@@ -1,3 +1,5 @@
+import 'package:vynic/core/database/repositories/order_table_mutation_repository.dart';
+import 'package:vynic/core/models/table.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
@@ -133,7 +135,7 @@ void main() {
 
   for (final remote in [false, true]) {
     test(
-      '${remote ? 'remote' : 'local'} create queues before reads until Close Day completes',
+      '${remote ? 'remote admitted command' : 'local dated request'} waits for Close Day and preserves retry ownership',
       () async {
         final entered = Completer<void>();
         final release = Completer<void>();
@@ -179,14 +181,51 @@ void main() {
                   ),
                 ],
                 includeServiceFee: false,
-              ).then((_) {
-                done = true;
-              });
+              ).then(
+                (_) {
+                  done = true;
+                },
+                onError: (Object error) {
+                  expect(
+                    error,
+                    isA<OrderMutationConflict>().having(
+                      (v) => v.code,
+                      'stale business date',
+                      'stale_date',
+                    ),
+                  );
+                  done = true;
+                },
+              );
         await Future<void>.delayed(Duration.zero);
         expect(done, false);
         release.complete();
         expect(await closing, true);
         await create;
+        if (!remote) {
+          expect(
+            DatabaseCore.orderBox!.values.where(
+              (o) => o.tableNumbers.contains('4'),
+            ),
+            isEmpty,
+          );
+          expect(DatabaseCore.tableBox!.get('free')!.activeOrderId, isNull);
+          await OrderRepository.createOrder(
+            tableNumbers: ['4'],
+            floor: 'first',
+            createdBy: 'local',
+            items: [
+              OrderItem(
+                itemKey: 'new',
+                itemName: 'New',
+                unitPrice: 5,
+                quantity: 1,
+                total: 5,
+              ),
+            ],
+            includeServiceFee: false,
+          );
+        }
         final order = DatabaseCore.orderBox!.values.singleWhere(
           (o) => o.tableNumbers.contains('4'),
         );
@@ -235,6 +274,10 @@ void main() {
         includeServiceFee: false,
       );
       await DatabaseCore.orderBox!.put('settling', order);
+      await DatabaseCore.tableBox!.put(
+        'free',
+        TableModel(tableNumber: '4', floor: 'first')..reserve('synthetic', 10),
+      );
       await OrderRepository.updateOrder(order);
       await AuditRepository.ensureAuditReport(
         orderId: order.orderId,
@@ -332,6 +375,10 @@ void main() {
 
   test('Order model helper waits before in-memory mutation', () async {
     final order = DatabaseCore.orderBox!.get('older-active')!;
+    await DatabaseCore.tableBox!.put(
+      'older-owned',
+      TableModel(tableNumber: '3', floor: 'first')..reserve('synthetic', 3),
+    );
     final entered = Completer<void>();
     final release = Completer<void>();
     final exclusive = LocalDataAdmission.exclusive(() async {

@@ -23,7 +23,6 @@ import 'package:vynic/core/models/audit_report.dart';
 import 'package:vynic/core/models/menu_item_db.dart';
 import 'package:vynic/core/models/order.dart';
 import 'package:vynic/core/models/audit_source.dart';
-import 'package:vynic/core/models/order_status.dart';
 import 'package:vynic/core/models/package.dart';
 import 'package:vynic/core/models/quick_order_draft.dart';
 import 'package:vynic/core/models/reservation.dart';
@@ -41,6 +40,7 @@ import 'business_day_repository.dart';
 import 'closure_journal_repository.dart';
 import 'close_day_journal_repository.dart';
 import 'order_transfer_journal_repository.dart';
+import 'order_table_mutation_repository.dart';
 import 'package:vynic/core/services/pos/order_item_transfer.dart';
 import '../transactions/close_day_transaction.dart';
 import '../database_core.dart';
@@ -370,7 +370,7 @@ class BackupRepository {
       case 'menu':
         return _deserializeMenuCategory(model());
       case 'reservations':
-        return _deserializeReservation(model());
+        return _deserializeReservation(model(), preserveStoredValues: true);
       case 'quickOrders':
         return _deserializeQuickOrderDraft(model());
       case 'sales':
@@ -563,6 +563,40 @@ class BackupRepository {
               OrderItemTransfer.persistedImage(store, key, stores: out),
         );
       }
+    }
+    var pendingOwnership = 0;
+    for (final entry in out['meta']!.entries) {
+      if (entry.key is! String ||
+          !(entry.key as String).startsWith(
+            OrderTableMutationRepository.prefix,
+          ))
+        continue;
+      final intent = OrderTableMutationRepository.decode(
+        entry.key as String,
+        entry.value,
+      );
+      if (!intent.pending) continue;
+      if (++pendingOwnership > 1 ||
+          pendingTransfers > 0 ||
+          dayClose != null && CloseDayIntent.fromMap(dayClose).pending ||
+          BusinessDayRepository.dateKey(
+                DateTime.parse(out['settings']!['currentDate'] as String),
+              ) !=
+              intent.businessDate)
+        throw const FormatException('Ownership backup recovery/date disagrees');
+      OrderTableMutationRepository.validateCurrent(
+        intent,
+        (store, key) => OrderTableMutationRepository.persistedImage(
+          store,
+          key,
+          stores: out,
+        ),
+      );
+      OrderTableMutationRepository.validateFinalOwnership(
+        intent,
+        orders: out['orders']!.cast<dynamic, Order>(),
+        tables: out['tables']!.cast<dynamic, TableModel>(),
+      );
     }
     if (menu[MenuLocalStore.versionKey] != null &&
         menu[MenuLocalStore.versionKey] != '1')
@@ -881,8 +915,14 @@ class BackupRepository {
     );
     // Restore already owns admission; finish the restored transition before
     // Menu recovery, rebuilt ACKs or any UI/worker can admit business writes.
+    await OrderTableMutationRepository.recoverPending(underExclusive: true);
     await CloseDayTransaction.recoverUnderAdmission();
     await OrderItemTransfer.recoverUnderAdmission();
+    if (DatabaseCore.reservationBox?.isOpen == true)
+      await HiveMigrationService.persistReservationLineIdentities(
+        DatabaseCore.metaBox!,
+        DatabaseCore.reservationBox!,
+      );
     // Rebuildable ACKs must not hide unsent data on this destination.
     await AuditSyncState.resetAfterRestore();
     await StaffCredentialSyncState.resetAfterRestore();
@@ -1213,7 +1253,7 @@ class BackupRepository {
   }
 
   static Future<void> replaceOrdersFromJson(List<dynamic> payload) =>
-      UpdateReadiness.track(
+      UpdateReadiness.mutate(
         'replaceOrdersFromJson',
         () => _updateTrackedReplaceOrdersFromJson(payload),
       );
@@ -1258,84 +1298,19 @@ class BackupRepository {
     required String pickupTime,
     required String waiterName,
     required List<Map<String, dynamic>> items,
-  }) => UpdateReadiness.track(
-    'createTakeawayOrderFromRemote',
-    () => _updateTrackedCreateTakeawayOrderFromRemote(
-      orderId: orderId,
-      customerName: customerName,
-      pickupTime: pickupTime,
-      waiterName: waiterName,
-      items: items,
-    ),
+  }) => OrderRepository.upsertMobileTakeawayOrder(
+    posOrderId: orderId,
+    customerName: customerName,
+    pickupTime: pickupTime,
+    waiterName: waiterName,
+    items: items
+        .map((raw) => OrderItem.fromJson(Map<String, dynamic>.of(raw)))
+        .toList(),
+    requestId: 'remote-takeaway:$orderId',
   );
 
-  static Future<Order?> _updateTrackedCreateTakeawayOrderFromRemote({
-    required int orderId,
-    required String customerName,
-    required String pickupTime,
-    required String waiterName,
-    required List<Map<String, dynamic>> items,
-  }) async {
-    if (DatabaseCore.orderBox == null) {
-      return null;
-    }
-    // Idempotent — skip if already exists
-    final existing = OrderRepository.getOrder(orderId);
-    if (existing != null) return existing;
-
-    final now = BusinessDayRepository.getCurrentDateTime();
-    final orderItems = items
-        .map(
-          (it) => OrderItem(
-            itemKey: it['itemName'] as String,
-            itemName: it['itemName'] as String,
-            unitPrice: (it['unitPrice'] as num).toDouble(),
-            quantity: (it['quantity'] as num).toInt(),
-            total:
-                ((it['total'] as num?)?.toDouble()) ??
-                (it['unitPrice'] as num).toDouble() *
-                    (it['quantity'] as num).toInt(),
-            menuItemId: it['menuItemId'] as String?,
-            variantId: it['variantId'] as String?,
-          ),
-        )
-        .toList();
-
-    final order = Order(
-      orderId: orderId,
-      tableNumbers: ['TA-$orderId'],
-      floor: 'takeaway',
-      items: orderItems,
-      totalAmount: 0,
-      createdAt: now,
-      createdBy: waiterName,
-      status: OrderStatus.confirmed.storageValue,
-      includeServiceFee: false,
-      customerName: customerName,
-      pickupTime: pickupTime,
-    );
-    order.recalculateTotal();
-    await DatabaseCore.orderBox!.add(order);
-
-    // Keep lastOrderId counter in sync so future POS orders don't reuse this ID
-    final stored = DatabaseCore.settingsBox?.get('lastOrderId') as int? ?? 0;
-    if (orderId > stored) {
-      await DatabaseCore.settingsBox?.put('lastOrderId', orderId);
-    }
-
-    SyncHub.notify(
-      SyncEvent(
-        type: SyncEventType.orders,
-        action: 'created',
-        payload: {'orderId': orderId},
-      ),
-    );
-
-    return order;
-  }
-
   static Future<Order> createOrderFromJson(Map<String, dynamic> json) =>
-      UpdateReadiness.track(
+      UpdateReadiness.mutate(
         'createOrderFromJson',
         () => _updateTrackedCreateOrderFromJson(json),
       );
@@ -1359,6 +1334,7 @@ class BackupRepository {
       createdBy: createdBy,
       items: items,
       includeServiceFee: includeServiceFee,
+      requestId: json['requestId'] as String?,
     );
     return order;
   }
@@ -1373,7 +1349,7 @@ class BackupRepository {
   }
 
   static Future<void> replaceReservationsFromJson(List<dynamic> payload) =>
-      UpdateReadiness.track(
+      UpdateReadiness.mutate(
         'replaceReservationsFromJson',
         () => _updateTrackedReplaceReservationsFromJson(payload),
       );
@@ -1404,7 +1380,7 @@ class BackupRepository {
   static Future<String> createReservationFromJson(
     Map<String, dynamic> json, {
     AuditSource source = AuditSource.manager,
-  }) => UpdateReadiness.track(
+  }) => UpdateReadiness.mutate(
     'createReservationFromJson',
     () => _updateTrackedCreateReservationFromJson(json, source: source),
   );
@@ -1472,7 +1448,7 @@ class BackupRepository {
   }
 
   static Future<void> replaceTablesFromJson(List<dynamic> payload) =>
-      UpdateReadiness.track(
+      UpdateReadiness.mutate(
         'replaceTablesFromJson',
         () => _updateTrackedReplaceTablesFromJson(payload),
       );
@@ -1497,7 +1473,7 @@ class BackupRepository {
   }
 
   static Future<void> updateTableFromJson(Map<String, dynamic> json) =>
-      UpdateReadiness.track(
+      UpdateReadiness.mutate(
         'updateTableFromJson',
         () => _updateTrackedUpdateTableFromJson(json),
       );
@@ -1590,7 +1566,12 @@ class BackupRepository {
           ((DatabaseCore.metaBox?.keys.any(
                     (key) =>
                         key is String &&
-                        key.startsWith(OrderTransferJournalRepository.prefix),
+                        (key.startsWith(
+                              OrderTransferJournalRepository.prefix,
+                            ) ||
+                            key.startsWith(
+                              OrderTableMutationRepository.prefix,
+                            )),
                   ) ??
                   false) ||
               (DatabaseCore.metaBox?.containsKey(
@@ -2144,10 +2125,18 @@ class BackupRepository {
     return order;
   }
 
-  static Reservation _deserializeReservation(Map<String, dynamic> json) {
+  static Reservation _deserializeReservation(
+    Map<String, dynamic> json, {
+    bool preserveStoredValues = false,
+  }) {
     final preOrders = ((json['preOrderItems'] as List?) ?? const [])
         .whereType<Map>()
-        .map((it) => _deserializeOrderItem(Map<String, dynamic>.from(it)))
+        .map(
+          (it) => _deserializeOrderItem(
+            Map<String, dynamic>.from(it),
+            preserveStoredTotal: preserveStoredValues,
+          ),
+        )
         .toList();
 
     final tableNumbers = ((json['tableNumbers'] as List?) ?? const [])
@@ -2168,7 +2157,9 @@ class BackupRepository {
       tableNumbers: tableNumbers,
       // Old backups carry no refs; derive them so restored records are
       // complete regardless of the migration state.
-      tableRefs: tableRefs.isNotEmpty
+      tableRefs: preserveStoredValues
+          ? (json['tableRefs'] == null ? null : tableRefs)
+          : tableRefs.isNotEmpty
           ? tableRefs
           : [
               for (final code in tableNumbers)
@@ -2181,7 +2172,11 @@ class BackupRepository {
       createdAt: _parseRequiredDate(json['createdAt'] as String?),
       createdBy: json['createdBy'] as String? ?? 'Unknown',
       status: json['status'] as String? ?? 'pending',
-      preOrderItems: preOrders.isEmpty ? null : preOrders,
+      preOrderItems: preserveStoredValues
+          ? (json['preOrderItems'] == null ? null : preOrders)
+          : preOrders.isEmpty
+          ? null
+          : preOrders,
       isTakeAway: json['isTakeAway'] as bool? ?? false,
       linkedOrderId: (json['linkedOrderId'] as num?)?.toInt(),
     );

@@ -1,3 +1,4 @@
+import 'package:vynic/core/database/repositories/order_table_mutation_repository.dart';
 import 'package:vynic/core/services/pos/update/tracked_box.dart';
 import 'package:hive/hive.dart';
 import 'table_operational_status.dart';
@@ -42,6 +43,11 @@ class TableModel extends HiveObject with UpdateTrackedHiveObject {
     this.reservationId,
     this.edgeRevision = 0,
   });
+
+  Map<String, dynamic>? mutationBaseline;
+
+  @override
+  Future<void> save() => OrderTableMutationRepository.saveTable(this);
 
   // Helper method to get display name
   String get displayName => 'Table $tableNumber';

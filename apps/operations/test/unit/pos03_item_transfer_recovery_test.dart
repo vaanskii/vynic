@@ -1,3 +1,4 @@
+import 'package:vynic/core/database/repositories/order_table_mutation_repository.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
@@ -108,10 +109,10 @@ void main() {
       final refused = expectLater(
         adjustment,
         throwsA(
-          isA<HiveError>().having(
-            (v) => v.message,
-            'stale handle reason',
-            contains('not in a box'),
+          isA<OrderMutationConflict>().having(
+            (v) => v.code,
+            'explicit stale handle conflict',
+            'stale_order',
           ),
         ),
       );

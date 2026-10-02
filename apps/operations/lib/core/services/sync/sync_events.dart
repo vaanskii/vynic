@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:vynic/core/database/local_data_admission.dart';
 
 import 'package:vynic/core/services/sync/pos_live_refresh.dart';
 
@@ -28,6 +29,10 @@ class SyncHub {
   static Stream<SyncEvent> get events => _eventBus.stream;
 
   static void notify(SyncEvent event) {
+    LocalDataAdmission.afterMutation(() => _notify(event));
+  }
+
+  static void _notify(SyncEvent event) {
     try {
       onLocalChange?.call(event);
       _eventBus.add(event);

@@ -445,6 +445,22 @@ current transport status.
   remains v9. Status DONE, with verified native crash recovery and development
   build evidence: `docs/POS03_CRASH_SAFE_ITEM_TRANSFER.md`. Windows smoke remains
   pending (`docs/POS03_WINDOWS_SMOKE.md`); physical release qualification is OPS-01.
+- POS-05 is DONE for the frozen single-process operational source: shared
+  reentrant writer admission, detached expected Order/Table images and
+  durable create/activation/move/cancel intents enforce one active Order
+  per physical Table. Stale/cross-writer actions refuse before audit;
+  simultaneous views remain usable. Startup and format-2 restore complete
+  exact interrupted intent before writers; completed stable-ID retries do
+  not overwrite later edits. Existing ambiguity stays readable with a Home
+  repair report and blocks unsafe mutation/rollback. Hive remains v9 with
+  an additive durable legacy Reservation line-identity bootstrap.
+  723 distinct Flutter tests, 280 ownership plus 88 transfer SIGKILL/restart
+  checkpoints, scoped analysis/format and main_pos development build pass
+  on matching hashes. Proof/runbook: `docs/POS05_ORDER_TABLE_OWNERSHIP.md`.
+  Windows smoke remains PENDING_NOT_RUN/HELD (`docs/POS05_WINDOWS_SMOKE.md`);
+  physical release remains OPS-01. The tested working profile contains
+  three protected runtime WIP files recorded in the proof; a bare commit
+  archive needs separate validation. Next: POS-02 -> SEC-05 -> OPS-01 -> PROD-01.
 - Every Order audit report opens with a typed creation event carrying
   `orderKind` (`WALK_IN`, `TAKEAWAY`, `PACKAGE`, `RESERVATION`), `tableRefs`,
   `source`, `actorId`, `actorName`, `businessDate`: `CREATE_WALKIN` for POS

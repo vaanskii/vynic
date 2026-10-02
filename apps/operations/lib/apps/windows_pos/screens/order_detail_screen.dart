@@ -1,3 +1,5 @@
+import 'package:vynic/core/database/local_data_admission.dart';
+import 'package:vynic/core/database/repositories/order_table_mutation_repository.dart';
 import 'package:vynic/core/services/pos/pos_input_settings.dart';
 import 'package:vynic/core/services/pos/update/update_readiness.dart';
 import 'package:vynic/core/database/repositories/inventory_repository.dart';
@@ -25,8 +27,6 @@ import 'package:vynic/core/widgets/pin_button.dart';
 import 'package:vynic/core/widgets/pos_keyboard/pos_keyboard_sheet.dart';
 import 'package:vynic/core/services/pos/table_payment_service.dart';
 import 'package:vynic/core/services/pos/order_item_transfer.dart';
-import 'package:vynic/core/services/edge/orders_tables/shadow.dart';
-import 'package:vynic/core/services/edge/orders_tables/pos_shadow_projection.dart';
 import 'package:vynic/core/utils/pos_feedback.dart';
 import 'package:vynic/core/utils/table_naming.dart';
 import 'package:vynic/apps/windows_pos/widgets/order/order_detail_content_section.dart';
@@ -59,6 +59,7 @@ class OrderDetailScreen extends StatefulWidget {
 
 class _OrderDetailScreenState extends State<OrderDetailScreen> {
   Order? _order;
+  String? _loadFailure;
   Reservation? _linkedReservation;
   late bool _serviceFeeAvailable;
   bool _autoConfirmTriggered = false;
@@ -319,7 +320,9 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
   /// keeps it out of table-availability checks, since the table is plainly not
   /// bookable by anyone else while this order is open.
   Future<void> _createReservationForTable() async {
-    final order = _order;
+    final order = _order == null
+        ? null
+        : OrderTableMutationRepository.capture(_order!);
     if (order == null || _isTakeAwayOrder) {
       return;
     }
@@ -456,47 +459,72 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
   void _loadOrder() {
     unawaited(
       UpdateReadiness.track('loadOrder', () async {
-        if (mounted) _admittedloadOrder();
+        if (mounted) await _admittedloadOrder();
       }).catchError((Object error, StackTrace stack) {
         developer.log(
           'POS mutation could not be admitted',
           error: error,
           stackTrace: stack,
         );
+        if (!mounted) return;
+        Order? readable;
+        try {
+          readable = DatabaseService.getOrder(widget.orderId);
+        } catch (readError, readStack) {
+          developer.log(
+            'Order view requires repair',
+            error: readError,
+            stackTrace: readStack,
+            name: 'order_detail',
+          );
+        }
+        final message = error is OrderMutationConflict
+            ? error.userMessage
+            : LocalDataAdmission.failure != null
+            ? 'ოპერაცია აღსადგენია — გადატვირთეთ POS'
+            : 'მოქმედება ვერ შესრულდა — განაახლეთ შეკვეთა';
+        final changed = _loadFailure != message;
+        setState(() {
+          _order = readable;
+          _loadFailure = message;
+        });
+        if (changed)
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) unawaited(showErrorToast(context, message));
+          });
       }),
     );
   }
 
-  void _admittedloadOrder() {
-    final fetchedOrder = DatabaseService.getOrder(widget.orderId);
-    final serviceFeeAvailable = DatabaseService.isServiceFeeAvailable();
-    Reservation? linkedReservation;
-
-    if (fetchedOrder != null) {
-      final isTakeAway = _isTakeAway(fetchedOrder);
-      if (!serviceFeeAvailable &&
+  Future<void> _admittedloadOrder() async {
+    final view = await UpdateReadiness.mutate('normalizeOrderView', () async {
+      final fetchedOrder = DatabaseService.getOrder(widget.orderId);
+      final serviceFeeAvailable = DatabaseService.isServiceFeeAvailable();
+      if (fetchedOrder != null &&
+          (!serviceFeeAvailable || _isTakeAway(fetchedOrder)) &&
           fetchedOrder.includeServiceFee &&
           !_isFinalizedStatus(fetchedOrder.status)) {
+        OrderTableMutationRepository.requireFresh(fetchedOrder);
         fetchedOrder.includeServiceFee = false;
         fetchedOrder.recalculateTotal();
         fetchedOrder.updatedAt = DatabaseService.getCurrentDateTime();
-        fetchedOrder.save();
+        await fetchedOrder.save();
       }
-      if (isTakeAway &&
-          fetchedOrder.includeServiceFee &&
-          !_isFinalizedStatus(fetchedOrder.status)) {
-        fetchedOrder.includeServiceFee = false;
-        fetchedOrder.recalculateTotal();
-        fetchedOrder.updatedAt = DatabaseService.getCurrentDateTime();
-        fetchedOrder.save();
-      }
-      linkedReservation = DatabaseService.findReservationForOrder(fetchedOrder);
-    }
-
+      return (
+        fetchedOrder,
+        serviceFeeAvailable,
+        fetchedOrder == null
+            ? null
+            : DatabaseService.findReservationForOrder(fetchedOrder),
+      );
+    });
+    if (!mounted) return;
+    final (fetchedOrder, serviceFeeAvailable, linkedReservation) = view;
     setState(() {
       _order = fetchedOrder;
       _linkedReservation = linkedReservation;
       _serviceFeeAvailable = serviceFeeAvailable;
+      _loadFailure = null;
     });
 
     if (widget.autoConfirmOnLoad &&
@@ -777,59 +805,63 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
   }
 
   void _toggleServiceFee() {
+    final order = _order == null
+        ? null
+        : OrderTableMutationRepository.capture(_order!);
+    if (order == null ||
+        _isTakeAwayOrder ||
+        !_serviceFeeAvailable ||
+        _isFinalizedStatus(order.status))
+      return;
     unawaited(
-      UpdateReadiness.track('toggleServiceFee', () async {
-        if (mounted) _admittedtoggleServiceFee();
-      }).catchError((Object error, StackTrace stack) {
-        developer.log(
-          'POS mutation could not be admitted',
-          error: error,
-          stackTrace: stack,
-        );
-      }),
+      UpdateReadiness.mutate('toggleServiceFee', () async {
+            OrderTableMutationRepository.requireFresh(order);
+            final percent = order.getEffectiveServiceFeePercentage(
+              globalDefaultPercentage:
+                  DatabaseService.getServiceFeePercentage(),
+            );
+            final before = order.includeServiceFee;
+            final beforeTotal = order.totalAmount;
+            order.includeServiceFee = !before;
+            order.recalculateTotal(serviceFeeRate: percent / 100);
+            order.updatedAt = DatabaseService.getCurrentDateTime();
+            await DatabaseService.updateOrder(
+              order,
+              previousIncludeServiceFee: before,
+            );
+            await MoneyAudit.orderServiceFeeChanged(
+              actorId: widget.user.username,
+              orderId: order.orderId,
+              previousIncluded: before,
+              newIncluded: order.includeServiceFee,
+              previousPercent: percent,
+              newPercent: percent,
+              previousTotal: beforeTotal,
+              newTotal: order.totalAmount,
+            );
+          })
+          .then<void>((_) {
+            if (mounted) _loadOrder();
+          })
+          .catchError(_mutationFailed),
     );
   }
 
-  void _admittedtoggleServiceFee() {
-    final order = _order;
-    if (order == null || _isTakeAwayOrder) {
-      return;
-    }
-    if (!_serviceFeeAvailable) {
-      return;
-    }
-    if (_isFinalizedStatus(order.status)) {
-      return;
-    }
-
-    final defaultPercent = DatabaseService.getServiceFeePercentage();
-    final effectivePercent = order.getEffectiveServiceFeePercentage(
-      globalDefaultPercentage: defaultPercent,
+  void _mutationFailed(Object error, StackTrace stack) {
+    developer.log(
+      'Order mutation refused',
+      error: error,
+      stackTrace: stack,
+      name: 'order_detail',
     );
-
-    final prevInclude = order.includeServiceFee;
-    final prevTotal = order.totalAmount;
-    setState(() {
-      order.includeServiceFee = !prevInclude;
-      order.recalculateTotal(serviceFeeRate: effectivePercent / 100);
-      order.updatedAt = DatabaseService.getCurrentDateTime();
-      unawaited(
-        DatabaseService.updateOrder(
-          order,
-          previousIncludeServiceFee: prevInclude,
-        ),
-      );
-    });
+    if (!mounted) return;
+    _loadOrder();
     unawaited(
-      MoneyAudit.orderServiceFeeChanged(
-        actorId: widget.user.username,
-        orderId: order.orderId,
-        previousIncluded: prevInclude,
-        newIncluded: order.includeServiceFee,
-        previousPercent: effectivePercent,
-        newPercent: effectivePercent,
-        previousTotal: prevTotal,
-        newTotal: order.totalAmount,
+      showErrorToast(
+        context,
+        error is OrderMutationConflict
+            ? error.userMessage
+            : 'მოქმედება ვერ შესრულდა — განაახლეთ შეკვეთა',
       ),
     );
   }
@@ -849,7 +881,9 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
   );
 
   Future<void> _admittedshowServiceFeeAdjustDialog() async {
-    final order = _order;
+    final order = _order == null
+        ? null
+        : OrderTableMutationRepository.capture(_order!);
     if (order == null || _isTakeAwayOrder) {
       return;
     }
@@ -886,36 +920,37 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     );
     final useGlobalDefault = (normalizedPercent - defaultPercent).abs() < 0.01;
 
-    final prevInclude = order.includeServiceFee;
-    final prevTotal = order.totalAmount;
-    setState(() {
-      order
-        ..includeServiceFee = result.includeServiceFee
-        ..customServiceFeePercentage = useGlobalDefault
-            ? null
-            : normalizedPercent;
-
-      order.recalculateTotal(serviceFeeRate: normalizedPercent / 100);
-      order.updatedAt = DatabaseService.getCurrentDateTime();
-    });
-    unawaited(
-      DatabaseService.updateOrder(
-        order,
-        previousIncludeServiceFee: prevInclude,
-      ),
-    );
-    unawaited(
-      MoneyAudit.orderServiceFeeChanged(
-        actorId: widget.user.username,
-        orderId: order.orderId,
-        previousIncluded: prevInclude,
-        newIncluded: order.includeServiceFee,
-        previousPercent: initialPercent,
-        newPercent: normalizedPercent,
-        previousTotal: prevTotal,
-        newTotal: order.totalAmount,
-      ),
-    );
+    try {
+      await UpdateReadiness.mutate('adjustServiceFee', () async {
+        OrderTableMutationRepository.requireFresh(order);
+        final prevInclude = order.includeServiceFee;
+        final prevTotal = order.totalAmount;
+        order
+          ..includeServiceFee = result.includeServiceFee
+          ..customServiceFeePercentage = useGlobalDefault
+              ? null
+              : normalizedPercent;
+        order.recalculateTotal(serviceFeeRate: normalizedPercent / 100);
+        order.updatedAt = DatabaseService.getCurrentDateTime();
+        await DatabaseService.updateOrder(
+          order,
+          previousIncludeServiceFee: prevInclude,
+        );
+        await MoneyAudit.orderServiceFeeChanged(
+          actorId: widget.user.username,
+          orderId: order.orderId,
+          previousIncluded: prevInclude,
+          newIncluded: order.includeServiceFee,
+          previousPercent: initialPercent,
+          newPercent: normalizedPercent,
+          previousTotal: prevTotal,
+          newTotal: order.totalAmount,
+        );
+      });
+      if (mounted) _loadOrder();
+    } catch (error, stack) {
+      _mutationFailed(error, stack);
+    }
   }
 
   Future<void> _showDiscountDialog() => UpdateReadiness.track(
@@ -925,6 +960,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
 
   Future<void> _admittedshowDiscountDialog() async {
     if (_order == null) return;
+    final captured = OrderTableMutationRepository.capture(_order!);
     if (!PosPermissions.has(widget.user, PosPermission.applyDiscount)) {
       unawaited(
         showErrorToast(
@@ -1110,53 +1146,61 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     );
 
     if (discount != null) {
-      final order = _order!;
-      final previousAdvance = order.effectiveAdvanceAmount;
-      final previousTotal = order.totalAmount;
-      final collectedOn = DatabaseService.getCurrentDate()
-          .toIso8601String()
-          .split('T')[0];
+      try {
+        await UpdateReadiness.mutate('adjustOrderMoney', () async {
+          OrderTableMutationRepository.requireFresh(captured);
+          final order = captured;
+          final previousAdvance = order.effectiveAdvanceAmount;
+          final previousTotal = order.totalAmount;
+          final collectedOn = DatabaseService.getCurrentDate()
+              .toIso8601String()
+              .split('T')[0];
 
-      // The receipt is written when the money is taken, dated today — not at
-      // close, dated the closing day. A deposit collected on Monday and spent
-      // on Friday belongs to Monday's cash, and the closure only applies it.
-      final receiptId = await DatabaseService.recordAdvanceReceipt(
-        orderId: order.orderId,
-        amount: discount,
-        collectedBy: widget.user.username,
-        receiptId: order.advanceReceiptId,
-        businessDate: order.advanceCollectedOn ?? collectedOn,
-      );
+          // The receipt is written when the money is taken, dated today — not at
+          // close, dated the closing day. A deposit collected on Monday and spent
+          // on Friday belongs to Monday's cash, and the closure only applies it.
+          final receiptId = await DatabaseService.recordAdvanceReceipt(
+            orderId: order.orderId,
+            amount: discount,
+            collectedBy: widget.user.username,
+            receiptId: order.advanceReceiptId,
+            businessDate: order.advanceCollectedOn ?? collectedOn,
+          );
 
-      if (!mounted) {
-        controller.dispose();
-        return;
+          if (!mounted) {
+            controller.dispose();
+            return;
+          }
+          await order.setAdvance(
+            discount,
+            collectedOn: order.advanceCollectedOn ?? collectedOn,
+            receiptId: receiptId,
+          );
+          if (mounted) setState(() {});
+          await DatabaseService.refreshDailySalesTotalForDate(
+            DatabaseService.getCurrentDate(),
+          );
+          unawaited(
+            MoneyAudit.advanceRecorded(
+              actorId: widget.user.username,
+              orderId: order.orderId,
+              previousAmount: previousAdvance,
+              newAmount: order.effectiveAdvanceAmount,
+              businessDate: order.advanceCollectedOn ?? collectedOn,
+              receiptId: receiptId,
+            ),
+          );
+          developer.log(
+            'Advance on order #${order.orderId}: '
+            '$previousAdvance → ${order.effectiveAdvanceAmount}, '
+            'balance was $previousTotal now ${order.totalAmount}',
+            name: 'order_advance',
+          );
+        });
+        if (mounted) _loadOrder();
+      } catch (error, stack) {
+        _mutationFailed(error, stack);
       }
-      await order.setAdvance(
-        discount,
-        collectedOn: order.advanceCollectedOn ?? collectedOn,
-        receiptId: receiptId,
-      );
-      if (mounted) setState(() {});
-      await DatabaseService.refreshDailySalesTotalForDate(
-        DatabaseService.getCurrentDate(),
-      );
-      unawaited(
-        MoneyAudit.advanceRecorded(
-          actorId: widget.user.username,
-          orderId: order.orderId,
-          previousAmount: previousAdvance,
-          newAmount: order.effectiveAdvanceAmount,
-          businessDate: order.advanceCollectedOn ?? collectedOn,
-          receiptId: receiptId,
-        ),
-      );
-      developer.log(
-        'Advance on order #${order.orderId}: '
-        '$previousAdvance → ${order.effectiveAdvanceAmount}, '
-        'balance was $previousTotal now ${order.totalAmount}',
-        name: 'order_advance',
-      );
     }
 
     controller.dispose();
@@ -1169,6 +1213,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
 
   Future<void> _admittedshowManualAdjustmentDialog() async {
     if (_order == null) return;
+    final captured = OrderTableMutationRepository.capture(_order!);
     if (!PosPermissions.has(widget.user, PosPermission.applyDiscount)) {
       unawaited(
         showErrorToast(
@@ -1343,21 +1388,29 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     );
 
     if (adjustment != null) {
-      final order = _order!;
-      final previousAdjustment = order.manualAdjustmentAmount;
-      final previousTotal = order.totalAmount;
-      await order.setManualAdjustment(adjustment);
-      if (mounted) setState(() {});
-      unawaited(
-        MoneyAudit.orderManualAdjustmentChanged(
-          actorId: widget.user.username,
-          orderId: order.orderId,
-          previousAdjustment: previousAdjustment,
-          newAdjustment: order.manualAdjustmentAmount,
-          previousTotal: previousTotal,
-          newTotal: order.totalAmount,
-        ),
-      );
+      try {
+        await UpdateReadiness.mutate('adjustOrderMoney', () async {
+          OrderTableMutationRepository.requireFresh(captured);
+          final order = captured;
+          final previousAdjustment = order.manualAdjustmentAmount;
+          final previousTotal = order.totalAmount;
+          await order.setManualAdjustment(adjustment);
+          if (mounted) setState(() {});
+          unawaited(
+            MoneyAudit.orderManualAdjustmentChanged(
+              actorId: widget.user.username,
+              orderId: order.orderId,
+              previousAdjustment: previousAdjustment,
+              newAdjustment: order.manualAdjustmentAmount,
+              previousTotal: previousTotal,
+              newTotal: order.totalAmount,
+            ),
+          );
+        });
+        if (mounted) _loadOrder();
+      } catch (error, stack) {
+        _mutationFailed(error, stack);
+      }
     }
 
     controller.dispose();
@@ -1782,6 +1835,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
 
   Future<void> _showChangeTableDialog() async {
     if (_order == null) return;
+    final expected = OrderTableMutationRepository.capture(_order!);
 
     final allTables = DatabaseService.getAllTables();
     final freeTables = allTables
@@ -1917,50 +1971,53 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                           final tableId = '${t.tableNumber}|${t.floor}';
                           final isSelected = selectedTableIds.contains(tableId);
 
-                          return CheckboxListTile(
-                            contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 20,
-                              vertical: 4,
-                            ),
-                            value: isSelected,
-                            onChanged: (val) {
-                              setDialogState(() {
-                                if (val == true) {
-                                  selectedTableIds.add(tableId);
-                                } else {
-                                  selectedTableIds.remove(tableId);
-                                }
-                              });
-                            },
-                            title: Text(
-                              OrderDetailCommonHelpers.tableDisplayName(
-                                tableNumber: t.tableNumber,
-                                floor: t.floor,
+                          return Material(
+                            type: MaterialType.transparency,
+                            child: CheckboxListTile(
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 20,
+                                vertical: 4,
                               ),
-                              style: TextStyle(
-                                color: const Color(0xFF374151),
-                                fontSize: 15,
-                                fontWeight: isSelected
-                                    ? FontWeight.w700
-                                    : FontWeight.w500,
+                              value: isSelected,
+                              onChanged: (val) {
+                                setDialogState(() {
+                                  if (val == true) {
+                                    selectedTableIds.add(tableId);
+                                  } else {
+                                    selectedTableIds.remove(tableId);
+                                  }
+                                });
+                              },
+                              title: Text(
+                                OrderDetailCommonHelpers.tableDisplayName(
+                                  tableNumber: t.tableNumber,
+                                  floor: t.floor,
+                                ),
+                                style: TextStyle(
+                                  color: const Color(0xFF374151),
+                                  fontSize: 15,
+                                  fontWeight: isSelected
+                                      ? FontWeight.w700
+                                      : FontWeight.w500,
+                                ),
                               ),
-                            ),
-                            subtitle: Text(
-                              t.floor == 'first'
-                                  ? 'პირველი სართული'
-                                  : 'მეორე სართული',
-                              style: const TextStyle(
-                                fontSize: 12,
-                                color: Colors.grey,
+                              subtitle: Text(
+                                t.floor == 'first'
+                                    ? 'პირველი სართული'
+                                    : 'მეორე სართული',
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.grey,
+                                ),
                               ),
-                            ),
-                            activeColor: const Color(0xFFC0AD7B),
-                            checkColor: Colors.white,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            checkboxShape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(4),
+                              activeColor: const Color(0xFFC0AD7B),
+                              checkColor: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              checkboxShape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(4),
+                              ),
                             ),
                           );
                         },
@@ -1995,7 +2052,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                                 : () async {
                                     final ids = selectedTableIds.toList();
                                     Navigator.of(ctx).pop();
-                                    await _changeTables(ids);
+                                    await _changeTables(ids, expected);
                                   },
                             style: ElevatedButton.styleFrom(
                               backgroundColor: const Color(0xFFC0AD7B),
@@ -2028,125 +2085,37 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     );
   }
 
-  Future<void> _changeTables(List<String> selectedTableIds) =>
-      UpdateReadiness.track(
-        'changeTables',
-        () => _admittedchangeTables(selectedTableIds),
-      );
-
-  Future<void> _admittedchangeTables(List<String> selectedTableIds) async {
-    if (_order == null || selectedTableIds.isEmpty) return;
-
-    final fromTables = List<String>.from(_order!.tableNumbers);
-    final fromFloor = _order!.floor;
-
-    final List<String> toTableNumbers = [];
-    String? toFloor;
-
+  Future<void> _changeTables(
+    List<String> selectedTableIds,
+    Order expected,
+  ) async {
+    if (selectedTableIds.isEmpty) return;
+    final numbers = <String>[];
+    String? floor;
     for (final id in selectedTableIds) {
       final parts = id.split('|');
-      toTableNumbers.add(parts[0]);
-      toFloor ??= parts[1];
+      if (parts.length != 2 || floor != null && floor != parts[1]) {
+        if (mounted)
+          unawaited(showErrorToast(context, 'აირჩიეთ ერთი სართულის მაგიდები'));
+        return;
+      }
+      numbers.add(parts[0]);
+      floor ??= parts[1];
     }
-
-    final targetFloor = toFloor;
-    if (targetFloor == null) return;
-
-    // Apply the change in memory
-    _order!.tableNumbers = toTableNumbers;
-    _order!.floor = targetFloor;
-    _order!.updatedAt = DatabaseService.getCurrentDateTime();
-
     try {
-      await OrderTableShadow.observe(
-        proposed: () => PosShadowProjection.moved(
-          _order!,
-          fromTables,
-          fromFloor,
-          proposed: true,
-        ),
-        actual: () => PosShadowProjection.moved(
-          _order!,
-          fromTables,
-          fromFloor,
-          proposed: false,
-        ),
-        operation: () async {
-          // Save order changes
-          await DatabaseService.updateOrder(_order!);
-
-          // Free all previously occupied tables
-          for (final oldNum in fromTables) {
-            await DatabaseService.freeTable(
-              tableNumber: oldNum,
-              floor: fromFloor,
-            );
-          }
-
-          // Reserve all new tables
-          for (final newNum in toTableNumbers) {
-            await DatabaseService.reserveTable(
-              tableNumber: newNum,
-              floor: targetFloor,
-              username: _order!.createdBy,
-              orderId: _order!.orderId,
-            );
-          }
-        },
+      await OrderTableMutationRepository.move(
+        expected: expected,
+        tableNumbers: numbers,
+        floor: floor!,
+        actor: widget.user.username,
       );
-
-      // Also update any linked reservation if it exists
-      if (_linkedReservation != null) {
-        try {
-          final tableRefs = [
-            for (final n in toTableNumbers)
-              if (int.tryParse(n) != null)
-                TableRef(floor: targetFloor, tableNumber: n),
-          ];
-
-          await DatabaseService.updateReservationTables(
-            _linkedReservation!.id,
-            const [],
-            tableRefs: tableRefs,
-            actorId: widget.user.username,
-          );
-        } catch (e) {
-          debugPrint('Note: Linked reservation table update failed: $e');
-        }
-      }
-
-      // Refresh UI
+      if (!mounted) return;
       _loadOrder();
-
-      if (mounted) {
-        unawaited(
-          showSuccessToast(
-            context,
-            'მაგიდა შეიცვალა: ${toTableNumbers.join(", ")}',
-          ),
-        );
-      }
-    } catch (error, stackTrace) {
-      debugPrint('Error changing tables: $error');
-      if (!mounted) {
-        return;
-      }
-      await DatabaseService.logError(
-        title: 'Order table change failed',
-        error: error,
-        stackTrace: stackTrace,
-        context: 'change_tables',
-        performedBy: widget.user.username,
-        metadata: {
-          'orderId': _order?.orderId,
-          'fromTables': fromTables,
-          'toTables': toTableNumbers,
-        },
+      unawaited(
+        showSuccessToast(context, 'მაგიდა შეიცვალა: ${numbers.join(", ")}'),
       );
-      if (!mounted) {
-        return;
-      }
-      unawaited(showErrorToast(context, 'მაგიდის შეცვლა ვერ მოხერხდა'));
+    } catch (error, stack) {
+      _mutationFailed(error, stack);
     }
   }
 
@@ -2339,6 +2308,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
       return;
     }
 
+    final expectedCancellation = OrderTableMutationRepository.capture(_order!);
     final canOverrideApproval = PosPermissions.has(
       widget.user,
       PosPermission.overrideManagerApproval,
@@ -2545,14 +2515,21 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
       // The cancellation itself — audit event, locked report, non-revenue
       // record, reservation, Order status and table — is one routine shared
       // with the Takeaway panel and the Manager commands.
-      final outcome = await DatabaseService.cancelOrder(
-        orderId: _order!.orderId,
-        actorId: waiterName,
-        actorName: waiterName,
-        source: AuditSource.pos,
-        reason: logComment,
-        approvedBy: approvedBy,
-      );
+      late CancelOrderOutcome outcome;
+      try {
+        outcome = await DatabaseService.cancelOrder(
+          orderId: expectedCancellation.orderId,
+          expectedOrder: expectedCancellation,
+          actorId: waiterName,
+          actorName: waiterName,
+          source: AuditSource.pos,
+          reason: logComment,
+          approvedBy: approvedBy,
+        );
+      } catch (error, stack) {
+        _mutationFailed(error, stack);
+        return;
+      }
       if (!mounted) return;
 
       switch (outcome) {
@@ -2569,7 +2546,12 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
           );
           return;
         case CancelOrderOutcome.failed:
-          await showErrorToast(context, 'შეკვეთის გაუქმება ვერ მოხერხდა');
+          await showErrorToast(
+            context,
+            LocalDataAdmission.failure != null
+                ? 'ოპერაცია აღსადგენია — გადატვირთეთ POS'
+                : 'შეკვეთის გაუქმება ვერ მოხერხდა',
+          );
           return;
       }
 
@@ -2617,7 +2599,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
       _order!.recalculateTotal(serviceFeeRate: serviceRate);
     }
 
-    final currentOrder = _order!;
+    final currentOrder = OrderTableMutationRepository.capture(_order!);
     if (currentOrder.items.isEmpty && currentOrder.packageItems.isEmpty) {
       await showErrorToast(context, 'შეკვეთაში დამატებული პოზიციები არ არის');
       return;
@@ -2673,7 +2655,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
       _order!.recalculateTotal(serviceFeeRate: serviceRate);
     }
 
-    final currentOrder = _order!;
+    final currentOrder = OrderTableMutationRepository.capture(_order!);
     if (currentOrder.items.isEmpty && currentOrder.packageItems.isEmpty) {
       await showErrorToast(context, 'შეკვეთაში დამატებული პოზიციები არ არის');
       return;
@@ -2834,6 +2816,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
       saleItems: saleItems,
       subtotalAmount: subtotal,
       finalTransaction: finalTransaction,
+      expectedOrder: order,
     );
 
     if (!result.isSuccess) {
@@ -2842,9 +2825,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
       }
       await showErrorToast(
         context,
-        result.outcome == ClosureOutcome.moneyMismatch
-            ? 'გადახდის ჯამი არ ემთხვევა შეკვეთის თანხას — დახურვა შეჩერდა'
-            : 'არაფისკალური დახურვა ვერ შესრულდა',
+        result.detail ?? 'არაფისკალური დახურვა ვერ შესრულდა',
       );
       return;
     }
@@ -2906,9 +2887,11 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
       saleItems: <OrderItem>[...order.packageItems, ...order.items],
       subtotalAmount: subtotal,
       finalTransaction: finalTransaction,
+      expectedOrder: order,
     );
 
     if (!result.isSuccess) {
+      _loadOrder();
       developer.log(
         'Table closure refused for order #${order.orderId}: '
         '${result.detail ?? result.outcome.name}',
@@ -2919,9 +2902,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
       }
       await showErrorToast(
         context,
-        result.outcome == ClosureOutcome.moneyMismatch
-            ? 'გადახდის ჯამი არ ემთხვევა შეკვეთის თანხას — დახურვა შეჩერდა'
-            : 'შეკვეთის დახურვა ვერ მოხერხდა',
+        result.detail ?? 'შეკვეთის დახურვა ვერ მოხერხდა',
       );
       return;
     }
@@ -3263,8 +3244,11 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
           elevation: 0,
           title: const Text('Order Not Found'),
         ),
-        body: const Center(
-          child: Text('Order not found', style: TextStyle(fontSize: 18)),
+        body: Center(
+          child: Text(
+            _loadFailure ?? 'Order not found',
+            style: const TextStyle(fontSize: 18),
+          ),
         ),
       );
     }

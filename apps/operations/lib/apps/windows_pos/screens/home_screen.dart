@@ -1,7 +1,9 @@
+import 'package:vynic/core/database/repositories/order_table_mutation_repository.dart';
 import 'package:vynic/core/services/pos/update/update_readiness.dart';
 import 'package:vynic/core/services/pos/pos_locale.dart';
 import 'package:vynic/core/widgets/pos_text.dart';
 import 'dart:async';
+import 'dart:developer' as developer;
 import 'dart:math' show min;
 
 import 'package:flutter/material.dart';
@@ -478,6 +480,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final activeDestinationKey = _destinations[activeIndex].key;
     final currentDate = DatabaseService.getCurrentDate();
     final takeAwayCount = _countActiveTakeAways(currentDate);
+    final ownershipIssues = DatabaseService.getOrderTableIntegrityReport();
 
     // Lazily build feature pages: only pages the user has actually opened are
     // constructed (and then kept alive by IndexedStack to preserve their
@@ -516,6 +519,18 @@ class _HomeScreenState extends State<HomeScreen> {
                 children: [
                   Column(
                     children: [
+                      if (ownershipIssues.isNotEmpty)
+                        Material(
+                          color: VynicFloorTokens.panel,
+                          child: Padding(
+                            key: const ValueKey('order-table-repair-report'),
+                            padding: const EdgeInsets.all(12),
+                            child: Text(
+                              'მაგიდის კავშირი არათანმიმდევრულია (${ownershipIssues.length}) — საჭიროა შემოწმება; ჩანაწერების ნახვა ხელმისაწვდომია',
+                              style: const TextStyle(fontSize: 14),
+                            ),
+                          ),
+                        ),
                       PosHomeUtilityBar(
                         businessDate: currentDate,
                         activeLabel: _destinations[activeIndex].label,
@@ -946,6 +961,7 @@ class _HomeScreenState extends State<HomeScreen> {
       if (!mounted) {
         return;
       }
+      _tableSelectionKey.currentState?.clearSelection();
       await DatabaseService.logError(
         title: 'Reserved table activation failed',
         error: error,
@@ -954,11 +970,22 @@ class _HomeScreenState extends State<HomeScreen> {
         performedBy: _user.username,
         metadata: {'reservationId': reservationId},
       );
-      await _refreshTables();
+      try {
+        await _refreshTables();
+      } catch (refreshError, refreshStack) {
+        developer.log(
+          'Recovery refusal prevented table refresh',
+          name: 'HomeScreen',
+          error: refreshError,
+          stackTrace: refreshStack,
+        );
+      }
       unawaited(
         showPosToast(
           context: context,
-          message: 'შეკვეთის გახსნა ვერ მოხერხდა: $error',
+          message: error is OrderMutationConflict
+              ? error.userMessage
+              : 'შეკვეთის გახსნა ვერ მოხერხდა — განაახლეთ და გაიმეორეთ',
           style: PosToastStyle.error,
         ),
       );
@@ -971,6 +998,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
     if (!result.isSuccess) {
       final reason = result.failureReason ?? 'Unknown reason';
+      _tableSelectionKey.currentState?.clearSelection();
       await DatabaseService.logError(
         title: 'Reserved table activation failed',
         error: StateError(reason),
@@ -987,9 +1015,11 @@ class _HomeScreenState extends State<HomeScreen> {
             (r) => r.id == reservationId,
           );
       if (!resExists) {
-        table.reservationId = null;
-        table.isReserved = false;
-        await table.save();
+        await DatabaseService.freeTable(
+          tableNumber: table.tableNumber,
+          floor: table.floor,
+          expectedReservationId: reservationId,
+        );
       }
 
       if (!mounted) {

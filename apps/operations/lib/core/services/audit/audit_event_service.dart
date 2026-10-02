@@ -1,3 +1,4 @@
+import 'package:vynic/core/database/local_data_admission.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
@@ -41,12 +42,12 @@ class AuditEventService {
 
     // Periodic sync attempt every 2 minutes
     _syncTimer = Timer.periodic(const Duration(minutes: 2), (_) {
-      unawaited(syncEvents());
+      LocalDataAdmission.afterMutation(() => unawaited(syncEvents()));
     });
 
     // Initial sync after startup
     Timer(const Duration(seconds: 10), () {
-      unawaited(syncEvents());
+      LocalDataAdmission.afterMutation(() => unawaited(syncEvents()));
     });
   }
 
@@ -87,7 +88,7 @@ class AuditEventService {
       await box.put(event.id, event.toMap());
 
       // Proactive debounced sync
-      unawaited(syncEvents());
+      LocalDataAdmission.afterMutation(() => unawaited(syncEvents()));
     } catch (e) {
       debugPrint(
         '[AuditEventService] CRITICAL: Failed to write audit event: $e',

@@ -1,3 +1,6 @@
+import 'dart:developer' as developer;
+import 'package:vynic/core/database/repositories/order_table_mutation_repository.dart';
+import 'package:vynic/core/services/pos/update/update_readiness.dart';
 import 'package:vynic/core/services/pos/pos_input_settings.dart';
 import 'dart:async';
 
@@ -382,7 +385,8 @@ class _OrderDetailContentSectionState extends State<OrderDetailContentSection> {
     );
   }
 
-  Future<void> _openPackageAdjustmentDialog(Order order) async {
+  Future<void> _openPackageAdjustmentDialog(Order suppliedOrder) async {
+    final order = OrderTableMutationRepository.capture(suppliedOrder);
     if (_isFinalizedStatus(order.status)) {
       return;
     }
@@ -394,13 +398,37 @@ class _OrderDetailContentSectionState extends State<OrderDetailContentSection> {
       return;
     }
 
-    final package = DatabaseService.getPackageById(packageId);
-    if (package == null) {
+    final storedPackage = DatabaseService.getPackageById(packageId);
+    if (storedPackage == null) {
       if (mounted) {
         unawaited(showErrorToast(context, 'პაკეტი აღარ არსებობს'));
       }
       return;
     }
+
+    final package = Package(
+      packageId: storedPackage.packageId,
+      name: storedPackage.name,
+      description: storedPackage.description,
+      pricePerPerson: storedPackage.pricePerPerson,
+      servingSize: storedPackage.servingSize,
+      isActive: storedPackage.isActive,
+      createdAt: storedPackage.createdAt,
+      createdBy: storedPackage.createdBy,
+      allowedTables: List.of(storedPackage.allowedTables),
+      items: storedPackage.items
+          .map(
+            (item) => PackageItem(
+              itemKey: item.itemKey,
+              itemName: item.itemName,
+              quantity: item.quantity,
+              unitPrice: item.unitPrice,
+              menuItemId: item.menuItemId,
+              variantId: item.variantId,
+            ),
+          )
+          .toList(),
+    );
 
     final result = await _showPackageAdjustmentDialog(
       order: order,
@@ -415,17 +443,40 @@ class _OrderDetailContentSectionState extends State<OrderDetailContentSection> {
       return;
     }
 
-    order.packageGuestCount = result.guestCount;
-    order.packageUnitPrice = package.pricePerPerson;
-    order.packagePrice = package.pricePerPerson * result.guestCount;
-    order.packageName = package.name;
-    order.packageId = package.packageId;
-    order.packageItems
-      ..clear()
-      ..addAll(result.items);
-    order.updatedAt = DatabaseService.getCurrentDateTime();
+    try {
+      await UpdateReadiness.mutate('adjustPackage', () async {
+        OrderTableMutationRepository.requireFresh(order);
+        order.packageGuestCount = result.guestCount;
+        order.packageUnitPrice = package.pricePerPerson;
+        order.packagePrice = package.pricePerPerson * result.guestCount;
+        order.packageName = package.name;
+        order.packageId = package.packageId;
+        order.packageItems
+          ..clear()
+          ..addAll(result.items);
+        order.updatedAt = DatabaseService.getCurrentDateTime();
 
-    await DatabaseService.updateOrder(order);
+        await DatabaseService.updateOrder(order);
+      });
+    } catch (error, stack) {
+      developer.log(
+        'Package adjustment refused',
+        error: error,
+        stackTrace: stack,
+        name: 'order_package',
+      );
+      if (widget.onOrderUpdated != null) await widget.onOrderUpdated!();
+      if (mounted)
+        unawaited(
+          showErrorToast(
+            context,
+            error is OrderMutationConflict
+                ? error.userMessage
+                : 'პაკეტის შენახვა ვერ შესრულდა',
+          ),
+        );
+      return;
+    }
     if (!mounted) {
       return;
     }
@@ -517,7 +568,7 @@ class _OrderDetailContentSectionState extends State<OrderDetailContentSection> {
     };
 
     try {
-      return await showDialog<_PackageAdjustmentResult>(
+      final route = DialogRoute<_PackageAdjustmentResult>(
         context: context,
         barrierDismissible: false,
         builder: (dialogContext) {
@@ -1094,6 +1145,14 @@ class _OrderDetailContentSectionState extends State<OrderDetailContentSection> {
           );
         },
       );
+      final result = await Navigator.of(
+        context,
+        rootNavigator: true,
+      ).push(route);
+      // The pop result arrives before the outgoing TextField is removed.
+      // Keep its controller alive through the exit transition.
+      await route.completed;
+      return result;
     } finally {
       guestController.dispose();
     }

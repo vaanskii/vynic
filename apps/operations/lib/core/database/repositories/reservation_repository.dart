@@ -55,7 +55,7 @@ class ReservationRepository {
     String status = 'pending',
     String? id,
     AuditSource source = AuditSource.pos,
-  }) => UpdateReadiness.track(
+  }) => UpdateReadiness.mutate(
     'createReservation',
     () => _updateTrackedCreateReservation(
       customerName: customerName,
@@ -230,7 +230,7 @@ class ReservationRepository {
     String? actorName,
     AuditSource source = AuditSource.pos,
     String? reason,
-  }) => UpdateReadiness.track(
+  }) => UpdateReadiness.mutate(
     'completeReservationByOrderId',
     () => _updateTrackedCompleteReservationByOrderId(
       orderId,
@@ -294,7 +294,7 @@ class ReservationRepository {
     String? actorName,
     AuditSource source = AuditSource.pos,
     String? reason,
-  }) => UpdateReadiness.track(
+  }) => UpdateReadiness.mutate(
     'cancelReservationByOrderId',
     () => _updateTrackedCancelReservationByOrderId(
       orderId,
@@ -490,7 +490,7 @@ class ReservationRepository {
     String? actorName,
     AuditSource source = AuditSource.pos,
     String? reason,
-  }) => UpdateReadiness.track(
+  }) => UpdateReadiness.mutate(
     'updateReservationStatus',
     () => _updateTrackedUpdateReservationStatus(
       reservationId,
@@ -560,7 +560,7 @@ class ReservationRepository {
     String actorId = 'system',
     String? actorName,
     AuditSource source = AuditSource.pos,
-  }) => UpdateReadiness.track(
+  }) => UpdateReadiness.mutate(
     'updateReservationDetails',
     () => _updateTrackedUpdateReservationDetails(
       reservationId,
@@ -669,7 +669,7 @@ class ReservationRepository {
     String actorId = 'system',
     String? actorName,
     AuditSource source = AuditSource.pos,
-  }) => UpdateReadiness.track(
+  }) => UpdateReadiness.mutate(
     'updateReservationPreOrderItems',
     () => _updateTrackedUpdateReservationPreOrderItems(
       reservationId,
@@ -766,7 +766,7 @@ class ReservationRepository {
     String actorId = 'system',
     String? actorName,
     AuditSource source = AuditSource.pos,
-  }) => UpdateReadiness.track(
+  }) => UpdateReadiness.mutate(
     'updateReservationTables',
     () => _updateTrackedUpdateReservationTables(
       reservationId,
@@ -858,7 +858,7 @@ class ReservationRepository {
     String? actorName,
     AuditSource source = AuditSource.pos,
     String? reason,
-  }) => UpdateReadiness.track(
+  }) => UpdateReadiness.mutate(
     'deleteReservation',
     () => _updateTrackedDeleteReservation(
       reservationId,

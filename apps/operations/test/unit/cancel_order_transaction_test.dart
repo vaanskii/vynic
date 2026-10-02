@@ -140,10 +140,9 @@ void main() {
       .where((sale) => sale['orderId'] == orderId)
       .toList();
 
-  double revenueForDay() =>
-      SalesRepository.getSalesForDate(businessDate)
-          .where(SalesRepository.countsAsRevenue)
-          .fold<double>(0, (sum, sale) => sum + SalesRepository.grossOf(sale));
+  double revenueForDay() => SalesRepository.getSalesForDate(businessDate)
+      .where(SalesRepository.countsAsRevenue)
+      .fold<double>(0, (sum, sale) => sum + SalesRepository.grossOf(sale));
 
   /// The full durable cancellation contract, asserted the same way for every
   /// path so the paths cannot drift apart again.
@@ -179,7 +178,10 @@ void main() {
     expect(details['actorId'], isNotEmpty);
     expect(details['businessDate'], businessDate);
     expect(details['floor'], order.floor);
-    expect(details['tableRefs'], order.tableNumbers.map((t) => '${order.floor}/$t'));
+    expect(
+      details['tableRefs'],
+      order.tableNumbers.map((t) => '${order.floor}/$t'),
+    );
     if (approvedBy != null) expect(details['approvedBy'], approvedBy);
     expect(details.containsKey('pin'), isFalse);
     expect(details.containsKey('pinCode'), isFalse);
@@ -255,7 +257,12 @@ void main() {
     );
 
     expect(outcome, CancelOrderOutcome.cancelled);
-    expectCancelled(101, source: 'POS', physicalTable: true, approvedBy: 'admin');
+    expectCancelled(
+      101,
+      source: 'POS',
+      physicalTable: true,
+      approvedBy: 'admin',
+    );
     final report = AuditRepository.getAuditReport(101)!;
     expect(report.closedById, 'admin');
     final event = report.events.single;
@@ -289,19 +296,27 @@ void main() {
     );
   });
 
-  test('Manager ORDER_STATUS_UPDATE cancelled uses the shared routine', () async {
-    await seedOrder(orderId: 103);
+  test(
+    'Manager ORDER_STATUS_UPDATE cancelled uses the shared routine',
+    () async {
+      await seedOrder(orderId: 103);
 
-    final result = await PosCommandApplier.updateOrderStatus(<String, dynamic>{
-      'posOrderId': 103,
-      'status': 'cancelled',
-      'updatedBy': 'Nino',
-    });
+      final result = await PosCommandApplier.updateOrderStatus(
+        <String, dynamic>{
+          'posOrderId': 103,
+          'status': 'cancelled',
+          'updatedBy': 'Nino',
+        },
+      );
 
-    expect(result.ok, isTrue);
-    expectCancelled(103, source: 'MANAGER', physicalTable: true);
-    expect(AuditRepository.getAuditReport(103)!.events.single.waiterId, 'Nino');
-  });
+      expect(result.ok, isTrue);
+      expectCancelled(103, source: 'MANAGER', physicalTable: true);
+      expect(
+        AuditRepository.getAuditReport(103)!.events.single.waiterId,
+        'Nino',
+      );
+    },
+  );
 
   test('Manager ORDER_CANCEL cancels instead of erasing', () async {
     await seedOrder(orderId: 104);
@@ -357,32 +372,39 @@ void main() {
     );
   });
 
-  test('Reservation-linked cancellation keeps the genuine booking coherent', () async {
-    final order = await seedOrder(orderId: 106);
-    final booking = await seedLinkedBooking(order);
+  test(
+    'Reservation-linked cancellation keeps the genuine booking coherent',
+    () async {
+      final order = await seedOrder(orderId: 106);
+      final booking = await seedLinkedBooking(order);
 
-    final outcome = await CancelOrderTransaction.run(
-      orderId: 106,
-      actorId: 'waiter',
-      source: AuditSource.pos,
-    );
+      final outcome = await CancelOrderTransaction.run(
+        orderId: 106,
+        actorId: 'waiter',
+        source: AuditSource.pos,
+      );
 
-    expect(outcome, CancelOrderOutcome.cancelled);
-    expectCancelled(106, source: 'POS', physicalTable: true);
-    expect(DatabaseCore.reservationBox!.values, hasLength(1));
-    final stored = DatabaseCore.reservationBox!.values.single;
-    expect(stored.id, booking.id);
-    expect(stored.statusEnum, ReservationStatus.cancelled);
-    expect(stored.linkedOrderId, 106);
-    expect(
-      AuditRepository.getAuditReport(106)!.events.single.details!['orderKind'],
-      'RESERVATION',
-    );
-    expect(
-      AuditRepository.getAuditReport(106)!.events.single.details!['reservationId'],
-      booking.id,
-    );
-  });
+      expect(outcome, CancelOrderOutcome.cancelled);
+      expectCancelled(106, source: 'POS', physicalTable: true);
+      expect(DatabaseCore.reservationBox!.values, hasLength(1));
+      final stored = DatabaseCore.reservationBox!.values.single;
+      expect(stored.id, booking.id);
+      expect(stored.statusEnum, ReservationStatus.cancelled);
+      expect(stored.linkedOrderId, 106);
+      expect(
+        AuditRepository.getAuditReport(
+          106,
+        )!.events.single.details!['orderKind'],
+        'RESERVATION',
+      );
+      expect(
+        AuditRepository.getAuditReport(
+          106,
+        )!.events.single.details!['reservationId'],
+        booking.id,
+      );
+    },
+  );
 
   test('legacy bookkeeping rows are not treated as bookings', () async {
     final order = await seedOrder(orderId: 107);
@@ -452,7 +474,10 @@ void main() {
     expect(direct, CancelOrderOutcome.alreadyCancelled);
     expectCancelled(108, source: 'MANAGER', physicalTable: true);
     expect(DatabaseCore.orderBox!.get(108)!.updatedAt, snapshotOrder);
-    expect(AuditRepository.getAuditReport(108)!.toMap(), equals(snapshotReport));
+    expect(
+      AuditRepository.getAuditReport(108)!.toMap(),
+      equals(snapshotReport),
+    );
     expect(salesFor(108).single, equals(snapshotSale));
     expect(DatabaseCore.reservationBox!.values, hasLength(1));
     expect(
@@ -473,7 +498,8 @@ void main() {
     );
     final order = DatabaseCore.orderBox!.get(109)!;
     order.status = OrderStatus.confirmed.storageValue;
-    await order.save();
+    // Raw fixture injection models an interrupted persisted prefix, rather than a live edit of finalized history.
+    await DatabaseCore.orderBox!.put(109, order);
     final table = DatabaseCore.tableBox!.values.single..reserve('waiter', 109);
     await table.save();
 

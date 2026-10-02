@@ -65,6 +65,11 @@ class UpdateReadiness {
         }
       });
 
+  /// Ordinary operational writes share one reentrant owner. Admission-only
+  /// activities, such as an open payment dialog, continue to use [track].
+  static Future<T> mutate<T>(String operation, Future<T> Function() action) =>
+      LocalDataAdmission.mutate(() => track(operation, action));
+
   /// Acquires synchronously before any await, closing check/use races.
   static Future<String?> freeze(Future<void> Function() flushAndClose) async {
     final reason = blockedReason;

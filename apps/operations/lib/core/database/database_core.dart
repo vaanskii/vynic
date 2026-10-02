@@ -1,3 +1,4 @@
+import 'repositories/order_table_mutation_repository.dart';
 import 'package:vynic/core/database/repositories/backup_repository.dart';
 import 'package:vynic/core/services/pos/update/tracked_box.dart';
 import 'dart:io';
@@ -207,6 +208,7 @@ class DatabaseCore {
 
     await EdgeDeviceCredentialStore.load();
     await BackupRepository.recoverInterruptedRestore();
+    await OrderTableMutationRepository.recoverPending();
     await OrderItemTransfer.recoverPending();
     await CloseDayTransaction.recoverPending();
 

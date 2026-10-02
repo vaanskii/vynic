@@ -1,5 +1,6 @@
 import 'package:vynic/core/services/pos/update/tracked_box.dart';
 import 'package:vynic/core/services/pos/update/update_readiness.dart';
+import 'package:vynic/core/database/repositories/order_table_mutation_repository.dart';
 import 'package:hive/hive.dart';
 import 'order_status.dart';
 import 'package:uuid/uuid.dart';
@@ -95,6 +96,13 @@ class OrderItem extends HiveObject with UpdateTrackedHiveObject {
 
 @HiveType(typeId: 4)
 class Order extends HiveObject with UpdateTrackedHiveObject {
+  /// Expected persisted image carried by an editable read. These are runtime
+  /// handles only; no adapter field or Hive version is added.
+  Map<String, dynamic>? mutationBaseline;
+  Object? mutationKey;
+
+  @override
+  Future<void> save() => OrderTableMutationRepository.saveOrder(this);
   @HiveField(0)
   int orderId;
 
@@ -455,112 +463,132 @@ class Order extends HiveObject with UpdateTrackedHiveObject {
   double get grossAmount =>
       double.parse((totalAmount + effectiveAdvanceAmount).toStringAsFixed(2));
 
-  // Toggle service fee
+  void _adopt(Order other) {
+    orderId = other.orderId;
+    tableNumbers = other.tableNumbers;
+    floor = other.floor;
+    items = other.items;
+    totalAmount = other.totalAmount;
+    createdAt = other.createdAt;
+    createdBy = other.createdBy;
+    status = other.status;
+    updatedAt = other.updatedAt;
+    includeServiceFee = other.includeServiceFee;
+    paymentMethod = other.paymentMethod;
+    closedAt = other.closedAt;
+    discountAmount = other.discountAmount;
+    packageId = other.packageId;
+    packageName = other.packageName;
+    packagePrice = other.packagePrice;
+    packageItems = other.packageItems;
+    packageUnitPrice = other.packageUnitPrice;
+    packageGuestCount = other.packageGuestCount;
+    manualAdjustmentAmount = other.manualAdjustmentAmount;
+    openedByUserId = other.openedByUserId;
+    customServiceFeePercentage = other.customServiceFeePercentage;
+    closureId = other.closureId;
+    advanceAmount = other.advanceAmount;
+    advanceCollectedOn = other.advanceCollectedOn;
+    advanceReceiptId = other.advanceReceiptId;
+    customerName = other.customerName;
+    customerPhone = other.customerPhone;
+    pickupTime = other.pickupTime;
+    orderUuid = other.orderUuid;
+    edgeRevision = other.edgeRevision;
+    mutationBaseline = other.mutationBaseline;
+    mutationKey = other.mutationKey;
+  }
+
+  Future<void> _edit(String operation, Future<void> Function(Order) apply) {
+    final frozen = clone();
+    frozen.mutationBaseline = OrderTableMutationRepository.image(this);
+    if (mutationBaseline != null)
+      frozen.mutationBaseline = Map.of(mutationBaseline!);
+    return UpdateReadiness.mutate(operation, () async {
+      OrderTableMutationRepository.requireFresh(frozen);
+      await apply(frozen);
+      await frozen.save();
+      _adopt(frozen);
+    });
+  }
+
   Future<void> toggleServiceFee({double? serviceFeeRate}) =>
-      UpdateReadiness.track('toggleServiceFee', () async {
-        includeServiceFee = !includeServiceFee;
-        recalculateTotal(serviceFeeRate: serviceFeeRate);
-        updatedAt = _resolveTimestamp();
-        await save();
+      _edit('toggleServiceFee', (d) async {
+        d.includeServiceFee = !d.includeServiceFee;
+        d.recalculateTotal(serviceFeeRate: serviceFeeRate);
+        d.updatedAt = _resolveTimestamp();
       });
-
-  // Set discount amount
   Future<void> setDiscount(double amount, {double? serviceFeeRate}) =>
-      UpdateReadiness.track('setDiscount', () async {
-        discountAmount = amount;
-        recalculateTotal(serviceFeeRate: serviceFeeRate);
-        updatedAt = _resolveTimestamp();
-        await save();
+      _edit('setDiscount', (d) async {
+        d.discountAmount = amount;
+        d.recalculateTotal(serviceFeeRate: serviceFeeRate);
+        d.updatedAt = _resolveTimestamp();
       });
-
-  /// Sets the advance already collected against this order.
-  ///
-  /// [collectedOn] is the business date the money was taken, which the
-  /// closure needs because it is often not the date the order closes on.
   Future<void> setAdvance(
     double amount, {
     required String collectedOn,
     String? receiptId,
     double? serviceFeeRate,
-  }) => UpdateReadiness.track('setAdvance', () async {
-    advanceAmount = double.parse(amount.toStringAsFixed(2));
-    if (advanceAmount <= 0) {
-      advanceAmount = 0.0;
-      advanceCollectedOn = null;
-      advanceReceiptId = null;
+  }) => _edit('setAdvance', (d) async {
+    d.advanceAmount = double.parse(amount.toStringAsFixed(2));
+    if (d.advanceAmount <= 0) {
+      d.advanceAmount = 0;
+      d.advanceCollectedOn = null;
+      d.advanceReceiptId = null;
     } else {
-      advanceCollectedOn = collectedOn;
-      advanceReceiptId = receiptId ?? advanceReceiptId;
+      d.advanceCollectedOn = collectedOn;
+      d.advanceReceiptId = receiptId ?? d.advanceReceiptId;
     }
-    recalculateTotal(serviceFeeRate: serviceFeeRate);
-    updatedAt = _resolveTimestamp();
-    await save();
+    d.recalculateTotal(serviceFeeRate: serviceFeeRate);
+    d.updatedAt = _resolveTimestamp();
   });
-
   Future<void> setManualAdjustment(double amount, {double? serviceFeeRate}) =>
-      UpdateReadiness.track('setManualAdjustment', () async {
-        manualAdjustmentAmount = double.parse(amount.toStringAsFixed(2));
-        recalculateTotal(serviceFeeRate: serviceFeeRate);
-        updatedAt = _resolveTimestamp();
-        await save();
+      _edit('setManualAdjustment', (d) async {
+        d.manualAdjustmentAmount = double.parse(amount.toStringAsFixed(2));
+        d.recalculateTotal(serviceFeeRate: serviceFeeRate);
+        d.updatedAt = _resolveTimestamp();
       });
-
-  // Update order status
   Future<void> updateStatus(String newStatus) =>
-      UpdateReadiness.track('updateStatus', () async {
-        status = newStatus;
-        updatedAt = _resolveTimestamp();
-        await save();
+      _edit('updateStatus', (d) async {
+        d.status = newStatus;
+        d.updatedAt = _resolveTimestamp();
       });
-
-  /// Typed view of [status]. Storage stays the raw `String` field (Hive
-  /// field 7, unchanged) — this is a computed read/write wrapper, not a new
-  /// source of truth. See `core/models/order_status.dart`.
   OrderStatus get statusEnum => OrderStatus.fromStorage(status);
   set statusEnum(OrderStatus value) => status = value.storageValue;
 
-  // Add item to order
-  Future<void> addItem(OrderItem item) => UpdateReadiness.track(
-    'addItem',
-    () async {
-      // Check if item already exists
-      final existingIndex = items.indexWhere((i) => i.itemKey == item.itemKey);
-      if (existingIndex != -1) {
-        items[existingIndex].quantity += item.quantity;
-        items[existingIndex].total =
-            items[existingIndex].unitPrice * items[existingIndex].quantity;
+  Future<void> addItem(OrderItem item) {
+    final incoming = item.clone();
+    return _edit('addItem', (d) async {
+      final index = d.items.indexWhere((i) => i.itemKey == incoming.itemKey);
+      if (index != -1) {
+        d.items[index].quantity += incoming.quantity;
+        d.items[index].total =
+            d.items[index].unitPrice * d.items[index].quantity;
       } else {
-        items.add(item);
+        d.items.add(incoming);
       }
-      recalculateTotal();
-      updatedAt = _resolveTimestamp();
-      await save();
-    },
-  );
+      d.recalculateTotal();
+      d.updatedAt = _resolveTimestamp();
+    });
+  }
 
-  // Remove item from order
-  Future<void> removeItem(String itemKey) =>
-      UpdateReadiness.track('removeItem', () async {
-        items.removeWhere((item) => item.itemKey == itemKey);
-        recalculateTotal();
-        updatedAt = _resolveTimestamp();
-        await save();
-      });
-
-  // Update item quantity
+  Future<void> removeItem(String itemKey) => _edit('removeItem', (d) async {
+    d.items.removeWhere((i) => i.itemKey == itemKey);
+    d.recalculateTotal();
+    d.updatedAt = _resolveTimestamp();
+  });
   Future<void> updateItemQuantity(String itemKey, int newQuantity) =>
-      UpdateReadiness.track('updateItemQuantity', () async {
-        final index = items.indexWhere((i) => i.itemKey == itemKey);
+      _edit('updateItemQuantity', (d) async {
+        final index = d.items.indexWhere((i) => i.itemKey == itemKey);
         if (index != -1) {
           if (newQuantity <= 0) {
-            await removeItem(itemKey);
+            d.items.removeAt(index);
           } else {
-            items[index].quantity = newQuantity;
-            items[index].total = items[index].unitPrice * newQuantity;
-            recalculateTotal();
-            updatedAt = _resolveTimestamp();
-            await save();
+            d.items[index].quantity = newQuantity;
+            d.items[index].total = d.items[index].unitPrice * newQuantity;
           }
+          d.recalculateTotal();
+          d.updatedAt = _resolveTimestamp();
         }
       });
 

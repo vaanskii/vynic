@@ -1,3 +1,6 @@
+import 'package:vynic/core/database/transactions/cancel_order_transaction.dart';
+import 'package:vynic/core/models/audit_source.dart';
+import 'package:vynic/core/database/repositories/table_repository.dart';
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -108,6 +111,12 @@ void main() {
     }
     order.recalculateTotal(serviceFeeRate: 0);
     await DatabaseCore.orderBox!.put(orderId, order);
+    if (floor != 'takeaway')
+      await DatabaseCore.tableBox!.put(
+        '$floor-$table',
+        TableModel(tableNumber: table, floor: floor)
+          ..reserve('waiter', orderId),
+      );
     return order;
   }
 
@@ -652,24 +661,19 @@ void main() {
   );
 
   test(
-    'a genuine cancellation uses cancellation audit and writes no sale',
+    'genuine cancellation writes one zero-collection non-revenue lifecycle record',
     () async {
       final order = await seedOrder(orderId: 300);
       await seedOccupiedTable(order);
 
-      await AuditRepository.logAdminAction(
-        actionType: 'cancel_table',
-        performedBy: 'manager',
-        details: {
-          'orderId': order.orderId,
-          'tableNumbers': order.tableNumbers,
-          'floor': order.floor,
-        },
-        comment: 'Guest left before service',
-      );
-      await OrderRepository.updateOrderStatus(
-        orderId: order.orderId,
-        status: 'cancelled',
+      expect(
+        await CancelOrderTransaction.run(
+          orderId: order.orderId,
+          actorId: 'manager',
+          source: AuditSource.pos,
+          reason: 'Guest left before service',
+        ),
+        CancelOrderOutcome.cancelled,
       );
 
       final report = AuditRepository.getAuditReport(order.orderId)!;
@@ -677,12 +681,14 @@ void main() {
       expect(report.status, AuditReportStatus.cancelled);
       expect(report.events.single.type, AuditEventType.cancelTable);
       expect(report.events.single.note, 'Guest left before service');
-      expect(
-        DatabaseCore.salesBox!.values.where(
-          (raw) => raw is Map && raw['recordType'] == 'sale',
-        ),
-        isEmpty,
-      );
+      final cancelledSales = DatabaseCore.salesBox!.values
+          .whereType<Map>()
+          .where((s) => s['orderId'] == order.orderId)
+          .toList();
+      expect(cancelledSales, hasLength(1));
+      expect(cancelledSales.single['collectedNow'], 0);
+      expect(cancelledSales.single['totalAmount'], order.totalAmount);
+      expect(SalesRepository.countsAsRevenue(cancelledSales.single), false);
       expect(DatabaseCore.tableBox!.values.single.isReserved, isFalse);
     },
   );
@@ -1169,7 +1175,10 @@ void main() {
       expect(reservation.statusEnum, ReservationStatus.completed);
       expect(reservation.linkedOrderId, order.orderId);
       expect(DatabaseCore.reservationBox!.values, hasLength(1));
-      expect(table.isReserved, isFalse);
+      expect(
+        TableRepository.getTable(table.tableNumber, table.floor)!.isReserved,
+        isFalse,
+      );
     },
   );
 
@@ -1199,6 +1208,9 @@ void main() {
       );
 
       final closureId = ClosureJournalRepository.newClosureId();
+      // The real closer stamps identity before writing the Sale.
+      order.closureId = closureId;
+      await order.save();
       final saleKey = await SalesRepository.saveSaleRecord(
         orderId: order.orderId,
         tableNumbers: order.tableNumbers,

@@ -1,3 +1,4 @@
+import 'package:vynic/core/database/local_data_admission.dart';
 import 'dart:io';
 import 'dart:convert';
 import 'package:fixnum/fixnum.dart';
@@ -161,7 +162,7 @@ void main() {
   }
 
   test(
-    'shadow commits before production create/cancel writes, then compares actual Hive',
+    'development shadow compares captured committed images outside mutation ownership',
     () async {
       await seedTable('1');
       await TableRepository.ensureCanonicalTableIdentity();
@@ -179,8 +180,9 @@ void main() {
       OrderTableShadow.observer = OrderTableShadow(coordinator);
       try {
         transport.beforeCommit = () {
-          expect(DatabaseCore.orderBox!.values, isEmpty);
-          expect(DatabaseCore.tableBox!.values.single.activeOrderId, isNull);
+          expect(LocalDataAdmission.insideMutation, isFalse);
+          expect(DatabaseCore.orderBox!.values, hasLength(1));
+          expect(DatabaseCore.tableBox!.values.single.activeOrderId, isNotNull);
         };
         final order = await OrderRepository.createOrder(
           tableNumbers: ['1'],
@@ -188,6 +190,15 @@ void main() {
           createdBy: 'Nino',
           items: [],
         );
+        for (
+          var i = 0;
+          i < 100 &&
+              (box.get('diagnostics') as List? ?? []).length <
+                  (DatabaseCore.salesBox!.isEmpty ? 1 : 2);
+          i++
+        ) {
+          await Future<void>.delayed(const Duration(milliseconds: 10));
+        }
         expect(
           jsonDecode((box.get('diagnostics') as List).last as String)['kind'],
           'matched',
@@ -197,8 +208,9 @@ void main() {
           order.orderId,
         );
         transport.beforeCommit = () {
-          expect(order.status, 'pending');
-          expect(DatabaseCore.salesBox!.values, isEmpty);
+          expect(LocalDataAdmission.insideMutation, isFalse);
+          expect(OrderRepository.getOrder(order.orderId)!.status, 'cancelled');
+          expect(DatabaseCore.salesBox!.values, isNotEmpty);
         };
         final outcome = await CancelOrderTransaction.run(
           orderId: order.orderId,
@@ -206,6 +218,15 @@ void main() {
           source: AuditSource.pos,
         );
         expect(outcome, CancelOrderOutcome.cancelled);
+        for (
+          var i = 0;
+          i < 100 &&
+              (box.get('diagnostics') as List? ?? []).length <
+                  (DatabaseCore.salesBox!.isEmpty ? 1 : 2);
+          i++
+        ) {
+          await Future<void>.delayed(const Duration(milliseconds: 10));
+        }
         expect(
           jsonDecode((box.get('diagnostics') as List).last as String)['kind'],
           'matched',

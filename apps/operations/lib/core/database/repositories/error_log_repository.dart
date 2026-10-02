@@ -34,7 +34,16 @@ class ErrorLogRepository {
       'date': timestamp.toIso8601String().split('T')[0],
     };
 
-    await DatabaseCore.errorLogBox!.put(logKey, log);
+    try {
+      await DatabaseCore.errorLogBox!.put(logKey, log);
+    } catch (storageError, storageStack) {
+      developer.log(
+        'Error log persistence unavailable: $title',
+        name: 'ErrorLog',
+        error: storageError,
+        stackTrace: storageStack,
+      );
+    }
     developer.log(
       'Error logged: $title',
       name: 'ErrorLog',

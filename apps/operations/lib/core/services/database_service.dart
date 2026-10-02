@@ -33,6 +33,7 @@ import 'package:vynic/core/database/repositories/sales_repository.dart';
 import 'package:vynic/core/database/repositories/error_log_repository.dart';
 import 'package:vynic/core/database/repositories/menu_repository.dart';
 import 'package:vynic/core/database/repositories/order_repository.dart';
+import 'package:vynic/core/database/repositories/order_table_mutation_repository.dart';
 import 'package:vynic/core/database/repositories/settings_repository.dart';
 import 'package:vynic/core/database/repositories/table_repository.dart';
 import 'package:vynic/core/database/repositories/user_repository.dart';
@@ -519,7 +520,14 @@ class DatabaseService {
   static Future<void> freeTable({
     required String tableNumber,
     required String floor,
-  }) => TableRepository.freeTable(tableNumber: tableNumber, floor: floor);
+    int? expectedOrderId,
+    String? expectedReservationId,
+  }) => TableRepository.freeTable(
+    tableNumber: tableNumber,
+    floor: floor,
+    expectedOrderId: expectedOrderId,
+    expectedReservationId: expectedReservationId,
+  );
 
   // Public helper to fetch reservation by ID (used by UI overlays)
   static Reservation? findReservationById(String reservationId) =>
@@ -534,6 +542,12 @@ class DatabaseService {
   static Future<void> syncTableReservationsForCurrentDate() =>
       TableRepository.syncTableReservationsForCurrentDate();
 
+  static List<Map<String, dynamic>> getOrderTableIntegrityReport() =>
+      OrderTableMutationRepository.integrityReport();
+
+  static void assertOrderTableRollbackSafe() =>
+      OrderTableMutationRepository.assertRollbackSafe();
+
   // ========== ORDER MANAGEMENT ==========
 
   static Future<Order> createOrder({
@@ -543,6 +557,8 @@ class DatabaseService {
     required List<OrderItem> items,
     bool? includeServiceFee,
     AuditSource source = AuditSource.pos,
+    String? requestId,
+    String? expectedBusinessDate,
   }) => OrderRepository.createOrder(
     tableNumbers: tableNumbers,
     floor: floor,
@@ -550,6 +566,8 @@ class DatabaseService {
     items: items,
     includeServiceFee: includeServiceFee,
     source: source,
+    requestId: requestId,
+    expectedBusinessDate: expectedBusinessDate,
   );
 
   static Future<Order> createTakeAwayOrder({
@@ -560,6 +578,8 @@ class DatabaseService {
     required List<OrderItem> items,
     required String createdBy,
     AuditSource source = AuditSource.pos,
+    String? requestId,
+    String? expectedBusinessDate,
   }) => OrderRepository.createTakeAwayOrder(
     customerName: customerName,
     customerPhone: customerPhone,
@@ -568,6 +588,8 @@ class DatabaseService {
     items: items,
     createdBy: createdBy,
     source: source,
+    requestId: requestId,
+    expectedBusinessDate: expectedBusinessDate,
   );
 
   static Future<Order?> upsertMobileTakeawayOrder({
@@ -577,6 +599,7 @@ class DatabaseService {
     required String waiterName,
     required List<OrderItem> items,
     double? totalAmount,
+    String? requestId,
   }) => OrderRepository.upsertMobileTakeawayOrder(
     posOrderId: posOrderId,
     customerName: customerName,
@@ -584,6 +607,7 @@ class DatabaseService {
     waiterName: waiterName,
     items: items,
     totalAmount: totalAmount,
+    requestId: requestId,
   );
 
   static Future<Order?> upsertMobileDineInOrder({
@@ -594,6 +618,7 @@ class DatabaseService {
     required List<OrderItem> items,
     int guestCount = 0,
     double? totalAmount,
+    String? requestId,
   }) => OrderRepository.upsertMobileDineInOrder(
     posOrderId: posOrderId,
     tableNumbers: tableNumbers,
@@ -602,6 +627,7 @@ class DatabaseService {
     items: items,
     guestCount: guestCount,
     totalAmount: totalAmount,
+    requestId: requestId,
   );
 
   static Future<Order> createOrderForPackage({
@@ -611,6 +637,8 @@ class DatabaseService {
     required int guestCount,
     required String createdBy,
     AuditSource source = AuditSource.pos,
+    String? requestId,
+    String? expectedBusinessDate,
   }) => OrderRepository.createOrderForPackage(
     package: package,
     tableNumbers: tableNumbers,
@@ -618,6 +646,8 @@ class DatabaseService {
     guestCount: guestCount,
     createdBy: createdBy,
     source: source,
+    requestId: requestId,
+    expectedBusinessDate: expectedBusinessDate,
   );
 
   static Order? getOrder(int orderId) => OrderRepository.getOrder(orderId);
@@ -647,6 +677,8 @@ class DatabaseService {
     required AuditSource source,
     String? reason,
     String? approvedBy,
+    Order? expectedOrder,
+    String? requestId,
   }) => CancelOrderTransaction.run(
     orderId: orderId,
     actorId: actorId,
@@ -654,6 +686,8 @@ class DatabaseService {
     source: source,
     reason: reason,
     approvedBy: approvedBy,
+    expectedOrder: expectedOrder,
+    requestId: requestId,
   );
 
   static Future<void> addItemToOrder({
@@ -1209,6 +1243,7 @@ class DatabaseService {
     List<OrderItem>? saleItems,
     double? subtotalAmount,
     Map<String, dynamic>? finalTransaction,
+    Order? expectedOrder,
   }) => CloseTableTransaction.run(
     orderId: orderId,
     money: money,
@@ -1221,6 +1256,7 @@ class DatabaseService {
     saleItems: saleItems,
     subtotalAmount: subtotalAmount,
     finalTransaction: finalTransaction,
+    expectedOrder: expectedOrder,
   );
 
   /// Writes a sale record directly.

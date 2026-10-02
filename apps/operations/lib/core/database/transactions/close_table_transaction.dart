@@ -17,6 +17,9 @@ import '../repositories/closure_journal_repository.dart';
 import '../repositories/reservation_repository.dart';
 import '../repositories/sales_repository.dart';
 import '../repositories/table_repository.dart';
+import '../repositories/order_repository.dart';
+import '../repositories/order_transfer_journal_repository.dart';
+import '../repositories/order_table_mutation_repository.dart';
 
 /// Why a closure did not happen, or that it already had.
 enum ClosureOutcome {
@@ -108,22 +111,35 @@ class CloseTableTransaction {
     List<OrderItem>? saleItems,
     double? subtotalAmount,
     Map<String, dynamic>? finalTransaction,
-  }) => UpdateReadiness.track(
-    'closeTable',
-    () => _updateTrackedRun(
-      orderId: orderId,
-      money: money,
-      paymentMethod: paymentMethod,
-      tenderBreakdown: tenderBreakdown,
-      closedById: closedById,
-      isFiscal: isFiscal,
-      closedByName: closedByName,
-      customPaymentLabel: customPaymentLabel,
-      saleItems: saleItems,
-      subtotalAmount: subtotalAmount,
-      finalTransaction: finalTransaction,
-    ),
-  );
+    Order? expectedOrder,
+  }) {
+    final frozenExpected = expectedOrder?.clone();
+    frozenExpected?.mutationBaseline = expectedOrder?.mutationBaseline == null
+        ? null
+        : Map<String, dynamic>.from(expectedOrder!.mutationBaseline!);
+    final frozenTender = Map<String, double>.of(tenderBreakdown);
+    final frozenItems = saleItems?.map((i) => i.clone()).toList();
+    final frozenFinal = finalTransaction == null
+        ? null
+        : OrderTransferIntent.cloneMap(finalTransaction);
+    return UpdateReadiness.mutate(
+      'closeTable',
+      () => _updateTrackedRun(
+        orderId: orderId,
+        money: money,
+        paymentMethod: paymentMethod,
+        tenderBreakdown: frozenTender,
+        closedById: closedById,
+        isFiscal: isFiscal,
+        closedByName: closedByName,
+        customPaymentLabel: customPaymentLabel,
+        saleItems: frozenItems,
+        subtotalAmount: subtotalAmount,
+        finalTransaction: frozenFinal,
+        expectedOrder: frozenExpected,
+      ),
+    );
+  }
 
   static Future<ClosureResult> _updateTrackedRun({
     required int orderId,
@@ -137,14 +153,14 @@ class CloseTableTransaction {
     List<OrderItem>? saleItems,
     double? subtotalAmount,
     Map<String, dynamic>? finalTransaction,
+    Order? expectedOrder,
   }) async {
-    Order? order;
-    try {
-      order = DatabaseCore.orderBox!.values.firstWhere(
-        (o) => o.orderId == orderId,
+    final order = OrderRepository.getOrder(orderId);
+    if (order?.statusEnum == OrderStatus.cancelled) {
+      return const ClosureResult(
+        outcome: ClosureOutcome.failed,
+        detail: 'შეკვეთა უკვე გაუქმებულია — განაახლეთ შეკვეთა',
       );
-    } catch (_) {
-      order = null;
     }
 
     // An order already settled is the double-click case. Answer from the
@@ -165,6 +181,30 @@ class CloseTableTransaction {
 
     if (order == null) {
       return const ClosureResult(outcome: ClosureOutcome.orderNotFound);
+    }
+
+    try {
+      if (expectedOrder != null)
+        OrderTableMutationRepository.requireFresh(expectedOrder);
+      OrderTableMutationRepository.requireFresh(
+        order,
+        allowTerminal: existing != null,
+      );
+    } on OrderMutationConflict catch (error) {
+      return ClosureResult(
+        outcome: ClosureOutcome.failed,
+        detail: error.userMessage,
+      );
+    }
+
+    if (existing == null &&
+        ((order.grossAmount - money.gross).abs() > 0.01 ||
+            (order.effectiveAdvanceAmount - money.advanceApplied).abs() >
+                0.01)) {
+      return const ClosureResult(
+        outcome: ClosureOutcome.moneyMismatch,
+        detail: 'შეკვეთის თანხა შეიცვალა — განაახლეთ და გაიმეორეთ გადახდა',
+      );
     }
 
     // Internal closure preserves the order's operational value while making
@@ -388,18 +428,21 @@ class CloseTableTransaction {
     String? customPaymentLabel,
     AuditSource source = AuditSource.pos,
     String? recoveryAction,
-  }) => UpdateReadiness.track(
-    'completeExistingSale',
-    () => _updateTrackedCompleteExistingSale(
-      entry: entry,
-      order: order,
-      saleRecordKey: saleRecordKey,
-      closedByName: closedByName,
-      customPaymentLabel: customPaymentLabel,
-      source: source,
-      recoveryAction: recoveryAction,
-    ),
-  );
+  }) {
+    final captured = OrderTableMutationRepository.capture(order);
+    return UpdateReadiness.mutate(
+      'completeExistingSale',
+      () => _updateTrackedCompleteExistingSale(
+        entry: entry,
+        order: captured,
+        saleRecordKey: saleRecordKey,
+        closedByName: closedByName,
+        customPaymentLabel: customPaymentLabel,
+        source: source,
+        recoveryAction: recoveryAction,
+      ),
+    );
+  }
 
   static Future<bool> _updateTrackedCompleteExistingSale({
     required ClosureJournalEntry entry,
@@ -488,6 +531,38 @@ class CloseTableTransaction {
     required AuditSource source,
     String? recoveryAction,
   }) async {
+    final stored = OrderTableMutationRepository.persisted(
+      order.orderId,
+      uuid: order.orderUuid,
+    );
+    if (stored == null ||
+        current.orderId != order.orderId ||
+        stored.$2.closureId != current.closureId ||
+        !OrderTransferIntent.sameImage(
+          OrderTableMutationRepository.image(stored.$2),
+          order.mutationBaseline ?? OrderTableMutationRepository.image(order),
+        ))
+      throw OrderMutationConflict(
+        'stale_order',
+        'Closure Order identity/image changed',
+      );
+    for (final n in order.tableNumbers) {
+      if (order.floor == 'takeaway') break;
+      final t = TableRepository.getTable(n, order.floor);
+      if (t == null ||
+          t.activeOrderId != null && t.activeOrderId != order.orderId ||
+          DatabaseCore.orderBox!.values.any(
+            (o) =>
+                o.orderId != order.orderId &&
+                !o.statusEnum.isTerminal &&
+                o.floor == order.floor &&
+                o.tableNumbers.contains(n),
+          ))
+        throw OrderMutationConflict(
+          'repair_required',
+          'Closure cannot release ambiguous/foreign table ownership',
+        );
+    }
     final rawSale = DatabaseCore.salesBox?.get(saleRecordKey);
     final sale = rawSale is Map ? rawSale : null;
     final saleClosedAt = DateTime.tryParse(sale?['closedAt']?.toString() ?? '');
@@ -527,7 +602,12 @@ class CloseTableTransaction {
     order.closedAt ??= closureTimestamp;
     order.updatedAt = closureTimestamp;
     order.closureId = current.closureId;
-    await order.save();
+    await DatabaseCore.orderBox!.put(
+      stored.$1,
+      OrderTransferIntent.orderImage(OrderTableMutationRepository.image(order)),
+    );
+    await DatabaseCore.orderBox!.flush();
+    order.mutationBaseline = OrderTableMutationRepository.image(order);
 
     // Takeaway uses a synthetic `TA-` table identity and must not mutate the
     // physical floor. Package and Walk-In table orders follow the normal path.
@@ -536,6 +616,7 @@ class CloseTableTransaction {
         await TableRepository.freeTable(
           tableNumber: tableNumber,
           floor: order.floor,
+          expectedOrderId: order.orderId,
         );
       }
     }

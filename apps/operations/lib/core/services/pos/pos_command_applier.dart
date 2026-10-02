@@ -1,3 +1,6 @@
+import 'package:vynic/core/database/repositories/order_table_mutation_repository.dart';
+import 'package:vynic/core/database/local_data_admission.dart';
+import 'package:vynic/core/database/repositories/order_transfer_journal_repository.dart';
 import 'package:vynic/core/services/pos/update/update_readiness.dart';
 import 'package:flutter/foundation.dart';
 import 'package:vynic/core/database/transactions/cancel_order_transaction.dart';
@@ -109,6 +112,25 @@ class PosCommandApplier {
   /// Who a Cloud-originated change is attributed to when nothing says.
   static const String defaultActor = 'mobile_manager';
 
+  static Future<PosCommandOutcome> _owned(
+    String operation,
+    Map<String, dynamic> payload,
+    Future<PosCommandOutcome> Function(Map<String, dynamic>) action,
+  ) {
+    final frozen = OrderTransferIntent.cloneMap(payload);
+    return UpdateReadiness.mutate(operation, () => action(frozen)).catchError((
+      Object error,
+      StackTrace stack,
+    ) {
+      if (error is OrderMutationConflict)
+        return PosCommandOutcome.conflicting(
+          error.code,
+          detail: error.userMessage,
+        );
+      Error.throwWithStackTrace(error, stack);
+    });
+  }
+
   // ── Orders ─────────────────────────────────────────────────────────────────
 
   /// Replace an order's lines, total and service-fee flag.
@@ -118,7 +140,7 @@ class PosCommandApplier {
   /// a replay produces no events, and [MoneyAudit] already declines to record a
   /// service-fee change that did not move.
   static Future<PosCommandOutcome> updateOrder(Map<String, dynamic> p) =>
-      UpdateReadiness.track('updateOrder', () => _updateTrackedUpdateOrder(p));
+      _owned('updateOrder', p, (frozen) => _updateTrackedUpdateOrder(frozen));
 
   static Future<PosCommandOutcome> _updateTrackedUpdateOrder(
     Map<String, dynamic> p,
@@ -131,6 +153,8 @@ class PosCommandApplier {
     if (order == null) {
       return const PosCommandOutcome.missing('order_not_found');
     }
+
+    OrderTableMutationRepository.requireFresh(order);
 
     final beforeItems = order.items.map((i) => i.clone()).toList();
     final newItems = parseOrderItems(p['items']);
@@ -217,9 +241,13 @@ class PosCommandApplier {
   static Future<PosCommandOutcome> cancelOrder(
     Map<String, dynamic> p, {
     bool treatMissingAsDone = false,
-  }) => UpdateReadiness.track(
+  }) => _owned(
     'cancelOrder',
-    () => _updateTrackedCancelOrder(p, treatMissingAsDone: treatMissingAsDone),
+    p,
+    (frozen) => _updateTrackedCancelOrder(
+      frozen,
+      treatMissingAsDone: treatMissingAsDone,
+    ),
   );
 
   static Future<PosCommandOutcome> _updateTrackedCancelOrder(
@@ -262,6 +290,8 @@ class PosCommandApplier {
       actorName: actor,
       source: AuditSource.manager,
       reason: reason.isEmpty ? null : reason,
+      requestId:
+          p['_mutationRequestId'] as String? ?? p['requestId'] as String?,
     );
 
     switch (outcome) {
@@ -307,9 +337,10 @@ class PosCommandApplier {
   /// cancellation transaction, and a request the Order already satisfies is a
   /// clean no-op — so a redelivery converges without writing twice.
   static Future<PosCommandOutcome> updateOrderStatus(Map<String, dynamic> p) =>
-      UpdateReadiness.track(
+      _owned(
         'updateOrderStatus',
-        () => _updateTrackedUpdateOrderStatus(p),
+        p,
+        (frozen) => _updateTrackedUpdateOrderStatus(frozen),
       );
 
   static Future<PosCommandOutcome> _updateTrackedUpdateOrderStatus(
@@ -403,9 +434,10 @@ class PosCommandApplier {
   /// the order was not already here, which is what stops a replay reprinting it.
   static Future<PosCommandOutcome> upsertTakeawayOrder(
     Map<String, dynamic> p,
-  ) => UpdateReadiness.track(
+  ) => _owned(
     'upsertTakeawayOrder',
-    () => _updateTrackedUpsertTakeawayOrder(p),
+    p,
+    (frozen) => _updateTrackedUpsertTakeawayOrder(frozen),
   );
 
   static Future<PosCommandOutcome> _updateTrackedUpsertTakeawayOrder(
@@ -422,6 +454,8 @@ class PosCommandApplier {
 
     final order = await DatabaseService.upsertMobileTakeawayOrder(
       posOrderId: posOrderId,
+      requestId:
+          p['_mutationRequestId'] as String? ?? p['requestId'] as String?,
       customerName: _string(p['customerName']),
       pickupTime: _string(p['pickupTime']),
       waiterName: waiterName,
@@ -461,9 +495,10 @@ class PosCommandApplier {
   ///
   /// Convergent for the same reason as [upsertTakeawayOrder].
   static Future<PosCommandOutcome> upsertDineInOrder(Map<String, dynamic> p) =>
-      UpdateReadiness.track(
+      _owned(
         'upsertDineInOrder',
-        () => _updateTrackedUpsertDineInOrder(p),
+        p,
+        (frozen) => _updateTrackedUpsertDineInOrder(frozen),
       );
 
   static Future<PosCommandOutcome> _updateTrackedUpsertDineInOrder(
@@ -485,6 +520,8 @@ class PosCommandApplier {
 
     final order = await DatabaseService.upsertMobileDineInOrder(
       posOrderId: posOrderId,
+      requestId:
+          p['_mutationRequestId'] as String? ?? p['requestId'] as String?,
       tableNumbers: tableNumbers,
       floor: floor,
       waiterName: waiterName,
@@ -534,9 +571,10 @@ class PosCommandApplier {
   /// Not convergent, and not pretended to be. Its protection against a repeated
   /// delivery is the Edge execution journal.
   static Future<PosCommandOutcome> printOrderCheck(Map<String, dynamic> p) =>
-      UpdateReadiness.track(
+      _owned(
         'printOrderCheck',
-        () => _updateTrackedPrintOrderCheck(p),
+        p,
+        (frozen) => _updateTrackedPrintOrderCheck(frozen),
       );
 
   static Future<PosCommandOutcome> _updateTrackedPrintOrderCheck(
@@ -613,20 +651,22 @@ class PosCommandApplier {
         ? order.manualAdjustmentAmount
         : null;
 
-    PrinterService.printReceiptInBackground(
-      items: itemsWithWaiter,
-      total: order.totalAmount,
-      subtotal: order.getItemsSubtotal(),
-      serviceFee: order.getServiceFee(),
-      includeServiceFee: order.includeServiceFee,
-      tableNumber: isTakeAway ? null : order.tableNumbers.join(', '),
-      orderNumber: order.orderId.toString(),
-      language: 'ka',
-      packageSubtotal: packageSubtotal > 0 ? packageSubtotal : null,
-      additionalSubtotal: additionalSubtotal > 0 ? additionalSubtotal : null,
-      discountAmount: discountAmount,
-      manualAdjustment: manualAdjustment,
-      receiptType: isTakeAway ? 'take_away' : 'client',
+    LocalDataAdmission.afterMutation(
+      () => PrinterService.printReceiptInBackground(
+        items: itemsWithWaiter,
+        total: order.totalAmount,
+        subtotal: order.getItemsSubtotal(),
+        serviceFee: order.getServiceFee(),
+        includeServiceFee: order.includeServiceFee,
+        tableNumber: isTakeAway ? null : order.tableNumbers.join(', '),
+        orderNumber: order.orderId.toString(),
+        language: 'ka',
+        packageSubtotal: packageSubtotal > 0 ? packageSubtotal : null,
+        additionalSubtotal: additionalSubtotal > 0 ? additionalSubtotal : null,
+        discountAmount: discountAmount,
+        manualAdjustment: manualAdjustment,
+        receiptType: isTakeAway ? 'take_away' : 'client',
+      ),
     );
 
     return const PosCommandOutcome.success();
@@ -636,9 +676,10 @@ class PosCommandApplier {
   /// uses when a reservation is created locally.
   static Future<PosCommandOutcome> printReservationCheck(
     Map<String, dynamic> p,
-  ) => UpdateReadiness.track(
+  ) => _owned(
     'printReservationCheck',
-    () => _updateTrackedPrintReservationCheck(p),
+    p,
+    (frozen) => _updateTrackedPrintReservationCheck(frozen),
   );
 
   static Future<PosCommandOutcome> _updateTrackedPrintReservationCheck(
@@ -672,14 +713,16 @@ class PosCommandApplier {
     final reservationTables = ReservationTableAvailability.tableRefsOf(
       reservation,
     );
-    PrinterService.printKitchenCheckInBackground(
-      items: kitchenItems,
-      tableNumber: reservationTables.isNotEmpty
-          ? reservationTables.map((ref) => ref.tableNumber).join(', ')
-          : null,
-      orderNumber: HomeReservationsHelper.buildKitchenOrderLabel(reservation),
-      waiterName: requestedBy.isNotEmpty ? requestedBy : defaultActor,
-      createdAt: HomeReservationsHelper.buildKitchenTime(reservation),
+    LocalDataAdmission.afterMutation(
+      () => PrinterService.printKitchenCheckInBackground(
+        items: kitchenItems,
+        tableNumber: reservationTables.isNotEmpty
+            ? reservationTables.map((ref) => ref.tableNumber).join(', ')
+            : null,
+        orderNumber: HomeReservationsHelper.buildKitchenOrderLabel(reservation),
+        waiterName: requestedBy.isNotEmpty ? requestedBy : defaultActor,
+        createdAt: HomeReservationsHelper.buildKitchenTime(reservation),
+      ),
     );
 
     return const PosCommandOutcome.success(
@@ -693,9 +736,10 @@ class PosCommandApplier {
   /// there and the POS has never seen one — so the whole draft travels in the
   /// command rather than being looked up.
   static Future<PosCommandOutcome> printCountedMenu(Map<String, dynamic> p) =>
-      UpdateReadiness.track(
+      _owned(
         'printCountedMenu',
-        () => _updateTrackedPrintCountedMenu(p),
+        p,
+        (frozen) => _updateTrackedPrintCountedMenu(frozen),
       );
 
   static Future<PosCommandOutcome> _updateTrackedPrintCountedMenu(
@@ -731,14 +775,16 @@ class PosCommandApplier {
         ? 'en'
         : 'ka';
 
-    PrinterService.printReceiptInBackground(
-      items: lines,
-      total: receiptTotal,
-      subtotal: subtotal,
-      serviceFee: includeServiceFee ? serviceFeeAmount : null,
-      includeServiceFee: includeServiceFee,
-      language: language,
-      receiptType: 'menu_count',
+    LocalDataAdmission.afterMutation(
+      () => PrinterService.printReceiptInBackground(
+        items: lines,
+        total: receiptTotal,
+        subtotal: subtotal,
+        serviceFee: includeServiceFee ? serviceFeeAmount : null,
+        includeServiceFee: includeServiceFee,
+        language: language,
+        receiptType: 'menu_count',
+      ),
     );
 
     return const PosCommandOutcome.success();
@@ -754,9 +800,10 @@ class PosCommandApplier {
   /// A reservation already carrying that id is reported as created, because it
   /// was: by the delivery before this one.
   static Future<PosCommandOutcome> createReservation(Map<String, dynamic> p) =>
-      UpdateReadiness.track(
+      _owned(
         'createReservation',
-        () => _updateTrackedCreateReservation(p),
+        p,
+        (frozen) => _updateTrackedCreateReservation(frozen),
       );
 
   static Future<PosCommandOutcome> _updateTrackedCreateReservation(
@@ -820,9 +867,10 @@ class PosCommandApplier {
   /// Set a reservation's status. Convergent by assignment.
   static Future<PosCommandOutcome> updateReservationStatus(
     Map<String, dynamic> p,
-  ) => UpdateReadiness.track(
+  ) => _owned(
     'updateReservationStatus',
-    () => _updateTrackedUpdateReservationStatus(p),
+    p,
+    (frozen) => _updateTrackedUpdateReservationStatus(frozen),
   );
 
   static Future<PosCommandOutcome> _updateTrackedUpdateReservationStatus(
@@ -855,9 +903,10 @@ class PosCommandApplier {
   /// Convergent: the goal state is "this reservation is gone", which an absent
   /// reservation already satisfies.
   static Future<PosCommandOutcome> deleteReservation(Map<String, dynamic> p) =>
-      UpdateReadiness.track(
+      _owned(
         'deleteReservation',
-        () => _updateTrackedDeleteReservation(p),
+        p,
+        (frozen) => _updateTrackedDeleteReservation(frozen),
       );
 
   static Future<PosCommandOutcome> _updateTrackedDeleteReservation(
@@ -897,9 +946,10 @@ class PosCommandApplier {
   /// it. Appending was the old behaviour, and it meant one retried delivery
   /// showed up as two expenses in a restaurant's day.
   static Future<PosCommandOutcome> createExpense(Map<String, dynamic> p) =>
-      UpdateReadiness.track(
+      _owned(
         'createExpense',
-        () => _updateTrackedCreateExpense(p),
+        p,
+        (frozen) => _updateTrackedCreateExpense(frozen),
       );
 
   static Future<PosCommandOutcome> _updateTrackedCreateExpense(
@@ -941,7 +991,7 @@ class PosCommandApplier {
   static Future<PosCommandOutcome> createStaff(
     Map<String, dynamic> p, {
     bool treatExistingAsDone = false,
-  }) => UpdateReadiness.track(
+  }) => UpdateReadiness.mutate(
     'createStaff',
     () =>
         _updateTrackedCreateStaff(p, treatExistingAsDone: treatExistingAsDone),
@@ -1013,9 +1063,10 @@ class PosCommandApplier {
 
   /// Set a staff user's PIN. Convergent by assignment.
   static Future<PosCommandOutcome> updateStaffPin(Map<String, dynamic> p) =>
-      UpdateReadiness.track(
+      _owned(
         'updateStaffPin',
-        () => _updateTrackedUpdateStaffPin(p),
+        p,
+        (frozen) => _updateTrackedUpdateStaffPin(frozen),
       );
 
   static Future<PosCommandOutcome> _updateTrackedUpdateStaffPin(
@@ -1039,9 +1090,10 @@ class PosCommandApplier {
 
   /// Set a staff user's role. Convergent by assignment.
   static Future<PosCommandOutcome> updateStaffRole(Map<String, dynamic> p) =>
-      UpdateReadiness.track(
+      _owned(
         'updateStaffRole',
-        () => _updateTrackedUpdateStaffRole(p),
+        p,
+        (frozen) => _updateTrackedUpdateStaffRole(frozen),
       );
 
   static Future<PosCommandOutcome> _updateTrackedUpdateStaffRole(
@@ -1076,9 +1128,13 @@ class PosCommandApplier {
   static Future<PosCommandOutcome> renameStaff(
     Map<String, dynamic> p, {
     bool treatRenamedAsDone = false,
-  }) => UpdateReadiness.track(
+  }) => _owned(
     'renameStaff',
-    () => _updateTrackedRenameStaff(p, treatRenamedAsDone: treatRenamedAsDone),
+    p,
+    (frozen) => _updateTrackedRenameStaff(
+      frozen,
+      treatRenamedAsDone: treatRenamedAsDone,
+    ),
   );
 
   static Future<PosCommandOutcome> _updateTrackedRenameStaff(
@@ -1122,9 +1178,13 @@ class PosCommandApplier {
   static Future<PosCommandOutcome> deleteStaff(
     Map<String, dynamic> p, {
     bool treatMissingAsDone = false,
-  }) => UpdateReadiness.track(
+  }) => _owned(
     'deleteStaff',
-    () => _updateTrackedDeleteStaff(p, treatMissingAsDone: treatMissingAsDone),
+    p,
+    (frozen) => _updateTrackedDeleteStaff(
+      frozen,
+      treatMissingAsDone: treatMissingAsDone,
+    ),
   );
 
   static Future<PosCommandOutcome> _updateTrackedDeleteStaff(
@@ -1172,17 +1232,21 @@ class PosCommandApplier {
       lines.add(line);
     }
     if (lines.isEmpty) return;
-    PrinterService.printKitchenCheckInBackground(
-      items: lines,
-      tableNumber: tableLabel,
-      orderNumber: orderLabel,
-      waiterName: waiterName,
-      createdAt: DateTime.now(),
+    LocalDataAdmission.afterMutation(
+      () => PrinterService.printKitchenCheckInBackground(
+        items: List<String>.of(lines),
+        tableNumber: tableLabel,
+        orderNumber: orderLabel,
+        waiterName: waiterName,
+        createdAt: DateTime.now(),
+      ),
     );
   }
 
   static void scheduleCloudSync() {
-    ManagerSyncService.syncToManagerAppDebounced();
+    LocalDataAdmission.afterMutation(
+      ManagerSyncService.syncToManagerAppDebounced,
+    );
   }
 
   @visibleForTesting
@@ -1290,13 +1354,16 @@ class PosCommandApplier {
   }
 
   static void _notify({required String message, Map<String, dynamic>? meta}) {
-    PosLiveRefresh.bump();
-    ManagerNotificationInbox.ingestLocal(
-      title: 'სისტემა:',
-      message: message,
-      source: 'system',
-      meta: meta,
-    );
+    final frozenMeta = meta == null ? null : OrderTransferIntent.cloneMap(meta);
+    LocalDataAdmission.afterMutation(() {
+      PosLiveRefresh.bump();
+      ManagerNotificationInbox.ingestLocal(
+        title: 'სისტემა:',
+        message: message,
+        source: 'system',
+        meta: frozenMeta,
+      );
+    });
   }
 
   static int? _int(Object? raw) =>

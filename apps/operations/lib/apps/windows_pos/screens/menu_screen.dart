@@ -1,3 +1,5 @@
+import 'package:uuid/uuid.dart';
+import 'package:vynic/core/database/repositories/order_table_mutation_repository.dart';
 import 'package:vynic/core/services/pos/update/update_readiness.dart';
 import 'package:vynic/core/services/pos/pos_locale.dart';
 import 'package:vynic/core/services/pos/pos_input_settings.dart';
@@ -202,6 +204,9 @@ class MenuScreen extends StatefulWidget {
 }
 
 class _MenuScreenState extends State<MenuScreen> {
+  Order? _editingOrderBaseline;
+  final String _createRequestId = const Uuid().v4();
+
   List<MenuCategory> _categories = [];
   MenuCategory? _selectedCategory;
   MenuSubcategory? _selectedSubcategory;
@@ -582,6 +587,7 @@ class _MenuScreenState extends State<MenuScreen> {
     if (widget.existingOrderId != null) {
       final order = DatabaseService.getOrder(widget.existingOrderId!);
       if (order != null) {
+        _editingOrderBaseline = OrderTableMutationRepository.capture(order);
         setState(() {
           _existingOrderIsTakeAway = _isTakeAwayOrder(order);
           // Reflect the existing order's service-fee state in the toggle.
@@ -764,8 +770,7 @@ class _MenuScreenState extends State<MenuScreen> {
     });
   }
 
-  Future<void> _placeOrder() =>
-      UpdateReadiness.track('placeOrder', () => _admittedplaceOrder());
+  Future<void> _placeOrder() => _admittedplaceOrder();
 
   Future<void> _admittedplaceOrder() async {
     // If in pre-order mode, return the cart items without creating an order
@@ -817,6 +822,7 @@ class _MenuScreenState extends State<MenuScreen> {
           notes: widget.takeAwayNotes,
           items: orderItems,
           createdBy: widget.user.username,
+          requestId: _createRequestId,
         );
 
         setState(() {
@@ -1213,23 +1219,28 @@ class _MenuScreenState extends State<MenuScreen> {
 
           orderId = existingOrder.orderId;
 
-          if (auditEvents.isNotEmpty) {
-            await DatabaseService.appendOrderAuditEvents(
-              orderId: existingOrder.orderId,
-              events: auditEvents,
+          await UpdateReadiness.mutate('editOrder', () async {
+            OrderTableMutationRepository.requireFresh(
+              _editingOrderBaseline ?? existingOrder,
             );
-          }
+            OrderTableMutationRepository.requireFresh(existingOrder);
+            if (auditEvents.isNotEmpty) {
+              await DatabaseService.appendOrderAuditEvents(
+                orderId: existingOrder.orderId,
+                events: auditEvents,
+              );
+            }
 
-          // Clear existing items and add new ones
-          existingOrder.items.clear();
-          existingOrder.items.addAll(orderItems);
-          _existingOrderIsTakeAway = _isTakeAwayOrder(existingOrder);
-          existingOrder.includeServiceFee = _shouldIncludeServiceFee;
-          existingOrder.recalculateTotal();
-          existingOrder.updatedAt = DatabaseService.getCurrentDateTime();
+            // Clear existing items and add new ones
+            existingOrder.items.clear();
+            existingOrder.items.addAll(orderItems);
+            _existingOrderIsTakeAway = _isTakeAwayOrder(existingOrder);
+            existingOrder.includeServiceFee = _shouldIncludeServiceFee;
+            existingOrder.recalculateTotal();
+            existingOrder.updatedAt = DatabaseService.getCurrentDateTime();
 
-          await DatabaseService.updateOrder(existingOrder);
-
+            await DatabaseService.updateOrder(existingOrder);
+          });
           // Print modification to kitchen if there are changes
           if (addedItems.isNotEmpty || removedItems.isNotEmpty) {
             PrinterService.printKitchenCheckInBackground(
@@ -1290,6 +1301,7 @@ class _MenuScreenState extends State<MenuScreen> {
           createdBy: widget.user.username,
           items: orderItems,
           includeServiceFee: _shouldIncludeServiceFee,
+          requestId: _createRequestId,
         );
         orderId = order.orderId;
       }
@@ -1337,7 +1349,9 @@ class _MenuScreenState extends State<MenuScreen> {
       }
     } catch (e) {
       if (!mounted) return;
-      String message = 'Error placing order: $e';
+      String message = e is OrderMutationConflict
+          ? e.userMessage
+          : 'შეკვეთის შენახვა ვერ შესრულდა';
       if (e is StateError &&
           e.message.toLowerCase().contains('audit report') &&
           e.message.toLowerCase().contains('locked')) {

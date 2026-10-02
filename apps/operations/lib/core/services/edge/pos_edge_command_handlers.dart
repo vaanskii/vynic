@@ -20,6 +20,9 @@
 /// each type, applied at the boundary that needs it.
 library;
 
+import 'package:vynic/core/database/repositories/order_table_mutation_repository.dart';
+import 'package:vynic/core/database/repositories/order_transfer_journal_repository.dart';
+
 import 'package:vynic/core/database/database_core.dart';
 import 'package:vynic/core/database/repositories/user_repository.dart';
 
@@ -37,9 +40,19 @@ abstract class _AppliedEdgeCommandHandler implements EdgeCommandHandler {
   Future<EdgeCommandResult> execute(EdgeCommandEnvelope command) async {
     final raw = command.payload;
     final payload = raw is Map
-        ? Map<String, dynamic>.from(raw)
+        ? OrderTransferIntent.cloneMap(raw)
         : <String, dynamic>{};
-    final outcome = await apply(payload);
+    payload['_mutationRequestId'] = command.commandId;
+    final PosCommandOutcome outcome;
+    try {
+      outcome = await apply(payload);
+    } on OrderMutationConflict catch (error) {
+      return EdgeCommandResult.failed(
+        command.commandId,
+        code: error.code,
+        detail: error.userMessage,
+      );
+    }
     if (outcome.ok) {
       return EdgeCommandResult.succeeded(command.commandId, code: outcome.code);
     }

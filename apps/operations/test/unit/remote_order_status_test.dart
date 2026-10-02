@@ -1,3 +1,4 @@
+import 'package:vynic/core/database/repositories/order_table_mutation_repository.dart';
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -164,7 +165,8 @@ void main() {
             current: current,
           ),
           RemoteOrderStatusDecision.cancelThroughTransaction,
-          reason: 'cancelling a $current Order still belongs to the transaction',
+          reason:
+              'cancelling a $current Order still belongs to the transaction',
         );
       }
     });
@@ -401,14 +403,19 @@ void main() {
       expect(storedStatus(211), 'pending');
     });
 
-    test('a legacy spelling is stored in its canonical form', () async {
-      await seedOrder(orderId: 212);
+    test(
+      'a legacy paid spelling cannot bypass physical table closure',
+      () async {
+        await seedOrder(orderId: 212);
 
-      await OrderRepository.updateOrderStatus(orderId: 212, status: 'paid');
-
-      expect(storedStatus(212), 'closed');
-      expect(DatabaseCore.orderBox!.get(212)!.statusEnum, OrderStatus.closed);
-    });
+        await expectLater(
+          OrderRepository.updateOrderStatus(orderId: 212, status: 'paid'),
+          throwsA(isA<OrderMutationConflict>()),
+        );
+        expect(storedStatus(212), 'pending');
+        expect(DatabaseCore.tableBox!.values.single.activeOrderId, 212);
+      },
+    );
 
     test('a historical row keeps its legacy status readable', () async {
       await seedOrder(orderId: 213, status: 'served');

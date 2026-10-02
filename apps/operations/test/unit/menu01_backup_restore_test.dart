@@ -520,7 +520,8 @@ void main() {
       // Preserve a captured total even if the destination's pricing resolver differs.
       final order = DatabaseCore.orderBox!.get(9)!;
       order.totalAmount = 19.23;
-      await order.save();
+      // This backup codec fixture holds an intentionally historical captured image.
+      await DatabaseCore.orderBox!.put(9, order);
       final file = await backup();
       await fresh(file);
       expect(

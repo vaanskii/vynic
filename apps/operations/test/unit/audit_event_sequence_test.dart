@@ -650,10 +650,13 @@ void main() {
           closedById: 'Nino',
           closedByName: 'Nino',
         );
-        await OrderRepository.updateOrderStatus(
-          orderId: order.orderId,
-          status: 'closed',
-        );
+        // Already-settled historical image; actual closure owns this lifecycle.
+        order.status = 'closed';
+        await DatabaseCore.orderBox!.put(order.mutationKey!, order);
+        final table = DatabaseCore.tableBox!.values.singleWhere(
+          (t) => t.tableNumber == '14',
+        )..free();
+        await DatabaseCore.tableBox!.put(table.key, table);
 
         final before = reportOf(order.orderId);
         expect(before.status, AuditReportStatus.closed);

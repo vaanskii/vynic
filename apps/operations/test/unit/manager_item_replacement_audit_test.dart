@@ -110,14 +110,20 @@ void main() {
         items: items,
       );
 
-  Future<void> upsertDineIn(List<OrderItem> items) =>
-      OrderRepository.upsertMobileDineInOrder(
-        posOrderId: 2,
-        tableNumbers: const ['5'],
-        floor: 'first',
-        waiterName: 'mobile_manager',
-        items: items,
+  Future<void> upsertDineIn(List<OrderItem> items) async {
+    if (DatabaseCore.tableBox!.isEmpty)
+      await DatabaseCore.tableBox!.put(
+        'first-5',
+        TableModel(tableNumber: '5', floor: 'first'),
       );
+    await OrderRepository.upsertMobileDineInOrder(
+      posOrderId: 2,
+      tableNumbers: const ['5'],
+      floor: 'first',
+      waiterName: 'mobile_manager',
+      items: items,
+    );
+  }
 
   /// The Order's timeline after the creation event and its opening lines.
   List<AuditEvent> changesAfterCreation(int orderId) {
@@ -146,22 +152,25 @@ void main() {
     expect(changes.single.details?[AuditSource.detailsKey], 'MANAGER');
   });
 
-  test('a smaller quantity is a REDUCE_QTY, a removed line a DELETE_ITEM', () async {
-    await upsertDineIn([item('Khinkali', 4), item('Lobio', 2)]);
-    await upsertDineIn([item('Khinkali', 1)]);
+  test(
+    'a smaller quantity is a REDUCE_QTY, a removed line a DELETE_ITEM',
+    () async {
+      await upsertDineIn([item('Khinkali', 4), item('Lobio', 2)]);
+      await upsertDineIn([item('Khinkali', 1)]);
 
-    final changes = changesAfterCreation(2);
-    final byName = {for (final change in changes) change.itemName: change};
-    expect(byName.keys, unorderedEquals(<String>['Khinkali', 'Lobio']));
+      final changes = changesAfterCreation(2);
+      final byName = {for (final change in changes) change.itemName: change};
+      expect(byName.keys, unorderedEquals(<String>['Khinkali', 'Lobio']));
 
-    expect(byName['Khinkali']!.type, AuditEventType.reduceQty);
-    expect(byName['Khinkali']!.previousQty, 4);
-    expect(byName['Khinkali']!.newQty, 1);
+      expect(byName['Khinkali']!.type, AuditEventType.reduceQty);
+      expect(byName['Khinkali']!.previousQty, 4);
+      expect(byName['Khinkali']!.newQty, 1);
 
-    expect(byName['Lobio']!.type, AuditEventType.deleteItem);
-    expect(byName['Lobio']!.previousQty, 2);
-    expect(byName['Lobio']!.newQty, 0);
-  });
+      expect(byName['Lobio']!.type, AuditEventType.deleteItem);
+      expect(byName['Lobio']!.previousQty, 2);
+      expect(byName['Lobio']!.newQty, 0);
+    },
+  );
 
   test('a redelivered identical payload writes nothing', () async {
     await upsertDineIn([item('Khinkali', 4)]);

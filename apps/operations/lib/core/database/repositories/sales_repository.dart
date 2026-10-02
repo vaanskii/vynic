@@ -23,6 +23,8 @@ import 'business_day_repository.dart';
 import 'closure_journal_repository.dart';
 import '../database_core.dart';
 import 'audit_repository.dart';
+import 'order_table_mutation_repository.dart';
+import 'order_transfer_journal_repository.dart';
 import 'order_repository.dart';
 import 'settings_repository.dart';
 import 'table_repository.dart';
@@ -106,7 +108,7 @@ class SalesRepository {
     String? businessDate,
     String? advanceReceiptId,
     bool captureConsumption = false,
-  }) => UpdateReadiness.track(
+  }) => UpdateReadiness.mutate(
     'saveSaleRecord',
     () => _updateTrackedSaveSaleRecord(
       orderId: orderId,
@@ -290,7 +292,7 @@ class SalesRepository {
     required String collectedBy,
     String? receiptId,
     String? businessDate,
-  }) => UpdateReadiness.track(
+  }) => UpdateReadiness.mutate(
     'recordAdvanceReceipt',
     () => _updateTrackedRecordAdvanceReceipt(
       orderId: orderId,
@@ -388,7 +390,7 @@ class SalesRepository {
   static Future<void> markAdvanceReceiptApplied({
     required String receiptId,
     required String closureId,
-  }) => UpdateReadiness.track(
+  }) => UpdateReadiness.mutate(
     'markAdvanceReceiptApplied',
     () => _updateTrackedMarkAdvanceReceiptApplied(
       receiptId: receiptId,
@@ -489,7 +491,7 @@ class SalesRepository {
     String actorId = 'unknown',
     String? actorName,
     AuditSource source = AuditSource.pos,
-  }) => UpdateReadiness.track(
+  }) => UpdateReadiness.mutate(
     'saveExpenseRecord',
     () => _updateTrackedSaveExpenseRecord(
       description: description,
@@ -580,7 +582,7 @@ class SalesRepository {
   /// ingestion keys on this id to stay idempotent, so a record without one
   /// would either be dropped or duplicated on every sync. Runs once at
   /// startup and is a no-op afterwards.
-  static Future<int> ensureExpenseIdentities() => UpdateReadiness.track(
+  static Future<int> ensureExpenseIdentities() => UpdateReadiness.mutate(
     'ensureExpenseIdentities',
     () => _updateTrackedEnsureExpenseIdentities(),
   );
@@ -697,7 +699,7 @@ class SalesRepository {
     required String cancelledBy,
     required String reason,
     bool allowHistorical = false,
-  }) => UpdateReadiness.track(
+  }) => UpdateReadiness.mutate(
     'cancelSaleRecord',
     () => _updateTrackedCancelSaleRecord(
       recordKey: recordKey,
@@ -779,7 +781,7 @@ class SalesRepository {
   static Future<bool> restoreClosedOrderFromSale({
     required dynamic recordKey,
     required String restoredBy,
-  }) => UpdateReadiness.track(
+  }) => UpdateReadiness.mutate(
     'restoreClosedOrderFromSale',
     () => _updateTrackedRestoreClosedOrderFromSale(
       recordKey: recordKey,
@@ -903,6 +905,27 @@ class SalesRepository {
         }
       }
 
+      OrderTableMutationRepository.requireConsistent(
+        refs: {for (final t in targetTables) '$targetFloor|$t'},
+        orderId: orderId,
+      );
+      if (!isTakeaway) {
+        for (final t in targetTables) {
+          final physical = TableRepository.getTable(t, targetFloor);
+          if (physical == null ||
+              physical.isReserved ||
+              physical.activeOrderId != null ||
+              DatabaseCore.orderBox!.values.any(
+                (o) =>
+                    o.orderId != orderId &&
+                    !o.statusEnum.isTerminal &&
+                    o.floor == targetFloor &&
+                    o.tableNumbers.contains(t),
+              ))
+            return false;
+        }
+      }
+
       final linkedReservations = DatabaseCore.reservationBox!.values.where(
         (reservation) =>
             reservation.linkedOrderId == orderId &&
@@ -998,6 +1021,27 @@ class SalesRepository {
         }
       }
 
+      order.statusEnum = OrderStatus.confirmed;
+      order.paymentMethod = null;
+      order.closedAt = null;
+      order.updatedAt = restoreTimestamp;
+      order.advanceAmount = restoredAdvance;
+      order.advanceReceiptId = sale['advanceReceiptId']?.toString();
+      // A reopened order is not a closed one. Leaving the old closure id on
+      // it would make the next close look like a retry of the reversed one.
+      order.closureId = null;
+      final storedOrder = OrderTableMutationRepository.persisted(
+        orderId,
+        uuid: order.orderUuid,
+      )!;
+      await DatabaseCore.orderBox!.put(
+        storedOrder.$1,
+        OrderTransferIntent.orderImage(
+          OrderTableMutationRepository.image(order),
+        ),
+      );
+      await DatabaseCore.orderBox!.flush();
+
       if (!isTakeaway) {
         for (final tableNumber in targetTables) {
           final table = TableRepository.getTable(tableNumber, targetFloor);
@@ -1014,17 +1058,6 @@ class SalesRepository {
           );
         }
       }
-
-      order.statusEnum = OrderStatus.confirmed;
-      order.paymentMethod = null;
-      order.closedAt = null;
-      order.updatedAt = restoreTimestamp;
-      order.advanceAmount = restoredAdvance;
-      order.advanceReceiptId = sale['advanceReceiptId']?.toString();
-      // A reopened order is not a closed one. Leaving the old closure id on
-      // it would make the next close look like a retry of the reversed one.
-      order.closureId = null;
-      await order.save();
 
       if (linkedReservation != null &&
           linkedReservation.statusEnum == ReservationStatus.completed) {
@@ -1136,7 +1169,7 @@ class SalesRepository {
   }
 
   // Reset daily sales total (called when closing day)
-  static Future<void> resetDailySalesTotal() => UpdateReadiness.track(
+  static Future<void> resetDailySalesTotal() => UpdateReadiness.mutate(
     'resetDailySalesTotal',
     () => _updateTrackedResetDailySalesTotal(),
   );

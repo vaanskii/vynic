@@ -463,7 +463,8 @@ current transport status.
   `docs/POS05_ORDER_TABLE_OWNERSHIP.md`. Windows smoke remains
   PENDING_NOT_RUN/HELD (`docs/POS05_WINDOWS_SMOKE.md`), using a clean frozen
   commit export. Physical release remains OPS-01.
-- MGR-02 routes Manager ghost-table repair through one immutable, selected-primary
+- MGR-02 is DONE for exact operational source 4c4c5d9. Manager ghost-table repair
+  uses one immutable, selected-primary
   `TABLE_REPAIR` pull command. Cloud leaves the mirror unchanged while queued;
   only an authenticated POS `table_repaired` ACK applies a snapshot comparison
   guard. POS refuses live Order/Reservation ownership, journals one durable
@@ -472,7 +473,8 @@ current transport status.
   persists request IDs by origin/principal and shows actual pending, failed,
   unavailable or completed delivery; changed sessions cannot send stale actions.
   No new frozen LAN callback exists. Clean-source synthetic qualification and
-  rollback limits: `docs/MGR02_GUARDED_TABLE_REPAIR.md`. Printer work is deferred
+  rollback limits: `docs/MGR02_GUARDED_TABLE_REPAIR.md`. Exact committed receipt:
+  `docs/proofs/MGR02_COMMITTED_4c4c5d9_2026-10-07.json`. Printer work is deferred
   at the user's request; POS-02 physical/driver acceptance remains pending.
   Broader Manager delivery, atomic item editing and release gates remain separate.
 - Every Order audit report opens with a typed creation event carrying

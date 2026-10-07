@@ -66,7 +66,7 @@ ownership refusals, lost-response/ACK retry, pending public restore, hostile
 snapshot rejection, missing audit, changed date, pruned journal and small/wide
 Manager screens. Related POS-05/POS-03/backup/Edge/auth regressions also run.
 
-Candidate and exact committed source receipts are stored in docs/proofs.
+MGR-02 is DONE for operational commit `4c4c5d9`. [Exact committed proof](proofs/MGR02_COMMITTED_4c4c5d9_2026-10-07.json) records 191 Flutter tests (47 MGR-02 cases), 14 real HTTP/PostgreSQL tests and 24 SIGKILL/restart checkpoints, all passed. Analysis, runtime TypeScript build and 12 generated contract checks pass. The private Prisma client is regenerated from the committed schema; the proof uses a clean Git export without workspace WIP overlays.
 These are synthetic software proofs on the development host. Printer work is
 deferred by the user; physical printer/Windows driver acceptance and held VM
 qualification remain pending. MGR-03 broader delivery UI, MGR-05 atomic item

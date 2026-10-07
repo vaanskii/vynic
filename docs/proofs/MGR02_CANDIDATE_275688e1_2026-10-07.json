@@ -3,7 +3,6 @@
   "status": "QUALIFIED_CANDIDATE",
   "baseCommit": "275688e1e5c5dc0e26e62705ab0c7670cf16d99a",
   "cleanHeadExportPlusOwnedChanges": true,
-  "preExistingWipOverlayUsed": false,
   "syntheticOnly": true,
   "flutter": {
     "passed": 191,
@@ -81,5 +80,8 @@
     "Windows VM operations HELD",
     "Broader Manager delivery/item editing and release qualification separate"
   ],
-  "earlierFailedRunsRetained": true
+  "earlierFailedRunsRetained": true,
+  "preExistingWipSourceOverlayUsed": false,
+  "installedPrismaClientReused": true,
+  "finalCommittedClientRegenerated": "docs/proofs/MGR02_COMMITTED_4c4c5d9_2026-10-07.json"
 }

@@ -1,4 +1,7 @@
+import 'package:vynic/core/services/manager_app/manager_operation_request.dart';
+import 'package:vynic/apps/mobile_app/presentation/widgets/manager_operations_panel.dart';
 import 'package:flutter/material.dart';
+import 'package:vynic/core/services/manager_app/mobile_api_service.dart';
 import 'package:vynic/apps/mobile_app/theme/manager_theme.dart';
 import 'package:vynic/apps/mobile_app/presentation/screens/mobile_calculator_screen.dart';
 import 'package:vynic/apps/mobile_app/presentation/widgets/mobile_glass_ui.dart';
@@ -22,14 +25,55 @@ class _CreateTakeawayScreenState extends State<CreateTakeawayScreen> {
   final _customerNameController = TextEditingController();
   final _pickupTimeController = TextEditingController();
 
+  String? _operationScope;
   @override
   void initState() {
     super.initState();
+    try {
+      _operationScope = MobileApiService.tableRepairScope;
+    } catch (_) {
+      _operationScope = null;
+    }
     _controller = CreateTakeawayController(
       const TakeawayRepository(TakeawayRemoteService()),
+      expectedScope: _operationScope,
     );
     _controller.addListener(_onControllerChanged);
-    _controller.initialize();
+    _restoreDraft();
+  }
+
+  Future<void> _restoreDraft() async {
+    await _controller.initialize();
+    try {
+      await ManagerOperationRequests.init();
+      final scope = _operationScope;
+      if (!mounted ||
+          scope == null ||
+          !MobileApiService.isCurrentTableRepairScope(scope))
+        return;
+      final v = ManagerOperationRequests.read(scope, 'takeaway_create');
+      if (v == null || ManagerOperationResult.fromMap(v['result']).isDone)
+        return;
+      _controller.newRequest = false;
+      final b = v['body'] as Map;
+      _controller.setCustomerName(b['customerName']);
+      _controller.setPickupTime(b['pickupTime']);
+      _controller.replaceCartFromSelection([
+        for (final i in b['items'])
+          {
+            'itemName': i['itemName'],
+            'unitPrice': i['unitPrice'],
+            'qty': i['quantity'],
+          },
+      ]);
+    } catch (_) {
+      if (mounted)
+        ManagerToast.showSnackBar(
+          context,
+          'მოთხოვნის მონახაზი ვერ ჩაიტვირთა',
+          isError: true,
+        );
+    }
   }
 
   void _onControllerChanged() {
@@ -70,7 +114,10 @@ class _CreateTakeawayScreenState extends State<CreateTakeawayScreen> {
 
   Future<void> _submit() async {
     final result = await _controller.submit(widget.user);
-    if (!mounted) return;
+    if (!mounted ||
+        _operationScope == null ||
+        !MobileApiService.isCurrentTableRepairScope(_operationScope!))
+      return;
     if (result.success) {
       Navigator.pop(context, true);
       return;
@@ -78,7 +125,7 @@ class _CreateTakeawayScreenState extends State<CreateTakeawayScreen> {
     ManagerToast.showSnackBar(
       context,
       result.message ?? 'შეცდომა',
-      isError: true,
+      isError: result.isError,
     );
   }
 
@@ -120,67 +167,113 @@ class _CreateTakeawayScreenState extends State<CreateTakeawayScreen> {
   @override
   Widget build(BuildContext context) {
     final s = _controller.state;
-    return Scaffold(
-      backgroundColor: MobileGlassTheme.bg,
-      appBar: AppBar(
-        backgroundColor: MobileGlassTheme.surfaceCard,
-        foregroundColor: MobileGlassTheme.textPrimary,
-        elevation: 0,
-        title: Text(
-          'ახალი გატანის შეკვეთა',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 17,
-            color: MobileGlassTheme.textPrimary,
+    return ManagerOperationBoundary(
+      scope: _operationScope,
+      slot: 'takeaway_create',
+      child: Scaffold(
+        backgroundColor: MobileGlassTheme.bg,
+        appBar: AppBar(
+          backgroundColor: MobileGlassTheme.surfaceCard,
+          foregroundColor: MobileGlassTheme.textPrimary,
+          elevation: 0,
+          title: Text(
+            'ახალი გატანის შეკვეთა',
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 17,
+              color: MobileGlassTheme.textPrimary,
+            ),
+          ),
+          bottom: PreferredSize(
+            preferredSize: const Size.fromHeight(1),
+            child: Container(height: 1, color: MobileGlassTheme.borderSubtle),
           ),
         ),
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(1),
-          child: Container(height: 1, color: MobileGlassTheme.borderSubtle),
-        ),
-      ),
-      body: s.loading
-          ? Center(
-              child: CircularProgressIndicator(color: MobileGlassTheme.primary),
-            )
-          : Column(
-              children: [
-                Expanded(
-                  child: ListView(
-                    padding: const EdgeInsets.all(16),
-                    children: [
-                      SectionCard(
-                        title: 'მომხმარებელი',
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                Checkbox(
-                                  value: s.waitInPlace,
-                                  onChanged: (v) =>
-                                      _controller.setWaitInPlace(v ?? false),
-                                  activeColor: MobileGlassTheme.primary,
-                                ),
-                                Text(
-                                  'აქ დაელოდება (ადგილზე ელოდება)',
-                                  style: TextStyle(
-                                    color: MobileGlassTheme.textPrimary,
-                                    fontSize: 14,
+        body: s.loading
+            ? Center(
+                child: CircularProgressIndicator(
+                  color: MobileGlassTheme.primary,
+                ),
+              )
+            : Column(
+                children: [
+                  Expanded(
+                    child: ListView(
+                      padding: const EdgeInsets.all(16),
+                      children: [
+                        SectionCard(
+                          title: 'მომხმარებელი',
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Checkbox(
+                                    value: s.waitInPlace,
+                                    onChanged: (v) =>
+                                        _controller.setWaitInPlace(v ?? false),
+                                    activeColor: MobileGlassTheme.primary,
+                                  ),
+                                  Expanded(
+                                    child: Text(
+                                      'აქ დაელოდება (ადგილზე ელოდება)',
+                                      style: TextStyle(
+                                        color: MobileGlassTheme.textPrimary,
+                                        fontSize: 14,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              if (!s.waitInPlace) ...[
+                                SizedBox(height: 8),
+                                TextField(
+                                  controller: _customerNameController,
+                                  keyboardType: TextInputType.phone,
+                                  onChanged: _controller.setCustomerName,
+                                  decoration: InputDecoration(
+                                    hintText: 'ტელეფონის ნომერი',
+                                    prefixIcon: const Icon(
+                                      Icons.phone_rounded,
+                                      size: 18,
+                                    ),
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                      borderSide: BorderSide(
+                                        color: MobileGlassTheme.borderSubtle,
+                                      ),
+                                    ),
+                                    enabledBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                      borderSide: BorderSide(
+                                        color: MobileGlassTheme.borderSubtle,
+                                      ),
+                                    ),
+                                    focusedBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                      borderSide: BorderSide(
+                                        color: MobileGlassTheme.primary,
+                                        width: 1.5,
+                                      ),
+                                    ),
                                   ),
                                 ),
                               ],
-                            ),
-                            if (!s.waitInPlace) ...[
-                              SizedBox(height: 8),
-                              TextField(
-                                controller: _customerNameController,
-                                keyboardType: TextInputType.phone,
-                                onChanged: _controller.setCustomerName,
+                            ],
+                          ),
+                        ),
+                        SizedBox(height: 12),
+                        SectionCard(
+                          title: 'გამოსატანი დრო',
+                          child: GestureDetector(
+                            onTap: _pickTime,
+                            child: AbsorbPointer(
+                              child: TextField(
+                                controller: _pickupTimeController,
                                 decoration: InputDecoration(
-                                  hintText: 'ტელეფონის ნომერი',
+                                  hintText: '00:00',
                                   prefixIcon: const Icon(
-                                    Icons.phone_rounded,
+                                    Icons.access_time_rounded,
                                     size: 18,
                                   ),
                                   border: OutlineInputBorder(
@@ -204,170 +297,134 @@ class _CreateTakeawayScreenState extends State<CreateTakeawayScreen> {
                                   ),
                                 ),
                               ),
-                            ],
-                          ],
-                        ),
-                      ),
-                      SizedBox(height: 12),
-                      SectionCard(
-                        title: 'გამოსატანი დრო',
-                        child: GestureDetector(
-                          onTap: _pickTime,
-                          child: AbsorbPointer(
-                            child: TextField(
-                              controller: _pickupTimeController,
-                              decoration: InputDecoration(
-                                hintText: '00:00',
-                                prefixIcon: const Icon(
-                                  Icons.access_time_rounded,
-                                  size: 18,
-                                ),
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                  borderSide: BorderSide(
-                                    color: MobileGlassTheme.borderSubtle,
-                                  ),
-                                ),
-                                enabledBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                  borderSide: BorderSide(
-                                    color: MobileGlassTheme.borderSubtle,
-                                  ),
-                                ),
-                                focusedBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                  borderSide: BorderSide(
-                                    color: MobileGlassTheme.primary,
-                                    width: 1.5,
-                                  ),
-                                ),
-                              ),
                             ),
                           ),
                         ),
-                      ),
-                      SizedBox(height: 12),
-                      CartSummarySection(
-                        cart: s.cart,
-                        total: s.total,
-                        onInc: (itemName) {
-                          final matches = s.menuItems.where(
-                            (e) => e.name == itemName,
-                          );
-                          if (matches.isNotEmpty) {
-                            final item = matches.first;
-                            _controller.incrementItem(item);
-                          }
-                        },
-                        onDec: _controller.decrementItem,
-                      ),
-                      if (s.cart.isNotEmpty) SizedBox(height: 12),
-                      SectionCard(
-                        title: 'მენიუს სრული არჩევა',
-                        child: SizedBox(
-                          width: double.infinity,
-                          child: OutlinedButton.icon(
-                            onPressed: _openUnifiedMenuSelector,
-                            icon: Icon(
-                              Icons.menu_book_rounded,
-                              color: MobileGlassTheme.primary,
-                            ),
-                            label: Text(
-                              'Windows სტილის მენიუს გახსნა',
-                              style: TextStyle(
+                        SizedBox(height: 12),
+                        CartSummarySection(
+                          cart: s.cart,
+                          total: s.total,
+                          onInc: (itemName) {
+                            final matches = s.menuItems.where(
+                              (e) => e.name == itemName,
+                            );
+                            if (matches.isNotEmpty) {
+                              final item = matches.first;
+                              _controller.incrementItem(item);
+                            }
+                          },
+                          onDec: _controller.decrementItem,
+                        ),
+                        if (s.cart.isNotEmpty) SizedBox(height: 12),
+                        SectionCard(
+                          title: 'მენიუს სრული არჩევა',
+                          child: SizedBox(
+                            width: double.infinity,
+                            child: OutlinedButton.icon(
+                              onPressed: _openUnifiedMenuSelector,
+                              icon: Icon(
+                                Icons.menu_book_rounded,
                                 color: MobileGlassTheme.primary,
-                                fontWeight: FontWeight.w600,
                               ),
-                            ),
-                            style: OutlinedButton.styleFrom(
-                              foregroundColor: MobileGlassTheme.primary,
-                              side: BorderSide(
-                                color: MobileGlassTheme.primary.withValues(
-                                  alpha: 0.45,
+                              label: Text(
+                                'Windows სტილის მენიუს გახსნა',
+                                style: TextStyle(
+                                  color: MobileGlassTheme.primary,
+                                  fontWeight: FontWeight.w600,
                                 ),
                               ),
-                              padding: const EdgeInsets.symmetric(vertical: 14),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: MobileGlassTheme.primary,
+                                side: BorderSide(
+                                  color: MobileGlassTheme.primary.withValues(
+                                    alpha: 0.45,
+                                  ),
+                                ),
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 14,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
                               ),
                             ),
                           ),
                         ),
-                      ),
-                      SizedBox(height: 12),
-                      MenuItemsSection(
-                        menuItems: s.menuItems,
-                        cart: s.cart,
-                        onInc: _controller.incrementItem,
-                        onDec: _controller.decrementItem,
-                      ),
-                    ],
-                  ),
-                ),
-                DecoratedBox(
-                  decoration: BoxDecoration(
-                    color: MobileGlassTheme.surfaceCard,
-                    border: Border(
-                      top: BorderSide(color: MobileGlassTheme.borderSubtle),
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: MobileGlassTheme.data.cardShadow,
-                        blurRadius: 12,
-                        offset: const Offset(0, -4),
-                      ),
-                    ],
-                  ),
-                  child: Padding(
-                    padding: EdgeInsets.fromLTRB(
-                      16,
-                      12,
-                      16,
-                      12 + MediaQuery.of(context).padding.bottom,
-                    ),
-                    child: SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: s.submitting ? null : _submit,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: MobileGlassTheme.primary,
-                          foregroundColor: Colors.white,
-                          disabledBackgroundColor: MobileGlassTheme.primary
-                              .withValues(alpha: 0.35),
-                          disabledForegroundColor: Colors.white.withValues(
-                            alpha: 0.7,
-                          ),
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14),
-                          ),
-                          elevation: 0,
+                        SizedBox(height: 12),
+                        MenuItemsSection(
+                          menuItems: s.menuItems,
+                          cart: s.cart,
+                          onInc: _controller.incrementItem,
+                          onDec: _controller.decrementItem,
                         ),
-                        child: s.submitting
-                            ? const SizedBox(
-                                width: 20,
-                                height: 20,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: Colors.white,
+                      ],
+                    ),
+                  ),
+                  DecoratedBox(
+                    decoration: BoxDecoration(
+                      color: MobileGlassTheme.surfaceCard,
+                      border: Border(
+                        top: BorderSide(color: MobileGlassTheme.borderSubtle),
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: MobileGlassTheme.data.cardShadow,
+                          blurRadius: 12,
+                          offset: const Offset(0, -4),
+                        ),
+                      ],
+                    ),
+                    child: Padding(
+                      padding: EdgeInsets.fromLTRB(
+                        16,
+                        12,
+                        16,
+                        12 + MediaQuery.of(context).padding.bottom,
+                      ),
+                      child: SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          onPressed: s.submitting ? null : _submit,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: MobileGlassTheme.primary,
+                            foregroundColor: Colors.white,
+                            disabledBackgroundColor: MobileGlassTheme.primary
+                                .withValues(alpha: 0.35),
+                            disabledForegroundColor: Colors.white.withValues(
+                              alpha: 0.7,
+                            ),
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                            elevation: 0,
+                          ),
+                          child: s.submitting
+                              ? const SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: Colors.white,
+                                  ),
+                                )
+                              : Text(
+                                  s.cart.isEmpty
+                                      ? 'შეკვეთის შექმნა'
+                                      : 'შეკვეთის შექმნა — ${s.total.toStringAsFixed(2)} ₾',
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 16,
+                                  ),
                                 ),
-                              )
-                            : Text(
-                                s.cart.isEmpty
-                                    ? 'შეკვეთის შექმნა'
-                                    : 'შეკვეთის შექმნა — ${s.total.toStringAsFixed(2)} ₾',
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 16,
-                                ),
-                              ),
+                        ),
                       ),
                     ),
                   ),
-                ),
-              ],
-            ),
+                ],
+              ),
+      ),
     );
   }
 }

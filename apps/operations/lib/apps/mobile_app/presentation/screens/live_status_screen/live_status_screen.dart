@@ -1,3 +1,4 @@
+import 'package:vynic/apps/mobile_app/presentation/widgets/manager_operations_panel.dart';
 import 'package:vynic/apps/mobile_app/presentation/widgets/table_repair_status_panel.dart';
 import 'package:flutter/services.dart';
 import 'package:vynic/apps/mobile_app/theme/manager_theme.dart';
@@ -45,9 +46,15 @@ class _LiveStatusScreenState extends State<LiveStatusScreen> {
     'რეზერვი',
   ];
 
+  String? _operationScope;
   @override
   void initState() {
     super.initState();
+    try {
+      _operationScope = MobileApiService.tableRepairScope;
+    } catch (_) {
+      _operationScope = null;
+    }
     _loadAll();
     _refreshTimer = Timer.periodic(
       const Duration(seconds: 30),
@@ -178,17 +185,29 @@ class _LiveStatusScreenState extends State<LiveStatusScreen> {
         '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}';
 
     try {
-      await MobileApiService.createTakeawayOrder(
+      final result = await MobileApiService.createTakeawayOrder(
+        expectedScope: _operationScope,
+        newRequest: true,
         customerName: info.waitInPlace ? 'აქ დაელოდება' : info.customerName,
         pickupTime: defaultPickup,
         waiterName: widget.user.username,
         items: items,
       );
-      if (!mounted) return;
-      ManagerToast.show(context, 'გატანის შეკვეთა შეიქმნა');
-      _loadTakeaway();
+      if (!mounted ||
+          _operationScope == null ||
+          !MobileApiService.isCurrentTableRepairScope(_operationScope!))
+        return;
+      ManagerToast.show(
+        context,
+        result.message,
+        isError: result.delivery.name == 'failed',
+      );
+      if (result.isDone) _loadTakeaway();
     } catch (e) {
-      if (!mounted) return;
+      if (!mounted ||
+          _operationScope == null ||
+          !MobileApiService.isCurrentTableRepairScope(_operationScope!))
+        return;
       ManagerToast.show(context, 'შეცდომა: $e', isError: true);
     }
   }
@@ -218,110 +237,115 @@ class _LiveStatusScreenState extends State<LiveStatusScreen> {
 
     final isTables = _viewIndex == 0;
 
-    return Scaffold(
-      backgroundColor: Colors.transparent,
-      body: Stack(
-        children: [
-          Positioned(
-            top: -60,
-            right: -80,
-            child: _GlowOrb(color: Color(0xFF2563EB), size: 300),
-          ),
-          Positioned(
-            bottom: 120,
-            left: -100,
-            child: _GlowOrb(color: Color(0xFF10B981), size: 260),
-          ),
-          SafeArea(
-            bottom: false,
-            child: Column(
-              children: [
-                // ── Header ────────────────────────────────────────────
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(24, 20, 24, 14),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'მაგიდები',
-                              style: TextStyle(
-                                color: MobileGlassTheme.textPrimary,
-                                fontSize: 30,
-                                fontWeight: FontWeight.bold,
-                                letterSpacing: -0.5,
+    return ManagerOperationBoundary(
+      scope: _operationScope,
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        body: Stack(
+          children: [
+            Positioned(
+              top: -60,
+              right: -80,
+              child: _GlowOrb(color: Color(0xFF2563EB), size: 300),
+            ),
+            Positioned(
+              bottom: 120,
+              left: -100,
+              child: _GlowOrb(color: Color(0xFF10B981), size: 260),
+            ),
+            SafeArea(
+              bottom: false,
+              child: Column(
+                children: [
+                  // ── Header ────────────────────────────────────────────
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(24, 20, 24, 14),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'მაგიდები',
+                                style: TextStyle(
+                                  color: MobileGlassTheme.textPrimary,
+                                  fontSize: 30,
+                                  fontWeight: FontWeight.bold,
+                                  letterSpacing: -0.5,
+                                ),
                               ),
-                            ),
-                            SizedBox(height: 4),
-                            Text(
-                              isTables
-                                  ? '$activeCount აქტიური • ${allTables.length} სულ'
-                                  : '$takeawayCount აქტიური გატანა',
-                              style: TextStyle(
-                                color: MobileGlassTheme.textSecondary,
-                                fontSize: 14,
+                              SizedBox(height: 4),
+                              Text(
+                                isTables
+                                    ? '$activeCount აქტიური • ${allTables.length} სულ'
+                                    : '$takeawayCount აქტიური გატანა',
+                                style: TextStyle(
+                                  color: MobileGlassTheme.textSecondary,
+                                  fontSize: 14,
+                                ),
                               ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      if (!isTables)
-                        _GlassPanel(
-                          onTap: _openNewTakeaway,
-                          shape: BoxShape.circle,
-                          padding: const EdgeInsets.all(12),
-                          child: Icon(
-                            Icons.add_rounded,
-                            color: MobileGlassTheme.textPrimary,
+                            ],
                           ),
                         ),
-                    ],
+                        if (!isTables)
+                          _GlassPanel(
+                            onTap: _openNewTakeaway,
+                            shape: BoxShape.circle,
+                            padding: const EdgeInsets.all(12),
+                            child: Icon(
+                              Icons.add_rounded,
+                              color: MobileGlassTheme.textPrimary,
+                            ),
+                          ),
+                      ],
+                    ),
                   ),
-                ),
-                // ── View switcher (Tables / Takeaways) ────────────────
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: _viewPill(
-                          label: 'მაგიდები',
-                          icon: Icons.table_bar_rounded,
-                          badge: activeCount,
-                          isActive: isTables,
-                          onTap: () => setState(() => _viewIndex = 0),
+                  // ── View switcher (Tables / Takeaways) ────────────────
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: _viewPill(
+                            label: 'მაგიდები',
+                            icon: Icons.table_bar_rounded,
+                            badge: activeCount,
+                            isActive: isTables,
+                            onTap: () => setState(() => _viewIndex = 0),
+                          ),
                         ),
-                      ),
-                      SizedBox(width: 12),
-                      Expanded(
-                        child: _viewPill(
-                          label: 'გატანები',
-                          icon: Icons.takeout_dining_rounded,
-                          badge: takeawayCount,
-                          isActive: !isTables,
-                          onTap: () => setState(() => _viewIndex = 1),
+                        SizedBox(width: 12),
+                        Expanded(
+                          child: _viewPill(
+                            label: 'გატანები',
+                            icon: Icons.takeout_dining_rounded,
+                            badge: takeawayCount,
+                            isActive: !isTables,
+                            onTap: () => setState(() => _viewIndex = 1),
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
-                SizedBox(height: 6),
-                Expanded(
-                  child: RefreshIndicator(
-                    color: MobileGlassTheme.primary,
-                    backgroundColor: MobileGlassTheme.surfaceCard,
-                    onRefresh: _loadAll,
-                    child: isTables ? _buildTablesView() : _buildTakeawayView(),
+                  SizedBox(height: 6),
+                  Expanded(
+                    child: RefreshIndicator(
+                      color: MobileGlassTheme.primary,
+                      backgroundColor: MobileGlassTheme.surfaceCard,
+                      onRefresh: _loadAll,
+                      child: isTables
+                          ? _buildTablesView()
+                          : _buildTakeawayView(),
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

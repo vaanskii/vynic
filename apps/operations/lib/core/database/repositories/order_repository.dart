@@ -337,6 +337,8 @@ class OrderRepository {
     double? totalAmount,
     AuditSource source = AuditSource.manager,
     String? requestId,
+    bool createOnly = false,
+    String? expectedBusinessDate,
   }) => _mobileUpsert(
     posOrderId: posOrderId,
     tableNumbers: ['TA-$posOrderId'],
@@ -346,6 +348,8 @@ class OrderRepository {
     totalAmount: totalAmount,
     source: source,
     requestId: requestId,
+    createOnly: createOnly,
+    expectedBusinessDate: expectedBusinessDate,
     customerName: customerName,
     pickupTime: pickupTime,
   );
@@ -360,6 +364,8 @@ class OrderRepository {
     double? totalAmount,
     AuditSource source = AuditSource.manager,
     String? requestId,
+    bool createOnly = false,
+    String? expectedBusinessDate,
   }) => _mobileUpsert(
     posOrderId: posOrderId,
     tableNumbers: tableNumbers,
@@ -369,6 +375,8 @@ class OrderRepository {
     totalAmount: totalAmount,
     source: source,
     requestId: requestId,
+    createOnly: createOnly,
+    expectedBusinessDate: expectedBusinessDate,
     guestCount: guestCount,
   );
 
@@ -381,6 +389,8 @@ class OrderRepository {
     double? totalAmount,
     required AuditSource source,
     String? requestId,
+    bool createOnly = false,
+    String? expectedBusinessDate,
     int guestCount = 0,
     String customerName = '',
     String pickupTime = '',
@@ -395,9 +405,12 @@ class OrderRepository {
         .whereType<String>()
         .toSet()
         .toList();
-    final date = OrderTableMutationRepository.dateKey;
+    final date = expectedBusinessDate ?? OrderTableMutationRepository.dateKey;
     final request = <String, dynamic>{
       'kind': 'mobileUpsert',
+      if (createOnly) 'createOnly': true,
+      if (expectedBusinessDate != null)
+        'expectedBusinessDate': expectedBusinessDate,
       'posOrderId': posOrderId,
       'tables': tables,
       'floor': floor,
@@ -422,6 +435,11 @@ class OrderRepository {
         throw OrderMutationConflict('stale_date', 'Business date changed');
       final existing = getOrder(posOrderId);
       if (existing != null) {
+        if (createOnly)
+          throw OrderMutationConflict(
+            'order_id_conflict',
+            'A local Order already owns this ID',
+          );
         if (expected != null)
           OrderTableMutationRepository.requireFresh(expected);
         OrderTableMutationRepository.requireFresh(existing);

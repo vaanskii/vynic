@@ -1404,14 +1404,20 @@ class BackupRepository {
   static Future<String> createReservationFromJson(
     Map<String, dynamic> json, {
     AuditSource source = AuditSource.manager,
+    bool requireDurability = false,
   }) => UpdateReadiness.mutate(
     'createReservationFromJson',
-    () => _updateTrackedCreateReservationFromJson(json, source: source),
+    () => _updateTrackedCreateReservationFromJson(
+      json,
+      source: source,
+      requireDurability: requireDurability,
+    ),
   );
 
   static Future<String> _updateTrackedCreateReservationFromJson(
     Map<String, dynamic> json, {
     AuditSource source = AuditSource.manager,
+    bool requireDurability = false,
   }) async {
     final tableNumbers = ((json['tableNumbers'] as List?) ?? const [])
         .map((e) => _coerceToInt(e) ?? 0)
@@ -1450,6 +1456,7 @@ class BackupRepository {
       // which is what makes a redelivered create converge instead of duplicate.
       id: json['id'] as String?,
       source: source,
+      requireDurability: requireDurability,
     );
   }
 

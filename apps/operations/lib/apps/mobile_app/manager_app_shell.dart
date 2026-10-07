@@ -1,3 +1,5 @@
+import 'package:vynic/core/services/manager_app/manager_operation_request.dart';
+import 'package:vynic/apps/mobile_app/presentation/widgets/manager_operations_panel.dart';
 import 'package:vynic/core/services/manager_app/manager_entitlements.dart';
 import 'package:vynic/core/services/manager_app/mobile_api_service.dart';
 import 'dart:async';
@@ -46,6 +48,40 @@ class ManagerAppShell extends StatefulWidget {
 
 class _ManagerAppShellState extends State<ManagerAppShell>
     with WidgetsBindingObserver {
+  String? _operationScope;
+  bool _operationChecking = false, _operationForeground = true;
+  Future<void> _refreshOperations() async {
+    final scope = _operationScope;
+    if (scope == null ||
+        _operationChecking ||
+        !_operationForeground ||
+        !MobileApiService.isCurrentTableRepairScope(scope))
+      return;
+    _operationChecking = true;
+    try {
+      await ManagerOperationRequests.init();
+      for (final value in ManagerOperationRequests.all(scope)) {
+        final old = ManagerOperationResult.fromMap(value['result']);
+        if (!old.needsCheck) continue;
+        final result = await MobileApiService.refreshOperation(value);
+        if (!mounted || !MobileApiService.isCurrentTableRepairScope(scope))
+          return;
+        if ((result.isDone || result.delivery.name == 'failed') &&
+            (result.delivery != old.delivery || result.code != old.code))
+          ManagerToast.show(context, result.message, isError: !result.isDone);
+      }
+    } catch (_) {
+      if (mounted)
+        ManagerToast.show(
+          context,
+          'POS მოთხოვნები ვერ განახლდა — ჩანაწერები შენარჩუნებულია',
+          isError: true,
+        );
+    } finally {
+      _operationChecking = false;
+    }
+  }
+
   int _selectedIndex = 0;
   List<int> _destinations = ManagerEntitlements.destinations;
   Timer? _entitlementTimer;
@@ -88,6 +124,12 @@ class _ManagerAppShellState extends State<ManagerAppShell>
   @override
   void initState() {
     super.initState();
+    try {
+      _operationScope = MobileApiService.tableRepairScope;
+    } catch (_) {
+      _operationScope = null;
+    }
+    unawaited(_refreshOperations());
     _pageController = PageController(initialPage: _selectedIndex);
     WidgetsBinding.instance.addObserver(this);
     MonitoringSocketService.initialize();
@@ -111,10 +153,10 @@ class _ManagerAppShellState extends State<ManagerAppShell>
     _screens = _buildScreens();
     ManagerEntitlements.features.addListener(_featuresChanged);
     unawaited(_refreshEntitlements());
-    _entitlementTimer = Timer.periodic(
-      const Duration(seconds: 10),
-      (_) => unawaited(_refreshEntitlements()),
-    );
+    _entitlementTimer = Timer.periodic(const Duration(seconds: 10), (_) {
+      unawaited(_refreshEntitlements());
+      unawaited(_refreshOperations());
+    });
     ManagerAppPreferences.dashboardAppearance.addListener(
       _onDashboardAppearanceChanged,
     );
@@ -166,16 +208,20 @@ class _ManagerAppShellState extends State<ManagerAppShell>
   void didChangeAppLifecycleState(AppLifecycleState state) {
     switch (state) {
       case AppLifecycleState.resumed:
+        _operationForeground = true;
+        unawaited(_refreshOperations());
         unawaited(_refreshEntitlements());
         _suppressToastsForResumeReconnect();
         MonitoringSocketService.onAppResumed();
         break;
       case AppLifecycleState.paused:
       case AppLifecycleState.inactive:
+        _operationForeground = false;
         MonitoringSocketService.onAppPaused();
         break;
       case AppLifecycleState.detached:
       case AppLifecycleState.hidden:
+        _operationForeground = false;
         break;
     }
   }
@@ -439,6 +485,8 @@ class _ManagerAppShellState extends State<ManagerAppShell>
                           ),
                         ),
                       ),
+                    if (_operationScope != null)
+                      ManagerOperationsPanel(scope: _operationScope!),
                     Expanded(
                       child: PageView(
                         key: ValueKey(_pageController),

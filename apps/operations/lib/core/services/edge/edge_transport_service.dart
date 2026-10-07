@@ -304,6 +304,29 @@ class EdgeTransportService {
       );
     }
 
+    if (command.type == EdgeCommandTypes.managerOperation &&
+        (previous?.status == EdgeExecutionStatus.interrupted ||
+            previous?.status == EdgeExecutionStatus.running) &&
+        command.payload is Map &&
+        (command.payload as Map)['operationType']?.toString().startsWith(
+              'RESERVATION_',
+            ) ==
+            true) {
+      await EdgeCommandJournal.completeExecution(
+        command.commandId,
+        requireDurability: command.type == EdgeCommandTypes.managerOperation,
+        succeeded: false,
+        code: 'manager_operation_outcome_unknown',
+      );
+      return _Handled(
+        _HandledKind.alreadyDone,
+        EdgeCommandResult.failed(
+          command.commandId,
+          code: 'manager_operation_outcome_unknown',
+        ),
+      );
+    }
+
     // An execution this POS started and never finished. For a convergent
     // command, running it again is the right answer and the default. For one
     // whose side effect left the machine — a check that may or may not have
@@ -314,6 +337,7 @@ class EdgeTransportService {
         EdgeCommandTypes.noRepeatAfterInterruption.contains(command.type)) {
       await EdgeCommandJournal.completeExecution(
         command.commandId,
+        requireDurability: command.type == EdgeCommandTypes.managerOperation,
         succeeded: false,
         code: 'interrupted_not_repeated',
       );
@@ -329,11 +353,20 @@ class EdgeTransportService {
       );
     }
 
+    var businessSucceeded = false;
+    var outcomeUnknown = false;
     try {
       final result = await handler.execute(command);
       final succeeded = result.status == EdgeCommandResultStatus.succeeded;
+      businessSucceeded = succeeded;
+      outcomeUnknown = result.code == 'manager_operation_outcome_unknown';
+      if (command.type == EdgeCommandTypes.managerOperation &&
+          (LocalDataAdmission.failure != null ||
+              UpdateReadiness.failure != null))
+        return const _Handled(_HandledKind.executed, null);
       await EdgeCommandJournal.completeExecution(
         command.commandId,
+        requireDurability: command.type == EdgeCommandTypes.managerOperation,
         succeeded: succeeded,
         code: result.code,
         resultProjection: result.resultProjection,
@@ -342,6 +375,12 @@ class EdgeTransportService {
     } catch (error) {
       // A durable edit must be recovered before a business result can be ACKed.
       // Terminal FAILED would lie after startup rolls this intent forward.
+      if (command.type == EdgeCommandTypes.managerOperation &&
+          (businessSucceeded ||
+              outcomeUnknown ||
+              LocalDataAdmission.failure != null ||
+              UpdateReadiness.failure != null))
+        return const _Handled(_HandledKind.executed, null);
       if (command.type == EdgeCommandTypes.orderEdit &&
           (LocalDataAdmission.failure != null ||
               UpdateReadiness.failure != null ||
@@ -349,6 +388,7 @@ class EdgeTransportService {
         return const _Handled(_HandledKind.executed, null);
       await EdgeCommandJournal.completeExecution(
         command.commandId,
+        requireDurability: command.type == EdgeCommandTypes.managerOperation,
         succeeded: false,
         code: 'handler_threw',
       );

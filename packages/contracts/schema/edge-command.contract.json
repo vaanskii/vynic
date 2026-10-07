@@ -98,7 +98,7 @@
       "idempotent": true,
       "repeatAfterInterruption": false,
       "description": "Print an order's customer pre-bill on the POS receipt printer.",
-      "idempotency": "Not naturally idempotent — paper is a side effect the world keeps. Safety comes from the local execution journal: a command already recorded as succeeded is acknowledged again without printing. A command interrupted mid-execution is NOT reprinted automatically, because the honest answer to 'did the paper come out' is unknown and a silent second check is worse than a reported failure.",
+      "idempotency": "Not naturally idempotent \u2014 paper is a side effect the world keeps. Safety comes from the local execution journal: a command already recorded as succeeded is acknowledged again without printing. A command interrupted mid-execution is NOT reprinted automatically, because the honest answer to 'did the paper come out' is unknown and a silent second check is worse than a reported failure.",
       "payload": {
         "posOrderId": "int"
       },
@@ -285,6 +285,21 @@
         "mirrorTables": "original table identities/revisions for ACK CAS"
       },
       "failure": "invalid_order_edit_request; stale_order; stale_date; closed_order; repair_required; service_fee_unavailable"
+    },
+    {
+      "type": "MANAGER_OPERATION",
+      "idempotent": true,
+      "repeatAfterInterruption": true,
+      "description": "Guarded Manager create/cancel/reservation request. Edge only; older POS registries must refuse before effects. Queue admission is not completion.",
+      "idempotency": "Immutable Staff-scoped request and command identity. Order effects use retained POS05 receipts; interrupted standalone reservation work reports retained uncertainty without automatic reexecution.",
+      "payload": {
+        "operationType": "one of the existing non-print Order/Reservation operation spellings",
+        "managerOperation": "{requestId, kind, frozen body, allocated reference reply}",
+        "businessDate": "frozen YYYY-MM-DD for Order creates",
+        "actorStaffId": "server-owned current Staff UUID",
+        "actorUsername": "server-owned current Staff username"
+      },
+      "failure": "unsupported_command_type; stale_date; order_id_conflict; manager_operation_outcome_unknown; explicit domain rejection. Storage recovery receives no false terminal ACK."
     }
   ],
   "resultProjection": "Optional POS-owned versioned result. ORDER_EDIT requires its frozen order image, fingerprint and effective fee percentage; other commands omit it."

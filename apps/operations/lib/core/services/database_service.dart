@@ -600,6 +600,8 @@ class DatabaseService {
     required List<OrderItem> items,
     double? totalAmount,
     String? requestId,
+    bool createOnly = false,
+    String? expectedBusinessDate,
   }) => OrderRepository.upsertMobileTakeawayOrder(
     posOrderId: posOrderId,
     customerName: customerName,
@@ -608,6 +610,8 @@ class DatabaseService {
     items: items,
     totalAmount: totalAmount,
     requestId: requestId,
+    createOnly: createOnly,
+    expectedBusinessDate: expectedBusinessDate,
   );
 
   static Future<Order?> upsertMobileDineInOrder({
@@ -619,6 +623,8 @@ class DatabaseService {
     int guestCount = 0,
     double? totalAmount,
     String? requestId,
+    bool createOnly = false,
+    String? expectedBusinessDate,
   }) => OrderRepository.upsertMobileDineInOrder(
     posOrderId: posOrderId,
     tableNumbers: tableNumbers,
@@ -628,6 +634,8 @@ class DatabaseService {
     guestCount: guestCount,
     totalAmount: totalAmount,
     requestId: requestId,
+    createOnly: createOnly,
+    expectedBusinessDate: expectedBusinessDate,
   );
 
   static Future<Order> createOrderForPackage({
@@ -1153,7 +1161,12 @@ class DatabaseService {
   static Future<String> createReservationFromJson(
     Map<String, dynamic> json, {
     AuditSource source = AuditSource.manager,
-  }) => BackupRepository.createReservationFromJson(json, source: source);
+    bool requireDurability = false,
+  }) => BackupRepository.createReservationFromJson(
+    json,
+    source: source,
+    requireDurability: requireDurability,
+  );
 
   static Map<String, dynamic>? getReservationById(String reservationId) =>
       BackupRepository.getReservationById(reservationId);
@@ -1608,6 +1621,7 @@ class DatabaseService {
     String actorId = 'system',
     String? actorName,
     AuditSource source = AuditSource.pos,
+    bool requireDurability = false,
     String? reason,
   }) => ReservationRepository.updateReservationStatus(
     reservationId,
@@ -1615,6 +1629,7 @@ class DatabaseService {
     actorId: actorId,
     actorName: actorName,
     source: source,
+    requireDurability: requireDurability,
     reason: reason,
   );
 
@@ -1690,12 +1705,14 @@ class DatabaseService {
     String? actorName,
     AuditSource source = AuditSource.pos,
     String? reason,
+    bool propagateErrors = false,
   }) => ReservationRepository.deleteReservation(
     reservationId,
     actorId: actorId,
     actorName: actorName,
     source: source,
     reason: reason,
+    propagateErrors: propagateErrors,
   );
 
   static bool areTablesAvailableForReservation({

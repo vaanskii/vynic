@@ -51,11 +51,12 @@ void main() {
   });
 
   test('the restaurant work is all here, not just the probe', () {
-    expect(posEdgeCommandHandlers, hasLength(19));
+    expect(posEdgeCommandHandlers, hasLength(20));
     expect(
       registry.supportedTypes,
       containsAll(<String>[
         EdgeCommandTypes.orderEdit,
+        EdgeCommandTypes.managerOperation,
         EdgeCommandTypes.tableRepair,
         EdgeCommandTypes.orderUpdate,
         EdgeCommandTypes.orderCancel,

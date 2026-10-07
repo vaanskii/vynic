@@ -31,12 +31,24 @@ extension _LiveStatusTakeawayView on _LiveStatusScreenState {
     if (confirmed != true || !mounted) return;
 
     try {
-      await MobileApiService.cancelOrder(order.orderId);
-      if (!mounted) return;
-      _showStatusToast('შეკვეთა გაუქმებულია');
-      _loadTakeaway();
+      final result = await MobileApiService.cancelOrder(
+        order.orderId,
+        expectedScope: _operationScope,
+      );
+      if (!mounted ||
+          _operationScope == null ||
+          !MobileApiService.isCurrentTableRepairScope(_operationScope!))
+        return;
+      _showStatusToast(
+        result.message,
+        isError: result.delivery.name == 'failed',
+      );
+      if (result.isDone) _loadTakeaway();
     } catch (e) {
-      if (!mounted) return;
+      if (!mounted ||
+          _operationScope == null ||
+          !MobileApiService.isCurrentTableRepairScope(_operationScope!))
+        return;
       _showStatusToast('შეცდომა: $e', isError: true);
     }
   }
@@ -70,12 +82,24 @@ extension _LiveStatusTakeawayView on _LiveStatusScreenState {
     );
     if (confirmed != true || !mounted) return;
     try {
-      await MobileApiService.deleteTakeawayOrder(order.orderId);
-      if (!mounted) return;
-      _showStatusToast('შეკვეთა გაუქმდა');
-      _loadTakeaway();
+      final result = await MobileApiService.deleteTakeawayOrder(
+        order.orderId,
+        expectedScope: _operationScope,
+      );
+      if (!mounted ||
+          _operationScope == null ||
+          !MobileApiService.isCurrentTableRepairScope(_operationScope!))
+        return;
+      _showStatusToast(
+        result.message,
+        isError: result.delivery.name == 'failed',
+      );
+      if (result.isDone) _loadTakeaway();
     } catch (e) {
-      if (!mounted) return;
+      if (!mounted ||
+          _operationScope == null ||
+          !MobileApiService.isCurrentTableRepairScope(_operationScope!))
+        return;
       _showStatusToast('შეცდომა: $e', isError: true);
     }
   }

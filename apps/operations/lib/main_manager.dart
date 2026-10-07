@@ -1,3 +1,4 @@
+import 'package:vynic/core/services/manager_app/manager_operation_request.dart';
 import 'package:vynic/core/services/manager_app/table_repair_request.dart';
 import 'package:vynic/core/widgets/connection_feedback.dart';
 import 'dart:io';
@@ -24,6 +25,7 @@ Future<void> main() async {
     AuthTokenService.init(),
     MobileCacheService.init(),
     TableRepairRequests.init(),
+    ManagerOperationRequests.init(),
     ManagerAppPreferences.init(),
   ]);
   try {

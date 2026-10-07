@@ -1,3 +1,5 @@
+import 'package:vynic/core/services/manager_app/manager_operation_request.dart';
+import 'package:vynic/apps/mobile_app/presentation/widgets/manager_operations_panel.dart';
 import 'package:vynic/apps/mobile_app/theme/manager_theme.dart';
 import 'package:vynic/apps/mobile_app/presentation/widgets/mobile_glass_ui.dart';
 import 'dart:async';
@@ -49,9 +51,15 @@ class _StaffPerformanceScreenState extends State<StaffPerformanceScreen> {
   String? _error;
   int _lastRealtimeTick = 0;
 
+  String? _operationScope;
   @override
   void initState() {
     super.initState();
+    try {
+      _operationScope = MobileApiService.tableRepairScope;
+    } catch (_) {
+      _operationScope = null;
+    }
     _selectedDate = _businessNow();
     _loadReservations();
     _lastRealtimeTick = MonitoringSocketService.updateCounter.value;
@@ -164,17 +172,23 @@ class _StaffPerformanceScreenState extends State<StaffPerformanceScreen> {
     ManagerToast.showSnackBar(context, msg, isError: error);
   }
 
-  Future<void> _updateStatus(String id, String status) async {
-    await MobileApiService.updateReservationStatus(
+  Future<ManagerOperationResult> _updateStatus(String id, String status) async {
+    final result = await MobileApiService.updateReservationStatus(
       reservationId: id,
+      expectedScope: _operationScope,
       status: status,
     );
-    await _loadReservations();
+    if (result.isDone) await _loadReservations();
+    return result;
   }
 
-  Future<void> _deleteReservation(String id) async {
-    await MobileApiService.deleteReservation(id);
-    await _loadReservations();
+  Future<ManagerOperationResult> _deleteReservation(String id) async {
+    final result = await MobileApiService.deleteReservation(
+      id,
+      expectedScope: _operationScope,
+    );
+    if (result.isDone) await _loadReservations();
+    return result;
   }
 
   Future<void> _pickReservationDate() async {
@@ -303,6 +317,7 @@ class _StaffPerformanceScreenState extends State<StaffPerformanceScreen> {
     final changed = await Navigator.of(context).push<bool>(
       ReservationDetailScreen.route(
         row: row,
+        operationScope: _operationScope,
         onUpdateStatus: _updateStatus,
         onDelete: _deleteReservation,
       ),
@@ -338,14 +353,20 @@ class _StaffPerformanceScreenState extends State<StaffPerformanceScreen> {
             },
           )
           .toList();
-      await MobileApiService.createWalkInOrder(
+      final result = await MobileApiService.createWalkInOrder(
+        expectedScope: _operationScope,
+        newRequest: true,
         tableNumbers: tables,
         floor: floor,
         waiterName: widget.user.username,
         items: items,
       );
-      await _loadReservations();
-      _toast('Walk-in შეიქმნა');
+      if (!mounted ||
+          _operationScope == null ||
+          !MobileApiService.isCurrentTableRepairScope(_operationScope!))
+        return;
+      if (result.isDone) await _loadReservations();
+      _toast(result.message, error: result.delivery.name == 'failed');
     } catch (_) {
       _toast('walk-in ვერ შეიქმნა', error: true);
     } finally {
@@ -515,33 +536,36 @@ class _StaffPerformanceScreenState extends State<StaffPerformanceScreen> {
   // ── Build ──────────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.transparent,
-      body: Stack(
-        children: [
-          Positioned(
-            top: -100,
-            right: -50,
-            child: _GlowOrb(color: MobileGlassTheme.primary, size: 300),
-          ),
-          Positioned(
-            top: 320,
-            left: -100,
-            child: _GlowOrb(color: Color(0xFF0EA5E9), size: 240),
-          ),
-          SafeArea(
-            bottom: false,
-            child: _isLoading
-                ? Center(
-                    child: CircularProgressIndicator(
-                      color: MobileGlassTheme.primary,
-                    ),
-                  )
-                : _error != null
-                ? _buildError()
-                : _buildContent(),
-          ),
-        ],
+    return ManagerOperationBoundary(
+      scope: _operationScope,
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        body: Stack(
+          children: [
+            Positioned(
+              top: -100,
+              right: -50,
+              child: _GlowOrb(color: MobileGlassTheme.primary, size: 300),
+            ),
+            Positioned(
+              top: 320,
+              left: -100,
+              child: _GlowOrb(color: Color(0xFF0EA5E9), size: 240),
+            ),
+            SafeArea(
+              bottom: false,
+              child: _isLoading
+                  ? Center(
+                      child: CircularProgressIndicator(
+                        color: MobileGlassTheme.primary,
+                      ),
+                    )
+                  : _error != null
+                  ? _buildError()
+                  : _buildContent(),
+            ),
+          ],
+        ),
       ),
     );
   }

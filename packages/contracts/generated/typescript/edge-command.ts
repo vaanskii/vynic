@@ -324,6 +324,22 @@ export const EdgeCommandTypes = {
    * Failure: invalid_order_edit_request; stale_order; stale_date; closed_order; repair_required; service_fee_unavailable
    */
   ORDER_EDIT: 'ORDER_EDIT',
+
+  /**
+   * Guarded Manager create/cancel/reservation request. Edge only; older POS registries must refuse before effects. Queue admission is not completion.
+   *
+   * Idempotency: Immutable Staff-scoped request and command identity. Order effects use retained POS05 receipts; interrupted standalone reservation work reports retained uncertainty without automatic reexecution.
+   *
+   * Payload:
+   * - `operationType`: one of the existing non-print Order/Reservation operation spellings
+   * - `managerOperation`: {requestId, kind, frozen body, allocated reference reply}
+   * - `businessDate`: frozen YYYY-MM-DD for Order creates
+   * - `actorStaffId`: server-owned current Staff UUID
+   * - `actorUsername`: server-owned current Staff username
+   *
+   * Failure: unsupported_command_type; stale_date; order_id_conflict; manager_operation_outcome_unknown; explicit domain rejection. Storage recovery receives no false terminal ACK.
+   */
+  MANAGER_OPERATION: 'MANAGER_OPERATION',
 } as const;
 
 export type EdgeCommandType =
@@ -346,7 +362,8 @@ export type EdgeCommandType =
   | 'STAFF_RENAME'
   | 'STAFF_DELETE'
   | 'TABLE_REPAIR'
-  | 'ORDER_EDIT';
+  | 'ORDER_EDIT'
+  | 'MANAGER_OPERATION';
 
 /**
  * Command types that may be executed more than once without extra effect.
@@ -376,6 +393,7 @@ export const EDGE_IDEMPOTENT_COMMAND_TYPES: ReadonlySet<string> = new Set([
   'STAFF_DELETE',
   'TABLE_REPAIR',
   'ORDER_EDIT',
+  'MANAGER_OPERATION',
 ]);
 
 /**

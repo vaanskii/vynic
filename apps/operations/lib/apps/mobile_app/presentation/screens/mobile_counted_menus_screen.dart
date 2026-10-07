@@ -369,8 +369,15 @@ class _MobileCountedMenusScreenState extends State<MobileCountedMenusScreen> {
     if (id.isEmpty || _printing.contains(id)) return;
     setState(() => _printing.add(id));
     try {
-      await MobileApiService.printCountedMenu(id);
-      if (mounted) showSuccessToast(context, 'ჩეკი გაიგზავნა POS-ზე');
+      final delivery = await MobileApiService.printCountedMenu(id);
+      if (mounted)
+        showPosToast(
+          context: context,
+          message: delivery.printMessage,
+          style: delivery.name == 'failed' || delivery.name == 'unavailable'
+              ? PosToastStyle.error
+              : PosToastStyle.info,
+        );
     } catch (e) {
       if (!mounted) return;
       final message = e.toString();

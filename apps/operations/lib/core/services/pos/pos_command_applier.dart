@@ -122,6 +122,17 @@ class PosCommandApplier {
       Object error,
       StackTrace stack,
     ) {
+      if (frozen['managerOperation'] is Map) {
+        if (error is OrderMutationConflict &&
+                error.code == 'recovery_required' ||
+            LocalDataAdmission.failure != null ||
+            UpdateReadiness.failure != null)
+          Error.throwWithStackTrace(error, stack);
+        if (operation.contains('Reservation'))
+          return const PosCommandOutcome.failed(
+            'manager_operation_outcome_unknown',
+          );
+      }
       if (error is OrderMutationConflict)
         return PosCommandOutcome.conflicting(
           error.code,
@@ -278,6 +289,24 @@ class PosCommandApplier {
     required bool treatMissingAsDone,
   }) async {
     final existing = DatabaseService.getOrder(posOrderId);
+    if (p['managerOperation'] is Map) {
+      final requestId = p['_mutationRequestId'] as String?;
+      final receipt = requestId == null
+          ? null
+          : OrderTableMutationRepository.read(requestId);
+      final priorOrder = receipt?.request['order'] as Map?;
+      final uuid = priorOrder?['orderUuid'] ?? existing?.orderUuid;
+      final date = priorOrder == null
+          ? existing?.createdAt.toIso8601String().split('T')[0]
+          : (priorOrder['createdAt'] as String?)?.split('T')[0];
+      if (p['orderUuid'] is! String ||
+          p['orderUuid'] != uuid ||
+          p['businessDate'] != date)
+        return const PosCommandOutcome.conflicting('stale_order_identity');
+      if (receipt == null &&
+          p['businessDate'] != OrderTableMutationRepository.dateKey)
+        return const PosCommandOutcome.conflicting('stale_date');
+    }
     final tableSeg = existing != null
         ? formatTablesSegment(existing.tableNumbers, existing.floor)
         : '';
@@ -454,6 +483,10 @@ class PosCommandApplier {
 
     final order = await DatabaseService.upsertMobileTakeawayOrder(
       posOrderId: posOrderId,
+      createOnly: p['managerOperation'] is Map,
+      expectedBusinessDate: p['managerOperation'] is Map
+          ? p['businessDate'] as String?
+          : null,
       requestId:
           p['_mutationRequestId'] as String? ?? p['requestId'] as String?,
       customerName: _string(p['customerName']),
@@ -520,6 +553,10 @@ class PosCommandApplier {
 
     final order = await DatabaseService.upsertMobileDineInOrder(
       posOrderId: posOrderId,
+      createOnly: p['managerOperation'] is Map,
+      expectedBusinessDate: p['managerOperation'] is Map
+          ? p['businessDate'] as String?
+          : null,
       requestId:
           p['_mutationRequestId'] as String? ?? p['requestId'] as String?,
       tableNumbers: tableNumbers,
@@ -814,6 +851,10 @@ class PosCommandApplier {
       if (requestedId.isNotEmpty) {
         final existing = DatabaseService.getReservationById(requestedId);
         if (existing != null) {
+          if (p['managerOperation'] is Map)
+            return const PosCommandOutcome.conflicting(
+              'reservation_id_conflict',
+            );
           return PosCommandOutcome.success(
             code: 'already_exists',
             data: <String, dynamic>{'reservation': existing},
@@ -824,6 +865,7 @@ class PosCommandApplier {
       final id = await DatabaseService.createReservationFromJson(
         <String, dynamic>{...p, if (requestedId.isNotEmpty) 'id': requestedId},
         source: _reservationSource(p),
+        requireDurability: p['managerOperation'] is Map,
       );
       final reservation = DatabaseService.getReservationById(id);
       final customerName = _string(
@@ -857,6 +899,10 @@ class PosCommandApplier {
         },
       );
     } catch (e) {
+      if (p['managerOperation'] is Map)
+        return const PosCommandOutcome.failed(
+          'manager_operation_outcome_unknown',
+        );
       return PosCommandOutcome.invalid(
         'reservation_invalid',
         detail: e.toString(),
@@ -888,6 +934,7 @@ class PosCommandApplier {
       status,
       actorId: _actor(p['updatedBy'] ?? p['cancelledBy'] ?? p['waiterName']),
       source: _reservationSource(p),
+      requireDurability: p['managerOperation'] is Map,
       reason: _string(p['reason']),
     );
     _notify(
@@ -921,6 +968,7 @@ class PosCommandApplier {
       actorId: _actor(p['deletedBy'] ?? p['updatedBy']),
       source: _reservationSource(p),
       reason: _string(p['reason']),
+      propagateErrors: p['managerOperation'] is Map,
     );
     scheduleCloudSync();
     return const PosCommandOutcome.success();

@@ -69,6 +69,7 @@ class AuditEventService {
     String? entityType,
     String? entityId,
     Map<String, dynamic> data = const {},
+    bool requireDurability = false,
   }) async {
     final event = AuditEventLog(
       action: action,
@@ -86,10 +87,12 @@ class AuditEventService {
     try {
       final box = DatabaseService.getAuditLogBox();
       await box.put(event.id, event.toMap());
+      if (requireDurability) await box.flush();
 
       // Proactive debounced sync
       LocalDataAdmission.afterMutation(() => unawaited(syncEvents()));
     } catch (e) {
+      if (requireDurability) rethrow;
       debugPrint(
         '[AuditEventService] CRITICAL: Failed to write audit event: $e',
       );

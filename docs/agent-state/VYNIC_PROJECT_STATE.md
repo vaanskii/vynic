@@ -502,9 +502,20 @@ current transport status.
   routes, and reports saved only after POS success. Unknown terminal outcomes
   require reconciliation. The runbook and synthetic qualification boundaries are
   `docs/MGR05_ATOMIC_ORDER_EDIT.md`; exact committed evidence is
-  `docs/proofs/MGR05_COMMITTED_424fbad_2026-10-07.json`. Broader MGR-03 and
-  Windows release gates remain separate; POS-02 printer/driver acceptance is
+  `docs/proofs/MGR05_COMMITTED_424fbad_2026-10-07.json`. Windows release gates remain separate; POS-02 printer/driver acceptance is
   deferred and VM work stays HELD.
+- MGR-03 implements retained delivery for seven Manager cancellation/creation/
+  reservation paths. Staff/Venue-authorized immutable MANAGER_OPERATION commands
+  are pulled by the selected active POS; admission and ACK leave Cloud mirrors
+  unchanged until POS sync. Guarded Order work uses existing recoverable receipts;
+  uncertain/interrupted reservation effects are retained for onsite reconciliation,
+  never automatically replayed. Manager flushes scoped UUID/drafts before HTTP,
+  restores pending forms, fences changed sessions and reports completion only on
+  POS SUCCEEDED. Fresh identical creations allocate new identities after completion.
+  The unsupported reservation Complete action is removed; seating/completion stays
+  at the POS. Delivery/pruning/rollback policy and qualification:
+  `docs/MGR03_OPERATION_DELIVERY.md`. Exact committed qualification is recorded
+  separately after the final source export. POS-02 remains deferred; VM stays HELD.
 - Every Order audit report opens with a typed creation event carrying
   `orderKind` (`WALK_IN`, `TAKEAWAY`, `PACKAGE`, `RESERVATION`), `tableRefs`,
   `source`, `actorId`, `actorName`, `businessDate`: `CREATE_WALKIN` for POS
@@ -520,9 +531,9 @@ current transport status.
   emptied by transfer closes its report with a locked `TRANSFER_CLOSE`
   (`closeReason=EMPTIED_BY_TRANSFER`, `transferredToOrderId`) and still writes
   no Sale. The backend normalizer stores all of these as themselves; it must be
-  deployed before a POS build that emits them. Manager `DELETE
-  /mobile/takeaway-orders/:id` now marks the Cloud row cancelled instead of
-  deleting it before dispatching `ORDER_CANCEL`.
+  deployed before a POS build that emits them. Manager `DELETE /mobile/takeaway-orders/:id` now queues a guarded
+  retained cancellation without changing the Cloud row; authoritative POS sync
+  subsequently projects its state.
 - Close payment semantics are structured, not textual: `CLOSE` /
   `INTERNAL_CLOSE` stay the only closure types and `details.paymentMethod`,
   `paymentBreakdown`, `cashAmount`, `cardAmount`, `advanceApplied`,

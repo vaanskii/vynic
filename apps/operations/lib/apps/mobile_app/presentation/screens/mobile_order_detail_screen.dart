@@ -1,3 +1,4 @@
+import 'package:vynic/apps/mobile_app/presentation/widgets/manager_operations_panel.dart';
 import 'package:vynic/apps/mobile_app/theme/manager_theme.dart';
 import 'package:vynic/apps/mobile_app/presentation/widgets/mobile_glass_ui.dart';
 import 'package:flutter/material.dart';
@@ -423,10 +424,17 @@ class _MobileOrderDetailScreenState extends State<MobileOrderDetailScreen> {
     if (confirmed != true || !mounted) return;
 
     try {
-      await MobileApiService.cancelOrder(order.orderId);
-      if (!mounted) return;
-      ManagerToast.show(context, 'მაგიდა გაუქმებულია');
-      Navigator.pop(context, 'cancelled');
+      final result = await MobileApiService.cancelOrder(
+        order.orderId,
+        expectedScope: _displayedEditScope,
+      );
+      if (!mounted || !_sameEditSession) return;
+      ManagerToast.show(
+        context,
+        result.message,
+        isError: result.delivery.name == 'failed',
+      );
+      if (result.isDone) Navigator.pop(context, 'cancelled');
     } catch (e) {
       if (!mounted) return;
       ManagerToast.show(context, 'გაუქმება ვერ მოხერხდა: $e', isError: true);
@@ -493,7 +501,8 @@ class _MobileOrderDetailScreenState extends State<MobileOrderDetailScreen> {
       // somebody to an empty printer.
       ManagerToast.show(
         context,
-        delivery.isPending ? 'ბეჭდვა გაიგზავნა POS-ზე' : 'ჩეკი დაიბეჭდა',
+        delivery.printMessage,
+        isError: delivery.name == 'failed' || delivery.name == 'unavailable',
       );
     } catch (e) {
       if (!mounted) return;
@@ -590,106 +599,118 @@ class _MobileOrderDetailScreenState extends State<MobileOrderDetailScreen> {
   @override
   Widget build(BuildContext context) {
     if (!_sameEditSession)
-      return MobileGlassScreen(
-        body: Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
+      return ManagerOperationBoundary(
+        scope: _displayedEditScope,
+        slot: 'order_cancel:${widget.orderId}',
+        child: MobileGlassScreen(
+          body: Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text('სესია შეიცვალა — გახსენით შეკვეთა თავიდან'),
+                TextButton(
+                  onPressed: () => Navigator.of(context).maybePop(),
+                  child: const Text('უკან'),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    if (_isLoading) {
+      return ManagerOperationBoundary(
+        scope: _displayedEditScope,
+        slot: 'order_cancel:${widget.orderId}',
+        child: MobileGlassScreen(
+          orbs: [
+            Positioned(
+              top: -80,
+              right: -60,
+              child: MobileGlowOrb(color: MobileGlassTheme.primary, size: 220),
+            ),
+            Positioned(
+              bottom: 80,
+              left: -80,
+              child: MobileGlowOrb(color: MobileGlassTheme.accent, size: 260),
+            ),
+          ],
+          body: Column(
             children: [
-              const Text('სესია შეიცვალა — გახსენით შეკვეთა თავიდან'),
-              TextButton(
-                onPressed: () => Navigator.of(context).maybePop(),
-                child: const Text('უკან'),
+              MobileGlassHeader(
+                title: 'შეკვეთა #${widget.orderId}',
+                onBack: () => Navigator.pop(context),
+              ),
+              Expanded(
+                child: Center(
+                  child: CircularProgressIndicator(
+                    color: MobileGlassTheme.primary,
+                  ),
+                ),
               ),
             ],
           ),
         ),
       );
-    if (_isLoading) {
-      return MobileGlassScreen(
-        orbs: [
-          Positioned(
-            top: -80,
-            right: -60,
-            child: MobileGlowOrb(color: MobileGlassTheme.primary, size: 220),
-          ),
-          Positioned(
-            bottom: 80,
-            left: -80,
-            child: MobileGlowOrb(color: MobileGlassTheme.accent, size: 260),
-          ),
-        ],
-        body: Column(
-          children: [
-            MobileGlassHeader(
-              title: 'შეკვეთა #${widget.orderId}',
-              onBack: () => Navigator.pop(context),
-            ),
-            Expanded(
-              child: Center(
-                child: CircularProgressIndicator(
-                  color: MobileGlassTheme.primary,
-                ),
-              ),
-            ),
-          ],
-        ),
-      );
     }
 
     if (_order == null) {
-      return MobileGlassScreen(
-        orbs: [
-          Positioned(
-            top: -80,
-            right: -60,
-            child: MobileGlowOrb(color: MobileGlassTheme.warn, size: 220),
-          ),
-        ],
-        body: Column(
-          children: [
-            MobileGlassHeader(
-              title: 'შეკვეთა #${widget.orderId}',
-              onBack: () => Navigator.pop(context),
+      return ManagerOperationBoundary(
+        scope: _displayedEditScope,
+        slot: 'order_cancel:${widget.orderId}',
+        child: MobileGlassScreen(
+          orbs: [
+            Positioned(
+              top: -80,
+              right: -60,
+              child: MobileGlowOrb(color: MobileGlassTheme.warn, size: 220),
             ),
-            Expanded(
-              child: Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(24),
-                  child: MobileGlassCard(
+          ],
+          body: Column(
+            children: [
+              MobileGlassHeader(
+                title: 'შეკვეთა #${widget.orderId}',
+                onBack: () => Navigator.pop(context),
+              ),
+              Expanded(
+                child: Center(
+                  child: Padding(
                     padding: const EdgeInsets.all(24),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.warning_amber_rounded,
-                          size: 48,
-                          color: MobileGlassTheme.warn,
-                        ),
-                        SizedBox(height: 16),
-                        Text(
-                          'შეკვეთა ვერ მოიძებნა',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: MobileGlassTheme.textPrimary,
+                    child: MobileGlassCard(
+                      padding: const EdgeInsets.all(24),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.warning_amber_rounded,
+                            size: 48,
+                            color: MobileGlassTheme.warn,
                           ),
-                        ),
-                        SizedBox(height: 16),
-                        MobileGlassPrimaryButton(
-                          label: 'თავიდან',
-                          icon: Icons.refresh_rounded,
-                          onPressed: () {
-                            setState(() => _isLoading = true);
-                            _loadOrder();
-                          },
-                        ),
-                      ],
+                          SizedBox(height: 16),
+                          Text(
+                            'შეკვეთა ვერ მოიძებნა',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: MobileGlassTheme.textPrimary,
+                            ),
+                          ),
+                          SizedBox(height: 16),
+                          MobileGlassPrimaryButton(
+                            label: 'თავიდან',
+                            icon: Icons.refresh_rounded,
+                            onPressed: () {
+                              setState(() => _isLoading = true);
+                              _loadOrder();
+                            },
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       );
     }
@@ -697,47 +718,51 @@ class _MobileOrderDetailScreenState extends State<MobileOrderDetailScreen> {
     final order = _order!;
     final dateFmt = DateFormat('dd.MM.yyyy HH:mm');
 
-    return MobileGlassScreen(
-      orbs: [
-        Positioned(
-          top: -90,
-          right: -70,
-          child: MobileGlowOrb(color: MobileGlassTheme.primary, size: 240),
-        ),
-        Positioned(
-          bottom: 100,
-          left: -90,
-          child: MobileGlowOrb(color: MobileGlassTheme.accent, size: 280),
-        ),
-      ],
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          MobileGlassHeader(
-            title: 'შეკვეთა #${order.orderId}',
-            subtitle: _tableLabel(order),
-            onBack: () => Navigator.pop(context),
-            actions: [
-              IconButton(
-                onPressed: _viewReceipt,
-                icon: Icon(
-                  Icons.receipt_long_rounded,
-                  color: MobileGlassTheme.muted(0.85),
-                ),
-                tooltip: 'ქვითარი',
-              ),
-            ],
+    return ManagerOperationBoundary(
+      scope: _displayedEditScope,
+      slot: 'order_cancel:${widget.orderId}',
+      child: MobileGlassScreen(
+        orbs: [
+          Positioned(
+            top: -90,
+            right: -70,
+            child: MobileGlowOrb(color: MobileGlassTheme.primary, size: 240),
           ),
-          if (_editResult != null) _editDeliveryPanel(),
-          if (_highlightKeys.isNotEmpty) _buildChangeBanner(),
-          _buildHeaderCard(order, dateFmt),
-          Expanded(child: _buildItemsList(order)),
-          _buildTotalsFooter(order),
-          if (_canEdit && _serviceFeeAvailable && widget.floor != 'takeaway')
-            _buildServiceFeeRow(order),
-          _buildPrintCheckBar(),
-          if (_canEdit) _buildActionBar(),
+          Positioned(
+            bottom: 100,
+            left: -90,
+            child: MobileGlowOrb(color: MobileGlassTheme.accent, size: 280),
+          ),
         ],
+        body: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            MobileGlassHeader(
+              title: 'შეკვეთა #${order.orderId}',
+              subtitle: _tableLabel(order),
+              onBack: () => Navigator.pop(context),
+              actions: [
+                IconButton(
+                  onPressed: _viewReceipt,
+                  icon: Icon(
+                    Icons.receipt_long_rounded,
+                    color: MobileGlassTheme.muted(0.85),
+                  ),
+                  tooltip: 'ქვითარი',
+                ),
+              ],
+            ),
+            if (_editResult != null) _editDeliveryPanel(),
+            if (_highlightKeys.isNotEmpty) _buildChangeBanner(),
+            _buildHeaderCard(order, dateFmt),
+            Expanded(child: _buildItemsList(order)),
+            _buildTotalsFooter(order),
+            if (_canEdit && _serviceFeeAvailable && widget.floor != 'takeaway')
+              _buildServiceFeeRow(order),
+            _buildPrintCheckBar(),
+            if (_canEdit) _buildActionBar(),
+          ],
+        ),
       ),
     );
   }

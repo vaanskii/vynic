@@ -195,6 +195,7 @@ the implementation and nearby tests. Do not treat this as architecture truth.
 - Effective feature state: `apps/operations/lib/core/services/manager_app/manager_entitlements.dart`; centralized keys: `core/models/feature_keys.dart`
 - Shared Manager API client: `apps/operations/lib/core/services/manager_app/mobile_api_service.dart`
 - MGR-05 guarded Order editing: Cloud `src/mobile/services/manager-order-edit.ts`, `src/edge/order-edit-result.ts`; POS `lib/core/database/repositories/order_edit_repository.dart` and `lib/core/models/order_edit_projection.dart`; Manager retained requests `lib/core/services/manager_app/order_edit_request.dart` (under the respective backend/operations roots). Runbook: `docs/MGR05_ATOMIC_ORDER_EDIT.md`; synthetic HTTP/PG and SIGKILL runners: backend `tool/prove_mgr05_postgres.py`, operations `tool/prove_mgr05_recovery.py`.
+- MGR-03 retained operation delivery: backend `src/mobile/services/manager-operation.ts`; Manager `lib/core/services/manager_app/manager_operation_request.dart` and `presentation/widgets/manager_operations_panel.dart`; guarded native handler/journal in `lib/core/services/edge/`. Runbook `docs/MGR03_OPERATION_DELIVERY.md`; synthetic runners backend `tool/prove_mgr03_postgres.py`, operations `tool/prove_mgr03_recovery.py` (under the corresponding app roots).
 - Backend controller/services: `apps/backend/src/mobile/`
 - Auth and tenant resolution: `apps/backend/src/auth/auth.service.ts`, `apps/backend/src/auth/manager-tenant.service.ts`
 - Tenant rules: `docs/MANAGER_TENANT_AUTH.md`

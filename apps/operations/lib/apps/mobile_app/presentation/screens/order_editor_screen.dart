@@ -1,3 +1,4 @@
+import 'package:vynic/apps/mobile_app/presentation/widgets/manager_operations_panel.dart';
 import 'package:vynic/apps/mobile_app/presentation/widgets/mobile_glass_ui.dart';
 import 'package:vynic/apps/mobile_app/presentation/widgets/mobile_menu_pin_sheet.dart';
 import 'package:flutter/material.dart';
@@ -599,13 +600,24 @@ class _OrderEditorScreenState extends State<OrderEditorScreen> {
     if (confirmed != true || !mounted) return;
 
     try {
-      await MobileApiService.cancelOrder(widget.orderId);
-      if (mounted) {
-        ManagerToast.show(context, 'მაგიდა გაუქმებულია');
-        Navigator.pop(context, 'cancelled');
+      final result = await MobileApiService.cancelOrder(
+        widget.orderId,
+        expectedScope: _editScope,
+      );
+      if (mounted &&
+          _editScope != null &&
+          MobileApiService.isCurrentTableRepairScope(_editScope!)) {
+        ManagerToast.show(
+          context,
+          result.message,
+          isError: result.delivery.name == 'failed',
+        );
+        if (result.isDone) Navigator.pop(context, 'cancelled');
       }
     } catch (e) {
-      if (mounted) {
+      if (mounted &&
+          _editScope != null &&
+          MobileApiService.isCurrentTableRepairScope(_editScope!)) {
         ManagerToast.show(context, 'გაუქმება ვერ მოხერხდა: $e', isError: true);
       }
     }
@@ -616,212 +628,117 @@ class _OrderEditorScreenState extends State<OrderEditorScreen> {
     final displayedRepairScope = _editScope ?? '';
     if (_editScope == null ||
         !MobileApiService.isCurrentTableRepairScope(_editScope!)) {
-      return MobileGlassScreen(
-        body: Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
+      return ManagerOperationBoundary(
+        scope: _editScope,
+        slot: 'order_cancel:${widget.orderId}',
+        child: MobileGlassScreen(
+          body: Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text('სესია შეიცვალა — გახსენით შეკვეთა თავიდან'),
+                TextButton(
+                  onPressed: () => Navigator.of(context).maybePop(),
+                  child: const Text('უკან'),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+    if (_isLoading) {
+      return ManagerOperationBoundary(
+        scope: _editScope,
+        slot: 'order_cancel:${widget.orderId}',
+        child: MobileGlassScreen(
+          orbs: [
+            Positioned(
+              top: -80,
+              right: -50,
+              child: MobileGlowOrb(color: MobileGlassTheme.primary, size: 220),
+            ),
+          ],
+          body: Column(
             children: [
-              const Text('სესია შეიცვალა — გახსენით შეკვეთა თავიდან'),
-              TextButton(
-                onPressed: () => Navigator.of(context).maybePop(),
-                child: const Text('უკან'),
+              MobileGlassHeader(
+                title: 'რედაქტირება',
+                subtitle: _orderSubtitle(),
+                onBack: () => Navigator.pop(context),
+              ),
+              Expanded(
+                child: Center(
+                  child: CircularProgressIndicator(
+                    color: MobileGlassTheme.primary,
+                  ),
+                ),
               ),
             ],
           ),
         ),
       );
     }
-    if (_isLoading) {
-      return MobileGlassScreen(
-        orbs: [
-          Positioned(
-            top: -80,
-            right: -50,
-            child: MobileGlowOrb(color: MobileGlassTheme.primary, size: 220),
-          ),
-        ],
-        body: Column(
-          children: [
-            MobileGlassHeader(
-              title: 'რედაქტირება',
-              subtitle: _orderSubtitle(),
-              onBack: () => Navigator.pop(context),
-            ),
-            Expanded(
-              child: Center(
-                child: CircularProgressIndicator(
-                  color: MobileGlassTheme.primary,
-                ),
-              ),
-            ),
-          ],
-        ),
-      );
-    }
 
     if (_order == null) {
-      return MobileGlassScreen(
-        orbs: [
-          Positioned(
-            top: -80,
-            right: -60,
-            child: MobileGlowOrb(color: MobileGlassTheme.warn, size: 220),
-          ),
-        ],
-        body: Column(
-          children: [
-            MobileGlassHeader(
-              title: _orderTitle(),
-              subtitle: _orderSubtitle(),
-              onBack: () => Navigator.pop(context),
+      return ManagerOperationBoundary(
+        scope: _editScope,
+        slot: 'order_cancel:${widget.orderId}',
+        child: MobileGlassScreen(
+          orbs: [
+            Positioned(
+              top: -80,
+              right: -60,
+              child: MobileGlowOrb(color: MobileGlassTheme.warn, size: 220),
             ),
-            Expanded(
-              child: Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(24),
-                  child: MobileGlassCard(
+          ],
+          body: Column(
+            children: [
+              MobileGlassHeader(
+                title: _orderTitle(),
+                subtitle: _orderSubtitle(),
+                onBack: () => Navigator.pop(context),
+              ),
+              Expanded(
+                child: Center(
+                  child: Padding(
                     padding: const EdgeInsets.all(24),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.warning_amber_rounded,
-                          size: 48,
-                          color: MobileGlassTheme.warn,
-                        ),
-                        SizedBox(height: 16),
-                        Text(
-                          'შეკვეთა #${widget.orderId} ვერ მოიძებნა',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: MobileGlassTheme.textPrimary,
+                    child: MobileGlassCard(
+                      padding: const EdgeInsets.all(24),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.warning_amber_rounded,
+                            size: 48,
+                            color: MobileGlassTheme.warn,
                           ),
-                          textAlign: TextAlign.center,
-                        ),
-                        SizedBox(height: 8),
-                        Text(
-                          'მაგიდა ${widget.tableNumber} (${widget.floor}) ბაზაში დაკავებულად არის მონიშნული, '
-                          'მაგრამ შეკვეთა ვერ მოიძებნა. '
-                          'შეგიძლიათ მაგიდა გაათავისუფლოთ ან სცადოთ ხელახლა.',
-                          style: TextStyle(
-                            color: MobileGlassTheme.muted(0.65),
-                            fontSize: 13,
-                            height: 1.5,
+                          SizedBox(height: 16),
+                          Text(
+                            'შეკვეთა #${widget.orderId} ვერ მოიძებნა',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: MobileGlassTheme.textPrimary,
+                            ),
+                            textAlign: TextAlign.center,
                           ),
-                          textAlign: TextAlign.center,
-                        ),
-                        SizedBox(height: 24),
-                        MobileGlassPrimaryButton(
-                          label: 'მაგიდის გათავისუფლება',
-                          icon: Icons.lock_open_rounded,
-                          onPressed: () async {
-                            try {
-                              final ok = await MobileApiService.freeTable(
-                                widget.tableNumber,
-                                widget.floor,
-                                expectedScope: displayedRepairScope,
-                              );
-                              if (context.mounted &&
-                                  ok.code == 'session_changed') {
-                                ManagerToast.show(
-                                  context,
-                                  ok.message,
-                                  isError: true,
-                                );
-                                return;
-                              }
-                              if (!context.mounted ||
-                                  !MobileApiService.isCurrentTableRepairScope(
-                                    displayedRepairScope,
-                                  ))
-                                return;
-                              if (ok.isDone) {
-                                ManagerToast.show(context, ok.message);
-                                Navigator.pop(context, 'freed');
-                              } else {
-                                ManagerToast.show(
-                                  context,
-                                  ok.message,
-                                  isError: ok.isError,
-                                );
-                              }
-                            } catch (error) {
-                              debugPrint('Table repair request failed: $error');
-                              if (context.mounted)
-                                ManagerToast.show(
-                                  context,
-                                  'მოთხოვნა ვერ გაიგზავნა — განაახლეთ სესია და სცადეთ ხელახლა',
-                                  isError: true,
-                                );
-                            }
-                          },
-                        ),
-                        SizedBox(height: 12),
-                        MobileGlassPrimaryButton(
-                          label: 'შეკვეთის გაუქმება DB-ში',
-                          icon: Icons.delete_outline_rounded,
-                          color: MobileGlassTheme.bad,
-                          onPressed: () async {
-                            final confirmed = await showDialog<bool>(
-                              context: context,
-                              builder: (ctx) => AlertDialog(
-                                backgroundColor: MobileGlassTheme.surfaceCard,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(20),
-                                ),
-                                title: Text(
-                                  'შეკვეთის გაუქმება',
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    color: MobileGlassTheme.textPrimary,
-                                  ),
-                                ),
-                                content: Text(
-                                  'შეკვეთა #${widget.orderId} გაუქმდება '
-                                  'და მაგიდა ${widget.tableNumber} გათავისუფლდება.',
-                                  style: TextStyle(
-                                    color: MobileGlassTheme.muted(0.7),
-                                  ),
-                                ),
-                                actions: [
-                                  TextButton(
-                                    onPressed: () => Navigator.pop(ctx, false),
-                                    child: Text(
-                                      'გაუქმება',
-                                      style: TextStyle(
-                                        color: MobileGlassTheme.muted(),
-                                      ),
-                                    ),
-                                  ),
-                                  ElevatedButton(
-                                    onPressed: () => Navigator.pop(ctx, true),
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: MobileGlassTheme.bad,
-                                      foregroundColor: Colors.white,
-                                      elevation: 0,
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(12),
-                                      ),
-                                    ),
-                                    child: Text('დადასტურება'),
-                                  ),
-                                ],
-                              ),
-                            );
-                            if (confirmed != true || !context.mounted) return;
-                            try {
-                              await MobileApiService.cancelOrder(
-                                widget.orderId,
-                              );
-                              if (!context.mounted ||
-                                  !MobileApiService.isCurrentTableRepairScope(
-                                    displayedRepairScope,
-                                  ))
-                                return;
-                              ManagerToast.show(context, 'შეკვეთა გაუქმებულია');
-                              Navigator.pop(context, 'cancelled');
-                            } catch (_) {
+                          SizedBox(height: 8),
+                          Text(
+                            'მაგიდა ${widget.tableNumber} (${widget.floor}) ბაზაში დაკავებულად არის მონიშნული, '
+                            'მაგრამ შეკვეთა ვერ მოიძებნა. '
+                            'შეგიძლიათ მაგიდა გაათავისუფლოთ ან სცადოთ ხელახლა.',
+                            style: TextStyle(
+                              color: MobileGlassTheme.muted(0.65),
+                              fontSize: 13,
+                              height: 1.5,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                          SizedBox(height: 24),
+                          MobileGlassPrimaryButton(
+                            label: 'მაგიდის გათავისუფლება',
+                            icon: Icons.lock_open_rounded,
+                            onPressed: () async {
                               try {
                                 final ok = await MobileApiService.freeTable(
                                   widget.tableNumber,
@@ -842,12 +759,16 @@ class _OrderEditorScreenState extends State<OrderEditorScreen> {
                                       displayedRepairScope,
                                     ))
                                   return;
-                                ManagerToast.show(
-                                  context,
-                                  ok.message,
-                                  isError: ok.isError,
-                                );
-                                if (ok.isDone) Navigator.pop(context, 'freed');
+                                if (ok.isDone) {
+                                  ManagerToast.show(context, ok.message);
+                                  Navigator.pop(context, 'freed');
+                                } else {
+                                  ManagerToast.show(
+                                    context,
+                                    ok.message,
+                                    isError: ok.isError,
+                                  );
+                                }
                               } catch (error) {
                                 debugPrint(
                                   'Table repair request failed: $error',
@@ -859,131 +780,219 @@ class _OrderEditorScreenState extends State<OrderEditorScreen> {
                                     isError: true,
                                   );
                               }
-                            }
-                          },
-                        ),
-                        SizedBox(height: 12),
-                        TextButton.icon(
-                          icon: Icon(
-                            Icons.refresh_rounded,
-                            color: MobileGlassTheme.muted(0.75),
+                            },
                           ),
-                          label: Text(
-                            'თავიდან ცდა',
-                            style: TextStyle(
+                          SizedBox(height: 12),
+                          MobileGlassPrimaryButton(
+                            label: 'გაუქმების მოთხოვნა POS-ზე',
+                            icon: Icons.delete_outline_rounded,
+                            color: MobileGlassTheme.bad,
+                            onPressed: () async {
+                              final confirmed = await showDialog<bool>(
+                                context: context,
+                                builder: (ctx) => AlertDialog(
+                                  backgroundColor: MobileGlassTheme.surfaceCard,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  title: Text(
+                                    'შეკვეთის გაუქმება',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      color: MobileGlassTheme.textPrimary,
+                                    ),
+                                  ),
+                                  content: Text(
+                                    'შეკვეთა #${widget.orderId} გაუქმდება '
+                                    'და მაგიდა ${widget.tableNumber} გათავისუფლდება.',
+                                    style: TextStyle(
+                                      color: MobileGlassTheme.muted(0.7),
+                                    ),
+                                  ),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () =>
+                                          Navigator.pop(ctx, false),
+                                      child: Text(
+                                        'გაუქმება',
+                                        style: TextStyle(
+                                          color: MobileGlassTheme.muted(),
+                                        ),
+                                      ),
+                                    ),
+                                    ElevatedButton(
+                                      onPressed: () => Navigator.pop(ctx, true),
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: MobileGlassTheme.bad,
+                                        foregroundColor: Colors.white,
+                                        elevation: 0,
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            12,
+                                          ),
+                                        ),
+                                      ),
+                                      child: Text('დადასტურება'),
+                                    ),
+                                  ],
+                                ),
+                              );
+                              if (confirmed != true || !context.mounted) return;
+                              try {
+                                final result =
+                                    await MobileApiService.cancelOrder(
+                                      widget.orderId,
+                                      expectedScope: displayedRepairScope,
+                                    );
+                                if (!context.mounted ||
+                                    !MobileApiService.isCurrentTableRepairScope(
+                                      displayedRepairScope,
+                                    ))
+                                  return;
+                                ManagerToast.show(
+                                  context,
+                                  result.message,
+                                  isError: result.delivery.name == 'failed',
+                                );
+                                if (result.isDone)
+                                  Navigator.pop(context, 'cancelled');
+                              } catch (_) {
+                                if (context.mounted)
+                                  ManagerToast.show(
+                                    context,
+                                    'მოთხოვნა ვერ დადასტურდა — შეამოწმეთ შენარჩუნებული მოთხოვნა',
+                                    isError: true,
+                                  );
+                              }
+                            },
+                          ),
+                          SizedBox(height: 12),
+                          TextButton.icon(
+                            icon: Icon(
+                              Icons.refresh_rounded,
                               color: MobileGlassTheme.muted(0.75),
                             ),
+                            label: Text(
+                              'თავიდან ცდა',
+                              style: TextStyle(
+                                color: MobileGlassTheme.muted(0.75),
+                              ),
+                            ),
+                            onPressed: () {
+                              setState(() => _isLoading = true);
+                              try {
+                                _editScope = MobileApiService.tableRepairScope;
+                              } catch (_) {
+                                _editScope = null;
+                              }
+                              _loadData();
+                            },
                           ),
-                          onPressed: () {
-                            setState(() => _isLoading = true);
-                            try {
-                              _editScope = MobileApiService.tableRepairScope;
-                            } catch (_) {
-                              _editScope = null;
-                            }
-                            _loadData();
-                          },
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       );
     }
 
-    return PopScope(
-      canPop: !_hasChanges && !_isOrderPanelOpen,
-      onPopInvokedWithResult: (didPop, result) async {
-        if (didPop) return;
-        if (_isOrderPanelOpen) {
-          setState(() => _isOrderPanelOpen = false);
-          return;
-        }
-        final shouldPop = await _showExitConfirmation();
-        if (shouldPop && mounted) {
-          Navigator.of(context).pop();
-        }
-      },
-      child: MobileGlassScreen(
-        orbs: [
-          Positioned(
-            top: -90,
-            right: -70,
-            child: MobileGlowOrb(color: MobileGlassTheme.primary, size: 240),
-          ),
-          Positioned(
-            bottom: 80,
-            left: -80,
-            child: MobileGlowOrb(color: MobileGlassTheme.good, size: 220),
-          ),
-        ],
-        body: Column(
-          children: [
-            if (!_isOrderPanelOpen)
-              MobileGlassHeader(
-                title: _orderTitle(),
-                subtitle: _orderSubtitle(),
-                onBack: () async {
-                  if (_hasChanges) {
-                    final shouldPop = await _showExitConfirmation();
-                    if (shouldPop && mounted) Navigator.pop(context);
-                  } else if (mounted) {
-                    Navigator.pop(context);
-                  }
-                },
-                actions: [
-                  IconButton(
-                    onPressed: () => setState(() => _isOrderPanelOpen = true),
-                    icon: Badge(
-                      isLabelVisible: _order!.items.isNotEmpty,
-                      backgroundColor: MobileGlassTheme.primary,
-                      label: Text('${_order!.items.length}'),
-                      child: Icon(
-                        Icons.shopping_cart_outlined,
-                        color: MobileGlassTheme.muted(0.85),
-                      ),
-                    ),
-                  ),
-                  IconButton(
-                    onPressed: _viewCheckPdf,
-                    icon: Icon(
-                      Icons.receipt_long_rounded,
-                      color: MobileGlassTheme.muted(0.85),
-                    ),
-                  ),
-                  IconButton(
-                    onPressed: _cancelOrder,
-                    icon: Icon(
-                      Icons.delete_outline_rounded,
-                      color: MobileGlassTheme.bad.withValues(alpha: 0.9),
-                    ),
-                  ),
-                  if (_hasChanges)
-                    TextButton.icon(
-                      onPressed: _saving ? null : _saveChanges,
-                      icon: Icon(
-                        Icons.check_circle_rounded,
-                        size: 18,
-                        color: MobileGlassTheme.good,
-                      ),
-                      label: Text(
-                        'შენახვა',
-                        style: TextStyle(
-                          color: MobileGlassTheme.good,
-                          fontWeight: FontWeight.bold,
+    return ManagerOperationBoundary(
+      scope: _editScope,
+      slot: 'order_cancel:${widget.orderId}',
+      child: PopScope(
+        canPop: !_hasChanges && !_isOrderPanelOpen,
+        onPopInvokedWithResult: (didPop, result) async {
+          if (didPop) return;
+          if (_isOrderPanelOpen) {
+            setState(() => _isOrderPanelOpen = false);
+            return;
+          }
+          final shouldPop = await _showExitConfirmation();
+          if (shouldPop && mounted) {
+            Navigator.of(context).pop();
+          }
+        },
+        child: MobileGlassScreen(
+          orbs: [
+            Positioned(
+              top: -90,
+              right: -70,
+              child: MobileGlowOrb(color: MobileGlassTheme.primary, size: 240),
+            ),
+            Positioned(
+              bottom: 80,
+              left: -80,
+              child: MobileGlowOrb(color: MobileGlassTheme.good, size: 220),
+            ),
+          ],
+          body: Column(
+            children: [
+              if (!_isOrderPanelOpen)
+                MobileGlassHeader(
+                  title: _orderTitle(),
+                  subtitle: _orderSubtitle(),
+                  onBack: () async {
+                    if (_hasChanges) {
+                      final shouldPop = await _showExitConfirmation();
+                      if (shouldPop && mounted) Navigator.pop(context);
+                    } else if (mounted) {
+                      Navigator.pop(context);
+                    }
+                  },
+                  actions: [
+                    IconButton(
+                      onPressed: () => setState(() => _isOrderPanelOpen = true),
+                      icon: Badge(
+                        isLabelVisible: _order!.items.isNotEmpty,
+                        backgroundColor: MobileGlassTheme.primary,
+                        label: Text('${_order!.items.length}'),
+                        child: Icon(
+                          Icons.shopping_cart_outlined,
+                          color: MobileGlassTheme.muted(0.85),
                         ),
                       ),
                     ),
-                ],
-              ),
-            if (_editResult != null || _order?.managerEditProjection == null)
-              _editStatus(),
-            Expanded(child: _buildMainStack()),
-          ],
+                    IconButton(
+                      onPressed: _viewCheckPdf,
+                      icon: Icon(
+                        Icons.receipt_long_rounded,
+                        color: MobileGlassTheme.muted(0.85),
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: _cancelOrder,
+                      icon: Icon(
+                        Icons.delete_outline_rounded,
+                        color: MobileGlassTheme.bad.withValues(alpha: 0.9),
+                      ),
+                    ),
+                    if (_hasChanges)
+                      TextButton.icon(
+                        onPressed: _saving ? null : _saveChanges,
+                        icon: Icon(
+                          Icons.check_circle_rounded,
+                          size: 18,
+                          color: MobileGlassTheme.good,
+                        ),
+                        label: Text(
+                          'შენახვა',
+                          style: TextStyle(
+                            color: MobileGlassTheme.good,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              if (_editResult != null || _order?.managerEditProjection == null)
+                _editStatus(),
+              Expanded(child: _buildMainStack()),
+            ],
+          ),
         ),
       ),
     );

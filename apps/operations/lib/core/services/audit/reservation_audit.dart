@@ -90,6 +90,7 @@ abstract final class ReservationAudit {
     String? newStatus,
     String? reason,
     Map<String, dynamic> extra = const {},
+    bool requireDurability = false,
   }) async {
     final actor = actorId.trim().isEmpty ? 'unknown' : actorId.trim();
     final name = (actorName == null || actorName.trim().isEmpty)
@@ -97,6 +98,7 @@ abstract final class ReservationAudit {
         : actorName.trim();
     await AuditEventService.logEvent(
       action: action,
+      requireDurability: requireDurability,
       userId: actor,
       entityType: GlobalAuditEntity.reservation,
       entityId: reservation.id,

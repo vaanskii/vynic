@@ -61,16 +61,18 @@ class EdgeCommandJournal {
 
   static const String boxName = 'edge_command_journal';
 
-  /// Terminal entries older than this are pruned. Comfortably longer than any
-  /// lease or redelivery window, short enough that the box stays small.
+  /// Ordinary terminal entries older than this are pruned. Guarded Manager
+  /// outcomes have no proven ACK retirement and remain retained.
   static const Duration retention = Duration(days: 7);
 
-  /// A hard ceiling in case a future command type is enqueued in bulk.
+  /// Target ceiling for ordinary terminal entries. Unresolved work and
+  /// guarded Manager outcomes survive it until a retirement protocol exists.
   static const int maxEntries = 5000;
 
   static const Uuid _uuid = Uuid();
 
   static Box<Map>? _box;
+  static final _unflushed = <String, Map>{};
 
   /// Identifies this process run, so an entry left behind by a crash is
   /// recognisable as one rather than looking like work in progress.
@@ -79,16 +81,18 @@ class EdgeCommandJournal {
   /// Opens the journal and settles anything a previous run left mid-flight.
   static Future<void> open({bool pruneExpired = true}) async {
     if (_box?.isOpen ?? false) return;
+    _unflushed.clear();
     _box = UpdateTrackedBox(await Hive.openBox<Map>(boxName));
     _runId = _uuid.v4();
     await _settleInterrupted();
     if (pruneExpired) await prune();
   }
 
-  static Map<dynamic, Map> snapshot() => _box?.toMap() ?? {};
+  static Map<dynamic, Map> snapshot() => {...?_box?.toMap(), ..._unflushed};
 
   static Future<void> restoreSnapshot(Map<dynamic, Map> rows) async {
     if (!(_box?.isOpen ?? false)) await open();
+    _unflushed.clear();
     await _box!.clear();
     await _box!.putAll(rows);
     // Restored running work belongs to the captured installation/run, even
@@ -113,10 +117,11 @@ class EdgeCommandJournal {
   static Future<void> close() async {
     await _box?.close();
     _box = null;
+    _unflushed.clear();
   }
 
   static EdgeExecutionEntry? entryFor(String commandId) {
-    final raw = _box?.get(commandId);
+    final raw = _unflushed[commandId] ?? _box?.get(commandId);
     if (raw == null) return null;
     return _fromMap(Map<String, dynamic>.from(raw));
   }
@@ -127,12 +132,23 @@ class EdgeCommandJournal {
     EdgeCommandEnvelope command,
   ) async {
     final box = _box;
-    if (box == null) return null;
+    if (box == null) {
+      if (command.type == EdgeCommandTypes.managerOperation)
+        throw StateError('Manager operation journal is not open');
+      return null;
+    }
 
     final existing = entryFor(command.commandId);
+    if (command.type == EdgeCommandTypes.managerOperation &&
+        existing != null &&
+        (existing.type != command.type ||
+            existing.idempotencyKey != command.idempotencyKey))
+      throw const FormatException(
+        'Manager operation journal identity conflict',
+      );
     if (existing != null && existing.isTerminal) return existing;
 
-    await box.put(command.commandId, <String, dynamic>{
+    final running = <String, dynamic>{
       'commandId': command.commandId,
       'idempotencyKey': command.idempotencyKey,
       'type': command.type,
@@ -141,7 +157,14 @@ class EdgeCommandJournal {
           existing?.firstSeenAt.toIso8601String() ??
           DateTime.now().toUtc().toIso8601String(),
       'runId': _runId,
-    });
+    };
+    if (command.type == EdgeCommandTypes.managerOperation)
+      _unflushed[command.commandId] = running;
+    await box.put(command.commandId, running);
+    if (command.type == EdgeCommandTypes.managerOperation) {
+      await box.flush();
+      _unflushed.remove(command.commandId);
+    }
     return existing;
   }
 
@@ -150,11 +173,20 @@ class EdgeCommandJournal {
     required bool succeeded,
     String? code,
     Map<String, dynamic>? resultProjection,
+    bool requireDurability = false,
   }) async {
     final box = _box;
-    if (box == null) return;
+    if (box == null) {
+      if (requireDurability)
+        throw StateError('Manager operation journal closed before completion');
+      return;
+    }
     final raw = box.get(commandId);
-    if (raw == null) return;
+    if (raw == null) {
+      if (requireDurability)
+        throw StateError('Manager operation intent missing before completion');
+      return;
+    }
 
     final updated = Map<String, dynamic>.from(raw)
       ..['status'] = succeeded
@@ -163,7 +195,13 @@ class EdgeCommandJournal {
       ..['completedAt'] = DateTime.now().toUtc().toIso8601String()
       ..['code'] = code
       ..['resultProjection'] = resultProjection;
+    final guarded = raw['type'] == EdgeCommandTypes.managerOperation;
+    if (guarded) _unflushed[commandId] = raw;
     await box.put(commandId, updated);
+    if (guarded) {
+      await box.flush();
+      _unflushed.remove(commandId);
+    }
   }
 
   /// Drops terminal entries past retention, then trims the oldest if the box
@@ -179,19 +217,24 @@ class EdgeCommandJournal {
       final raw = box.get(key);
       if (raw == null) continue;
       final entry = _fromMap(Map<String, dynamic>.from(raw));
-      if (!entry.isTerminal) continue;
+      if (!entry.isTerminal || entry.type == EdgeCommandTypes.managerOperation)
+        continue;
       final finished = entry.completedAt ?? entry.firstSeenAt;
       if (finished.isBefore(cutoff)) expired.add(key);
     }
     if (expired.isNotEmpty) await box.deleteAll(expired);
 
     if (box.length <= maxEntries) return;
-    final byAge = box.keys.toList()
-      ..sort((a, b) {
-        final left = _fromMap(Map<String, dynamic>.from(box.get(a)!));
-        final right = _fromMap(Map<String, dynamic>.from(box.get(b)!));
-        return left.firstSeenAt.compareTo(right.firstSeenAt);
-      });
+    final byAge =
+        box.keys.where((key) {
+          final entry = _fromMap(Map<String, dynamic>.from(box.get(key)!));
+          return entry.isTerminal &&
+              entry.type != EdgeCommandTypes.managerOperation;
+        }).toList()..sort((a, b) {
+          final left = _fromMap(Map<String, dynamic>.from(box.get(a)!));
+          final right = _fromMap(Map<String, dynamic>.from(box.get(b)!));
+          return left.firstSeenAt.compareTo(right.firstSeenAt);
+        });
     await box.deleteAll(byAge.take(box.length - maxEntries));
   }
 
@@ -204,6 +247,7 @@ class EdgeCommandJournal {
 
   @visibleForTesting
   static Future<void> clearForTest() async {
+    _unflushed.clear();
     await _box?.clear();
   }
 

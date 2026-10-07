@@ -1,3 +1,4 @@
+import 'package:vynic/core/services/manager_app/manager_operation_request.dart';
 import 'package:vynic/apps/mobile_app/data/models/takeaway_models.dart';
 import 'package:vynic/apps/mobile_app/data/services/takeaway_remote_service.dart';
 
@@ -15,8 +16,16 @@ class TakeawayRepository {
     return items;
   }
 
-  Future<void> createOrder(TakeawayCreatePayload payload) {
-    return _service.createTakeawayOrder(payload);
+  Future<ManagerOperationResult> createOrder(
+    TakeawayCreatePayload payload, {
+    String? expectedScope,
+    bool newRequest = false,
+  }) {
+    return _service.createTakeawayOrder(
+      payload,
+      expectedScope: expectedScope,
+      newRequest: newRequest,
+    );
   }
 
   void _collectItems(

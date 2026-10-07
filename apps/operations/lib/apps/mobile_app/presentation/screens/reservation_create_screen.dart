@@ -1,3 +1,5 @@
+import 'package:vynic/core/services/manager_app/manager_operation_request.dart';
+import 'package:vynic/apps/mobile_app/presentation/widgets/manager_operations_panel.dart';
 import 'package:vynic/apps/mobile_app/theme/manager_theme.dart';
 import 'package:vynic/apps/mobile_app/presentation/widgets/mobile_glass_ui.dart';
 import 'dart:io';
@@ -85,13 +87,21 @@ class _ReservationCreateScreenState extends State<ReservationCreateScreen> {
   late DateTime _selectedDate;
   final List<_DraftMenuItem> _selectedMenuItems = [];
   bool _isSubmitting = false;
+  bool _newRequest = true;
 
+  String? _operationScope;
   @override
   void initState() {
     super.initState();
+    try {
+      _operationScope = MobileApiService.tableRepairScope;
+    } catch (_) {
+      _operationScope = null;
+    }
     // Callers pass DateTime.now(), whose time-of-day would otherwise sit
     // inside a value the pickers compare against midnight boundaries.
     _selectedDate = _dateOnly(widget.initialDate);
+    _restoreOperationDraft();
     if (widget.initialName != null && widget.initialName!.trim().isNotEmpty) {
       _customerNameController.text = widget.initialName!.trim();
     }
@@ -100,6 +110,49 @@ class _ReservationCreateScreenState extends State<ReservationCreateScreen> {
         widget.initialItems.map(
           (e) => _DraftMenuItem(name: e.name, price: e.price, qty: e.qty),
         ),
+      );
+    }
+  }
+
+  Future<void> _restoreOperationDraft() async {
+    try {
+      await ManagerOperationRequests.init();
+      final scope = _operationScope;
+      if (!mounted ||
+          scope == null ||
+          !MobileApiService.isCurrentTableRepairScope(scope))
+        return;
+      final v = ManagerOperationRequests.read(scope, 'reservation_create');
+      if (v == null || ManagerOperationResult.fromMap(v['result']).isDone)
+        return;
+      _newRequest = false;
+      final b = v['body'] as Map;
+      setState(() {
+        _customerNameController.text = b['customerName'];
+        _customerPhoneController.text = b['customerPhone'];
+        _guestsController.text = '${b['numberOfGuests']}';
+        _notesController.text = b['notes'] ?? '';
+        _selectedDate = DateTime.parse(b['reservationDate']);
+        final time = (b['reservationTime'] as String).split(':');
+        _selectedTime = TimeOfDay(
+          hour: int.parse(time[0]),
+          minute: int.parse(time[1]),
+        );
+        _selectedMenuItems
+          ..clear()
+          ..addAll([
+            for (final i in b['preOrderItems'])
+              _DraftMenuItem(
+                name: i['itemName'],
+                price: (i['unitPrice'] as num).toDouble(),
+                qty: i['quantity'],
+              ),
+          ]);
+      });
+    } catch (_) {
+      _toast(
+        'შენარჩუნებული მოთხოვნა ვერ ჩაიტვირთა — გადაამოწმეთ ჟურნალი',
+        error: true,
       );
     }
   }
@@ -380,18 +433,48 @@ class _ReservationCreateScreenState extends State<ReservationCreateScreen> {
       return;
     }
 
-    final tables = await ReservationTablePickerSheet.show(
-      context: context,
-      reservationDate: _selectedDate,
-      reservationTime: _timeAsText(_selectedTime),
-    );
+    List<int>? tables;
+    try {
+      await ManagerOperationRequests.init();
+      if (!mounted ||
+          _operationScope == null ||
+          !MobileApiService.isCurrentTableRepairScope(_operationScope!))
+        return;
+      final retained = _operationScope == null
+          ? null
+          : ManagerOperationRequests.read(
+              _operationScope!,
+              'reservation_create',
+            );
+      tables =
+          retained != null &&
+              (!_newRequest ||
+                  !ManagerOperationResult.fromMap(retained['result']).isDone)
+          ? List<int>.from(retained['body']['tableNumbers'])
+          : await ReservationTablePickerSheet.show(
+              context: context,
+              reservationDate: _selectedDate,
+              reservationTime: _timeAsText(_selectedTime),
+            );
+    } catch (_) {
+      if (mounted)
+        _toast(
+          'მოთხოვნის ჟურნალი ვერ იკითხება — გადაამოწმეთ შენარჩუნებული მოთხოვნა',
+          error: true,
+        );
+      return;
+    }
     if (tables == null || tables.isEmpty || !mounted) {
       return;
     }
 
     setState(() => _isSubmitting = true);
     try {
-      await MobileApiService.createReservation(
+      final fresh = _newRequest;
+      _newRequest = false;
+      final result = await MobileApiService.createReservation(
+        expectedScope: _operationScope,
+        newRequest: fresh,
         customerName: name,
         customerPhone: phone,
         tableNumbers: tables,
@@ -413,7 +496,15 @@ class _ReservationCreateScreenState extends State<ReservationCreateScreen> {
             )
             .toList(),
       );
-      if (mounted) Navigator.of(context).pop(true);
+      if (!mounted ||
+          _operationScope == null ||
+          !MobileApiService.isCurrentTableRepairScope(_operationScope!))
+        return;
+      _toast(result.message, error: result.delivery.name == 'failed');
+      if (result.isDone)
+        Navigator.of(context).pop(true);
+      else
+        setState(() => _isSubmitting = false);
     } catch (_) {
       _toast('რეზერვაციის შექმნა ვერ მოხერხდა', error: true);
       if (mounted) setState(() => _isSubmitting = false);
@@ -422,122 +513,128 @@ class _ReservationCreateScreenState extends State<ReservationCreateScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: MobileGlassTheme.bg,
-      body: Stack(
-        children: [
-          Positioned(
-            top: -90,
-            left: -60,
-            child: _GlowOrb(color: MobileGlassTheme.primary, size: 280),
-          ),
-          Positioned(
-            bottom: 80,
-            right: -90,
-            child: _GlowOrb(color: Color(0xFF10B981), size: 240),
-          ),
-          SafeArea(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 12, 20, 12),
-                  child: Row(
-                    children: [
-                      _GlassCircleButton(
-                        icon: Icons.arrow_back_ios_new_rounded,
-                        onTap: () => Navigator.of(context).maybePop(),
-                      ),
-                      SizedBox(width: 14),
-                      Text(
-                        'ახალი რეზერვაცია',
-                        style: TextStyle(
-                          color: MobileGlassTheme.textPrimary,
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: -0.5,
+    return ManagerOperationBoundary(
+      scope: _operationScope,
+      slot: 'reservation_create',
+      child: Scaffold(
+        backgroundColor: MobileGlassTheme.bg,
+        body: Stack(
+          children: [
+            Positioned(
+              top: -90,
+              left: -60,
+              child: _GlowOrb(color: MobileGlassTheme.primary, size: 280),
+            ),
+            Positioned(
+              bottom: 80,
+              right: -90,
+              child: _GlowOrb(color: Color(0xFF10B981), size: 240),
+            ),
+            SafeArea(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 12, 20, 12),
+                    child: Row(
+                      children: [
+                        _GlassCircleButton(
+                          icon: Icons.arrow_back_ios_new_rounded,
+                          onTap: () => Navigator.of(context).maybePop(),
                         ),
-                      ),
-                    ],
+                        SizedBox(width: 14),
+                        Expanded(
+                          child: Text(
+                            'ახალი რეზერვაცია',
+                            style: TextStyle(
+                              color: MobileGlassTheme.textPrimary,
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: -0.5,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-                Expanded(
-                  child: ListView(
-                    physics: const BouncingScrollPhysics(),
-                    padding: const EdgeInsets.fromLTRB(20, 4, 20, 32),
-                    children: [
-                      _GlassCard(
-                        child: Column(
+                  Expanded(
+                    child: ListView(
+                      physics: const BouncingScrollPhysics(),
+                      padding: const EdgeInsets.fromLTRB(20, 4, 20, 32),
+                      children: [
+                        _GlassCard(
+                          child: Column(
+                            children: [
+                              _field(
+                                _customerNameController,
+                                'კლიენტის სახელი',
+                                icon: Icons.person_outline_rounded,
+                              ),
+                              SizedBox(height: 12),
+                              _field(
+                                _customerPhoneController,
+                                'ტელეფონი',
+                                icon: Icons.phone_outlined,
+                                phone: true,
+                              ),
+                              SizedBox(height: 12),
+                              _field(
+                                _guestsController,
+                                'სტუმრები',
+                                icon: Icons.groups_outlined,
+                                number: true,
+                              ),
+                            ],
+                          ),
+                        ),
+                        SizedBox(height: 16),
+                        Row(
                           children: [
-                            _field(
-                              _customerNameController,
-                              'კლიენტის სახელი',
-                              icon: Icons.person_outline_rounded,
+                            Expanded(
+                              child: _pickerTile(
+                                icon: Icons.calendar_today_rounded,
+                                label: 'თარიღი',
+                                value: _dateFmt.format(_selectedDate),
+                                onTap: _pickDate,
+                              ),
                             ),
-                            SizedBox(height: 12),
-                            _field(
-                              _customerPhoneController,
-                              'ტელეფონი',
-                              icon: Icons.phone_outlined,
-                              phone: true,
-                            ),
-                            SizedBox(height: 12),
-                            _field(
-                              _guestsController,
-                              'სტუმრები',
-                              icon: Icons.groups_outlined,
-                              number: true,
+                            SizedBox(width: 12),
+                            Expanded(
+                              child: _pickerTile(
+                                icon: Icons.schedule_rounded,
+                                label: 'დრო',
+                                value: _timeAsText(_selectedTime),
+                                onTap: _pickTime,
+                              ),
                             ),
                           ],
                         ),
-                      ),
-                      SizedBox(height: 16),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _pickerTile(
-                              icon: Icons.calendar_today_rounded,
-                              label: 'თარიღი',
-                              value: _dateFmt.format(_selectedDate),
-                              onTap: _pickDate,
-                            ),
+                        SizedBox(height: 16),
+                        _GlassCard(
+                          child: _field(
+                            _notesController,
+                            'შენიშვნა',
+                            icon: Icons.notes_rounded,
+                            maxLines: 2,
                           ),
-                          SizedBox(width: 12),
-                          Expanded(
-                            child: _pickerTile(
-                              icon: Icons.schedule_rounded,
-                              label: 'დრო',
-                              value: _timeAsText(_selectedTime),
-                              onTap: _pickTime,
-                            ),
-                          ),
-                        ],
-                      ),
-                      SizedBox(height: 16),
-                      _GlassCard(
-                        child: _field(
-                          _notesController,
-                          'შენიშვნა',
-                          icon: Icons.notes_rounded,
-                          maxLines: 2,
                         ),
-                      ),
-                      SizedBox(height: 16),
-                      _buildPreOrder(),
-                      SizedBox(height: 24),
-                      _primaryButton(
-                        label: _isSubmitting
-                            ? 'ინახება...'
-                            : 'რეზერვაციის შექმნა',
-                        onTap: _isSubmitting ? null : _createReservation,
-                      ),
-                    ],
+                        SizedBox(height: 16),
+                        _buildPreOrder(),
+                        SizedBox(height: 24),
+                        _primaryButton(
+                          label: _isSubmitting
+                              ? 'ინახება...'
+                              : 'რეზერვაციის შექმნა',
+                          onTap: _isSubmitting ? null : _createReservation,
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -555,15 +652,17 @@ class _ReservationCreateScreenState extends State<ReservationCreateScreen> {
                 size: 18,
               ),
               SizedBox(width: 8),
-              Text(
-                'წინასწარი შეკვეთა',
-                style: TextStyle(
-                  color: MobileGlassTheme.textPrimary,
-                  fontWeight: FontWeight.w600,
-                  fontSize: 15,
+              Expanded(
+                child: Text(
+                  'წინასწარი შეკვეთა',
+                  style: TextStyle(
+                    color: MobileGlassTheme.textPrimary,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 15,
+                  ),
                 ),
               ),
-              const Spacer(),
+
               if (_selectedMenuItems.isNotEmpty)
                 Text(
                   '₾${_preOrderTotal.toStringAsFixed(2)}',
@@ -675,25 +774,27 @@ class _ReservationCreateScreenState extends State<ReservationCreateScreen> {
         children: [
           Icon(icon, color: MobileGlassTheme.accentText, size: 18),
           SizedBox(width: 10),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                label,
-                style: TextStyle(
-                  color: MobileGlassTheme.textSecondary,
-                  fontSize: 11,
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: TextStyle(
+                    color: MobileGlassTheme.textSecondary,
+                    fontSize: 11,
+                  ),
                 ),
-              ),
-              Text(
-                value,
-                style: TextStyle(
-                  color: MobileGlassTheme.textPrimary,
-                  fontWeight: FontWeight.w600,
-                  fontSize: 15,
+                Text(
+                  value,
+                  style: TextStyle(
+                    color: MobileGlassTheme.textPrimary,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 15,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ],
       ),

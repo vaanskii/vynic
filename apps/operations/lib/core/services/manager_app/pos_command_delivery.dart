@@ -37,6 +37,16 @@ enum PosCommandDelivery {
   bool get isPending =>
       this == PosCommandDelivery.queued || this == PosCommandDelivery.claimed;
 
+  String get printMessage => switch (this) {
+    queued => 'ბეჭდვის მოთხოვნა რიგშია — POS-ის შედეგი ჯერ არ მიღებულა',
+    claimed => 'POS ასრულებს ბეჭდვის მოთხოვნას — დაელოდეთ შედეგს',
+    succeeded => 'POS-მა ბეჭდვის მოთხოვნის შესრულება დაადასტურა',
+    deliveredLegacy => 'POS-მა ბეჭდვის მოთხოვნა მიიღო',
+    failed => 'POS-მა ბეჭდვის მოთხოვნა ვერ შეასრულა',
+    unavailable => 'POS მიუწვდომელია — ბეჭდვის მოთხოვნა არ ჩაწერილა',
+    unknown => 'ბეჭდვის შედეგი უცნობია — გადაამოწმეთ POS-ზე',
+  };
+
   /// Reads the `posDelivery` block a migrated endpoint returns.
   ///
   /// An older backend sends nothing, and that is [unknown] rather than a

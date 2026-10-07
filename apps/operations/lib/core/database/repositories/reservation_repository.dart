@@ -55,6 +55,7 @@ class ReservationRepository {
     String status = 'pending',
     String? id,
     AuditSource source = AuditSource.pos,
+    bool requireDurability = false,
   }) => UpdateReadiness.mutate(
     'createReservation',
     () => _updateTrackedCreateReservation(
@@ -73,6 +74,7 @@ class ReservationRepository {
       status: status,
       id: id,
       source: source,
+      requireDurability: requireDurability,
     ),
   );
 
@@ -92,6 +94,7 @@ class ReservationRepository {
     String status = 'pending',
     String? id,
     AuditSource source = AuditSource.pos,
+    bool requireDurability = false,
   }) async {
     // Cloud supplies the id for a reservation it originated, because a POS that
     // invents one turns an at-least-once redelivery into a second booking. A
@@ -136,6 +139,7 @@ class ReservationRepository {
     );
 
     await DatabaseCore.reservationBox!.add(reservation);
+    if (requireDurability) await DatabaseCore.reservationBox!.flush();
     SyncHub.notify(
       SyncEvent(
         type: SyncEventType.reservations,
@@ -148,6 +152,7 @@ class ReservationRepository {
       reservation: reservation,
       actorId: createdBy,
       source: source,
+      requireDurability: requireDurability,
       newStatus: reservation.status,
     );
     return reservationId;
@@ -489,6 +494,7 @@ class ReservationRepository {
     String actorId = 'system',
     String? actorName,
     AuditSource source = AuditSource.pos,
+    bool requireDurability = false,
     String? reason,
   }) => UpdateReadiness.mutate(
     'updateReservationStatus',
@@ -498,6 +504,7 @@ class ReservationRepository {
       actorId: actorId,
       actorName: actorName,
       source: source,
+      requireDurability: requireDurability,
       reason: reason,
     ),
   );
@@ -508,6 +515,7 @@ class ReservationRepository {
     String actorId = 'system',
     String? actorName,
     AuditSource source = AuditSource.pos,
+    bool requireDurability = false,
     String? reason,
   }) async {
     final reservation = DatabaseCore.reservationBox!.values.firstWhere(
@@ -519,10 +527,14 @@ class ReservationRepository {
     final unchanged = nextEnum != ReservationStatus.unknown
         ? previousEnum == nextEnum
         : previous.trim().toLowerCase() == newStatus.trim().toLowerCase();
-    if (unchanged) return;
+    if (unchanged) {
+      if (requireDurability) await DatabaseCore.reservationBox!.flush();
+      return;
+    }
 
     reservation.status = newStatus;
     await reservation.save();
+    if (requireDurability) await DatabaseCore.reservationBox!.flush();
     SyncHub.notify(
       SyncEvent(
         type: SyncEventType.reservations,
@@ -539,6 +551,7 @@ class ReservationRepository {
       actorId: actorId,
       actorName: actorName,
       source: source,
+      requireDurability: requireDurability,
       previousStatus: previous,
       newStatus: reservation.status,
       reason: reason,
@@ -858,6 +871,7 @@ class ReservationRepository {
     String? actorName,
     AuditSource source = AuditSource.pos,
     String? reason,
+    bool propagateErrors = false,
   }) => UpdateReadiness.mutate(
     'deleteReservation',
     () => _updateTrackedDeleteReservation(
@@ -866,6 +880,7 @@ class ReservationRepository {
       actorName: actorName,
       source: source,
       reason: reason,
+      propagateErrors: propagateErrors,
     ),
   );
 
@@ -875,10 +890,14 @@ class ReservationRepository {
     String? actorName,
     AuditSource source = AuditSource.pos,
     String? reason,
+    bool propagateErrors = false,
   }) async {
     try {
       final reservation = findReservationById(reservationId);
-      if (reservation == null) return;
+      if (reservation == null) {
+        if (propagateErrors) await DatabaseCore.reservationBox!.flush();
+        return;
+      }
       // Written before the row goes, so the history exists even if the
       // delete itself fails half-way.
       await ReservationAudit.log(
@@ -887,10 +906,12 @@ class ReservationRepository {
         actorId: actorId,
         actorName: actorName,
         source: source,
+        requireDurability: propagateErrors,
         previousStatus: reservation.status,
         reason: reason,
       );
       await reservation.delete();
+      if (propagateErrors) await DatabaseCore.reservationBox!.flush();
       SyncHub.notify(
         SyncEvent(
           type: SyncEventType.reservations,
@@ -899,6 +920,7 @@ class ReservationRepository {
         ),
       );
     } catch (e) {
+      if (propagateErrors) rethrow;
       developer.log('Error deleting reservation: $e');
     }
   }

@@ -1,3 +1,4 @@
+import 'manager_operation_request.dart';
 import 'table_repair_request.dart';
 import 'order_edit_request.dart';
 import 'package:vynic/core/models/order_edit_projection.dart';
@@ -14,7 +15,6 @@ import 'package:vynic/core/services/sync/api_config.dart';
 import 'package:vynic/core/services/auth/auth_token_service.dart';
 import 'package:vynic/core/services/manager_app/pos_command_delivery.dart';
 import 'package:vynic/core/services/manager_app/mobile_cache_service.dart';
-import 'package:vynic/core/services/sync/mobile_edit_echo_guard.dart';
 import 'package:vynic/core/services/sync/monitoring_socket_service.dart';
 import 'package:vynic/core/models/global_audit_entry.dart';
 import 'package:vynic/core/models/inventory.dart';
@@ -323,72 +323,113 @@ class MobileApiService {
     throw Exception('getTakeawayOrders failed: ${response.statusCode}');
   }
 
-  static Future<Order> createTakeawayOrder({
+  static Future<ManagerOperationResult> createTakeawayOrder({
     required String customerName,
     required String pickupTime,
     required String waiterName,
     required List<Map<String, dynamic>> items,
-  }) async {
-    final response = await _post('/mobile/takeaway-orders', {
-      'customerName': customerName,
-      'pickupTime': pickupTime,
-      'waiterName': waiterName,
-      'items': items,
-    });
-    if (response.statusCode == 200 || response.statusCode == 201) {
-      final order = Order.fromJson(
-        jsonDecode(response.body) as Map<String, dynamic>,
-      );
-      MobileEditEchoGuard.markOrderEdited(order.orderId);
-      return order;
-    }
-    throw Exception(
-      'createTakeawayOrder failed: ${response.statusCode} ${response.body}',
-    );
-  }
+    String? expectedScope,
+    bool newRequest = false,
+  }) => _operation(
+    'takeaway_create',
+    'takeaway_create',
+    {'customerName': customerName, 'pickupTime': pickupTime, 'items': items},
+    expectedScope: expectedScope,
+    newRequest: newRequest,
+  );
 
   /// Create a dine-in (walk-in) order on one or more tables of a single floor.
-  static Future<Map<String, dynamic>> createWalkInOrder({
+  static Future<ManagerOperationResult> createWalkInOrder({
     required List<String> tableNumbers,
     required String floor,
     required String waiterName,
     required List<Map<String, dynamic>> items,
     int guestCount = 0,
-  }) async {
-    final response = await _post('/mobile/walk-in-orders', {
+    String? expectedScope,
+    bool newRequest = false,
+  }) => _operation(
+    'dine_in_create',
+    'dine_in_create',
+    {
       'tableNumbers': tableNumbers,
       'floor': floor,
-      'waiterName': waiterName,
-      'guestCount': guestCount,
       'items': items,
-    });
-    if (response.statusCode == 200 || response.statusCode == 201) {
-      final data = jsonDecode(response.body) as Map<String, dynamic>;
-      final posOrderId = (data['posOrderId'] as num?)?.toInt();
-      if (posOrderId != null) {
-        MobileEditEchoGuard.markOrderEdited(posOrderId);
-      }
-      for (final t in tableNumbers) {
-        MobileEditEchoGuard.markTableEdited(t, floor);
-      }
-      return data;
+      'guestCount': guestCount,
+    },
+    expectedScope: expectedScope,
+    newRequest: newRequest,
+  );
+
+  static Future<ManagerOperationResult> deleteTakeawayOrder(
+    int posOrderId, {
+    String? expectedScope,
+  }) => _operation('takeaway_cancel', 'order_cancel:$posOrderId', {
+    'posOrderId': posOrderId,
+  }, expectedScope: expectedScope);
+
+  static Future<ManagerOperationResult> _operation(
+    String kind,
+    String slot,
+    Map<String, dynamic> body, {
+    String? expectedScope,
+    bool refresh = false,
+    bool newRequest = false,
+  }) {
+    final String scope;
+    try {
+      scope = tableRepairScope;
+    } catch (_) {
+      return Future.value(
+        const ManagerOperationResult(
+          PosCommandDelivery.failed,
+          code: 'session_changed',
+        ),
+      );
     }
-    throw Exception(
-      'createWalkInOrder failed: ${response.statusCode} ${response.body}',
+    if (expectedScope == null || expectedScope != scope)
+      return Future.value(
+        const ManagerOperationResult(
+          PosCommandDelivery.failed,
+          code: 'session_changed',
+        ),
+      );
+    return ManagerOperationRequests.submit(
+      scope: scope,
+      slot: slot,
+      kind: kind,
+      body: body,
+      refresh: refresh,
+      newRequest: newRequest,
+      currentSession: () => isCurrentTableRepairScope(scope),
+      exchange: (request, statusOnly) {
+        if (!isCurrentTableRepairScope(scope))
+          throw StateError('Manager session changed');
+        if (statusOnly)
+          return http
+              .get(
+                Uri.parse(
+                  '$_base/mobile/operation-requests/${request['requestId']}',
+                ),
+                headers: _headers,
+              )
+              .timeout(_timeout);
+        return _post('/mobile/operation-requests/${request['kind']}', {
+          'requestId': request['requestId'],
+          'body': request['body'],
+        });
+      },
     );
   }
 
-  static Future<void> deleteTakeawayOrder(int posOrderId) async {
-    final uri = Uri.parse('$_base/mobile/takeaway-orders/$posOrderId');
-    final response = await http
-        .delete(uri, headers: _headers)
-        .timeout(_timeout)
-        .catchError(_throwNetworkError);
-    if (response.statusCode != 200 && response.statusCode != 201) {
-      throw Exception('deleteTakeawayOrder failed: ${response.statusCode}');
-    }
-    MobileEditEchoGuard.markOrderEdited(posOrderId);
-  }
+  static Future<ManagerOperationResult> refreshOperation(
+    Map<String, dynamic> request,
+  ) => _operation(
+    request['kind'],
+    request['slot'],
+    Map<String, dynamic>.from(request['body']),
+    expectedScope: request['scope'],
+    refresh: true,
+  );
 
   // ── Staff performance ──────────────────────────────────────────────────────
 
@@ -429,7 +470,7 @@ class MobileApiService {
     throw Exception('getReservations failed: ${response.statusCode}');
   }
 
-  static Future<Map<String, dynamic>> createReservation({
+  static Future<ManagerOperationResult> createReservation({
     required String customerName,
     required String customerPhone,
     required List<int> tableNumbers,
@@ -439,43 +480,40 @@ class MobileApiService {
     String? notes,
     String? createdBy,
     List<Map<String, dynamic>>? preOrderItems,
-  }) async {
-    final response = await _post('/mobile/reservations', {
+    String? expectedScope,
+    bool newRequest = false,
+  }) => _operation(
+    'reservation_create',
+    'reservation_create',
+    {
       'customerName': customerName,
       'customerPhone': customerPhone,
       'tableNumbers': tableNumbers,
       'reservationDate': reservationDate,
       'reservationTime': reservationTime,
       'numberOfGuests': numberOfGuests,
-      'notes': notes,
-      'createdBy': createdBy,
-      'status': 'confirmed',
-      'preOrderItems': preOrderItems ?? const [],
-    });
-    if (response.statusCode == 200 || response.statusCode == 201) {
-      return jsonDecode(response.body) as Map<String, dynamic>;
-    }
-    throw Exception('createReservation failed: ${response.statusCode}');
-  }
+      'notes': notes ?? '',
+      'preOrderItems': preOrderItems ?? [],
+    },
+    expectedScope: expectedScope,
+    newRequest: newRequest,
+  );
 
-  static Future<void> updateReservationStatus({
+  static Future<ManagerOperationResult> updateReservationStatus({
     required String reservationId,
     required String status,
-  }) async {
-    final response = await _post('/mobile/reservations/$reservationId/status', {
-      'status': status,
-    });
-    if (response.statusCode != 200 && response.statusCode != 201) {
-      throw Exception('updateReservationStatus failed: ${response.statusCode}');
-    }
-  }
+    String? expectedScope,
+  }) => _operation('reservation_status', 'reservation:$reservationId', {
+    'reservationId': reservationId,
+    'status': status,
+  }, expectedScope: expectedScope);
 
-  static Future<void> deleteReservation(String reservationId) async {
-    final response = await _delete('/mobile/reservations/$reservationId');
-    if (response.statusCode != 200 && response.statusCode != 201) {
-      throw Exception('deleteReservation failed: ${response.statusCode}');
-    }
-  }
+  static Future<ManagerOperationResult> deleteReservation(
+    String reservationId, {
+    String? expectedScope,
+  }) => _operation('reservation_delete', 'reservation:$reservationId', {
+    'reservationId': reservationId,
+  }, expectedScope: expectedScope);
 
   /// Ask the backend to print the reservation check on the Windows POS.
   ///
@@ -717,13 +755,12 @@ class MobileApiService {
 
   // ── Cancel order (manager-only) ────────────────────────────────────────────
 
-  static Future<void> cancelOrder(int posOrderId) async {
-    final response = await _post('/mobile/order/$posOrderId/cancel', {});
-    if (response.statusCode != 200 && response.statusCode != 201) {
-      throw Exception('Cancel failed: ${response.statusCode} ${response.body}');
-    }
-    MobileEditEchoGuard.markOrderEdited(posOrderId);
-  }
+  static Future<ManagerOperationResult> cancelOrder(
+    int posOrderId, {
+    String? expectedScope,
+  }) => _operation('order_cancel', 'order_cancel:$posOrderId', {
+    'posOrderId': posOrderId,
+  }, expectedScope: expectedScope);
 
   // ── Print order/table check (manager-only) ─────────────────────────────────
 

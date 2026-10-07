@@ -570,20 +570,29 @@ extension _LiveStatusTablesView on _LiveStatusScreenState {
             },
           )
           .toList();
-      await MobileApiService.createWalkInOrder(
+      final result = await MobileApiService.createWalkInOrder(
+        expectedScope: _operationScope,
+        newRequest: true,
         tableNumbers: [table.tableNumber],
         floor: table.floor,
         waiterName: widget.user.username,
         items: items,
       );
-      if (!mounted) return;
+      if (!mounted ||
+          _operationScope == null ||
+          !MobileApiService.isCurrentTableRepairScope(_operationScope!))
+        return;
       _showStatusToast(
-        'Walk-in შეიქმნა — მაგიდა ${table.tableNumber}',
+        result.message,
+        isError: result.delivery.name == 'failed',
         icon: Icons.check_circle_outline_rounded,
       );
-      _loadTables();
+      if (result.isDone) _loadTables();
     } catch (_) {
-      if (!mounted) return;
+      if (!mounted ||
+          _operationScope == null ||
+          !MobileApiService.isCurrentTableRepairScope(_operationScope!))
+        return;
       _showStatusToast('walk-in ვერ შეიქმნა', isError: true);
     }
   }

@@ -9,6 +9,7 @@ import {
   Patch,
   Delete,
   Headers,
+  HttpCode,
   Param,
   Body,
   Query,
@@ -429,21 +430,17 @@ export class MobileController {
     return this.dashboard.getTables(tenant);
   }
 
-  // POST /mobile/tables/:tableNumber/free?floor=first
-  // Forcefully marks a table as free (emergency ghost-table fix for managers).
+  // Acceptance is not authoritative completion. Old clients cannot
+  // interpret 202 as a completed repair using their 200/201 boolean check.
   @Post('tables/:tableNumber/free')
+  @HttpCode(202)
   async freeTable(
-    @ManagerTenant() tenant: TenantContext,
+    @ManagerAuth() actor: ManagerAuthContext,
     @Param('tableNumber') tableNumber: string,
     @Query('floor') floor: string = 'first',
-    @Headers('x-monitoring-socket-id') monitoringSocketId?: string,
+    @Body() body: { requestId?: unknown },
   ) {
-    return this.dashboard.freeTable(
-      tenant,
-      tableNumber,
-      floor,
-      monitoringSocketId,
-    );
+    return this.dashboard.freeTable(actor, tableNumber, floor, body?.requestId);
   }
 
   // GET /mobile/staff-performance

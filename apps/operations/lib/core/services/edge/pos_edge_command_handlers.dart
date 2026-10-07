@@ -20,6 +20,8 @@
 /// each type, applied at the boundary that needs it.
 library;
 
+import 'package:vynic/core/database/repositories/table_repair_repository.dart';
+
 import 'package:vynic/core/database/repositories/order_table_mutation_repository.dart';
 import 'package:vynic/core/database/repositories/order_transfer_journal_repository.dart';
 
@@ -65,6 +67,15 @@ abstract class _AppliedEdgeCommandHandler implements EdgeCommandHandler {
 }
 
 // ── Orders ───────────────────────────────────────────────────────────────────
+
+class TableRepairEdgeHandler extends _AppliedEdgeCommandHandler {
+  const TableRepairEdgeHandler();
+  @override
+  String get type => EdgeCommandTypes.tableRepair;
+  @override
+  Future<PosCommandOutcome> apply(Map<String, dynamic> p) =>
+      TableRepairRepository.repair(p);
+}
 
 class OrderUpdateEdgeHandler extends _AppliedEdgeCommandHandler {
   const OrderUpdateEdgeHandler();
@@ -239,6 +250,7 @@ class StaffDeleteEdgeHandler extends _AppliedEdgeCommandHandler {
 /// contract declares and this build cannot run would sit in the queue being
 /// claimed, refused and redelivered until its attempts ran out.
 const List<EdgeCommandHandler> posEdgeCommandHandlers = <EdgeCommandHandler>[
+  TableRepairEdgeHandler(),
   OrderUpdateEdgeHandler(),
   OrderCancelEdgeHandler(),
   OrderStatusUpdateEdgeHandler(),

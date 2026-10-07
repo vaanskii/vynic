@@ -1,3 +1,4 @@
+import 'package:vynic/apps/mobile_app/presentation/widgets/table_repair_status_panel.dart';
 import 'package:flutter/services.dart';
 import 'package:vynic/apps/mobile_app/theme/manager_theme.dart';
 import 'package:vynic/apps/mobile_app/presentation/widgets/mobile_glass_ui.dart';

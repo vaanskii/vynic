@@ -1,3 +1,4 @@
+import 'table_repair_request.dart';
 import 'manager_entitlements.dart';
 import 'dart:async';
 import 'dart:convert';
@@ -240,21 +241,71 @@ class MobileApiService {
     }
   }
 
-  /// Force-frees a ghost table (emergency manager action).
-  static Future<bool> freeTable(String tableNumber, String floor) async {
+  static String get tableRepairScope {
+    final token = AuthTokenService.token;
+    if (token == null || AuthTokenService.username == null)
+      throw StateError('Manager authentication is required');
+    final pieces = token.split('.');
+    if (pieces.length != 3)
+      throw const FormatException('Invalid Manager session');
+    final claims = jsonDecode(
+      utf8.decode(base64Url.decode(base64Url.normalize(pieces[1]))),
+    );
+    if (claims is! Map) throw const FormatException('Invalid Manager claims');
+    final subject = claims['sub'];
+    if (subject is! String || subject.isEmpty)
+      throw const FormatException('Missing Manager principal');
+    // Namespacing only; the server derives all actual authority from Staff.
+    return TableRepairRequests.scope(
+      _base,
+      jsonEncode([subject, AuthTokenService.venueCode]),
+    );
+  }
+
+  static bool isCurrentTableRepairScope(String scope) {
     try {
-      final response = await _post(
-        '/mobile/tables/$tableNumber/free?floor=${Uri.encodeComponent(floor)}',
-        {},
-      );
-      final ok = response.statusCode == 200 || response.statusCode == 201;
-      if (ok) {
-        MobileEditEchoGuard.markTableEdited(tableNumber, floor);
-      }
-      return ok;
-    } catch (_) {
+      return tableRepairScope == scope;
+    } on StateError {
+      return false;
+    } on FormatException {
       return false;
     }
+  }
+
+  static Future<TableRepairResult> freeTable(
+    String tableNumber,
+    String floor, {
+    bool refresh = false,
+    String? expectedScope,
+  }) {
+    final String scope;
+    const changed = TableRepairResult(
+      delivery: PosCommandDelivery.failed,
+      code: 'session_changed',
+    );
+    try {
+      scope = tableRepairScope;
+    } on StateError {
+      return Future.value(changed);
+    } on FormatException {
+      return Future.value(changed);
+    }
+    if (expectedScope != null && scope != expectedScope)
+      return Future.value(changed);
+    return TableRepairRequests.submit(
+      scope: scope,
+      number: tableNumber,
+      floor: floor,
+      refresh: refresh,
+      send: (body) {
+        if (tableRepairScope != scope)
+          throw StateError('Manager session changed before repair request');
+        return _post(
+          '/mobile/tables/${Uri.encodeComponent(tableNumber)}/free?floor=${Uri.encodeComponent(floor)}',
+          body,
+        );
+      },
+    );
   }
 
   // ── Takeaway orders ────────────────────────────────────────────────────────

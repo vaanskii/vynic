@@ -1,3 +1,4 @@
+import 'table_repair_repository.dart';
 import 'package:vynic/core/services/edge/orders_tables/shadow.dart';
 import 'package:vynic/core/services/edge/orders_tables/pos_shadow_projection.dart';
 import 'dart:convert';
@@ -1177,7 +1178,8 @@ abstract final class OrderTableMutationRepository {
     if (box == null || !box.isOpen) return [];
     return [
       for (final e in box.toMap().entries)
-        if (e.key is String && (e.key as String).startsWith(prefix))
+        if (e.key is String && (e.key as String).startsWith(prefix) &&
+            !TableRepairRepository.isRecord(e.key, e.value))
           decode(e.key as String, e.value),
     ];
   }

@@ -462,7 +462,19 @@ current transport status.
   `docs/proofs/POS05_COMMITTED_ec430880_2026-10-02.json`; runbook:
   `docs/POS05_ORDER_TABLE_OWNERSHIP.md`. Windows smoke remains
   PENDING_NOT_RUN/HELD (`docs/POS05_WINDOWS_SMOKE.md`), using a clean frozen
-  commit export. Physical release remains OPS-01. Await next milestone handoff.
+  commit export. Physical release remains OPS-01.
+- MGR-02 routes Manager ghost-table repair through one immutable, selected-primary
+  `TABLE_REPAIR` pull command. Cloud leaves the mirror unchanged while queued;
+  only an authenticated POS `table_repaired` ACK applies a snapshot comparison
+  guard. POS refuses live Order/Reservation ownership, journals one durable
+  repair/audit and recovers before writers or restored-data admission. Retained
+  retries preserve later occupancy even after transport journal pruning. Manager
+  persists request IDs by origin/principal and shows actual pending, failed,
+  unavailable or completed delivery; changed sessions cannot send stale actions.
+  No new frozen LAN callback exists. Clean-source synthetic qualification and
+  rollback limits: `docs/MGR02_GUARDED_TABLE_REPAIR.md`. Printer work is deferred
+  at the user's request; POS-02 physical/driver acceptance remains pending.
+  Broader Manager delivery, atomic item editing and release gates remain separate.
 - Every Order audit report opens with a typed creation event carrying
   `orderKind` (`WALK_IN`, `TAKEAWAY`, `PACKAGE`, `RESERVATION`), `tableRefs`,
   `source`, `actorId`, `actorName`, `businessDate`: `CREATE_WALKIN` for POS

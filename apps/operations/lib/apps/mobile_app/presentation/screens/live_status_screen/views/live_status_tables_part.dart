@@ -94,6 +94,7 @@ extension _LiveStatusTablesView on _LiveStatusScreenState {
     final tableLabel = sortedTables.length == 1
         ? sortedTables.first.tableNumber
         : 'T${sortedTables.map((t) => t.tableNumber).join('-')}';
+    final requestScope = MobileApiService.tableRepairScope;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -121,25 +122,41 @@ extension _LiveStatusTablesView on _LiveStatusScreenState {
     );
     if (confirmed != true || !mounted) return;
 
-    var ok = true;
-    for (final table in sortedTables) {
-      final freed = await MobileApiService.freeTable(
-        table.tableNumber,
-        table.floor,
-      );
-      ok = ok && freed;
+    var completed = true;
+    var message = 'მაგიდა გათავისუფლდა POS-ის მიერ';
+    var error = false;
+    try {
+      for (final table in sortedTables) {
+        final result = await MobileApiService.freeTable(
+          table.tableNumber,
+          table.floor,
+          expectedScope: requestScope,
+        );
+        if (result.code == 'session_changed') {
+          if (mounted) _showStatusToast(result.message, isError: true);
+          return;
+        }
+        completed = completed && result.isDone;
+        if (!result.isDone) message = result.message;
+        error = error || result.isError;
+      }
+    } catch (error) {
+      debugPrint('Table repair request failed: $error');
+      if (mounted)
+        _showStatusToast(
+          'მოთხოვნა ვერ გაიგზავნა — განაახლეთ სესია და სცადეთ ხელახლა',
+          isError: true,
+        );
+      return;
     }
-    if (!mounted) return;
-
+    if (!mounted || !MobileApiService.isCurrentTableRepairScope(requestScope))
+      return;
     _showStatusToast(
-      ok
-          ? 'მაგიდა $tableLabel გათავისუფლდა'
-          : 'შეცდომა — ვერ მოხდა გათავისუფლება',
-      isError: !ok,
-      icon: ok ? Icons.table_restaurant_rounded : Icons.error_outline_rounded,
+      message,
+      isError: error,
+      icon: completed ? Icons.table_restaurant_rounded : Icons.schedule_rounded,
     );
-
-    if (ok) _loadTables();
+    if (completed) _loadTables();
   }
 
   /// 'free' | 'occupied' | 'reserved'
@@ -182,6 +199,7 @@ extension _LiveStatusTablesView on _LiveStatusScreenState {
     final groupColors = TableGroupStyle.buildColorMap(allTables);
     final orderTableNumbers = TableGroupStyle.buildOrderTableNumbers(allTables);
 
+    final repairScope = MobileApiService.tableRepairScope;
     final sections = <Widget>[];
     for (final floor in _tablesByFloor.keys) {
       final filtered = _tablesByFloor[floor]!.where(_matchesFilter).toList();
@@ -202,6 +220,22 @@ extension _LiveStatusTablesView on _LiveStatusScreenState {
       ),
       padding: const EdgeInsets.fromLTRB(24, 8, 24, 130),
       children: [
+        TableRepairStatusPanel(
+          scope: repairScope,
+          refresh: (number, floor) async {
+            final result = await MobileApiService.freeTable(
+              number,
+              floor,
+              refresh: true,
+              expectedScope: repairScope,
+            );
+            if (result.isDone &&
+                mounted &&
+                MobileApiService.isCurrentTableRepairScope(repairScope))
+              await _loadTables();
+            return result;
+          },
+        ),
         _buildFilterPills(),
         SizedBox(height: 18),
         if (sections.isEmpty)

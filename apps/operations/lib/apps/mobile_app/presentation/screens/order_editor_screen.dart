@@ -478,6 +478,7 @@ class _OrderEditorScreenState extends State<OrderEditorScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final displayedRepairScope = MobileApiService.tableRepairScope;
     if (_isLoading) {
       return MobileGlassScreen(
         orbs: [
@@ -563,20 +564,44 @@ class _OrderEditorScreenState extends State<OrderEditorScreen> {
                           label: 'მაგიდის გათავისუფლება',
                           icon: Icons.lock_open_rounded,
                           onPressed: () async {
-                            final ok = await MobileApiService.freeTable(
-                              widget.tableNumber,
-                              widget.floor,
-                            );
-                            if (!context.mounted) return;
-                            if (ok) {
-                              ManagerToast.show(context, 'მაგიდა გათავისუფლდა');
-                              Navigator.pop(context, 'freed');
-                            } else {
-                              ManagerToast.show(
-                                context,
-                                'გათავისუფლება ვერ მოხერხდა',
-                                isError: true,
+                            try {
+                              final ok = await MobileApiService.freeTable(
+                                widget.tableNumber,
+                                widget.floor,
+                                expectedScope: displayedRepairScope,
                               );
+                              if (context.mounted &&
+                                  ok.code == 'session_changed') {
+                                ManagerToast.show(
+                                  context,
+                                  ok.message,
+                                  isError: true,
+                                );
+                                return;
+                              }
+                              if (!context.mounted ||
+                                  !MobileApiService.isCurrentTableRepairScope(
+                                    displayedRepairScope,
+                                  ))
+                                return;
+                              if (ok.isDone) {
+                                ManagerToast.show(context, ok.message);
+                                Navigator.pop(context, 'freed');
+                              } else {
+                                ManagerToast.show(
+                                  context,
+                                  ok.message,
+                                  isError: ok.isError,
+                                );
+                              }
+                            } catch (error) {
+                              debugPrint('Table repair request failed: $error');
+                              if (context.mounted)
+                                ManagerToast.show(
+                                  context,
+                                  'მოთხოვნა ვერ გაიგზავნა — განაახლეთ სესია და სცადეთ ხელახლა',
+                                  isError: true,
+                                );
                             }
                           },
                         ),
@@ -637,21 +662,51 @@ class _OrderEditorScreenState extends State<OrderEditorScreen> {
                               await MobileApiService.cancelOrder(
                                 widget.orderId,
                               );
-                              if (!context.mounted) return;
+                              if (!context.mounted ||
+                                  !MobileApiService.isCurrentTableRepairScope(
+                                    displayedRepairScope,
+                                  ))
+                                return;
                               ManagerToast.show(context, 'შეკვეთა გაუქმებულია');
                               Navigator.pop(context, 'cancelled');
                             } catch (_) {
-                              final ok = await MobileApiService.freeTable(
-                                widget.tableNumber,
-                                widget.floor,
-                              );
-                              if (!context.mounted) return;
-                              ManagerToast.show(
-                                context,
-                                ok ? 'მაგიდა გათავისუფლდა' : 'შეცდომა',
-                                isError: !ok,
-                              );
-                              if (ok) Navigator.pop(context, 'freed');
+                              try {
+                                final ok = await MobileApiService.freeTable(
+                                  widget.tableNumber,
+                                  widget.floor,
+                                  expectedScope: displayedRepairScope,
+                                );
+                                if (context.mounted &&
+                                    ok.code == 'session_changed') {
+                                  ManagerToast.show(
+                                    context,
+                                    ok.message,
+                                    isError: true,
+                                  );
+                                  return;
+                                }
+                                if (!context.mounted ||
+                                    !MobileApiService.isCurrentTableRepairScope(
+                                      displayedRepairScope,
+                                    ))
+                                  return;
+                                ManagerToast.show(
+                                  context,
+                                  ok.message,
+                                  isError: ok.isError,
+                                );
+                                if (ok.isDone) Navigator.pop(context, 'freed');
+                              } catch (error) {
+                                debugPrint(
+                                  'Table repair request failed: $error',
+                                );
+                                if (context.mounted)
+                                  ManagerToast.show(
+                                    context,
+                                    'მოთხოვნა ვერ გაიგზავნა — განაახლეთ სესია და სცადეთ ხელახლა',
+                                    isError: true,
+                                  );
+                              }
                             }
                           },
                         ),

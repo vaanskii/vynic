@@ -269,7 +269,9 @@ class EdgeTransportService {
         previous.status == EdgeExecutionStatus.succeeded
             ? EdgeCommandResult.succeeded(
                 command.commandId,
-                code: 'already_executed',
+                code: command.type == EdgeCommandTypes.tableRepair
+                    ? previous.code ?? 'repair_receipt_missing'
+                    : 'already_executed',
               )
             : EdgeCommandResult.failed(
                 command.commandId,

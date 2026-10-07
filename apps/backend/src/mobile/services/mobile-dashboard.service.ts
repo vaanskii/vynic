@@ -1,3 +1,5 @@
+import { requestTableRepair } from './manager-table-repair';
+import type { ManagerAuthContext } from '../../auth/manager-auth-context';
 import { financialPayments } from '../../finance/financial-summary';
 import {
   BadRequestException,
@@ -480,37 +482,12 @@ export class MobileDashboardService {
   }
 
   async freeTable(
-    tenant: TenantContext,
+    actor: ManagerAuthContext,
     tableNumber: string,
     floor: string,
-    monitoringSocketId?: string,
+    requestId: unknown,
   ) {
-    const updated = await (this.prisma as any).table.updateMany({
-      where: {
-        venueId: tenant.venueId,
-        tableNumber,
-        floor,
-      },
-      data: { isReserved: false, activeOrderId: null, currentBill: 0 },
-    });
-    if (updated.count === 0)
-      return { success: false, error: 'table_not_found' };
-    this.mutationSupport.registerMobileMutationEchoGuard(tenant, undefined, {
-      tableNumber,
-      floor,
-    });
-    this.gateway.broadcastUpdate(
-      tenant,
-      'data_updated',
-      {
-        type: 'tables',
-        action: 'freed',
-        tableNumber,
-        floor,
-      },
-      this.mutationSupport.wsExcludeOpts(monitoringSocketId),
-    );
-    return { success: true };
+    return requestTableRepair(this.prisma, actor, tableNumber, floor, requestId);
   }
 
   async getStaffPerformance(tenant: TenantContext): Promise<StaffRankEntry[]> {

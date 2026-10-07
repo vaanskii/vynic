@@ -1,3 +1,4 @@
+import 'table_repair_repository.dart';
 import 'package:vynic/core/models/sale_record.dart';
 import 'package:vynic/core/services/menu/canonical_menu.dart';
 import 'package:vynic/core/services/menu/menu_mutation_journal.dart';
@@ -564,6 +565,10 @@ class BackupRepository {
         );
       }
     }
+    final pendingRepairs = TableRepairRepository.validateBackup(out);
+    if (pendingRepairs > 0 && (pendingTransfers > 0 ||
+        dayClose != null && CloseDayIntent.fromMap(dayClose).pending))
+      throw const FormatException('Table repair overlaps another recovery in backup');
     var pendingOwnership = 0;
     for (final entry in out['meta']!.entries) {
       if (entry.key is! String ||
@@ -571,12 +576,13 @@ class BackupRepository {
             OrderTableMutationRepository.prefix,
           ))
         continue;
+      if (TableRepairRepository.isRecord(entry.key, entry.value)) continue;
       final intent = OrderTableMutationRepository.decode(
         entry.key as String,
         entry.value,
       );
       if (!intent.pending) continue;
-      if (++pendingOwnership > 1 ||
+      if (++pendingOwnership > 1 || pendingRepairs > 0 ||
           pendingTransfers > 0 ||
           dayClose != null && CloseDayIntent.fromMap(dayClose).pending ||
           BusinessDayRepository.dateKey(
@@ -915,6 +921,7 @@ class BackupRepository {
     );
     // Restore already owns admission; finish the restored transition before
     // Menu recovery, rebuilt ACKs or any UI/worker can admit business writes.
+    await TableRepairRepository.recoverPending(underExclusive: true);
     await OrderTableMutationRepository.recoverPending(underExclusive: true);
     await CloseDayTransaction.recoverUnderAdmission();
     await OrderItemTransfer.recoverUnderAdmission();

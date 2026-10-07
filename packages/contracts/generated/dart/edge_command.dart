@@ -252,6 +252,23 @@ class EdgeCommandTypes {
   /// - `platformRevision`: int?, monotonic Platform Staff revision; older revisions must be ignored
   static const String staffDelete = 'STAFF_DELETE';
 
+  /// Release a ghost table only when canonical identity and observed state match and no live Order or Reservation owns it. Edge only; Cloud updates through the authoritative snapshot.
+  ///
+  /// Idempotency: Immutable command identity, flushed repair intent, table/audit effects and retained receipt. Completed replay never clears later occupancy.
+  ///
+  /// Payload:
+  /// - `tableId`: canonical physical table UUID
+  /// - `tableNumber`: legacy table number
+  /// - `floor`: legacy floor key
+  /// - `expectedIsReserved`: bool
+  /// - `expectedActiveOrderId`: int|null
+  /// - `actorStaffId`: authenticated Manager Staff UUID
+  /// - `actorUsername`: authenticated Manager username
+  /// - `mirrorUpdatedAt`: string, server-owned original Cloud snapshot timestamp; ACK projection CAS only, excluded from local business request fingerprint
+  ///
+  /// Failure: table_not_found; table_busy; stale_table; canonical_table_identity_required; repair_required
+  static const String tableRepair = 'TABLE_REPAIR';
+
   static const Set<String> all = <String>{
     'NOOP',
     'ORDER_UPDATE',
@@ -271,6 +288,7 @@ class EdgeCommandTypes {
     'STAFF_ROLE_UPDATE',
     'STAFF_RENAME',
     'STAFF_DELETE',
+    'TABLE_REPAIR',
   };
 
   /// Types safe to execute more than once.
@@ -296,6 +314,7 @@ class EdgeCommandTypes {
     'STAFF_ROLE_UPDATE',
     'STAFF_RENAME',
     'STAFF_DELETE',
+    'TABLE_REPAIR',
   };
 
   /// Types that must NOT be re-run after an interrupted execution.

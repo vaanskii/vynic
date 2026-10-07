@@ -51,7 +51,7 @@ void main() {
   });
 
   test('the restaurant work is all here, not just the probe', () {
-    expect(posEdgeCommandHandlers, hasLength(17));
+    expect(posEdgeCommandHandlers, hasLength(18));
     expect(
       registry.supportedTypes,
       containsAll(<String>[

@@ -532,18 +532,23 @@ current transport status.
   88 backend cases and 44 actual HTTP/PG cases;
   `docs/proofs/MGR04_COMMITTED_4a46db3_2026-10-07.json`. Analytics remain deferred. POS-02 is
   deferred and VM operations stay HELD.
-- MGR-06 implements immutable linked full negative payroll-payment, obligation-
-  payment and reserve corrections. Current Manager Staff/Venue and existing
-  feature guards apply to fresh and retained requests. Original effective dates
-  net historical amounts; server correction date/createdAt retain chronology.
-  Existing period/cycle locks and atomic audits serialize correction/payment work;
-  payment reversals restore their original reserve consumption. Fresh reserve
-  corrections conservatively refuse nonzero cycle consumption. Manager flushes
-  scoped frozen UUID/reason before HTTP, validates and flushes Cloud receipts,
-  resumes lost-response requests after history reopen and fences displayed
-  sessions. Runbook: `docs/MGR06_FINANCIAL_CORRECTIONS.md`. Exact-source
-  qualification and DONE status are recorded in the milestone proof.
-  POS-02 remains deferred and Windows VM operations stay HELD.
+- MGR-06 is DONE from `e9b5f0f45966bae091205506b78605b8f719d012`. A clean Git-tree export
+  qualified before the conditional local commit; the actual committed archive
+  then matched every tested Git blob. It adds one immutable linked full negative
+  payroll-payment, obligation-payment or reserve correction. Current Manager
+  Staff/Venue and existing feature guards apply to fresh and retained requests.
+  Original effective dates net historical totals; server correction date and
+  createdAt preserve chronology. Existing locks and atomic audits serialize writes;
+  payment reversals restore original reserve consumption. Fresh reserve corrections
+  conservatively refuse nonzero cycle consumption. Manager durably retains scoped
+  frozen UUID/reason, validates and flushes Cloud receipts, resumes uncertain results
+  after reversed history reopen and fences displayed sessions. Runbook:
+  `docs/MGR06_FINANCIAL_CORRECTIONS.md`. Exact qualification: 569 Flutter cases
+  (42 MGR-06), 104 backend cases, 27 actual HTTP/PG cases, nine static checks,
+  preserved nine original records across eight tables after migration/PG restart,
+  zero schema drift and Manager/POS macOS development builds. Proof:
+  `docs/proofs/MGR06_COMMITTED_e9b5f0f_2026-10-07.json`. POS-02 remains deferred and
+  Windows VM operations stay HELD; broader release gates remain separate.
 - Every Order audit report opens with a typed creation event carrying
   `orderKind` (`WALK_IN`, `TAKEAWAY`, `PACKAGE`, `RESERVATION`), `tableRefs`,
   `source`, `actorId`, `actorName`, `businessDate`: `CREATE_WALKIN` for POS

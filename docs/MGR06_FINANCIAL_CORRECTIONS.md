@@ -100,3 +100,22 @@ No live financial record, bank action, customer restaurant, production database,
 push or deployment is involved in these proofs. Windows VM work remains HELD;
 physical printer/driver/paper acceptance remains NOT_DONE/deferred under POS-02.
 Those release gates are separate from this Cloud/Manager correction milestone.
+
+## Exact source result
+
+Runtime `e9b5f0f45966bae091205506b78605b8f719d012` is qualified: 569 Flutter cases in 41 suites,
+including 28 MGR-06 client and 14 history-widget cases; 104 backend cases;
+27 actual HTTP/PostgreSQL cases (13 MGR-06, 14 existing finance); nine static
+checks; both Manager and POS macOS development builds. Every original field in
+nine representative pre-migration records across eight tables survived the
+additive migration and PostgreSQL restart. Schema drift is zero. All 2,140
+regular and 29 symlink Git blobs match before/after qualification and the actual
+committed export; no user WIP overlay was used. The final clean receipts have
+zero failed or skipped acceptance cases. Existing touched audit lint debt remains
+one error before and after; new source/fixture typed lint is clean.
+
+Exact evidence: `docs/proofs/MGR06_COMMITTED_e9b5f0f_2026-10-07.json` and its raw-receipt ZIP.
+The first build session lost execution connectivity; the owned build was resumed
+only after proving no compiler remained and restoring the original input.
+Final receipts record successful builds and unchanged source. Windows and
+physical printer/driver acceptance retain the separate pending scope above.

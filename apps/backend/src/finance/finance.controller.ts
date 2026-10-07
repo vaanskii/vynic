@@ -1,3 +1,4 @@
+import type { CorrectionInput } from './finance-corrections';
 import { financeDates } from './finance-common';
 import { VenueEntitlementsService } from '../entitlements/venue-entitlements.service';
 import {
@@ -78,6 +79,16 @@ export class FinanceController {
     return this.payroll.recordPayment(a, id, body);
   }
   @RequiresFeature(FeatureKeys.PAYROLL)
+  @Post('payroll/:id/payments/:entryId/reversal')
+  reversePayroll(
+    @ManagerAuth() actor: Actor,
+    @Param('id') id: string,
+    @Param('entryId') originalId: string,
+    @Body() body: CorrectionInput,
+  ) {
+    return this.payroll.reversePayment(actor, id, originalId, body);
+  }
+  @RequiresFeature(FeatureKeys.PAYROLL)
   @Post('payroll/:id/accruals')
   accrual(
     @ManagerAuth() a: Actor,
@@ -139,6 +150,26 @@ export class FinanceController {
     @Body() body: PaymentInput,
   ) {
     return this.obligations.record(a, id, body, true);
+  }
+  @RequiresFeature(FeatureKeys.FINANCIAL_PLANNING)
+  @Post('cycles/:id/payments/:entryId/reversal')
+  reverseObligationPayment(
+    @ManagerAuth() actor: Actor,
+    @Param('id') id: string,
+    @Param('entryId') originalId: string,
+    @Body() body: CorrectionInput,
+  ) {
+    return this.obligations.reverse(actor, id, originalId, body, true);
+  }
+  @RequiresFeature(FeatureKeys.FINANCIAL_PLANNING)
+  @Post('cycles/:id/reserves/:entryId/reversal')
+  reverseReserve(
+    @ManagerAuth() actor: Actor,
+    @Param('id') id: string,
+    @Param('entryId') originalId: string,
+    @Body() body: CorrectionInput,
+  ) {
+    return this.obligations.reverse(actor, id, originalId, body, false);
   }
   @RequiresFeature(FeatureKeys.PAYROLL)
   @Get('legacy-salaries')

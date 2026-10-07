@@ -168,7 +168,7 @@ class _ManagerDataStatusPanelState extends State<ManagerDataStatusPanel> {
                         ),
                       if (limited)
                         const Text(
-                          'ეს მონაცემები მიმდინარე POS მდგომარეობას ვერ ადასტურებს. ცვლილების დასრულება დასტურდება მხოლოდ POS-ის პასუხით.',
+                          'ეს მონაცემები მიმდინარე POS მდგომარეობას ვერ ადასტურებს. POS ოპერაციის დასრულება დასტურდება მხოლოდ POS-ის პასუხით.',
                           style: TextStyle(
                             color: Color(0xFFFFCF8A),
                             fontSize: 12,

@@ -211,8 +211,9 @@ remote push or database access was performed during implementation.
 - Historical production salary existence/count remains unverified and preserved.
 - No inferred attendance, hourly wages, partial-month proration, automatic salary
   accrual from shifts or retroactive editing of frozen periods.
-- Entries are immutable. A general reversal/refund/correction workflow is not
-  part of this step; mistakes cannot be silently edited or deleted.
+- Entries remain immutable. MGR-06 now adds linked signed payment/reserve
+  corrections with preserved originals; see `MGR06_FINANCIAL_CORRECTIONS.md`.
+  Real bank transfers/refunds remain outside the application.
 - Finance history reads currently return the selected Venue's full requested
   history; keyset pagination/batched monthly materialization is a future scaling
   improvement. New finance mutations require Cloud connectivity.

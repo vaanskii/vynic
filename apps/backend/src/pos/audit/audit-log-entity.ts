@@ -110,6 +110,10 @@ const ACTION_RULES: Readonly<Record<string, EntityRule>> = {
     entityType: 'PAYROLL_PAYMENT',
     idKeys: ['paymentId'],
   },
+  PAYROLL_PAYMENT_REVERSED: {
+    entityType: 'PAYROLL_PAYMENT',
+    idKeys: ['entryId'],
+  },
   PAYROLL_DAY_REVERSED: { entityType: 'PAYROLL_PERIOD', idKeys: ['periodId'] },
   PAYROLL_ACCRUAL_RECORDED: {
     entityType: 'PAYROLL_PERIOD',
@@ -132,6 +136,14 @@ const ACTION_RULES: Readonly<Record<string, EntityRule>> = {
     idKeys: ['cycleId'],
   },
   OBLIGATION_PAYMENT_RECORDED: {
+    entityType: 'OBLIGATION_CYCLE',
+    idKeys: ['cycleId'],
+  },
+  OBLIGATION_PAYMENT_REVERSED: {
+    entityType: 'OBLIGATION_CYCLE',
+    idKeys: ['cycleId'],
+  },
+  OBLIGATION_RESERVE_REVERSED: {
     entityType: 'OBLIGATION_CYCLE',
     idKeys: ['cycleId'],
   },

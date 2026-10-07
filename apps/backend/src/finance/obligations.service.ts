@@ -1,3 +1,11 @@
+import {
+  correctionInput,
+  assertCorrectionReplay,
+  assertOriginal,
+  correctionTransaction,
+  presentCorrections,
+  type CorrectionInput,
+} from './finance-corrections';
 import { inputObject } from './finance-rules';
 import {
   BadRequestException,
@@ -246,10 +254,12 @@ export class ObligationsService {
         c.dueDate,
         today,
       ),
-      reserves: c.reserves.map((e) => ({ ...e, amount: e.amount.toFixed(2) })),
-      payments: c.payments.map((e) => ({
+      reserves: presentCorrections(
+        c.reserves,
+        !c.payments.reduce((s, p) => s.plus(p.reserveConsumed), zero()).eq(0),
+      ),
+      payments: presentCorrections(c.payments).map((e) => ({
         ...e,
-        amount: e.amount.toFixed(2),
         reserveConsumed: e.reserveConsumed.toFixed(2),
       })),
     };
@@ -369,6 +379,139 @@ export class ObligationsService {
           obligationId: cycle.obligationId,
           amount: data.amount.toFixed(2),
           businessDate: data.businessDate,
+        },
+      );
+      return entry;
+    });
+  }
+  async reverse(
+    actor: Actor,
+    cycleId: string,
+    originalId: string,
+    input: CorrectionInput,
+    payment: boolean,
+  ) {
+    const data = correctionInput(input);
+    return correctionTransaction(this.db, async (tx) => {
+      await tx.$queryRaw`SELECT id FROM pos."ObligationCycle" WHERE id = ${cycleId} AND "venueId" = ${actor.venueId} FOR UPDATE`;
+      const cycle = await tx.obligationCycle.findFirst({
+        where: { id: cycleId, venueId: actor.venueId },
+        include,
+      });
+      if (!cycle)
+        throw new NotFoundException('ვალდებულების პერიოდი ვერ მოიძებნა');
+      const originalPayment = payment
+        ? await tx.obligationPayment.findFirst({
+            where: {
+              id: originalId,
+              venueId: actor.venueId,
+              obligationCycleId: cycleId,
+            },
+          })
+        : null;
+      const original =
+        originalPayment ??
+        (payment
+          ? null
+          : await tx.obligationReserveEntry.findFirst({
+              where: {
+                id: originalId,
+                venueId: actor.venueId,
+                obligationCycleId: cycleId,
+              },
+            }));
+      if (!original)
+        throw new NotFoundException('საწყისი ჩანაწერი ვერ მოიძებნა');
+      const existing = payment
+        ? await tx.obligationPayment.findUnique({ where: { id: data.id } })
+        : await tx.obligationReserveEntry.findUnique({
+            where: { id: data.id },
+          });
+      if (existing) {
+        assertCorrectionReplay(
+          existing,
+          actor.venueId,
+          originalId,
+          data.reason,
+          existing.obligationCycleId === cycleId,
+        );
+        return existing;
+      }
+      assertOriginal(original);
+      const reversed = payment
+        ? await tx.obligationPayment.findUnique({
+            where: { reversalOfId: originalId },
+          })
+        : await tx.obligationReserveEntry.findUnique({
+            where: { reversalOfId: originalId },
+          });
+      if (reversed) throw new ConflictException('ჩანაწერი უკვე კორექტირებულია');
+      if (!payment) {
+        const consumed = cycle.payments.reduce(
+          (s, p) => s.plus(p.reserveConsumed),
+          zero(),
+        );
+        if (!consumed.eq(0))
+          throw new ConflictException(
+            'ამ ციკლის რეზერვი გამოყენებულია. ჯერ შესაბამისი გადახდები გაასწორეთ.',
+          );
+        if (sum(cycle.reserves).lt(original.amount))
+          throw new ConflictException(
+            'რეზერვის ბალანსი კორექტირებას არ უშვებს',
+          );
+      }
+      if (
+        originalPayment &&
+        (originalPayment.reserveConsumed.lt(0) ||
+          originalPayment.reserveConsumed.gt(originalPayment.amount))
+      )
+        throw new ConflictException(
+          'გადახდის რეზერვის ჩანაწერი გადამოწმებას მოითხოვს',
+        );
+      const correctionBusinessDate = (await financeDates(tx, actor))
+        .businessDate;
+      const common = {
+        id: data.id,
+        ...actorData(actor),
+        obligationCycleId: cycleId,
+        amount: original.amount.negated(),
+        businessDate: original.businessDate,
+        notes: data.reason,
+        reversalOfId: originalId,
+        correctionBusinessDate,
+      };
+      const entry = originalPayment
+        ? await tx.obligationPayment.create({
+            data: {
+              ...common,
+              paymentDate: originalPayment.paymentDate,
+              reserveConsumed: originalPayment.reserveConsumed.negated(),
+            },
+          })
+        : await tx.obligationReserveEntry.create({ data: common });
+      await audit(
+        tx,
+        actor,
+        payment ? 'OBLIGATION_PAYMENT_REVERSED' : 'OBLIGATION_RESERVE_REVERSED',
+        'OBLIGATION_CYCLE',
+        cycleId,
+        {
+          entryId: entry.id,
+          originalEntryId: originalId,
+          obligationId: cycle.obligationId,
+          periodMonth: cycle.periodMonth,
+          amount: entry.amount.toFixed(2),
+          businessDate: original.businessDate,
+          correctionBusinessDate,
+          reason: data.reason,
+          ...(originalPayment
+            ? {
+                reserveConsumed: originalPayment.reserveConsumed
+                  .negated()
+                  .toFixed(2),
+                paymentDate: originalPayment.paymentDate,
+              }
+            : {}),
         },
       );
       return entry;

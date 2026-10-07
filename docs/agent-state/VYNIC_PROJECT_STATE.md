@@ -530,9 +530,20 @@ current transport status.
   Calculator expose bound source/status details and refresh on resume. Runbook:
   `docs/MGR04_DATA_FRESHNESS.md`. Exact qualification passed 492 Flutter tests,
   88 backend cases and 44 actual HTTP/PG cases;
-  `docs/proofs/MGR04_COMMITTED_4a46db3_2026-10-07.json`. Analytics remain deferred; next MGR-06 covers
-  immutable financial corrections. POS-02 is
+  `docs/proofs/MGR04_COMMITTED_4a46db3_2026-10-07.json`. Analytics remain deferred. POS-02 is
   deferred and VM operations stay HELD.
+- MGR-06 implements immutable linked full negative payroll-payment, obligation-
+  payment and reserve corrections. Current Manager Staff/Venue and existing
+  feature guards apply to fresh and retained requests. Original effective dates
+  net historical amounts; server correction date/createdAt retain chronology.
+  Existing period/cycle locks and atomic audits serialize correction/payment work;
+  payment reversals restore their original reserve consumption. Fresh reserve
+  corrections conservatively refuse nonzero cycle consumption. Manager flushes
+  scoped frozen UUID/reason before HTTP, validates and flushes Cloud receipts,
+  resumes lost-response requests after history reopen and fences displayed
+  sessions. Runbook: `docs/MGR06_FINANCIAL_CORRECTIONS.md`. Exact-source
+  qualification and DONE status are recorded in the milestone proof.
+  POS-02 remains deferred and Windows VM operations stay HELD.
 - Every Order audit report opens with a typed creation event carrying
   `orderKind` (`WALK_IN`, `TAKEAWAY`, `PACKAGE`, `RESERVATION`), `tableRefs`,
   `source`, `actorId`, `actorName`, `businessDate`: `CREATE_WALKIN` for POS

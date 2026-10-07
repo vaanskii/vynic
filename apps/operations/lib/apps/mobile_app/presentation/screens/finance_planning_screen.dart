@@ -3,6 +3,9 @@ import 'package:uuid/uuid.dart';
 import 'package:vynic/core/services/manager_app/mobile_api_service.dart';
 import 'package:vynic/core/ui/vynic_spacing.dart';
 import 'mobile_admin_screen.dart';
+import '../widgets/finance_correction_dialog.dart';
+import 'package:vynic/core/services/manager_app/finance_correction_request.dart';
+import 'package:vynic/core/services/auth/auth_token_service.dart';
 
 typedef FinanceRead = Future<Map<String, dynamic>> Function(String path);
 typedef FinanceWrite =
@@ -43,10 +46,14 @@ class FinancePlanningScreen extends StatefulWidget {
     this.obligations = false,
     this.read,
     this.write,
+    this.correctionSend,
+    this.correctionScope,
   });
   final bool obligations;
   final FinanceRead? read;
   final FinanceWrite? write;
+  final FinanceCorrectionSend? correctionSend;
+  final String? correctionScope;
   @override
   State<FinancePlanningScreen> createState() => _FinancePlanningState();
 }
@@ -119,13 +126,21 @@ class _FinancePlanningState extends State<FinancePlanningScreen> {
     if (saved == true && mounted) await _load();
   }
 
-  Future<void> _history(String title, String path) =>
-      Navigator.of(context).push<void>(
-        MaterialPageRoute(
-          builder: (_) =>
-              FinanceHistoryScreen(title: title, path: path, read: read),
+  Future<void> _history(String title, String path) async {
+    await Navigator.of(context).push<void>(
+      MaterialPageRoute(
+        builder: (_) => FinanceHistoryScreen(
+          title: title,
+          path: path,
+          read: read,
+          correctionSend: widget.correctionSend,
+          correctionScope: widget.correctionScope,
         ),
-      );
+      ),
+    );
+    if (mounted) await _load();
+  }
+
   String get businessDate => _data!['businessDate'].toString();
   String get today => _data!['today'].toString();
   Future<void> _payment(String path, {bool reserve = false}) => _form(
@@ -1101,15 +1116,142 @@ class FinanceHistoryScreen extends StatefulWidget {
     required this.title,
     required this.path,
     required this.read,
+    this.correctionSend,
+    this.correctionScope,
   });
   final String title, path;
   final FinanceRead read;
+  final FinanceCorrectionSend? correctionSend;
+  final String? correctionScope;
   @override
   State<FinanceHistoryScreen> createState() => _FinanceHistoryState();
 }
 
 class _FinanceHistoryState extends State<FinanceHistoryScreen> {
-  late Future<Map<String, dynamic>> _future = widget.read(widget.path);
+  late Future<Map<String, dynamic>> _future = _loadHistory();
+  String? _shownScope, _shownSession, _storageError;
+  final _retained = <String>{};
+  Future<Map<String, dynamic>> _loadHistory() async {
+    final scope = widget.correctionScope ?? _currentScope();
+    final session = AuthTokenService.token;
+    final data = await widget.read(widget.path);
+    void requireSession() {
+      if (widget.correctionScope == null &&
+          scope != null &&
+          (!MobileApiService.isCurrentTableRepairScope(scope) ||
+              AuthTokenService.token != session)) {
+        throw StateError('სესია შეიცვალა — განაახლეთ ისტორია');
+      }
+    }
+
+    requireSession();
+    _retained.clear();
+    _storageError = null;
+    if (scope != null) {
+      try {
+        await FinanceCorrectionRequests.init();
+        requireSession();
+        for (final p in financeRows(data['periods'] ?? data['cycles'])) {
+          for (final group in ['payments', 'reserves']) {
+            for (final entry in financeRows(p[group])) {
+              final saved = FinanceCorrectionRequests.read(
+                scope,
+                _correctionPath(p, group, entry),
+              );
+              if (saved != null) _retained.add(entry['id'].toString());
+            }
+          }
+        }
+      } catch (error) {
+        _storageError = error.toString();
+      }
+    }
+    requireSession();
+    _shownScope = scope;
+    _shownSession = session;
+    return data;
+  }
+
+  String? _currentScope() {
+    try {
+      return MobileApiService.tableRepairScope;
+    } on StateError {
+      return null;
+    } on FormatException {
+      return null;
+    }
+  }
+
+  String _correctionPath(
+    Map<String, dynamic> parent,
+    String group,
+    Map<String, dynamic> entry,
+  ) =>
+      '${parent.containsKey('staffId') ? 'payroll' : 'cycles'}/${parent['id']}/$group/${entry['id']}/reversal';
+  Future<void> _correct(
+    Map<String, dynamic> parent,
+    String group,
+    Map<String, dynamic> entry,
+  ) async {
+    try {
+      final scope = _shownScope;
+      if (scope == null) {
+        throw StateError('სესია ვერ დადასტურდა — განაახლეთ ისტორია');
+      }
+      final session = _shownSession;
+      void requireSession() {
+        if (widget.correctionScope == null &&
+            (!MobileApiService.isCurrentTableRepairScope(scope) ||
+                AuthTokenService.token != session)) {
+          throw StateError('სესია შეიცვალა — განაახლეთ ისტორია');
+        }
+      }
+
+      final original = <String, dynamic>{
+        for (final key in [
+          'id',
+          'amount',
+          'businessDate',
+          'paymentDate',
+          'reserveConsumed',
+        ])
+          if (entry.containsKey(key)) key: entry[key],
+      };
+      requireSession();
+      final path = _correctionPath(parent, group, entry);
+      final saved = await showDialog<bool>(
+        context: context,
+        barrierDismissible: false,
+        builder: (_) => Theme(
+          data: financeTheme(context),
+          child: FinanceCorrectionDialog(
+            path: path,
+            original: original,
+            scope: scope,
+            requireSession: requireSession,
+            send:
+                widget.correctionSend ??
+                MobileApiService.financeCorrectionWrite,
+          ),
+        ),
+      );
+      requireSession();
+      if (saved == true && mounted) {
+        setState(() {
+          _future = _loadHistory();
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('კორექტირება Cloud-ში შენახულია')),
+        );
+      }
+    } catch (error) {
+      if (mounted)
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(error.toString())));
+    }
+  }
+
   @override
   Widget build(BuildContext context) => Theme(
     data: financeTheme(context),
@@ -1122,8 +1264,9 @@ class _FinanceHistoryState extends State<FinanceHistoryScreen> {
           if (snap.hasError)
             return Center(
               child: TextButton(
-                onPressed: () =>
-                    setState(() => _future = widget.read(widget.path)),
+                onPressed: () => setState(() {
+                  _future = _loadHistory();
+                }),
                 child: const Text('ვერ ჩაიტვირთა — თავიდან ცდა'),
               ),
             );
@@ -1144,6 +1287,8 @@ class _FinanceHistoryState extends State<FinanceHistoryScreen> {
                     'ძველი ჩანაწერები — მხოლოდ წაკითხვა. თანამშრომელზე ავტომატურად არ არის მიბმული.',
                   ),
                 ),
+              if (_storageError != null)
+                Text('კორექტირების საცავი: $_storageError'),
               if (periods.isEmpty) const Text('ისტორია ჯერ არ არის.'),
               for (final p in periods)
                 Card(
@@ -1178,11 +1323,49 @@ class _FinanceHistoryState extends State<FinanceHistoryScreen> {
                             ).where((e) => e['amount'] != '0.00'))
                               Padding(
                                 padding: const EdgeInsets.only(top: 12),
-                                child: Text(
-                                  '${group.$2}: ${e['amount']} ₾\n${e['businessDate'] ?? e['payableDate'] ?? financeRows(p['accruals']).where((a) => a['id'] == e['dayEntryId']).firstOrNull?['payableDate'] ?? p['periodMonth']} · ${e['actorName']}'
-                                  '${e['paymentDate'] == null ? '' : '\nგადახდის თარიღი: ${e['paymentDate']}'}'
-                                  '${e['reserveConsumed'] == null ? '' : '\nრეზერვიდან: ${e['reserveConsumed']} ₾'}'
-                                  '${e['notes'] == null ? '' : '\n${e['notes']}'}',
+                                child: Column(
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.stretch,
+                                  children: [
+                                    Text(
+                                      '${e['reversalOfId'] == null ? group.$2 : 'კორექტირება'}: ${e['amount']} ₾\n'
+                                      '${e['businessDate'] ?? e['payableDate'] ?? financeRows(p['accruals']).where((a) => a['id'] == e['dayEntryId']).firstOrNull?['payableDate'] ?? p['periodMonth']} · ${e['actorName']}'
+                                      '${e['paymentDate'] == null ? '' : '\nგადახდის თარიღი: ${e['paymentDate']}'}'
+                                      '${e['reserveConsumed'] == null ? '' : '\nრეზერვიდან: ${e['reserveConsumed']} ₾'}'
+                                      '${e['notes'] == null ? '' : '\n${e['notes']}'}',
+                                    ),
+                                    if (e['reversalOfId'] != null)
+                                      Text(
+                                        'საწყისი ჩანაწერი: ${e['reversalOfId']}\n'
+                                        'კორექტირების სამუშაო თარიღი: ${e['correctionBusinessDate']}\nდაფიქსირდა: ${e['createdAt']}',
+                                      ),
+                                    if (e['reversedById'] != null)
+                                      Text(
+                                        'კორექტირებულია: ${e['reversedById']}',
+                                      ),
+                                    if (e['correctionBlockedReason'] != null)
+                                      Text(
+                                        e['correctionBlockedReason'].toString(),
+                                      ),
+                                    if (group.$1 != 'accruals' &&
+                                        e['reversalOfId'] == null &&
+                                        (_retained.contains(e['id']) ||
+                                            e['canReverse'] == true &&
+                                                e['reversedById'] == null))
+                                      Align(
+                                        alignment: Alignment.centerLeft,
+                                        child: TextButton.icon(
+                                          onPressed: () =>
+                                              _correct(p, group.$1, e),
+                                          icon: const Icon(Icons.undo),
+                                          label: Text(
+                                            _retained.contains(e['id'])
+                                                ? 'იგივე მოთხოვნის გამეორება'
+                                                : 'ჩანაწერის კორექტირება',
+                                          ),
+                                        ),
+                                      ),
+                                  ],
                                 ),
                               ),
                         ],

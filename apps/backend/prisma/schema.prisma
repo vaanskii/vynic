@@ -2015,6 +2015,12 @@ model PayrollPayment {
   venue           Venue         @relation(fields: [venueId], references: [id], onDelete: Restrict)
   period          PayrollPeriod @relation(fields: [venueId, payrollPeriodId], references: [venueId, id], onDelete: Restrict)
 
+  reversalOfId           String?          @unique
+  correctionBusinessDate String?
+  reversalOf             PayrollPayment?  @relation("PayrollPaymentReversal", fields: [venueId, payrollPeriodId, reversalOfId], references: [venueId, payrollPeriodId, id], onDelete: Restrict, onUpdate: NoAction, map: "PayrollPayment_reversalOf_fkey")
+  reversalEntries        PayrollPayment[] @relation("PayrollPaymentReversal")
+
+  @@unique([venueId, payrollPeriodId, id])
   @@index([venueId, businessDate])
   @@schema("pos")
 }
@@ -2074,6 +2080,12 @@ model ObligationReserveEntry {
   venue             Venue           @relation(fields: [venueId], references: [id], onDelete: Restrict)
   cycle             ObligationCycle @relation(fields: [venueId, obligationCycleId], references: [venueId, id], onDelete: Restrict)
 
+  reversalOfId           String?                  @unique
+  correctionBusinessDate String?
+  reversalOf             ObligationReserveEntry?  @relation("ObligationReserveEntryReversal", fields: [venueId, obligationCycleId, reversalOfId], references: [venueId, obligationCycleId, id], onDelete: Restrict, onUpdate: NoAction, map: "ObligationReserveEntry_reversalOf_fkey")
+  reversalEntries        ObligationReserveEntry[] @relation("ObligationReserveEntryReversal")
+
+  @@unique([venueId, obligationCycleId, id])
   @@index([venueId, businessDate])
   @@schema("pos")
 }
@@ -2093,6 +2105,12 @@ model ObligationPayment {
   venue             Venue           @relation(fields: [venueId], references: [id], onDelete: Restrict)
   cycle             ObligationCycle @relation(fields: [venueId, obligationCycleId], references: [venueId, id], onDelete: Restrict)
 
+  reversalOfId           String?             @unique
+  correctionBusinessDate String?
+  reversalOf             ObligationPayment?  @relation("ObligationPaymentReversal", fields: [venueId, obligationCycleId, reversalOfId], references: [venueId, obligationCycleId, id], onDelete: Restrict, onUpdate: NoAction, map: "ObligationPayment_reversalOf_fkey")
+  reversalEntries        ObligationPayment[] @relation("ObligationPaymentReversal")
+
+  @@unique([venueId, obligationCycleId, id])
   @@index([venueId, businessDate])
   @@schema("pos")
 }

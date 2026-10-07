@@ -658,7 +658,31 @@ class MobileApiService {
   /// Finance mutations carry a caller-generated UUID, retained across retries.
   /// Cloud confirms persistence; no optimistic/offline financial writes.
   static Future<Map<String, dynamic>> financeRead(String path) async {
-    final response = await _get('/mobile/finance/$path');
+    final scope = tableRepairScope, token = AuthTokenService.token;
+    final uri = Uri.parse('$_base/mobile/finance/$path');
+    final headers = Map<String, String>.from(_headers);
+    void requireSession() {
+      if (!isCurrentTableRepairScope(scope) ||
+          AuthTokenService.token != token) {
+        throw StateError('სესია შეიცვალა — განაახლეთ ისტორია');
+      }
+    }
+
+    http.Response? result;
+    for (var attempt = 0; attempt < _maxRetries; attempt++) {
+      requireSession();
+      try {
+        result = await http.get(uri, headers: headers).timeout(_timeout);
+        requireSession();
+        break;
+      } catch (_) {
+        requireSession();
+        if (attempt == _maxRetries - 1) rethrow;
+        await Future<void>.delayed(Duration(seconds: 1 << attempt));
+      }
+    }
+    requireSession();
+    final response = result!;
     if (response.statusCode == 200) {
       return Map<String, dynamic>.from(jsonDecode(response.body) as Map);
     }
@@ -680,6 +704,40 @@ class MobileApiService {
           ? decoded['message'] ?? 'შენახვა ვერ მოხერხდა'
           : 'შენახვა ვერ მოხერხდა (${response.statusCode})',
     );
+  }
+
+  /// One captured authenticated Cloud request. The correction store owns the
+  /// retained UUID and receipt validation; retries are deliberate, never offline.
+  static Future<Map<String, dynamic>> financeCorrectionWrite(
+    String path,
+    Map<String, dynamic> body,
+  ) async {
+    final scope = tableRepairScope, token = AuthTokenService.token;
+    final uri = Uri.parse('$_base/mobile/finance/$path');
+    final headers = Map<String, String>.from(_headers);
+    void requireSession() {
+      if (!isCurrentTableRepairScope(scope) ||
+          AuthTokenService.token != token) {
+        throw StateError('სესია შეიცვალა — განაახლეთ ისტორია');
+      }
+    }
+
+    requireSession();
+    final response = await http
+        .post(uri, headers: headers, body: jsonEncode(body))
+        .timeout(_timeout);
+    requireSession();
+    final decoded = jsonDecode(response.body);
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw Exception(
+        decoded is Map
+            ? decoded['message'] ?? 'კორექტირება ვერ შესრულდა'
+            : 'კორექტირება ვერ შესრულდა (${response.statusCode})',
+      );
+    }
+    if (decoded is! Map)
+      throw const FormatException('კორექტირების შედეგი ვერ დადასტურდა');
+    return Map<String, dynamic>.from(decoded);
   }
 
   static Future<Map<String, dynamic>> getFinancials() => _readData(

@@ -1,0 +1,210 @@
+{
+  "milestone": "MGR-01",
+  "status": "DONE",
+  "cleanHeadExportPlusOwnedChanges": true,
+  "preExistingWipOverlayUsed": false,
+  "syntheticOnly": true,
+  "flutter": {
+    "passed": 179,
+    "suites": 19,
+    "skipped": 0,
+    "errors": 0,
+    "mgr01ProjectionAndWire": 12,
+    "mgr01ActualNavigationWindows": [
+      320,
+      1024
+    ],
+    "visitsPerWindow": 3,
+    "actualCombinedCard": "Main 2 · Main 10",
+    "singleMergedBill": 45,
+    "rawLog": "flutter-qualified.jsonl"
+  },
+  "postgres": {
+    "mgr01": 19,
+    "mgr02Regression": 14,
+    "passed": 33,
+    "skipped": 0,
+    "actualHTTP": true,
+    "freshOwnedClusterStoppedAndRemoved": true,
+    "rawReceipt": "postgres-proof.json"
+  },
+  "backendSyncTests": {
+    "passed": 55,
+    "failed": 0,
+    "skipped": 0
+  },
+  "analysis": {
+    "files": 9,
+    "issues": 0
+  },
+  "typescriptRuntimeBuild": {
+    "exitCode": 0
+  },
+  "prismaClient": {
+    "generatedPrivatelyFromCandidateSchema": true,
+    "newInstalls": false,
+    "coldRegeneratedPrivatelyFromCommittedSchema": true
+  },
+  "independentReview": {
+    "agent": "manager_repair_review",
+    "status": "APPROVED",
+    "openP1": 0,
+    "openP2": 0,
+    "reviewFixes": [
+      "Known UUID Order linking preserves current layout alias and floor",
+      "Empty modern full snapshot retains cold-boot visibility guard",
+      "Same-floor merged card and single bill exercised"
+    ]
+  },
+  "sourceSha256": {
+    "apps/backend/prisma/migrations/20261007120000_manager_table_layout/migration.sql": "57ded5ccaeb936f51d3e3ae07e3c3fa8f2b02bd680d99fa726f77f711cce53a5",
+    "apps/backend/prisma/schema.prisma": "3450588d6c9f6fce79173294b2a6ee633a12be32582bbcb7dd7cf169dbb011a3",
+    "apps/backend/src/mobile/services/mgr01-table-layout.integration.spec.ts": "ec398adb3fdcb28deae21e6d4c8279807601e23124cbe650693db6c000becffc",
+    "apps/backend/src/mobile/services/mobile-dashboard.service.ts": "dcd2d73fe9054aa4036d3010209e51fbc64ee209a1ada0d17265cb7cb39ad74e",
+    "apps/backend/src/pos/sync/application/ingest-pos-snapshot.service.ts": "2a144af0a39cb2547c989095c61ca36013bbd58b807c29cd4908e1dfb8f9df71",
+    "apps/backend/src/pos/sync/snapshot/order-sync.service.ts": "484b5b35e66f61f0301a095085ba90f78bc49a984a9b2fe6569b0feca386b1fa",
+    "apps/backend/src/pos/sync/snapshot/table-presentation.ts": "7aee03abb1bdf9c967d4211fcf6e87ebdc323fb1198b50e5218c8978abb3f188",
+    "apps/backend/src/pos/sync/snapshot/table-record-identity.ts": "8d6cc3b2dc6d58b941658fc8a1d7aafb1f6aa43a86ab68038055da117bfb84b9",
+    "apps/backend/src/pos/sync/snapshot/table-sync.service.ts": "0140067064fb96d8ff9ef7e8ba296170cfc5172eed4cc54d68de8cfc5909ffea",
+    "apps/backend/src/pos/sync/sync-payload.ts": "d0c11ee67f309752617f71dc9af98d6ab30f3ff8cffb622e2be37e7a840dedfe",
+    "apps/backend/tool/prove_mgr01_postgres.py": "a71e1fe0a90918334004bd1be51d5fd797f9cc9f69576af3228a892906e89bfb",
+    "apps/operations/lib/apps/mobile_app/presentation/screens/live_status_screen/live_status_screen.dart": "209be975cabd6ff9e6d0738c5a472508bd9282547fa8fcf04fe02b84495e43c3",
+    "apps/operations/lib/apps/mobile_app/presentation/screens/live_status_screen/views/live_status_tables_part.dart": "5a048b75fb1dcb67295a35b83a83c8e3aa760a2000d413aeacff38215ed2878a",
+    "apps/operations/lib/apps/mobile_app/presentation/widgets/mobile_glass_ui.dart": "2a80bb7cb2a10a0edaf1954078b279e21016f19dfdfe7dafcfa6861dd8242b9c",
+    "apps/operations/lib/core/database/repositories/settings_repository.dart": "197d02b465c449451fa656a8b8e567a7f896f5f5b0e38acb6ba23ddacf44d35b",
+    "apps/operations/lib/core/database/repositories/table_repository.dart": "39311cd867ace698fd36290347bd41061b342842af66c6ed6ca701a61ff57470",
+    "apps/operations/lib/core/models/table.dart": "21f5b23840c36dbcca16ec8e0c958d6646b0e930a882e64d94157042c55ec00f",
+    "apps/operations/lib/core/services/sync/manager_sync_service.dart": "c2e2af8be8ba587be184108a8ae29878fc08b0f1a1093f1ffaeed402305c5e15",
+    "apps/operations/lib/core/services/sync/table_snapshot_projection.dart": "6792ed1aeb8ae3ad40c90406c34ae60757ef2cef3c00f271477edcfb2b74495e",
+    "apps/operations/test/fixtures/mgr01_table_layout.json": "7595470eac2f2613339dc103a00d48f7868e952e58cf55d5de48b6f323b8d158",
+    "apps/operations/test/unit/mgr01_table_snapshot_test.dart": "a3d7f659466dc87169c12c17e2f5a990906dcca7e7683dcf592aaf7d1cd1f60f",
+    "apps/operations/test/widget/mgr01_manager_table_navigation_test.dart": "2bccbc5edd7d20557dd85988c02c55ec7631868e17cee1dc9fbfa2ec6b2693ca",
+    "docs/MGR01_GENERIC_TABLE_LAYOUT.md": "08388c4fb5074847b10f88245927bf47f446a29701469d4048f0861e25032b6b",
+    "docs/agent-state/VYNIC_CODE_MAP.md": "8406745a5d6ae76e0eb1e2ffe0fcea6d9c4ff88c3b106d8d909da8aac214d0e6",
+    "docs/agent-state/VYNIC_PROJECT_STATE.md": "01c0a2f8795dbfdb4f1fe68332e8f839e8067ed4568f7387b09e764e1906d085",
+    "docs/proofs/MGR01_CANDIDATE_409c591c_2026-10-07.zip": "26c53d4a3f250fcf91c66eb65e5e91c66460f28df63bac1262c1b918508893f7",
+    "docs/proofs/MGR01_CANDIDATE_409c591c_2026-10-07.json": "4ff7bcae56de9660cff9e373697ce4b6fc81e4e8f7118e8a767d4a76ceb3a4ab"
+  },
+  "preservation": {
+    "unownedFiles": 3617,
+    "unchanged": true,
+    "sharedFileOriginalsRecovered": [
+      {
+        "path": "apps/backend/prisma/schema.prisma",
+        "method": "three-way inverse",
+        "matches": true
+      },
+      {
+        "path": "apps/backend/src/mobile/services/mobile-dashboard.service.ts",
+        "method": "three-way inverse",
+        "matches": true
+      },
+      {
+        "path": "apps/backend/src/pos/sync/application/ingest-pos-snapshot.service.ts",
+        "method": "three-way inverse",
+        "matches": true
+      },
+      {
+        "path": "apps/backend/src/pos/sync/snapshot/order-sync.service.ts",
+        "method": "three-way inverse",
+        "matches": true
+      },
+      {
+        "path": "apps/backend/src/pos/sync/snapshot/table-record-identity.ts",
+        "method": "three-way inverse",
+        "matches": true
+      },
+      {
+        "path": "apps/backend/src/pos/sync/snapshot/table-sync.service.ts",
+        "method": "three-way inverse",
+        "matches": true
+      },
+      {
+        "path": "apps/backend/src/pos/sync/sync-payload.ts",
+        "method": "three-way inverse",
+        "matches": true
+      },
+      {
+        "path": "apps/operations/lib/apps/mobile_app/presentation/screens/live_status_screen/live_status_screen.dart",
+        "method": "three-way inverse",
+        "matches": true
+      },
+      {
+        "path": "apps/operations/lib/apps/mobile_app/presentation/screens/live_status_screen/views/live_status_tables_part.dart",
+        "method": "three-way inverse",
+        "matches": true
+      },
+      {
+        "path": "apps/operations/lib/apps/mobile_app/presentation/widgets/mobile_glass_ui.dart",
+        "method": "three-way inverse",
+        "matches": true
+      },
+      {
+        "path": "apps/operations/lib/core/database/repositories/settings_repository.dart",
+        "method": "three-way inverse",
+        "matches": true
+      },
+      {
+        "path": "apps/operations/lib/core/database/repositories/table_repository.dart",
+        "method": "three-way inverse",
+        "matches": true
+      },
+      {
+        "path": "apps/operations/lib/core/models/table.dart",
+        "method": "three-way inverse",
+        "matches": true
+      },
+      {
+        "path": "apps/operations/lib/core/services/sync/manager_sync_service.dart",
+        "method": "three-way inverse",
+        "matches": true
+      },
+      {
+        "path": "docs/agent-state/VYNIC_CODE_MAP.md",
+        "method": "three-way inverse",
+        "matches": true
+      },
+      {
+        "path": "docs/agent-state/VYNIC_PROJECT_STATE.md",
+        "method": "exact owned block removal",
+        "matches": true
+      }
+    ],
+    "branch": "codex/docker-deployment-foundation",
+    "stash": "9df454225caec647f67ad4f70ef6038dbbbe41d6"
+  },
+  "pending": {
+    "milestoneBlockers": [],
+    "printerPhysicalDriverAcceptance": "PENDING_NOT_DONE_DEFERRED",
+    "WindowsVMOperations": "HELD",
+    "packagedFontManualPlatformQualification": "later release gate; screenshots are Ahem layout renders"
+  },
+  "earlierTrials": {
+    "candidateTrials": "Candidate archive records corrected nonexistent-path trial; final exact-commit qualification has zero errors/skips"
+  },
+  "archive": {
+    "path": "docs/proofs/MGR01_COMMITTED_a7c64c5_2026-10-07.zip",
+    "sha256": "c5208b200a924ecc96323e393e41f2982e27b5e48c8891bd43a0af5fe4211948"
+  },
+  "runtimeCommit": "a7c64c50703d6a71ca765472eb638371e98d7c1a",
+  "exactCommittedExport": true,
+  "sourceHashesUnchangedAfterVerification": true,
+  "rawReceiptsSha256": {
+    "pg-start.log": "66afd0411ccc09366e99fdd99b85f21899c8d2d064f5835126859618802153ad",
+    "backend-sync-unit-tests.log": "935456341f6c31e837e39a18fd8bd494989959e1b7a4ea8b8f07e1b9e38f72d8",
+    "mgr01-http-fixture.json": "733ab3bf69c9cbad2e89570cf78067ef4b2212612465ce3dbd800efc36bc1948",
+    "pg-migrate.log": "8be71d12a046930006e9980b87a7eef1ae6b00a83426880fc0952af0bc282768",
+    "backend-build.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "flutter-qualified.jsonl": "b8ff16d12ba5443069aa75df1961e1434e4cbe4eefc898f1161d288e1c3fdf46",
+    "backend-sync-unit-tests.json": "16a8418019ae05f68fd1f657c9e2da0a2949106ae23e8489f61a5d71b028da0a",
+    "pg-init.log": "2ae18081354e033c6ed9c800be1834ee87ad67d4e63406138379235845440fce",
+    "pg-stop.log": "ca19178a35ab4153b75b494963b66ce8243e1b94c173107c87b44d09db23652d",
+    "pg-create.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "mgr01-postgres-tests.json": "86497f4cc8b93bcce4dfb7efb6907906e1fa974b9658ad1fde7a00b85af6163e",
+    "pg-integration.log": "c01764a64d514a665e6ed751ca09ccf39bc197aecd1900daa8eeb381d660f3e5",
+    "postgres-proof.json": "010f65d8e7772fa0d605977b647c78b25fd3bc400046bd408c950c1c605471f2",
+    "dart-analyze.log": "13879d4b3ce0dd3842cc2cba44542d742b7b726a470118a2f07e5d01ea5917a1",
+    "prisma-generate.log": "c20391eb11e03764e7f05596cc98df2aaa0ceb6d66b44a16870f0a9588ea9c48",
+    "postgres-proof-console.log": "cc3ec01e9418af8543e223bd49f1e690764b517aae07d677b81d0fe9fdd36075"
+  }
+}

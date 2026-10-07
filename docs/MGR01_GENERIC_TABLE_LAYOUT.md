@@ -64,3 +64,7 @@ three visits per 320/1024 window, one socket/timer refresh and disposal/cache be
 Optional `MGR01_SCREENSHOT_DIR` exports Flutter-test layout images (Ahem glyphs), not
 manual packaged-font/platform qualification. Windows VM/device/printer release
 acceptance remains separately held/pending; no live restaurant is used.
+
+Exact committed runtime proof: `docs/proofs/MGR01_COMMITTED_a7c64c5_2026-10-07.json`
+(179 Flutter cases in 19 suites, 33 HTTP/PostgreSQL, 55 backend sync cases,
+clean 9-file analysis and backend build; no WIP overlay).

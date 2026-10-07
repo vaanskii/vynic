@@ -473,7 +473,7 @@ current transport status.
   and merged payable contributes once per Order. Manager JSON/cache carries metadata
   without a Hive v9 adapter change. Real HTTP/PG and compact/desktop repeated-route
   proof and compatibility policy: `docs/MGR01_GENERIC_TABLE_LAYOUT.md`. Clean-source
-  receipt: `docs/proofs/MGR01_CANDIDATE_409c591c_2026-10-07.json`.
+  receipt: `docs/proofs/MGR01_COMMITTED_a7c64c5_2026-10-07.json`.
 - MGR-02 is DONE for exact operational source 4c4c5d9. Manager ghost-table repair
   uses one immutable, selected-primary
   `TABLE_REPAIR` pull command. Cloud leaves the mirror unchanged while queued;

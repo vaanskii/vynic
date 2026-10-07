@@ -12,6 +12,11 @@ export interface TableOccupancyState {
   isReserved: boolean;
   activeOrderId: number | null;
   currentBill: number;
+  tableKind?: 'PHYSICAL' | 'VIRTUAL';
+  tableLabel?: string;
+  floorLabel?: string;
+  tableSortOrder?: number;
+  floorSortOrder?: number;
 }
 
 function canonicalIdOf(identity: TableRecordIdentity): string | null {

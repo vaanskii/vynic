@@ -57,10 +57,10 @@ extension _LiveStatusTablesView on _LiveStatusScreenState {
     final encoded = int.tryParse(raw);
     final hint = floorHint.trim().toLowerCase();
 
+    yield (number: raw, floor: hint.isEmpty ? 'first' : floorHint.trim());
     if (encoded != null && encoded > 10) {
       yield (number: (encoded - 10).toString(), floor: 'second');
     }
-    yield (number: raw, floor: hint.isEmpty ? 'first' : hint);
     if (encoded != null && encoded <= 10) {
       yield (number: raw, floor: 'second');
     }
@@ -215,6 +215,7 @@ extension _LiveStatusTablesView on _LiveStatusScreenState {
     }
 
     return ListView(
+      key: const ValueKey('manager-table-list'),
       physics: const AlwaysScrollableScrollPhysics(
         parent: BouncingScrollPhysics(),
       ),
@@ -376,7 +377,7 @@ extension _LiveStatusTablesView on _LiveStatusScreenState {
         Padding(
           padding: const EdgeInsets.only(bottom: 12, left: 4),
           child: Text(
-            floorName.toUpperCase(),
+            tables.first.floorLabel ?? floorName.toUpperCase(),
             style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.bold,
@@ -392,7 +393,9 @@ extension _LiveStatusTablesView on _LiveStatusScreenState {
                 ? 4
                 : width >= 640
                 ? 3
-                : 2;
+                : width >= 340
+                ? 2
+                : 1;
             final aspect = width >= 640 ? 1.05 : 0.92;
             return GridView.builder(
               shrinkWrap: true,
@@ -449,6 +452,10 @@ extension _LiveStatusTablesView on _LiveStatusScreenState {
   List<TableModel> _sortTablesByNumber(Iterable<TableModel> tables) {
     final sorted = tables.toList();
     sorted.sort((a, b) {
+      final order = (a.tableSortOrder ?? 2147483647).compareTo(
+        b.tableSortOrder ?? 2147483647,
+      );
+      if (order != 0) return order;
       final aNumber = int.tryParse(a.tableNumber.trim());
       final bNumber = int.tryParse(b.tableNumber.trim());
       if (aNumber != null && bNumber != null) return aNumber.compareTo(bNumber);
@@ -619,7 +626,11 @@ extension _LiveStatusTablesView on _LiveStatusScreenState {
         : linkedNumbers != null && linkedNumbers.length > 1
         ? TableGroupStyle.formatTableNumbersList(linkedNumbers, table.floor)
         : null;
-    final title = 'T${displayNumbers.join('-')}';
+    final title = displayTables.any((t) => t.tableLabel != null)
+        ? displayTables
+              .map((t) => t.tableLabel ?? 'T${t.tableNumber}')
+              .join(' · ')
+        : 'T${displayNumbers.join('-')}';
 
     final IconData icon = isOccupied
         ? Icons.local_dining_rounded
@@ -665,29 +676,35 @@ extension _LiveStatusTablesView on _LiveStatusScreenState {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 18,
-                      color: MobileGlassTheme.textPrimary,
-                    ),
-                  ),
-                  if (combinedLabel != null) ...[
-                    SizedBox(height: 2),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
                     Text(
-                      combinedLabel,
+                      title,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                       style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                        color: accent,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 18,
+                        color: MobileGlassTheme.textPrimary,
                       ),
                     ),
+                    if (combinedLabel != null) ...[
+                      SizedBox(height: 2),
+                      Text(
+                        combinedLabel,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          color: accent,
+                        ),
+                      ),
+                    ],
                   ],
-                ],
+                ),
               ),
               Container(
                 padding: const EdgeInsets.all(6),

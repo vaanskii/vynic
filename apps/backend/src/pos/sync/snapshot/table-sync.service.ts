@@ -1,7 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../../prisma.service';
-import { TableSync } from '../sync-payload';
+import { TableLayoutSync, TableSync } from '../sync-payload';
 import { upsertTableRecord } from './table-record-identity';
+import {
+  tablePresentation,
+  validateTablePresentation,
+} from './table-presentation';
 import type { TenantContext } from '../../../auth/pos-auth-context';
 
 /**
@@ -22,7 +26,9 @@ export class TableSyncService {
     tenant: TenantContext,
     tables: TableSync[] | undefined,
     realtimeOnly: boolean,
+    layout?: TableLayoutSync,
   ): Promise<boolean> {
+    validateTablePresentation(tables, layout);
     let didSync = false;
     // Strategy: The POS is the source of truth.
     // We only process a full table sync if the POS payload contains at least
@@ -82,6 +88,7 @@ export class TableSyncService {
                 ? (table.activeOrderId ?? null)
                 : null,
               currentBill: isActuallyReserved ? (table.currentBill ?? 0) : 0,
+              ...tablePresentation(table),
             },
           );
         }
@@ -90,7 +97,34 @@ export class TableSyncService {
       console.log(
         'Skipping table sync: empty tables array received (POS may be initializing)',
       );
+      if (layout !== undefined) {
+        const occupied = realtimeOnly
+          ? 0
+          : await this.prisma.table.count({
+              where: {
+                venueId: tenant.venueId,
+                OR: [{ isReserved: true }, { activeOrderId: { not: null } }],
+              },
+            });
+        didSync = realtimeOnly || occupied === 0;
+      }
     }
+    if (didSync && layout !== undefined)
+      await this.reconcileLayout(tenant, layout);
     return didSync;
+  }
+
+  /** Only a validated complete layout can retire stale/derived Cloud rows. */
+  async reconcileLayout(
+    tenant: TenantContext,
+    layout: TableLayoutSync,
+  ): Promise<void> {
+    await this.prisma.table.updateMany({
+      where: {
+        venueId: tenant.venueId,
+        id: { notIn: layout.physicalTableIds },
+      },
+      data: { tableKind: 'VIRTUAL' },
+    });
   }
 }

@@ -463,6 +463,17 @@ current transport status.
   `docs/POS05_ORDER_TABLE_OWNERSHIP.md`. Windows smoke remains
   PENDING_NOT_RUN/HELD (`docs/POS05_WINDOWS_SMOKE.md`), using a clean frozen
   commit export. Physical release remains OPS-01.
+- MGR-01 is DONE from the POS's strictly validated
+  saved configuration. Additive nullable Cloud Table metadata carries physical/
+  virtual type, labels and ordering; an explicit complete membership claim retires
+  stale/carrier rows without deleting occupancy. Legacy partial snapshots preserve
+  metadata, unknown legacy rows stay visible, and cold full/empty snapshots retain
+  occupied state. Actual aliases and UUID-linked retained Orders cannot drift through
+  historical prefix/second-floor decoding. Dashboard/UI count physical rows equally
+  and merged payable contributes once per Order. Manager JSON/cache carries metadata
+  without a Hive v9 adapter change. Real HTTP/PG and compact/desktop repeated-route
+  proof and compatibility policy: `docs/MGR01_GENERIC_TABLE_LAYOUT.md`. Clean-source
+  receipt: `docs/proofs/MGR01_CANDIDATE_409c591c_2026-10-07.json`.
 - MGR-02 is DONE for exact operational source 4c4c5d9. Manager ghost-table repair
   uses one immutable, selected-primary
   `TABLE_REPAIR` pull command. Cloud leaves the mirror unchanged while queued;

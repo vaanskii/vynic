@@ -244,12 +244,15 @@ class MobileGlassPrimaryButton extends StatelessWidget {
                 Icon(icon, color: Colors.white, size: 20),
                 SizedBox(width: 8),
               ],
-              Text(
-                label,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w700,
-                  fontSize: 15,
+              Flexible(
+                child: Text(
+                  label,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 15,
+                  ),
                 ),
               ),
             ],

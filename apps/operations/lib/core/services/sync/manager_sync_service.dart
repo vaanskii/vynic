@@ -1,3 +1,5 @@
+import 'package:vynic/core/database/repositories/settings_repository.dart';
+import 'table_snapshot_projection.dart';
 import '../menu/menu_client_compatibility.dart';
 import 'dart:async';
 import 'package:flutter/foundation.dart';
@@ -403,7 +405,11 @@ class ManagerSyncService {
                 .toLowerCase(),
             'waiterName': order.createdBy,
             'tableNumbers': order.tableNumbers
-                .map((table) => table.toString())
+                .map(
+                  (table) => tableIds != null
+                      ? _normalizeTableNumberForSync(table, order.floor)!
+                      : table,
+                )
                 .toList(),
             if (tableIds != null) 'tableIds': tableIds,
             'floor': order.floor,
@@ -454,7 +460,8 @@ class ManagerSyncService {
       );
       timing.mark('orders');
 
-      final tables = _buildTablesSyncPayload(allOrders, businessDate);
+      final tableProjection = _buildTablesSyncPayload(allOrders, businessDate);
+      final tables = tableProjection.tables;
       final orderMaps = todayOrders
           .map((e) => Map<String, dynamic>.from(e as Map))
           .toList();
@@ -481,6 +488,8 @@ class ManagerSyncService {
         final payload = <String, dynamic>{
           'realtimeOnly': true,
           'tables': tables,
+          if (tableProjection.layout != null)
+            'tableLayout': tableProjection.layout,
           'orders': todayOrders,
           if (touchedOrderHints.isNotEmpty)
             'touchedOrderHints': touchedOrderHints,
@@ -876,6 +885,8 @@ class ManagerSyncService {
 
       final payload = {
         'tables': tables,
+        if (tableProjection.layout != null)
+          'tableLayout': tableProjection.layout,
         'orders': todayOrders,
         if (touchedOrderHints.isNotEmpty)
           'touchedOrderHints': touchedOrderHints,
@@ -1538,103 +1549,34 @@ class ManagerSyncService {
   }
 
   /// Hive table map + active dine-in orders (source of truth when Hive lags).
-  static List<Map<String, dynamic>> _buildTablesSyncPayload(
+  static TableSnapshotProjection _buildTablesSyncPayload(
     List<Order> allOrders,
     DateTime businessDate,
   ) {
-    final byKey = <String, Map<String, dynamic>>{};
-
-    for (final table in DatabaseService.getAllTables()) {
-      if (table.activeOrderId != null) {
-        final order = allOrders
-            .where((o) => o.orderId == table.activeOrderId)
-            .firstOrNull;
-        table.currentBill = order?.totalAmount ?? 0.0;
-      } else {
-        table.currentBill = 0.0;
+    final projection = TableSnapshotProjection.build(
+      sourceTables: DatabaseService.getAllTables(),
+      orders: allOrders,
+      businessDate: businessDate,
+      savedLayout: SettingsRepository.getActiveTableLayoutForSync(),
+    );
+    if (projection.layout == null) {
+      for (final row in projection.tables) {
+        final id = _canonicalTableIdForAlias(
+          floor: row['floor'] as String,
+          tableNumber: row['tableNumber'] as String,
+        );
+        if (id != null) row['tableId'] = id;
       }
-      final json = Map<String, dynamic>.from(table.toJson());
-      final tableId = _canonicalTableIdForAlias(
-        floor: table.floor,
-        tableNumber: table.tableNumber,
+    }
+    return projection;
+  }
+
+  static String? _normalizeTableNumberForSync(String raw, String floor) =>
+      TableSnapshotProjection.normalizeAlias(
+        raw,
+        floor,
+        SettingsRepository.getActiveTableLayoutForSync(),
       );
-      if (tableId != null) {
-        json['tableId'] = tableId;
-      }
-      byKey[_tableKeyForSync(json)] = json;
-    }
-
-    for (final order in allOrders) {
-      if (!_isActiveDineInOrderForBusinessDate(order, businessDate)) {
-        continue;
-      }
-      for (final rawNum in order.tableNumbers) {
-        final tableNumber = _normalizeTableNumberForSync(
-          rawNum.toString(),
-          order.floor,
-        );
-        if (tableNumber == null || tableNumber.isEmpty) continue;
-        final key = '${tableNumber}_${order.floor}';
-        final merged = Map<String, dynamic>.from(
-          byKey[key] ??
-              {
-                'tableNumber': tableNumber,
-                'floor': order.floor,
-                'isReserved': false,
-                'currentBill': 0.0,
-              },
-        );
-        final tableId = _canonicalTableIdForAlias(
-          floor: order.floor,
-          tableNumber: tableNumber,
-        );
-        if (tableId != null) {
-          merged['tableId'] = tableId;
-        }
-        merged['isReserved'] = true;
-        merged['activeOrderId'] = order.orderId;
-        merged['currentBill'] = order.totalAmount;
-        byKey[key] = merged;
-      }
-    }
-
-    return byKey.values.toList();
-  }
-
-  static bool _isActiveDineInOrderForBusinessDate(
-    Order order,
-    DateTime businessDate,
-  ) {
-    final status = order.status.toLowerCase();
-    if (status == 'closed' || status == 'cancelled' || status == 'paid') {
-      return false;
-    }
-    final floor = order.floor.toLowerCase();
-    if (floor.contains('takeaway') || floor.contains('take away')) {
-      return false;
-    }
-    final created = order.createdAt;
-    return created.year == businessDate.year &&
-        created.month == businessDate.month &&
-        created.day == businessDate.day;
-  }
-
-  static String? _normalizeTableNumberForSync(String raw, String floor) {
-    final trimmed = raw.trim();
-    if (trimmed.isEmpty) return null;
-    final lower = trimmed.toLowerCase();
-    if (lower.startsWith('table ')) {
-      return trimmed.substring(6).trim();
-    }
-    if (lower.startsWith('vip zone ')) {
-      return trimmed.substring(9).trim();
-    }
-    final parsed = int.tryParse(trimmed);
-    if (parsed != null && floor == 'second' && parsed > 10) {
-      return (parsed - 10).toString();
-    }
-    return trimmed;
-  }
 
   static String? _canonicalTableIdForAlias({
     required String floor,

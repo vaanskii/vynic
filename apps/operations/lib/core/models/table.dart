@@ -32,6 +32,13 @@ class TableModel extends HiveObject with UpdateTrackedHiveObject {
   int edgeRevision;
 
   double? currentBill; // Only used for mobile monitoring API
+  // Manager presentation/cache only. POS derives these from its saved layout;
+  // they are deliberately absent from the Hive adapter and local schema.
+  String? tableKind;
+  String? tableLabel;
+  String? floorLabel;
+  int? tableSortOrder;
+  int? floorSortOrder;
 
   TableModel({
     required this.tableNumber,
@@ -94,17 +101,23 @@ class TableModel extends HiveObject with UpdateTrackedHiveObject {
         json['isOccupied'] == true ||
         activeOrderId != null;
     return TableModel(
-      edgeRevision: json['edgeRevision'] as int? ?? 0,
-      tableNumber: json['tableNumber'] ?? '',
-      floor: json['floor'] ?? '',
-      isReserved: isReserved,
-      reservedAt: json['reservedAt'] != null
-          ? DateTime.parse(json['reservedAt'])
-          : null,
-      reservedBy: json['reservedBy'],
-      activeOrderId: isReserved ? activeOrderId : null,
-      reservationId: json['reservationId'],
-    )..currentBill = isReserved ? (json['currentBill'] ?? 0).toDouble() : 0.0;
+        edgeRevision: json['edgeRevision'] as int? ?? 0,
+        tableNumber: json['tableNumber'] ?? '',
+        floor: json['floor'] ?? '',
+        isReserved: isReserved,
+        reservedAt: json['reservedAt'] != null
+            ? DateTime.parse(json['reservedAt'])
+            : null,
+        reservedBy: json['reservedBy'],
+        activeOrderId: isReserved ? activeOrderId : null,
+        reservationId: json['reservationId'],
+      )
+      ..currentBill = isReserved ? (json['currentBill'] ?? 0).toDouble() : 0.0
+      ..tableKind = json['tableKind'] as String?
+      ..tableLabel = json['tableLabel'] as String?
+      ..floorLabel = json['floorLabel'] as String?
+      ..tableSortOrder = json['tableSortOrder'] as int?
+      ..floorSortOrder = json['floorSortOrder'] as int?;
   }
 
   Map<String, dynamic> toJson() {
@@ -118,6 +131,11 @@ class TableModel extends HiveObject with UpdateTrackedHiveObject {
       'activeOrderId': activeOrderId,
       'reservationId': reservationId,
       'currentBill': currentBill,
+      if (tableKind != null) 'tableKind': tableKind,
+      if (tableLabel != null) 'tableLabel': tableLabel,
+      if (floorLabel != null) 'floorLabel': floorLabel,
+      if (tableSortOrder != null) 'tableSortOrder': tableSortOrder,
+      if (floorSortOrder != null) 'floorSortOrder': floorSortOrder,
     };
   }
 }

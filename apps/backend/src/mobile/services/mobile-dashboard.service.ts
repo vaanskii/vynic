@@ -33,11 +33,6 @@ import { settingIdentity } from '../../tenancy/tenant-identity';
 import type { TenantContext } from '../../tenancy/tenant-context';
 import { MobileSaleLedgerService } from './mobile-sale-ledger.service';
 
-const MANAGER_TABLE_LAYOUT: Record<string, Set<string>> = {
-  first: new Set(['1', '2', '3', '4', '5', '6', '7', '8', '9']),
-  second: new Set(['1', '2', '3', '4']),
-};
-
 export interface DashboardResponse {
   todayRevenue: number;
   shiftTotalRevenue: number;
@@ -134,60 +129,30 @@ export class MobileDashboardService {
     private readonly saleLedger?: MobileSaleLedgerService,
   ) {}
 
-  private normalizeManagerTableNumber(raw: unknown, floor: string): string {
-    const trimmed = String(raw ?? '').trim();
-    if (!trimmed) return '';
-    const withoutLabel = trimmed
-      .replace(/^table\s*/i, '')
-      .replace(/^vip zone\s*/i, '')
-      .trim();
-    const parsed = Number.parseInt(withoutLabel, 10);
-    if (Number.isFinite(parsed) && floor === 'second' && parsed > 10) {
-      return String(parsed - 10);
-    }
-    return withoutLabel;
-  }
-
-  private isManagerPhysicalTable(table: any): boolean {
-    const floor = String(table.floor ?? '')
-      .trim()
-      .toLowerCase();
-    const allowed = MANAGER_TABLE_LAYOUT[floor];
-    if (!allowed) return false;
-    return allowed.has(
-      this.normalizeManagerTableNumber(table.tableNumber, floor),
-    );
+  private isManagerPhysicalTable(table: {
+    tableKind?: string | null;
+  }): boolean {
+    // NULL preserves visibility for clients predating explicit classification.
+    return table.tableKind !== 'VIRTUAL';
   }
 
   private managerTableSort(a: any, b: any): number {
-    const floorRank = (floor: unknown) =>
-      String(floor ?? '')
-        .trim()
-        .toLowerCase() === 'second'
-        ? 1
-        : 0;
-    const floorDiff = floorRank(a.floor) - floorRank(b.floor);
-    if (floorDiff !== 0) return floorDiff;
-
-    const aFloor = String(a.floor ?? '')
-      .trim()
-      .toLowerCase();
-    const bFloor = String(b.floor ?? '')
-      .trim()
-      .toLowerCase();
-    const aNum = Number.parseInt(
-      this.normalizeManagerTableNumber(a.tableNumber, aFloor),
-      10,
-    );
-    const bNum = Number.parseInt(
-      this.normalizeManagerTableNumber(b.tableNumber, bFloor),
-      10,
-    );
-    if (Number.isFinite(aNum) && Number.isFinite(bNum)) {
-      return aNum - bNum;
-    }
-    return String(a.tableNumber ?? '').localeCompare(
-      String(b.tableNumber ?? ''),
+    const floorOrder =
+      (a.floorSortOrder ?? Number.MAX_SAFE_INTEGER) -
+      (b.floorSortOrder ?? Number.MAX_SAFE_INTEGER);
+    if (floorOrder !== 0) return floorOrder;
+    const floor = String(a.floor).localeCompare(String(b.floor), undefined, {
+      numeric: true,
+    });
+    if (floor !== 0) return floor;
+    const tableOrder =
+      (a.tableSortOrder ?? Number.MAX_SAFE_INTEGER) -
+      (b.tableSortOrder ?? Number.MAX_SAFE_INTEGER);
+    return (
+      tableOrder ||
+      String(a.tableNumber).localeCompare(String(b.tableNumber), undefined, {
+        numeric: true,
+      })
     );
   }
 
@@ -233,6 +198,7 @@ export class MobileDashboardService {
           currentBill: true,
           isReserved: true,
           activeOrderId: true,
+          tableKind: true,
         },
       }),
       this.prisma.order.findMany({
@@ -240,12 +206,6 @@ export class MobileDashboardService {
           venueId: tenant.venueId,
           ...businessDateWhere(todayDateKey),
           status: { notIn: ['closed', 'cancelled', 'paid'] },
-          NOT: {
-            OR: [
-              { floor: { contains: 'takeaway', mode: 'insensitive' } },
-              { floor: { contains: 'take away', mode: 'insensitive' } },
-            ],
-          },
         },
         select: { posOrderId: true, totalAmount: true, businessDate: true },
       }),
@@ -281,7 +241,6 @@ export class MobileDashboardService {
       });
     }
 
-    const openPosOrderIds = new Set<number>();
     const openPayableByPosOrderId = new Map<number, number>();
     for (const table of physicalTables) {
       if (table.activeOrderId == null) continue;
@@ -294,15 +253,13 @@ export class MobileDashboardService {
       const payable = bill > 0 ? bill : linked.totalAmount;
       const previous = openPayableByPosOrderId.get(posId) ?? 0;
       openPayableByPosOrderId.set(posId, Math.max(previous, payable));
-      openPosOrderIds.add(posId);
     }
     const openTablesPayable = Array.from(
       openPayableByPosOrderId.values(),
     ).reduce((sum, amount) => sum + amount, 0);
 
     const occupiedTables = physicalTables.filter(
-      (t: any) =>
-        t.activeOrderId != null && openPosOrderIds.has(Number(t.activeOrderId)),
+      (t: any) => t.activeOrderId != null,
     ).length;
     const reservedTables = physicalTables.filter(
       (t: any) => t.isReserved && t.activeOrderId == null,
@@ -467,10 +424,15 @@ export class MobileDashboardService {
       .filter((t: any) => this.isManagerPhysicalTable(t))
       .sort((a: any, b: any) => this.managerTableSort(a, b))
       .map((t: any) => {
-        const occupied = !!(t.isReserved || t.activeOrderId);
+        const occupied = t.isReserved || t.activeOrderId != null;
         return {
           id: t.id,
-          tableNumber: this.normalizeManagerTableNumber(t.tableNumber, t.floor),
+          tableNumber: t.tableNumber,
+          tableKind: t.tableKind ?? null,
+          tableLabel: t.tableLabel ?? null,
+          floorLabel: t.floorLabel ?? null,
+          tableSortOrder: t.tableSortOrder ?? null,
+          floorSortOrder: t.floorSortOrder ?? null,
           floor: t.floor,
           isReserved: occupied,
           isOccupied: occupied,
@@ -487,7 +449,13 @@ export class MobileDashboardService {
     floor: string,
     requestId: unknown,
   ) {
-    return requestTableRepair(this.prisma, actor, tableNumber, floor, requestId);
+    return requestTableRepair(
+      this.prisma,
+      actor,
+      tableNumber,
+      floor,
+      requestId,
+    );
   }
 
   async getStaffPerformance(tenant: TenantContext): Promise<StaffRankEntry[]> {

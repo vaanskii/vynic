@@ -143,14 +143,19 @@ export class IngestPosSnapshotService {
     // Sync Tables — the POS is the source of truth, except for the cold-boot
     // all-free snapshot the service guards against.
     let didSyncTables = await timing.phase('tables', () =>
-      tableSync.sync(tenant, tables, realtimeOnly),
+      data.tableLayout === undefined
+        ? tableSync.sync(tenant, tables, realtimeOnly)
+        : tableSync.sync(tenant, tables, realtimeOnly, data.tableLayout),
     );
 
     // Sync Orders — last-write-wins against the outbox, table linking, and
     // reconciliation of orders the snapshot no longer carries.
+    const appliedTableLayout = didSyncTables && data.tableLayout !== undefined;
     const orderResult = await timing.phase('orders', () =>
       orderSync.sync(tenant, orders, data.businessDate),
     );
+    if (appliedTableLayout)
+      await tableSync.reconcileLayout(tenant, data.tableLayout!);
     didSyncTables = didSyncTables || orderResult.didSyncTables;
     const releasedTablesFromClosedOrders = orderResult.releasedTables;
 

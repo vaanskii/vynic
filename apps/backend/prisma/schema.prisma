@@ -18,6 +18,11 @@ model Table {
   isReserved    Boolean  @default(false)
   activeOrderId Int?
   currentBill   Float    @default(0)
+  tableKind     String?
+  tableLabel    String?
+  floorLabel    String?
+  tableSortOrder Int?
+  floorSortOrder Int?
   updatedAt     DateTime @updatedAt
   venue         Venue    @relation(fields: [venueId], references: [id], onDelete: Restrict)
 

@@ -610,6 +610,14 @@ class TableRepository {
       return null;
     }
 
+    if (getRestaurantTableLayout().tableForLegacy(
+          floor: floor,
+          tableNumber: trimmed,
+        ) !=
+        null) {
+      return trimmed;
+    }
+
     final lower = trimmed.toLowerCase();
     if (lower.startsWith('table ')) {
       final extracted = trimmed.substring(6).trim();

@@ -350,46 +350,52 @@ class _LiveStatusScreenState extends State<LiveStatusScreen> {
                 : MobileGlassTheme.border(0.12),
           ),
         ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              icon,
-              size: 18,
-              color: isActive ? Colors.white : MobileGlassTheme.textSecondary,
-            ),
-            SizedBox(width: 8),
-            Text(
-              label,
-              style: TextStyle(
-                color: isActive ? Colors.white : MobileGlassTheme.textPrimary,
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
+        child: FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                icon,
+                size: 18,
+                color: isActive ? Colors.white : MobileGlassTheme.textSecondary,
               ),
-            ),
-            if (badge > 0) ...[
               SizedBox(width: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-                decoration: BoxDecoration(
-                  color: isActive
-                      ? Colors.white.withValues(alpha: 0.25)
-                      : MobileGlassTheme.surface(0.12),
-                  borderRadius: BorderRadius.circular(999),
+              Text(
+                label,
+                style: TextStyle(
+                  color: isActive ? Colors.white : MobileGlassTheme.textPrimary,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
                 ),
-                child: Text(
-                  '$badge',
-                  style: TextStyle(
+              ),
+              if (badge > 0) ...[
+                SizedBox(width: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 7,
+                    vertical: 2,
+                  ),
+                  decoration: BoxDecoration(
                     color: isActive
-                        ? Colors.white
-                        : MobileGlassTheme.textPrimary,
-                    fontSize: 11,
-                    fontWeight: FontWeight.bold,
+                        ? Colors.white.withValues(alpha: 0.25)
+                        : MobileGlassTheme.surface(0.12),
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                  child: Text(
+                    '$badge',
+                    style: TextStyle(
+                      color: isActive
+                          ? Colors.white
+                          : MobileGlassTheme.textPrimary,
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
-              ),
+              ],
             ],
-          ],
+          ),
         ),
       ),
     );

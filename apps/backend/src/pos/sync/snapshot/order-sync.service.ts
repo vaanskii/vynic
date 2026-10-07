@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../../prisma.service';
+import { isCanonicalTableId } from '../../../shared/contracts/table-identity';
 import { posWinsOrderConflict } from '../sync-conflict';
 import { OrderSync } from '../sync-payload';
 import {
@@ -199,24 +200,19 @@ export class OrderSyncService {
         // Active dine-in orders must reserve tables even when POS table snapshot is stale.
         if (!terminalStatuses.has(status) && !isTakeaway) {
           for (const [tableIndex, rawNum] of tableNumbers.entries()) {
-            const tableNumber = String(rawNum)
-              .replace(/^table\s*/i, '')
-              .trim();
-            if (!tableNumber) continue;
-            await upsertTableRecord(
-              this.prisma,
+            const identity = await this.tableIdentityForOrder(
               tenant,
-              {
-                tableId: order.tableIds?.[tableIndex],
-                tableNumber,
-                floor,
-              },
-              {
-                isReserved: true,
-                activeOrderId: pOrderId,
-                currentBill: order.totalAmount ?? 0,
-              },
+              rawNum,
+              floor,
+              order.tableIds?.[tableIndex],
             );
+            const tableNumber = identity.tableNumber;
+            if (!tableNumber) continue;
+            await upsertTableRecord(this.prisma, tenant, identity, {
+              isReserved: true,
+              activeOrderId: pOrderId,
+              currentBill: order.totalAmount ?? 0,
+            });
             didSyncTables = true;
             console.log(
               `[Sync] Linked table ${tableNumber}/${floor} → order #${pOrderId} (${status})`,
@@ -227,18 +223,18 @@ export class OrderSyncService {
         // When POS closes/pays an order, free linked tables even if table snapshot was skipped.
         if (terminalStatuses.has(status)) {
           for (const [tableIndex, rawNum] of tableNumbers.entries()) {
-            const tableNumber = String(rawNum)
-              .replace(/^table\s*/i, '')
-              .trim();
+            const identity = await this.tableIdentityForOrder(
+              tenant,
+              rawNum,
+              floor,
+              order.tableIds?.[tableIndex],
+            );
+            const tableNumber = identity.tableNumber;
             if (!tableNumber) continue;
             const updatedCount = await updateExistingTableRecord(
               this.prisma,
               tenant,
-              {
-                tableId: order.tableIds?.[tableIndex],
-                tableNumber,
-                floor,
-              },
+              identity,
               {
                 isReserved: false,
                 activeOrderId: null,
@@ -306,5 +302,35 @@ export class OrderSyncService {
       }
     }
     return { didSyncTables, releasedTables };
+  }
+
+  private async tableIdentityForOrder(
+    tenant: TenantContext,
+    raw: unknown,
+    floor: string,
+    tableId?: string,
+  ) {
+    const alias = String(raw).trim();
+    // A retained Order may carry a display-era alias. A known UUID resolves
+    // to the current POS layout row, including its floor; Order linking must
+    // never rename the table after the authoritative layout snapshot.
+    if (tableId && isCanonicalTableId(tableId)) {
+      const known = await this.prisma.table.findUnique({
+        where: { id: tableId, venueId: tenant.venueId },
+      });
+      if (known)
+        return { tableId, tableNumber: known.tableNumber, floor: known.floor };
+    }
+    if (!/^table/i.test(alias)) return { tableId, tableNumber: alias, floor };
+    const exact = await this.prisma.table.findUnique({
+      where: {
+        tableIdentifier: { venueId: tenant.venueId, tableNumber: alias, floor },
+      },
+    });
+    return {
+      tableId,
+      tableNumber: exact ? alias : alias.replace(/^table\s*/i, '').trim(),
+      floor,
+    };
   }
 }

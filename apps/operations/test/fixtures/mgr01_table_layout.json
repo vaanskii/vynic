@@ -1,0 +1,95 @@
+{
+  "tables": [
+    {
+      "tableNumber": "1",
+      "tableKind": "PHYSICAL",
+      "tableLabel": "Terrace 1",
+      "floorLabel": "Terrace",
+      "tableSortOrder": 1,
+      "floorSortOrder": 1,
+      "floor": "terrace",
+      "isReserved": false,
+      "isOccupied": false,
+      "currentBill": 0,
+      "activeOrderId": null
+    },
+    {
+      "tableNumber": "2",
+      "tableKind": "PHYSICAL",
+      "tableLabel": "Main 2",
+      "floorLabel": "Main hall",
+      "tableSortOrder": 2,
+      "floorSortOrder": 2,
+      "floor": "first",
+      "isReserved": true,
+      "isOccupied": true,
+      "currentBill": 45,
+      "activeOrderId": 70
+    },
+    {
+      "tableNumber": "3",
+      "tableKind": "PHYSICAL",
+      "tableLabel": "Main 3",
+      "floorLabel": "Main hall",
+      "tableSortOrder": 3,
+      "floorSortOrder": 2,
+      "floor": "first",
+      "isReserved": true,
+      "isOccupied": true,
+      "currentBill": 17,
+      "activeOrderId": 999
+    },
+    {
+      "tableNumber": "10",
+      "tableKind": "PHYSICAL",
+      "tableLabel": "Main 10",
+      "floorLabel": "Main hall",
+      "tableSortOrder": 10,
+      "floorSortOrder": 2,
+      "floor": "first",
+      "isReserved": true,
+      "isOccupied": true,
+      "currentBill": 45,
+      "activeOrderId": 70
+    },
+    {
+      "tableNumber": "11",
+      "tableKind": "PHYSICAL",
+      "tableLabel": "VIP 11",
+      "floorLabel": "VIP",
+      "tableSortOrder": 11,
+      "floorSortOrder": 3,
+      "floor": "second",
+      "isReserved": false,
+      "isOccupied": false,
+      "currentBill": 0,
+      "activeOrderId": null
+    },
+    {
+      "tableNumber": "Table Garden",
+      "tableKind": "PHYSICAL",
+      "tableLabel": "ბაღის მაგიდა",
+      "floorLabel": "ქართული დარბაზი",
+      "tableSortOrder": 1,
+      "floorSortOrder": 4,
+      "floor": "ქართული სართული",
+      "isReserved": true,
+      "isOccupied": true,
+      "currentBill": 0,
+      "activeOrderId": null
+    },
+    {
+      "tableNumber": "1",
+      "tableKind": "PHYSICAL",
+      "tableLabel": "Lounge 1",
+      "floorLabel": "Lounge",
+      "tableSortOrder": 1,
+      "floorSortOrder": 5,
+      "floor": "takeaway lounge",
+      "isReserved": true,
+      "isOccupied": true,
+      "currentBill": 20,
+      "activeOrderId": 71
+    }
+  ]
+}

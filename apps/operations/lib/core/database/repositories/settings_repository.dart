@@ -1166,6 +1166,46 @@ class SettingsRepository {
     );
   }
 
+  /// Sync must distinguish missing legacy configuration from corrupt saved
+  /// configuration. Presentation-era decoding defaults cannot certify a layout.
+  static RestaurantTableLayout? getActiveTableLayoutForSync() {
+    final raw = _settingsBox?.get(_activeTableLayoutSetting);
+    if (raw == null) return null;
+    final decoded = raw is String ? jsonDecode(raw) : raw;
+    if (decoded is! Map ||
+        decoded['zones'] is! List ||
+        decoded['tables'] is! List) {
+      throw const FormatException('Saved table layout is incomplete');
+    }
+    void requireFields(
+      Object? row,
+      List<String> strings,
+      List<String> integers,
+    ) {
+      if (row is! Map ||
+          strings.any(
+            (key) => row[key] is! String || (row[key] as String).trim().isEmpty,
+          ) ||
+          integers.any((key) => row[key] is! int)) {
+        throw const FormatException(
+          'Saved table layout contains invalid metadata',
+        );
+      }
+    }
+
+    for (final zone in decoded['zones'] as List) {
+      requireFields(zone, ['id', 'name', 'legacyFloor'], ['displayOrder']);
+    }
+    for (final table in decoded['tables'] as List) {
+      requireFields(
+        table,
+        ['id', 'zoneId', 'legacyFloor', 'legacyTableNumber', 'label'],
+        ['sortOrder'],
+      );
+    }
+    return RestaurantTableLayout.fromJson(Map<String, dynamic>.from(decoded));
+  }
+
   static Future<void> saveActiveTableLayout(RestaurantTableLayout layout) =>
       UpdateReadiness.track(
         'saveActiveTableLayout',

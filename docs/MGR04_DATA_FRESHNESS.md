@@ -1,5 +1,7 @@
 # MGR-04 — Manager data freshness and completeness
 
+Status: **DONE** from runtime `4a46db340e9b29d0da95dd11ed75e6a379099e30`, qualified in a fresh exact-commit export. [Source-identified proof](proofs/MGR04_COMMITTED_4a46db3_2026-10-07.json).
+
 Manager reads distinguish API availability, displayed data location, API read time,
 POS source time, Cloud receipt time and completeness. Cached values keep their
 original times and refresh failures; a successful API response does not imply that
@@ -33,8 +35,9 @@ from labeling a mixed response as known. Source markers roll back with failed sy
 Cloud-authoritative menu and counted-menu reads identify Cloud as their source;
 unknown source-change time is displayed explicitly. Legacy report breakdowns remain
 partial. Staff-performance attribution is unavailable in the existing read model. Top-items
-is conservatively unavailable because completeness is unproven; MGR-06 analytics
-work remains separate.
+is conservatively unavailable because completeness is unproven; analytics
+enhancements remain separate deferred work. MGR-06 covers immutable payroll,
+obligation and reserve corrections.
 
 ## Client cache and visible state
 
@@ -63,20 +66,27 @@ Manager operations still complete only through the existing authoritative POS re
 
 ## Verification
 
-Candidate verification and independent read-only source review cover warm cache/API
-down, API up/POS stale, partial ledger, one failed subrequest, durable cache reopen,
-app resume, account/origin/query fencing, concurrent response generations, primary
-replacement, atomic rollback and an actual COMPLETE-ledger → summary-only upload.
-Widget checks include 360/640/1440 widths and 1×/2× text scales. Regression selection
-includes MGR-01/02/03/05, ledger compatibility and existing POS/Edge ownership paths.
+Exact committed verification passed 492 Flutter tests across 37 suites (31 MGR-04
+cases and 461 regressions), 88 backend cases and 44 authenticated HTTP/PostgreSQL
+cases. Coverage includes warm cache/API down, API up/POS stale, partial ledger,
+one failed subrequest, new business day query failure, durable cache reopen, app
+resume, account/origin/query fencing, concurrent generations, primary replacement,
+atomic rollback and an actual COMPLETE-ledger → summary-only upload. Widget checks
+include 360/640/1440 widths and 1×/2× text scales with repository Georgian fonts.
 
 The synthetic runner is `apps/backend/tool/prove_mgr04_postgres.py`; it creates a
-fresh loopback PostgreSQL cluster, replays migrations, exercises actual authenticated
-HTTP requests and removes the owned cluster afterward. It never uses a restaurant
-or customer database. Dart analysis/format, TypeScript production compilation,
-new typed server lint, unchanged-contract checks, Prisma validation and Manager/POS
-macOS development builds are required before the local runtime commit. The exact
-committed source export is then qualified independently of pre-existing WIP.
+fresh loopback PostgreSQL cluster, replays migrations, exercises authenticated HTTP
+requests and removes the owned cluster. No restaurant/customer database is used.
+Dart analysis/format (19 files), TypeScript production compilation, new typed server
+lint, unchanged-contract checks, Prisma validation and Manager/POS macOS development
+builds all passed. Existing touched server lint debt remains unchanged (147 errors,
+12 warnings); it is not reported as a clean legacy lint result. Independent source
+and exact-commit evidence review found no open blocker.
+
+Every tracked Git blob and symlink matched the runtime before and after verification.
+Only build-generated CocoaPods checksum metadata was recorded and restored inside
+the isolated export. Pre-existing WIP was excluded from verification and commits;
+branch/stash and original shared documentation changes were preserved.
 
 Windows VM operations remain HELD. macOS builds are development proof only.
 POS-02 physical printer/driver/paper acceptance and broader release/production gates

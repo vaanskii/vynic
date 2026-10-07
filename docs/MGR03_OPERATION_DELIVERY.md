@@ -1,5 +1,7 @@
 # MGR-03 — retained Manager operation delivery
 
+Status: **DONE** from runtime commit `4c020120893cc8f360fe29e34c4e6237af8927bd`, verified on a fresh exact-commit export. [Source-identified proof](proofs/MGR03_COMMITTED_4c02012_2026-10-07.json).
+
 The Manager reports completion only after a retained POS SUCCEEDED result.
 QUEUED and CLAIMED mean accepted and pending; FAILED, UNAVAILABLE and unknown
 outcomes remain visible. Qualification uses isolated synthetic data and cached
@@ -76,8 +78,8 @@ driver or physical-paper implementation.
 
 ## Verification and limits
 
-Candidate acceptance passed 85 MGR-03 client/native/widget tests, 331 relevant
-regressions across 28 suites, 55 backend snapshot regressions, and 24 actual
+Exact committed acceptance passed 416 Flutter tests across 31 suites (85 MGR-03
+client/native/widget cases and 331 regressions), 55 backend snapshot tests, and 24 actual
 HTTP/PostgreSQL tests. All seven actual Cloud claim -> native Hive execution ->
 lost ACK -> reopen -> successful HTTP ACK flows preserve later POS work and
 leave Cloud mirrors unchanged. Twelve concurrent duplicate POSTs converge on
@@ -90,9 +92,13 @@ The SIGKILL runner verifies 21 selected checkpoints: each operation's durable
 Edge intent, native effect flush and boundary before terminal Edge write. Every
 reader runs in a different native process. These are three checkpoints per
 operation, not every possible I/O or arbitrary power-loss qualification.
-Analysis of 35 owned Dart files, generated-contract checks, TypeScript build,
+Analysis/format of 36 selected Dart files (including the generated contract),
+generated-contract checks, TypeScript build,
 Prisma validation and macOS development builds of both Manager and POS roles
-are required. The new server helper and HTTP fixture pass typed ESLint; legacy
+passed on the exact export. All 2,117 regular files and 29 symlinks match the
+runtime commit. The build-generated checksum-only Podfile metadata was recorded
+and restored; runtime source stayed unchanged. Existing WIP was excluded from
+the tested export and commits. The new server helper and HTTP fixture pass typed ESLint; legacy
 service lint findings are measured against the clean base, not claimed clean.
 
 Reproduction tools are apps/backend/tool/prove_mgr03_postgres.py and

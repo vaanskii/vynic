@@ -504,7 +504,8 @@ current transport status.
   `docs/MGR05_ATOMIC_ORDER_EDIT.md`; exact committed evidence is
   `docs/proofs/MGR05_COMMITTED_424fbad_2026-10-07.json`. Windows release gates remain separate; POS-02 printer/driver acceptance is
   deferred and VM work stays HELD.
-- MGR-03 implements retained delivery for seven Manager cancellation/creation/
+- MGR-03 is DONE from `4c020120893cc8f360fe29e34c4e6237af8927bd` on a fresh
+  exact-commit export. It retains delivery for seven Manager cancellation/creation/
   reservation paths. Staff/Venue-authorized immutable MANAGER_OPERATION commands
   are pulled by the selected active POS; admission and ACK leave Cloud mirrors
   unchanged until POS sync. Guarded Order work uses existing recoverable receipts;
@@ -514,8 +515,9 @@ current transport status.
   POS SUCCEEDED. Fresh identical creations allocate new identities after completion.
   The unsupported reservation Complete action is removed; seating/completion stays
   at the POS. Delivery/pruning/rollback policy and qualification:
-  `docs/MGR03_OPERATION_DELIVERY.md`. Exact committed qualification is recorded
-  separately after the final source export. POS-02 remains deferred; VM stays HELD.
+  `docs/MGR03_OPERATION_DELIVERY.md`. Exact qualification: 416 Flutter tests,
+  24 HTTP/PG cases, 55 backend tests and 21 selected SIGKILL checkpoints;
+  `docs/proofs/MGR03_COMMITTED_4c02012_2026-10-07.json`. POS-02 remains deferred; VM stays HELD.
 - Every Order audit report opens with a typed creation event carrying
   `orderKind` (`WALK_IN`, `TAKEAWAY`, `PACKAGE`, `RESERVATION`), `tableRefs`,
   `source`, `actorId`, `actorName`, `businessDate`: `CREATE_WALKIN` for POS

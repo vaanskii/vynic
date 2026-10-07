@@ -31,6 +31,7 @@ export interface TableLayoutSync {
 }
 
 export interface OrderSync {
+  managerEditProjection?: unknown;
   posOrderId: number;
   orderId?: number;
   status: string;

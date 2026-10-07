@@ -630,15 +630,17 @@ export class MobileController {
     return this.orders.getOrder(tenant, id);
   }
 
-  // POST /mobile/order/:id
-  @Post('order/:id')
+  // The guarded client uses edit-request so a Cloud rollback cannot admit its
+  // retry through the old blind replacement route. Legacy bodies fail validation.
+  @Post(['order/:id', 'order/:id/edit-request'])
+  @HttpCode(202)
   async updateOrder(
-    @ManagerTenant() tenant: TenantContext,
+    @ManagerAuth() actor: ManagerAuthContext,
     @Param('id') id: string,
     @Headers('x-monitoring-socket-id') monitoringSocketId: string | undefined,
     @Body() body: any,
   ) {
-    return this.orders.updateOrder(tenant, id, monitoringSocketId, body);
+    return this.orders.updateOrder(actor, id, monitoringSocketId, body);
   }
 
   // POST /mobile/order/:id/cancel

@@ -1,6 +1,8 @@
 import 'package:vynic/apps/mobile_app/presentation/widgets/mobile_glass_ui.dart';
 import 'package:vynic/apps/mobile_app/presentation/widgets/mobile_menu_pin_sheet.dart';
 import 'package:flutter/material.dart';
+import 'package:vynic/core/services/manager_app/order_edit_request.dart';
+import 'package:vynic/core/services/manager_app/pos_command_delivery.dart';
 import 'package:vynic/core/models/user.dart';
 import 'package:vynic/core/models/order.dart';
 import 'package:vynic/core/models/menu_item_db.dart';
@@ -36,6 +38,15 @@ class OrderEditorScreen extends StatefulWidget {
 
 class _OrderEditorScreenState extends State<OrderEditorScreen> {
   Order? _order;
+  String? _editScope;
+  OrderEditResult? _editResult;
+  bool _saving = false;
+  bool get _locked =>
+      _saving ||
+      _editScope == null ||
+      !MobileApiService.isCurrentTableRepairScope(_editScope!) ||
+      _order?.managerEditProjection == null ||
+      _editResult != null && !_editResult!.isDone;
   List<MenuCategoryDB> _categories = [];
   String? _selectedCategorySlug;
   String? _selectedSubcategorySlug;
@@ -58,6 +69,11 @@ class _OrderEditorScreenState extends State<OrderEditorScreen> {
       _isOrderPanelOpen = true;
     }
     MonitoringSocketService.updateCounter.addListener(_onRemoteOrderChange);
+    try {
+      _editScope = MobileApiService.tableRepairScope;
+    } catch (_) {
+      _editScope = null;
+    }
     _loadData();
   }
 
@@ -114,7 +130,12 @@ class _OrderEditorScreenState extends State<OrderEditorScreen> {
   }
 
   void _onRemoteOrderChange() {
-    if (!mounted) return;
+    if (!mounted ||
+        _hasChanges ||
+        _saving ||
+        _editScope == null ||
+        !MobileApiService.isCurrentTableRepairScope(_editScope!))
+      return;
     _loadData();
   }
 
@@ -125,7 +146,40 @@ class _OrderEditorScreenState extends State<OrderEditorScreen> {
         MobileApiService.getMenu(),
       ]);
 
-      final order = results[0] as Order;
+      if (!mounted) return;
+      if (_editScope == null ||
+          !MobileApiService.isCurrentTableRepairScope(_editScope!)) {
+        setState(() {
+          _editResult = const OrderEditResult(
+            PosCommandDelivery.failed,
+            code: 'session_changed',
+          );
+          _isLoading = false;
+        });
+        return;
+      }
+      var order = results[0] as Order;
+      await OrderEditRequests.init();
+      if (_editScope != null &&
+          MobileApiService.isCurrentTableRepairScope(_editScope!)) {
+        order = OrderEditRequests.draft(_editScope!, widget.orderId) ?? order;
+        final retained = OrderEditRequests.read(_editScope!, widget.orderId);
+        if (retained != null)
+          _editResult = OrderEditResult.fromMap(retained['result']);
+      }
+      if (!mounted) return;
+      if (_editScope == null ||
+          !MobileApiService.isCurrentTableRepairScope(_editScope!)) {
+        setState(() {
+          _editResult = const OrderEditResult(
+            PosCommandDelivery.failed,
+            code: 'session_changed',
+          );
+          _order = null;
+          _isLoading = false;
+        });
+        return;
+      }
       final rawMenu = results[1] as List<dynamic>;
 
       final categories = rawMenu.map((cat) {
@@ -214,13 +268,14 @@ class _OrderEditorScreenState extends State<OrderEditorScreen> {
   }
 
   void _updateQuantity(int index, int delta) {
-    if (_order == null) return;
+    if (_order == null || _locked) return;
     setState(() {
       _hasChanges = true;
       final item = _order!.items[index];
       final newQty = item.quantity + delta;
       if (newQty > 0) {
         _order!.items[index] = OrderItem(
+          lineUuid: item.lineUuid,
           itemKey: item.itemKey,
           itemName: item.itemName,
           unitPrice: item.unitPrice,
@@ -238,7 +293,7 @@ class _OrderEditorScreenState extends State<OrderEditorScreen> {
   }
 
   void _addItem(MenuItemDB menuItem, int quantity, {MenuVariantDB? variant}) {
-    if (_order == null || quantity <= 0) return;
+    if (_order == null || quantity <= 0 || _locked) return;
     setState(() {
       _hasChanges = true;
       String itemName =
@@ -257,7 +312,11 @@ class _OrderEditorScreenState extends State<OrderEditorScreen> {
           : (menuItem.translationsEn['name'] ?? itemName);
 
       final existingIndex = _order!.items.indexWhere(
-        (it) => it.itemKey == itemKey,
+        (it) =>
+            it.itemKey == itemKey &&
+            it.menuItemId == menuItem.id &&
+            it.variantId == variant?.id &&
+            (it.comment ?? '').trim().isEmpty,
       );
 
       if (existingIndex >= 0) {
@@ -266,6 +325,7 @@ class _OrderEditorScreenState extends State<OrderEditorScreen> {
         _order!.items.insert(
           0,
           OrderItem(
+            lineUuid: existing.lineUuid,
             itemKey: existing.itemKey,
             itemName: existing.itemName,
             unitPrice: existing.unitPrice,
@@ -328,7 +388,7 @@ class _OrderEditorScreenState extends State<OrderEditorScreen> {
   }
 
   Future<void> _viewCheckPdf() async {
-    if (_order == null) return;
+    if (_order == null || _locked) return;
 
     // Show loading
     showDialog(
@@ -381,26 +441,101 @@ class _OrderEditorScreenState extends State<OrderEditorScreen> {
   }
 
   Future<void> _saveChanges() async {
-    if (_order == null) return;
-
+    final order = _order;
+    if (order == null || _saving) return;
+    setState(() => _saving = true);
+    final OrderEditResult result;
     try {
-      await MobileApiService.updateOrder(
-        _order!,
-        updatedBy: widget.user.username,
+      result = await MobileApiService.updateOrder(
+        order,
+        expectedScope: _editScope,
       );
-      _hasChanges = false;
-      if (mounted) {
-        ManagerToast.show(context, 'შეკვეთა წარმატებით შეინახა');
-        Navigator.pop(context);
-      }
-    } catch (e, stack) {
-      debugPrint('[OrderEditor] _saveChanges error: $e');
-      debugPrint('[OrderEditor] stack: $stack');
-      if (mounted) {
-        ManagerToast.show(context, 'შეცდომა განახლებისას: $e', isError: true);
-      }
+    } catch (_) {
+      if (mounted)
+        setState(() {
+          _saving = false;
+          _editResult = const OrderEditResult(
+            PosCommandDelivery.unknown,
+            code: 'local_request_error',
+          );
+        });
+      return;
+    }
+    if (!mounted) return;
+    setState(() {
+      _saving = false;
+      _editResult = result;
+      if (result.isDone) _hasChanges = false;
+    });
+    if (result.isDone) {
+      ManagerToast.show(context, result.message);
+      Navigator.pop(context);
     }
   }
+
+  Future<void> _discardEdit() async {
+    if (_editScope == null || _editResult?.needsCheck == true) return;
+    if (!MobileApiService.isCurrentTableRepairScope(_editScope!)) {
+      if (mounted)
+        setState(
+          () => _editResult = const OrderEditResult(
+            PosCommandDelivery.failed,
+            code: 'session_changed',
+          ),
+        );
+      return;
+    }
+    try {
+      await OrderEditRequests.discard(_editScope!, widget.orderId);
+    } catch (e) {
+      debugPrint('Manager draft discard failed: ${e.runtimeType}');
+      if (mounted)
+        ManagerToast.show(
+          context,
+          'მონახაზის გაუქმება ვერ მოხერხდა — სცადეთ ხელახლა',
+          isError: true,
+        );
+      return;
+    }
+    if (!mounted) return;
+    setState(() {
+      _editResult = null;
+      _hasChanges = false;
+    });
+    await _loadData();
+  }
+
+  Widget _editStatus() => Padding(
+    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          _editResult?.message ??
+              (_order?.managerEditProjection == null
+                  ? 'რედაქტირებისთვის საჭიროა POS-ის ახალი მონაცემები'
+                  : ''),
+          key: const ValueKey('manager-order-edit-status'),
+        ),
+        if (_editResult != null && !_editResult!.isDone)
+          Wrap(
+            spacing: 12,
+            children: [
+              if (_editResult!.delivery != PosCommandDelivery.failed)
+                TextButton(
+                  onPressed: _saving ? null : _saveChanges,
+                  child: const Text('შედეგის გადამოწმება'),
+                ),
+              if (!_editResult!.needsCheck)
+                TextButton(
+                  onPressed: _discardEdit,
+                  child: const Text('განახლება და მონახაზის გაუქმება'),
+                ),
+            ],
+          ),
+      ],
+    ),
+  );
 
   bool get _isTakeaway => widget.floor == 'takeaway';
 
@@ -478,7 +613,24 @@ class _OrderEditorScreenState extends State<OrderEditorScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final displayedRepairScope = MobileApiService.tableRepairScope;
+    final displayedRepairScope = _editScope ?? '';
+    if (_editScope == null ||
+        !MobileApiService.isCurrentTableRepairScope(_editScope!)) {
+      return MobileGlassScreen(
+        body: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text('სესია შეიცვალა — გახსენით შეკვეთა თავიდან'),
+              TextButton(
+                onPressed: () => Navigator.of(context).maybePop(),
+                child: const Text('უკან'),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
     if (_isLoading) {
       return MobileGlassScreen(
         orbs: [
@@ -724,6 +876,11 @@ class _OrderEditorScreenState extends State<OrderEditorScreen> {
                           ),
                           onPressed: () {
                             setState(() => _isLoading = true);
+                            try {
+                              _editScope = MobileApiService.tableRepairScope;
+                            } catch (_) {
+                              _editScope = null;
+                            }
                             _loadData();
                           },
                         ),
@@ -807,7 +964,7 @@ class _OrderEditorScreenState extends State<OrderEditorScreen> {
                   ),
                   if (_hasChanges)
                     TextButton.icon(
-                      onPressed: _saveChanges,
+                      onPressed: _saving ? null : _saveChanges,
                       icon: Icon(
                         Icons.check_circle_rounded,
                         size: 18,
@@ -823,6 +980,8 @@ class _OrderEditorScreenState extends State<OrderEditorScreen> {
                     ),
                 ],
               ),
+            if (_editResult != null || _order?.managerEditProjection == null)
+              _editStatus(),
             Expanded(child: _buildMainStack()),
           ],
         ),
@@ -853,7 +1012,7 @@ class _OrderEditorScreenState extends State<OrderEditorScreen> {
           }
         },
         onToggleServiceFee: _toggleServiceFee,
-        onSave: _hasChanges ? _saveChanges : null,
+        onSave: _hasChanges && !_saving ? _saveChanges : null,
       );
     }
 
@@ -875,8 +1034,10 @@ class _OrderEditorScreenState extends State<OrderEditorScreen> {
         border: Border(top: BorderSide(color: MobileGlassTheme.border(0.08))),
       ),
       padding: const EdgeInsets.fromLTRB(20, 14, 20, 20),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      child: Wrap(
+        alignment: WrapAlignment.spaceBetween,
+        spacing: 12,
+        runSpacing: 12,
         children: [
           GestureDetector(
             onTap: () => setState(() => _isOrderPanelOpen = true),

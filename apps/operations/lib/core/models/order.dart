@@ -96,6 +96,9 @@ class OrderItem extends HiveObject with UpdateTrackedHiveObject {
 
 @HiveType(typeId: 4)
 class Order extends HiveObject with UpdateTrackedHiveObject {
+  /// Ephemeral authenticated POS baseline for Manager edits; no Hive schema change.
+  Map<String, dynamic>? managerEditProjection;
+
   /// Expected persisted image carried by an editable read. These are runtime
   /// handles only; no adapter field or Hive version is added.
   Map<String, dynamic>? mutationBaseline;
@@ -630,6 +633,12 @@ class Order extends HiveObject with UpdateTrackedHiveObject {
       return serviceFeeRate >= 0 ? serviceFeeRate : 0;
     }
 
+    final projectedRate = managerEditProjection?['effectiveServiceFeePercent'];
+    if (projectedRate is num &&
+        projectedRate.isFinite &&
+        projectedRate >= 0 &&
+        projectedRate <= 100)
+      return projectedRate.toDouble() / 100;
     return _resolveDefaultServiceFeeRate();
   }
 

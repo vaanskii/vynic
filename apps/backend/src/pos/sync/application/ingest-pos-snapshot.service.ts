@@ -152,7 +152,7 @@ export class IngestPosSnapshotService {
     // reconciliation of orders the snapshot no longer carries.
     const appliedTableLayout = didSyncTables && data.tableLayout !== undefined;
     const orderResult = await timing.phase('orders', () =>
-      orderSync.sync(tenant, orders, data.businessDate),
+      orderSync.sync(authContext, orders, data.businessDate),
     );
     if (appliedTableLayout)
       await tableSync.reconcileLayout(tenant, data.tableLayout!);

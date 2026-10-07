@@ -269,6 +269,22 @@ class EdgeCommandTypes {
   /// Failure: table_not_found; table_busy; stale_table; canonical_table_identity_required; repair_required
   static const String tableRepair = 'TABLE_REPAIR';
 
+  /// Apply a guarded Manager edit on the selected POS through one recoverable Order/audit intent. Edge only; Cloud mirrors only a validated POS result.
+  ///
+  /// Idempotency: Immutable request and exact POS baseline; durable business receipt survives transport pruning and returns the original result after later edits. Interrupted storage remains unresolved until recovery.
+  ///
+  /// Payload:
+  /// - `request`: {posOrderId, expectedFingerprint, items: frozen stable-line array, includeServiceFee, customServiceFeePercentage}
+  /// - `baseline`: version 1 POS-owned canonical order image string and SHA-256 fingerprint, orderUuid, effectiveServiceFeePercent
+  /// - `businessDate`: YYYY-MM-DD
+  /// - `actorStaffId`: authenticated Manager Staff UUID
+  /// - `actorUsername`: authenticated Manager username
+  /// - `mirrorUpdatedAt`: original Cloud row revision for ACK CAS
+  /// - `mirrorTables`: original table identities/revisions for ACK CAS
+  ///
+  /// Failure: invalid_order_edit_request; stale_order; stale_date; closed_order; repair_required; service_fee_unavailable
+  static const String orderEdit = 'ORDER_EDIT';
+
   static const Set<String> all = <String>{
     'NOOP',
     'ORDER_UPDATE',
@@ -289,6 +305,7 @@ class EdgeCommandTypes {
     'STAFF_RENAME',
     'STAFF_DELETE',
     'TABLE_REPAIR',
+    'ORDER_EDIT',
   };
 
   /// Types safe to execute more than once.
@@ -315,6 +332,7 @@ class EdgeCommandTypes {
     'STAFF_RENAME',
     'STAFF_DELETE',
     'TABLE_REPAIR',
+    'ORDER_EDIT',
   };
 
   /// Types that must NOT be re-run after an interrupted execution.
@@ -405,16 +423,26 @@ class EdgeCommandResult {
     required this.status,
     this.code,
     this.detail,
+    this.resultProjection,
   });
 
-  const EdgeCommandResult.succeeded(this.commandId, {this.code, this.detail})
-    : status = EdgeCommandResultStatus.succeeded;
+  const EdgeCommandResult.succeeded(
+    this.commandId, {
+    this.code,
+    this.detail,
+    this.resultProjection,
+  }) : status = EdgeCommandResultStatus.succeeded;
 
-  const EdgeCommandResult.failed(this.commandId, {this.code, this.detail})
-    : status = EdgeCommandResultStatus.failed;
+  const EdgeCommandResult.failed(
+    this.commandId, {
+    this.code,
+    this.detail,
+    this.resultProjection,
+  }) : status = EdgeCommandResultStatus.failed;
 
   final String commandId;
   final String status;
+  final Map<String, dynamic>? resultProjection;
 
   /// Short machine-readable outcome, e.g. `printer_offline`.
   final String? code;
@@ -426,6 +454,7 @@ class EdgeCommandResult {
     'status': status,
     if (code != null) 'code': code,
     if (detail != null) 'detail': detail,
+    if (resultProjection != null) 'resultProjection': resultProjection,
   };
 }
 

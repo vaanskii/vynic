@@ -306,6 +306,24 @@ export const EdgeCommandTypes = {
    * Failure: table_not_found; table_busy; stale_table; canonical_table_identity_required; repair_required
    */
   TABLE_REPAIR: 'TABLE_REPAIR',
+
+  /**
+   * Apply a guarded Manager edit on the selected POS through one recoverable Order/audit intent. Edge only; Cloud mirrors only a validated POS result.
+   *
+   * Idempotency: Immutable request and exact POS baseline; durable business receipt survives transport pruning and returns the original result after later edits. Interrupted storage remains unresolved until recovery.
+   *
+   * Payload:
+   * - `request`: {posOrderId, expectedFingerprint, items: frozen stable-line array, includeServiceFee, customServiceFeePercentage}
+   * - `baseline`: version 1 POS-owned canonical order image string and SHA-256 fingerprint, orderUuid, effectiveServiceFeePercent
+   * - `businessDate`: YYYY-MM-DD
+   * - `actorStaffId`: authenticated Manager Staff UUID
+   * - `actorUsername`: authenticated Manager username
+   * - `mirrorUpdatedAt`: original Cloud row revision for ACK CAS
+   * - `mirrorTables`: original table identities/revisions for ACK CAS
+   *
+   * Failure: invalid_order_edit_request; stale_order; stale_date; closed_order; repair_required; service_fee_unavailable
+   */
+  ORDER_EDIT: 'ORDER_EDIT',
 } as const;
 
 export type EdgeCommandType =
@@ -327,7 +345,8 @@ export type EdgeCommandType =
   | 'STAFF_ROLE_UPDATE'
   | 'STAFF_RENAME'
   | 'STAFF_DELETE'
-  | 'TABLE_REPAIR';
+  | 'TABLE_REPAIR'
+  | 'ORDER_EDIT';
 
 /**
  * Command types that may be executed more than once without extra effect.
@@ -356,6 +375,7 @@ export const EDGE_IDEMPOTENT_COMMAND_TYPES: ReadonlySet<string> = new Set([
   'STAFF_RENAME',
   'STAFF_DELETE',
   'TABLE_REPAIR',
+  'ORDER_EDIT',
 ]);
 
 /**
@@ -396,4 +416,6 @@ export interface EdgeCommandResult {
   /** Short machine-readable outcome, e.g. `printer_offline`. */
   code?: string | null;
   detail?: string | null;
+  /** Optional POS-owned versioned result. ORDER_EDIT requires its frozen order image, fingerprint and effective fee percentage; other commands omit it. */
+  resultProjection?: unknown;
 }

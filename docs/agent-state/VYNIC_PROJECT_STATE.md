@@ -377,10 +377,11 @@ current transport status.
   cannot claim Device-specific Edge work.
 - Enrollment is available through Platform Admin and `POST /edge/enroll`; the
   POS stores the issued credential outside Hive in `edge_device.json`.
-- Contract v2 declares 18 types: `NOOP` plus 17 real commands covering orders,
-  dine-in/takeaway, reservations, expenses, staff, and three print operations.
-- All declared command types have POS handlers. Mutations converge on
-  `PosCommandApplier`, shared by Edge and the legacy LAN adapter.
+- Contract v2 declares 20 types: `NOOP` plus 19 real commands covering orders,
+  dine-in/takeaway, reservations, expenses, staff, and three print operations, plus guarded table repair and Order editing.
+- All declared command types have POS handlers. Legacy operations converge on
+  `PosCommandApplier`, shared by Edge and the legacy LAN adapter; guarded repair
+  and Order edit use durable repositories through Edge only.
 - Delivery is at least once. The Hive `edge_command_journal` prevents replay of
   completed work; interrupted print commands fail visibly instead of printing
   a possibly duplicated check.
@@ -487,7 +488,18 @@ current transport status.
   rollback limits: `docs/MGR02_GUARDED_TABLE_REPAIR.md`. Exact committed receipt:
   `docs/proofs/MGR02_COMMITTED_4c4c5d9_2026-10-07.json`. Printer work is deferred
   at the user's request; POS-02 physical/driver acceptance remains pending.
-  Broader Manager delivery, atomic item editing and release gates remain separate.
+  Broader Manager delivery and release gates remain separate.
+- MGR-05 adds guarded atomic Order editing through an immutable selected-primary
+  `ORDER_EDIT` pull request. Queue acceptance never edits the Cloud mirror.
+  POS journals complete Order/audit effects and retains exact results across
+  interrupted writes, pruning and later edits; startup/public restore recover
+  before writers. A validated POS ACK atomically replaces Cloud lines/total/bills
+  under snapshot/revision guards. Stable lines, package/advance/adjustment values,
+  comments and actual effective fee survive the lossless POS projection.
+  Manager persists request IDs/drafts, fences changed sessions and old Cloud
+  routes, and reports saved only after POS success. Unknown terminal outcomes
+  require reconciliation. The runbook and synthetic qualification boundaries are
+  `docs/MGR05_ATOMIC_ORDER_EDIT.md`; broader MGR-03 and Windows release gates remain.
 - Every Order audit report opens with a typed creation event carrying
   `orderKind` (`WALK_IN`, `TAKEAWAY`, `PACKAGE`, `RESERVATION`), `tableRefs`,
   `source`, `actorId`, `actorName`, `businessDate`: `CREATE_WALKIN` for POS

@@ -194,6 +194,7 @@ the implementation and nearby tests. Do not treat this as architecture truth.
 - Flutter shell/screens: `apps/operations/lib/apps/mobile_app/`; primary Inventory beside Financials and notification routing: `manager_app_shell.dart`; measured body/nav separation: `presentation/widgets/manager_glass_nav_bar.dart` (`ManagerNavigationFrame`).
 - Effective feature state: `apps/operations/lib/core/services/manager_app/manager_entitlements.dart`; centralized keys: `core/models/feature_keys.dart`
 - Shared Manager API client: `apps/operations/lib/core/services/manager_app/mobile_api_service.dart`
+- MGR-05 guarded Order editing: Cloud `src/mobile/services/manager-order-edit.ts`, `src/edge/order-edit-result.ts`; POS `lib/core/database/repositories/order_edit_repository.dart` and `lib/core/models/order_edit_projection.dart`; Manager retained requests `lib/core/services/manager_app/order_edit_request.dart` (under the respective backend/operations roots). Runbook: `docs/MGR05_ATOMIC_ORDER_EDIT.md`; synthetic HTTP/PG and SIGKILL runners: backend `tool/prove_mgr05_postgres.py`, operations `tool/prove_mgr05_recovery.py`.
 - Backend controller/services: `apps/backend/src/mobile/`
 - Auth and tenant resolution: `apps/backend/src/auth/auth.service.ts`, `apps/backend/src/auth/manager-tenant.service.ts`
 - Tenant rules: `docs/MANAGER_TENANT_AUTH.md`

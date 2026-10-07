@@ -1,3 +1,4 @@
+import 'package:vynic/core/database/repositories/order_edit_repository.dart';
 import 'table_repair_repository.dart';
 import 'package:vynic/core/models/sale_record.dart';
 import 'package:vynic/core/services/menu/canonical_menu.dart';
@@ -565,10 +566,21 @@ class BackupRepository {
         );
       }
     }
+    final pendingEdits = OrderEditRepository.validateBackup(out);
     final pendingRepairs = TableRepairRepository.validateBackup(out);
-    if (pendingRepairs > 0 && (pendingTransfers > 0 ||
-        dayClose != null && CloseDayIntent.fromMap(dayClose).pending))
-      throw const FormatException('Table repair overlaps another recovery in backup');
+    if (pendingEdits > 0 &&
+        (pendingRepairs > 0 ||
+            pendingTransfers > 0 ||
+            dayClose != null && CloseDayIntent.fromMap(dayClose).pending))
+      throw const FormatException(
+        'Order edit overlaps another recovery in backup',
+      );
+    if (pendingRepairs > 0 &&
+        (pendingTransfers > 0 ||
+            dayClose != null && CloseDayIntent.fromMap(dayClose).pending))
+      throw const FormatException(
+        'Table repair overlaps another recovery in backup',
+      );
     var pendingOwnership = 0;
     for (final entry in out['meta']!.entries) {
       if (entry.key is! String ||
@@ -576,13 +588,17 @@ class BackupRepository {
             OrderTableMutationRepository.prefix,
           ))
         continue;
-      if (TableRepairRepository.isRecord(entry.key, entry.value)) continue;
+      if (TableRepairRepository.isRecord(entry.key, entry.value) ||
+          OrderEditRepository.isRecord(entry.key, entry.value))
+        continue;
       final intent = OrderTableMutationRepository.decode(
         entry.key as String,
         entry.value,
       );
       if (!intent.pending) continue;
-      if (++pendingOwnership > 1 || pendingRepairs > 0 ||
+      if (++pendingOwnership > 1 ||
+          pendingEdits > 0 ||
+          pendingRepairs > 0 ||
           pendingTransfers > 0 ||
           dayClose != null && CloseDayIntent.fromMap(dayClose).pending ||
           BusinessDayRepository.dateKey(
@@ -921,6 +937,7 @@ class BackupRepository {
     );
     // Restore already owns admission; finish the restored transition before
     // Menu recovery, rebuilt ACKs or any UI/worker can admit business writes.
+    await OrderEditRepository.recoverPending(underExclusive: true);
     await TableRepairRepository.recoverPending(underExclusive: true);
     await OrderTableMutationRepository.recoverPending(underExclusive: true);
     await CloseDayTransaction.recoverUnderAdmission();

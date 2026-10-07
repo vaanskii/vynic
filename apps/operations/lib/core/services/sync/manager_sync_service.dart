@@ -1,3 +1,4 @@
+import 'package:vynic/core/models/order_edit_projection.dart';
 import 'package:vynic/core/database/repositories/settings_repository.dart';
 import 'table_snapshot_projection.dart';
 import '../menu/menu_client_compatibility.dart';
@@ -394,6 +395,7 @@ class ManagerSyncService {
         .map((order) {
           final tableIds = _canonicalTableIdsForOrder(order);
           return <String, dynamic>{
+            'managerEditProjection': OrderEditProjection.build(order),
             'posOrderId': order.orderId,
             'status': order.status,
             // Last local-edit time — lets the server resolve same-order
@@ -422,7 +424,9 @@ class ManagerSyncService {
             // Cloud's totalAmount cannot be reconciled against its own item
             // lines, discount and service fee.
             'manualAdjustmentAmount': order.manualAdjustmentAmount,
-            'serviceFeePercent': (order.customServiceFeePercentage ?? 10.0),
+            'serviceFeePercent':
+                (order.customServiceFeePercentage ??
+                DatabaseService.getServiceFeePercentage()),
             'items': order.items
                 .map(
                   (item) => {

@@ -1,3 +1,4 @@
+import 'package:vynic/core/database/repositories/order_edit_repository.dart';
 import 'repositories/table_repair_repository.dart';
 import 'repositories/order_table_mutation_repository.dart';
 import 'package:vynic/core/database/repositories/backup_repository.dart';
@@ -209,6 +210,7 @@ class DatabaseCore {
 
     await EdgeDeviceCredentialStore.load();
     await BackupRepository.recoverInterruptedRestore();
+    await OrderEditRepository.recoverPending();
     await TableRepairRepository.recoverPending();
     await OrderTableMutationRepository.recoverPending();
     await OrderItemTransfer.recoverPending();

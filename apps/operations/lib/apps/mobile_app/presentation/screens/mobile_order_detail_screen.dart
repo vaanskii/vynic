@@ -1,11 +1,14 @@
 import 'package:vynic/apps/mobile_app/theme/manager_theme.dart';
 import 'package:vynic/apps/mobile_app/presentation/widgets/mobile_glass_ui.dart';
 import 'package:flutter/material.dart';
+import 'package:vynic/core/services/manager_app/order_edit_request.dart';
+import 'package:vynic/core/services/manager_app/pos_command_delivery.dart';
 import 'package:intl/intl.dart';
 import 'package:vynic/apps/mobile_app/presentation/screens/order_editor_screen.dart';
 import 'package:vynic/apps/mobile_app/presentation/widgets/mobile_receipt_preview_dialog.dart';
 import 'package:vynic/core/widgets/service_fee_adjust_dialog.dart';
 import 'package:vynic/core/models/order.dart';
+import 'package:vynic/core/models/order_edit_projection.dart';
 import 'package:vynic/core/models/table.dart';
 import 'package:vynic/core/models/user.dart';
 import 'package:vynic/core/utils/table_group_style.dart';
@@ -39,6 +42,16 @@ class MobileOrderDetailScreen extends StatefulWidget {
 
 class _MobileOrderDetailScreenState extends State<MobileOrderDetailScreen> {
   Order? _order;
+  String? _displayedEditScope;
+  OrderEditResult? _editResult;
+  bool get _sameEditSession =>
+      _displayedEditScope != null &&
+      MobileApiService.isCurrentTableRepairScope(_displayedEditScope!);
+  bool get _canEditFee =>
+      _canEdit &&
+      _sameEditSession &&
+      _order?.managerEditProjection != null &&
+      (_editResult == null || _editResult!.isDone);
   bool _isLoading = true;
   bool _isTogglingServiceFee = false;
   bool _serviceFeeAvailable = false;
@@ -49,6 +62,11 @@ class _MobileOrderDetailScreenState extends State<MobileOrderDetailScreen> {
   @override
   void initState() {
     super.initState();
+    try {
+      _displayedEditScope = MobileApiService.tableRepairScope;
+    } catch (_) {
+      _displayedEditScope = null;
+    }
     _highlightKeys =
         widget.highlightItemKeys ??
         PosChangeHighlightService.takeForOrder(widget.orderId) ??
@@ -74,6 +92,16 @@ class _MobileOrderDetailScreenState extends State<MobileOrderDetailScreen> {
         MobileApiService.getRestaurantSettings(),
         MobileApiService.getTables(),
       ]);
+      await OrderEditRequests.init();
+      if (!mounted) return;
+      if (!_sameEditSession) {
+        setState(() => _isLoading = false);
+        return;
+      }
+      final retained = OrderEditRequests.read(
+        _displayedEditScope!,
+        widget.orderId,
+      );
       var order = results[0] as Order;
       final settings = results[1] as Map<String, dynamic>;
       final tables = results[2] as List<TableModel>;
@@ -82,6 +110,9 @@ class _MobileOrderDetailScreenState extends State<MobileOrderDetailScreen> {
       if (!mounted) return;
       setState(() {
         _order = order;
+        _editResult = retained == null
+            ? null
+            : OrderEditResult.fromMap(retained['result']);
         _serviceFeeAvailable = settings['serviceFeeAvailable'] == true;
         _serviceFeePercent =
             (settings['serviceFeePercent'] as num?)?.round() ?? 10;
@@ -179,9 +210,12 @@ class _MobileOrderDetailScreenState extends State<MobileOrderDetailScreen> {
   }
 
   Future<void> _toggleServiceFee() async {
-    final order = _order;
+    final current = _order;
+    final order = current?.managerEditProjection == null
+        ? null
+        : OrderEditProjection.read(current!.managerEditProjection!);
     if (order == null ||
-        !_canEdit ||
+        !_canEditFee ||
         !_serviceFeeAvailable ||
         _isTogglingServiceFee) {
       return;
@@ -197,12 +231,22 @@ class _MobileOrderDetailScreenState extends State<MobileOrderDetailScreen> {
           100;
       order.includeServiceFee = turningOn;
       order.recalculateTotal(serviceFeeRate: turningOn ? rate : 0);
-      await MobileApiService.updateOrder(
+      final delivery = await MobileApiService.updateOrder(
         order,
-        updatedBy: widget.user.username,
+        expectedScope: _displayedEditScope,
       );
+      if (!mounted || !_sameEditSession) return;
+      setState(() => _editResult = delivery);
       await _loadOrder();
-      if (!mounted) return;
+      if (!mounted || !_sameEditSession) return;
+      if (!delivery.isDone) {
+        ManagerToast.show(
+          context,
+          delivery.message,
+          isError: !delivery.needsCheck,
+        );
+        return;
+      }
       ManagerToast.show(
         context,
         turningOn
@@ -223,8 +267,11 @@ class _MobileOrderDetailScreenState extends State<MobileOrderDetailScreen> {
   }
 
   Future<void> _openServiceFeeConfig() async {
-    final order = _order;
-    if (order == null || !_canEdit || !_serviceFeeAvailable) return;
+    final current = _order;
+    final order = current?.managerEditProjection == null
+        ? null
+        : OrderEditProjection.read(current!.managerEditProjection!);
+    if (order == null || !_canEditFee || !_serviceFeeAvailable) return;
 
     final defaultPercent = _serviceFeePercent.toDouble();
     final initialPercent = order.getEffectiveServiceFeePercentage(
@@ -243,7 +290,7 @@ class _MobileOrderDetailScreenState extends State<MobileOrderDetailScreen> {
       ),
     );
 
-    if (result == null || !mounted) return;
+    if (result == null || !mounted || !_sameEditSession) return;
 
     setState(() => _isTogglingServiceFee = true);
     try {
@@ -257,12 +304,22 @@ class _MobileOrderDetailScreenState extends State<MobileOrderDetailScreen> {
           ? null
           : normalizedPercent;
       order.recalculateTotal(serviceFeeRate: normalizedPercent / 100);
-      await MobileApiService.updateOrder(
+      final delivery = await MobileApiService.updateOrder(
         order,
-        updatedBy: widget.user.username,
+        expectedScope: _displayedEditScope,
       );
+      if (!mounted || !_sameEditSession) return;
+      setState(() => _editResult = delivery);
       await _loadOrder();
-      if (!mounted) return;
+      if (!mounted || !_sameEditSession) return;
+      if (!delivery.isDone) {
+        ManagerToast.show(
+          context,
+          delivery.message,
+          isError: !delivery.needsCheck,
+        );
+        return;
+      }
       ManagerToast.show(context, 'სერვისი განახლდა');
     } catch (e) {
       if (mounted) {
@@ -459,8 +516,94 @@ class _MobileOrderDetailScreenState extends State<MobileOrderDetailScreen> {
     }
   }
 
+  Future<void> _checkEditResult() async {
+    if (!_sameEditSession || _isTogglingServiceFee) return;
+    final draft = OrderEditRequests.draft(_displayedEditScope!, widget.orderId);
+    if (draft == null) return;
+    setState(() => _isTogglingServiceFee = true);
+    try {
+      final result = await MobileApiService.updateOrder(
+        draft,
+        expectedScope: _displayedEditScope,
+      );
+      if (!mounted || !_sameEditSession) return;
+      setState(() => _editResult = result);
+      if (result.isDone) await _loadOrder();
+    } catch (e) {
+      if (mounted && _sameEditSession)
+        ManagerToast.show(
+          context,
+          'შედეგის გადამოწმება ვერ მოხერხდა',
+          isError: true,
+        );
+    } finally {
+      if (mounted) setState(() => _isTogglingServiceFee = false);
+    }
+  }
+
+  Future<void> _discardEditResult() async {
+    if (!_sameEditSession || _editResult?.needsCheck == true) return;
+    try {
+      await OrderEditRequests.discard(_displayedEditScope!, widget.orderId);
+    } catch (e) {
+      if (mounted)
+        ManagerToast.show(
+          context,
+          'მონახაზის გაუქმება ვერ მოხერხდა — სცადეთ ხელახლა',
+          isError: true,
+        );
+      return;
+    }
+    if (!mounted || !_sameEditSession) return;
+    await _loadOrder();
+  }
+
+  Widget _editDeliveryPanel() => Padding(
+    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          _editResult!.message,
+          key: const ValueKey('manager-order-detail-edit-status'),
+        ),
+        if (!_editResult!.isDone)
+          Wrap(
+            spacing: 12,
+            children: [
+              if (_editResult!.delivery != PosCommandDelivery.failed)
+                TextButton(
+                  onPressed: _isTogglingServiceFee ? null : _checkEditResult,
+                  child: const Text('შედეგის გადამოწმება'),
+                ),
+              if (!_editResult!.needsCheck)
+                TextButton(
+                  onPressed: _discardEditResult,
+                  child: const Text('განახლება და მონახაზის გაუქმება'),
+                ),
+            ],
+          ),
+      ],
+    ),
+  );
+
   @override
   Widget build(BuildContext context) {
+    if (!_sameEditSession)
+      return MobileGlassScreen(
+        body: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text('სესია შეიცვალა — გახსენით შეკვეთა თავიდან'),
+              TextButton(
+                onPressed: () => Navigator.of(context).maybePop(),
+                child: const Text('უკან'),
+              ),
+            ],
+          ),
+        ),
+      );
     if (_isLoading) {
       return MobileGlassScreen(
         orbs: [
@@ -585,6 +728,7 @@ class _MobileOrderDetailScreenState extends State<MobileOrderDetailScreen> {
               ),
             ],
           ),
+          if (_editResult != null) _editDeliveryPanel(),
           if (_highlightKeys.isNotEmpty) _buildChangeBanner(),
           _buildHeaderCard(order, dateFmt),
           Expanded(child: _buildItemsList(order)),
@@ -871,7 +1015,7 @@ class _MobileOrderDetailScreenState extends State<MobileOrderDetailScreen> {
               )
             else ...[
               IconButton(
-                onPressed: _canEdit ? _openServiceFeeConfig : null,
+                onPressed: _canEditFee ? _openServiceFeeConfig : null,
                 icon: Icon(
                   Icons.tune_rounded,
                   size: 20,
@@ -886,7 +1030,7 @@ class _MobileOrderDetailScreenState extends State<MobileOrderDetailScreen> {
               Switch.adaptive(
                 value: order.includeServiceFee,
                 activeColor: MobileGlassTheme.primary,
-                onChanged: _canEdit ? (_) => _toggleServiceFee() : null,
+                onChanged: _canEditFee ? (_) => _toggleServiceFee() : null,
               ),
             ],
           ],

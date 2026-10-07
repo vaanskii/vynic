@@ -32,6 +32,7 @@ model Table {
 }
 
 model Order {
+  managerEditProjection Json?
   id                     String      @id @default(uuid())
   venueId                String
   posOrderId             Int
@@ -1380,6 +1381,7 @@ model EdgeCommand {
   claimedByDeviceId String?
   claimExpiresAt    DateTime?
   acknowledgedAt    DateTime?
+  resultProjection  Json?
   resultCode        String?
   resultDetail      String?
   createdAt         DateTime          @default(now())

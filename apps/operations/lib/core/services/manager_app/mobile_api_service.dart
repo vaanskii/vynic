@@ -1,4 +1,6 @@
 import 'table_repair_request.dart';
+import 'order_edit_request.dart';
+import 'package:vynic/core/models/order_edit_projection.dart';
 import 'manager_entitlements.dart';
 import 'dart:async';
 import 'dart:convert';
@@ -669,28 +671,48 @@ class MobileApiService {
   static Future<Order> getOrder(int posOrderId) async {
     final response = await _get('/mobile/order/$posOrderId');
     if (response.statusCode == 200) {
-      return Order.fromJson(jsonDecode(response.body) as Map<String, dynamic>);
+      final body = jsonDecode(response.body) as Map<String, dynamic>;
+      return body['editProjection'] is Map
+          ? OrderEditProjection.read(
+              Map<String, dynamic>.from(body['editProjection']),
+            )
+          : Order.fromJson(body);
     }
     throw Exception('Status ${response.statusCode}');
   }
 
   // ── Update order ───────────────────────────────────────────────────────────
 
-  static Future<void> updateOrder(Order order, {String? updatedBy}) async {
-    final payload = order.toJson();
-    if (updatedBy != null && updatedBy.trim().isNotEmpty) {
-      payload['updatedBy'] = updatedBy.trim();
+  static Future<OrderEditResult> updateOrder(
+    Order order, {
+    String? updatedBy,
+    String? expectedScope,
+  }) {
+    final String scope;
+    try {
+      scope = tableRepairScope;
+    } catch (_) {
+      return Future.value(
+        const OrderEditResult(
+          PosCommandDelivery.failed,
+          code: 'session_changed',
+        ),
+      );
     }
-    debugPrint('[API] updateOrder orderId=${order.orderId}');
-    debugPrint('[API] updateOrder payload: ${jsonEncode(payload)}');
-    final response = await _post('/mobile/order/${order.orderId}', payload);
-    debugPrint(
-      '[API] updateOrder response ${response.statusCode}: ${response.body}',
+    if (expectedScope != null && scope != expectedScope)
+      return Future.value(
+        const OrderEditResult(
+          PosCommandDelivery.failed,
+          code: 'session_changed',
+        ),
+      );
+    return OrderEditRequests.submit(
+      scope: scope,
+      order: order,
+      currentSession: () => isCurrentTableRepairScope(scope),
+      send: (body) =>
+          _post('/mobile/order/${order.orderId}/edit-request', body),
     );
-    if (response.statusCode != 200 && response.statusCode != 201) {
-      throw Exception('Update failed: ${response.statusCode} ${response.body}');
-    }
-    MobileEditEchoGuard.markOrderEdited(order.orderId);
   }
 
   // ── Cancel order (manager-only) ────────────────────────────────────────────

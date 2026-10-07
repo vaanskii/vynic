@@ -25,6 +25,7 @@ class EdgeExecutionEntry {
     required this.firstSeenAt,
     this.completedAt,
     this.code,
+    this.resultProjection,
   });
 
   final String commandId;
@@ -34,6 +35,7 @@ class EdgeExecutionEntry {
   final DateTime firstSeenAt;
   final DateTime? completedAt;
   final String? code;
+  final Map<String, dynamic>? resultProjection;
 
   bool get isTerminal =>
       status == EdgeExecutionStatus.succeeded ||
@@ -147,6 +149,7 @@ class EdgeCommandJournal {
     String commandId, {
     required bool succeeded,
     String? code,
+    Map<String, dynamic>? resultProjection,
   }) async {
     final box = _box;
     if (box == null) return;
@@ -158,7 +161,8 @@ class EdgeCommandJournal {
           ? EdgeExecutionStatus.succeeded.name
           : EdgeExecutionStatus.failed.name
       ..['completedAt'] = DateTime.now().toUtc().toIso8601String()
-      ..['code'] = code;
+      ..['code'] = code
+      ..['resultProjection'] = resultProjection;
     await box.put(commandId, updated);
   }
 
@@ -189,6 +193,13 @@ class EdgeCommandJournal {
         return left.firstSeenAt.compareTo(right.firstSeenAt);
       });
     await box.deleteAll(byAge.take(box.length - maxEntries));
+  }
+
+  @visibleForTesting
+  static void wrapBoxForTest(Box<Map> Function(Box<Map>) wrap) {
+    final box = _box;
+    if (box == null) throw StateError('Open journal before wrapping its I/O');
+    _box = wrap(box);
   }
 
   @visibleForTesting
@@ -231,6 +242,9 @@ class EdgeCommandJournal {
       completedAt: DateTime.tryParse(
         (map['completedAt'] as String?) ?? '',
       )?.toUtc(),
+      resultProjection: map['resultProjection'] is Map
+          ? Map<String, dynamic>.from(map['resultProjection'])
+          : null,
       code: map['code'] as String?,
     );
   }

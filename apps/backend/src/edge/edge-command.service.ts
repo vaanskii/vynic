@@ -1,3 +1,4 @@
+import { applyOrderEditResult } from './order-edit-result';
 import {
   lockOperationalVenue,
   operationalDatabase,
@@ -43,6 +44,7 @@ export interface ClaimEdgeCommands {
 }
 
 export interface AcknowledgeEdgeCommand {
+  resultProjection?: unknown;
   commandId: string;
   status: EdgeCommandResultStatus;
   code?: string | null;
@@ -346,6 +348,12 @@ export class EdgeCommandService {
         ? EdgeCommandStatus.SUCCEEDED
         : EdgeCommandStatus.FAILED;
 
+    let resultProjection: any;
+    if (command.type === 'ORDER_EDIT' && status === EdgeCommandStatus.SUCCEEDED) {
+      if (ack.code !== 'order_edited') throw new BadRequestException('Invalid order edit result');
+      resultProjection = await applyOrderEditResult(this.prisma, device.venueId, command.payload, ack.resultProjection);
+    }
+
     if (command.type === 'TABLE_REPAIR' && status === EdgeCommandStatus.SUCCEEDED) {
       if (ack.code !== 'table_repaired')
         throw new BadRequestException('Invalid table repair result');
@@ -371,6 +379,7 @@ export class EdgeCommandService {
         status,
         acknowledgedAt: new Date(),
         claimExpiresAt: null,
+        ...(resultProjection ? { resultProjection } : {}),
         resultCode: ack.code?.slice(0, 200) ?? null,
         resultDetail: ack.detail?.slice(0, 2000) ?? null,
       },

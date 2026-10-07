@@ -1,3 +1,5 @@
+import 'package:vynic/core/services/manager_app/manager_data_read.dart';
+import 'package:vynic/apps/mobile_app/presentation/widgets/manager_data_status.dart';
 import 'dart:ui';
 import 'package:vynic/apps/mobile_app/theme/manager_theme.dart';
 import 'package:vynic/apps/mobile_app/presentation/widgets/mobile_glass_ui.dart';
@@ -23,6 +25,23 @@ class MobileCountedMenusScreen extends StatefulWidget {
 }
 
 class _MobileCountedMenusScreenState extends State<MobileCountedMenusScreen> {
+  Map<String, ManagerReadStatus> _displayReads = {};
+  void _readFailed(Object error, String key) {
+    final previous = _displayReads[key];
+    final failure = error is ManagerReadFailure
+        ? error.status
+        : ManagerReadStatus(key: key, error: 'მონაცემები ვერ განახლდა.');
+    _displayReads = {
+      ..._displayReads,
+      key: previous?.fetchedAt == null
+          ? failure
+          : previous!.failed(
+              failure.error ?? 'მონაცემები ვერ განახლდა.',
+              location: 'memory',
+            ),
+    };
+  }
+
   bool _loading = true;
   List<Map<String, dynamic>> _drafts = [];
   String? _error;
@@ -67,6 +86,7 @@ class _MobileCountedMenusScreenState extends State<MobileCountedMenusScreen> {
             });
       if (mounted) {
         setState(() {
+          _displayReads = {'counted_menus': MobileApiService.statusFor(data)!};
           _drafts = drafts;
           _serviceFeeAvailable = serviceFeeAvailable;
           _defaultServiceFeePercent = defaultServiceFeePercent;
@@ -76,7 +96,8 @@ class _MobileCountedMenusScreenState extends State<MobileCountedMenusScreen> {
     } catch (e) {
       if (mounted) {
         setState(() {
-          _error = e.toString();
+          _readFailed(e, 'counted_menus');
+          _error = _drafts.isEmpty ? 'მონაცემები ვერ განახლდა.' : null;
           _loading = false;
         });
       }
@@ -441,40 +462,45 @@ class _MobileCountedMenusScreenState extends State<MobileCountedMenusScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: MobileGlassTheme.bg,
-      body: Stack(
-        children: [
-          Positioned(
-            top: -80,
-            right: -60,
-            child: _GlowOrb(color: Color(0xFFF59E0B), size: 220),
-          ),
-          Positioned(
-            bottom: 120,
-            left: -80,
-            child: _GlowOrb(color: Color(0xFF2563EB), size: 260),
-          ),
-          SafeArea(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildHeader(),
-                if (!_loading && _error == null && _drafts.isNotEmpty)
-                  _buildStatsBar(),
-                Expanded(child: _buildBody()),
-              ],
+    return ManagerDataBoundary(
+      reads: _displayReads,
+      blocks: const {'counted_menus'},
+      onRefresh: _load,
+      child: Scaffold(
+        backgroundColor: MobileGlassTheme.bg,
+        body: Stack(
+          children: [
+            Positioned(
+              top: -80,
+              right: -60,
+              child: _GlowOrb(color: Color(0xFFF59E0B), size: 220),
             ),
+            Positioned(
+              bottom: 120,
+              left: -80,
+              child: _GlowOrb(color: Color(0xFF2563EB), size: 260),
+            ),
+            SafeArea(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildHeader(),
+                  if (!_loading && _error == null && _drafts.isNotEmpty)
+                    _buildStatsBar(),
+                  Expanded(child: _buildBody()),
+                ],
+              ),
+            ),
+          ],
+        ),
+        floatingActionButton: FloatingActionButton.extended(
+          onPressed: _startNewCount,
+          backgroundColor: MobileGlassTheme.primary,
+          icon: Icon(Icons.add_rounded),
+          label: Text(
+            'ახალი დათვლა',
+            style: TextStyle(fontWeight: FontWeight.w700),
           ),
-        ],
-      ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: _startNewCount,
-        backgroundColor: MobileGlassTheme.primary,
-        icon: Icon(Icons.add_rounded),
-        label: Text(
-          'ახალი დათვლა',
-          style: TextStyle(fontWeight: FontWeight.w700),
         ),
       ),
     );

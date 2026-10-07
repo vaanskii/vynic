@@ -1,3 +1,5 @@
+import 'package:vynic/core/services/manager_app/manager_data_read.dart';
+import 'package:vynic/apps/mobile_app/presentation/widgets/manager_data_status.dart';
 import 'package:vynic/core/models/sale_visibility.dart';
 import 'package:vynic/core/services/manager_app/manager_entitlements.dart';
 import 'finance_planning_screen.dart';
@@ -40,6 +42,23 @@ class FinancialsScreen extends StatefulWidget {
 
 class _FinancialsScreenState extends State<FinancialsScreen>
     with SingleTickerProviderStateMixin {
+  Map<String, ManagerReadStatus> _displayReads = {};
+  void _readFailed(Object error, String key) {
+    final previous = _displayReads[key];
+    final failure = error is ManagerReadFailure
+        ? error.status
+        : ManagerReadStatus(key: key, error: 'მონაცემები ვერ განახლდა.');
+    _displayReads = {
+      ..._displayReads,
+      key: previous?.fetchedAt == null
+          ? failure
+          : previous!.failed(
+              failure.error ?? 'მონაცემები ვერ განახლდა.',
+              location: 'memory',
+            ),
+    };
+  }
+
   Map<String, dynamic>? _data;
   bool _isLoading = true;
   String? _error;
@@ -104,6 +123,16 @@ class _FinancialsScreenState extends State<FinancialsScreen>
       data['saleStaff'] = results[3]['staff'] ?? const [];
       if (mounted) {
         setState(() {
+          _displayReads = {
+            'financials': MobileApiService.statusFor(data)!,
+            for (final entry in [
+              'ledger_summary',
+              'sale_history',
+              'product_analytics',
+              'sale_staff',
+            ].asMap().entries)
+              entry.value: MobileApiService.statusFor(results[entry.key])!,
+          };
           _data = data;
           _salesCursor = results[1]['nextCursor']?.toString();
           _isLoading = false;
@@ -111,11 +140,15 @@ class _FinancialsScreenState extends State<FinancialsScreen>
         });
         if (_animController.value == 0) _animController.forward();
       }
-    } catch (_) {
+    } catch (e) {
       if (mounted) {
         setState(() {
+          if (e is ManagerReadFailure)
+            _readFailed(e, e.status.key);
+          else
+            _readFailed(e, 'financials');
           _isLoading = false;
-          _error = 'სერვერთან კავშირი ვერ დამყარდა';
+          _error = _data == null ? 'სერვერთან კავშირი ვერ დამყარდა' : null;
         });
       }
     }
@@ -247,33 +280,44 @@ class _FinancialsScreenState extends State<FinancialsScreen>
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.transparent,
-      body: Stack(
-        children: [
-          Positioned(
-            top: -100,
-            right: -50,
-            child: _GlowOrb(color: Color(0xFF0EA5E9), size: 300),
-          ),
-          Positioned(
-            top: 300,
-            left: -100,
-            child: _GlowOrb(color: Color(0xFF2563EB), size: 250),
-          ),
-          SafeArea(
-            bottom: false,
-            child: _isLoading
-                ? Center(
-                    child: CircularProgressIndicator(
-                      color: MobileGlassTheme.primary,
-                    ),
-                  )
-                : _error != null
-                ? _buildError()
-                : _buildContent(),
-          ),
-        ],
+    return ManagerDataBoundary(
+      reads: _displayReads,
+      blocks: const {
+        'financials',
+        'ledger_summary',
+        'sale_history',
+        'product_analytics',
+        'sale_staff',
+      },
+      onRefresh: _loadFinancials,
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        body: Stack(
+          children: [
+            Positioned(
+              top: -100,
+              right: -50,
+              child: _GlowOrb(color: Color(0xFF0EA5E9), size: 300),
+            ),
+            Positioned(
+              top: 300,
+              left: -100,
+              child: _GlowOrb(color: Color(0xFF2563EB), size: 250),
+            ),
+            SafeArea(
+              bottom: false,
+              child: _isLoading
+                  ? Center(
+                      child: CircularProgressIndicator(
+                        color: MobileGlassTheme.primary,
+                      ),
+                    )
+                  : _error != null
+                  ? _buildError()
+                  : _buildContent(),
+            ),
+          ],
+        ),
       ),
     );
   }

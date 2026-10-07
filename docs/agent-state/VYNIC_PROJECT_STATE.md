@@ -518,6 +518,18 @@ current transport status.
   `docs/MGR03_OPERATION_DELIVERY.md`. Exact qualification: 416 Flutter tests,
   24 HTTP/PG cases, 55 backend tests and 21 selected SIGKILL checkpoints;
   `docs/proofs/MGR03_COMMITTED_4c02012_2026-10-07.json`. POS-02 remains deferred; VM stays HELD.
+- MGR-04 implements scoped Manager read freshness and completeness. Accepted
+  Device/Venue snapshots atomically stamp only applied blocks and ledger dates;
+  concurrent generations, changed primary and uncovered ledger ranges are unknown.
+  Dashboard snapshotAt preserves POS source time. API availability, cache/read age,
+  POS source age and completeness remain distinct; failed subrequests retain their
+  original visible data or show unavailable instead of false zero/empty success.
+  Query/account/origin cache envelopes are flushed together and session-fenced.
+  Dashboard, Tables/Takeaway, Financials, Reservations, Counted Menus and Menu
+  Calculator expose bound source/status details and refresh on resume. Runbook:
+  `docs/MGR04_DATA_FRESHNESS.md`. Exact committed qualification is recorded after
+  the final clean source export. Unsupported analytics remains MGR-06; POS-02 is
+  deferred and VM operations stay HELD.
 - Every Order audit report opens with a typed creation event carrying
   `orderKind` (`WALK_IN`, `TAKEAWAY`, `PACKAGE`, `RESERVATION`), `tableRefs`,
   `source`, `actorId`, `actorName`, `businessDate`: `CREATE_WALKIN` for POS

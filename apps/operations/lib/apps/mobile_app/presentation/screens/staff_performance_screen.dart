@@ -1,3 +1,5 @@
+import 'package:vynic/core/services/manager_app/manager_data_read.dart';
+import 'package:vynic/apps/mobile_app/presentation/widgets/manager_data_status.dart';
 import 'package:vynic/core/services/manager_app/manager_operation_request.dart';
 import 'package:vynic/apps/mobile_app/presentation/widgets/manager_operations_panel.dart';
 import 'package:vynic/apps/mobile_app/theme/manager_theme.dart';
@@ -39,6 +41,24 @@ class StaffPerformanceScreen extends StatefulWidget {
 }
 
 class _StaffPerformanceScreenState extends State<StaffPerformanceScreen> {
+  Map<String, ManagerReadStatus> _displayReads = {};
+  int _readGeneration = 0;
+  void _readFailed(Object error, String key) {
+    final previous = _displayReads[key];
+    final failure = error is ManagerReadFailure
+        ? error.status
+        : ManagerReadStatus(key: key, error: 'მონაცემები ვერ განახლდა.');
+    _displayReads = {
+      ..._displayReads,
+      key: previous?.fetchedAt == null || previous?.query != failure.query
+          ? failure
+          : previous!.failed(
+              failure.error ?? 'მონაცემები ვერ განახლდა.',
+              location: 'memory',
+            ),
+    };
+  }
+
   final DateFormat _dateFmt = DateFormat('yyyy-MM-dd');
   final DateFormat _prettyFmt = DateFormat('EEE, d MMM');
   final DateFormat _groupFmt = DateFormat('EEEE, d MMMM');
@@ -117,12 +137,23 @@ class _StaffPerformanceScreenState extends State<StaffPerformanceScreen> {
   }
 
   Future<void> _loadReservations() async {
+    final generation = ++_readGeneration;
+    final query =
+        '/mobile/reservations${_showAll ? '' : '?date=${_dateFmt.format(_selectedDate)}'}';
+    if (mounted && _displayReads['reservations']?.query != query) {
+      setState(() {
+        _reservations = [];
+        _displayReads = {};
+        _isLoading = true;
+      });
+    }
     try {
       final rows = _showAll
           ? await MobileApiService.getReservations()
           : await MobileApiService.getReservations(
               date: _dateFmt.format(_selectedDate),
             );
+      if (!mounted || generation != _readGeneration) return;
       rows.sort((a, b) {
         if (_showAll) {
           final d = _dateKey(a).compareTo(_dateKey(b));
@@ -138,14 +169,16 @@ class _StaffPerformanceScreenState extends State<StaffPerformanceScreen> {
       });
       if (mounted) {
         setState(() {
+          _displayReads = {'reservations': MobileApiService.statusFor(rows)!};
           _reservations = rows;
           _isLoading = false;
           _error = null;
         });
       }
-    } catch (_) {
-      if (mounted) {
+    } catch (e) {
+      if (mounted && generation == _readGeneration) {
         setState(() {
+          _readFailed(e, 'reservations');
           _isLoading = false;
           _error = 'სერვერთან კავშირი ვერ დამყარდა';
         });
@@ -536,35 +569,40 @@ class _StaffPerformanceScreenState extends State<StaffPerformanceScreen> {
   // ── Build ──────────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
-    return ManagerOperationBoundary(
-      scope: _operationScope,
-      child: Scaffold(
-        backgroundColor: Colors.transparent,
-        body: Stack(
-          children: [
-            Positioned(
-              top: -100,
-              right: -50,
-              child: _GlowOrb(color: MobileGlassTheme.primary, size: 300),
-            ),
-            Positioned(
-              top: 320,
-              left: -100,
-              child: _GlowOrb(color: Color(0xFF0EA5E9), size: 240),
-            ),
-            SafeArea(
-              bottom: false,
-              child: _isLoading
-                  ? Center(
-                      child: CircularProgressIndicator(
-                        color: MobileGlassTheme.primary,
-                      ),
-                    )
-                  : _error != null
-                  ? _buildError()
-                  : _buildContent(),
-            ),
-          ],
+    return ManagerDataBoundary(
+      reads: _displayReads,
+      blocks: const {'reservations'},
+      onRefresh: _loadReservations,
+      child: ManagerOperationBoundary(
+        scope: _operationScope,
+        child: Scaffold(
+          backgroundColor: Colors.transparent,
+          body: Stack(
+            children: [
+              Positioned(
+                top: -100,
+                right: -50,
+                child: _GlowOrb(color: MobileGlassTheme.primary, size: 300),
+              ),
+              Positioned(
+                top: 320,
+                left: -100,
+                child: _GlowOrb(color: Color(0xFF0EA5E9), size: 240),
+              ),
+              SafeArea(
+                bottom: false,
+                child: _isLoading
+                    ? Center(
+                        child: CircularProgressIndicator(
+                          color: MobileGlassTheme.primary,
+                        ),
+                      )
+                    : _error != null
+                    ? _buildError()
+                    : _buildContent(),
+              ),
+            ],
+          ),
         ),
       ),
     );

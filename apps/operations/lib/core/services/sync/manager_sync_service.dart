@@ -501,7 +501,7 @@ class ManagerSyncService {
             'touchedTableHints': touchedTableHints,
           if (touchedReservationHints.isNotEmpty)
             'touchedReservationHints': touchedReservationHints,
-          'syncedAt': DateTime.now().toIso8601String(),
+          'syncedAt': DateTime.now().toUtc().toIso8601String(),
           'businessDate': businessDateString,
           'dailySalesTotal': double.parse(
             DatabaseService.getDailySalesTotal().toStringAsFixed(2),
@@ -923,7 +923,7 @@ class ManagerSyncService {
         // and this is what fills it. The POS is still the one that owns them.
         'reservations': reservationPayload,
         'quickOrders': quickOrders,
-        'syncedAt': DateTime.now().toIso8601String(),
+        'syncedAt': DateTime.now().toUtc().toIso8601String(),
         // Send current business date so the backend knows which calendar day
         // the POS considers "today" (independent of wall-clock midnight).
         'businessDate': businessDateString,

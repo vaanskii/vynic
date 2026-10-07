@@ -21,6 +21,7 @@ import { MobileDevicesService } from './mobile/services/mobile-devices.service';
 import { MobileMenuService } from './mobile/services/mobile-menu.service';
 import { MobileMutationSupport } from './mobile/services/mobile-mutation-support.service';
 import { MobileReservationsService } from './mobile/services/mobile-reservations.service';
+import { ManagerDataFreshnessInterceptor } from './mobile/services/manager-data-freshness';
 import { MobileDashboardService } from './mobile/services/mobile-dashboard.service';
 import { MobileOrdersService } from './mobile/services/mobile-orders.service';
 import { MobileSaleLedgerService } from './mobile/services/mobile-sale-ledger.service';
@@ -90,6 +91,7 @@ import { WebsiteModule } from './website/website.module';
     MobileMutationSupport,
     MobileReservationsService,
     MobileDashboardService,
+    ManagerDataFreshnessInterceptor,
     PayrollService,
     ObligationsService,
     MobileOrdersService,

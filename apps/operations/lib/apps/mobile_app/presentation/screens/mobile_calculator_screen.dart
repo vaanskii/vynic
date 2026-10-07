@@ -1,3 +1,5 @@
+import 'package:vynic/core/services/manager_app/manager_data_read.dart';
+import 'package:vynic/apps/mobile_app/presentation/widgets/manager_data_status.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:vynic/core/services/manager_app/mobile_api_service.dart';
@@ -36,6 +38,23 @@ class MobileCalculatorScreen extends StatefulWidget {
 
 class _MobileCalculatorScreenState extends State<MobileCalculatorScreen>
     with TickerProviderStateMixin {
+  Map<String, ManagerReadStatus> _displayReads = {};
+  void _readFailed(Object error, String key) {
+    final previous = _displayReads[key];
+    final failure = error is ManagerReadFailure
+        ? error.status
+        : ManagerReadStatus(key: key, error: 'მონაცემები ვერ განახლდა.');
+    _displayReads = {
+      ..._displayReads,
+      key: previous?.fetchedAt == null
+          ? failure
+          : previous!.failed(
+              failure.error ?? 'მონაცემები ვერ განახლდა.',
+              location: 'memory',
+            ),
+    };
+  }
+
   bool _loading = true;
   String? _error;
   List<_MenuCat> _categories = [];
@@ -108,6 +127,7 @@ class _MobileCalculatorScreenState extends State<MobileCalculatorScreen>
 
       if (mounted) {
         setState(() {
+          _displayReads = {'menu': MobileApiService.statusFor(raw)!};
           _categories = cats;
           _tabController = TabController(
             length: _categories.length,
@@ -132,7 +152,8 @@ class _MobileCalculatorScreenState extends State<MobileCalculatorScreen>
       debugPrint('[CALC] Error loading menu: $e');
       if (mounted) {
         setState(() {
-          _error = e.toString();
+          _readFailed(e, 'menu');
+          _error = _categories.isEmpty ? 'მენიუ ვერ განახლდა.' : null;
           _loading = false;
         });
       }
@@ -493,86 +514,93 @@ class _MobileCalculatorScreenState extends State<MobileCalculatorScreen>
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: MobileGlassTheme.bg,
-      appBar: AppBar(
-        title: Text(
-          widget.editDraftId != null
-              ? 'მენიუს რედაქტირება'
-              : (widget.isCountMode ? 'მენიუს დათვლა' : 'მენიუ'),
-          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-        ),
+    return ManagerDataBoundary(
+      reads: _displayReads,
+      blocks: const {'menu'},
+      onRefresh: _loadMenu,
+      child: Scaffold(
         backgroundColor: MobileGlassTheme.bg,
-        foregroundColor: MobileGlassTheme.textPrimary,
-        iconTheme: IconThemeData(color: MobileGlassTheme.textPrimary),
-        elevation: 0,
-        bottom: (_loading || _categories.isEmpty)
-            ? null
-            : TabBar(
-                controller: _tabController,
-                isScrollable: true,
-                labelColor: MobileGlassTheme.textPrimary,
-                unselectedLabelColor: MobileGlassTheme.textSecondary,
-                indicatorColor: MobileGlassTheme.primary,
-                indicatorWeight: 3,
-                dividerColor: Colors.transparent,
-                labelStyle: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 14,
+        appBar: AppBar(
+          title: Text(
+            widget.editDraftId != null
+                ? 'მენიუს რედაქტირება'
+                : (widget.isCountMode ? 'მენიუს დათვლა' : 'მენიუ'),
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+          ),
+          backgroundColor: MobileGlassTheme.bg,
+          foregroundColor: MobileGlassTheme.textPrimary,
+          iconTheme: IconThemeData(color: MobileGlassTheme.textPrimary),
+          elevation: 0,
+          bottom: (_loading || _categories.isEmpty)
+              ? null
+              : TabBar(
+                  controller: _tabController,
+                  isScrollable: true,
+                  labelColor: MobileGlassTheme.textPrimary,
+                  unselectedLabelColor: MobileGlassTheme.textSecondary,
+                  indicatorColor: MobileGlassTheme.primary,
+                  indicatorWeight: 3,
+                  dividerColor: Colors.transparent,
+                  labelStyle: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                  ),
+                  tabs: _categories.map((c) => Tab(text: c.nameKa)).toList(),
                 ),
-                tabs: _categories.map((c) => Tab(text: c.nameKa)).toList(),
-              ),
-      ),
-      body: _loading
-          ? Center(
-              child: CircularProgressIndicator(color: MobileGlassTheme.primary),
-            )
-          : _error != null
-          ? _buildError()
-          : Column(
-              children: [
-                if (_subTabController != null && _searchQuery.isEmpty)
-                  SizedBox(
-                    height: 52,
-                    child: TabBar(
-                      controller: _subTabController,
-                      isScrollable: true,
-                      labelColor: MobileGlassTheme.textPrimary,
-                      unselectedLabelColor: MobileGlassTheme.textSecondary,
-                      dividerColor: Colors.transparent,
-                      indicatorSize: TabBarIndicatorSize.tab,
-                      indicator: BoxDecoration(
-                        borderRadius: BorderRadius.circular(20),
-                        color: MobileGlassTheme.primary,
-                      ),
-                      indicatorPadding: const EdgeInsets.symmetric(
-                        vertical: 9,
-                        horizontal: 4,
-                      ),
-                      tabs: _categories[_selectedCatIndex].subcategories
-                          .map(
-                            (s) => Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 8,
-                              ),
-                              child: Text(
-                                s.nameKa,
-                                style: const TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w600,
+        ),
+        body: _loading
+            ? Center(
+                child: CircularProgressIndicator(
+                  color: MobileGlassTheme.primary,
+                ),
+              )
+            : _error != null
+            ? _buildError()
+            : Column(
+                children: [
+                  if (_subTabController != null && _searchQuery.isEmpty)
+                    SizedBox(
+                      height: 52,
+                      child: TabBar(
+                        controller: _subTabController,
+                        isScrollable: true,
+                        labelColor: MobileGlassTheme.textPrimary,
+                        unselectedLabelColor: MobileGlassTheme.textSecondary,
+                        dividerColor: Colors.transparent,
+                        indicatorSize: TabBarIndicatorSize.tab,
+                        indicator: BoxDecoration(
+                          borderRadius: BorderRadius.circular(20),
+                          color: MobileGlassTheme.primary,
+                        ),
+                        indicatorPadding: const EdgeInsets.symmetric(
+                          vertical: 9,
+                          horizontal: 4,
+                        ),
+                        tabs: _categories[_selectedCatIndex].subcategories
+                            .map(
+                              (s) => Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 8,
+                                ),
+                                child: Text(
+                                  s.nameKa,
+                                  style: const TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                  ),
                                 ),
                               ),
-                            ),
-                          )
-                          .toList(),
+                            )
+                            .toList(),
+                      ),
                     ),
-                  ),
-                _buildSearchBar(),
-                Expanded(child: _buildItemGrid()),
-                _buildCartSummary(),
-              ],
-            ),
+                  _buildSearchBar(),
+                  Expanded(child: _buildItemGrid()),
+                  _buildCartSummary(),
+                ],
+              ),
+      ),
     );
   }
 

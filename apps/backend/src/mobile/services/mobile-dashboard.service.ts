@@ -31,6 +31,7 @@ import {
 } from '../util/mobile-date.util';
 import { settingIdentity } from '../../tenancy/tenant-identity';
 import type { TenantContext } from '../../tenancy/tenant-context';
+import { managerSource } from './manager-data-freshness';
 import { MobileSaleLedgerService } from './mobile-sale-ledger.service';
 
 export interface DashboardResponse {
@@ -58,7 +59,7 @@ export interface DashboardResponse {
   occupiedTables: number;
   reservedTables: number;
   freeTables: number;
-  snapshotAt: string;
+  snapshotAt: string | null;
   financialProvenance?: string;
   financialWarning?: string | null;
   tbcRevenue?: number;
@@ -157,6 +158,7 @@ export class MobileDashboardService {
   }
 
   async getDashboard(tenant: TenantContext): Promise<DashboardResponse> {
+    const source = await managerSource(this.prisma, tenant, 'dashboard');
     // Use the business date set by the POS (stored in Setting).
     // Falls back to calendar today if not yet set (first-run / no POS connected).
     const businessDateSetting = await (this.prisma as any).setting.findUnique({
@@ -402,7 +404,7 @@ export class MobileDashboardService {
       occupiedTables,
       reservedTables,
       freeTables,
-      snapshotAt: new Date().toISOString(),
+      snapshotAt: source.sourceUpdatedAt,
       ...(ledger
         ? {
             financialProvenance: ledger.provenance,

@@ -1,3 +1,4 @@
+import 'package:vynic/apps/mobile_app/presentation/widgets/manager_data_status.dart';
 import 'package:vynic/core/services/manager_app/mobile_api_service.dart';
 import 'package:vynic/core/services/manager_app/manager_entitlements.dart';
 import '../widgets/financial_planning_card.dart';
@@ -307,274 +308,346 @@ class _DashboardScreenState extends State<DashboardScreen>
     );
     final menuSummary = _countedMenusSummary(state.countedMenus);
 
-    return ValueListenableBuilder<ManagerDashboardAppearance>(
-      valueListenable: ManagerAppPreferences.dashboardAppearance,
-      builder: (context, appearance, _) {
-        final theme = DashboardThemeData.forAppearance(appearance);
-        return DashboardThemeScope(
-          theme: theme,
-          child: Scaffold(
-            backgroundColor: theme.scaffoldBackground,
-            body: Stack(
-              children: [
-                Positioned(
-                  top: -150,
-                  right: -100,
-                  child: _SoftGlow(
-                    color: theme.glowTopRight,
-                    size: 500,
-                    opacity: theme.glowTopRightOpacity,
+    return ManagerDataBoundary(
+      reads: state.reads,
+      blocks: const {
+        'dashboard',
+        'sales_report',
+        'staff_performance',
+        'sales_daily',
+        'reservations',
+        'counted_menus',
+      },
+      onRefresh: _controller.loadAll,
+      child: ValueListenableBuilder<ManagerDashboardAppearance>(
+        valueListenable: ManagerAppPreferences.dashboardAppearance,
+        builder: (context, appearance, _) {
+          final theme = DashboardThemeData.forAppearance(appearance);
+          return DashboardThemeScope(
+            theme: theme,
+            child: Scaffold(
+              backgroundColor: theme.scaffoldBackground,
+              body: Stack(
+                children: [
+                  Positioned(
+                    top: -150,
+                    right: -100,
+                    child: _SoftGlow(
+                      color: theme.glowTopRight,
+                      size: 500,
+                      opacity: theme.glowTopRightOpacity,
+                    ),
                   ),
-                ),
-                Positioned(
-                  bottom: 0,
-                  left: -150,
-                  child: _SoftGlow(
-                    color: theme.glowBottomLeft,
-                    size: 400,
-                    opacity: theme.glowBottomLeftOpacity,
+                  Positioned(
+                    bottom: 0,
+                    left: -150,
+                    child: _SoftGlow(
+                      color: theme.glowBottomLeft,
+                      size: 400,
+                      opacity: theme.glowBottomLeftOpacity,
+                    ),
                   ),
-                ),
-                SafeArea(
-                  bottom: false,
-                  child: RefreshIndicator(
-                    color: theme.primary,
-                    backgroundColor: theme.refreshIndicatorBackground,
-                    onRefresh: () async {
-                      await MobileApiService.refreshEntitlements();
-                      await _controller.loadAll();
-                    },
-                    child: CustomScrollView(
-                      physics: const AlwaysScrollableScrollPhysics(
-                        parent: BouncingScrollPhysics(),
-                      ),
-                      slivers: [
-                        SliverToBoxAdapter(
-                          child: Padding(
-                            padding: const EdgeInsets.only(bottom: 24),
-                            child: state.loading && state.metrics == null
-                                ? _DashboardSkeleton()
-                                : LayoutBuilder(
-                                    builder: (context, constraints) {
-                                      Widget fade(double delay, Widget child) =>
-                                          _FadeInSlide(
-                                            controller: _animController,
-                                            delay: delay,
-                                            child: child,
-                                          );
-
-                                      // Build every section once, then arrange
-                                      // them responsively below.
-                                      final header = _Header(
-                                        greeting: _greeting(),
-                                        name: widget.user.username,
-                                        onNotifications:
-                                            widget.onOpenNotifications,
-                                      );
-                                      const aiCard = _AIInsightsCard();
-                                      final activeDay = _ActiveBusinessDayCard(
-                                        metrics: metrics,
-                                        formatOpened: _formatOpenedLocal,
-                                        formatDuration: () => _formatDuration(
-                                          metrics.businessDayOpenedAt,
-                                          metrics.businessDayDurationMinutes,
-                                        ),
-                                      );
-                                      final hero = _HeroRevenueCard(
-                                        metrics: metrics,
-                                        series: series,
-                                        dayChange: dayChange,
-                                        onTap: () =>
-                                            widget.onNavigateTab?.call(2),
-                                      );
-                                      final secondary = _SecondaryStats(
-                                        orderCount: metrics.todayOrderCount,
-                                        avgOrder: avgOrder,
-                                        activeTables: metrics.activeTablesCount,
-                                        occupancy: metrics.occupancyPercentage
-                                            .round(),
-                                        payable: metrics.openTablesPayable,
-                                        onTapOrders: () =>
-                                            widget.onNavigateTab?.call(2),
-                                        onTapTables: () =>
-                                            widget.onNavigateTab?.call(1),
-                                      );
-                                      final pulse = _ManagerPulseCard(
-                                        metrics: metrics,
-                                        reservations: state.todayReservations,
-                                        onTapTables: () =>
-                                            widget.onNavigateTab?.call(1),
-                                        onTapReservations: () =>
-                                            widget.onNavigateTab?.call(4),
-                                      );
-                                      final tables = _TablesOverviewStrip(
-                                        metrics: metrics,
-                                        onTap: () =>
-                                            widget.onNavigateTab?.call(1),
-                                      );
-                                      final quickActions = _QuickActionsSection(
-                                        onCloseBusinessDay: () => _toast(
-                                          'დღის დახურვა ხდება Windows POS-ში',
-                                          color: context.dash.warn,
-                                        ),
-                                        onViewReport: () =>
-                                            widget.onNavigateTab?.call(2),
-                                        onExportPdf: () => _toast(
-                                          'PDF ექსპორტი მალე დაემატება',
-                                          color: context.dash.info,
-                                        ),
-                                        onReservations: () =>
-                                            widget.onNavigateTab?.call(4),
-                                        onAnnouncement: () => _toast(
-                                          'შეტყობინების გაგზავნა მალე დაემატება',
-                                          color: context.dash.info,
-                                        ),
-                                      );
-                                      final countedMenus = _CountedMenusSection(
-                                        summary: menuSummary,
-                                        onOpenAll: _openCountedMenus,
-                                        onNewCount: _startCountMenu,
-                                      );
-                                      final Widget? topItemsWidget =
-                                          topItems.isNotEmpty
-                                          ? _TopItemsSection(topItems: topItems)
-                                          : null;
-                                      final Widget? waitersWidget =
-                                          staff.isNotEmpty
-                                          ? _WaitersSection(staff: staff)
-                                          : null;
-
-                                      // Phones (< 880px): single column, in the
-                                      // original priority order. Tablets / Mac
-                                      // (>= 880px): a centered two-column
-                                      // masonry mirroring the dashboard mockup.
-                                      if (constraints.maxWidth < 880) {
-                                        return Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            const SizedBox(height: 12),
-                                            fade(0.0, header),
-                                            const SizedBox(height: 24),
-                                            fade(0.04, aiCard),
-                                            const SizedBox(height: 24),
-                                            fade(0.08, activeDay),
-                                            const SizedBox(height: 16),
-                                            fade(0.15, hero),
-                                            const SizedBox(height: 16),
-                                            fade(0.25, secondary),
-                                            const SizedBox(height: 16),
-                                            if (ManagerEntitlements.has(
-                                              FeatureKeys.inventory,
-                                            ))
-                                              InventorySummaryCard(
-                                                onOpenInventory:
-                                                    widget.onNavigateTab == null
-                                                    ? null
-                                                    : () =>
-                                                          widget.onNavigateTab!(
-                                                            3,
-                                                          ),
-                                              ),
-                                            const SizedBox(height: 12),
-                                            if (ManagerEntitlements.has(
-                                              FeatureKeys.financialPlanning,
-                                            ))
-                                              const FinancialPlanningCard(),
-                                            const SizedBox(height: 28),
-                                            fade(0.32, pulse),
-                                            const SizedBox(height: 28),
-                                            fade(0.35, tables),
-                                            const SizedBox(height: 28),
-                                            fade(0.38, quickActions),
-                                            const SizedBox(height: 28),
-                                            fade(0.42, countedMenus),
-                                            if (topItemsWidget != null) ...[
-                                              const SizedBox(height: 28),
-                                              fade(0.5, topItemsWidget),
-                                            ],
-                                            if (waitersWidget != null) ...[
-                                              const SizedBox(height: 28),
-                                              fade(0.6, waitersWidget),
-                                            ],
-                                            const SizedBox(height: 28),
-                                          ],
+                  SafeArea(
+                    bottom: false,
+                    child: RefreshIndicator(
+                      color: theme.primary,
+                      backgroundColor: theme.refreshIndicatorBackground,
+                      onRefresh: () async {
+                        await MobileApiService.refreshEntitlements();
+                        await _controller.loadAll();
+                      },
+                      child: CustomScrollView(
+                        physics: const AlwaysScrollableScrollPhysics(
+                          parent: BouncingScrollPhysics(),
+                        ),
+                        slivers: [
+                          SliverToBoxAdapter(
+                            child: Padding(
+                              padding: const EdgeInsets.only(bottom: 24),
+                              child: state.loading && state.metrics == null
+                                  ? _DashboardSkeleton()
+                                  : state.metrics == null
+                                  ? const ManagerDataUnavailable(label: 'დაფა')
+                                  : LayoutBuilder(
+                                      builder: (context, constraints) {
+                                        Widget fade(
+                                          double delay,
+                                          Widget child,
+                                        ) => _FadeInSlide(
+                                          controller: _animController,
+                                          delay: delay,
+                                          child: child,
                                         );
-                                      }
 
-                                      // Header + AI banner always span full
-                                      // width; the responsive grid sits below.
-                                      Widget shell(
-                                        double maxWidth,
-                                        Widget grid,
-                                      ) {
-                                        return Center(
-                                          child: ConstrainedBox(
-                                            constraints: BoxConstraints(
-                                              maxWidth: maxWidth,
+                                        // Build every section once, then arrange
+                                        // them responsively below.
+                                        final header = _Header(
+                                          greeting: _greeting(),
+                                          name: widget.user.username,
+                                          onNotifications:
+                                              widget.onOpenNotifications,
+                                        );
+                                        const aiCard = _AIInsightsCard();
+                                        final activeDay = _ActiveBusinessDayCard(
+                                          metrics: metrics,
+                                          formatOpened: _formatOpenedLocal,
+                                          formatDuration: () => _formatDuration(
+                                            metrics.businessDayOpenedAt,
+                                            metrics.businessDayDurationMinutes,
+                                          ),
+                                        );
+                                        final hero = _HeroRevenueCard(
+                                          metrics: metrics,
+                                          series: series,
+                                          dayChange: dayChange,
+                                          onTap: () =>
+                                              widget.onNavigateTab?.call(2),
+                                        );
+                                        final secondary = _SecondaryStats(
+                                          orderCount: metrics.todayOrderCount,
+                                          avgOrder: avgOrder,
+                                          activeTables:
+                                              metrics.activeTablesCount,
+                                          occupancy: metrics.occupancyPercentage
+                                              .round(),
+                                          payable: metrics.openTablesPayable,
+                                          onTapOrders: () =>
+                                              widget.onNavigateTab?.call(2),
+                                          onTapTables: () =>
+                                              widget.onNavigateTab?.call(1),
+                                        );
+                                        final pulse = ManagerDataSection(
+                                          block: 'reservations',
+                                          status: state.reads['reservations'],
+                                          child: _ManagerPulseCard(
+                                            metrics: metrics,
+                                            reservations:
+                                                state.todayReservations,
+                                            onTapTables: () =>
+                                                widget.onNavigateTab?.call(1),
+                                            onTapReservations: () =>
+                                                widget.onNavigateTab?.call(4),
+                                          ),
+                                        );
+                                        final tables = _TablesOverviewStrip(
+                                          metrics: metrics,
+                                          onTap: () =>
+                                              widget.onNavigateTab?.call(1),
+                                        );
+                                        final quickActions = _QuickActionsSection(
+                                          onCloseBusinessDay: () => _toast(
+                                            'დღის დახურვა ხდება Windows POS-ში',
+                                            color: context.dash.warn,
+                                          ),
+                                          onViewReport: () =>
+                                              widget.onNavigateTab?.call(2),
+                                          onExportPdf: () => _toast(
+                                            'PDF ექსპორტი მალე დაემატება',
+                                            color: context.dash.info,
+                                          ),
+                                          onReservations: () =>
+                                              widget.onNavigateTab?.call(4),
+                                          onAnnouncement: () => _toast(
+                                            'შეტყობინების გაგზავნა მალე დაემატება',
+                                            color: context.dash.info,
+                                          ),
+                                        );
+                                        final countedMenus = ManagerDataSection(
+                                          block: 'counted_menus',
+                                          status: state.reads['counted_menus'],
+                                          child: _CountedMenusSection(
+                                            summary: menuSummary,
+                                            onOpenAll: _openCountedMenus,
+                                            onNewCount: _startCountMenu,
+                                          ),
+                                        );
+                                        final Widget? topItemsWidget =
+                                            topItems.isNotEmpty
+                                            ? _TopItemsSection(
+                                                topItems: topItems,
+                                              )
+                                            : null;
+                                        final Widget? waitersWidget =
+                                            staff.isNotEmpty
+                                            ? _WaitersSection(staff: staff)
+                                            : null;
+
+                                        // Phones (< 880px): single column, in the
+                                        // original priority order. Tablets / Mac
+                                        // (>= 880px): a centered two-column
+                                        // masonry mirroring the dashboard mockup.
+                                        if (constraints.maxWidth < 880) {
+                                          return Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              const SizedBox(height: 12),
+                                              fade(0.0, header),
+                                              const SizedBox(height: 24),
+                                              fade(0.04, aiCard),
+                                              const SizedBox(height: 24),
+                                              fade(0.08, activeDay),
+                                              const SizedBox(height: 16),
+                                              fade(0.15, hero),
+                                              const SizedBox(height: 16),
+                                              fade(0.25, secondary),
+                                              const SizedBox(height: 16),
+                                              if (ManagerEntitlements.has(
+                                                FeatureKeys.inventory,
+                                              ))
+                                                InventorySummaryCard(
+                                                  onOpenInventory:
+                                                      widget.onNavigateTab ==
+                                                          null
+                                                      ? null
+                                                      : () => widget
+                                                            .onNavigateTab!(3),
+                                                ),
+                                              const SizedBox(height: 12),
+                                              if (ManagerEntitlements.has(
+                                                FeatureKeys.financialPlanning,
+                                              ))
+                                                const FinancialPlanningCard(),
+                                              const SizedBox(height: 28),
+                                              fade(0.32, pulse),
+                                              const SizedBox(height: 28),
+                                              fade(0.35, tables),
+                                              const SizedBox(height: 28),
+                                              fade(0.38, quickActions),
+                                              const SizedBox(height: 28),
+                                              fade(0.42, countedMenus),
+                                              if (topItemsWidget != null) ...[
+                                                const SizedBox(height: 28),
+                                                fade(0.5, topItemsWidget),
+                                              ],
+                                              if (waitersWidget != null) ...[
+                                                const SizedBox(height: 28),
+                                                fade(0.6, waitersWidget),
+                                              ],
+                                              const SizedBox(height: 28),
+                                            ],
+                                          );
+                                        }
+
+                                        // Header + AI banner always span full
+                                        // width; the responsive grid sits below.
+                                        Widget shell(
+                                          double maxWidth,
+                                          Widget grid,
+                                        ) {
+                                          return Center(
+                                            child: ConstrainedBox(
+                                              constraints: BoxConstraints(
+                                                maxWidth: maxWidth,
+                                              ),
+                                              child: Column(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                children: [
+                                                  const SizedBox(height: 16),
+                                                  fade(0.0, header),
+                                                  const SizedBox(height: 20),
+                                                  fade(0.04, aiCard),
+                                                  const SizedBox(height: 20),
+                                                  if (ManagerEntitlements.has(
+                                                    FeatureKeys.inventory,
+                                                  ))
+                                                    InventorySummaryCard(
+                                                      onOpenInventory:
+                                                          widget.onNavigateTab ==
+                                                              null
+                                                          ? null
+                                                          : () => widget
+                                                                .onNavigateTab!(3),
+                                                    ),
+                                                  const SizedBox(height: 12),
+                                                  if (ManagerEntitlements.has(
+                                                    FeatureKeys
+                                                        .financialPlanning,
+                                                  ))
+                                                    const FinancialPlanningCard(),
+                                                  const SizedBox(height: 20),
+                                                  grid,
+                                                  const SizedBox(height: 28),
+                                                ],
+                                              ),
                                             ),
-                                            child: Column(
+                                          );
+                                        }
+
+                                        Widget col(List<Widget> children) =>
+                                            Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: children,
+                                            );
+
+                                        // Extra-wide desktop (e.g. 1728px Mac):
+                                        // three balanced columns like the mockup.
+                                        if (constraints.maxWidth >= 1320) {
+                                          return shell(
+                                            1600,
+                                            Row(
                                               crossAxisAlignment:
                                                   CrossAxisAlignment.start,
                                               children: [
-                                                const SizedBox(height: 16),
-                                                fade(0.0, header),
-                                                const SizedBox(height: 20),
-                                                fade(0.04, aiCard),
-                                                const SizedBox(height: 20),
-                                                if (ManagerEntitlements.has(
-                                                  FeatureKeys.inventory,
-                                                ))
-                                                  InventorySummaryCard(
-                                                    onOpenInventory:
-                                                        widget.onNavigateTab ==
-                                                            null
-                                                        ? null
-                                                        : () => widget
-                                                              .onNavigateTab!(3),
-                                                  ),
-                                                const SizedBox(height: 12),
-                                                if (ManagerEntitlements.has(
-                                                  FeatureKeys.financialPlanning,
-                                                ))
-                                                  const FinancialPlanningCard(),
-                                                const SizedBox(height: 20),
-                                                grid,
-                                                const SizedBox(height: 28),
+                                                Expanded(
+                                                  child: col([
+                                                    fade(0.15, hero),
+                                                    const SizedBox(height: 20),
+                                                    fade(0.25, secondary),
+                                                  ]),
+                                                ),
+                                                Expanded(
+                                                  child: col([
+                                                    fade(0.42, countedMenus),
+                                                    const SizedBox(height: 20),
+                                                    fade(0.38, quickActions),
+                                                    if (topItemsWidget !=
+                                                        null) ...[
+                                                      const SizedBox(
+                                                        height: 20,
+                                                      ),
+                                                      fade(0.5, topItemsWidget),
+                                                    ],
+                                                  ]),
+                                                ),
+                                                Expanded(
+                                                  child: col([
+                                                    fade(0.08, activeDay),
+                                                    const SizedBox(height: 20),
+                                                    fade(0.32, pulse),
+                                                    const SizedBox(height: 20),
+                                                    fade(0.35, tables),
+                                                    if (waitersWidget !=
+                                                        null) ...[
+                                                      const SizedBox(
+                                                        height: 20,
+                                                      ),
+                                                      fade(0.6, waitersWidget),
+                                                    ],
+                                                  ]),
+                                                ),
                                               ],
                                             ),
-                                          ),
-                                        );
-                                      }
-
-                                      Widget col(List<Widget> children) =>
-                                          Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: children,
                                           );
+                                        }
 
-                                      // Extra-wide desktop (e.g. 1728px Mac):
-                                      // three balanced columns like the mockup.
-                                      if (constraints.maxWidth >= 1320) {
+                                        // Tablet / small desktop: two columns.
                                         return shell(
-                                          1600,
+                                          1240,
                                           Row(
                                             crossAxisAlignment:
                                                 CrossAxisAlignment.start,
                                             children: [
                                               Expanded(
+                                                flex: 3,
                                                 child: col([
                                                   fade(0.15, hero),
                                                   const SizedBox(height: 20),
                                                   fade(0.25, secondary),
-                                                ]),
-                                              ),
-                                              Expanded(
-                                                child: col([
-                                                  fade(0.42, countedMenus),
                                                   const SizedBox(height: 20),
-                                                  fade(0.38, quickActions),
+                                                  fade(0.42, countedMenus),
                                                   if (topItemsWidget !=
                                                       null) ...[
                                                     const SizedBox(height: 20),
@@ -583,12 +656,15 @@ class _DashboardScreenState extends State<DashboardScreen>
                                                 ]),
                                               ),
                                               Expanded(
+                                                flex: 2,
                                                 child: col([
                                                   fade(0.08, activeDay),
                                                   const SizedBox(height: 20),
                                                   fade(0.32, pulse),
                                                   const SizedBox(height: 20),
                                                   fade(0.35, tables),
+                                                  const SizedBox(height: 20),
+                                                  fade(0.38, quickActions),
                                                   if (waitersWidget !=
                                                       null) ...[
                                                     const SizedBox(height: 20),
@@ -599,61 +675,20 @@ class _DashboardScreenState extends State<DashboardScreen>
                                             ],
                                           ),
                                         );
-                                      }
-
-                                      // Tablet / small desktop: two columns.
-                                      return shell(
-                                        1240,
-                                        Row(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Expanded(
-                                              flex: 3,
-                                              child: col([
-                                                fade(0.15, hero),
-                                                const SizedBox(height: 20),
-                                                fade(0.25, secondary),
-                                                const SizedBox(height: 20),
-                                                fade(0.42, countedMenus),
-                                                if (topItemsWidget != null) ...[
-                                                  const SizedBox(height: 20),
-                                                  fade(0.5, topItemsWidget),
-                                                ],
-                                              ]),
-                                            ),
-                                            Expanded(
-                                              flex: 2,
-                                              child: col([
-                                                fade(0.08, activeDay),
-                                                const SizedBox(height: 20),
-                                                fade(0.32, pulse),
-                                                const SizedBox(height: 20),
-                                                fade(0.35, tables),
-                                                const SizedBox(height: 20),
-                                                fade(0.38, quickActions),
-                                                if (waitersWidget != null) ...[
-                                                  const SizedBox(height: 20),
-                                                  fade(0.6, waitersWidget),
-                                                ],
-                                              ]),
-                                            ),
-                                          ],
-                                        ),
-                                      );
-                                    },
-                                  ),
+                                      },
+                                    ),
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-        );
-      },
+          );
+        },
+      ),
     );
   }
 }

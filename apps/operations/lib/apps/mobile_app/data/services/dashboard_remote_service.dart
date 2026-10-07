@@ -1,47 +1,66 @@
 import 'package:vynic/core/services/manager_app/manager_entitlements.dart';
+import 'package:vynic/core/services/manager_app/manager_data_read.dart';
 import 'package:intl/intl.dart';
 import 'package:vynic/apps/mobile_app/data/models/dashboard_bundle.dart';
-import 'package:vynic/core/models/monitoring.dart';
 import 'package:vynic/core/services/manager_app/mobile_api_service.dart';
 import 'package:vynic/core/services/sync/monitoring_socket_service.dart';
 
 class DashboardRemoteService {
   const DashboardRemoteService();
-
   String _businessDateKey() {
     final raw = MonitoringSocketService.currentBusinessDate.value;
-    if (raw != null && raw.trim().length >= 10) {
-      return raw.substring(0, 10);
-    }
-    return DateFormat('yyyy-MM-dd').format(DateTime.now());
+    return raw != null && raw.trim().length >= 10
+        ? raw.substring(0, 10)
+        : DateFormat('yyyy-MM-dd').format(DateTime.now());
   }
 
   Future<DashboardBundle> fetchDashboardBundle() async {
-    final businessDate = _businessDateKey();
-    final results = await Future.wait([
-      MobileApiService.getDashboard(),
-      MobileApiService.getSalesReport(period: 'today'),
-      MobileApiService.getStaffPerformance(),
-      // Daily history for the dashboard sparkline / weekday comparison.
-      MobileApiService.getSalesDaily().catchError(
-        (_) => <Map<String, dynamic>>[],
+    final metrics = await MobileApiService.captureRead(
+      'dashboard',
+      MobileApiService.getDashboard,
+    );
+    final businessDate = metrics.data?.businessDate ?? _businessDateKey();
+    final results = await Future.wait<ManagerDataRead<dynamic>>([
+      Future.value(metrics),
+      MobileApiService.captureRead(
+        'sales_report',
+        () => MobileApiService.getSalesReport(period: 'today'),
       ),
-      // Reservations for the active business day (manager pulse card).
+      MobileApiService.captureRead(
+        'staff_performance',
+        MobileApiService.getStaffPerformance,
+      ),
+      MobileApiService.captureRead(
+        'sales_daily',
+        MobileApiService.getSalesDaily,
+      ),
       ManagerEntitlements.has(FeatureKeys.managerReservations)
-          ? MobileApiService.getReservations(
-              date: businessDate,
-            ).catchError((_) => <Map<String, dynamic>>[])
-          : Future.value(<Map<String, dynamic>>[]),
-      MobileApiService.getCountedMenus().catchError((_) => <dynamic>[]),
+          ? MobileApiService.captureRead(
+              'reservations',
+              () => MobileApiService.getReservations(date: businessDate),
+            )
+          : Future.value(
+              const ManagerDataRead(
+                null,
+                ManagerReadStatus(
+                  key: 'reservations',
+                  completeness: 'DISABLED',
+                ),
+              ),
+            ),
+      MobileApiService.captureRead(
+        'counted_menus',
+        MobileApiService.getCountedMenus,
+      ),
     ]);
-
     return DashboardBundle(
-      metrics: results[0] as ManagerDashboardMetrics,
-      salesReport: results[1] as Map<String, dynamic>,
-      staff: results[2] as List<StaffMetric>,
-      salesDaily: results[3] as List<Map<String, dynamic>>,
-      todayReservations: results[4] as List<Map<String, dynamic>>,
-      countedMenus: results[5] as List<dynamic>,
+      metrics: results[0].data,
+      salesReport: results[1].data,
+      staff: results[2].data,
+      salesDaily: results[3].data,
+      todayReservations: results[4].data,
+      countedMenus: results[5].data,
+      reads: {for (final result in results) result.status.key: result.status},
     );
   }
 }

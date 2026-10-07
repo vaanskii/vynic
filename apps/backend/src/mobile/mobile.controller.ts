@@ -40,6 +40,7 @@ import { MobileDevicesService } from './services/mobile-devices.service';
 import { MobileMenuService } from './services/mobile-menu.service';
 import { MobileMutationSupport } from './services/mobile-mutation-support.service';
 import { MobileReservationsService } from './services/mobile-reservations.service';
+import { ManagerDataFreshnessInterceptor } from './services/manager-data-freshness';
 import { MobileDashboardService } from './services/mobile-dashboard.service';
 import { MobileOrdersService } from './services/mobile-orders.service';
 import { MobileSaleLedgerService } from './services/mobile-sale-ledger.service';
@@ -56,7 +57,10 @@ import { RecipeService, type RecipeInput } from '../inventory/recipe.service';
 
 // ─── Controller ───────────────────────────────────────────────────────────────
 
-@UseInterceptors(CommercialProjectionInterceptor)
+@UseInterceptors(
+  CommercialProjectionInterceptor,
+  ManagerDataFreshnessInterceptor,
+)
 @Controller('mobile')
 @UseGuards(JwtAuthGuard, RolesGuard, FeatureGuard)
 @Roles(StaffRole.MANAGER)

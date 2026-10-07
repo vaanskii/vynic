@@ -1,3 +1,4 @@
+import 'manager_data_read.dart';
 import 'manager_operation_request.dart';
 import 'table_repair_request.dart';
 import 'order_edit_request.dart';
@@ -32,6 +33,164 @@ class MobileApiService {
 
   static const int _maxRetries = 3;
   static const Duration _timeout = Duration(seconds: 12);
+
+  static final Map<String, Future<Object>> _readFlights = {};
+  static final Expando<ManagerReadStatus> _dataStatuses = Expando();
+  static Future<T> _readData<T extends Object>(
+    String key,
+    String path,
+    T Function(dynamic) parse,
+  ) async {
+    final scope = tableRepairScope;
+    final session = AuthTokenService.authHeader['Authorization'];
+    final headers = Map<String, String>.from(_headers);
+    final uri = Uri.parse('$_base$path');
+    final identity = '$scope:$session:$path';
+    ManagerDataReads.activate(scope);
+    void requireSession() {
+      if (!isCurrentTableRepairScope(scope) ||
+          session != AuthTokenService.authHeader['Authorization'])
+        throw StateError('Manager session changed');
+    }
+
+    Future<T> perform() async {
+      http.Response? response;
+      Object? failure;
+      for (var attempt = 0; attempt < _maxRetries; attempt++) {
+        requireSession();
+        try {
+          response = await http.get(uri, headers: headers).timeout(_timeout);
+          requireSession();
+          break;
+        } catch (e) {
+          requireSession();
+          failure = e;
+          if (attempt < _maxRetries - 1)
+            await Future<void>.delayed(Duration(seconds: 1 << attempt));
+        }
+      }
+      requireSession();
+      final cached = MobileCacheService.cachedRead(scope, path);
+      if (response?.statusCode == 200) {
+        try {
+          final json = jsonDecode(response!.body);
+          final data = parse(json);
+          Map<String, dynamic> stamp = {};
+          final header = response.headers['x-vynic-data-freshness'];
+          if (header != null)
+            stamp = Map<String, dynamic>.from(jsonDecode(header) as Map);
+          if (json is Map) {
+            final provenance =
+                json['financialProvenance'] ?? json['provenance'];
+            if (provenance == 'PARTIAL' || provenance == 'LEGACY_FALLBACK')
+              stamp['completeness'] = provenance;
+          }
+          var status = ManagerReadStatus.fromJson(key, {
+            ...stamp,
+            'location': 'api',
+            'fetchedAt': DateTime.now().toUtc().toIso8601String(),
+            'apiAvailable': true,
+            'query': path,
+          });
+          requireSession();
+          try {
+            await MobileCacheService.saveRead(
+              scope,
+              path,
+              json as Object,
+              status,
+            );
+          } catch (_) {
+            // Remote data is valid even when local persistence fails. Never serve
+            // an optimistic Hive memory write as a durable cache on the next failure.
+            status = ManagerReadStatus.fromJson(key, {
+              ...status.toJson(),
+              'error':
+                  'ქეში ვერ შეინახა; ინტერნეტის გარეშე ეს განახლება მიუწვდომელია.',
+            });
+          }
+          requireSession();
+          ManagerDataReads.publish(scope, status);
+          _dataStatuses[data] = status;
+          MonitoringSocketService.apiError.value = ManagerDataReads.hasApiError;
+          return data;
+        } catch (e) {
+          requireSession();
+          failure = e;
+        }
+      }
+      final message = response == null
+          ? 'API მიუწვდომელია — მონაცემები ვერ განახლდა.'
+          : response.statusCode == 200
+          ? 'API მონაცემები ვერ წაიკითხა — განახლება არ მიღებულა.'
+          : 'API შეცდომა (${response.statusCode}) — მონაცემები ვერ განახლდა.';
+      if (cached != null &&
+          response?.statusCode != 401 &&
+          response?.statusCode != 403) {
+        try {
+          final value = parse(cached['data']);
+          final status = ManagerReadStatus.fromJson(
+            key,
+            Map<String, dynamic>.from(cached['status'] as Map),
+          ).failed(message, location: 'cache');
+          requireSession();
+          ManagerDataReads.publish(scope, status);
+          _dataStatuses[value] = status;
+          MonitoringSocketService.apiError.value = ManagerDataReads.hasApiError;
+          return value;
+        } catch (e) {
+          requireSession();
+          failure = e;
+        }
+      }
+      final unavailable = ManagerReadStatus(
+        key: key,
+        query: path,
+        error: message,
+      );
+      ManagerDataReads.publish(scope, unavailable);
+      MonitoringSocketService.apiError.value = true;
+      // Diagnostic details remain in developer logs; release UI receives safe copy.
+      debugPrint('[Manager read $key] $failure');
+      throw ManagerReadFailure(unavailable);
+    }
+
+    final existing = _readFlights[identity];
+    if (existing != null) return await existing as T;
+    final future = perform();
+    _readFlights[identity] = future;
+    try {
+      return await future;
+    } finally {
+      if (identical(_readFlights[identity], future))
+        _readFlights.remove(identity);
+    }
+  }
+
+  static Future<ManagerDataRead<T>> captureRead<T>(
+    String key,
+    Future<T> Function() fetch,
+  ) async {
+    final scope = tableRepairScope;
+    T? data;
+    ManagerReadStatus? failure;
+    try {
+      data = await fetch();
+    } catch (e) {
+      if (!isCurrentTableRepairScope(scope)) rethrow;
+      if (e is ManagerReadFailure) failure = e.status;
+    }
+    if (!isCurrentTableRepairScope(scope))
+      throw StateError('Manager session changed');
+    return ManagerDataRead(
+      data,
+      (data == null ? failure : _dataStatuses[data as Object]) ??
+          ManagerDataReads.statuses.value[key] ??
+          ManagerReadStatus(key: key, error: 'მონაცემები მიუწვდომელია.'),
+    );
+  }
+
+  static ManagerReadStatus? statusFor(Object data) => _dataStatuses[data];
 
   // Network exceptions may contain endpoint/IP details. Keep them out of release UI.
   static Never _throwNetworkError(Object error, StackTrace stack) {
@@ -198,50 +357,27 @@ class MobileApiService {
   // ── Dashboard ──────────────────────────────────────────────────────────────
 
   static Future<ManagerDashboardMetrics> getDashboard() async {
-    try {
-      final response = await _get('/mobile/dashboard');
-      if (response.statusCode == 200) {
-        final metrics = ManagerDashboardMetrics.fromJson(
-          jsonDecode(response.body) as Map<String, dynamic>,
-        );
-        await MobileCacheService.saveDashboard(metrics);
-        if (metrics.businessDate != null) {
-          MonitoringSocketService.currentBusinessDate.value =
-              metrics.businessDate;
-        }
-        return metrics;
+    final value = await _readData('dashboard', '/mobile/dashboard', (json) {
+      final map = Map<String, dynamic>.from(json as Map);
+      for (final key in ['todayRevenue', 'openTablesPayable', 'totalTables']) {
+        if (map[key] is! num)
+          throw const FormatException('Incomplete dashboard response');
       }
-      debugPrint('[API] Dashboard ${response.statusCode}: ${response.body}');
-      throw Exception('Status ${response.statusCode}');
-    } catch (e) {
-      debugPrint('[API] getDashboard failed ($e), using cache');
-      final cached = MobileCacheService.getCachedDashboard();
-      if (cached != null) return cached;
-      rethrow;
-    }
+      return ManagerDashboardMetrics.fromJson(map);
+    });
+    MonitoringSocketService.currentBusinessDate.value = value.businessDate;
+    return value;
   }
 
   // ── Tables ─────────────────────────────────────────────────────────────────
 
-  static Future<List<TableModel>> getTables() async {
-    try {
-      final response = await _get('/mobile/tables');
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body) as List;
-        final tables = data
-            .map((e) => TableModel.fromJson(e as Map<String, dynamic>))
-            .toList();
-        await MobileCacheService.saveTables(tables);
-        return tables;
-      }
-      throw Exception('Status ${response.statusCode}');
-    } catch (e) {
-      debugPrint('[API] getTables failed ($e), using cache');
-      final cached = MobileCacheService.getCachedTables();
-      if (cached != null) return cached;
-      rethrow;
-    }
-  }
+  static Future<List<TableModel>> getTables() => _readData(
+    'tables',
+    '/mobile/tables',
+    (json) => (json as List)
+        .map((e) => TableModel.fromJson(Map<String, dynamic>.from(e as Map)))
+        .toList(),
+  );
 
   static String get tableRepairScope {
     final token = AuthTokenService.token;
@@ -312,16 +448,13 @@ class MobileApiService {
 
   // ── Takeaway orders ────────────────────────────────────────────────────────
 
-  static Future<List<Order>> getTakeawayOrders() async {
-    final response = await _get('/mobile/takeaway-orders');
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body) as List;
-      return data
-          .map((e) => Order.fromJson(e as Map<String, dynamic>))
-          .toList();
-    }
-    throw Exception('getTakeawayOrders failed: ${response.statusCode}');
-  }
+  static Future<List<Order>> getTakeawayOrders() => _readData(
+    'takeaway',
+    '/mobile/takeaway-orders',
+    (json) => (json as List)
+        .map((e) => Order.fromJson(Map<String, dynamic>.from(e as Map)))
+        .toList(),
+  );
 
   static Future<ManagerOperationResult> createTakeawayOrder({
     required String customerName,
@@ -433,25 +566,13 @@ class MobileApiService {
 
   // ── Staff performance ──────────────────────────────────────────────────────
 
-  static Future<List<StaffMetric>> getStaffPerformance() async {
-    try {
-      final response = await _get('/mobile/staff-performance');
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body) as List;
-        final staff = data
-            .map((e) => StaffMetric.fromJson(e as Map<String, dynamic>))
-            .toList();
-        await MobileCacheService.saveStaffPerformance(staff);
-        return staff;
-      }
-      throw Exception('Status ${response.statusCode}');
-    } catch (e) {
-      debugPrint('[API] getStaffPerformance failed ($e), using cache');
-      final cached = MobileCacheService.getCachedStaffPerformance();
-      if (cached != null) return cached;
-      rethrow;
-    }
-  }
+  static Future<List<StaffMetric>> getStaffPerformance() => _readData(
+    'staff_performance',
+    '/mobile/staff-performance',
+    (json) => (json as List)
+        .map((e) => StaffMetric.fromJson(Map<String, dynamic>.from(e as Map)))
+        .toList(),
+  );
 
   // ── Reservations ────────────────────────────────────────────────────────────
 
@@ -459,15 +580,13 @@ class MobileApiService {
     String? date,
   }) async {
     final query = (date != null && date.isNotEmpty) ? '?date=$date' : '';
-    final response = await _get('/mobile/reservations$query');
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body) as List<dynamic>;
-      return data
-          .whereType<Map>()
-          .map((e) => Map<String, dynamic>.from(e))
-          .toList();
-    }
-    throw Exception('getReservations failed: ${response.statusCode}');
+    return _readData(
+      'reservations',
+      '/mobile/reservations$query',
+      (json) => (json as List)
+          .map((e) => Map<String, dynamic>.from(e as Map))
+          .toList(),
+    );
   }
 
   static Future<ManagerOperationResult> createReservation({
@@ -563,22 +682,11 @@ class MobileApiService {
     );
   }
 
-  static Future<Map<String, dynamic>> getFinancials() async {
-    try {
-      final response = await _get('/mobile/financials');
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body) as Map<String, dynamic>;
-        await MobileCacheService.saveFinancials(data);
-        return data;
-      }
-      throw Exception('Status ${response.statusCode}');
-    } catch (e) {
-      debugPrint('[API] getFinancials failed ($e), using cache');
-      final cached = MobileCacheService.getCachedFinancials();
-      if (cached != null) return cached;
-      rethrow;
-    }
-  }
+  static Future<Map<String, dynamic>> getFinancials() => _readData(
+    'financials',
+    '/mobile/financials',
+    (json) => Map<String, dynamic>.from(json as Map),
+  );
 
   static Future<Map<String, dynamic>> getFinancialSummary({
     String? from,
@@ -591,11 +699,11 @@ class MobileApiService {
     final suffix = params.isEmpty
         ? ''
         : '?${Uri(queryParameters: params).query}';
-    final response = await _get('/mobile/financial-summary$suffix');
-    if (response.statusCode == 200) {
-      return Map<String, dynamic>.from(jsonDecode(response.body) as Map);
-    }
-    throw Exception('getFinancialSummary failed: ${response.statusCode}');
+    return _readData(
+      'ledger_summary',
+      '/mobile/financial-summary$suffix',
+      (json) => Map<String, dynamic>.from(json as Map),
+    );
   }
 
   static Future<Map<String, dynamic>> getSales({
@@ -610,13 +718,11 @@ class MobileApiService {
       if (to != null) 'to': to,
       if (cursor != null) 'cursor': cursor,
     };
-    final response = await _get(
+    return _readData(
+      'sale_history',
       '/mobile/sales?${Uri(queryParameters: params).query}',
+      (json) => Map<String, dynamic>.from(json as Map),
     );
-    if (response.statusCode == 200) {
-      return Map<String, dynamic>.from(jsonDecode(response.body) as Map);
-    }
-    throw Exception('getSales failed: ${response.statusCode}');
   }
 
   static Future<Map<String, dynamic>> getSale(String id) async {
@@ -638,11 +744,11 @@ class MobileApiService {
     final suffix = params.isEmpty
         ? ''
         : '?${Uri(queryParameters: params).query}';
-    final response = await _get('/mobile/product-analytics$suffix');
-    if (response.statusCode == 200) {
-      return Map<String, dynamic>.from(jsonDecode(response.body) as Map);
-    }
-    throw Exception('getProductAnalytics failed: ${response.statusCode}');
+    return _readData(
+      'product_analytics',
+      '/mobile/product-analytics$suffix',
+      (json) => Map<String, dynamic>.from(json as Map),
+    );
   }
 
   static Future<Map<String, dynamic>> getSaleStaffAnalytics({
@@ -656,11 +762,11 @@ class MobileApiService {
     final suffix = params.isEmpty
         ? ''
         : '?${Uri(queryParameters: params).query}';
-    final response = await _get('/mobile/sale-staff-analytics$suffix');
-    if (response.statusCode == 200) {
-      return Map<String, dynamic>.from(jsonDecode(response.body) as Map);
-    }
-    throw Exception('getSaleStaffAnalytics failed: ${response.statusCode}');
+    return _readData(
+      'sale_staff',
+      '/mobile/sale-staff-analytics$suffix',
+      (json) => Map<String, dynamic>.from(json as Map),
+    );
   }
 
   static Future<Map<String, dynamic>> createExpense({
@@ -783,22 +889,8 @@ class MobileApiService {
 
   // ── Menu ───────────────────────────────────────────────────────────────────
 
-  static Future<List<dynamic>> getMenu() async {
-    try {
-      final response = await _get('/mobile/menu');
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body) as List<dynamic>;
-        await MobileCacheService.saveMenu(data);
-        return data;
-      }
-      throw Exception('Status ${response.statusCode}');
-    } catch (e) {
-      debugPrint('[API] getMenu failed ($e), using cache');
-      final cached = MobileCacheService.getCachedMenu();
-      if (cached != null) return cached;
-      rethrow;
-    }
-  }
+  static Future<List<dynamic>> getMenu() =>
+      _readData('menu', '/mobile/menu', (json) => json as List<dynamic>);
 
   // ── Restaurant settings ────────────────────────────────────────────────────
 
@@ -824,22 +916,11 @@ class MobileApiService {
 
   // ── Counted Menus (QuickOrderDrafts) ───────────────────────────────────────
 
-  static Future<List<dynamic>> getCountedMenus() async {
-    try {
-      final response = await _get('/mobile/counted-menus');
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body) as List<dynamic>;
-        await MobileCacheService.saveCountedMenus(data);
-        return data;
-      }
-      throw Exception('Status ${response.statusCode}');
-    } catch (e) {
-      debugPrint('[API] getCountedMenus failed ($e), using cache');
-      final cached = MobileCacheService.getCachedCountedMenus();
-      if (cached != null) return cached;
-      rethrow;
-    }
-  }
+  static Future<List<dynamic>> getCountedMenus() => _readData(
+    'counted_menus',
+    '/mobile/counted-menus',
+    (json) => json as List<dynamic>,
+  );
 
   static Future<void> deleteCountedMenu(String draftId) async {
     final response = await _post('/mobile/counted-menu/$draftId/delete', {});
@@ -1518,48 +1599,26 @@ class MobileApiService {
   static Future<Map<String, dynamic>> getSalesReport({
     String period = 'today',
     String? month,
-  }) async {
-    final query = StringBuffer('?period=$period');
-    if (month != null && month.isNotEmpty) {
-      query.write('&month=$month');
-    }
-    final response = await _get('/mobile/sales-report$query');
-    if (response.statusCode == 200) {
-      return jsonDecode(response.body) as Map<String, dynamic>;
-    }
-    throw Exception('Status ${response.statusCode}');
-  }
+  }) => _readData(
+    'sales_report',
+    '/mobile/sales-report?period=${Uri.encodeQueryComponent(period)}${month == null || month.isEmpty ? '' : '&month=${Uri.encodeQueryComponent(month)}'}',
+    (json) => Map<String, dynamic>.from(json as Map),
+  );
 
   static Future<List<Map<String, dynamic>>> getSalesDaily({
     String? month,
-  }) async {
-    final query = (month != null && month.isNotEmpty) ? '?month=$month' : '';
-    final response = await _get('/mobile/sales-daily$query');
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body) as List<dynamic>;
-      return data
-          .whereType<Map>()
-          .map((e) => Map<String, dynamic>.from(e))
-          .toList();
-    }
-    throw Exception('getSalesDaily failed: ${response.statusCode}');
-  }
+  }) => _readData(
+    'sales_daily',
+    '/mobile/sales-daily${month == null || month.isEmpty ? '' : '?month=${Uri.encodeQueryComponent(month)}'}',
+    (json) =>
+        (json as List).map((e) => Map<String, dynamic>.from(e as Map)).toList(),
+  );
 
   // ── Top items ──────────────────────────────────────────────────────────────
 
-  static Future<List<dynamic>> getTopItems({int limit = 10}) async {
-    try {
-      final response = await _get('/mobile/top-items?limit=$limit');
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body) as List<dynamic>;
-        await MobileCacheService.saveTopItems(data);
-        return data;
-      }
-      throw Exception('Status ${response.statusCode}');
-    } catch (e) {
-      final cached = MobileCacheService.getCachedTopItems();
-      if (cached != null) return cached;
-      rethrow;
-    }
-  }
+  static Future<List<dynamic>> getTopItems({int limit = 10}) => _readData(
+    'top_items',
+    '/mobile/top-items?limit=$limit',
+    (json) => json as List<dynamic>,
+  );
 }

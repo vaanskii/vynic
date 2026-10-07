@@ -12,6 +12,8 @@ import 'package:vynic/core/models/user.dart';
 import 'package:vynic/core/services/auth/auth_token_service.dart';
 import 'package:vynic/core/services/manager_app/manager_app_preferences.dart';
 import 'package:vynic/core/services/manager_app/mobile_cache_service.dart';
+import 'package:vynic/core/services/manager_app/mobile_api_service.dart';
+import 'package:vynic/core/models/table.dart';
 import 'package:vynic/core/services/manager_app/table_repair_request.dart';
 import 'package:vynic/core/services/sync/monitoring_socket_service.dart';
 
@@ -221,7 +223,17 @@ void main() {
             await pumpIO(tester);
             expect(tableCalls, disposedCalls);
           }
-          final cached = MobileCacheService.getCachedTables()!;
+          final envelope = MobileCacheService.cachedRead(
+            MobileApiService.tableRepairScope,
+            '/mobile/tables',
+          )!;
+          final cached = (envelope['data'] as List)
+              .map(
+                (value) => TableModel.fromJson(
+                  Map<String, dynamic>.from(value as Map),
+                ),
+              )
+              .toList();
           expect(cached.length, 7);
           expect(
             cached.any(

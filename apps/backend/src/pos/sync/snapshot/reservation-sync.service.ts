@@ -35,16 +35,21 @@ export class ReservationSyncService {
     tenant: Pick<TenantContext, 'venueId'>,
     reservations: ReservationSync[] | undefined,
     failOnError = false,
-  ): Promise<void> {
-    if (!Array.isArray(reservations)) return;
+  ): Promise<{ complete: boolean }> {
+    if (!Array.isArray(reservations)) return { complete: false };
+    let complete = true;
 
     const seen = new Set<string>();
     for (const raw of reservations) {
       const posReservationId = String(raw?.id ?? '').trim();
-      if (!posReservationId) continue;
+      if (!posReservationId) {
+        complete = false;
+        continue;
+      }
 
       const reservationDate = parseDate(raw.reservationDate);
       if (!reservationDate) {
+        complete = false;
         this.logger.warn(
           `Reservation ${posReservationId} has no usable date; skipped.`,
         );
@@ -87,6 +92,7 @@ export class ReservationSyncService {
         });
         seen.add(posReservationId);
       } catch (error) {
+        complete = false;
         if (failOnError) throw error;
         // One malformed reservation must not cost the rest of the snapshot.
         this.logger.warn(
@@ -108,6 +114,7 @@ export class ReservationSyncService {
         `Venue ${tenant.venueId}: removed ${removed.count} reservation(s) the POS no longer holds`,
       );
     }
+    return { complete };
   }
 }
 

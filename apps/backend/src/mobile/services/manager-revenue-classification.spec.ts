@@ -22,6 +22,7 @@ type Fixture = {
 function makePrisma(fixture: Fixture = {}) {
   const settings = fixture.settings ?? {};
   return {
+    saleLedgerDay: { findUnique: jest.fn().mockResolvedValue(null) },
     setting: {
       findUnique: jest.fn(({ where }: any) => {
         const key = where.venueId_key?.key;
@@ -51,6 +52,10 @@ function makePrisma(fixture: Fixture = {}) {
       findMany: jest.fn(() => Promise.resolve(fixture.tables ?? [])),
     },
     venue: {
+      findUnique: jest.fn().mockResolvedValue({
+        activeOperationalDeviceId: null,
+        menuAuthority: 'POS',
+      }),
       findUniqueOrThrow: jest
         .fn()
         .mockResolvedValue({ timezone: 'Asia/Tbilisi' }),

@@ -1,6 +1,6 @@
 # MGR-05 — recoverable Manager order editing
 
-Status: milestone acceptance passed on the owned candidate; exact committed qualification follows the owned runtime commit.
+Status: **DONE** from runtime commit `424fbadd206137dae0bd14d482f42d1102af632e`, qualified on a fresh exact-commit export. [Source-identified proof](proofs/MGR05_COMMITTED_424fbad_2026-10-07.json).
 
 ## Operational boundary
 
@@ -74,6 +74,16 @@ permit blind discard/resubmit. Broader MGR-03 delivery/reconciliation policy is
 separate. Discard write errors stay visible and preserve the displayed draft.
 
 ## Qualification and limits
+
+The exact committed export passed 321 Flutter tests across 27 suites (85 new
+MGR-05 cases), 55 backend sync regressions, 35 HTTP/PostgreSQL cases (21 MGR-05
+and 14 MGR-02), fresh and populated previous-schema migration replay, and all
+32 SIGKILL/different-process recovery checkpoints. Analysis and formatting of
+20 owned Dart files, TypeScript build, Prisma validation and generated-contract
+checks passed. All 2,103 regular files and 29 symlinks matched the runtime commit;
+regular file hashes stayed unchanged through qualification. Independent review
+approved the runtime; the proof archive retains the raw receipts and preservation
+checks. Existing WIP was excluded from the tested export and both local commits.
 
 Tests use synthetic Staff/Orders, fresh temporary Hive, and guarded owned
 loopback HTTP/PostgreSQL only. No customer data, live restaurant access, printer

@@ -489,7 +489,9 @@ current transport status.
   `docs/proofs/MGR02_COMMITTED_4c4c5d9_2026-10-07.json`. Printer work is deferred
   at the user's request; POS-02 physical/driver acceptance remains pending.
   Broader Manager delivery and release gates remain separate.
-- MGR-05 adds guarded atomic Order editing through an immutable selected-primary
+- MGR-05 is DONE from `424fbadd206137dae0bd14d482f42d1102af632e` on a fresh
+  exact-commit export. It adds guarded atomic Order editing through an immutable
+  selected-primary
   `ORDER_EDIT` pull request. Queue acceptance never edits the Cloud mirror.
   POS journals complete Order/audit effects and retains exact results across
   interrupted writes, pruning and later edits; startup/public restore recover
@@ -499,7 +501,10 @@ current transport status.
   Manager persists request IDs/drafts, fences changed sessions and old Cloud
   routes, and reports saved only after POS success. Unknown terminal outcomes
   require reconciliation. The runbook and synthetic qualification boundaries are
-  `docs/MGR05_ATOMIC_ORDER_EDIT.md`; broader MGR-03 and Windows release gates remain.
+  `docs/MGR05_ATOMIC_ORDER_EDIT.md`; exact committed evidence is
+  `docs/proofs/MGR05_COMMITTED_424fbad_2026-10-07.json`. Broader MGR-03 and
+  Windows release gates remain separate; POS-02 printer/driver acceptance is
+  deferred and VM work stays HELD.
 - Every Order audit report opens with a typed creation event carrying
   `orderKind` (`WALK_IN`, `TAKEAWAY`, `PACKAGE`, `RESERVATION`), `tableRefs`,
   `source`, `actorId`, `actorName`, `businessDate`: `CREATE_WALKIN` for POS

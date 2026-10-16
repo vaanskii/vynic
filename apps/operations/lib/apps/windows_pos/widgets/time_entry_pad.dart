@@ -1,13 +1,8 @@
+import 'package:vynic/core/ui/widgets/pos_dialog.dart';
+import 'package:vynic/core/ui/vynic_floor_tokens.dart';
 import 'package:vynic/core/widgets/pos_text.dart';
 import 'package:flutter/material.dart';
 import 'package:vynic/core/widgets/pin_button.dart';
-
-const Color _timeAccent = Color(0xFF2563EB);
-const Color _timeSurface = Color(0xFFFFFFFF);
-const Color _timeSurfaceAlt = Color(0xFFF8FAFC);
-const Color _timeOutline = Color(0xFFE2E8F0);
-const Color _timeText = Color(0xFF0F172A);
-const Color _timeMuted = Color(0xFF64748B);
 
 class TimeEntryDialog extends StatefulWidget {
   final String initialTime;
@@ -28,36 +23,15 @@ class _TimeEntryDialogState extends State<TimeEntryDialog> {
   }
 
   void _onDigitPressed(String digit) {
-    if (_timeInput.length >= 5) return;
-
-    String newText = _timeInput + digit;
-
-    // Auto-insert colon
-    if (newText.length == 2) {
-      // Validate hours
-      int hour = int.parse(newText);
-      if (hour > 23) {
-        // Invalid hour, don't add
-        return;
-      }
-      newText += ':';
-    } else if (newText.length == 1) {
-      // First digit check (optional, but good for UX)
-      // If > 2, it can only be 0-9 hours, so maybe auto-prepend 0?
-      // But standard typing is fine.
-    }
-
-    // Validate minutes if length > 3
-    if (newText.length > 3) {
-      String minuteFirstDigit = newText[3];
-      if (int.parse(minuteFirstDigit) > 5) {
-        return; // Invalid minute start
-      }
-    }
-
-    setState(() {
-      _timeInput = newText;
-    });
+    final digits = _timeInput.replaceAll(':', '') + digit;
+    if (digits.length > 4) return;
+    if (digits.length >= 2 && int.parse(digits.substring(0, 2)) > 23) return;
+    if (digits.length >= 3 && int.parse(digits[2]) > 5) return;
+    setState(
+      () => _timeInput = digits.length >= 2
+          ? '${digits.substring(0, 2)}:${digits.substring(2)}'
+          : digits,
+    );
   }
 
   void _onClearPressed() {
@@ -88,104 +62,53 @@ class _TimeEntryDialogState extends State<TimeEntryDialog> {
     return hour >= 0 && hour <= 23 && minute >= 0 && minute <= 59;
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return AlertDialog(
-      backgroundColor: _timeSurface,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      title: const PosText(
-        'დროის შეყვანა',
-        style: TextStyle(
-          color: _timeAccent,
-          fontSize: 22,
-          fontWeight: FontWeight.w800,
-        ),
-      ),
-      contentPadding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
-      content: SizedBox(
-        width: 400,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: _timeSurfaceAlt,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: _timeOutline),
-              ),
-              child: Center(
-                child: PosText(
-                  _timeInput.isEmpty ? 'HH:MM' : _timeInput,
-                  style: TextStyle(
-                    color: _timeInput.isEmpty ? _timeMuted : _timeText,
-                    fontSize: 32,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 2,
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(height: 20),
-            SizedBox(
-              width: 340,
-              child: PinPad(
-                onDigitPressed: _onDigitPressed,
-                onClearPressed: _onClearPressed,
-                onDeletePressed: _onDeletePressed,
-              ),
-            ),
-            const SizedBox(height: 24),
-            Wrap(
-              alignment: WrapAlignment.end,
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                TextButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  style: TextButton.styleFrom(
-                    foregroundColor: _timeMuted,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 24,
-                      vertical: 12,
-                    ),
-                  ),
-                  child: const PosText(
-                    'გაუქმება',
-                    style: TextStyle(fontSize: 16),
-                  ),
-                ),
-                ElevatedButton(
-                  onPressed: _isValidTime()
-                      ? () => Navigator.of(context).pop(_timeInput)
-                      : null,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: _timeAccent,
-                    disabledBackgroundColor: const Color(0xFFBFDBFE),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 32,
-                      vertical: 12,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ),
-                  child: const PosText(
-                    'დადასტურება',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-          ],
-        ),
-      ),
-      actions: const [],
-    );
+  void _confirm() {
+    if (_isValidTime()) Navigator.of(context).pop(_timeInput);
   }
+
+  @override
+  Widget build(BuildContext context) => PosFormDialog(
+    width: 420,
+    title: 'დროის შეყვანა',
+    onClose: () => Navigator.pop(context),
+    actions: [
+      TextButton(
+        onPressed: () => Navigator.pop(context),
+        child: const PosText('გაუქმება'),
+      ),
+      ElevatedButton(
+        onPressed: _isValidTime() ? _confirm : null,
+        child: const PosText('დადასტურება'),
+      ),
+    ],
+    child: Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: VynicFloorTokens.metricFill,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: VynicFloorTokens.panelBorder),
+          ),
+          child: Text(
+            _timeInput.isEmpty ? 'HH:MM' : _timeInput,
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontSize: 32, fontWeight: FontWeight.w600),
+          ),
+        ),
+        const SizedBox(height: 16),
+        SizedBox(
+          width: 320,
+          child: PinPad(
+            onDigitPressed: _onDigitPressed,
+            onClearPressed: _onClearPressed,
+            onDeletePressed: _onDeletePressed,
+            onSubmit: _confirm,
+          ),
+        ),
+      ],
+    ),
+  );
 }

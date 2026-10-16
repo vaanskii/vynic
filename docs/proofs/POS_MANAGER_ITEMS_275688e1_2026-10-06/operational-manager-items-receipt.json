@@ -1,0 +1,204 @@
+{
+  "recordedAtUtc": "2026-10-06T10:46:21.755558+00:00",
+  "status": "FROZEN_REVIEWED_DETACHED_MANAGER_RETAINED_ITEM_CANDIDATE",
+  "sourceRoot": "/tmp/vynic-readiness-20261006-a2nbcprb/source",
+  "mode": "ISOLATED_PROOF",
+  "scope": "Manager-only complete additional-item quantity/removal replacement for retained stable itemKey/lineUuid pairs; no production attachment.",
+  "sourceFrozen": true,
+  "sources": [
+    {
+      "path": "apps/operations/lib/core/services/edge/operational_proof/manager_items_planner.dart",
+      "beforeExists": false,
+      "beforeSha256": null,
+      "afterSha256": "86635d11eed2929e8a7fd454a2d0485fe99c7ef52cfe86c66037700c41e635fd"
+    },
+    {
+      "path": "apps/operations/lib/core/services/edge/operational_proof/manager_items_adapter.dart",
+      "beforeExists": false,
+      "beforeSha256": null,
+      "afterSha256": "34f1a77a254d32832003094d156022a1f30764bb9b2f019322d48fea716a2ad2"
+    },
+    {
+      "path": "apps/operations/test/unit/operational_manager_items_test.dart",
+      "beforeExists": false,
+      "beforeSha256": null,
+      "afterSha256": "3b4fee3bc637b053afecc07c37bfc5a29a87991b548a00effab15ffcc1f44a5d"
+    }
+  ],
+  "baselineManifest": {
+    "path": "/tmp/vynic-readiness-20261006-a2nbcprb/operational-manager-items-before-hashes.json",
+    "sha256": "3df659a39852f51217fba4ec234971724923421840c6a71cdc7d22c95a936c4f"
+  },
+  "protectedExistingFiles": [
+    {
+      "path": "apps/operations/lib/core/services/edge/operational_proof/client.dart",
+      "beforeSha256": "8dd5b07ca905aec3240c0b077e06845ea92488dc89724b74da57eac6704c4338",
+      "afterSha256": "8dd5b07ca905aec3240c0b077e06845ea92488dc89724b74da57eac6704c4338",
+      "unchanged": true
+    },
+    {
+      "path": "apps/operations/lib/core/services/edge/operational_proof/domain.dart",
+      "beforeSha256": "e14f30e884ae492b172f5ca310395c6932f0f08902beff89e0527f5ccf131c1c",
+      "afterSha256": "e14f30e884ae492b172f5ca310395c6932f0f08902beff89e0527f5ccf131c1c",
+      "unchanged": true
+    },
+    {
+      "path": "apps/operations/lib/core/services/edge/operational_proof/frame_store.dart",
+      "beforeSha256": "95d5893daa62522d96c6688e6b8195c1af4dd191a84b54788877e102a0b22c53",
+      "afterSha256": "95d5893daa62522d96c6688e6b8195c1af4dd191a84b54788877e102a0b22c53",
+      "unchanged": true
+    },
+    {
+      "path": "apps/operations/lib/core/services/edge/operational_proof/intent_adapter.dart",
+      "beforeSha256": "143e73f8606289f399431682f338ee898eb0f6f1afaf941a9310c4cf012f76e5",
+      "afterSha256": "143e73f8606289f399431682f338ee898eb0f6f1afaf941a9310c4cf012f76e5",
+      "unchanged": true
+    },
+    {
+      "path": "apps/operations/lib/core/services/edge/operational_proof/ordinary_planner.dart",
+      "beforeSha256": "2b63ba76ff9864e1c92099e7e62a863a7426552d3d4b3d8019e81f5cadd1875f",
+      "afterSha256": "2b63ba76ff9864e1c92099e7e62a863a7426552d3d4b3d8019e81f5cadd1875f",
+      "unchanged": true
+    },
+    {
+      "path": "apps/operations/lib/core/services/edge/operational_proof/planning_view.dart",
+      "beforeSha256": "38973bfff6f373abfa575be72c0d1af962ef8c6040c6d5134f92c9052872fe17",
+      "afterSha256": "38973bfff6f373abfa575be72c0d1af962ef8c6040c6d5134f92c9052872fe17",
+      "unchanged": true
+    },
+    {
+      "path": "apps/operations/lib/core/database/repositories/order_table_mutation_repository.dart",
+      "beforeSha256": "9939c54d5b6b9fc927f35ddac94548925d90fab47dea7e0446700b72ecd87a17",
+      "afterSha256": "9939c54d5b6b9fc927f35ddac94548925d90fab47dea7e0446700b72ecd87a17",
+      "unchanged": true
+    },
+    {
+      "path": "apps/operations/lib/core/models/order.dart",
+      "beforeSha256": "271c255416aa245ed47f3d31116c7f32fd5e4726f5344e9c9c726c6ecec2a9c1",
+      "afterSha256": "271c255416aa245ed47f3d31116c7f32fd5e4726f5344e9c9c726c6ecec2a9c1",
+      "unchanged": true
+    },
+    {
+      "path": "apps/operations/test/unit/operational_ordinary_planner_test.dart",
+      "beforeSha256": "bed0e69dc31b0ea4070c66c7de9f37a7ead2fc1bd716776f8b0d702f28fa172b",
+      "afterSha256": "bed0e69dc31b0ea4070c66c7de9f37a7ead2fc1bd716776f8b0d702f28fa172b",
+      "unchanged": true
+    },
+    {
+      "path": "apps/operations/test/unit/operational_proof_client_test.dart",
+      "beforeSha256": "ac90249cf5d7c0fd4120cdf3072454b6701b0faf24ed88cfbb71a9ed3ddd48fd",
+      "afterSha256": "ac90249cf5d7c0fd4120cdf3072454b6701b0faf24ed88cfbb71a9ed3ddd48fd",
+      "unchanged": true
+    }
+  ],
+  "sourceManifest": {
+    "path": "/tmp/vynic-readiness-20261006-a2nbcprb/operational-manager-items-source.sha256",
+    "sha256": "8565e33ef0c148dc945cacb45ab86bf9db626745542fc767bdaaa889ec658e59"
+  },
+  "validation": {
+    "workingDirectory": "/tmp/vynic-readiness-20261006-a2nbcprb/source/apps/operations",
+    "selectedTests": {
+      "command": [
+        "flutter",
+        "test",
+        "--no-pub",
+        "test/unit/operational_manager_items_test.dart",
+        "test/unit/manager_item_replacement_audit_test.dart",
+        "test/unit/table_close_service_fee_test.dart",
+        "test/unit/audit_event_sequence_test.dart",
+        "test/unit/pos_command_convergence_test.dart",
+        "test/unit/pos05_order_table_mutation_test.dart",
+        "test/unit/operational_ordinary_planner_test.dart",
+        "test/unit/operational_proof_client_test.dart"
+      ],
+      "suiteCount": 8,
+      "passed": 143,
+      "failed": 0,
+      "exitCode": 0,
+      "newManagerTestsPassed": 19,
+      "newManagerIsolatedTests": 16,
+      "newManagerActualLocalHiveLegacyParityTests": 3,
+      "log": "operational-manager-items-validation-test.log"
+    },
+    "analysis": {
+      "command": [
+        "flutter",
+        "analyze",
+        "--no-pub",
+        "lib/core/services/edge/operational_proof",
+        "test/unit/operational_manager_items_test.dart"
+      ],
+      "exitCode": 0,
+      "issues": 0,
+      "log": "operational-manager-items-validation-analyze.log"
+    },
+    "format": {
+      "command": [
+        "dart",
+        "format",
+        "--output=none",
+        "--set-exit-if-changed",
+        "lib/core/services/edge/operational_proof/manager_items_planner.dart",
+        "lib/core/services/edge/operational_proof/manager_items_adapter.dart",
+        "test/unit/operational_manager_items_test.dart"
+      ],
+      "exitCode": 0,
+      "files": 3,
+      "changed": 0,
+      "log": "operational-manager-items-validation-format.log"
+    },
+    "whitespace": {
+      "commandTemplate": [
+        "git",
+        "diff",
+        "--no-index",
+        "--check",
+        "/dev/null",
+        "<new-file>"
+      ],
+      "files": 3,
+      "allClean": true,
+      "log": "operational-manager-items-validation-whitespace.json"
+    },
+    "logSha256": {
+      "operational-manager-items-validation-test.log": "f33994b3e491f54adb7ddf5d6e0ab6ae0d09633ee4dfc21e92fd6c4dbea6b551",
+      "operational-manager-items-validation-analyze.log": "3d1b8e5f21c3a232381c958c2022d476bb93f386ca5eb05448d071bf05ea33e7",
+      "operational-manager-items-validation-format.log": "a8665628d3d8dc8a51632550dfb214cf87c098912f4250420d0df700431790e6",
+      "operational-manager-items-validation-whitespace.json": "61a72664a53a45bb59bcbeecafca7ee6f21e43552f20734828af38545b6de440"
+    },
+    "earlierHarnessFailure": {
+      "log": "operational-manager-items-first-test.log",
+      "description": "First 17-case run had one incorrect expectation that client.open leaves pending state unresolved. Existing open automatically reconciles; the new test was corrected to assert the exact pending request before open and the exact durable result after reconciliation. Subsequent focused 17-case run and final expanded 19-case selected run passed."
+    },
+    "qualificationLimit": "Pure/scripts plus actual isolated Hive parity and reopen; no Go, wire/RPC, LAN, or physical devices."
+  },
+  "independentReview": {
+    "reviewer": "multipos_architecture",
+    "status": "NO_P1_P2_IN_REVIEWED_DETACHED_MANAGER_RETAINED_ITEM_SCOPE",
+    "matchingSourceHashes": true,
+    "reviewJson": "/tmp/vynic-readiness-20261006-a2nbcprb/operational-manager-items-review.json",
+    "reviewJsonSha256": "297fe0ef3dbca5a1a2a9730ecb44ffecd0f9ccc6c7ccdd90b964d9c1fce3a765",
+    "reviewMarkdown": "/tmp/vynic-readiness-20261006-a2nbcprb/operational-manager-items-review.md",
+    "reviewMarkdownSha256": "d58bfa3d93e828968ed6778098c15515baf25f0361c6a782bf64998feea2a763",
+    "method": "Source review plus inspected captured 143-pass selected regression and clean targeted analysis. Reviewer did not rerun Dart tests."
+  },
+  "design": {
+    "path": "/tmp/vynic-readiness-20261006-a2nbcprb/operational-manager-items-design.md",
+    "sha256": "9a237b825061a4493cd23ded32565031a83388b35dd2a4e50f9089ae698672bf"
+  },
+  "legacyParityBoundaries": [
+    "Legacy Manager parser regenerates retained line UUIDs; detached canonical intent preserves explicit original UUIDs. Tests assert this difference and normalize it only for full legacy business comparison.",
+    "Legacy command samples multiple new wall-clock values; detached proof uses one frozen logical time. Tests normalize only those new clock fields for legacy comparison, while pure tests require exact frozen time."
+  ],
+  "unsupportedAndRemainingGates": [
+    "Trusted complete canonical projection capture and authenticated Manager origin/Staff admission",
+    "Remote command ingestion/ACK integration and exact already-completed/no-op lifecycle handling",
+    "New-item frozen catalog quotes and broader item/fee/status writers",
+    "POS modifications require atomic frozen PRINT effects",
+    "Other mandatory writer domains and real three-terminal LAN/RPC/handover/rollback qualification",
+    "Price, metadata, fee, package, status, and empty/no-op variants are refused in this retained-line slice.",
+    "Unknown complex historical audit detail schemas are refused, not discarded.",
+    "Other mandatory writer families and production capture/attachment remain pending."
+  ],
+  "externalActions": "No original-checkout writes by this agent, no production startup/boxes attachment, no secrets, installs/downloads, wire generation, physical dispatch, commits or pushes. Receipt/design are outside source; old sealed proof packet unchanged."
+}

@@ -1,4 +1,5 @@
 import 'package:vynic/core/database/local_data_admission.dart';
+import 'package:vynic/core/database/local_venue_binding.dart';
 import 'dart:async';
 import 'dart:convert';
 
@@ -125,7 +126,10 @@ class MenuLocalStore {
   void _checkVenue(CanonicalMenu current) {
     final venue = _venueId?.call();
     if (venue != null && current.venueId != venue) {
-      throw StateError('Stored Menu belongs to another Venue');
+      throw LocalVenueMismatch(
+        storedVenueId: current.venueId,
+        targetVenueId: venue,
+      );
     }
   }
 

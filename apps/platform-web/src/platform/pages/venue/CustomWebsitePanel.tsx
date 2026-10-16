@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import {
   ArrowSquareOut,
   CheckCircle,
@@ -18,8 +18,8 @@ type SettableStatus = Exclude<CustomWebsite["status"], "NOT_CONFIGURED">;
 
 const statusLabels: Record<SettableStatus, string> = {
   SETUP_PENDING: "Setup pending — frontend in development",
-  READY: "Ready — deployed and verified, not launched",
-  ACTIVE: "Active — live for visitors",
+  READY: "Ready — operator review recorded, not launched",
+  ACTIVE: "Active — operator marked live",
   ERROR: "Error — deployment or domain problem",
 };
 
@@ -34,6 +34,7 @@ const checkLabels: Record<keyof CustomWebsite["readiness"]["checks"], string> =
 const auditLabels: Record<string, string> = {
   "venue.website_mode_changed": "Website mode changed",
   "venue.custom_website_site_key_changed": "Frontend identity changed",
+  "venue.custom_website_build_changed": "Expected build changed",
   "venue.custom_website_status_changed": "Setup status changed",
   "venue.domain_registered": "Domain registered",
   "venue.domain_status_changed": "Domain status changed",
@@ -47,6 +48,7 @@ const auditLabels: Record<string, string> = {
 
 const apiLabels: Record<CustomWebsiteCheck["api"]["state"], string> = {
   OK: "Answers for this Venue",
+  UNVERIFIED: "Stable Venue identity unavailable",
   WRONG_SITE: "Answers for a different restaurant",
   FAILED: "Not answering",
   NOT_CHECKED: "Not checked",
@@ -60,28 +62,57 @@ const apiLabels: Record<CustomWebsiteCheck["api"]["state"], string> = {
  * operator attestations, gated by a server-side checklist.
  */
 export function CustomWebsitePanel({ venueId }: { venueId: string }) {
+  return <CustomWebsitePanelContent key={venueId} venueId={venueId} />;
+}
+
+function CustomWebsitePanelContent({ venueId }: { venueId: string }) {
   const queryClient = useQueryClient();
   const custom = useQuery({
     queryKey: ["custom-website", venueId],
     queryFn: () => platformApi.customWebsite(venueId),
   });
   const [siteKey, setSiteKey] = useState<string | null>(null);
+  const [buildId, setBuildId] = useState<string | null>(null);
   const [status, setStatus] = useState<SettableStatus | null>(null);
   const [note, setNote] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
   // Held only for this view: availability is observed, never stored.
   const [check, setCheck] = useState<CustomWebsiteCheck | null>(null);
+  const observationEpoch = useRef(0);
   const runCheck = useMutation({
     mutationFn: () => platformApi.checkCustomWebsite(venueId),
-    onSuccess: setCheck,
+    onMutate: async () => {
+      const epoch = ++observationEpoch.current;
+      setCheck(null);
+      await queryClient.cancelQueries({
+        queryKey: ["custom-website", venueId],
+      });
+      return { epoch };
+    },
+    onSuccess: async (next, _variables, context) => {
+      if (context?.epoch !== observationEpoch.current) return;
+      await queryClient.invalidateQueries({
+        queryKey: ["custom-website", venueId],
+      });
+      if (context.epoch === observationEpoch.current) setCheck(next);
+    },
   });
   const save = useMutation({
     mutationFn: (body: Parameters<typeof platformApi.updateCustomWebsite>[1]) =>
       platformApi.updateCustomWebsite(venueId, body),
+    onMutate: async () => {
+      ++observationEpoch.current;
+      setCheck(null);
+      await queryClient.cancelQueries({
+        queryKey: ["custom-website", venueId],
+      });
+    },
     onSuccess: async (next) => {
       queryClient.setQueryData(["custom-website", venueId], next);
       await queryClient.invalidateQueries({ queryKey: ["audit"] });
       setSiteKey(null);
+      setBuildId(null);
+      setCheck(null);
       setStatus(null);
       setNote(null);
       setSaved(true);
@@ -102,12 +133,15 @@ export function CustomWebsitePanel({ venueId }: { venueId: string }) {
     data.status === "NOT_CONFIGURED" ? "SETUP_PENDING" : data.status;
   const draft = {
     siteKey: siteKey ?? data.siteKey ?? "",
+    buildId: buildId ?? data.expectedBuildId ?? "",
     status: status ?? currentStatus,
     note: note ?? data.statusNote ?? "",
   };
   const changes: Parameters<typeof platformApi.updateCustomWebsite>[1] = {};
   if (draft.siteKey !== (data.siteKey ?? ""))
     changes.siteKey = draft.siteKey || null;
+  if (draft.buildId !== (data.expectedBuildId ?? ""))
+    changes.expectedBuildId = draft.buildId || null;
   if (draft.status !== data.status) changes.status = draft.status;
   if (draft.note !== (data.statusNote ?? ""))
     changes.statusNote = draft.note || null;
@@ -120,6 +154,33 @@ export function CustomWebsitePanel({ venueId }: { venueId: string }) {
   const canCheck = localTarget
     ? local?.state === "CONFIGURED"
     : !!data.primaryDomain;
+  const context = check?.checkedFor;
+  const currentCheck =
+    !!check?.observationCurrent &&
+    !!context &&
+    context.publicIdentity === data.publicIdentity &&
+    context.siteKey === data.siteKey &&
+    context.expectedBuildId === (data.expectedBuildId ?? null) &&
+    context.bindingUpdatedAt === data.updatedAt &&
+    context.status === data.status &&
+    context.mode === data.mode &&
+    context.entitled === data.entitled &&
+    context.hostname === (localTarget ? local?.hostname : data.primaryDomain) &&
+    context.domainActive;
+  const verifiedFacts = currentCheck ? check?.facts : undefined;
+  const evidenceRows = [
+    { label: "Commercial access", value: data.entitled },
+    { label: "Domain registration", value: !!data.primaryDomain },
+    { label: "Renderer deployed", value: verifiedFacts?.rendererDeployed },
+    {
+      label: "Binding identity verified",
+      value: verifiedFacts?.bindingIdentityVerified,
+    },
+    {
+      label: "Publication live",
+      value: data.status !== "ACTIVE" ? false : verifiedFacts?.publicationLive,
+    },
+  ];
 
   return (
     <>
@@ -192,7 +253,7 @@ export function CustomWebsitePanel({ venueId }: { venueId: string }) {
           </Field>
           <Field
             label="Setup status"
-            hint="Tracking only. READY and ACTIVE require every readiness item."
+            hint="Operator record only. The configuration checklist gates READY/ACTIVE; deployment evidence is reported separately."
           >
             <Select
               value={draft.status}
@@ -206,6 +267,20 @@ export function CustomWebsitePanel({ venueId }: { venueId: string }) {
                 </option>
               ))}
             </Select>
+          </Field>
+          <Field
+            label="Expected build fingerprint"
+            hint="Public SHA-256 from an independently reviewed build's vynic-site-manifest.json. Empty means unrecorded and cannot verify deployment. Changing the app key clears the previous build."
+          >
+            <Input
+              name="expectedBuildId"
+              autoComplete="off"
+              value={draft.buildId}
+              onChange={(event) => setBuildId(event.target.value.trim())}
+              maxLength={64}
+              pattern="[a-f0-9]{64}"
+              spellCheck={false}
+            />
           </Field>
           <Field label="Operator note" hint="Internal; never shown publicly.">
             <Input
@@ -240,6 +315,27 @@ export function CustomWebsitePanel({ venueId }: { venueId: string }) {
               : "Whether the site answers right now. Checked on demand from the server against the primary domain; not stored, not monitored, and independent of the setup status above."
           }
         >
+          <ul className="platform-checklist" aria-label="Deployment evidence">
+            {evidenceRows.map((row) => (
+              <li key={row.label}>
+                <span>{row.label}</span>
+                {" · "}
+                <span>
+                  {row.value === undefined
+                    ? "Not verified"
+                    : row.value
+                      ? "Confirmed"
+                      : "Not confirmed"}
+                </span>
+              </li>
+            ))}
+          </ul>
+          {check && !currentCheck ? (
+            <p role="status">
+              This observation is stale or lacks identity evidence. Run a fresh
+              check.
+            </p>
+          ) : null}
           <div className="platform-website-state">
             {local ? (
               <div>
@@ -271,8 +367,34 @@ export function CustomWebsitePanel({ venueId }: { venueId: string }) {
                 <div>
                   <span>Backend through this domain</span>
                   <span>
-                    {apiLabels[check.api.state]}
+                    {check.api.state === "OK" && !context?.publicIdentity
+                      ? "Legacy answer; stable identity not verified"
+                      : apiLabels[check.api.state]}
                     {check.api.state === "OK" ? "" : ` · ${check.api.detail}`}
+                  </span>
+                </div>
+                <div>
+                  <span>Build identity</span>
+                  <span>
+                    {check.build?.state ?? "Not verified"} ·{" "}
+                    {check.build?.detail ??
+                      "Backend does not report build evidence"}
+                  </span>
+                </div>
+                <div>
+                  <span>Observed build fingerprint</span>
+                  <code
+                    className="platform-mono"
+                    style={{ overflowWrap: "anywhere" }}
+                  >
+                    {check.build?.observedBuildId ?? "Not reported"}
+                  </code>
+                </div>
+                <div>
+                  <span>Observation environment</span>
+                  <span>
+                    {check.environment ?? "Unknown"} · An observation is not a
+                    production acceptance.
                   </span>
                 </div>
               </>

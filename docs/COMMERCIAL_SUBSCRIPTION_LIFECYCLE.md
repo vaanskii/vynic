@@ -36,7 +36,12 @@ request a trial or contact Vynic. This is an explicit alternative to Trial appro
 Operators choose a plan/end date to start, extend or change a Trial. Suspension
 ends usability immediately; resume requires an unexpired Trial. Expired Trials
 fail closed by time comparison even before the timer, then reconcile once to
-SUSPENDED with a SYSTEM audit. Extension can reactivate an expired Trial explicitly.
+SUSPENDED with a SYSTEM audit. Extension can reactivate an expired Trial explicitly
+(confirmed, audited `reactivated`); an expired Trial can also be replaced by a new
+Trial or converted to a paid plan directly, without cancelling first.
+A manual activation may be marked as a gift (`complimentary`): the first billing
+period is free, `paymentState=COMPLIMENTARY`, audit source `COMPLIMENTARY`, no
+billing operation; the agreed plan price is due at the next renewal.
 A paid agreement must be ended before a new Trial can replace it.
 
 ## E. Paid model

@@ -1,3 +1,4 @@
+import { WebsitePaymentReviews } from "./WebsitePaymentReviews";
 export { SubscriptionSection } from "./SubscriptionSection";
 import { useState } from "react";
 import { customerApi } from "./api";
@@ -169,6 +170,9 @@ export function DevicesSection({
   setEnrollment: (enrollment: IssuedEnrollment) => void;
 }) {
   const id = venue.venue.id;
+  const [managerSetupChoice, setManagerSetupChoice] = useState({ venueId: id, include: true });
+  const initialManagerSetup = venue.initialManagerSetupEligible === true &&
+    (managerSetupChoice.venueId !== id || managerSetupChoice.include);
   const current =
     enrollment &&
     venue.enrollments.some(
@@ -188,6 +192,14 @@ export function DevicesSection({
           <Downloads links={releaseLinks} keys={["posWindows"]} />
           <h3>2. დააკავშირეთ კოდით</h3>
           <p>გახსენით POS და შეიყვანეთ მოწყობილობის კოდი.</p>
+          {venue.initialManagerSetupEligible ? <>
+            <label>
+              <input type="checkbox" checked={initialManagerSetup} disabled={busy}
+                onChange={(event) => setManagerSetupChoice({ venueId: id, include: event.target.checked })} />
+              პირველი Manager-ის რეგისტრაციაც
+            </label>
+            <p>ეს ერთი კოდი რესტორანსაც დააკავშირებს და პირველ Manager-ს სახელისა და PIN-ის არჩევის საშუალებას მისცემს. დამატებითი POS-ისთვის გამორთეთ ეს არჩევანი.</p>
+          </> : null}
           {current && (
             <div className="portal-inset">
               <p className="customer-code">{current.code}</p>
@@ -212,7 +224,7 @@ export function DevicesSection({
                 setEnrollment(
                   await customerApi<IssuedEnrollment>(
                     `venues/${id}/enrollments`,
-                    {},
+                    { initialManagerSetup },
                   ),
                 );
                 await refresh();
@@ -311,10 +323,6 @@ export function DevicesSection({
 export function ManagersSection({
   venue,
   releaseLinks,
-  busy,
-  run,
-  refresh,
-  onError,
 }: {
   venue: VenueStatus;
   releaseLinks: Record<string, string>;
@@ -323,48 +331,16 @@ export function ManagersSection({
   refresh: () => Promise<void>;
   onError: (message: string) => void;
 }) {
-  const id = venue.venue.id;
-  const [resetId, setResetId] = useState<string>();
-  const [adding, setAdding] = useState(false);
-  const [requestId, setRequestId] = useState(() => crypto.randomUUID());
-  const showForm = adding || !!resetId || !venue.managers.length;
   return (
     <>
       <SectionHeader
         title="მენეჯერები"
         lead="მენეჯერი რესტორანს მართავს Vynic Manager აპით — ტელეფონიდან ან კომპიუტერიდან."
-      >
-        {venue.managers.length > 0 && !showForm && (
-          <button
-            onClick={() => {
-              setAdding(true);
-              setRequestId(crypto.randomUUID());
-            }}
-          >
-            + მენეჯერის დამატება
-          </button>
-        )}
-      </SectionHeader>
-      {!venue.features.includes("MANAGER_APP") && (
-        <p className="portal-note">
-          მენეჯერის აპლიკაცია თქვენს პაკეტში გამორთულია.
-        </p>
-      )}
+      />
       <div className="portal-grid">
         <section className="portal-card">
-          <h3>რესტორნის კოდი</h3>
-          <p className="customer-code">{venue.venue.loginCode}</p>
-          <button
-            className="secondary"
-            onClick={() => void copy(venue.venue.loginCode, onError)}
-          >
-            კოდის კოპირება
-          </button>
-          <p className="portal-hint">
-            კოდი შეიყვანეთ ერთხელ თითოეულ მოწყობილობაზე, შემდეგ გამოიყენეთ
-            პირადი PIN.
-          </p>
-          <h3>აპლიკაცია</h3>
+          <h3>Manager აპის დაკავშირება</h3>
+          <p className="portal-hint">ახალი მოწყობილობისთვის Vynic-ის მხარდაჭერისგან მიიღეთ ერთჯერადი დაკავშირების კოდი. ერთხელ დაკავშირების შემდეგ შესვლისთვის პირადი PIN გამოიყენეთ.</p>
           <Downloads
             links={releaseLinks}
             keys={[
@@ -376,112 +352,31 @@ export function ManagersSection({
           />
         </section>
         <section className="portal-card">
-          <h3>მენეჯერების სია</h3>
-          {!venue.managers.length && (
-            <p className="portal-hint">მენეჯერი ჯერ არ დამატებულა.</p>
-          )}
+          <h3>{venue.managers.length ? "მენეჯერები" : "პირველი აქტივაცია"}</h3>
           <ul className="portal-list">
             {venue.managers.map((m) => (
               <li key={m.id}>
                 <strong>{m.displayName || m.username}</strong>
                 <span>{m.isActive ? "აქტიური" : "გამორთული"}</span>
-                <div className="customer-row">
-                  <button
-                    className="secondary"
-                    onClick={() => {
-                      setResetId(m.id);
-                      setRequestId(crypto.randomUUID());
-                    }}
-                  >
-                    PIN-ის შეცვლა
-                  </button>
-                  <button
-                    className="secondary"
-                    disabled={busy || !m.isActive}
-                    onClick={() => {
-                      if (confirm("გსურთ მენეჯერის წვდომის გამორთვა?"))
-                        void run(async () => {
-                          await customerApi(
-                            `venues/${id}/managers/${m.id}/disable`,
-                            { requestId: crypto.randomUUID() },
-                          );
-                          await refresh();
-                        });
-                    }}
-                  >
-                    გამორთვა
-                  </button>
-                </div>
               </li>
             ))}
           </ul>
-          {showForm && (
-            <form
-              key={resetId ?? "create"}
-              onSubmit={(e) => {
-                e.preventDefault();
-                const form = e.currentTarget;
-                const data = Object.fromEntries(new FormData(form));
-                void run(async () => {
-                  await customerApi(
-                    `venues/${id}/managers${resetId ? `/${resetId}/reset` : ""}`,
-                    { ...data, role: "MANAGER", requestId },
-                  );
-                  form.reset();
-                  setResetId(undefined);
-                  setAdding(false);
-                  setRequestId(crypto.randomUUID());
-                  await refresh();
-                });
-              }}
-            >
-              <h4>{resetId ? "ახალი PIN" : "ახალი მენეჯერი"}</h4>
-              {!resetId && (
-                <>
-                  <label>
-                    მენეჯერის სახელი
-                    <input name="displayName" required />
-                  </label>
-                  <label>
-                    მომხმარებლის სახელი
-                    <input
-                      name="username"
-                      required
-                      maxLength={80}
-                      autoComplete="off"
-                    />
-                  </label>
-                </>
-              )}
-              <label>
-                PIN
-                <input
-                  name="pin"
-                  type="password"
-                  inputMode="numeric"
-                  pattern="[0-9]{4,6}"
-                  required
-                  autoComplete="new-password"
-                />
-              </label>
-              <div className="customer-row">
-                <button disabled={busy}>
-                  {resetId ? "ახალი PIN-ის შენახვა" : "მენეჯერის შექმნა"}
-                </button>
-                {(resetId || (adding && venue.managers.length > 0)) && (
-                  <button
-                    type="button"
-                    className="secondary"
-                    onClick={() => {
-                      setResetId(undefined);
-                      setAdding(false);
-                    }}
-                  >
-                    გაუქმება
-                  </button>
-                )}
-              </div>
-            </form>
+          {venue.managers.length ? (
+            <p>
+              შესვლის შემდეგ თანამშრომლებს მართავთ აპლიკაციიდან. საწყისი
+              Manager-ის PIN-ის აღსადგენად დაუკავშირდით Vynic Platform Admin-ს.
+            </p>
+          ) : venue.features.includes("MANAGER_APP") &&
+            venue.features.includes("POS") ? (
+            <p>
+              მიიღეთ პირველი POS-ის დაკავშირების კოდი „მოწყობილობები / POS“ სექციიდან.
+              POS-ში აირჩიეთ სახელი და პირადი PIN — დამატებითი აქტივაციის კოდი აღარ გჭირდებათ.
+              შემდეგ Manager აპისთვის Vynic-ის მხარდაჭერისგან მიიღეთ ერთჯერადი დაკავშირების კოდი და შედით თქვენი PIN-ით.
+            </p>
+          ) : (
+            <p>
+              პირველი რეგისტრაციისთვის საჭიროა POS-ისა და Manager-ის პაკეტი.
+            </p>
           )}
         </section>
       </div>
@@ -494,6 +389,7 @@ export function ManagersSection({
 export function PaymentsSection({ venue }: { venue: VenueStatus }) {
   return (
     <>
+      <WebsitePaymentReviews key={venue.venue.id} venueId={venue.venue.id} />
       <SectionHeader
         title="ონლაინ გადახდები"
         lead="სტუმრებს შეეძლებათ ვებსაიტზე ჯავშნის ან შეკვეთის გადახდა ბარათით."

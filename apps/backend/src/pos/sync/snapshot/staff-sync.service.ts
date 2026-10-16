@@ -3,7 +3,14 @@ import { Injectable } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../../../prisma.service';
 import { StaffPinVault } from '../../../auth/staff-pin-vault.service';
-import { normalizeStaffRole } from '../../../staff/staff-role';
+import {
+  assertStaffPinAvailable,
+  verifiedStoredStaffPin,
+} from '../../../staff/staff-pin-policy';
+import {
+  isMobileAppStaffRole,
+  normalizeStaffRole,
+} from '../../../staff/staff-role';
 import { pendingStaffUsernames } from '../sync-conflict';
 import { StaffSync } from '../sync-payload';
 import type { TenantContext } from '../../../auth/pos-auth-context';
@@ -82,6 +89,7 @@ export class StaffSyncService {
     let pinsHashed = 0;
     const needsPin: string[] = [];
     const incomingUsernames = new Set<string>();
+    const pinsToCheck = new Map<string, string>();
     for (const member of staff) {
       incomingUsernames.add(member.username);
       const identity = {
@@ -91,7 +99,7 @@ export class StaffSyncService {
         },
       };
       const pin = typeof member.pin === 'string' ? member.pin.trim() : '';
-      const existingMember = await (db as any).staff.findUnique({
+      const existingMember = await db.staff.findUnique({
         where: identity,
       });
       if (existingMember?.platformManaged) continue;
@@ -103,21 +111,43 @@ export class StaffSyncService {
         pin.length > 0 &&
         plainPinsByUsername[member.username] === pin;
 
-      if (pin.length > 0 && !credentialUnchanged) {
+      const role = normalizeStaffRole(member.role);
+      // Check only new credentials or entry into an active/Manager login set.
+      // Unchanged legacy snapshots remain idempotent even if old data conflicts;
+      // authentication continues to reject ambiguous matches.
+      const credentialChanged = pin.length > 0 && !credentialUnchanged;
+      const enteringLoginSet =
+        existingMember &&
+        (!existingMember.isActive ||
+          (isMobileAppStaffRole(role) &&
+            !isMobileAppStaffRole(existingMember.role)));
+      if (credentialChanged) {
+        pinsToCheck.set(member.username, pin);
+      } else if (existingMember && enteringLoginSet) {
+        pinsToCheck.set(
+          member.username,
+          await verifiedStoredStaffPin(
+            plainPinsByUsername[member.username],
+            existingMember.pinHash,
+          ),
+        );
+      }
+
+      if (credentialChanged) {
         const pinHash = await bcrypt.hash(pin, 12);
         pinsHashed += 1;
         await (db as any).staff.upsert({
           where: identity,
           update: {
             pinHash,
-            role: normalizeStaffRole(member.role),
+            role,
             isActive: true,
           },
           create: {
             venueId: tenant.venueId,
             username: member.username,
             pinHash,
-            role: normalizeStaffRole(member.role),
+            role,
             isActive: true,
           },
         });
@@ -126,7 +156,7 @@ export class StaffSyncService {
       } else if (existingMember) {
         await (db as any).staff.update({
           where: identity,
-          data: { role: normalizeStaffRole(member.role), isActive: true },
+          data: { role, isActive: true },
         });
       } else {
         needsPin.push(member.username);
@@ -135,10 +165,6 @@ export class StaffSyncService {
         );
       }
     }
-    if (pinsMapChanged) {
-      await this.pinVault.write(plainPinsByUsername, tenant, db);
-    }
-
     // Reconcile deletions: if user disappeared from Windows POS list,
     // remove it from backend too so mobile and Windows stay 1:1.
     //
@@ -197,6 +223,22 @@ export class StaffSyncService {
       await (db as any).staff.deleteMany({
         where: { venueId: tenant.venueId, username: { in: removable } },
       });
+    }
+
+    // Validate the final active set: a rename, deletion or PIN swap in this
+    // snapshot may legitimately free a PIN. Any conflict rolls back the entire
+    // staff snapshot, including removals and the encrypted vault.
+    for (const [username, pin] of pinsToCheck) {
+      await assertStaffPinAvailable(
+        db,
+        tenant.venueId,
+        pin,
+        username,
+        pinsToCheck,
+      );
+    }
+    if (pinsMapChanged) {
+      await this.pinVault.write(plainPinsByUsername, tenant, db);
     }
 
     return { pinsHashed, needsPin };

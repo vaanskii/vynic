@@ -1,0 +1,8 @@
+{
+  "completedUtc": "2026-10-06T16:32:46.124361+00:00",
+  "prlctlExitCode": 0,
+  "log": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/printer-validation/windows-go-packages-prlctl.log",
+  "VM": "9830bac8-34c6-46f7-9062-cd8f62f7a127",
+  "encodedCommandPlaintext": "$ErrorActionPreference='Stop'; $s='\\\\Mac\\Home\\Developer\\vynic\\docs\\proofs\\POS_SHARED_PRINT_GO_275688e1_2026-10-06\\windows-go-packages-stage'; if ((Get-FileHash -LiteralPath (Join-Path $s 'stage-receipt.json') -Algorithm SHA256).Hash.ToLowerInvariant() -ne '6df33960c0f019889995f69bcd327e5288e73c662cf59e98db81c91a55680f3f') { throw 'Stage receipt pin mismatch' }; $p=Join-Path $s 'run.ps.txt'; if ((Get-FileHash -LiteralPath $p -Algorithm SHA256).Hash.ToLowerInvariant() -ne '432ad76e87cdc30f5a5d1970c144c9b135b6eb727cb0770e8fdd1fd3f9879fd5') { throw 'Runner pin mismatch' }; & ([scriptblock]::Create([IO.File]::ReadAllText($p)))",
+  "scope": "Frozen V2 seven package tests only; no product/SCM/OS/physical execution"
+}

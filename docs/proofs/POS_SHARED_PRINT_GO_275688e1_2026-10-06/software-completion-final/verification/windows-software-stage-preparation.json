@@ -1,0 +1,10 @@
+{
+  "genericStage": "/Users/vaanskii/Developer/vynic/docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/software-windows-flutter-stage",
+  "posStage": "/Users/vaanskii/Developer/vynic/docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/software-windows-pos-stage",
+  "finalSourceReceiptSHA256": "193e4800e5d0733a30bc6c8d4ac993590219363941e69a787bba5ac3681c8f68",
+  "genericStageReceiptSHA256": "700aba05ce08b93223c6579391455377b7eec1b2fb7fd706bf5c1213e5443260",
+  "posStageReceiptSHA256": "e9ecad72adc981e61426379d952491401207344eaf5b0931854644d5760eadf9",
+  "productPreparationSHA256": "0b2191c5d26212836f6967bf2b50bbea23a60da94593f87e99e387d43c3533b4",
+  "VMExecuted": false,
+  "executionHeld": true
+}

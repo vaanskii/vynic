@@ -28,6 +28,8 @@ export class InventoryCostService {
         cost: Prisma.Decimal | null;
         provisional: boolean;
         hasPurchase: boolean;
+        reconstructed: boolean;
+        lastSequence: string | null;
       }
     >();
     for (const row of rows) {
@@ -40,8 +42,12 @@ export class InventoryCostService {
         cost: null,
         provisional: false,
         hasPurchase: false,
+        reconstructed: false,
+        lastSequence: null,
       };
       g.quantity = g.quantity.plus(row.quantityDeltaBase.toString());
+      g.reconstructed ||= row.valuationStatus === 'RECONSTRUCTED';
+      g.lastSequence = row.valuationSequence?.toString() ?? null;
       g.value = g.value.plus(row.inventoryValueDelta?.toString() ?? '0');
       if (
         row.movementType === 'RECEIVING' &&
@@ -90,6 +96,13 @@ export class InventoryCostService {
       lastPurchaseUnitCost: group?.last ?? null,
       currentQuantity: group?.quantity.toFixed(6) ?? '0.000000',
       inventoryValue: group?.value.toFixed(12) ?? '0.000000000000',
+      provenance: {
+        basis: 'CURRENT_REMAINING_MOVEMENTS',
+        ordering: 'CLOUD_ACCEPTANCE',
+        historicalCloseTimeCogs: false,
+        includesReconstructedHistory: group?.reconstructed ?? false,
+        lastValuationSequence: group?.lastSequence ?? null,
+      },
       purchaseQuantity: group?.quantity.toFixed(3) ?? '0.000',
       purchaseValue: group?.value.toFixed(2) ?? '0.00',
     };
@@ -129,7 +142,11 @@ export class InventoryCostService {
         quantity: component.baseQuantityPerUnit.toFixed(6),
         weightedUnitCost: unitCost?.toFixed(6) ?? null,
         cost: cost?.toFixed(6) ?? null,
-        status: cost == null ? 'NO_PURCHASE_HISTORY' : 'AVAILABLE',
+        status: group?.provisional
+          ? 'PROVISIONAL'
+          : cost == null
+            ? 'NO_PURCHASE_HISTORY'
+            : 'AVAILABLE',
       };
     });
     return {
@@ -137,6 +154,14 @@ export class InventoryCostService {
       status: complete ? 'AVAILABLE' : 'MISSING_COMPONENT_COST',
       total: complete ? total.toFixed(2) : null,
       totalExact: complete ? total.toFixed(12) : null,
+      provenance: {
+        basis: 'CURRENT_RECIPE_ESTIMATE',
+        ordering: 'CLOUD_ACCEPTANCE',
+        historicalCloseTimeCogs: false,
+        includesReconstructedHistory: [...bases.values()].some(
+          (group) => group.reconstructed,
+        ),
+      },
       components,
     };
   }

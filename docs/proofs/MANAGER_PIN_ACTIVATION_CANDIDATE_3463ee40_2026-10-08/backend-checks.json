@@ -1,0 +1,63 @@
+[
+  {
+    "label": "backend-aggregate-final",
+    "exitCode": 0,
+    "command": [
+      "npm",
+      "test",
+      "--",
+      "--runInBand"
+    ]
+  },
+  {
+    "label": "backend-auth-pg",
+    "exitCode": 0,
+    "command": [
+      "npm",
+      "test",
+      "--",
+      "--runInBand",
+      "--runTestsByPath",
+      "src/staff/staff-pin.integration.spec.ts",
+      "src/auth/manager-activation.integration.spec.ts",
+      "src/customer/customer-onboarding.integration.spec.ts",
+      "src/platform/saas-phase2.integration.spec.ts"
+    ]
+  },
+  {
+    "label": "backend-commercial-pg",
+    "exitCode": 0,
+    "command": [
+      "npm",
+      "test",
+      "--",
+      "--runInBand",
+      "--runTestsByPath",
+      "src/customer/commercial-access.integration.spec.ts"
+    ]
+  },
+  {
+    "label": "backend-mgr01-pg",
+    "exitCode": 0,
+    "command": [
+      "npm",
+      "test",
+      "--",
+      "--runInBand",
+      "--runTestsByPath",
+      "src/mobile/services/mgr01-table-layout.integration.spec.ts"
+    ]
+  },
+  {
+    "label": "backend-platform-pg",
+    "exitCode": 0,
+    "command": [
+      "npm",
+      "test",
+      "--",
+      "--runInBand",
+      "--runTestsByPath",
+      "src/platform/platform-control-plane.integration.spec.ts"
+    ]
+  }
+]

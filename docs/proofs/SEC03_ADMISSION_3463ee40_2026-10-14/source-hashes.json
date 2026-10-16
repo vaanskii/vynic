@@ -1,0 +1,17 @@
+{
+  "apps/backend/src/main.ts": "e24e56fc35f16a10893c84f292325fbd2b5d6adb45e5f8250d02cbf214f1734e",
+  "apps/backend/src/website/auth/dto/auth.dto.ts": "f146e9ee27ed6c401cdc0a1a15133078d8f33c7416eeb28098e65457c3e07597",
+  "apps/backend/src/website/auth/auth.controller.ts": "6c995dedebb81ee9b4bbf983f0c1cb502fd858fe22d58766236dad857402cc4a",
+  "apps/backend/src/website/auth/auth.service.ts": "1bb3c37a29947d278502c70c607a3ff0970504bda4e2668458badbe00dbd25bf",
+  "apps/backend/src/website/auth/auth.module.ts": "eebb5240e38153964c3f5369086dcad78faa2f3c356015757a22f1cd159f047e",
+  "apps/backend/src/website/common/csrf.service.ts": "994952276fe9f1fcd70ad1646869cc2ed7e58295502d96065811a9738baad231",
+  "apps/backend/src/website/user/guest-booking-ownership.integration.spec.ts": "d0e9fb2283525fcb193a396cc57fac0fab2899c49f4d1596e7c0d0f943182f44",
+  "apps/backend/src/website/custom/custom-website.integration.spec.ts": "eb75adfcc24659327197dffa1c213868da201427de793ad9d3a39723319df099",
+  "docs/agent-state/VYNIC_PROJECT_STATE.md": "b2f2d1078a834cce23de16c63efc848661826678544f4b086b36eb6cbbf90bef",
+  "docs/agent-state/VYNIC_CODE_MAP.md": "e56df67a612145303eb765e1e9ec0d7bbd55d62afd1bcf943146f6ea0b425487",
+  "apps/backend/src/website/auth/auth-input.ts": "b4f6f1606a59b2ef00144c90e242d1787bef46b017f9ce60a07e192f435749be",
+  "apps/backend/src/website/auth/auth-body-parsers.ts": "40e7b777ce9acf210dd4649cf0a0cb02628e44a6f051a963dad8f9d8d00ccbad",
+  "apps/backend/src/website/auth/auth-admission.spec.ts": "62ec657b36aa79c57c6c088f5b700ad52d8672b5bea14d853a7817e57f6db0ca",
+  "apps/backend/src/website/auth/auth-admission.integration.spec.ts": "fbda38b44b902f6f8a669e89088816495ac4e5c7b6cc0ee8c8d0c1d8d882a7ca",
+  "docs/SEC03_WEBSITE_AUTH_ADMISSION.md": "28e0312376c3ed150a956e4208f04719564132acfdb9075db726164d57c9b6f8"
+}

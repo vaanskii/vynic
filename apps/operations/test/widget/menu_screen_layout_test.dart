@@ -1,3 +1,6 @@
+import '../support/pos_visual_capture.dart';
+import 'package:vynic/core/ui/pos_theme.dart';
+import 'package:vynic/core/ui/pos_scaled_surface.dart';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -182,9 +185,15 @@ Widget _harness(
   return MediaQuery(
     data: MediaQueryData(size: size),
     child: MaterialApp(
+      theme: PosTheme.light,
+      debugShowCheckedModeBanner: false,
+      builder: (_, child) => RepaintBoundary(
+        key: posVisualKey,
+        child: PosScaledSurface(scale: 1, child: child!),
+      ),
       home: SizedBox(
-        width: size.width,
-        height: size.height,
+        width: double.infinity,
+        height: double.infinity,
         child: MenuScreen(
           user: _user,
           selectedTables: const ['7'],
@@ -246,6 +255,7 @@ Future<void> _loadRealFont() async {
 
 void main() {
   setUpAll(() async {
+    await loadPosVisualFonts();
     await _loadRealFont();
     _tempDir = await Directory.systemTemp.createTemp('vynic_menu_screen');
     Hive.init(_tempDir.path);
@@ -305,6 +315,15 @@ void main() {
     DatabaseCore.settingsBox = null;
     DatabaseCore.tableBox = null;
     if (_tempDir.existsSync()) _tempDir.deleteSync(recursive: true);
+  });
+
+  testWidgets('production menu visual at 1024 with Georgian text', (
+    tester,
+  ) async {
+    await _pump(tester, const Size(1024, 768));
+    await tester.pump(const Duration(milliseconds: 150));
+    await capturePosVisual(tester, 'menu-1024x768');
+    expect(tester.takeException(), isNull);
   });
 
   for (final (name, size) in _resolutions) {
@@ -389,7 +408,7 @@ void main() {
     testWidgets('the comment dialog fits at $name', (tester) async {
       await _pump(tester, size);
       expect(tester.takeException(), isNull);
-      await tester.tap(find.text('+ კომენტარი').first);
+      await tester.tap(find.byTooltip('+ კომენტარი').first);
       await tester.pumpAndSettle();
       expect(find.text('კომენტარი'), findsWidgets);
       expect(tester.takeException(), isNull);

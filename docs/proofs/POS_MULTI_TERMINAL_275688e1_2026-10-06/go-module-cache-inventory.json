@@ -1,0 +1,102 @@
+{
+  "goMod": "apps/edge/go.mod",
+  "modules": [
+    {
+      "module": "github.com/gofrs/flock",
+      "version": "v0.12.1",
+      "zipCached": true,
+      "modCached": true
+    },
+    {
+      "module": "github.com/google/uuid",
+      "version": "v1.6.0",
+      "zipCached": true,
+      "modCached": true
+    },
+    {
+      "module": "google.golang.org/grpc",
+      "version": "v1.79.3",
+      "zipCached": true,
+      "modCached": true
+    },
+    {
+      "module": "google.golang.org/protobuf",
+      "version": "v1.36.11",
+      "zipCached": true,
+      "modCached": true
+    },
+    {
+      "module": "modernc.org/sqlite",
+      "version": "v1.59.0",
+      "zipCached": true,
+      "modCached": true
+    },
+    {
+      "module": "github.com/dustin/go-humanize",
+      "version": "v1.0.1",
+      "zipCached": true,
+      "modCached": true
+    },
+    {
+      "module": "github.com/mattn/go-isatty",
+      "version": "v0.0.24",
+      "zipCached": true,
+      "modCached": true
+    },
+    {
+      "module": "github.com/ncruces/go-strftime",
+      "version": "v1.0.0",
+      "zipCached": true,
+      "modCached": true
+    },
+    {
+      "module": "github.com/remyoudompheng/bigfft",
+      "version": "v0.0.0-20230129092748-24d4a6f8daec",
+      "zipCached": true,
+      "modCached": true
+    },
+    {
+      "module": "golang.org/x/net",
+      "version": "v0.48.0",
+      "zipCached": true,
+      "modCached": true
+    },
+    {
+      "module": "golang.org/x/sys",
+      "version": "v0.47.0",
+      "zipCached": true,
+      "modCached": true
+    },
+    {
+      "module": "golang.org/x/text",
+      "version": "v0.32.0",
+      "zipCached": true,
+      "modCached": true
+    },
+    {
+      "module": "google.golang.org/genproto/googleapis/rpc",
+      "version": "v0.0.0-20251202230838-ff82c1b0f217",
+      "zipCached": true,
+      "modCached": true
+    },
+    {
+      "module": "modernc.org/libc",
+      "version": "v1.75.7",
+      "zipCached": true,
+      "modCached": true
+    },
+    {
+      "module": "modernc.org/mathutil",
+      "version": "v1.7.1",
+      "zipCached": true,
+      "modCached": true
+    },
+    {
+      "module": "modernc.org/memory",
+      "version": "v1.12.1",
+      "zipCached": true,
+      "modCached": true
+    }
+  ],
+  "missingZip": []
+}

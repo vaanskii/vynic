@@ -1,3 +1,4 @@
+import 'package:vynic/core/ui/widgets/pos_dialog.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -206,7 +207,7 @@ class _AdminTableLayoutsSectionState extends State<AdminTableLayoutsSection> {
       return;
     }
 
-    final confirmed = await showDialog<bool>(
+    final confirmed = await showPosModal<bool>(
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: AdminDesign.panel,
@@ -250,7 +251,7 @@ class _AdminTableLayoutsSectionState extends State<AdminTableLayoutsSection> {
   }
 
   Future<void> _resetToDefault() async {
-    final confirmed = await showDialog<bool>(
+    final confirmed = await showPosModal<bool>(
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: AdminDesign.panel,
@@ -299,7 +300,7 @@ class _AdminTableLayoutsSectionState extends State<AdminTableLayoutsSection> {
     required String initial,
   }) async {
     final controller = TextEditingController(text: initial);
-    final result = await showDialog<String>(
+    final result = await showPosModal<String>(
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: AdminDesign.panel,

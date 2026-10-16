@@ -1,0 +1,181 @@
+{
+  "inspectedAtUtc": "2026-10-02T22:24:22.229305+00:00",
+  "mode": "READ_ONLY",
+  "metadataSignaturesVerifiedThisTask": false,
+  "publishedCandidateIsCurrentPos02": false,
+  "actions": {
+    "serverStarted": false,
+    "vmLaunched": false,
+    "publishUploadDeploy": false,
+    "installOrUpdateRequested": false,
+    "certificateTrustChanged": false,
+    "printerContact": false
+  },
+  "installer-local-readonly": {
+    "base": {
+      "status.json": {
+        "state": "READY",
+        "bootstrapPublished": true,
+        "version": "1.0.13"
+      },
+      "distribution.json": {
+        "bootstrapURL": "https://10.10.10.3:8443/bootstrap.json",
+        "channel": "local-development"
+      },
+      "pos/manifest.json": {
+        "product": "vynic-pos",
+        "version": "1.0.13",
+        "release": 14,
+        "os": "windows",
+        "arch": "amd64",
+        "channel": "local-development",
+        "url": "https://10.10.10.3:8443/artifacts/pos-f79a780c3eca7d82e027871709fc48dcdd0d9000a68c0f2fb8f4ac275aefeda3.zip",
+        "sha256": "f79a780c3eca7d82e027871709fc48dcdd0d9000a68c0f2fb8f4ac275aefeda3",
+        "size": 18821663,
+        "expires": "2026-09-28T21:08:18.394698Z",
+        "updaterProtocol": 1,
+        "hiveSchema": 9,
+        "edgeSchema": 2,
+        "dataPolicy": "hive9-no-migration"
+      },
+      "bootstrap.json": {
+        "release": 3,
+        "channel": "local-development",
+        "expires": "2026-09-28T21:08:18.394698Z",
+        "posFeed": "https://10.10.10.3:8443/pos/manifest.json",
+        "repairBase": "https://10.10.10.3:8443/repair",
+        "posReleaseBase": "https://10.10.10.3:8443/pos/releases"
+      },
+      "installer": {
+        "bytes": 26046464,
+        "sha256": "a23432b5955abb26c946dbc0fb9a0ee43a16bdeb83ffedb54b55bd888a357d91"
+      }
+    },
+    "networks/10.10.10.3/": {
+      "distribution.json": {
+        "bootstrapURL": "https://10.10.10.3:8443/networks/10.10.10.3/bootstrap.json",
+        "channel": "local-development"
+      },
+      "pos/manifest.json": {
+        "product": "vynic-pos",
+        "version": "1.0.13",
+        "release": 14,
+        "os": "windows",
+        "arch": "amd64",
+        "channel": "local-development",
+        "url": "https://10.10.10.3:8443/artifacts/pos-f79a780c3eca7d82e027871709fc48dcdd0d9000a68c0f2fb8f4ac275aefeda3.zip",
+        "sha256": "f79a780c3eca7d82e027871709fc48dcdd0d9000a68c0f2fb8f4ac275aefeda3",
+        "size": 18821663,
+        "expires": "2026-09-28T21:08:18.394698Z",
+        "updaterProtocol": 1,
+        "hiveSchema": 9,
+        "edgeSchema": 2,
+        "dataPolicy": "hive9-no-migration"
+      },
+      "bootstrap.json": {
+        "release": 3,
+        "channel": "local-development",
+        "expires": "2026-09-28T21:08:18.394698Z",
+        "posFeed": "https://10.10.10.3:8443/networks/10.10.10.3/pos/manifest.json",
+        "repairBase": "https://10.10.10.3:8443/networks/10.10.10.3/repair",
+        "posReleaseBase": "https://10.10.10.3:8443/networks/10.10.10.3/pos/releases"
+      },
+      "installer": {
+        "bytes": 26046464,
+        "sha256": "2189d75fc41418e0de94ac82f8ed2f6d04de583430d530c5eda60b9ed30d0216"
+      }
+    },
+    "networks/172.20.10.2/": {
+      "distribution.json": {
+        "bootstrapURL": "https://172.20.10.2:8443/networks/172.20.10.2/bootstrap.json",
+        "channel": "local-development"
+      },
+      "pos/manifest.json": {
+        "product": "vynic-pos",
+        "version": "1.0.13",
+        "release": 14,
+        "os": "windows",
+        "arch": "amd64",
+        "channel": "local-development",
+        "url": "https://172.20.10.2:8443/artifacts/pos-f79a780c3eca7d82e027871709fc48dcdd0d9000a68c0f2fb8f4ac275aefeda3.zip",
+        "sha256": "f79a780c3eca7d82e027871709fc48dcdd0d9000a68c0f2fb8f4ac275aefeda3",
+        "size": 18821663,
+        "expires": "2026-09-28T21:08:18.394698Z",
+        "updaterProtocol": 1,
+        "hiveSchema": 9,
+        "edgeSchema": 2,
+        "dataPolicy": "hive9-no-migration"
+      },
+      "bootstrap.json": {
+        "release": 3,
+        "channel": "local-development",
+        "expires": "2026-09-28T21:08:18.394698Z",
+        "posFeed": "https://172.20.10.2:8443/networks/172.20.10.2/pos/manifest.json",
+        "repairBase": "https://172.20.10.2:8443/networks/172.20.10.2/repair",
+        "posReleaseBase": "https://172.20.10.2:8443/networks/172.20.10.2/pos/releases"
+      },
+      "installer": {
+        "bytes": 26046464,
+        "sha256": "2c28cce1598fcd7aa0c2d21fe31039c78d461988fde25adf28972ca88e0c93f2"
+      }
+    },
+    "en0": "NO_ADDRESS",
+    "en1": "NO_ADDRESS"
+  },
+  "installer-live-readonly": {
+    "en0": {
+      "exit": 0,
+      "address": "10.10.10.3",
+      "diagnostic": ""
+    },
+    "en1": {
+      "exit": 1,
+      "address": "",
+      "diagnostic": ""
+    },
+    "listener": {
+      "exit": 1,
+      "output": "",
+      "diagnostic": ""
+    },
+    "httpsStatus": {
+      "error": "<urlopen error [Errno 61] Connection refused>"
+    }
+  },
+  "installer-state-readonly": {
+    "origin": "https://10.10.10.3:8443",
+    "posVersion": "1.0.13",
+    "posRelease": 14,
+    "edgeVersion": "1.0.1",
+    "edgeRelease": 3,
+    "posUpdatePending": false,
+    "posReceipt": {
+      "product": "vynic-pos",
+      "version": "1.0.13",
+      "sourceSha256": "fe53104f5d18b3e0408e311b72795731b82ae8fdfe90dd739e3a197c83f58047",
+      "environment": "development",
+      "apiOrigin": "http://10.10.10.3:3000"
+    },
+    "certificatePemSha256": "0d31b94c7820b7c2c7a8dc83066742f348bb538bbd654f42178b5725be244613"
+  },
+  "installer-published-source": {
+    "publishedSourceZipSha256": "fe53104f5d18b3e0408e311b72795731b82ae8fdfe90dd739e3a197c83f58047",
+    "publishedArtifactSha256": "f79a780c3eca7d82e027871709fc48dcdd0d9000a68c0f2fb8f4ac275aefeda3",
+    "buildReceipt": {
+      "product": "vynic-pos",
+      "version": "1.0.13",
+      "sourceSha256": "fe53104f5d18b3e0408e311b72795731b82ae8fdfe90dd739e3a197c83f58047",
+      "environment": "development",
+      "apiOrigin": "http://10.10.10.3:3000"
+    },
+    "containsNewCorePaths": {
+      "apps/operations/lib/core/services/printing/print_job.dart": false,
+      "apps/operations/lib/core/services/printing/print_reconciliation.dart": false,
+      "apps/operations/lib/core/services/printing/local_printer_catalog.dart": false
+    }
+  },
+  "rootCAderFingerprintSha256": "D1:2C:1A:7E:0B:65:91:E8:24:11:6E:B3:DF:6C:56:6A:71:E1:C3:FE:64:13:E8:ED:5C:09:00:B4:35:BA:E3:05",
+  "publicTrustKeyExpirations": {
+    "vynic-local-development-only": "2027-03-19T12:15:19.109695Z"
+  }
+}

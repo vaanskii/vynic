@@ -17,6 +17,9 @@ export type SubscriptionDetail = {
   startedAt?: string | null;
   serverTime?: string;
   trialEndsAt?: string | null;
+  trialEndedAt?: string | null;
+  suspendedFrom?: string | null;
+  suspendedAt?: string | null;
   currentPeriodStart?: string | null;
   currentPeriodEndsAt?: string | null;
   billingAnchorAt?: string | null;

@@ -1,0 +1,82 @@
+00:00 +0: loading /Users/vaanskii/Developer/vynic/apps/operations/test/widget/pos_home_correction_test.dart
+00:00 +0: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/pos_home_correction_test.dart: (setUpAll)
+00:00 +0: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/pos_home_correction_test.dart: connected workflows retain actual Home navigation at 1024
+00:00 +1: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/pos_home_correction_test.dart: connected workflows retain actual Home navigation at 1024
+00:00 +2: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/pos_home_correction_test.dart: connected workflows retain actual Home navigation at 1024
+00:00 +3: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/pos_home_correction_test.dart: connected workflows retain actual Home navigation at 1024
+00:00 +4: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/pos_home_correction_test.dart: connected workflows retain actual Home navigation at 1024
+00:00 +5: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/pos_home_correction_test.dart: connected workflows retain actual Home navigation at 1024
+00:00 +6: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/pos_home_correction_test.dart: connected workflows retain actual Home navigation at 1024
+00:00 +7: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/pos_home_correction_test.dart: connected workflows retain actual Home navigation at 1024
+00:00 +8: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/pos_home_correction_test.dart: connected workflows retain actual Home navigation at 1024
+00:00 +9: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/pos_home_correction_test.dart: connected workflows retain actual Home navigation at 1024
+00:00 +10: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/pos_home_correction_test.dart: connected workflows retain actual Home navigation at 1024
+00:00 +11: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/pos_home_correction_test.dart: connected workflows retain actual Home navigation at 1024
+00:00 +12: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/pos_home_correction_test.dart: connected workflows retain actual Home navigation at 1024
+00:00 +13: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/pos_home_correction_test.dart: connected workflows retain actual Home navigation at 1024
+00:00 +14: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/pos_home_correction_test.dart: connected workflows retain actual Home navigation at 1024
+00:00 +15: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/pos_home_correction_test.dart: connected workflows retain actual Home navigation at 1024
+00:00 +16: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/pos_home_correction_test.dart: connected workflows retain actual Home navigation at 1024
+00:00 +17: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/pos_home_correction_test.dart: connected workflows retain actual Home navigation at 1024
+00:00 +18: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/pos_home_correction_test.dart: connected workflows retain actual Home navigation at 1024
+00:01 +19: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/pos_home_correction_test.dart: connected workflows retain actual Home navigation at 1024
+00:01 +20: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/pos_home_correction_test.dart: connected workflows retain actual Home navigation at 1024
+00:01 +21: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/pos_home_correction_test.dart: connected workflows retain actual Home navigation at 1024
+00:01 +22: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/pos_home_correction_test.dart: connected workflows retain actual Home navigation at 1024
+00:01 +23: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/pos_home_correction_test.dart: restrained full-width table view 1024x768
+00:01 +24: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/pos_home_correction_test.dart: restrained full-width table view 1440x900
+00:01 +25: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/menu_screen_layout_test.dart: saved category appears in the open menu without restart
+00:01 +26: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/menu_screen_layout_test.dart: saved category appears in the open menu without restart
+00:02 +27: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/menu_screen_layout_test.dart: production menu visual at 1024 with Georgian text
+00:02 +28: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/pos_login_layout_test.dart: production login visual at 1024
+00:02 +29: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/pos_login_layout_test.dart: production login visual at 1024
+00:02 +30: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/pos_login_layout_test.dart: production login visual at 1024
+00:02 +31: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/pos_login_layout_test.dart: production login visual at 1024
+00:02 +32: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/pos_login_layout_test.dart: production login visual at 1024
+00:02 +33: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/pos_login_layout_test.dart: production login visual at 1024
+00:02 +34: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/menu_screen_layout_test.dart: the variant picker fits at 1200x720
+00:02 +35: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/menu_screen_layout_test.dart: the variant picker fits at 1200x720
+00:02 +36: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/menu_screen_layout_test.dart: the variant picker fits at 1200x720
+00:02 +37: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/pos_login_layout_test.dart: Login version and right-aligned date at 800.0 / 1.0
+00:02 +38: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/menu_screen_layout_test.dart: a two-line dish name stays inside its card at 1200x720
+00:02 +39: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/menu_screen_layout_test.dart: a two-line dish name stays inside its card at 1200x720
+00:02 +40: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/pos_login_layout_test.dart: Login version and right-aligned date at 1024.0 / 1.0
+00:02 +41: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/menu_screen_layout_test.dart: the comment dialog fits at 1200x720
+00:02 +42: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/menu_screen_layout_test.dart: the comment dialog fits at 1200x720
+00:02 +43: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/menu_screen_layout_test.dart: the comment dialog fits at 1200x720
+00:02 +44: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/pos_login_layout_test.dart: Login version and right-aligned date at 1280.0 / 1.5
+00:02 +45: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/menu_screen_layout_test.dart: lays out without overflow at 1280x720
+00:02 +46: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/menu_screen_layout_test.dart: lays out without overflow at 1280x720, booked
+00:02 +47: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/menu_screen_layout_test.dart: lays out without overflow at 1280x720, empty cart
+00:02 +48: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/menu_screen_layout_test.dart: lays out without overflow at 1280x720, take away
+00:02 +49: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/menu_screen_layout_test.dart: the quantity pad fits at 1280x720
+00:02 +50: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/menu_screen_layout_test.dart: the variant picker fits at 1280x720
+00:03 +51: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/menu_screen_layout_test.dart: a two-line dish name stays inside its card at 1280x720
+00:03 +52: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/menu_screen_layout_test.dart: the comment dialog fits at 1280x720
+00:03 +53: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/menu_screen_layout_test.dart: lays out without overflow at 1366x768
+00:03 +54: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/menu_screen_layout_test.dart: lays out without overflow at 1366x768, booked
+00:03 +55: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/menu_screen_layout_test.dart: lays out without overflow at 1366x768, empty cart
+00:03 +56: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/menu_screen_layout_test.dart: lays out without overflow at 1366x768, take away
+00:03 +57: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/menu_screen_layout_test.dart: the quantity pad fits at 1366x768
+00:03 +58: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/menu_screen_layout_test.dart: the variant picker fits at 1366x768
+00:03 +59: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/menu_screen_layout_test.dart: a two-line dish name stays inside its card at 1366x768
+00:03 +60: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/menu_screen_layout_test.dart: the comment dialog fits at 1366x768
+00:03 +61: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/menu_screen_layout_test.dart: lays out without overflow at 1440x900
+00:03 +62: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/menu_screen_layout_test.dart: lays out without overflow at 1440x900, booked
+00:03 +63: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/menu_screen_layout_test.dart: lays out without overflow at 1440x900, empty cart
+00:03 +64: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/menu_screen_layout_test.dart: lays out without overflow at 1440x900, take away
+00:03 +65: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/menu_screen_layout_test.dart: the quantity pad fits at 1440x900
+00:03 +66: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/menu_screen_layout_test.dart: the variant picker fits at 1440x900
+00:03 +67: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/menu_screen_layout_test.dart: a two-line dish name stays inside its card at 1440x900
+00:03 +68: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/menu_screen_layout_test.dart: the comment dialog fits at 1440x900
+00:03 +69: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/menu_screen_layout_test.dart: lays out without overflow at 1920x1080
+00:03 +70: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/menu_screen_layout_test.dart: lays out without overflow at 1920x1080, booked
+00:03 +71: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/menu_screen_layout_test.dart: lays out without overflow at 1920x1080, empty cart
+00:03 +72: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/menu_screen_layout_test.dart: lays out without overflow at 1920x1080, take away
+00:03 +73: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/menu_screen_layout_test.dart: the quantity pad fits at 1920x1080
+00:03 +74: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/menu_screen_layout_test.dart: the variant picker fits at 1920x1080
+00:03 +75: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/menu_screen_layout_test.dart: a two-line dish name stays inside its card at 1920x1080
+00:03 +76: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/menu_screen_layout_test.dart: the comment dialog fits at 1920x1080
+00:03 +77: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/menu_screen_layout_test.dart: service fee controls stay out of take-away menu selection
+00:03 +78: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/menu_screen_layout_test.dart: (tearDownAll)
+00:04 +78: All tests passed!

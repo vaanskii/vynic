@@ -1,0 +1,11 @@
+{
+  "freshMigrations": "PASS_TASK_DATABASES",
+  "populatedUpgrade": "PASS",
+  "existingIdsDatesStatusAmountsAndDuplicateLegacyRefsPreserved": true,
+  "legacyState": "UNTRACKED_NO_INFERRED_MONEY_OR_HOLDS",
+  "schemaDiff": "UNCHANGED_PREEXISTING_TWO_PRINTER_FK_NAMES",
+  "websiteSchemaChangesMatchMigration": true,
+  "prismaValidation": "PASS",
+  "verifiedMigrationChecksums": 74,
+  "liveDataChanged": false
+}

@@ -1,3 +1,4 @@
+import 'package:vynic/core/ui/widgets/pos_dialog.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -113,7 +114,7 @@ class _FloorEditorScreenState extends State<FloorEditorScreen> {
 
   Future<bool> _confirmDiscard() async {
     if (!_controller.isDirty) return true;
-    final result = await showDialog<bool>(
+    final result = await showPosModal<bool>(
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: AdminDesign.panel,

@@ -1,0 +1,29 @@
+{
+  "schema": 1,
+  "observedCounters": {
+    "printJobsBefore": {
+      "value": 0,
+      "method": "Win32_PrintJob CIM snapshot immediately before package execution"
+    },
+    "printJobsAfter": {
+      "value": 0,
+      "method": "Win32_PrintJob CIM snapshot immediately after package execution"
+    },
+    "betweenPackages": {
+      "value": 0,
+      "method": "Win32_PrintJob CIM check after each package"
+    }
+  },
+  "sourceBoundedCounters": {
+    "documentsSubmitted": 0,
+    "validRAWCalls": 0,
+    "serviceRegistrations": 0,
+    "driverInstalls": 0,
+    "productStarts": 0,
+    "machineRestarts": 0,
+    "VMSettingsChanges": 0,
+    "persistentCredentialChanges": 0
+  },
+  "sourceBoundedMeaning": "These runner counters label the reviewed, hash-pinned action scope; they are not a continuous Winspool/SCM trace. Real helper fixtures enumerate inventory or submit empty/malformed frames that fail validation; valid TCP destinations use injected fake dialers, and eligibility/cluster network tests bind loopback synthetic peers only. No physical acceptance is claimed.",
+  "receiptScope": "Native Windows package runs, frozen V2 163 source files, seven amd64 test executables on ARM64 Windows VM; no later service/installer/UI code."
+}

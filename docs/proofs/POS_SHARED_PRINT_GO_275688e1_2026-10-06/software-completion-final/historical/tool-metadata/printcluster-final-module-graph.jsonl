@@ -1,0 +1,1027 @@
+{
+	"Path": "vynic.local/edge",
+	"Main": true,
+	"Dir": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/source/apps/edge",
+	"GoMod": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/source/apps/edge/go.mod",
+	"GoVersion": "1.26.0"
+}
+{
+	"Path": "cel.dev/expr",
+	"Version": "v0.25.2",
+	"Time": "2026-03-12T16:46:44Z",
+	"Indirect": true
+}
+{
+	"Path": "cloud.google.com/go/auth",
+	"Version": "v0.18.2",
+	"Time": "2026-02-13T17:14:27Z",
+	"Indirect": true
+}
+{
+	"Path": "cloud.google.com/go/compute/metadata",
+	"Version": "v0.9.0",
+	"Time": "2025-09-24T19:41:55Z",
+	"Indirect": true
+}
+{
+	"Path": "github.com/DataDog/datadog-go",
+	"Version": "v4.8.3+incompatible",
+	"Time": "2021-10-27T13:03:13Z",
+	"Indirect": true
+}
+{
+	"Path": "github.com/DataDog/zstd",
+	"Version": "v1.5.2",
+	"Time": "2022-04-22T19:53:43Z",
+	"Indirect": true
+}
+{
+	"Path": "github.com/GoogleCloudPlatform/opentelemetry-operations-go/detectors/gcp",
+	"Version": "v1.33.0",
+	"Time": "2026-06-04T20:21:43Z",
+	"Indirect": true
+}
+{
+	"Path": "github.com/Microsoft/go-winio",
+	"Version": "v0.6.2",
+	"Time": "2024-04-09T20:07:04Z",
+	"Indirect": true
+}
+{
+	"Path": "github.com/Sereal/Sereal/Go/sereal",
+	"Version": "v0.0.0-20231009093132-b9187f1a92c6",
+	"Time": "2023-10-09T09:31:32Z",
+	"Indirect": true
+}
+{
+	"Path": "github.com/armon/go-metrics",
+	"Version": "v0.4.1",
+	"Time": "2022-09-08T12:00:52Z",
+	"Indirect": true
+}
+{
+	"Path": "github.com/beorn7/perks",
+	"Version": "v1.0.1",
+	"Time": "2019-07-31T12:00:54Z",
+	"Indirect": true
+}
+{
+	"Path": "github.com/boltdb/bolt",
+	"Version": "v1.3.1",
+	"Time": "2017-07-17T17:11:48Z",
+	"Indirect": true,
+	"Dir": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/github.com/boltdb/bolt@v1.3.1",
+	"GoMod": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/github.com/boltdb/bolt/@v/v1.3.1.mod",
+	"Sum": "h1:JQmyP4ZBrce+ZQu0dY660FMfatumYDLun9hBCUVIkF4=",
+	"GoModSum": "h1:clJnj/oiGkjum5o1McbSZDSLxVThjynRyGBgiAx27Ps="
+}
+{
+	"Path": "github.com/cespare/xxhash/v2",
+	"Version": "v2.3.0",
+	"Time": "2024-04-04T20:00:10Z",
+	"Indirect": true,
+	"Dir": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/github.com/cespare/xxhash/v2@v2.3.0",
+	"GoMod": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/github.com/cespare/xxhash/v2/@v/v2.3.0.mod",
+	"GoVersion": "1.11",
+	"Sum": "h1:UL815xU9SqsFlibzuggzjXhog7bL6oX9BbNZnL2UFvs=",
+	"GoModSum": "h1:VGX0DQ3Q6kWi7AoAeZDth3/j3BFtOZR5XLFGgcrjCOs="
+}
+{
+	"Path": "github.com/circonus-labs/circonus-gometrics",
+	"Version": "v2.3.1+incompatible",
+	"Time": "2019-04-16T23:07:14Z",
+	"Indirect": true
+}
+{
+	"Path": "github.com/circonus-labs/circonusllhist",
+	"Version": "v0.1.3",
+	"Time": "2018-11-28T18:31:03Z",
+	"Indirect": true
+}
+{
+	"Path": "github.com/cncf/xds/go",
+	"Version": "v0.0.0-20260202195803-dba9d589def2",
+	"Time": "2026-02-02T19:58:03Z",
+	"Indirect": true
+}
+{
+	"Path": "github.com/davecgh/go-spew",
+	"Version": "v1.1.1",
+	"Time": "2018-02-21T23:26:28Z",
+	"Indirect": true,
+	"Dir": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/github.com/davecgh/go-spew@v1.1.1",
+	"GoMod": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/github.com/davecgh/go-spew/@v/v1.1.1.mod",
+	"Sum": "h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=",
+	"GoModSum": "h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38="
+}
+{
+	"Path": "github.com/davecgh/go-xdr",
+	"Version": "v0.0.0-20161123171359-e6a2ba005892",
+	"Time": "2016-11-23T17:13:59Z",
+	"Indirect": true
+}
+{
+	"Path": "github.com/dustin/go-humanize",
+	"Version": "v1.0.1",
+	"Time": "2023-01-10T06:44:38Z",
+	"Indirect": true,
+	"Dir": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/github.com/dustin/go-humanize@v1.0.1",
+	"GoMod": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/github.com/dustin/go-humanize/@v/v1.0.1.mod",
+	"GoVersion": "1.16",
+	"Sum": "h1:GzkhY7T5VNhEkwH0PVJgjz+fX1rhBrR7pRT3mDkpeCY=",
+	"GoModSum": "h1:Mu1zIs6XwVuF/gI1OepvI0qD18qycQx+mFykh5fBlto="
+}
+{
+	"Path": "github.com/envoyproxy/go-control-plane",
+	"Version": "v0.14.0",
+	"Time": "2025-11-04T22:01:44Z",
+	"Indirect": true
+}
+{
+	"Path": "github.com/envoyproxy/go-control-plane/envoy",
+	"Version": "v1.37.0",
+	"Time": "2026-01-13T06:26:49Z",
+	"Indirect": true
+}
+{
+	"Path": "github.com/envoyproxy/go-control-plane/ratelimit",
+	"Version": "v0.1.0",
+	"Time": "2024-12-23T15:25:59Z",
+	"Indirect": true
+}
+{
+	"Path": "github.com/envoyproxy/protoc-gen-validate",
+	"Version": "v1.3.3",
+	"Time": "2026-02-18T16:13:16Z",
+	"Indirect": true
+}
+{
+	"Path": "github.com/fatih/color",
+	"Version": "v1.19.0",
+	"Time": "2026-03-20T08:53:23Z",
+	"Indirect": true,
+	"Dir": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/github.com/fatih/color@v1.19.0",
+	"GoMod": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/github.com/fatih/color/@v/v1.19.0.mod",
+	"GoVersion": "1.25.0",
+	"Sum": "h1:Zp3PiM21/9Ld6FzSKyL5c/BULoe/ONr9KlbYVOfG8+w=",
+	"GoModSum": "h1:zNk67I0ZUT1bEGsSGyCZYZNrHuTkJJB+r6Q9VuMi0LE="
+}
+{
+	"Path": "github.com/felixge/httpsnoop",
+	"Version": "v1.0.4",
+	"Time": "2023-03-12T10:31:09Z",
+	"Indirect": true
+}
+{
+	"Path": "github.com/go-jose/go-jose/v4",
+	"Version": "v4.1.4",
+	"Time": "2026-03-31T23:33:50Z",
+	"Indirect": true
+}
+{
+	"Path": "github.com/go-logr/logr",
+	"Version": "v1.4.3",
+	"Time": "2025-05-19T04:56:57Z",
+	"Indirect": true,
+	"Dir": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/github.com/go-logr/logr@v1.4.3",
+	"GoMod": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/github.com/go-logr/logr/@v/v1.4.3.mod",
+	"GoVersion": "1.18",
+	"Sum": "h1:CjnDlHq8ikf6E492q6eKboGOC0T8CDaOvkHCIg8idEI=",
+	"GoModSum": "h1:9T104GzyrTigFIr8wt5mBrctHMim0Nb2HLGrmQ40KvY="
+}
+{
+	"Path": "github.com/go-logr/stdr",
+	"Version": "v1.2.2",
+	"Time": "2021-12-14T08:00:35Z",
+	"Indirect": true,
+	"Dir": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/github.com/go-logr/stdr@v1.2.2",
+	"GoMod": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/github.com/go-logr/stdr/@v/v1.2.2.mod",
+	"GoVersion": "1.16",
+	"Sum": "h1:hSWxHoqTgW2S2qGc0LTAI563KZ5YKYRhT3MFKZMbjag=",
+	"GoModSum": "h1:mMo/vtBO5dYbehREoey6XUKy/eSumjCCveDpRre4VKE="
+}
+{
+	"Path": "github.com/gofrs/flock",
+	"Version": "v0.12.1",
+	"Time": "2024-07-22T20:18:06Z",
+	"Dir": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/github.com/gofrs/flock@v0.12.1",
+	"GoMod": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/github.com/gofrs/flock/@v/v0.12.1.mod",
+	"GoVersion": "1.21.0",
+	"Sum": "h1:MTLVXXHf8ekldpJk3AKicLij9MdwOWkZ+a/jHHZby9E=",
+	"GoModSum": "h1:9zxTsyu5xtJ9DK+1tFZyibEV7y3uwDxPPfbxeeHCoD0="
+}
+{
+	"Path": "github.com/golang/glog",
+	"Version": "v1.2.5",
+	"Time": "2025-04-29T08:43:26Z",
+	"Indirect": true
+}
+{
+	"Path": "github.com/golang/protobuf",
+	"Version": "v1.5.4",
+	"Time": "2024-03-06T06:45:40Z",
+	"Indirect": true,
+	"Dir": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/github.com/golang/protobuf@v1.5.4",
+	"GoMod": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/github.com/golang/protobuf/@v/v1.5.4.mod",
+	"GoVersion": "1.17",
+	"Sum": "h1:i7eJL8qZTpSEXOPTxNKhASYpMn+8e5Q6AdndVa1dWek=",
+	"GoModSum": "h1:lnTiLA8Wa4RWRcIUkrtSVa5nRhsEGBg48fD6rSs7xps="
+}
+{
+	"Path": "github.com/golang/snappy",
+	"Version": "v0.0.4",
+	"Time": "2021-06-08T04:05:37Z",
+	"Indirect": true
+}
+{
+	"Path": "github.com/google/go-cmp",
+	"Version": "v0.7.0",
+	"Time": "2025-01-14T18:15:44Z",
+	"Indirect": true,
+	"Dir": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/github.com/google/go-cmp@v0.7.0",
+	"GoMod": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/github.com/google/go-cmp/@v/v0.7.0.mod",
+	"GoVersion": "1.21",
+	"Sum": "h1:wk8382ETsv4JYUZwIsn6YpYiWiBsYLSJiTsyBybVuN8=",
+	"GoModSum": "h1:pXiqmnSA92OHEEa9HXL2W4E7lf9JzCmGVUdgjX3N/iU="
+}
+{
+	"Path": "github.com/google/pprof",
+	"Version": "v0.0.0-20260802141513-ef3492d7dac3",
+	"Time": "2026-08-02T14:15:13Z",
+	"Indirect": true,
+	"Dir": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/github.com/google/pprof@v0.0.0-20260802141513-ef3492d7dac3",
+	"GoMod": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/github.com/google/pprof/@v/v0.0.0-20260802141513-ef3492d7dac3.mod",
+	"GoVersion": "1.25.0",
+	"Sum": "h1:LMLX+LgTNWpfvCBdFebv6EsYotImrt/Ppc5cXIriCSo=",
+	"GoModSum": "h1:jl5iWTm0/hd5PjEYEOuwAJ57L/CibdZfrqZ5XA5GrCk="
+}
+{
+	"Path": "github.com/google/s2a-go",
+	"Version": "v0.1.9",
+	"Time": "2025-01-06T17:53:46Z",
+	"Indirect": true
+}
+{
+	"Path": "github.com/google/uuid",
+	"Version": "v1.6.0",
+	"Time": "2024-01-23T18:54:04Z",
+	"Dir": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/github.com/google/uuid@v1.6.0",
+	"GoMod": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/github.com/google/uuid/@v/v1.6.0.mod",
+	"Sum": "h1:NIvaJDMOsjHA8n1jAhLSgzrAzy1Hgr+hNrb57e+94F0=",
+	"GoModSum": "h1:TIyPZe4MgqvfeYDBFedMoGGpEw/LqOeaOT+nhxU+yHo="
+}
+{
+	"Path": "github.com/googleapis/enterprise-certificate-proxy",
+	"Version": "v0.3.11",
+	"Time": "2026-01-13T07:11:36Z",
+	"Indirect": true
+}
+{
+	"Path": "github.com/googleapis/gax-go/v2",
+	"Version": "v2.17.0",
+	"Time": "2026-02-03T18:41:38Z",
+	"Indirect": true
+}
+{
+	"Path": "github.com/hashicorp/go-cleanhttp",
+	"Version": "v0.5.2",
+	"Time": "2021-02-03T18:51:13Z",
+	"Indirect": true
+}
+{
+	"Path": "github.com/hashicorp/go-hclog",
+	"Version": "v1.6.3",
+	"Time": "2024-04-01T20:03:54Z",
+	"Indirect": true,
+	"Dir": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/github.com/hashicorp/go-hclog@v1.6.3",
+	"GoMod": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/github.com/hashicorp/go-hclog/@v/v1.6.3.mod",
+	"GoVersion": "1.13",
+	"Sum": "h1:Qr2kF+eVWjTiYmU7Y31tYlP1h0q/X3Nl3tPGdaB11/k=",
+	"GoModSum": "h1:W4Qnvbt70Wk/zYJryRzDRU/4r0kIg0PVHBcfoyhpF5M="
+}
+{
+	"Path": "github.com/hashicorp/go-immutable-radix",
+	"Version": "v1.3.1",
+	"Time": "2021-06-28T20:38:56Z",
+	"Indirect": true,
+	"Dir": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/github.com/hashicorp/go-immutable-radix@v1.3.1",
+	"GoMod": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/github.com/hashicorp/go-immutable-radix/@v/v1.3.1.mod",
+	"Sum": "h1:DKHmCUm2hRBK510BaiZlwvpD40f8bJFeZnpfm2KLowc=",
+	"GoModSum": "h1:0y9vanUI8NX6FsYoO3zeMjhV/C5i9g4Q3DwcSNZ4P60="
+}
+{
+	"Path": "github.com/hashicorp/go-metrics",
+	"Version": "v0.7.0",
+	"Time": "2026-09-16T14:13:16Z",
+	"Indirect": true,
+	"Dir": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/github.com/hashicorp/go-metrics@v0.7.0",
+	"GoMod": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/github.com/hashicorp/go-metrics/@v/v0.7.0.mod",
+	"GoVersion": "1.25.0",
+	"Sum": "h1:lLWieZTcbzZT+rY0zrqKbyryXG8RIajdUjmM0+R79eg=",
+	"GoModSum": "h1:8T/Es8FPTfQvY7azBPGyrwXwwg7mbA9/TmQ1/lWfxb4="
+}
+{
+	"Path": "github.com/hashicorp/go-msgpack",
+	"Version": "v0.5.5",
+	"Time": "2019-05-02T14:51:04Z",
+	"Indirect": true,
+	"Dir": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/github.com/hashicorp/go-msgpack@v0.5.5",
+	"Sum": "h1:i9R9JSrqIz0QVLz3sz+i3YJdT7TTSLcfLLzJi9aZTuI="
+}
+{
+	"Path": "github.com/hashicorp/go-msgpack/v2",
+	"Version": "v2.1.5",
+	"Time": "2025-09-24T13:24:49Z",
+	"Indirect": true,
+	"Dir": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/github.com/hashicorp/go-msgpack/v2@v2.1.5",
+	"GoMod": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/github.com/hashicorp/go-msgpack/v2/@v/v2.1.5.mod",
+	"GoVersion": "1.24.0",
+	"Sum": "h1:Ue879bPnutj/hXfmUk6s/jtIK90XxgiUIcXRl656T44=",
+	"GoModSum": "h1:bjCsRXpZ7NsJdk45PoCQnzRGDaK8TKm5ZnDI/9y3J4M="
+}
+{
+	"Path": "github.com/hashicorp/go-retryablehttp",
+	"Version": "v0.7.7",
+	"Time": "2024-05-30T00:13:00Z",
+	"Indirect": true
+}
+{
+	"Path": "github.com/hashicorp/go-uuid",
+	"Version": "v1.0.0",
+	"Time": "2018-08-30T03:27:00Z",
+	"Indirect": true,
+	"GoMod": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/github.com/hashicorp/go-uuid/@v/v1.0.0.mod",
+	"GoModSum": "h1:6SBZvOh/SIDV7/2o3Jml5SYk/TvGqwFJ/bN7x4byOro="
+}
+{
+	"Path": "github.com/hashicorp/golang-lru",
+	"Version": "v1.0.2",
+	"Time": "2023-08-08T11:23:39Z",
+	"Indirect": true,
+	"Dir": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/github.com/hashicorp/golang-lru@v1.0.2",
+	"GoMod": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/github.com/hashicorp/golang-lru/@v/v1.0.2.mod",
+	"GoVersion": "1.12",
+	"Sum": "h1:dV3g9Z/unq5DpblPpw+Oqcv4dU/1omnb4Ok8iPY6p1c=",
+	"GoModSum": "h1:iADmTwqILo4mZ8BN3D2Q6+9jd8WM5uGBxy+E8yxSoD4="
+}
+{
+	"Path": "github.com/hashicorp/golang-lru/v2",
+	"Version": "v2.0.7",
+	"Time": "2023-09-21T18:26:40Z",
+	"Indirect": true,
+	"Dir": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/github.com/hashicorp/golang-lru/v2@v2.0.7",
+	"GoMod": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/github.com/hashicorp/golang-lru/v2/@v/v2.0.7.mod",
+	"GoVersion": "1.18",
+	"Sum": "h1:a+bsQ5rvGLjzHuww6tVxozPZFVghXaHOwFs4luLUK2k=",
+	"GoModSum": "h1:QeFd9opnmA6QUJc5vARoKUSoFhyfM2/ZepoAG6RGpeM="
+}
+{
+	"Path": "github.com/hashicorp/raft",
+	"Version": "v1.8.0",
+	"Time": "2026-09-16T14:40:33Z",
+	"Dir": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/github.com/hashicorp/raft@v1.8.0",
+	"GoMod": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/github.com/hashicorp/raft/@v/v1.8.0.mod",
+	"GoVersion": "1.25.0",
+	"Sum": "h1:YbfecBcuTar/LNFEDfVTpqu9Aw+MczTk7MYczvy+62k=",
+	"GoModSum": "h1:agL5fncrpEsbxr5P5KOd2srskDwPY18opjXN5x0661s="
+}
+{
+	"Path": "github.com/hashicorp/raft-boltdb",
+	"Version": "v0.0.0-20230125174641-2a8082862702",
+	"Time": "2023-01-25T17:46:41Z",
+	"Indirect": true
+}
+{
+	"Path": "github.com/hashicorp/raft-boltdb/v2",
+	"Version": "v2.4.2",
+	"Time": "2026-09-16T15:42:38Z",
+	"Dir": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/github.com/hashicorp/raft-boltdb/v2@v2.4.2",
+	"GoMod": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/github.com/hashicorp/raft-boltdb/v2/@v/v2.4.2.mod",
+	"GoVersion": "1.26.0",
+	"Sum": "h1:r2RRgZ6ajT+VH8/9yC5mfoKAlt3KrYiUDhfbUSmaoTs=",
+	"GoModSum": "h1:+wvKK1thWEqM7amY1MXjtQpkm+b9KNUXks0fcus5ZGU="
+}
+{
+	"Path": "github.com/inconshreveable/mousetrap",
+	"Version": "v1.1.0",
+	"Time": "2022-11-27T22:01:53Z",
+	"Indirect": true
+}
+{
+	"Path": "github.com/josharian/intern",
+	"Version": "v1.0.0",
+	"Time": "2019-12-14T22:12:22Z",
+	"Indirect": true
+}
+{
+	"Path": "github.com/json-iterator/go",
+	"Version": "v1.1.12",
+	"Time": "2021-09-11T02:17:26Z",
+	"Indirect": true
+}
+{
+	"Path": "github.com/kr/pretty",
+	"Version": "v0.3.1",
+	"Time": "2022-08-29T23:03:05Z",
+	"Indirect": true
+}
+{
+	"Path": "github.com/mailru/easyjson",
+	"Version": "v0.7.7",
+	"Time": "2021-02-06T19:00:08Z",
+	"Indirect": true
+}
+{
+	"Path": "github.com/mattn/go-colorable",
+	"Version": "v0.1.15",
+	"Time": "2026-05-29T14:40:24Z",
+	"Indirect": true,
+	"Dir": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/github.com/mattn/go-colorable@v0.1.15",
+	"GoMod": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/github.com/mattn/go-colorable/@v/v0.1.15.mod",
+	"GoVersion": "1.18",
+	"Sum": "h1:+u9SLTRGnXv73cEsnsmoZBom+dMU88B2M0aDcWy0/jY=",
+	"GoModSum": "h1:6LmQG8QLFO4G5z1gPvYEzlUgJ2wF+stgPZH1UqBm1s8="
+}
+{
+	"Path": "github.com/mattn/go-isatty",
+	"Version": "v0.0.24",
+	"Time": "2026-07-23T16:45:22Z",
+	"Indirect": true,
+	"Dir": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/github.com/mattn/go-isatty@v0.0.24",
+	"GoMod": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/github.com/mattn/go-isatty/@v/v0.0.24.mod",
+	"GoVersion": "1.20",
+	"Sum": "h1:tGZZoVgT/KiqK1c8ocVLeDS8BSWMRd47J3Lbz7vsReI=",
+	"GoModSum": "h1:nMCL3Zebbrt45jsMDgnfIwz6ydEQApk5oEI3HqDio6A="
+}
+{
+	"Path": "github.com/modern-go/concurrent",
+	"Version": "v0.0.0-20180306012644-bacd9c7ef1dd",
+	"Time": "2018-03-06T01:26:44Z",
+	"Indirect": true
+}
+{
+	"Path": "github.com/modern-go/reflect2",
+	"Version": "v1.0.2",
+	"Time": "2021-09-11T02:10:30Z",
+	"Indirect": true
+}
+{
+	"Path": "github.com/munnerz/goautoneg",
+	"Version": "v0.0.0-20191010083416-a7dc8b61c822",
+	"Time": "2019-10-10T08:34:16Z",
+	"Indirect": true
+}
+{
+	"Path": "github.com/ncruces/go-strftime",
+	"Version": "v1.0.0",
+	"Time": "2025-10-08T11:45:18Z",
+	"Indirect": true,
+	"Dir": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/github.com/ncruces/go-strftime@v1.0.0",
+	"GoMod": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/github.com/ncruces/go-strftime/@v/v1.0.0.mod",
+	"GoVersion": "1.17",
+	"Sum": "h1:HMFp8mLCTPp341M/ZnA4qaf7ZlsbTc+miZjCLOFAw7w=",
+	"GoModSum": "h1:Fwc5htZGVVkseilnfgOVb9mKy6w1naJmn9CehxcKcls="
+}
+{
+	"Path": "github.com/philhofer/fwd",
+	"Version": "v1.1.2",
+	"Time": "2022-12-11T15:56:23Z",
+	"Indirect": true
+}
+{
+	"Path": "github.com/pkg/errors",
+	"Version": "v0.9.1",
+	"Time": "2020-01-14T19:47:44Z",
+	"Indirect": true
+}
+{
+	"Path": "github.com/planetscale/vtprotobuf",
+	"Version": "v0.6.1-0.20240319094008-0393e58bdf10",
+	"Time": "2024-03-19T09:40:08Z",
+	"Indirect": true
+}
+{
+	"Path": "github.com/pmezard/go-difflib",
+	"Version": "v1.0.0",
+	"Time": "2016-01-10T10:55:54Z",
+	"Indirect": true,
+	"Dir": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/github.com/pmezard/go-difflib@v1.0.0",
+	"GoMod": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/github.com/pmezard/go-difflib/@v/v1.0.0.mod",
+	"Sum": "h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=",
+	"GoModSum": "h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4="
+}
+{
+	"Path": "github.com/pquerna/ffjson",
+	"Version": "v0.0.0-20190930134022-aa0246cd15f7",
+	"Time": "2019-09-30T13:40:22Z",
+	"Indirect": true
+}
+{
+	"Path": "github.com/prometheus/client_golang",
+	"Version": "v1.24.1",
+	"Time": "2026-07-24T06:32:04Z",
+	"Indirect": true
+}
+{
+	"Path": "github.com/prometheus/client_model",
+	"Version": "v0.6.3",
+	"Time": "2026-08-31T09:02:46Z",
+	"Indirect": true
+}
+{
+	"Path": "github.com/prometheus/common",
+	"Version": "v0.71.0",
+	"Time": "2026-08-31T08:47:38Z",
+	"Indirect": true
+}
+{
+	"Path": "github.com/prometheus/procfs",
+	"Version": "v0.21.1",
+	"Time": "2026-06-30T13:35:04Z",
+	"Indirect": true
+}
+{
+	"Path": "github.com/remyoudompheng/bigfft",
+	"Version": "v0.0.0-20230129092748-24d4a6f8daec",
+	"Time": "2023-01-29T09:27:48Z",
+	"Indirect": true,
+	"Dir": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/github.com/remyoudompheng/bigfft@v0.0.0-20230129092748-24d4a6f8daec",
+	"GoMod": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/github.com/remyoudompheng/bigfft/@v/v0.0.0-20230129092748-24d4a6f8daec.mod",
+	"GoVersion": "1.12",
+	"Sum": "h1:W09IVJc94icq4NjY3clb7Lk8O1qJ8BdBEF8z0ibU0rE=",
+	"GoModSum": "h1:qqbHyh8v60DhA7CoWK5oRCqLrMHRGoxYCSS9EjAz6Eo="
+}
+{
+	"Path": "github.com/spf13/cobra",
+	"Version": "v1.8.1",
+	"Time": "2024-06-01T10:31:11Z",
+	"Indirect": true
+}
+{
+	"Path": "github.com/spf13/pflag",
+	"Version": "v1.0.6",
+	"Time": "2025-01-09T00:37:54Z",
+	"Indirect": true
+}
+{
+	"Path": "github.com/spiffe/go-spiffe/v2",
+	"Version": "v2.7.0",
+	"Time": "2026-06-03T20:07:47Z",
+	"Indirect": true
+}
+{
+	"Path": "github.com/stretchr/objx",
+	"Version": "v0.5.3",
+	"Time": "2025-10-03T06:41:42Z",
+	"Indirect": true
+}
+{
+	"Path": "github.com/stretchr/testify",
+	"Version": "v1.11.1",
+	"Time": "2025-08-27T10:46:31Z",
+	"Indirect": true,
+	"Sum": "h1:7s2iGBzp5EwR7/aIZr8ao5+dra3wiQyKjjFuvgVKu7U="
+}
+{
+	"Path": "github.com/tinylib/msgp",
+	"Version": "v1.1.8",
+	"Time": "2022-12-31T16:00:32Z",
+	"Indirect": true
+}
+{
+	"Path": "github.com/tv42/httpunix",
+	"Version": "v0.0.0-20150427012821-b75d8614f926",
+	"Time": "2015-04-27T01:28:21Z",
+	"Indirect": true
+}
+{
+	"Path": "go.etcd.io/bbolt",
+	"Version": "v1.4.1",
+	"Time": "2025-06-10T13:51:14Z",
+	"Indirect": true,
+	"Dir": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/go.etcd.io/bbolt@v1.4.1",
+	"GoMod": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/go.etcd.io/bbolt/@v/v1.4.1.mod",
+	"GoVersion": "1.23",
+	"Sum": "h1:5mOV+HWjIPLEAlUGMsveaUvK2+byZMFOzojoi7bh7uI=",
+	"GoModSum": "h1:c8zu2BnXWTu2XM4XcICtbGSl9cFwsXtcf9zLt2OncM8="
+}
+{
+	"Path": "go.etcd.io/gofail",
+	"Version": "v0.2.0",
+	"Time": "2024-06-19T04:45:01Z",
+	"Indirect": true
+}
+{
+	"Path": "go.opentelemetry.io/auto/sdk",
+	"Version": "v1.2.1",
+	"Time": "2025-09-15T16:53:44Z",
+	"Indirect": true,
+	"Dir": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/go.opentelemetry.io/auto/sdk@v1.2.1",
+	"GoMod": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/go.opentelemetry.io/auto/sdk/@v/v1.2.1.mod",
+	"GoVersion": "1.24.0",
+	"Sum": "h1:jXsnJ4Lmnqd11kwkBV2LgLoFMZKizbCi5fNZ/ipaZ64=",
+	"GoModSum": "h1:KRTj+aOaElaLi+wW1kO/DZRXwkF4C5xPbEe3ZiIhN7Y="
+}
+{
+	"Path": "go.opentelemetry.io/contrib/detectors/gcp",
+	"Version": "v1.44.0",
+	"Time": "2026-05-28T05:28:14Z",
+	"Indirect": true
+}
+{
+	"Path": "go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp",
+	"Version": "v0.61.0",
+	"Time": "2025-05-22T14:29:43Z",
+	"Indirect": true
+}
+{
+	"Path": "go.opentelemetry.io/otel",
+	"Version": "v1.44.0",
+	"Time": "2026-05-27T16:42:37Z",
+	"Indirect": true,
+	"Dir": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/go.opentelemetry.io/otel@v1.44.0",
+	"GoMod": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/go.opentelemetry.io/otel/@v/v1.44.0.mod",
+	"GoVersion": "1.25.0",
+	"Sum": "h1:JjwHmHpA4iZ3wBxluu2fbbE7j4kqlE8jXyAyPXH7HqU=",
+	"GoModSum": "h1:BMgjTHL9WPRlRjL2oZCBTL4whCGtXch2H4BhOPIAyYc="
+}
+{
+	"Path": "go.opentelemetry.io/otel/metric",
+	"Version": "v1.44.0",
+	"Time": "2026-05-27T16:42:37Z",
+	"Indirect": true,
+	"Dir": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/go.opentelemetry.io/otel/metric@v1.44.0",
+	"GoMod": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/go.opentelemetry.io/otel/metric/@v/v1.44.0.mod",
+	"GoVersion": "1.25.0",
+	"Sum": "h1:1w0gILTcHdr3YI+ixLyjemwrVnsMURbTZFrSYCdDdmc=",
+	"GoModSum": "h1:8O7hanEPBNgEMmybD3s2VBKcgWOCsA6tzHBPODAiquo="
+}
+{
+	"Path": "go.opentelemetry.io/otel/sdk",
+	"Version": "v1.44.0",
+	"Time": "2026-05-27T16:42:37Z",
+	"Indirect": true,
+	"Dir": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/go.opentelemetry.io/otel/sdk@v1.44.0",
+	"GoMod": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/go.opentelemetry.io/otel/sdk/@v/v1.44.0.mod",
+	"GoVersion": "1.25.0",
+	"Sum": "h1:nHYwb9lK+fJPU/dnT6s7W7Z8itMWyqrnVfbheVYrZ58=",
+	"GoModSum": "h1:Osuydd3Se74nqjAKxid74N5eC+jfEqfTegHRnq58oK0="
+}
+{
+	"Path": "go.opentelemetry.io/otel/sdk/metric",
+	"Version": "v1.44.0",
+	"Time": "2026-05-27T16:42:37Z",
+	"Indirect": true,
+	"Dir": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/go.opentelemetry.io/otel/sdk/metric@v1.44.0",
+	"GoMod": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/go.opentelemetry.io/otel/sdk/metric/@v/v1.44.0.mod",
+	"GoVersion": "1.25.0",
+	"Sum": "h1:3LlKgI+VjbVsjNRFZJZAJ30WjXC5VkNRks6si09iEfI=",
+	"GoModSum": "h1:5B5pMARnXxKhltooO4xUuCBorl65a4EpnTalObqOigA="
+}
+{
+	"Path": "go.opentelemetry.io/otel/trace",
+	"Version": "v1.44.0",
+	"Time": "2026-05-27T16:42:37Z",
+	"Indirect": true,
+	"Dir": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/go.opentelemetry.io/otel/trace@v1.44.0",
+	"GoMod": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/go.opentelemetry.io/otel/trace/@v/v1.44.0.mod",
+	"GoVersion": "1.25.0",
+	"Sum": "h1:jxF5CsGYCe74MCRx2X4g7WsY/VBKRqqpNvXlX/6gtIk=",
+	"GoModSum": "h1:oLl1jrMQAVo6v3GAggN+1VH9VIz9iUSvW53sW1Q8PIE="
+}
+{
+	"Path": "golang.org/x/crypto",
+	"Version": "v0.55.0",
+	"Time": "2026-08-11T17:56:31Z",
+	"Indirect": true
+}
+{
+	"Path": "golang.org/x/mod",
+	"Version": "v0.38.0",
+	"Time": "2026-07-08T15:41:22Z",
+	"Indirect": true,
+	"Dir": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/golang.org/x/mod@v0.38.0",
+	"GoMod": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/golang.org/x/mod/@v/v0.38.0.mod",
+	"GoVersion": "1.25.0",
+	"Sum": "h1:MECBjubtXD7yj4HrhIUcywNaGeNVUdfVnxmPajOk4yk=",
+	"GoModSum": "h1:V6Xz0pq8TQ3dGqVQ1FVHuelZpAL0uNhSkk9ogYP3c40="
+}
+{
+	"Path": "golang.org/x/net",
+	"Version": "v0.58.0",
+	"Time": "2026-08-12T17:41:32Z",
+	"Indirect": true,
+	"Dir": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/golang.org/x/net@v0.58.0",
+	"GoMod": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/golang.org/x/net/@v/v0.58.0.mod",
+	"GoVersion": "1.25.0",
+	"Sum": "h1:ynWG7rqYi4ccpTEuPZ2QGWHktVEM9DMCj9yzDE0Q7To=",
+	"GoModSum": "h1:YwCddHnFlT7eLQqVprV19OnhLGtc5xOKgE0RyqgfWAU="
+}
+{
+	"Path": "golang.org/x/oauth2",
+	"Version": "v0.36.0",
+	"Time": "2026-02-11T19:14:10Z",
+	"Indirect": true
+}
+{
+	"Path": "golang.org/x/sync",
+	"Version": "v0.22.0",
+	"Time": "2026-07-01T17:29:34Z",
+	"Indirect": true,
+	"Dir": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/golang.org/x/sync@v0.22.0",
+	"GoMod": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/golang.org/x/sync/@v/v0.22.0.mod",
+	"GoVersion": "1.25.0",
+	"Sum": "h1:SZjpbeLmrCk4xhRSZFNZW5gFUeCeFgjekvI/+gfScek=",
+	"GoModSum": "h1:9xrNwdLfx4jkKbNva9FpL6vEN7evnE43NNNJQ2LF3+0="
+}
+{
+	"Path": "golang.org/x/sys",
+	"Version": "v0.48.0",
+	"Time": "2026-08-31T19:43:43Z",
+	"Dir": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/golang.org/x/sys@v0.48.0",
+	"GoMod": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/golang.org/x/sys/@v/v0.48.0.mod",
+	"GoVersion": "1.26.0",
+	"Sum": "h1:bbX/i/6MgT9BVLM9RT1thmxL04yeTAhbEz4SyadbXoo=",
+	"GoModSum": "h1:hNLxWAXmnKAxqDtdwIYC4bM9oQPEecfsnNMuSxOs3og="
+}
+{
+	"Path": "golang.org/x/term",
+	"Version": "v0.45.0",
+	"Time": "2026-07-08T15:40:56Z",
+	"Indirect": true
+}
+{
+	"Path": "golang.org/x/text",
+	"Version": "v0.41.0",
+	"Time": "2026-08-11T15:22:47Z",
+	"Indirect": true,
+	"Dir": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/golang.org/x/text@v0.41.0",
+	"GoMod": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/golang.org/x/text/@v/v0.41.0.mod",
+	"GoVersion": "1.25.0",
+	"Sum": "h1:vz/seA0lnX87Othu2f/0L24RcgrXD9/YFTSuGjj3rH8=",
+	"GoModSum": "h1:jvf1O8ajNzZqhSrQBPbutR/EB83Cc0CFrezNQIwbb5M="
+}
+{
+	"Path": "golang.org/x/tools",
+	"Version": "v0.48.0",
+	"Time": "2026-07-09T02:42:41Z",
+	"Indirect": true,
+	"Dir": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/golang.org/x/tools@v0.48.0",
+	"GoMod": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/golang.org/x/tools/@v/v0.48.0.mod",
+	"GoVersion": "1.25.0",
+	"Sum": "h1:3+hClM1aLL5mjMKm5ovokw9epgRXPuu2tILgismM6RE=",
+	"GoModSum": "h1:08xX0orndb/F7jJxGDicx061tyd5pcMto75YMAXr6lk="
+}
+{
+	"Path": "gonum.org/v1/gonum",
+	"Version": "v0.17.0",
+	"Time": "2025-12-29T19:16:44Z",
+	"Indirect": true,
+	"Dir": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/gonum.org/v1/gonum@v0.17.0",
+	"GoMod": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/gonum.org/v1/gonum/@v/v0.17.0.mod",
+	"GoVersion": "1.24.0",
+	"Sum": "h1:VbpOemQlsSMrYmn7T2OUvQ4dqxQXU+ouZFQsZOx50z4=",
+	"GoModSum": "h1:El3tOrEuMpv2UdMrbNlKEh9vd86bmQ6vqIcDwxEOc1E="
+}
+{
+	"Path": "google.golang.org/appengine",
+	"Version": "v1.6.7",
+	"Time": "2020-10-13T00:46:28Z",
+	"Indirect": true
+}
+{
+	"Path": "google.golang.org/genproto/googleapis/api",
+	"Version": "v0.0.0-20260526163538-3dc84a4a5aaa",
+	"Time": "2026-05-26T16:35:38Z",
+	"Indirect": true
+}
+{
+	"Path": "google.golang.org/genproto/googleapis/rpc",
+	"Version": "v0.0.0-20260526163538-3dc84a4a5aaa",
+	"Time": "2026-05-26T16:35:38Z",
+	"Indirect": true,
+	"Dir": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/google.golang.org/genproto/googleapis/rpc@v0.0.0-20260526163538-3dc84a4a5aaa",
+	"GoMod": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/google.golang.org/genproto/googleapis/rpc/@v/v0.0.0-20260526163538-3dc84a4a5aaa.mod",
+	"GoVersion": "1.25.0",
+	"Sum": "h1:mZHHdPZl0dbGHCflZgAq/Q468DWVFcU2whhB2KAo8fk=",
+	"GoModSum": "h1:4Hqkh8ycfw05ld/3BWL7rJOSfebL2Q+DVDeRgYgxUU8="
+}
+{
+	"Path": "google.golang.org/grpc",
+	"Version": "v1.83.2",
+	"Time": "2026-08-25T15:47:16Z",
+	"Dir": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/google.golang.org/grpc@v1.83.2",
+	"GoMod": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/google.golang.org/grpc/@v/v1.83.2.mod",
+	"GoVersion": "1.25.0",
+	"Sum": "h1:EManeRomTObA0BU7I8vXgg/78uE5MJ9M8B39EX2WscU=",
+	"GoModSum": "h1:YPI1hK3kDked6iHvgX3tR0y+nX/qpMFKhPgFsokw1S8="
+}
+{
+	"Path": "google.golang.org/protobuf",
+	"Version": "v1.36.12",
+	"Time": "2026-08-10T13:29:45Z",
+	"Dir": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/google.golang.org/protobuf@v1.36.12",
+	"GoMod": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/google.golang.org/protobuf/@v/v1.36.12.mod",
+	"GoVersion": "1.23",
+	"Sum": "h1:pJOKDDOyeXErUroCihFAd5LQuwXBSpVnKGrj5o/fwxc=",
+	"GoModSum": "h1:HTf+CrKn2C3g5S8VImy6tdcUvCska2kB7j23XfzDpco="
+}
+{
+	"Path": "gopkg.in/check.v1",
+	"Version": "v1.0.0-20201130134442-10cb98267c6c",
+	"Time": "2020-11-30T13:44:42Z",
+	"Indirect": true
+}
+{
+	"Path": "gopkg.in/mgo.v2",
+	"Version": "v2.0.0-20190816093944-a6b53ec6cb22",
+	"Time": "2019-08-16T09:39:44Z",
+	"Indirect": true
+}
+{
+	"Path": "gopkg.in/vmihailenco/msgpack.v2",
+	"Version": "v2.9.2",
+	"Time": "2021-06-09T11:43:42Z",
+	"Indirect": true
+}
+{
+	"Path": "gopkg.in/yaml.v2",
+	"Version": "v2.4.0",
+	"Time": "2020-11-17T15:46:20Z",
+	"Indirect": true
+}
+{
+	"Path": "gopkg.in/yaml.v3",
+	"Version": "v3.0.1",
+	"Time": "2022-05-27T08:35:30Z",
+	"Indirect": true,
+	"Dir": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/gopkg.in/yaml.v3@v3.0.1",
+	"GoMod": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/gopkg.in/yaml.v3/@v/v3.0.1.mod",
+	"Sum": "h1:fxVm/GzAzEWqLHuvctI91KS9hhNmmWOoWu0XTYJS7CA=",
+	"GoModSum": "h1:K4uyk7z7BCEPqu6E+C64Yfv1cQ7kz7rIZviUmN+EgEM="
+}
+{
+	"Path": "modernc.org/cc/v4",
+	"Version": "v4.29.2",
+	"Time": "2026-07-28T13:57:35Z",
+	"Indirect": true,
+	"Dir": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/modernc.org/cc/v4@v4.29.2",
+	"GoMod": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/modernc.org/cc/v4/@v/v4.29.2.mod",
+	"GoVersion": "1.25",
+	"Sum": "h1:h6+9ciCnPKutf4I03CvheAvDLX7+IHlqR6Iy6J+cgd8=",
+	"GoModSum": "h1:OnovgIhbbMXMu1aISnJ0wvVD1KnW+cAUJkIrAWh+kVI="
+}
+{
+	"Path": "modernc.org/ccgo/v4",
+	"Version": "v4.35.0",
+	"Time": "2026-08-06T20:42:40Z",
+	"Indirect": true,
+	"Dir": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/modernc.org/ccgo/v4@v4.35.0",
+	"GoMod": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/modernc.org/ccgo/v4/@v/v4.35.0.mod",
+	"GoVersion": "1.25.0",
+	"Sum": "h1:F+TUsmw09QxLzmi3aeYYGxjAXarmZaKgj3mKQHNaA8w=",
+	"GoModSum": "h1:qrVGs9S3Sr2Ztcg9ve+kTAYMp5a3YvWjo+SoN06kJ5I="
+}
+{
+	"Path": "modernc.org/fileutil",
+	"Version": "v1.4.0",
+	"Time": "2026-02-18T10:24:55Z",
+	"Indirect": true,
+	"Dir": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/modernc.org/fileutil@v1.4.0",
+	"GoMod": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/modernc.org/fileutil/@v/v1.4.0.mod",
+	"GoVersion": "1.24",
+	"Sum": "h1:j6ZzNTftVS054gi281TyLjHPp6CPHr2KCxEXjEbD6SM=",
+	"GoModSum": "h1:EqdKFDxiByqxLk8ozOxObDSfcVOv/54xDs/DUHdvCUU="
+}
+{
+	"Path": "modernc.org/gc/v2",
+	"Version": "v2.6.5",
+	"Time": "2025-03-12T16:49:23Z",
+	"Indirect": true,
+	"Dir": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/modernc.org/gc/v2@v2.6.5",
+	"GoMod": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/modernc.org/gc/v2/@v/v2.6.5.mod",
+	"GoVersion": "1.21",
+	"Sum": "h1:nyqdV8q46KvTpZlsw66kWqwXRHdjIlJOhG6kxiV/9xI=",
+	"GoModSum": "h1:YgIahr1ypgfe7chRuJi2gD7DBQiKSLMPgBQe9oIiito="
+}
+{
+	"Path": "modernc.org/gc/v3",
+	"Version": "v3.1.5",
+	"Time": "2026-06-24T18:04:59Z",
+	"Indirect": true,
+	"Dir": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/modernc.org/gc/v3@v3.1.5",
+	"GoMod": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/modernc.org/gc/v3/@v/v3.1.5.mod",
+	"GoVersion": "1.23.0",
+	"Sum": "h1:21ldfPfRYE31Tb7B3mwAK8gy1AxP4+dKjrOQPfqakoc=",
+	"GoModSum": "h1:HFK/6AGESC7Ex+EZJhJ2Gni6cTaYpSMmU/cT9RmlfYY="
+}
+{
+	"Path": "modernc.org/goabi0",
+	"Version": "v0.2.0",
+	"Time": "2025-07-02T15:46:44Z",
+	"Indirect": true,
+	"Dir": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/modernc.org/goabi0@v0.2.0",
+	"GoMod": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/modernc.org/goabi0/@v/v0.2.0.mod",
+	"GoVersion": "1.23.0",
+	"Sum": "h1:HvEowk7LxcPd0eq6mVOAEMai46V+i7Jrj13t4AzuNks=",
+	"GoModSum": "h1:CEFRnnJhKvWT1c1JTI3Avm+tgOWbkOu5oPA8eH8LnMI="
+}
+{
+	"Path": "modernc.org/libc",
+	"Version": "v1.75.7",
+	"Time": "2026-09-01T19:33:05Z",
+	"Indirect": true,
+	"Dir": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/modernc.org/libc@v1.75.7",
+	"GoMod": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/modernc.org/libc/@v/v1.75.7.mod",
+	"GoVersion": "1.25.0",
+	"Sum": "h1:o3DTP9/0p9pKmY2WCKQaySW6wIiZhNM7wc2lUoyhfew=",
+	"GoModSum": "h1:bO5o2ztHxBb2rjz0PgdHN0sSMw57CgxGFLZ3Qd/QpVQ="
+}
+{
+	"Path": "modernc.org/mathutil",
+	"Version": "v1.7.1",
+	"Time": "2024-12-26T12:13:25Z",
+	"Indirect": true,
+	"Dir": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/modernc.org/mathutil@v1.7.1",
+	"GoMod": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/modernc.org/mathutil/@v/v1.7.1.mod",
+	"GoVersion": "1.21",
+	"Sum": "h1:GCZVGXdaN8gTqB1Mf/usp1Y/hSqgI2vAGGP4jZMCxOU=",
+	"GoModSum": "h1:4p5IwJITfppl0G4sUEDtCr4DthTaT47/N3aT6MhfgJg="
+}
+{
+	"Path": "modernc.org/memory",
+	"Version": "v1.12.1",
+	"Time": "2026-08-19T16:36:49Z",
+	"Indirect": true,
+	"Dir": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/modernc.org/memory@v1.12.1",
+	"GoMod": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/modernc.org/memory/@v/v1.12.1.mod",
+	"GoVersion": "1.23.0",
+	"Sum": "h1:nFMiWrpStgZczNl6XI9GnIk/rWhYIyHGUaR04pGbp9g=",
+	"GoModSum": "h1:/JP4VbVC+K5sU2wZi9bHoq2MAkCnrt2r98UGeSK7Mjw="
+}
+{
+	"Path": "modernc.org/opt",
+	"Version": "v0.2.0",
+	"Time": "2026-03-24T16:14:02Z",
+	"Indirect": true,
+	"Dir": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/modernc.org/opt@v0.2.0",
+	"GoMod": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/modernc.org/opt/@v/v0.2.0.mod",
+	"GoVersion": "1.21",
+	"Sum": "h1:tGyef5ApycA7FSEOMraay9SaTk5zmbx7Tu+cJs4QKZg=",
+	"GoModSum": "h1:03fq9lsNfvkYSfxrfUhZCWPk1lm4cq4N+Bh//bEtgns="
+}
+{
+	"Path": "modernc.org/sortutil",
+	"Version": "v1.2.1",
+	"Time": "2024-12-28T00:09:37Z",
+	"Indirect": true,
+	"Dir": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/modernc.org/sortutil@v1.2.1",
+	"GoMod": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/modernc.org/sortutil/@v/v1.2.1.mod",
+	"GoVersion": "1.21",
+	"Sum": "h1:+xyoGf15mM3NMlPDnFqrteY07klSFxLElE2PVuWIJ7w=",
+	"GoModSum": "h1:7ZI3a3REbai7gzCLcotuw9AC4VZVpYMjDzETGsSMqJE="
+}
+{
+	"Path": "modernc.org/sqlite",
+	"Version": "v1.59.0",
+	"Time": "2026-09-15T07:30:39Z",
+	"Dir": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/modernc.org/sqlite@v1.59.0",
+	"GoMod": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/modernc.org/sqlite/@v/v1.59.0.mod",
+	"GoVersion": "1.25.0",
+	"Sum": "h1:X1es1GpqBlS/5T+vbM4HLUdaa8OtQx468DF2vrx+38A=",
+	"GoModSum": "h1:+paeT2A3iPRHkQDwG7oA6Tk0zQd5woMEI8q7orfry8k="
+}
+{
+	"Path": "modernc.org/strutil",
+	"Version": "v1.2.1",
+	"Time": "2024-12-27T20:23:31Z",
+	"Indirect": true,
+	"Dir": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/modernc.org/strutil@v1.2.1",
+	"GoMod": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/modernc.org/strutil/@v/v1.2.1.mod",
+	"GoVersion": "1.21",
+	"Sum": "h1:UneZBkQA+DX2Rp35KcM69cSsNES9ly8mQWD71HKlOA0=",
+	"GoModSum": "h1:EHkiggD70koQxjVdSBM3JKM7k6L0FbGE5eymy9i3B9A="
+}
+{
+	"Path": "modernc.org/token",
+	"Version": "v1.1.0",
+	"Time": "2022-11-13T14:28:03Z",
+	"Indirect": true,
+	"Dir": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/modernc.org/token@v1.1.0",
+	"GoMod": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/modernc.org/token/@v/v1.1.0.mod",
+	"Sum": "h1:Xl7Ap9dKaEs5kLoOQeQmPWevfnk/DM5qcLcYlA8ys6Y=",
+	"GoModSum": "h1:UGzOrNV1mAFSEB63lOFHIpNRUVMvYTc6yu1SMY/XTDM="
+}
+{
+	"Path": "vynic.local/contracts/go",
+	"Version": "v0.0.0",
+	"Replace": {
+		"Path": "../../packages/contracts/generated/go",
+		"Dir": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/source/packages/contracts/generated/go",
+		"GoMod": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/source/packages/contracts/generated/go/go.mod",
+		"GoVersion": "1.26.0"
+	},
+	"Dir": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/source/packages/contracts/generated/go",
+	"GoMod": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/source/packages/contracts/generated/go/go.mod",
+	"GoVersion": "1.26.0"
+}

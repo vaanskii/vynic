@@ -1,3 +1,4 @@
+import 'package:vynic/core/ui/widgets/pos_dialog.dart';
 import 'dart:async';
 import 'dart:io';
 
@@ -16,7 +17,7 @@ class DeveloperUnlockDialog extends StatefulWidget {
   const DeveloperUnlockDialog({super.key});
 
   static Future<bool> show(BuildContext context) async {
-    final result = await showDialog<bool>(
+    final result = await showPosModal<bool>(
       context: context,
       barrierDismissible: false,
       builder: (_) => const DeveloperUnlockDialog(),

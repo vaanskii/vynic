@@ -1,14 +1,20 @@
 import 'package:flutter/material.dart';
 import 'dart:io' show Platform;
 import 'package:flutter/foundation.dart';
+import 'package:http/http.dart' as http;
+import 'package:vynic/core/services/auth/manager_activation_service.dart';
+import 'package:vynic/core/services/edge/edge_device_credential_store.dart';
 import 'package:vynic/apps/windows_pos/widgets/update/pos_update_ui.dart';
 import 'package:vynic/core/services/edge/pos_enrollment_service.dart';
 import 'package:vynic/core/services/sync/api_config.dart';
 import 'package:vynic/core/services/database_service.dart';
 import 'login_screen.dart';
+import 'pos_manager_registration_screen.dart';
 
 class PosFirstRun extends StatefulWidget {
-  const PosFirstRun({super.key});
+  const PosFirstRun({super.key, this.service, this.activationClient});
+  final PosEnrollmentService? service;
+  final http.Client? activationClient;
   @override
   State<PosFirstRun> createState() => _PosFirstRunState();
 }
@@ -16,8 +22,11 @@ class PosFirstRun extends StatefulWidget {
 class _PosFirstRunState extends State<PosFirstRun> {
   final _code = TextEditingController();
   final _address = TextEditingController(text: ApiConfig.baseUrl);
-  final _service = PosEnrollmentService();
+  late final _service = widget.service ?? PosEnrollmentService();
   bool _busy = false;
+  bool _reconnecting = false;
+  Future<PosManagerSetupStatus>? _setupFuture;
+  String? _setupDeviceId;
   String? _error;
   @override
   void dispose() {
@@ -31,29 +40,99 @@ class _PosFirstRunState extends State<PosFirstRun> {
   Widget build(BuildContext context) {
     // Existing configured restaurants retain local access even before fleet enrollment.
     if (DatabaseService.isSetupComplete()) return const LoginScreen();
-    if (!PosEnrollmentService.needsEnrollment) {
+    if (!PosEnrollmentService.needsEnrollment && !_reconnecting) {
       return StreamBuilder<dynamic>(
         stream: DatabaseService.userBox?.watch(),
         builder: (context, snapshot) {
           if (DatabaseService.userBox?.isNotEmpty ?? false) {
             return const LoginScreen();
           }
-          return Scaffold(
-            appBar: _updateBar(),
-            body: SafeArea(
-              child: Center(
-                child: Padding(
-                  padding: EdgeInsets.all(24),
-                  child: Text(
-                    'Vynic POS დაკავშირებულია.\n'
-                    'მენეჯერის წვდომის მიღების მოლოდინში…\n'
-                    'დატოვეთ POS დაკავშირებული ინტერნეტთან. '
-                    'მენეჯერის შექმნა და მიწოდების მდგომარეობა ნახეთ რესტორნის გვერდზე.',
-                    textAlign: TextAlign.center,
+          final deviceId = EdgeDeviceCredentialStore.deviceId;
+          if (_setupFuture == null || _setupDeviceId != deviceId) {
+            _setupDeviceId = deviceId;
+            _setupFuture = PosManagerSetupService.load(
+              client: widget.activationClient,
+            );
+          }
+          return FutureBuilder<PosManagerSetupStatus>(
+            future: _setupFuture,
+            builder: (context, setupSnapshot) {
+              final setup = setupSnapshot.data;
+              final legacy = setup?.state == 'LEGACY_INVITATION';
+              final message = switch (setup?.state) {
+                'READY' =>
+                  'POS დაკავშირებულია. შექმენით პირველი Manager თქვენი სახელითა და პირადი PIN-ით.',
+                'RECONNECT_REQUIRED' =>
+                  'POS-ის შენახული წვდომა სერვერმა უარყო. ხელახლა დააკავშირეთ POS მოწყობილობის ახალი კოდით.',
+                'EXPIRED' =>
+                  'პირველი Manager-ის რეგისტრაციის ვადა ამოიწურა. მიიღეთ ახალი დაკავშირების კოდი.',
+                'COMPLETED' || 'EXISTING_MANAGER' =>
+                  'მენეჯერის წვდომის მიღების მოლოდინში… დატოვეთ POS ინტერნეტთან დაკავშირებული.',
+                'WAITING_PRIMARY' =>
+                  'პირველი Manager შექმენით მთავარ POS-ზე. ეს დამატებითი POS მის წვდომას სინქრონიზაციის შემდეგ მიიღებს.',
+                'LEGACY_INVITATION' =>
+                  'მენეჯერის წვდომის მიღების მოლოდინში… ეს მოწყობილობა რეგისტრაციის ძველ პროცესს იყენებს.',
+                null => 'POS-ის კავშირი მოწმდება…',
+                _ =>
+                  'რეგისტრაციის შემოწმება ვერ მოხერხდა. გადაამოწმეთ კავშირი და სცადეთ ხელახლა.',
+              };
+              return Scaffold(
+                appBar: _updateBar(),
+                body: SafeArea(
+                  child: Center(
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.all(24),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(message, textAlign: TextAlign.center),
+                          if (setup?.ready == true || legacy) ...[
+                            const SizedBox(height: 24),
+                            FilledButton(
+                              onPressed: () => Navigator.of(context)
+                                  .push(
+                                    MaterialPageRoute<void>(
+                                      builder: (_) =>
+                                          PosManagerRegistrationScreen(
+                                            client: widget.activationClient,
+                                            setupId: setup?.ready == true
+                                                ? setup!.setupId
+                                                : null,
+                                          ),
+                                    ),
+                                  )
+                                  .then((_) {
+                                    if (mounted)
+                                      setState(() => _setupFuture = null);
+                                  }),
+                              child: Text(
+                                legacy
+                                    ? 'პირველი აქტივაცია'
+                                    : 'Manager-ის შექმნა',
+                              ),
+                            ),
+                          ],
+                          const SizedBox(height: 12),
+                          OutlinedButton(
+                            onPressed: () => setState(() {
+                              _reconnecting = true;
+                              _error = null;
+                            }),
+                            child: const Text('POS-ის ხელახლა დაკავშირება'),
+                          ),
+                          if (setup?.state == 'UNAVAILABLE')
+                            TextButton(
+                              onPressed: () =>
+                                  setState(() => _setupFuture = null),
+                              child: const Text('ხელახლა შემოწმება'),
+                            ),
+                        ],
+                      ),
+                    ),
                   ),
                 ),
-              ),
-            ),
+              );
+            },
           );
         },
       );
@@ -78,12 +157,24 @@ class _PosFirstRunState extends State<PosFirstRun> {
                   const Text(
                     'შეიყვანეთ თქვენი რესტორნის გვერდზე მიღებული მოწყობილობის კოდი.',
                   ),
+                  if (_reconnecting) ...[
+                    const SizedBox(height: 12),
+                    const Text(
+                      'ხელახალი დაკავშირება ცვლის ამ POS-ის წვდომას. '
+                      'გამოიყენეთ მოწყობილობის enrollment კოდი, '
+                      'და არა მენეჯერის აქტივაციის კოდი.',
+                    ),
+                  ],
                   const SizedBox(height: 24),
                   if (ApiConfig.allowDeveloperOverride)
                     TextField(
                       controller: _address,
                       decoration: const InputDecoration(
                         labelText: 'Development API URL',
+                        helperText:
+                            'Same Mac: http://api.vynic.localhost · '
+                            'LAN/Windows: http://<Mac LAN IP>:8088',
+                        helperMaxLines: 2,
                       ),
                     ),
                   TextField(
@@ -127,13 +218,32 @@ class _PosFirstRunState extends State<PosFirstRun> {
                                   ? null
                                   : result.message ??
                                         'დაკავშირება ვერ მოხერხდა';
-                              if (result.isConnected) _code.clear();
+                              if (result.isConnected) {
+                                _code.clear();
+                                _reconnecting = false;
+                                _setupFuture = null;
+                              }
                             });
                           },
                     child: Text(
                       _busy ? 'უკავშირდება…' : 'მოწყობილობის დაკავშირება',
                     ),
                   ),
+                  if (_reconnecting) ...[
+                    const SizedBox(height: 12),
+                    OutlinedButton(
+                      onPressed: _busy
+                          ? null
+                          : () {
+                              _code.clear();
+                              setState(() {
+                                _reconnecting = false;
+                                _error = null;
+                              });
+                            },
+                      child: const Text('გაუქმება'),
+                    ),
+                  ],
                 ],
               ),
             ),

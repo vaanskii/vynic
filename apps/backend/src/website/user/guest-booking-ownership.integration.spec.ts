@@ -19,6 +19,7 @@ import { encryptPaymentConfig } from '../../payment-integrations/payment-config.
 import { PaymentIntegrationsService } from '../../payment-integrations/payment-integrations.service';
 import { PosReservationMirrorService } from '../../pos/pos-reservation-mirror.service';
 import { WebsiteAuthController } from '../auth/auth.controller';
+import { EnrollmentRateLimiter } from '../../edge/enrollment-rate-limiter';
 import { WebsiteAuthService } from '../auth/auth.service';
 import { CryptoService } from '../common/crypto.service';
 import { CsrfService } from '../common/csrf.service';
@@ -303,6 +304,7 @@ type Created = { id: string; date: string; paymentId: string };
         { provide: WebsiteAuthService, useValue: auth },
         { provide: CryptoService, useValue: crypto },
         CsrfService,
+        EnrollmentRateLimiter,
         { provide: UserService, useValue: new UserService(db) },
         { provide: BogService, useValue: bog },
         {
@@ -355,12 +357,28 @@ type Created = { id: string; date: string; paymentId: string };
         },
       });
     });
-    providerGet.mockImplementation((target: string) => {
+    providerGet.mockImplementation(async (target: string) => {
       const id = decodeURIComponent(target.split('/').at(-1)!);
       const reservationId = providerOrders.get(id);
       if (!reservationId) throw new Error('Unknown synthetic provider order');
+      const booking = await db.websiteReservation.findUniqueOrThrow({
+        where: { id: reservationId },
+      });
       return Promise.resolve({
-        data: { external_order_id: reservationId, status: 'pending' },
+        data: {
+          order_id: id,
+          external_order_id: reservationId,
+          order_status: { key: 'created' },
+          capture: 'automatic',
+          purchase_units: {
+            currency_code: 'GEL',
+            request_amount: (
+              Number(booking.paymentExpectedMinor) / 100
+            ).toFixed(2),
+            transfer_amount: '0.00',
+            refund_amount: '0.00',
+          },
+        },
       });
     });
     alice = await session(0, `alice-${tag}@example.invalid`);

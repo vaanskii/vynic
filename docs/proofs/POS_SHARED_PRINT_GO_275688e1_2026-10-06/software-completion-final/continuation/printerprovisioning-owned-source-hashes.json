@@ -1,0 +1,39 @@
+{
+  "schema": 1,
+  "createdAtUtc": "2026-10-06T16:59:45.052018+00:00",
+  "source": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/source",
+  "ownedRoot": "apps/edge/internal/printerprovisioning",
+  "ownership": "Seven new files only; no original/frozen proof or existing source edits",
+  "files": {
+    "apps/edge/internal/printerprovisioning/adapter.go": {
+      "sha256": "401eebd82dd1ff4b2c3c42faba93c8efc211ea1bf0241df891b13e83add64d6f",
+      "bytes": 2258
+    },
+    "apps/edge/internal/printerprovisioning/adapter_test.go": {
+      "sha256": "06ae3fd6c64e4b59d77ec0f60f77a959284ebbd5f7960c400e8e40c3bd8985a1",
+      "bytes": 5287
+    },
+    "apps/edge/internal/printerprovisioning/binding_test.go": {
+      "sha256": "6486e030b7174098cd08c221733f4624bbb94ad787780705d61ef44de413ad5a",
+      "bytes": 9040
+    },
+    "apps/edge/internal/printerprovisioning/strict.go": {
+      "sha256": "4aecc7878c5de575e7009d825df8101706ae8e729f7a184d3f891da54767e74e",
+      "bytes": 2107
+    },
+    "apps/edge/internal/printerprovisioning/types.go": {
+      "sha256": "2960794fc93d7458de913e671051ab71863fdf4269cb66d7e5a4d131d260d1ed",
+      "bytes": 6861
+    },
+    "apps/edge/internal/printerprovisioning/validate.go": {
+      "sha256": "eb92582fdd7225a52a68e8fe07619bb5ff652ded322f5cdcab7a6920e48d4108",
+      "bytes": 7494
+    },
+    "apps/edge/internal/printerprovisioning/validate_test.go": {
+      "sha256": "30a507944cb7a4acd18456961b833f58240fb117c38d85ef6e1303a029848a5e",
+      "bytes": 12283
+    }
+  },
+  "count": 7,
+  "scope": "Signed printer-only CANDIDATE grant, exact route/job binder, fresh trusted-state held-server preflight; no issuer/storage/production admission/transport"
+}

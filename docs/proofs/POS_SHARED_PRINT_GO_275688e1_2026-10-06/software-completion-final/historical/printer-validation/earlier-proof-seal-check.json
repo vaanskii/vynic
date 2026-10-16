@@ -1,0 +1,14 @@
+[
+  {
+    "directory": "POS_MULTI_TERMINAL_275688e1_2026-10-06",
+    "sealSHA256": "163473fcf3b8d05a80b1f39868a42c2a807222c808dac91c7ad659f3fcfe863c"
+  },
+  {
+    "directory": "POS_WINDOWS_NATIVE_abf7e6b3_2026-10-06",
+    "sealSHA256": "9a209a98330f8e108cd53ab2d88c799b20511a3f5c0a4d2fee58a77ba16d5859"
+  },
+  {
+    "directory": "POS_MANAGER_ITEMS_275688e1_2026-10-06",
+    "sealSHA256": "7365038dfb3aaa6d6485f19711d65b347fa8a30a3face4fd1b9c109327b1df71"
+  }
+]

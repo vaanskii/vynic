@@ -1,0 +1,18 @@
+{
+  "apps/operations/lib/core/services/sync/api_config.dart": "ce85828bcfd3ffdfd8706521648fcc84d88a976a55f0ffd01906a04cb6db76cb",
+  "apps/operations/lib/main_manager.dart": "3e6d010a5d357361f1822d80c3a06689d48dbb0c2055855cb00ccac27d1fa1d2",
+  "apps/operations/lib/main_pos.dart": "80028178eb2274318135a7e6fcf2c38bcb20170ace9289bee3195b7bad4a4043",
+  "apps/operations/lib/core/services/manager_app/manager_app_preferences.dart": "792bfd279ba883fbf42db2af7872cfe9cfaa86c3001512c5f216b5a2e6a31fa4",
+  "apps/operations/lib/core/services/auth/mobile_auth_service.dart": "8dd7b5abd4990d98d5ac7c8011330bb322dbc354ad30ab3983857fbea3a017ea",
+  "apps/operations/lib/apps/mobile_app/presentation/screens/mobile_login_screen.dart": "004a9869a22933aa8b3de7681284909e6b25cb7847b1631a60169a9652ae4d36",
+  "apps/operations/lib/apps/windows_pos/screens/pos_first_run.dart": "7ca0eb8a3f62e3fb7d432b1feba09afb66dfa00966fddf5df647cd356410b402",
+  "apps/operations/lib/core/services/edge/pos_enrollment_service.dart": "a4511f09db5304349a0efa566a2b27a51522ff44607896c3b0279ba09ec822e2",
+  "apps/operations/tool/dev.py": "98429a4696c78b3e7d872dc712c1250573fb5539a1516a6000b0a794b08f1f68",
+  "apps/operations/tool/product.py": "90aa1c0ec15ccb12d13e3fb2da881b50f551687b8cf4520f4c98e4555ef57e5a",
+  "apps/backend/src/edge/device-enrollment.controller.ts": "d865dd1987a7a3f8b73f6915058efdb5d94adf4c655e0d6ec9dc93a8dab6c990",
+  "apps/backend/src/edge/device-enrollment.service.ts": "7a340b7bc2e4d44b8f64eed8560047359d57a98cafff471845c5403882d91655",
+  "apps/backend/src/auth/manager-activation.service.ts": "b2d2ae33c6b4244ea2ae7e061a69ee827b9773b367f4b0ac2f915cbb1e88b52d",
+  "apps/backend/src/auth/manager-activation.controller.ts": "f41b51187307abfaa27848fe0c0bdea75189093fd760cfd0fcf8890615cd1442",
+  "apps/backend/src/auth/auth.service.ts": "ad5dc61a6df92a0e6d00733a00f1486bd09d2c485b931acefb7f11e048c5ae5b",
+  "apps/backend/prisma/schema.prisma": "884a6ba58aa181d168fc7567dfa46224d1ae310f8d2facab6a49c95ca19a6238"
+}

@@ -1,0 +1,35 @@
+{
+  "status": "PREVIEW_PREPARATION_VERIFIED_MILESTONE_NOT_DONE_UNCOMMITTED",
+  "baseCommit": "275688e1e5c5dc0e26e62705ab0c7670cf16d99a",
+  "createdAtUTC": "2026-10-02T19:58:27.366828+00:00",
+  "filesSha256": {
+    "commands.json": "c044e1ce77ba811f8ff7c282e8971e672f5797f18bddbc5cf154d94c82b34229",
+    "independent-review.md": "27fdcd917bc3122230085f0d941b48936732b7dc8d95b2a70404b64f62cfeb94",
+    "log-sha256.json": "877da0b819e642c56ac13aa2b8094180d9614930d871c2c99cdbf0927a140e0e",
+    "logs.zip": "9f3893435d90ea705d22254dd363cc1bbac8d2b9205ae06770c9fce048feaf10",
+    "mac-app-manifest.json": "638b4bb57ce78661a5f0321b6937b2c01294ba3324a778c768dda50e2f8c2b24",
+    "mac-preview.zip": "4b4131b1fcd8945130f0c095b58741d2f557c13d6c82d58f8e4f00a180ff16c3",
+    "preservation.json": "6a9a365f8ec28ae3993f2a3afd6aecde1d08dea191d568e92206130e4cdc6d77",
+    "preview-auxiliary.patch": "d7c272275096cc1762b97321f4ee2b74a3bd76e9c25db39ac10972c62bdd8f43",
+    "preview-source.zip": "481403a271c36133d7ac20e326113b7e451b928580970fa836a21d5e15f37dd8",
+    "profile.json": "277f8f4dd17689fb69b3059b85baa5c80067504e903c8780acafd4ce5938a7dd",
+    "proof.json": "6d27b14604ffcfb7b643c5ed9156fbac8b89a028d7a886fe84a5ec234ac16b1b",
+    "source-sha256.json": "0de29a8cb15f351b41571ea5a2edcd8e66ab3167ef2474a250892c0ed7655dd3",
+    "verify_preview.py": "72e4b2d04b26655d299b89dea0fd2e1cee77b48a1bf054be1461c3dee69c8de3"
+  },
+  "guideSha256": "c4c99c56882c512833b2068be7b4cf9ffb5f59add56f2e6bc2d4521641818e29",
+  "foundationChecksumSha256": "ef6f8acbc990e805e60137d2f6bb4e8372d5da501c6b0beeccfe062041caec82",
+  "oldWindowsCandidateUnchangedSha256": "6142021ae4e2164487356a0a422e0a050feb2fb206fc5cd4c9f1175818afe733",
+  "temporarySourceRequiredToLaunch": false,
+  "macGuiLaunched": false,
+  "physicalAcceptance": "PENDING",
+  "updatedAtUTC": "2026-10-02T20:22:29.194790+00:00",
+  "previousChecksumSha256": "63631f90d1fb32d17ccc00f365efb80fe8550d0ca23e7283e7bc3bb4d6fae8f6",
+  "windowsExecutionPerformedByAgent": false,
+  "userReportedWindowsCoreSmoke": {
+    "checks": 50,
+    "exitCode": 0,
+    "evidenceFile": "../POS02_WINDOWS_SMOKE_275688e1_2026-10-02.json",
+    "sha256": "44f724eee52b5fcb02b4ddbc93d64feabedb40b4d41152dbf8d02903df3fecf3"
+  }
+}

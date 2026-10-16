@@ -145,6 +145,27 @@ existing STAFF commands atomically with Cloud access/audit; the Phase 2 POS
 rejects older revisions and disables future login without destroying local
 identity or interrupting already-open operation. See `SAAS_PHASE2_CONTROL_PLANE.md`.
 
+Initial Manager activation follows the same authority boundary. A short-lived
+POS enrollment code may explicitly include first Manager setup. Redemption binds
+that permission to the enrolled Primary Device; the person chooses a name and
+PIN there without entering a second activation code. Ordinary/additional POS
+codes grant no setup permission. Issuer authority, POS/Manager entitlements,
+expiry and absence of Manager history are rechecked under the Venue lock. Legacy
+invitation codes remain compatible, but cannot redeem a Device-bound setup grant.
+Manager has ordinary login only; Platform cannot create the initial Manager to
+bypass POS registration.
+There is no shared production default PIN. Owners may issue an invitation only
+before any Manager exists; existing Manager recovery belongs to Vynic Platform
+Admin, not the owner cabinet. Authenticated POS/Manager operational permissions
+remain unchanged. Invitation verifiers and audit contain no readable credentials;
+normal authentication still requires exactly one matching active Manager. New
+Manager installations redeem a Platform Admin-only, expiring one-use linking
+code to remember a Venue. It creates neither Staff nor a session and cannot
+replace PIN authentication. The public per-origin installation UUID permits
+same-code lost-response retry, not authentication or attestation. Existing
+remembered selections, sessions and legacy lookup remain compatible; owners
+cannot mint linking codes. See `docs/SINGLE_POS_ONBOARDING.md`.
+
 ## D017 — Customer owners have Organization-scoped authority
 
 **Decision:** CustomerAccount → OrganizationMembership(OWNER) → Organization → Venue
@@ -351,6 +372,22 @@ Venues; primary-POS containment stays for operational domains only; Edge may
 coordinate over LAN later but is never a second Menu authority. See
 `docs/CANONICAL_MENU_SYNC.md`.
 
+## D031 — Native clients use their own API origin; Host never selects their Venue
+
+**Decision:** POS and Manager reach the backend only through `api.<base domain>`
+(local `http://api.vynic.localhost`, production `https://api.vynic.ge`), where
+Traefik forwards an allowlist of native route families and answers everything
+else with a backend 404. A LAN listener for other machines is opt-in
+(`start-lan`), bound to one private IP, native paths only.
+**Reason:** Native routes mixed into website hosts fall through to frontends, and
+`.localhost` resolves to the calling machine; a dedicated origin keeps Platform,
+Customer and restaurant sites independent of native clients.
+**Implication:** New native route prefixes must be added to the allowlist in
+`deploy/traefik/routes.yml` and the inventory in `docs/DEPLOYMENT.md`. Venue on these
+routes stays Device/Staff authenticated (D003); never add Host- or header-based
+tenancy or widen browser CORS for native apps. Never combine `compose.lan.yaml`
+with production.
+
 ## D032 — Menu removal retires identity; tombstones remove only active projections
 
 **Decision:** Normal Menu removal retains Category/Subcategory/Item/Variant rows
@@ -386,8 +423,103 @@ Menu work holds local intents, safe recovery/offline operation stays available,
 and CLOUD-to-POS downgrade is unsupported. Stable identities and explicit POS
 adoption survive cutover. See `docs/MENU09_CLIENT_COMPATIBILITY_GATE.md`.
 
+## D034 — Printer scope and physical authority are separate from quorum
+
+**Decision:** The selected printer migration target keeps Flutter's business
+planning, Georgian raster rendering and operator UI, with one independent Go
+service per Windows host. LOCAL uses one exclusive local durable spool;
+VENUE_SHARED uses explicit stable membership and full data-bearing replicas,
+normally three voters plus client agents. A third participant for two POS is a
+full replica, never a metadata-only witness. Business routing names a configurable
+logical station, independently of source POS. Logical jobs retain station,
+origin, configuration snapshot/digest and bytes; physical printer/controller and
+outcome belong to separate attempts. Each physical route has one explicitly
+configured controller, independent of queue leadership. Membership is never
+discovered or reduced to standalone during an outage.
+**Reason:** A Flutter-window lifetime cannot own shared background availability.
+Consensus preserves durable logical admission/order but cannot revoke an old
+socket or make an ordinary RAW printer enforce a leadership epoch. Short leases
+and missed heartbeats do not prove physical exclusion.
+**Implication:** Fixed-controller shared printing does not require a transferable
+RAW fence; it requires exclusive configured ownership and a qualified cutover.
+Automatic takeover of the SAME RAW printer remains held without downstream
+enforcement. Primary/backup fallback uses a different configured physical printer
+only after definitive non-submission. Uncertainty pauses that station's FIFO and
+holds the affected physical printer; unrelated stations may progress. A controller
+timeout after dispatch reservation never authorizes fallback. The new isolated
+proof APIs do not change current Hive/Device authority, attach production writers,
+install a service, qualify rollback or activate Cloud Windows routes. The existing
+interactive-user installer remains D022 until a separate qualified cutover.
+See `docs/VYNIC_PRINT_ARCHITECTURE.md` and
+`docs/POS_PRINTER_ARCHITECTURE_REPORT_2026-10-09.md`. October 6 proofs remain
+historical evidence, including the RAW counterexamples.
+
+## D035 — Printer authority has its own identity and bounded offline grant
+
+**Decision:** Production printer enrollment binds a fresh Go key/installation to
+an existing server-authorized Windows Device and Venue. Foundation/candidate/proof
+credentials are not production printer authority. Cloud-signed inventory grants
+last at most seven days; learned revocation and generation high-water persist in
+protected service storage. That identity store never travels in POS backups.
+**Reason:** Offline printing needs cached authority, while a disconnected peer
+cannot observe new Cloud revocations. A finite signed validity window makes that
+tradeoff explicit rather than claiming instant offline revocation.
+**Implication:** New members are clients; voter and fixed-controller assignments
+require controlled configuration. Discovery supplies hints only. Expiry or clock
+rollback fails closed for authorization and never authorizes job replay. Service
+installation, authenticated queue integration and physical activation remain
+separate gates. Full OS/VM identity clones are unsupported fresh installations.
+See `docs/POS02_A_PROVISIONING.md`.
+
+## D036 — Peer discovery cannot bootstrap or reconfigure a printer queue
+
+**Decision:** Production Go peer RPC and Raft share POS-02.A certificate/inventory
+verification. Client sources have no vote. The signed desired membership is
+committed into the existing queue before controlled 1-to-3 voter expansion;
+startup, reconnection and observed machine counts never change quorum.
+**Reason:** Recreating a queue or changing membership during an outage can lose
+acknowledged jobs, even when the returning machines belong to the same Venue.
+**Implication:** Explicit initialization is restricted to configuration revision 1.
+A protected identity-store marker refuses silent recreation of a lost queue.
+Voter removal/replacement/endpoint movement require later qualified transitions.
+Logical leadership grants no physical writer rights. See `docs/POS02_B_PEER_TRANSPORT.md`.
+
 ## Maintenance
 
 Add an entry only when it prevents repeated architectural debate. Update or
 briefly supersede a decision when the architecture changes; do not add
 implementation trivia or session history.
+
+## D037 — Website domains are managed by Platform Admin
+
+**Decision:** Customers contact support for every website hostname change; no
+owner request/mutation path remains. Platform Admin may register Vynic subdomains
+or external domains for SAAS/CUSTOM and rename existing domain identities with
+an expected hostname and reason. SAAS keeps one assigned identity plus optional
+Admin-managed aliases.
+**Reason:** Domain selection is a Vynic operator responsibility, including bespoke
+sites hosted below the Vynic base domain. A generic namespace refusal prevented
+this operator workflow without protecting against an unauthorized customer.
+**Implication:** Preserve Platform principal separation, globally unique/retained
+names, reserved platform origins, atomic audit and canonical SAAS mirrors.
+Owners cannot bypass policy through draft/publication or direct API calls.
+DNS/TLS and CUSTOM frontend routing stay separate deployment tasks. Existing
+requests/history are retained; no data migration or live rename is implicit.
+See `docs/WEBSITE_SAAS_HOSTNAMES.md` and `docs/CUSTOM_WEBSITES.md`.
+
+## D038 — Whole-day payment holds and restaurant-owned financial exceptions
+
+**Decision:** Preserve whole-day physical-table booking. New website holds and
+BOG order TTL each use ten minutes; replies never extend the frozen website
+window. Verified late/unproved expired payments require manual review with no
+automatic restore or refund. Partial refunds preserve the confirmed booking.
+The restaurant owner decides financial exceptions; Vynic support assists with
+technical evidence. Hourly slots and automated exception-resolution operations
+require a later approved product policy.
+**Reason:** These five rules were explicitly approved for WEB-01/04; matching a
+callback-send timestamp with a payment-completion timestamp would invent proof.
+**Implication:** Preserve signed/pinned receipt authority, exact money and
+immutable observations; keep read-only owner history accessible after access
+loss. Causal proof of timely payment can finish the original unconflicted hold,
+never steal reassigned occupancy. Old history is not inferred or replayed.
+See `docs/WEB0104_BOOKING_HOLDS_PAYMENT_LEDGER.md`.

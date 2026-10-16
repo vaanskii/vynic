@@ -1,0 +1,1 @@
+{"exitCode": 0, "command": "GOPROXY=off go test -mod=readonly -race -count=1 -json ./...", "source": "security-candidate/apps/edge", "scope": "unchanged baseline source with fixed dependency manifests; synthetic loopback/SQLite fixtures only"}

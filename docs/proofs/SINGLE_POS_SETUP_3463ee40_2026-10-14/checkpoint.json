@@ -1,0 +1,85 @@
+{
+  "status": "QUALIFIED_POS_SETUP_AND_CONFIG_MANAGER_EXISTING_SELECTION_VERIFIED",
+  "privateWorkDir": "/var/folders/82/drcfb4994p16rl49gxx9tj000000gn/T/vynic-single-pos-setup-8i91wjhf",
+  "approvals": "User approved single POS enrollment -> initial Manager name/PIN; Manager once Venue binding -> PIN; config additions only, preserve existing env values.",
+  "design": [
+    "DeviceEnrollment.initialManagerSetup is closed-by-default explicit privilege; authorized issuer, entitlements and no Manager history verified under Venue lock",
+    "Reuse ManagerActivation with nullable setupEnrollmentId/setupDeviceId links; legacy invitation path remains distinct and compatible",
+    "First redemption binds grant to the enrolled Primary Device atomically; new client capability version required for setup code",
+    "GET/POST edge/manager-setup use Device guard plus same issuer/expiry/Primary/duplicate-PIN/transaction checks; grant ID is public retry identity, not authorization",
+    "POS wizard asks name/PIN without an extra human activation code; no default PIN; additional ordinary code grants no Manager setup",
+    "Use existing Manager per-origin Venue selection, simplify labels; production API immutable; dev override explicit",
+    "Append only public VYNIC_ENV and VYNIC_API_URL block to Flutter env files; build tooling reads only these keys, never forwards legacy secret values"
+  ],
+  "liveBoundaries": "No live enrollment, credential issuance, activation, deployment, reset, email or OPS01 restore retry",
+  "updatedAt": "2026-10-14T14:45:46.361556+00:00",
+  "completed": [
+    "Prisma additive enrollment permission and ManagerActivation enrollment/Device links",
+    "New transaction policy helper: authorized issuer/entitlements/no-Manager-history + Primary binding",
+    "DeviceEnrollment grant creation/redemption wiring",
+    "Device-guarded GET/POST manager-setup + shared existing Staff/PIN/Edge activation transaction",
+    "Protected setup eligibility endpoints; explicit setup flag in Platform/owner enrollment APIs",
+    "Build tooling consumes appended public values; legacy env values not forwarded/changed",
+    "POS setup metadata/wizard and one-time Manager linking copy wired"
+  ],
+  "configuration": {
+    "envAdditionsExecuted": true,
+    "preservationEvidence": "env-preservation.json",
+    "originalBytesExactlyPreserved": {
+      "apps/operations/.env": 2937,
+      "apps/operations/.env.example": 823
+    },
+    "consumedKeys": [
+      "VYNIC_ENV",
+      "VYNIC_API_URL"
+    ],
+    "secretsForwardedToFlutter": false
+  },
+  "validation": {
+    "singleSetupPGHttp": "16 PASS_FINAL",
+    "legacyActivationPG": "15 PASS",
+    "legacyEnrollmentPG": "19 PASS",
+    "migration75to76": "PASS; existing values/checksums unchanged; repeat deploy NOOP",
+    "flutterFocused": "37 PASS_FINAL",
+    "productionEndpointPolicy": "1 PASS",
+    "publicBuildConfigAndProductTool": "8 PASS",
+    "backendAndPlatformTypes": "PASS",
+    "backendNewBoundaryLint": "0 errors/0 warnings",
+    "backendAggregate": "864 PASS_FINAL;0 failed;869 skipped;50 opt-ins passed separately",
+    "frontendAggregate": "253 PASS_FINAL;0 failed",
+    "managerBindingRegression": "16 PASS",
+    "productionManagerUIAndEndpointPolicy": "6 PASS",
+    "nativeDeveloperBuilds": "POS + Manager macOS debug PASS_FINAL; binaries not launched",
+    "lint": "0 new implementation/test errors;4 inherited backend errors on unchanged source"
+  },
+  "blocker": "No blocker for qualified POS/config work. New server single-use Manager linking code/link is not implemented; current flow retains reusable restaurant code. Broad Flutter fixture limitations remain explicit.",
+  "ui": [
+    "POS scoped metadata -> first Manager name/PIN without manual activation code",
+    "Stale credential reconnect/cancel; additional POS waits for existing Manager",
+    "Manager one-time Venue binding labels; developer URL precedence/Docker default",
+    "Owner/Platform initial Manager copy leads to single POS setup code; ordinary additional codes stay unprivileged"
+  ],
+  "managerBinding": {
+    "scope": "Existing once-per-origin remembered Venue binding retained and clarified; PIN-only subsequent login",
+    "QRDeepLink": "not in approved minimal implementation",
+    "backendEditControls": "production/staging hidden; explicit developer override only",
+    "entryMechanism": "Existing reusable restaurant loginCode entered once per installation/API origin; persisted ManagerVenueSelection; PIN-only subsequent login",
+    "serverConsumedOneUseManagerCodeOrLink": "NOT_IMPLEMENTED",
+    "approvedWrittenProposal": "proposal.md table and S item explicitly retain existing identifier/selection; no new server one-use linking mechanism was claimed",
+    "implementedChanges": "Wording/config clarification plus restart/logout/origin/production UI regression; existing selection mechanism retained",
+    "newTokenMechanismWouldRequire": "Separate implementation scope if a server single-use code rather than once-per-installation selection is intended"
+  },
+  "liveActions": false,
+  "cleanup": {
+    "ownedCluster": "STOPPED",
+    "port": 56321,
+    "portClosed": true,
+    "postmasterPidAbsent": true,
+    "liveServicesChanged": false,
+    "ops01Retried": false
+  },
+  "qualification": "qualification.json",
+  "activeContinuation": "../MANAGER_LINK_3463ee40_2026-10-14/checkpoint.json",
+  "activeContinuationStatus": "PASS_SOURCE_AND_ISOLATED_TESTS_NOT_DEPLOYED",
+  "managerSingleUseLinkingNowImplemented": "../MANAGER_LINK_3463ee40_2026-10-14/qualification.json"
+}

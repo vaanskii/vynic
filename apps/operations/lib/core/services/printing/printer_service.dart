@@ -1,6 +1,14 @@
 import 'dart:ui' as ui;
+import 'dart:async';
+import 'package:uuid/uuid.dart';
+import '../edge/edge_device_credential_store.dart';
+import 'print_job.dart';
+import 'print_reconciliation.dart';
+import '../../database/local_data_admission.dart';
+import '../../database/repositories/print_job_repository.dart';
 import 'dart:developer' as developer;
 import 'package:flutter/services.dart';
+import 'package:flutter/foundation.dart';
 import '../../models/receipt_header_layout.dart';
 import '../database_service.dart';
 import 'escpos_kitchen_renderer.dart';
@@ -9,20 +17,29 @@ import 'escpos_report_renderer.dart';
 import 'kitchen_print_filter.dart';
 import 'print_queue.dart';
 import 'printer_transport.dart';
-import 'printer_connection.dart';
+import 'local_printer_catalog.dart';
+import 'printer_destination.dart';
+import 'printer_capability_profile.dart';
 
-/// Service for printing to POS printers over raw TCP sockets
-/// Supports kitchen checks and customer receipts with persistent connections
+/// Durable, capability-configured printing over TCP or Windows RAW queues.
 class PrinterService {
+  static PrinterRoute? _route(PrinterRole role) {
+    final matching = LocalPrinterCatalog.readRoutesForDispatch(role: role);
+    if (matching.length > 1)
+      throw StateError('Printer role has multiple destinations');
+    return matching.isEmpty ? null : matching.single;
+  }
+
+  @visibleForTesting
+  static Future<List<int>> Function()? renderBytesOverride;
+
   // Printer configuration (overridable via settings)
   static String get _kitchenPrinterIp => DatabaseService.getKitchenPrinterIp();
   static String get _receiptPrinterIp => DatabaseService.getReceiptPrinterIp();
   static int get _kitchenPrinterPort => DatabaseService.getKitchenPrinterPort();
   static int get _receiptPrinterPort => DatabaseService.getReceiptPrinterPort();
-  static int get _printerPort => DatabaseService.getPrinterPort();
 
   // Persistent printer connections
-  static bool _isInitialized = false;
   static ui.Image? _cachedReceiptLogo;
   static Rect? _cachedReceiptLogoContentRect;
 
@@ -206,52 +223,12 @@ class PrinterService {
     }
   }
 
-  /// Initialize persistent printer connections
-  /// Call this once during app startup for best performance
+  /// Start the durable worker. Accepted jobs keep their frozen destination.
   static Future<void> initialize({bool forceReconnect = false}) async {
-    if (_isInitialized && !forceReconnect) {
-      developer.log('⚠️ PrinterService already initialized');
-      return;
-    }
-
-    if (forceReconnect && _isInitialized) {
-      PrinterConnectionManager.instance.dispose();
-      _isInitialized = false;
-    }
-
-    final kitchenIp = _kitchenPrinterIp;
-    final receiptIp = _receiptPrinterIp;
-    final kitchenPort = _kitchenPrinterPort;
-    final receiptPort = _receiptPrinterPort;
-
-    if (kitchenIp.isEmpty && receiptIp.isEmpty) {
-      developer.log(
-        '⚠️ PrinterService skipped initialization: no printer IP configured',
-      );
-      return;
-    }
-
-    try {
-      await PrinterConnectionManager.instance.initialize(
-        kitchenIp: kitchenIp,
-        receiptIp: receiptIp,
-        kitchenPort: kitchenPort,
-        receiptPort: receiptPort,
-      );
-      _isInitialized = true;
-      developer.log('✅ PrinterService initialized with persistent connections');
-    } catch (e) {
-      developer.log('⚠️ PrinterService initialization failed: $e');
-      // Don't throw - we can still use fallback method
-    }
+    PrintQueue.start();
   }
 
-  /// Dispose printer connections
-  /// Call this when shutting down the app
-  static void dispose() {
-    PrinterConnectionManager.instance.dispose();
-    _isInitialized = false;
-  }
+  static void dispose() => PrintQueue.stop();
 
   /// Print a kitchen check with order items (Georgian language)
   ///
@@ -263,7 +240,8 @@ class PrinterService {
   /// [waiterName] Waiter/Admin username who created the order
   /// [createdAt] Time when order was created
   ///
-  /// Returns true if print was successful, false otherwise
+  /// True means the configured transport accepted the bytes; physical paper
+  /// output still requires operator observation.
   static Future<bool> printKitchenCheck({
     required List<String> items,
     List<String>? addedItems,
@@ -272,17 +250,27 @@ class PrinterService {
     String? orderNumber,
     String? waiterName,
     DateTime? createdAt,
-  }) async {
-    return _printKitchenCheckLocal(
-      items: items,
-      addedItems: addedItems,
-      removedItems: removedItems,
-      tableNumber: tableNumber,
-      orderNumber: orderNumber,
-      waiterName: waiterName,
-      createdAt: createdAt,
-    );
-  }
+    String? jobId,
+    String? requiresConfirmedOrderUuid,
+    String? copyOf,
+    String? copyReason,
+    bool waitForDelivery = true,
+    void Function(bool)? onComplete,
+  }) => _printKitchenCheckLocal(
+    items: List.of(items),
+    addedItems: addedItems == null ? null : List.of(addedItems),
+    removedItems: removedItems == null ? null : List.of(removedItems),
+    tableNumber: tableNumber,
+    orderNumber: orderNumber,
+    waiterName: waiterName,
+    createdAt: createdAt,
+    jobId: jobId,
+    requiresConfirmedOrderUuid: requiresConfirmedOrderUuid,
+    copyOf: copyOf,
+    copyReason: copyReason,
+    waitForDelivery: waitForDelivery,
+    onComplete: onComplete,
+  );
 
   static Future<bool> _printKitchenCheckLocal({
     required List<String> items,
@@ -292,11 +280,27 @@ class PrinterService {
     String? orderNumber,
     String? waiterName,
     DateTime? createdAt,
+    String? jobId,
+    String? requiresConfirmedOrderUuid,
+    String? copyOf,
+    String? copyReason,
+    required bool waitForDelivery,
+    void Function(bool)? onComplete,
   }) async {
     try {
+      final capturedVenue = EdgeDeviceCredentialStore.venueId;
+      final route = _route(PrinterRole.kitchen);
+      final host =
+          route?.destination.host ??
+          route?.destination.queueName ??
+          _kitchenPrinterIp;
+      final port = route == null
+          ? _kitchenPrinterPort
+          : route.destination.port ?? 0;
       // Validate printer IP configuration
-      if (_kitchenPrinterIp.isEmpty) {
+      if (host.isEmpty) {
         developer.log('Error: Kitchen printer IP not configured in settings');
+        onComplete?.call(false);
         return false;
       }
 
@@ -314,55 +318,52 @@ class PrinterService {
           (kitchenAddedItems?.isEmpty ?? true) &&
           (kitchenRemovedItems?.isEmpty ?? true)) {
         developer.log('ℹ️ No kitchen items to print (only drinks)');
-        return true; // Not an error, just nothing to print
+        onComplete?.call(true);
+        return true; // No kitchen-bound work
       }
 
       // Generate ESC/POS commands for kitchen check
-      final List<int> bytes = await EscposKitchenRenderer.generateBytes(
-        items: kitchenItems,
-        addedItems: kitchenAddedItems,
-        removedItems: kitchenRemovedItems,
-        tableNumber: tableNumber,
-        orderNumber: orderNumber,
-        waiterName: waiterName,
-        createdAt: createdAt,
-        resolveOperatorDisplayName: _resolveOperatorDisplayName,
-      );
+      final List<int> bytes = renderBytesOverride != null
+          ? await renderBytesOverride!()
+          : await EscposKitchenRenderer.generateBytes(
+              items: kitchenItems,
+              addedItems: kitchenAddedItems,
+              removedItems: kitchenRemovedItems,
+              tableNumber: tableNumber,
+              orderNumber: orderNumber,
+              waiterName: waiterName,
+              createdAt: createdAt,
+              resolveOperatorDisplayName: _resolveOperatorDisplayName,
+              capabilityProfile: route?.capabilityProfile,
+            );
 
-      // Send to kitchen printer with retry logic
-      final success = await _sendToPrinter(
-        _kitchenPrinterIp,
-        _kitchenPrinterPort,
+      // Flush durable admission before transport
+      final success = await _queueBytes(
+        host,
+        port,
         bytes,
-        printerName: 'Kitchen',
+        target: PrintQueueTarget.kitchen,
+        route: route,
+        venueId: capturedVenue,
+        label: 'Kitchen / ${orderNumber ?? tableNumber ?? 'ticket'}',
+        jobId: jobId,
+        requiresConfirmedOrderUuid: requiresConfirmedOrderUuid,
+        copyOf: copyOf,
+        copyReason: copyReason,
+        waitForDelivery: waitForDelivery,
+        onComplete: onComplete,
       );
 
       return success;
     } catch (e) {
-      developer.log('Error printing kitchen check: $e');
+      developer.log('Kitchen print admission failed: $e');
+      onComplete?.call(false);
       return false;
     }
   }
 
-  /// Print a kitchen check in the background (non-blocking)
-  ///
-  /// This method returns immediately without waiting for the print to complete.
-  /// Perfect for restaurant POS where you want instant UI response.
-  ///
-  /// The print job is queued and executed in a detached Future, so:
-  /// - UI never freezes
-  /// - No loading dialogs needed
-  /// - Multiple prints are handled in order
-  ///
-  /// [items] List of items to print (e.g., ["2x Burger", "1x Fries"])
-  /// [addedItems] Items that were added (for order modifications)
-  /// [removedItems] Items that were removed (for order modifications)
-  /// [tableNumber] Optional table number to display
-  /// [orderNumber] Optional order number to display
-  /// [waiterName] Waiter/Admin username who created the order
-  /// [createdAt] Time when order was created
-  /// [onComplete] Optional callback when print finishes (success or failure)
-  static void printKitchenCheckInBackground({
+  /// Returns only after frozen bytes/destination are flushed to Hive.
+  static Future<bool> printKitchenCheckInBackground({
     required List<String> items,
     List<String>? addedItems,
     List<String>? removedItems,
@@ -370,63 +371,80 @@ class PrinterService {
     String? orderNumber,
     String? waiterName,
     DateTime? createdAt,
-    Function(bool success)? onComplete,
-  }) {
-    PrintQueue.enqueue(
-      target: PrintQueueTarget.kitchen,
-      debugLabel: 'background kitchen print for order $orderNumber',
+    String? jobId,
+    String? requiresConfirmedOrderUuid,
+    String? initialOrderUuid,
+    String? copyOf,
+    String? copyReason,
+    void Function(bool)? onComplete,
+  }) => _admitKitchenBackground(
+    initialOrderUuid: initialOrderUuid,
+    items: List.of(items),
+    addedItems: addedItems == null ? null : List.of(addedItems),
+    removedItems: removedItems == null ? null : List.of(removedItems),
+    tableNumber: tableNumber,
+    orderNumber: orderNumber,
+    waiterName: waiterName,
+    createdAt: createdAt,
+    jobId: jobId,
+    requiresConfirmedOrderUuid: requiresConfirmedOrderUuid,
+    copyOf: copyOf,
+    copyReason: copyReason,
+    onComplete: onComplete,
+  );
+
+  static Future<bool> _admitKitchenBackground({
+    required List<String> items,
+    List<String>? addedItems,
+    List<String>? removedItems,
+    String? tableNumber,
+    String? orderNumber,
+    String? waiterName,
+    DateTime? createdAt,
+    String? jobId,
+    String? requiresConfirmedOrderUuid,
+    String? initialOrderUuid,
+    String? copyOf,
+    String? copyReason,
+    void Function(bool)? onComplete,
+  }) => LocalDataAdmission.mutate(() async {
+    if (initialOrderUuid != null) {
+      if (jobId != null ||
+          copyOf != null ||
+          addedItems != null ||
+          removedItems != null) {
+        throw ArgumentError(
+          'Initial kitchen identity cannot be used for copies or item changes',
+        );
+      }
+      jobId = 'kitchen-initial-$initialOrderUuid';
+      final existing = PrintJobRepository.read(jobId!);
+      if (existing != null) {
+        // This names one creation/confirmation event. Later Order, settings,
+        // menu and clock changes cannot recreate its original paper payload.
+        await PrintQueue.enqueue(existing, onComplete: onComplete);
+        return true;
+      }
+    }
+    return printKitchenCheck(
+      items: items,
+      addedItems: addedItems,
+      removedItems: removedItems,
+      tableNumber: tableNumber,
+      orderNumber: orderNumber,
+      waiterName: waiterName,
+      createdAt: createdAt,
+      jobId: jobId,
+      requiresConfirmedOrderUuid: requiresConfirmedOrderUuid,
+      copyOf: copyOf,
+      copyReason: copyReason,
+      waitForDelivery: false,
       onComplete: onComplete,
-      job: () async {
-        try {
-          developer.log(
-            '🖨️ Starting background kitchen print for order $orderNumber',
-          );
-
-          final success = await printKitchenCheck(
-            items: items,
-            addedItems: addedItems,
-            removedItems: removedItems,
-            tableNumber: tableNumber,
-            orderNumber: orderNumber,
-            waiterName: waiterName,
-            createdAt: createdAt,
-          );
-
-          if (success) {
-            developer.log(
-              '✅ Kitchen check printed successfully for order $orderNumber',
-            );
-          } else {
-            developer.log(
-              '❌ Kitchen check print failed for order $orderNumber',
-            );
-          }
-
-          return success;
-        } catch (e) {
-          developer.log('❌ Kitchen print error: $e');
-          return false;
-        }
-      },
     );
-  }
+  });
 
-  /// Print a receipt in the background (non-blocking)
-  ///
-  /// Similar to printKitchenCheckInBackground, but for customer receipts.
-  /// Returns immediately without blocking UI.
-  ///
-  /// [items] List of items to print (e.g., ["Burger - 15.00", "Fries - 5.00"])
-  /// [total] Total amount to display
-  /// [subtotal] Subtotal before service fee
-  /// [serviceFee] Service fee amount (10%)
-  /// [includeServiceFee] Whether service fee is included
-  /// [tableNumber] Optional table number to display
-  /// [orderNumber] Optional order number to display
-  /// [paymentMethod] Optional payment method (e.g., "Cash", "Card")
-  /// [language] Language code ('ka' for Georgian, 'en' for English, defaults to 'ka')
-  /// [onComplete] Optional callback when print finishes (success or failure)
-  static void printReceiptInBackground({
+  /// Returns durable admission; the callback reports transport acceptance.
+  static Future<bool> printReceiptInBackground({
     required List<String> items,
     required double total,
     double? subtotal,
@@ -441,51 +459,31 @@ class PrinterService {
     double? discountAmount,
     double? manualAdjustment,
     String? receiptType,
-    Function(bool success)? onComplete,
-  }) {
-    PrintQueue.enqueue(
-      target: PrintQueueTarget.receipt,
-      debugLabel: 'background receipt print for order $orderNumber',
-      onComplete: onComplete,
-      job: () async {
-        try {
-          developer.log(
-            '🖨️ Starting background receipt print for order $orderNumber in language: $language',
-          );
-
-          final success = await printReceipt(
-            items: items,
-            total: total,
-            subtotal: subtotal,
-            serviceFee: serviceFee,
-            includeServiceFee: includeServiceFee,
-            tableNumber: tableNumber,
-            orderNumber: orderNumber,
-            paymentMethod: paymentMethod,
-            language: language,
-            packageSubtotal: packageSubtotal,
-            additionalSubtotal: additionalSubtotal,
-            discountAmount: discountAmount,
-            manualAdjustment: manualAdjustment,
-            receiptType: receiptType,
-          );
-
-          if (success) {
-            developer.log(
-              '✅ Receipt printed successfully for order $orderNumber',
-            );
-          } else {
-            developer.log('❌ Receipt print failed for order $orderNumber');
-          }
-
-          return success;
-        } catch (e) {
-          developer.log('❌ Receipt print error: $e');
-          return false;
-        }
-      },
-    );
-  }
+    String? jobId,
+    String? copyOf,
+    String? copyReason,
+    void Function(bool)? onComplete,
+  }) => printReceipt(
+    items: List.of(items),
+    total: total,
+    subtotal: subtotal,
+    serviceFee: serviceFee,
+    includeServiceFee: includeServiceFee,
+    tableNumber: tableNumber,
+    orderNumber: orderNumber,
+    paymentMethod: paymentMethod,
+    language: language,
+    packageSubtotal: packageSubtotal,
+    additionalSubtotal: additionalSubtotal,
+    discountAmount: discountAmount,
+    manualAdjustment: manualAdjustment,
+    receiptType: receiptType,
+    jobId: jobId,
+    copyOf: copyOf,
+    copyReason: copyReason,
+    waitForDelivery: false,
+    onComplete: onComplete,
+  );
 
   /// Get the current number of pending print jobs
   /// Useful for debugging or showing queue status in UI
@@ -505,7 +503,7 @@ class PrinterService {
   /// [paymentMethod] Optional payment method (e.g., "Cash", "Card")
   /// [language] Language code ('ka' for Georgian, 'en' for English, defaults to 'ka')
   ///
-  /// Returns true if print was successful, false otherwise
+  /// Returns transport acceptance, which does not confirm physical paper output.
   static Future<bool> printReceipt({
     required List<String> items,
     required double total,
@@ -521,51 +519,80 @@ class PrinterService {
     double? discountAmount,
     double? manualAdjustment,
     String? receiptType,
+    String? jobId,
+    String? copyOf,
+    String? copyReason,
+    bool waitForDelivery = true,
+    void Function(bool)? onComplete,
   }) async {
     try {
+      items = List.of(items);
+      final capturedVenue = EdgeDeviceCredentialStore.venueId;
+      final route = _route(PrinterRole.receipt);
+      final host =
+          route?.destination.host ??
+          route?.destination.queueName ??
+          _receiptPrinterIp;
+      final port = route == null
+          ? _receiptPrinterPort
+          : route.destination.port ?? 0;
       // Validate printer IP configuration
-      if (_receiptPrinterIp.isEmpty) {
+      if (host.isEmpty) {
         developer.log('Error: Receipt printer IP not configured in settings');
+        onComplete?.call(false);
         return false;
       }
 
       // Generate ESC/POS commands for receipt.
       // Display-only admin setting: hides the separate service-fee row while
       // leaving the printed total untouched.
-      final List<int> bytes = await EscposReceiptRenderer.generateBytes(
-        items: items,
-        total: total,
-        subtotal: subtotal,
-        serviceFee: serviceFee,
-        includeServiceFee: includeServiceFee,
-        tableNumber: tableNumber,
-        orderNumber: orderNumber,
-        paymentMethod: paymentMethod,
-        language: language,
-        packageSubtotal: packageSubtotal,
-        additionalSubtotal: additionalSubtotal,
-        discountAmount: discountAmount,
-        manualAdjustment: manualAdjustment,
-        receiptType: receiptType,
-        showServiceFeeLine: _shouldShowServiceFeeLine(),
-        showCloseReceiptServiceFeeLine: _shouldShowCloseReceiptServiceFeeLine(),
-        loadReceiptLogoImage: _loadReceiptLogoImage,
-        venue: venueHeader(),
-        layout: receiptHeaderLayout(),
-        getReceiptLogoContentRect: _getReceiptLogoContentRect,
-      );
+      final List<int> bytes = renderBytesOverride != null
+          ? await renderBytesOverride!()
+          : await EscposReceiptRenderer.generateBytes(
+              items: items,
+              total: total,
+              subtotal: subtotal,
+              serviceFee: serviceFee,
+              includeServiceFee: includeServiceFee,
+              tableNumber: tableNumber,
+              orderNumber: orderNumber,
+              paymentMethod: paymentMethod,
+              language: language,
+              packageSubtotal: packageSubtotal,
+              additionalSubtotal: additionalSubtotal,
+              discountAmount: discountAmount,
+              manualAdjustment: manualAdjustment,
+              receiptType: receiptType,
+              showServiceFeeLine: _shouldShowServiceFeeLine(),
+              showCloseReceiptServiceFeeLine:
+                  _shouldShowCloseReceiptServiceFeeLine(),
+              loadReceiptLogoImage: _loadReceiptLogoImage,
+              venue: venueHeader(),
+              layout: receiptHeaderLayout(),
+              getReceiptLogoContentRect: _getReceiptLogoContentRect,
+              capabilityProfile: route?.capabilityProfile,
+            );
 
-      // Send to receipt printer with retry logic
-      final success = await _sendToPrinter(
-        _receiptPrinterIp,
-        _receiptPrinterPort,
+      // Flush durable admission before transport
+      final success = await _queueBytes(
+        host,
+        port,
         bytes,
-        printerName: 'Receipt',
+        target: PrintQueueTarget.receipt,
+        route: route,
+        venueId: capturedVenue,
+        label: 'Receipt / ${orderNumber ?? receiptType ?? 'ticket'}',
+        jobId: jobId,
+        copyOf: copyOf,
+        copyReason: copyReason,
+        waitForDelivery: waitForDelivery,
+        onComplete: onComplete,
       );
 
       return success;
     } catch (e) {
-      developer.log('Error printing receipt: $e');
+      developer.log('Receipt print admission failed: $e');
+      onComplete?.call(false);
       return false;
     }
   }
@@ -659,29 +686,60 @@ class PrinterService {
     return normalized.startsWith('admin ') || normalized.startsWith('ადმინ ');
   }
 
-  /// Send byte data to printer via persistent connection or fallback to raw TCP
-  ///
-  /// [printerIp] IP address of the printer
-  /// [port] Port number (typically 9100 for ESC/POS)
-  /// [bytes] ESC/POS command bytes to send
-  /// [printerName] Name for logging purposes
-  ///
-  /// First attempts to use persistent connection for instant printing
-  /// Falls back to traditional connection method if persistent connection fails
-  /// Returns true if successful, false otherwise
-  static Future<bool> _sendToPrinter(
-    String printerIp,
+  static Future<bool> _queueBytes(
+    String host,
     int port,
     List<int> bytes, {
-    String printerName = 'Printer',
-  }) {
-    return PrinterTransport.sendToPrinter(
-      printerIp: printerIp,
-      port: port,
-      bytes: bytes,
-      printerName: printerName,
-      usePersistentConnection: _isInitialized,
-    );
+    required PrintQueueTarget target,
+    PrinterRoute? route,
+    required String? venueId,
+    String? requiresConfirmedOrderUuid,
+    required String label,
+    String? jobId,
+    String? copyOf,
+    String? copyReason,
+    bool waitForDelivery = true,
+    void Function(bool)? onComplete,
+  }) async {
+    final completion = Completer<bool>();
+    await LocalDataAdmission.mutate(() async {
+      if ((copyOf == null) != (copyReason == null)) {
+        throw ArgumentError('Copy source and reason must be supplied together');
+      }
+      final actor = copyReason == null
+          ? null
+          : target == PrintQueueTarget.kitchen
+          ? PrintReconciliation.authorizeKitchenCopy()
+          : PrintReconciliation.authorizeCopy(copyReason);
+      await PrintQueue.enqueue(
+        PrintJob.create(
+          id: jobId ?? const Uuid().v4(),
+          target: target,
+          host: host,
+          port: port,
+          destination: route?.destination,
+          printerId: route?.id,
+          routeRevision: route?.revision,
+          capabilityProfile: route?.capabilityProfile,
+          label: label,
+          bytes: bytes,
+          venueId: venueId,
+          requiresConfirmedOrderUuid: requiresConfirmedOrderUuid,
+          copyOf: copyOf,
+          copyActorId: actor?.username,
+          copyReason: copyReason == null
+              ? null
+              : target == PrintQueueTarget.kitchen
+              ? PrintReconciliation.kitchenCopyReason
+              : copyReason.trim(),
+        ),
+        onComplete: (sent) {
+          if (!completion.isCompleted) completion.complete(sent);
+          onComplete?.call(sent);
+        },
+      );
+    });
+    return waitForDelivery ? completion.future : true;
   }
 
   /// Test connection to both printers
@@ -714,46 +772,72 @@ class PrinterService {
     String reportType = 'X REPORT',
   }) async {
     try {
+      final capturedVenue = EdgeDeviceCredentialStore.venueId;
+      final route = _route(PrinterRole.receipt);
+      final host =
+          route?.destination.host ??
+          route?.destination.queueName ??
+          _receiptPrinterIp;
+      final port = route == null
+          ? _receiptPrinterPort
+          : route.destination.port ?? 0;
       // Validate printer IP configuration
-      if (_receiptPrinterIp.isEmpty) {
+      if (host.isEmpty) {
         developer.log('Error: Receipt printer IP not configured in settings');
         return false;
       }
 
-      // Generate ESC/POS commands for text report
-      final List<int> bytes = [];
-
-      // ESC/POS Commands
-      const ESC = 0x1B;
-      const GS = 0x1D;
-
-      // Initialize printer
-      bytes.addAll([ESC, 0x40]); // ESC @ - Initialize
-
-      // Generate bitmap image of the report
-      final imageBytes = await EscposReportRenderer.generateImage(
-        reportText: reportText,
-        reportType: reportType,
-        loadReceiptLogoImage: _loadReceiptLogoImage,
-        venue: venueHeader(),
-        getReceiptLogoContentRect: _getReceiptLogoContentRect,
-      );
-
-      if (imageBytes != null) {
-        // Print the bitmap image
-        bytes.addAll(imageBytes);
+      final profile =
+          route?.capabilityProfile ??
+          PrinterCapabilityProfile.genericEscposRaster(
+            cutter: PrinterCutter.full,
+          );
+      if (!profile.hasImplementedRenderer) {
+        throw UnsupportedError(
+          'Printer command language has no implemented renderer',
+        );
+      }
+      final List<int> bytes;
+      if (renderBytesOverride != null) {
+        final raster = await renderBytesOverride!();
+        if (raster.isEmpty)
+          throw StateError('Required report raster could not be rendered');
+        bytes = [
+          0x1b,
+          0x40,
+          ...raster,
+          0x0a,
+          0x0a,
+          0x0a,
+          0x0a,
+          0x0a,
+          0x0a,
+          ...switch (profile.cutter) {
+            PrinterCutter.none => <int>[],
+            PrinterCutter.full => [0x1d, 0x56, 0],
+            PrinterCutter.partial => [0x1d, 0x56, 1],
+          },
+        ];
+      } else {
+        bytes = await EscposReportRenderer.generateBytes(
+          reportText: reportText,
+          reportType: reportType,
+          loadReceiptLogoImage: _loadReceiptLogoImage,
+          venue: venueHeader(),
+          getReceiptLogoContentRect: _getReceiptLogoContentRect,
+          capabilityProfile: profile,
+        );
       }
 
-      // Add extra line feeds and cut
-      bytes.addAll([0x0A, 0x0A, 0x0A, 0x0A, 0x0A, 0x0A]); // Extra line feeds
-      bytes.addAll([GS, 0x56, 0x00]); // GS V 0 - Full cut
-
       // Send to receipt printer
-      final success = await _sendToPrinter(
-        _receiptPrinterIp,
-        _printerPort,
+      final success = await _queueBytes(
+        host,
+        port,
         bytes,
-        printerName: 'Receipt',
+        target: PrintQueueTarget.receipt,
+        route: route,
+        venueId: capturedVenue,
+        label: 'Report / $reportType',
       );
 
       return success;

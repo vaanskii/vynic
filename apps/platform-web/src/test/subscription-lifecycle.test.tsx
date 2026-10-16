@@ -228,6 +228,81 @@ describe("Commercial lifecycle UI", () => {
       }),
     );
   });
+  const lapsed = {
+    ...active,
+    status: "SUSPENDED",
+    billingManaged: false,
+    suspendedFrom: "TRIAL",
+    startedAt: "2027-09-25T12:00:00Z",
+    trialEndsAt: "2027-09-28T12:00:00Z",
+    suspendedAt: "2027-09-28T12:00:00Z",
+    serverTime: "2027-09-29T12:00:00Z",
+  };
+  it("reactivates an expired Trial with a new end date instead of a dead-end Resume", async () => {
+    const api = serve(lapsed);
+    admin();
+    const user = userEvent.setup();
+    const select = await screen.findByLabelText("Commercial action");
+    expect(
+      within(select)
+        .getAllByRole("option")
+        .map((o) => o.getAttribute("value")),
+    ).toEqual(["", "EXTEND_TRIAL", "TRIAL", "GRANT_ACTIVE", "CANCEL_NOW"]);
+    expect(screen.getByText("Trial ended")).toBeVisible();
+    await user.selectOptions(select, "EXTEND_TRIAL");
+    const end = screen.getByLabelText(
+      "Trial end date and time (local timezone)",
+    ) as HTMLInputElement;
+    expect(new Date(end.value).getTime()).toBeGreaterThan(
+      Date.parse(lapsed.serverTime),
+    );
+    await user.type(screen.getByLabelText("Operator reason"), "Extra week");
+    await user.click(screen.getByRole("button", { name: "Review change" }));
+    const dialog = await screen.findByRole("dialog");
+    expect(
+      within(dialog).getAllByText(/Reactivate the expired/)[0],
+    ).toBeVisible();
+    await user.click(
+      within(dialog).getByRole("button", { name: "Apply change" }),
+    );
+    await waitFor(() =>
+      expect(
+        api.requests.find((r) => r.url.pathname.endsWith("/actions"))?.body,
+      ).toMatchObject({ action: "EXTEND_TRIAL", confirm: true }),
+    );
+  });
+  it("gifts one period of a plan without recording a payment", async () => {
+    const api = serve(lapsed);
+    admin();
+    const user = userEvent.setup();
+    await user.selectOptions(
+      await screen.findByLabelText("Commercial action"),
+      "GRANT_ACTIVE",
+    );
+    await user.selectOptions(screen.getByLabelText("Plan"), "full");
+    await user.click(
+      screen.getByLabelText("Gift this period (no payment received)"),
+    );
+    await user.type(screen.getByLabelText("Operator reason"), "Launch gift");
+    await user.click(screen.getByRole("button", { name: "Review change" }));
+    const dialog = await screen.findByRole("dialog");
+    expect(
+      within(dialog).getAllByText(/Gift Full for one month at no charge/)[0],
+    ).toBeVisible();
+    await user.click(
+      within(dialog).getByRole("button", { name: "Apply change" }),
+    );
+    await waitFor(() =>
+      expect(
+        api.requests.find((r) => r.url.pathname.endsWith("/actions"))?.body,
+      ).toMatchObject({
+        action: "GRANT_ACTIVE",
+        planId: "full",
+        complimentary: true,
+        confirm: true,
+      }),
+    );
+  });
   it("support can inspect the agreement without mutation controls", async () => {
     serve(active);
     admin(false);

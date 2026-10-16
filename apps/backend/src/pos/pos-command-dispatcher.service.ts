@@ -1,7 +1,10 @@
 import { withOperationalAuthority } from '../edge/operational-authority';
 import { Injectable, Logger } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
-import { EdgeCommandStatus } from '@prisma/client';
+import { isDeepStrictEqual } from 'node:util';
+import { BOOTSTRAP_VENUE_ID } from '../auth/legacy-pos-tenant.service';
+import { ConflictException } from '@nestjs/common';
+import { Prisma, EdgeCommandStatus } from '@prisma/client';
 import { PrismaService } from '../prisma.service';
 import { EdgeCommandService } from '../edge/edge-command.service';
 import { PosCallbackClient } from './pos-callback.client';
@@ -157,6 +160,70 @@ export class PosCommandDispatcher {
       };
     }
     return this.dispatchLegacy(tenant, command);
+  }
+
+  /** Website payment outbox only: caller holds the Venue lock. Never revive an
+   * existing terminal/claimed command, and never make a LAN call in a transaction. */
+  async recordWebsiteDelivery(
+    tx: Prisma.TransactionClient,
+    venueId: string,
+    command: DispatchPosCommand & { idempotencyKey: string },
+  ): Promise<{ transport: 'edge' | 'legacy'; queueId: string } | null> {
+    if (
+      command.type !== EdgeCommandTypes.RESERVATION_CREATE &&
+      command.type !== EdgeCommandTypes.RESERVATION_STATUS_UPDATE
+    )
+      throw new TypeError('Unsupported website delivery');
+    const hasDevice = await tx.device.findFirst({
+      where: { venueId },
+      select: { id: true },
+    });
+    if (hasDevice) {
+      const existing = await tx.edgeCommand.findUnique({
+        where: {
+          venueId_idempotencyKey: {
+            venueId,
+            idempotencyKey: command.idempotencyKey,
+          },
+        },
+      });
+      if (existing) {
+        if (
+          existing.type !== command.type ||
+          existing.deviceId !== null ||
+          existing.contractVersion !== EDGE_COMMAND_CONTRACT_VERSION ||
+          !isDeepStrictEqual(existing.payload, command.payload)
+        )
+          throw new ConflictException('Website delivery identity conflict');
+        return { transport: 'edge', queueId: existing.id };
+      }
+      const row = await tx.edgeCommand.create({
+        data: {
+          venueId,
+          type: command.type,
+          payload: command.payload as Prisma.InputJsonObject,
+          idempotencyKey: command.idempotencyKey,
+          contractVersion: EDGE_COMMAND_CONTRACT_VERSION,
+        },
+      });
+      return { transport: 'edge', queueId: row.id };
+    }
+    // The frozen shared-key callback identifies only the bootstrap Venue.
+    if (venueId !== BOOTSTRAP_VENUE_ID) return null;
+    const row = await tx.posCallbackOutbox.create({
+      data: {
+        venueId,
+        endpoint: LEGACY_ENDPOINTS[command.type]!,
+        payload: command.payload as Prisma.InputJsonObject,
+        dedupeKey: command.idempotencyKey,
+      },
+    });
+    return { transport: 'legacy', queueId: row.id };
+  }
+
+  async kickWebsiteLegacy(venueId: string) {
+    if (venueId === BOOTSTRAP_VENUE_ID)
+      await this.posOutbox.processDue({ venueId });
   }
 
   /**

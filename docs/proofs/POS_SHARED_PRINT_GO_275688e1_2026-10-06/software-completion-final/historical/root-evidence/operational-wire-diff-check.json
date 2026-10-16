@@ -1,0 +1,163 @@
+{
+  "method": "git diff --no-index --check /dev/null each_owned_file; exit 1 with no diagnostics is expected file addition",
+  "filesChecked": 26,
+  "issues": [],
+  "results": [
+    {
+      "file": "apps/edge/internal/server/operational_proof.go",
+      "exit": 1,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "file": "apps/edge/internal/server/operational_proof_test.go",
+      "exit": 1,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "file": "apps/edge/internal/server/operational_wire.go",
+      "exit": 1,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "file": "apps/edge/internal/store/coordination_test.go",
+      "exit": 1,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "file": "apps/edge/internal/store/migrations/003_operational_coordination.sql",
+      "exit": 1,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "file": "apps/edge/internal/store/migrations/004_operational_entity_kinds.sql",
+      "exit": 1,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "file": "apps/edge/internal/store/migrations/006_operational_terminal_origin.sql",
+      "exit": 1,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "file": "apps/edge/internal/store/operational.go",
+      "exit": 1,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "file": "apps/edge/internal/store/operational_authority.go",
+      "exit": 1,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "file": "apps/edge/internal/store/operational_origin.go",
+      "exit": 1,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "file": "apps/edge/internal/store/operational_queue_test.go",
+      "exit": 1,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "file": "apps/edge/internal/store/operational_status.go",
+      "exit": 1,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "file": "apps/edge/internal/store/operational_test.go",
+      "exit": 1,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "file": "apps/edge/internal/store/store.go",
+      "exit": 1,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "file": "apps/operations/lib/core/services/edge/operational_proof/client.dart",
+      "exit": 1,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "file": "apps/operations/lib/core/services/edge/operational_proof/domain.dart",
+      "exit": 1,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "file": "apps/operations/lib/core/services/edge/operational_proof/grpc_transport.dart",
+      "exit": 1,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "file": "apps/operations/test/unit/operational_proof_wire_test.dart",
+      "exit": 1,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "file": "packages/contracts/generated/edge_dart/lib/src/generated/vynic/edge/v1/operational_proof.pb.dart",
+      "exit": 1,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "file": "packages/contracts/generated/edge_dart/lib/src/generated/vynic/edge/v1/operational_proof.pbenum.dart",
+      "exit": 1,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "file": "packages/contracts/generated/edge_dart/lib/src/generated/vynic/edge/v1/operational_proof.pbgrpc.dart",
+      "exit": 1,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "file": "packages/contracts/generated/edge_dart/lib/src/generated/vynic/edge/v1/operational_proof.pbjson.dart",
+      "exit": 1,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "file": "packages/contracts/generated/edge_dart/lib/vynic_edge_contracts.dart",
+      "exit": 1,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "file": "packages/contracts/generated/go/vynic/edge/v1/operational_proof.pb.go",
+      "exit": 1,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "file": "packages/contracts/generated/go/vynic/edge/v1/operational_proof_grpc.pb.go",
+      "exit": 1,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "file": "packages/contracts/proto/vynic/edge/v1/operational_proof.proto",
+      "exit": 1,
+      "stdout": "",
+      "stderr": ""
+    }
+  ]
+}

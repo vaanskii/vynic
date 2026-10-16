@@ -1,0 +1,49 @@
+{
+  "schema": 1,
+  "reviewedAtUtc": "2026-10-06T17:03:14.726928+00:00",
+  "verdict": "PASS_BOUNDED_READONLY_MANUAL_HEALTH_UI",
+  "openP1": [],
+  "openP2": [],
+  "sourceRoot": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/source",
+  "ownedManifest": {
+    "path": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/metadata/printer-agent-ui-owned-hashes.json",
+    "sha256": "b7bc1d8fb500858976d2e8bc9c62af8031ce19ac1d7b83cc3c3b5e955fb54754"
+  },
+  "verifiedSourceFiles": 6,
+  "ownerValidationIndependentlyParsed": {
+    "tests": {
+      "path": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/printer-agent-ui-tests-final.jsonl",
+      "sha256": "a463a8d885b67fe72fed1a34cfc804334d1d145c41ac5080e573a627546b9d8d"
+    },
+    "analysis": {
+      "path": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/printer-agent-ui-analyze-final.log",
+      "sha256": "62a38c54c4399ff24a04b006c1f9af08e01c1a937af0a17ab1294126f665848a"
+    },
+    "visibleSuccess": 90,
+    "hiddenSuccess": 4,
+    "skip": 0,
+    "errors": 0,
+    "doneSuccess": true,
+    "analysisItems": 6,
+    "analysisNoIssues": true,
+    "executedByReviewer": false
+  },
+  "reviewedBoundaries": [
+    "Empty default build flag performs no profile read, startup probe, discovery, service start or print action; manual developer-printers scope required.",
+    "Exact bounded duplicate-aware 11-key profile; explicit POS currentDeviceInstallationId remains distinct from Go pins.installationId. Device/Venue/current enrollment/transition/restore held checks precede credentials and guard asynchronous result.",
+    "Same-directory bounded read-only PEM inputs and exact DER pins; profile and credentials reread before presenting a result; typed errors avoid credential/path leakage.",
+    "Card clears stale asynchronous results and suppresses cached health on changed current identity/restore/permission; timestamp explicitly labels historical manual observation.",
+    "Only AdminPrintersSection import/optional test injection/card attachment added; existing printer save/test callbacks unchanged."
+  ],
+  "closedFindings": [
+    "Cached prior-identity health no longer remains presented as current after a build with changed enrollment or restore hold.",
+    "POS enrollment installation is explicitly distinct from Go agent installation; malformed/missing/wrong explicit currentDeviceInstallationId fails closed."
+  ],
+  "actualWireEvidence": "Passing visible test manual card uses real profile and mTLS health then shows actual offline failure invokes actual readonly loader and pinned mTLS client against owned Go process, asserts unequal installation IDs, then stops that process and observes unavailable on second explicit read. Synthetic enrollment getter; no production enrollment.",
+  "limitations": [
+    "This reviews six UI/runtime files and owner-produced test evidence; underlying final Go RPC/Dart profile/client cohort has separate final review.",
+    "Health is a timestamped manual observation, not continuously refreshed availability.",
+    "Held service infrastructure is not joined Raft replica health, production authority or physical printing capability.",
+    "No SCM registration, enrollment, credential provisioning, physical job or production cutover qualified."
+  ]
+}

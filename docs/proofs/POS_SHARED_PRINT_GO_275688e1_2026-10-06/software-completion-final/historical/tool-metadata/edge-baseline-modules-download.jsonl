@@ -1,0 +1,660 @@
+{
+	"Path": "cel.dev/expr",
+	"Version": "v0.25.1",
+	"Info": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/cel.dev/expr/@v/v0.25.1.info",
+	"GoMod": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/cel.dev/expr/@v/v0.25.1.mod",
+	"Zip": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/cel.dev/expr/@v/v0.25.1.zip",
+	"Dir": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cel.dev/expr@v0.25.1",
+	"Sum": "h1:1KrZg61W6TWSxuNZ37Xy49ps13NUovb66QLprthtwi4=",
+	"GoModSum": "h1:hrXvqGP6G6gyx8UAHSHJ5RGk//1Oj5nXQ2NI02Nrsg4="
+}
+{
+	"Path": "cloud.google.com/go/compute/metadata",
+	"Version": "v0.9.0",
+	"Info": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/cloud.google.com/go/compute/metadata/@v/v0.9.0.info",
+	"GoMod": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/cloud.google.com/go/compute/metadata/@v/v0.9.0.mod",
+	"Zip": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/cloud.google.com/go/compute/metadata/@v/v0.9.0.zip",
+	"Dir": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cloud.google.com/go/compute/metadata@v0.9.0",
+	"Sum": "h1:pDUj4QMoPejqq20dK0Pg2N4yG9zIkYGdBtwLoEkH9Zs=",
+	"GoModSum": "h1:E0bWwX5wTnLPedCKqk3pJmVgCBSM6qQI1yTBdEb3C10="
+}
+{
+	"Path": "github.com/GoogleCloudPlatform/opentelemetry-operations-go/detectors/gcp",
+	"Version": "v1.30.0",
+	"Info": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/github.com/!google!cloud!platform/opentelemetry-operations-go/detectors/gcp/@v/v1.30.0.info",
+	"GoMod": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/github.com/!google!cloud!platform/opentelemetry-operations-go/detectors/gcp/@v/v1.30.0.mod",
+	"Zip": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/github.com/!google!cloud!platform/opentelemetry-operations-go/detectors/gcp/@v/v1.30.0.zip",
+	"Dir": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/github.com/!google!cloud!platform/opentelemetry-operations-go/detectors/gcp@v1.30.0",
+	"Sum": "h1:sBEjpZlNHzK1voKq9695PJSX2o5NEXl7/OL3coiIY0c=",
+	"GoModSum": "h1:P4WPRUkOhJC13W//jWpyfJNDAIpvRbAUIYLX/4jtlE0="
+}
+{
+	"Path": "github.com/cespare/xxhash/v2",
+	"Version": "v2.3.0",
+	"Info": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/github.com/cespare/xxhash/v2/@v/v2.3.0.info",
+	"GoMod": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/github.com/cespare/xxhash/v2/@v/v2.3.0.mod",
+	"Zip": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/github.com/cespare/xxhash/v2/@v/v2.3.0.zip",
+	"Dir": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/github.com/cespare/xxhash/v2@v2.3.0",
+	"Sum": "h1:UL815xU9SqsFlibzuggzjXhog7bL6oX9BbNZnL2UFvs=",
+	"GoModSum": "h1:VGX0DQ3Q6kWi7AoAeZDth3/j3BFtOZR5XLFGgcrjCOs="
+}
+{
+	"Path": "github.com/cncf/xds/go",
+	"Version": "v0.0.0-20251210132809-ee656c7534f5",
+	"Info": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/github.com/cncf/xds/go/@v/v0.0.0-20251210132809-ee656c7534f5.info",
+	"GoMod": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/github.com/cncf/xds/go/@v/v0.0.0-20251210132809-ee656c7534f5.mod",
+	"Zip": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/github.com/cncf/xds/go/@v/v0.0.0-20251210132809-ee656c7534f5.zip",
+	"Dir": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/github.com/cncf/xds/go@v0.0.0-20251210132809-ee656c7534f5",
+	"Sum": "h1:6xNmx7iTtyBRev0+D/Tv1FZd4SCg8axKApyNyRsAt/w=",
+	"GoModSum": "h1:KdCmV+x/BuvyMxRnYBlmVaq4OLiKW6iRQfvC62cvdkI="
+}
+{
+	"Path": "github.com/davecgh/go-spew",
+	"Version": "v1.1.1",
+	"Info": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/github.com/davecgh/go-spew/@v/v1.1.1.info",
+	"GoMod": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/github.com/davecgh/go-spew/@v/v1.1.1.mod",
+	"Zip": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/github.com/davecgh/go-spew/@v/v1.1.1.zip",
+	"Dir": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/github.com/davecgh/go-spew@v1.1.1",
+	"Sum": "h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=",
+	"GoModSum": "h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38="
+}
+{
+	"Path": "github.com/dustin/go-humanize",
+	"Version": "v1.0.1",
+	"Info": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/github.com/dustin/go-humanize/@v/v1.0.1.info",
+	"GoMod": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/github.com/dustin/go-humanize/@v/v1.0.1.mod",
+	"Zip": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/github.com/dustin/go-humanize/@v/v1.0.1.zip",
+	"Dir": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/github.com/dustin/go-humanize@v1.0.1",
+	"Sum": "h1:GzkhY7T5VNhEkwH0PVJgjz+fX1rhBrR7pRT3mDkpeCY=",
+	"GoModSum": "h1:Mu1zIs6XwVuF/gI1OepvI0qD18qycQx+mFykh5fBlto="
+}
+{
+	"Path": "github.com/envoyproxy/go-control-plane",
+	"Version": "v0.14.0",
+	"Info": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/github.com/envoyproxy/go-control-plane/@v/v0.14.0.info",
+	"GoMod": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/github.com/envoyproxy/go-control-plane/@v/v0.14.0.mod",
+	"Zip": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/github.com/envoyproxy/go-control-plane/@v/v0.14.0.zip",
+	"Dir": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/github.com/envoyproxy/go-control-plane@v0.14.0",
+	"Sum": "h1:hbG2kr4RuFj222B6+7T83thSPqLjwBIfQawTkC++2HA=",
+	"GoModSum": "h1:NcS5X47pLl/hfqxU70yPwL9ZMkUlwlKxtAohpi2wBEU="
+}
+{
+	"Path": "github.com/envoyproxy/go-control-plane/envoy",
+	"Version": "v1.36.0",
+	"Info": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/github.com/envoyproxy/go-control-plane/envoy/@v/v1.36.0.info",
+	"GoMod": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/github.com/envoyproxy/go-control-plane/envoy/@v/v1.36.0.mod",
+	"Zip": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/github.com/envoyproxy/go-control-plane/envoy/@v/v1.36.0.zip",
+	"Dir": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/github.com/envoyproxy/go-control-plane/envoy@v1.36.0",
+	"Sum": "h1:yg/JjO5E7ubRyKX3m07GF3reDNEnfOboJ0QySbH736g=",
+	"GoModSum": "h1:ty89S1YCCVruQAm9OtKeEkQLTb+Lkz0k8v9W0Oxsv98="
+}
+{
+	"Path": "github.com/envoyproxy/go-control-plane/ratelimit",
+	"Version": "v0.1.0",
+	"Info": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/github.com/envoyproxy/go-control-plane/ratelimit/@v/v0.1.0.info",
+	"GoMod": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/github.com/envoyproxy/go-control-plane/ratelimit/@v/v0.1.0.mod",
+	"Zip": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/github.com/envoyproxy/go-control-plane/ratelimit/@v/v0.1.0.zip",
+	"Dir": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/github.com/envoyproxy/go-control-plane/ratelimit@v0.1.0",
+	"Sum": "h1:/G9QYbddjL25KvtKTv3an9lx6VBE2cnb8wp1vEGNYGI=",
+	"GoModSum": "h1:Wk+tMFAFbCXaJPzVVHnPgRKdUdwW/KdbRt94AzgRee4="
+}
+{
+	"Path": "github.com/envoyproxy/protoc-gen-validate",
+	"Version": "v1.3.0",
+	"Info": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/github.com/envoyproxy/protoc-gen-validate/@v/v1.3.0.info",
+	"GoMod": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/github.com/envoyproxy/protoc-gen-validate/@v/v1.3.0.mod",
+	"Zip": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/github.com/envoyproxy/protoc-gen-validate/@v/v1.3.0.zip",
+	"Dir": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/github.com/envoyproxy/protoc-gen-validate@v1.3.0",
+	"Sum": "h1:TvGH1wof4H33rezVKWSpqKz5NXWg5VPuZ0uONDT6eb4=",
+	"GoModSum": "h1:HvYl7zwPa5mffgyeTUHA9zHIH36nmrm7oCbo4YKoSWA="
+}
+{
+	"Path": "github.com/go-jose/go-jose/v4",
+	"Version": "v4.1.3",
+	"Info": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/github.com/go-jose/go-jose/v4/@v/v4.1.3.info",
+	"GoMod": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/github.com/go-jose/go-jose/v4/@v/v4.1.3.mod",
+	"Zip": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/github.com/go-jose/go-jose/v4/@v/v4.1.3.zip",
+	"Dir": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/github.com/go-jose/go-jose/v4@v4.1.3",
+	"Sum": "h1:CVLmWDhDVRa6Mi/IgCgaopNosCaHz7zrMeF9MlZRkrs=",
+	"GoModSum": "h1:x4oUasVrzR7071A4TnHLGSPpNOm2a21K9Kf04k1rs08="
+}
+{
+	"Path": "github.com/go-logr/logr",
+	"Version": "v1.4.3",
+	"Info": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/github.com/go-logr/logr/@v/v1.4.3.info",
+	"GoMod": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/github.com/go-logr/logr/@v/v1.4.3.mod",
+	"Zip": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/github.com/go-logr/logr/@v/v1.4.3.zip",
+	"Dir": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/github.com/go-logr/logr@v1.4.3",
+	"Sum": "h1:CjnDlHq8ikf6E492q6eKboGOC0T8CDaOvkHCIg8idEI=",
+	"GoModSum": "h1:9T104GzyrTigFIr8wt5mBrctHMim0Nb2HLGrmQ40KvY="
+}
+{
+	"Path": "github.com/go-logr/stdr",
+	"Version": "v1.2.2",
+	"Info": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/github.com/go-logr/stdr/@v/v1.2.2.info",
+	"GoMod": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/github.com/go-logr/stdr/@v/v1.2.2.mod",
+	"Zip": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/github.com/go-logr/stdr/@v/v1.2.2.zip",
+	"Dir": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/github.com/go-logr/stdr@v1.2.2",
+	"Sum": "h1:hSWxHoqTgW2S2qGc0LTAI563KZ5YKYRhT3MFKZMbjag=",
+	"GoModSum": "h1:mMo/vtBO5dYbehREoey6XUKy/eSumjCCveDpRre4VKE="
+}
+{
+	"Path": "github.com/gofrs/flock",
+	"Version": "v0.12.1",
+	"Info": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/github.com/gofrs/flock/@v/v0.12.1.info",
+	"GoMod": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/github.com/gofrs/flock/@v/v0.12.1.mod",
+	"Zip": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/github.com/gofrs/flock/@v/v0.12.1.zip",
+	"Dir": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/github.com/gofrs/flock@v0.12.1",
+	"Sum": "h1:MTLVXXHf8ekldpJk3AKicLij9MdwOWkZ+a/jHHZby9E=",
+	"GoModSum": "h1:9zxTsyu5xtJ9DK+1tFZyibEV7y3uwDxPPfbxeeHCoD0="
+}
+{
+	"Path": "github.com/golang/glog",
+	"Version": "v1.2.5",
+	"Info": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/github.com/golang/glog/@v/v1.2.5.info",
+	"GoMod": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/github.com/golang/glog/@v/v1.2.5.mod",
+	"Zip": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/github.com/golang/glog/@v/v1.2.5.zip",
+	"Dir": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/github.com/golang/glog@v1.2.5",
+	"Sum": "h1:DrW6hGnjIhtvhOIiAKT6Psh/Kd/ldepEa81DKeiRJ5I=",
+	"GoModSum": "h1:6AhwSGph0fcJtXVM/PEHPqZlFeoLxhs7/t5UDAwmO+w="
+}
+{
+	"Path": "github.com/golang/protobuf",
+	"Version": "v1.5.4",
+	"Info": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/github.com/golang/protobuf/@v/v1.5.4.info",
+	"GoMod": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/github.com/golang/protobuf/@v/v1.5.4.mod",
+	"Zip": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/github.com/golang/protobuf/@v/v1.5.4.zip",
+	"Dir": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/github.com/golang/protobuf@v1.5.4",
+	"Sum": "h1:i7eJL8qZTpSEXOPTxNKhASYpMn+8e5Q6AdndVa1dWek=",
+	"GoModSum": "h1:lnTiLA8Wa4RWRcIUkrtSVa5nRhsEGBg48fD6rSs7xps="
+}
+{
+	"Path": "github.com/google/go-cmp",
+	"Version": "v0.7.0",
+	"Info": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/github.com/google/go-cmp/@v/v0.7.0.info",
+	"GoMod": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/github.com/google/go-cmp/@v/v0.7.0.mod",
+	"Zip": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/github.com/google/go-cmp/@v/v0.7.0.zip",
+	"Dir": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/github.com/google/go-cmp@v0.7.0",
+	"Sum": "h1:wk8382ETsv4JYUZwIsn6YpYiWiBsYLSJiTsyBybVuN8=",
+	"GoModSum": "h1:pXiqmnSA92OHEEa9HXL2W4E7lf9JzCmGVUdgjX3N/iU="
+}
+{
+	"Path": "github.com/google/pprof",
+	"Version": "v0.0.0-20260802141513-ef3492d7dac3",
+	"Info": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/github.com/google/pprof/@v/v0.0.0-20260802141513-ef3492d7dac3.info",
+	"GoMod": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/github.com/google/pprof/@v/v0.0.0-20260802141513-ef3492d7dac3.mod",
+	"Zip": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/github.com/google/pprof/@v/v0.0.0-20260802141513-ef3492d7dac3.zip",
+	"Dir": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/github.com/google/pprof@v0.0.0-20260802141513-ef3492d7dac3",
+	"Sum": "h1:LMLX+LgTNWpfvCBdFebv6EsYotImrt/Ppc5cXIriCSo=",
+	"GoModSum": "h1:jl5iWTm0/hd5PjEYEOuwAJ57L/CibdZfrqZ5XA5GrCk="
+}
+{
+	"Path": "github.com/google/uuid",
+	"Version": "v1.6.0",
+	"Info": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/github.com/google/uuid/@v/v1.6.0.info",
+	"GoMod": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/github.com/google/uuid/@v/v1.6.0.mod",
+	"Zip": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/github.com/google/uuid/@v/v1.6.0.zip",
+	"Dir": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/github.com/google/uuid@v1.6.0",
+	"Sum": "h1:NIvaJDMOsjHA8n1jAhLSgzrAzy1Hgr+hNrb57e+94F0=",
+	"GoModSum": "h1:TIyPZe4MgqvfeYDBFedMoGGpEw/LqOeaOT+nhxU+yHo="
+}
+{
+	"Path": "github.com/hashicorp/golang-lru/v2",
+	"Version": "v2.0.7",
+	"Info": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/github.com/hashicorp/golang-lru/v2/@v/v2.0.7.info",
+	"GoMod": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/github.com/hashicorp/golang-lru/v2/@v/v2.0.7.mod",
+	"Zip": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/github.com/hashicorp/golang-lru/v2/@v/v2.0.7.zip",
+	"Dir": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/github.com/hashicorp/golang-lru/v2@v2.0.7",
+	"Sum": "h1:a+bsQ5rvGLjzHuww6tVxozPZFVghXaHOwFs4luLUK2k=",
+	"GoModSum": "h1:QeFd9opnmA6QUJc5vARoKUSoFhyfM2/ZepoAG6RGpeM="
+}
+{
+	"Path": "github.com/kr/pretty",
+	"Version": "v0.3.1",
+	"Info": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/github.com/kr/pretty/@v/v0.3.1.info",
+	"GoMod": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/github.com/kr/pretty/@v/v0.3.1.mod",
+	"Zip": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/github.com/kr/pretty/@v/v0.3.1.zip",
+	"Dir": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/github.com/kr/pretty@v0.3.1",
+	"Sum": "h1:flRD4NNwYAUpkphVc1HcthR4KEIFJ65n8Mw5qdRn3LE=",
+	"GoModSum": "h1:hoEshYVHaxMs3cyo3Yncou5ZscifuDolrwPKZanG3xk="
+}
+{
+	"Path": "github.com/mattn/go-isatty",
+	"Version": "v0.0.24",
+	"Info": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/github.com/mattn/go-isatty/@v/v0.0.24.info",
+	"GoMod": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/github.com/mattn/go-isatty/@v/v0.0.24.mod",
+	"Zip": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/github.com/mattn/go-isatty/@v/v0.0.24.zip",
+	"Dir": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/github.com/mattn/go-isatty@v0.0.24",
+	"Sum": "h1:tGZZoVgT/KiqK1c8ocVLeDS8BSWMRd47J3Lbz7vsReI=",
+	"GoModSum": "h1:nMCL3Zebbrt45jsMDgnfIwz6ydEQApk5oEI3HqDio6A="
+}
+{
+	"Path": "github.com/ncruces/go-strftime",
+	"Version": "v1.0.0",
+	"Info": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/github.com/ncruces/go-strftime/@v/v1.0.0.info",
+	"GoMod": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/github.com/ncruces/go-strftime/@v/v1.0.0.mod",
+	"Zip": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/github.com/ncruces/go-strftime/@v/v1.0.0.zip",
+	"Dir": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/github.com/ncruces/go-strftime@v1.0.0",
+	"Sum": "h1:HMFp8mLCTPp341M/ZnA4qaf7ZlsbTc+miZjCLOFAw7w=",
+	"GoModSum": "h1:Fwc5htZGVVkseilnfgOVb9mKy6w1naJmn9CehxcKcls="
+}
+{
+	"Path": "github.com/planetscale/vtprotobuf",
+	"Version": "v0.6.1-0.20240319094008-0393e58bdf10",
+	"Info": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/github.com/planetscale/vtprotobuf/@v/v0.6.1-0.20240319094008-0393e58bdf10.info",
+	"GoMod": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/github.com/planetscale/vtprotobuf/@v/v0.6.1-0.20240319094008-0393e58bdf10.mod",
+	"Zip": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/github.com/planetscale/vtprotobuf/@v/v0.6.1-0.20240319094008-0393e58bdf10.zip",
+	"Dir": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/github.com/planetscale/vtprotobuf@v0.6.1-0.20240319094008-0393e58bdf10",
+	"Sum": "h1:GFCKgmp0tecUJ0sJuv4pzYCqS9+RGSn52M3FUwPs+uo=",
+	"GoModSum": "h1:t/avpk3KcrXxUnYOhZhMXJlSEyie6gQbtLq5NM3loB8="
+}
+{
+	"Path": "github.com/pmezard/go-difflib",
+	"Version": "v1.0.0",
+	"Info": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/github.com/pmezard/go-difflib/@v/v1.0.0.info",
+	"GoMod": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/github.com/pmezard/go-difflib/@v/v1.0.0.mod",
+	"Zip": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/github.com/pmezard/go-difflib/@v/v1.0.0.zip",
+	"Dir": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/github.com/pmezard/go-difflib@v1.0.0",
+	"Sum": "h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=",
+	"GoModSum": "h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4="
+}
+{
+	"Path": "github.com/remyoudompheng/bigfft",
+	"Version": "v0.0.0-20230129092748-24d4a6f8daec",
+	"Info": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/github.com/remyoudompheng/bigfft/@v/v0.0.0-20230129092748-24d4a6f8daec.info",
+	"GoMod": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/github.com/remyoudompheng/bigfft/@v/v0.0.0-20230129092748-24d4a6f8daec.mod",
+	"Zip": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/github.com/remyoudompheng/bigfft/@v/v0.0.0-20230129092748-24d4a6f8daec.zip",
+	"Dir": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/github.com/remyoudompheng/bigfft@v0.0.0-20230129092748-24d4a6f8daec",
+	"Sum": "h1:W09IVJc94icq4NjY3clb7Lk8O1qJ8BdBEF8z0ibU0rE=",
+	"GoModSum": "h1:qqbHyh8v60DhA7CoWK5oRCqLrMHRGoxYCSS9EjAz6Eo="
+}
+{
+	"Path": "github.com/spiffe/go-spiffe/v2",
+	"Version": "v2.6.0",
+	"Info": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/github.com/spiffe/go-spiffe/v2/@v/v2.6.0.info",
+	"GoMod": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/github.com/spiffe/go-spiffe/v2/@v/v2.6.0.mod",
+	"Zip": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/github.com/spiffe/go-spiffe/v2/@v/v2.6.0.zip",
+	"Dir": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/github.com/spiffe/go-spiffe/v2@v2.6.0",
+	"Sum": "h1:l+DolpxNWYgruGQVV0xsfeya3CsC7m8iBzDnMpsbLuo=",
+	"GoModSum": "h1:gm2SeUoMZEtpnzPNs2Csc0D/gX33k1xIx7lEzqblHEs="
+}
+{
+	"Path": "github.com/stretchr/testify",
+	"Version": "v1.9.0",
+	"Info": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/github.com/stretchr/testify/@v/v1.9.0.info",
+	"GoMod": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/github.com/stretchr/testify/@v/v1.9.0.mod",
+	"Zip": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/github.com/stretchr/testify/@v/v1.9.0.zip",
+	"Dir": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/github.com/stretchr/testify@v1.9.0",
+	"Sum": "h1:HtqpIVDClZ4nwg75+f6Lvsy/wHu+3BoSGCbBAcpTsTg=",
+	"GoModSum": "h1:r2ic/lqez/lEtzL7wO/rwa5dbSLXVDPFyf8C91i36aY="
+}
+{
+	"Path": "go.opentelemetry.io/auto/sdk",
+	"Version": "v1.2.1",
+	"Info": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/go.opentelemetry.io/auto/sdk/@v/v1.2.1.info",
+	"GoMod": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/go.opentelemetry.io/auto/sdk/@v/v1.2.1.mod",
+	"Zip": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/go.opentelemetry.io/auto/sdk/@v/v1.2.1.zip",
+	"Dir": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/go.opentelemetry.io/auto/sdk@v1.2.1",
+	"Sum": "h1:jXsnJ4Lmnqd11kwkBV2LgLoFMZKizbCi5fNZ/ipaZ64=",
+	"GoModSum": "h1:KRTj+aOaElaLi+wW1kO/DZRXwkF4C5xPbEe3ZiIhN7Y="
+}
+{
+	"Path": "go.opentelemetry.io/contrib/detectors/gcp",
+	"Version": "v1.39.0",
+	"Info": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/go.opentelemetry.io/contrib/detectors/gcp/@v/v1.39.0.info",
+	"GoMod": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/go.opentelemetry.io/contrib/detectors/gcp/@v/v1.39.0.mod",
+	"Zip": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/go.opentelemetry.io/contrib/detectors/gcp/@v/v1.39.0.zip",
+	"Dir": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/go.opentelemetry.io/contrib/detectors/gcp@v1.39.0",
+	"Sum": "h1:kWRNZMsfBHZ+uHjiH4y7Etn2FK26LAGkNFw7RHv1DhE=",
+	"GoModSum": "h1:t/OGqzHBa5v6RHZwrDBJ2OirWc+4q/w2fTbLZwAKjTk="
+}
+{
+	"Path": "go.opentelemetry.io/otel",
+	"Version": "v1.39.0",
+	"Info": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/go.opentelemetry.io/otel/@v/v1.39.0.info",
+	"GoMod": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/go.opentelemetry.io/otel/@v/v1.39.0.mod",
+	"Zip": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/go.opentelemetry.io/otel/@v/v1.39.0.zip",
+	"Dir": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/go.opentelemetry.io/otel@v1.39.0",
+	"Sum": "h1:8yPrr/S0ND9QEfTfdP9V+SiwT4E0G7Y5MO7p85nis48=",
+	"GoModSum": "h1:kLlFTywNWrFyEdH0oj2xK0bFYZtHRYUdv1NklR/tgc8="
+}
+{
+	"Path": "go.opentelemetry.io/otel/metric",
+	"Version": "v1.39.0",
+	"Info": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/go.opentelemetry.io/otel/metric/@v/v1.39.0.info",
+	"GoMod": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/go.opentelemetry.io/otel/metric/@v/v1.39.0.mod",
+	"Zip": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/go.opentelemetry.io/otel/metric/@v/v1.39.0.zip",
+	"Dir": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/go.opentelemetry.io/otel/metric@v1.39.0",
+	"Sum": "h1:d1UzonvEZriVfpNKEVmHXbdf909uGTOQjA0HF0Ls5Q0=",
+	"GoModSum": "h1:jrZSWL33sD7bBxg1xjrqyDjnuzTUB0x1nBERXd7Ftcs="
+}
+{
+	"Path": "go.opentelemetry.io/otel/sdk",
+	"Version": "v1.39.0",
+	"Info": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/go.opentelemetry.io/otel/sdk/@v/v1.39.0.info",
+	"GoMod": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/go.opentelemetry.io/otel/sdk/@v/v1.39.0.mod",
+	"Zip": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/go.opentelemetry.io/otel/sdk/@v/v1.39.0.zip",
+	"Dir": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/go.opentelemetry.io/otel/sdk@v1.39.0",
+	"Sum": "h1:nMLYcjVsvdui1B/4FRkwjzoRVsMK8uL/cj0OyhKzt18=",
+	"GoModSum": "h1:vDojkC4/jsTJsE+kh+LXYQlbL8CgrEcwmt1ENZszdJE="
+}
+{
+	"Path": "go.opentelemetry.io/otel/sdk/metric",
+	"Version": "v1.39.0",
+	"Info": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/go.opentelemetry.io/otel/sdk/metric/@v/v1.39.0.info",
+	"GoMod": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/go.opentelemetry.io/otel/sdk/metric/@v/v1.39.0.mod",
+	"Zip": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/go.opentelemetry.io/otel/sdk/metric/@v/v1.39.0.zip",
+	"Dir": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/go.opentelemetry.io/otel/sdk/metric@v1.39.0",
+	"Sum": "h1:cXMVVFVgsIf2YL6QkRF4Urbr/aMInf+2WKg+sEJTtB8=",
+	"GoModSum": "h1:xq9HEVH7qeX69/JnwEfp6fVq5wosJsY1mt4lLfYdVew="
+}
+{
+	"Path": "go.opentelemetry.io/otel/trace",
+	"Version": "v1.39.0",
+	"Info": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/go.opentelemetry.io/otel/trace/@v/v1.39.0.info",
+	"GoMod": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/go.opentelemetry.io/otel/trace/@v/v1.39.0.mod",
+	"Zip": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/go.opentelemetry.io/otel/trace/@v/v1.39.0.zip",
+	"Dir": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/go.opentelemetry.io/otel/trace@v1.39.0",
+	"Sum": "h1:2d2vfpEDmCJ5zVYz7ijaJdOF59xLomrvj7bjt6/qCJI=",
+	"GoModSum": "h1:88w4/PnZSazkGzz/w84VHpQafiU4EtqqlVdxWy+rNOA="
+}
+{
+	"Path": "golang.org/x/crypto",
+	"Version": "v0.46.0",
+	"Info": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/golang.org/x/crypto/@v/v0.46.0.info",
+	"GoMod": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/golang.org/x/crypto/@v/v0.46.0.mod",
+	"Zip": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/golang.org/x/crypto/@v/v0.46.0.zip",
+	"Dir": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/golang.org/x/crypto@v0.46.0",
+	"Sum": "h1:cKRW/pmt1pKAfetfu+RCEvjvZkA9RimPbh7bhFjGVBU=",
+	"GoModSum": "h1:Evb/oLKmMraqjZ2iQTwDwvCtJkczlDuTmdJXoZVzqU0="
+}
+{
+	"Path": "golang.org/x/mod",
+	"Version": "v0.38.0",
+	"Info": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/golang.org/x/mod/@v/v0.38.0.info",
+	"GoMod": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/golang.org/x/mod/@v/v0.38.0.mod",
+	"Zip": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/golang.org/x/mod/@v/v0.38.0.zip",
+	"Dir": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/golang.org/x/mod@v0.38.0",
+	"Sum": "h1:MECBjubtXD7yj4HrhIUcywNaGeNVUdfVnxmPajOk4yk=",
+	"GoModSum": "h1:V6Xz0pq8TQ3dGqVQ1FVHuelZpAL0uNhSkk9ogYP3c40="
+}
+{
+	"Path": "golang.org/x/net",
+	"Version": "v0.48.0",
+	"Info": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/golang.org/x/net/@v/v0.48.0.info",
+	"GoMod": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/golang.org/x/net/@v/v0.48.0.mod",
+	"Zip": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/golang.org/x/net/@v/v0.48.0.zip",
+	"Dir": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/golang.org/x/net@v0.48.0",
+	"Sum": "h1:zyQRTTrjc33Lhh0fBgT/H3oZq9WuvRR5gPC70xpDiQU=",
+	"GoModSum": "h1:+ndRgGjkh8FGtu1w1FGbEC31if4VrNVMuKTgcAAnQRY="
+}
+{
+	"Path": "golang.org/x/oauth2",
+	"Version": "v0.34.0",
+	"Info": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/golang.org/x/oauth2/@v/v0.34.0.info",
+	"GoMod": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/golang.org/x/oauth2/@v/v0.34.0.mod",
+	"Zip": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/golang.org/x/oauth2/@v/v0.34.0.zip",
+	"Dir": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/golang.org/x/oauth2@v0.34.0",
+	"Sum": "h1:hqK/t4AKgbqWkdkcAeI8XLmbK+4m4G5YeQRrmiotGlw=",
+	"GoModSum": "h1:lzm5WQJQwKZ3nwavOZ3IS5Aulzxi68dUSgRHujetwEA="
+}
+{
+	"Path": "golang.org/x/sync",
+	"Version": "v0.22.0",
+	"Info": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/golang.org/x/sync/@v/v0.22.0.info",
+	"GoMod": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/golang.org/x/sync/@v/v0.22.0.mod",
+	"Zip": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/golang.org/x/sync/@v/v0.22.0.zip",
+	"Dir": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/golang.org/x/sync@v0.22.0",
+	"Sum": "h1:SZjpbeLmrCk4xhRSZFNZW5gFUeCeFgjekvI/+gfScek=",
+	"GoModSum": "h1:9xrNwdLfx4jkKbNva9FpL6vEN7evnE43NNNJQ2LF3+0="
+}
+{
+	"Path": "golang.org/x/sys",
+	"Version": "v0.47.0",
+	"Info": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/golang.org/x/sys/@v/v0.47.0.info",
+	"GoMod": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/golang.org/x/sys/@v/v0.47.0.mod",
+	"Zip": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/golang.org/x/sys/@v/v0.47.0.zip",
+	"Dir": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/golang.org/x/sys@v0.47.0",
+	"Sum": "h1:o7XGOvZQCADBQQ4Y7VNq2dRWQR7JmOUW8Kxx4ZsNgWs=",
+	"GoModSum": "h1:4GL1E5IUh+htKOUEOaiffhrAeqysfVGipDYzABqnCmw="
+}
+{
+	"Path": "golang.org/x/term",
+	"Version": "v0.38.0",
+	"Info": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/golang.org/x/term/@v/v0.38.0.info",
+	"GoMod": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/golang.org/x/term/@v/v0.38.0.mod",
+	"Zip": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/golang.org/x/term/@v/v0.38.0.zip",
+	"Dir": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/golang.org/x/term@v0.38.0",
+	"Sum": "h1:PQ5pkm/rLO6HnxFR7N2lJHOZX6Kez5Y1gDSJla6jo7Q=",
+	"GoModSum": "h1:bSEAKrOT1W+VSu9TSCMtoGEOUcKxOKgl3LE5QEF/xVg="
+}
+{
+	"Path": "golang.org/x/text",
+	"Version": "v0.32.0",
+	"Info": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/golang.org/x/text/@v/v0.32.0.info",
+	"GoMod": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/golang.org/x/text/@v/v0.32.0.mod",
+	"Zip": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/golang.org/x/text/@v/v0.32.0.zip",
+	"Dir": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/golang.org/x/text@v0.32.0",
+	"Sum": "h1:ZD01bjUt1FQ9WJ0ClOL5vxgxOI/sVCNgX1YtKwcY0mU=",
+	"GoModSum": "h1:o/rUWzghvpD5TXrTIBuJU77MTaN0ljMWE47kxGJQ7jY="
+}
+{
+	"Path": "golang.org/x/tools",
+	"Version": "v0.48.0",
+	"Info": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/golang.org/x/tools/@v/v0.48.0.info",
+	"GoMod": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/golang.org/x/tools/@v/v0.48.0.mod",
+	"Zip": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/golang.org/x/tools/@v/v0.48.0.zip",
+	"Dir": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/golang.org/x/tools@v0.48.0",
+	"Sum": "h1:3+hClM1aLL5mjMKm5ovokw9epgRXPuu2tILgismM6RE=",
+	"GoModSum": "h1:08xX0orndb/F7jJxGDicx061tyd5pcMto75YMAXr6lk="
+}
+{
+	"Path": "gonum.org/v1/gonum",
+	"Version": "v0.16.0",
+	"Info": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/gonum.org/v1/gonum/@v/v0.16.0.info",
+	"GoMod": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/gonum.org/v1/gonum/@v/v0.16.0.mod",
+	"Zip": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/gonum.org/v1/gonum/@v/v0.16.0.zip",
+	"Dir": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/gonum.org/v1/gonum@v0.16.0",
+	"Sum": "h1:5+ul4Swaf3ESvrOnidPp4GZbzf0mxVQpDCYUQE7OJfk=",
+	"GoModSum": "h1:fef3am4MQ93R2HHpKnLk4/Tbh/s0+wqD5nfa6Pnwy4E="
+}
+{
+	"Path": "google.golang.org/genproto/googleapis/api",
+	"Version": "v0.0.0-20251202230838-ff82c1b0f217",
+	"Info": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/google.golang.org/genproto/googleapis/api/@v/v0.0.0-20251202230838-ff82c1b0f217.info",
+	"GoMod": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/google.golang.org/genproto/googleapis/api/@v/v0.0.0-20251202230838-ff82c1b0f217.mod",
+	"Zip": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/google.golang.org/genproto/googleapis/api/@v/v0.0.0-20251202230838-ff82c1b0f217.zip",
+	"Dir": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/google.golang.org/genproto/googleapis/api@v0.0.0-20251202230838-ff82c1b0f217",
+	"Sum": "h1:fCvbg86sFXwdrl5LgVcTEvNC+2txB5mgROGmRL5mrls=",
+	"GoModSum": "h1:+rXWjjaukWZun3mLfjmVnQi18E1AsFbDN9QdJ5YXLto="
+}
+{
+	"Path": "google.golang.org/genproto/googleapis/rpc",
+	"Version": "v0.0.0-20251202230838-ff82c1b0f217",
+	"Info": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/google.golang.org/genproto/googleapis/rpc/@v/v0.0.0-20251202230838-ff82c1b0f217.info",
+	"GoMod": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/google.golang.org/genproto/googleapis/rpc/@v/v0.0.0-20251202230838-ff82c1b0f217.mod",
+	"Zip": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/google.golang.org/genproto/googleapis/rpc/@v/v0.0.0-20251202230838-ff82c1b0f217.zip",
+	"Dir": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/google.golang.org/genproto/googleapis/rpc@v0.0.0-20251202230838-ff82c1b0f217",
+	"Sum": "h1:gRkg/vSppuSQoDjxyiGfN4Upv/h/DQmIR10ZU8dh4Ww=",
+	"GoModSum": "h1:7i2o+ce6H/6BluujYR+kqX3GKH+dChPTQU19wjRPiGk="
+}
+{
+	"Path": "google.golang.org/grpc",
+	"Version": "v1.79.3",
+	"Info": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/google.golang.org/grpc/@v/v1.79.3.info",
+	"GoMod": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/google.golang.org/grpc/@v/v1.79.3.mod",
+	"Zip": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/google.golang.org/grpc/@v/v1.79.3.zip",
+	"Dir": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/google.golang.org/grpc@v1.79.3",
+	"Sum": "h1:sybAEdRIEtvcD68Gx7dmnwjZKlyfuc61Dyo9pGXXkKE=",
+	"GoModSum": "h1:KmT0Kjez+0dde/v2j9vzwoAScgEPx/Bw1CYChhHLrHQ="
+}
+{
+	"Path": "google.golang.org/protobuf",
+	"Version": "v1.36.11",
+	"Info": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/google.golang.org/protobuf/@v/v1.36.11.info",
+	"GoMod": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/google.golang.org/protobuf/@v/v1.36.11.mod",
+	"Zip": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/google.golang.org/protobuf/@v/v1.36.11.zip",
+	"Dir": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/google.golang.org/protobuf@v1.36.11",
+	"Sum": "h1:fV6ZwhNocDyBLK0dj+fg8ektcVegBBuEolpbTQyBNVE=",
+	"GoModSum": "h1:HTf+CrKn2C3g5S8VImy6tdcUvCska2kB7j23XfzDpco="
+}
+{
+	"Path": "gopkg.in/check.v1",
+	"Version": "v1.0.0-20201130134442-10cb98267c6c",
+	"Info": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/gopkg.in/check.v1/@v/v1.0.0-20201130134442-10cb98267c6c.info",
+	"GoMod": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/gopkg.in/check.v1/@v/v1.0.0-20201130134442-10cb98267c6c.mod",
+	"Zip": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/gopkg.in/check.v1/@v/v1.0.0-20201130134442-10cb98267c6c.zip",
+	"Dir": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/gopkg.in/check.v1@v1.0.0-20201130134442-10cb98267c6c",
+	"Sum": "h1:Hei/4ADfdWqJk1ZMxUNpqntNwaWcugrBjAiHlqqRiVk=",
+	"GoModSum": "h1:JHkPIbrfpd72SG/EVd6muEfDQjcINNoR0C8j2r3qZ4Q="
+}
+{
+	"Path": "gopkg.in/yaml.v3",
+	"Version": "v3.0.1",
+	"Info": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/gopkg.in/yaml.v3/@v/v3.0.1.info",
+	"GoMod": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/gopkg.in/yaml.v3/@v/v3.0.1.mod",
+	"Zip": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/gopkg.in/yaml.v3/@v/v3.0.1.zip",
+	"Dir": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/gopkg.in/yaml.v3@v3.0.1",
+	"Sum": "h1:fxVm/GzAzEWqLHuvctI91KS9hhNmmWOoWu0XTYJS7CA=",
+	"GoModSum": "h1:K4uyk7z7BCEPqu6E+C64Yfv1cQ7kz7rIZviUmN+EgEM="
+}
+{
+	"Path": "modernc.org/cc/v4",
+	"Version": "v4.29.2",
+	"Info": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/modernc.org/cc/v4/@v/v4.29.2.info",
+	"GoMod": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/modernc.org/cc/v4/@v/v4.29.2.mod",
+	"Zip": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/modernc.org/cc/v4/@v/v4.29.2.zip",
+	"Dir": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/modernc.org/cc/v4@v4.29.2",
+	"Sum": "h1:h6+9ciCnPKutf4I03CvheAvDLX7+IHlqR6Iy6J+cgd8=",
+	"GoModSum": "h1:OnovgIhbbMXMu1aISnJ0wvVD1KnW+cAUJkIrAWh+kVI="
+}
+{
+	"Path": "modernc.org/ccgo/v4",
+	"Version": "v4.35.0",
+	"Info": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/modernc.org/ccgo/v4/@v/v4.35.0.info",
+	"GoMod": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/modernc.org/ccgo/v4/@v/v4.35.0.mod",
+	"Zip": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/modernc.org/ccgo/v4/@v/v4.35.0.zip",
+	"Dir": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/modernc.org/ccgo/v4@v4.35.0",
+	"Sum": "h1:F+TUsmw09QxLzmi3aeYYGxjAXarmZaKgj3mKQHNaA8w=",
+	"GoModSum": "h1:qrVGs9S3Sr2Ztcg9ve+kTAYMp5a3YvWjo+SoN06kJ5I="
+}
+{
+	"Path": "modernc.org/fileutil",
+	"Version": "v1.4.0",
+	"Info": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/modernc.org/fileutil/@v/v1.4.0.info",
+	"GoMod": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/modernc.org/fileutil/@v/v1.4.0.mod",
+	"Zip": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/modernc.org/fileutil/@v/v1.4.0.zip",
+	"Dir": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/modernc.org/fileutil@v1.4.0",
+	"Sum": "h1:j6ZzNTftVS054gi281TyLjHPp6CPHr2KCxEXjEbD6SM=",
+	"GoModSum": "h1:EqdKFDxiByqxLk8ozOxObDSfcVOv/54xDs/DUHdvCUU="
+}
+{
+	"Path": "modernc.org/gc/v2",
+	"Version": "v2.6.5",
+	"Info": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/modernc.org/gc/v2/@v/v2.6.5.info",
+	"GoMod": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/modernc.org/gc/v2/@v/v2.6.5.mod",
+	"Zip": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/modernc.org/gc/v2/@v/v2.6.5.zip",
+	"Dir": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/modernc.org/gc/v2@v2.6.5",
+	"Sum": "h1:nyqdV8q46KvTpZlsw66kWqwXRHdjIlJOhG6kxiV/9xI=",
+	"GoModSum": "h1:YgIahr1ypgfe7chRuJi2gD7DBQiKSLMPgBQe9oIiito="
+}
+{
+	"Path": "modernc.org/gc/v3",
+	"Version": "v3.1.5",
+	"Info": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/modernc.org/gc/v3/@v/v3.1.5.info",
+	"GoMod": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/modernc.org/gc/v3/@v/v3.1.5.mod",
+	"Zip": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/modernc.org/gc/v3/@v/v3.1.5.zip",
+	"Dir": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/modernc.org/gc/v3@v3.1.5",
+	"Sum": "h1:21ldfPfRYE31Tb7B3mwAK8gy1AxP4+dKjrOQPfqakoc=",
+	"GoModSum": "h1:HFK/6AGESC7Ex+EZJhJ2Gni6cTaYpSMmU/cT9RmlfYY="
+}
+{
+	"Path": "modernc.org/goabi0",
+	"Version": "v0.2.0",
+	"Info": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/modernc.org/goabi0/@v/v0.2.0.info",
+	"GoMod": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/modernc.org/goabi0/@v/v0.2.0.mod",
+	"Zip": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/modernc.org/goabi0/@v/v0.2.0.zip",
+	"Dir": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/modernc.org/goabi0@v0.2.0",
+	"Sum": "h1:HvEowk7LxcPd0eq6mVOAEMai46V+i7Jrj13t4AzuNks=",
+	"GoModSum": "h1:CEFRnnJhKvWT1c1JTI3Avm+tgOWbkOu5oPA8eH8LnMI="
+}
+{
+	"Path": "modernc.org/libc",
+	"Version": "v1.75.7",
+	"Info": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/modernc.org/libc/@v/v1.75.7.info",
+	"GoMod": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/modernc.org/libc/@v/v1.75.7.mod",
+	"Zip": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/modernc.org/libc/@v/v1.75.7.zip",
+	"Dir": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/modernc.org/libc@v1.75.7",
+	"Sum": "h1:o3DTP9/0p9pKmY2WCKQaySW6wIiZhNM7wc2lUoyhfew=",
+	"GoModSum": "h1:bO5o2ztHxBb2rjz0PgdHN0sSMw57CgxGFLZ3Qd/QpVQ="
+}
+{
+	"Path": "modernc.org/mathutil",
+	"Version": "v1.7.1",
+	"Info": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/modernc.org/mathutil/@v/v1.7.1.info",
+	"GoMod": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/modernc.org/mathutil/@v/v1.7.1.mod",
+	"Zip": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/modernc.org/mathutil/@v/v1.7.1.zip",
+	"Dir": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/modernc.org/mathutil@v1.7.1",
+	"Sum": "h1:GCZVGXdaN8gTqB1Mf/usp1Y/hSqgI2vAGGP4jZMCxOU=",
+	"GoModSum": "h1:4p5IwJITfppl0G4sUEDtCr4DthTaT47/N3aT6MhfgJg="
+}
+{
+	"Path": "modernc.org/memory",
+	"Version": "v1.12.1",
+	"Info": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/modernc.org/memory/@v/v1.12.1.info",
+	"GoMod": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/modernc.org/memory/@v/v1.12.1.mod",
+	"Zip": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/modernc.org/memory/@v/v1.12.1.zip",
+	"Dir": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/modernc.org/memory@v1.12.1",
+	"Sum": "h1:nFMiWrpStgZczNl6XI9GnIk/rWhYIyHGUaR04pGbp9g=",
+	"GoModSum": "h1:/JP4VbVC+K5sU2wZi9bHoq2MAkCnrt2r98UGeSK7Mjw="
+}
+{
+	"Path": "modernc.org/opt",
+	"Version": "v0.2.0",
+	"Info": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/modernc.org/opt/@v/v0.2.0.info",
+	"GoMod": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/modernc.org/opt/@v/v0.2.0.mod",
+	"Zip": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/modernc.org/opt/@v/v0.2.0.zip",
+	"Dir": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/modernc.org/opt@v0.2.0",
+	"Sum": "h1:tGyef5ApycA7FSEOMraay9SaTk5zmbx7Tu+cJs4QKZg=",
+	"GoModSum": "h1:03fq9lsNfvkYSfxrfUhZCWPk1lm4cq4N+Bh//bEtgns="
+}
+{
+	"Path": "modernc.org/sortutil",
+	"Version": "v1.2.1",
+	"Info": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/modernc.org/sortutil/@v/v1.2.1.info",
+	"GoMod": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/modernc.org/sortutil/@v/v1.2.1.mod",
+	"Zip": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/modernc.org/sortutil/@v/v1.2.1.zip",
+	"Dir": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/modernc.org/sortutil@v1.2.1",
+	"Sum": "h1:+xyoGf15mM3NMlPDnFqrteY07klSFxLElE2PVuWIJ7w=",
+	"GoModSum": "h1:7ZI3a3REbai7gzCLcotuw9AC4VZVpYMjDzETGsSMqJE="
+}
+{
+	"Path": "modernc.org/sqlite",
+	"Version": "v1.59.0",
+	"Info": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/modernc.org/sqlite/@v/v1.59.0.info",
+	"GoMod": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/modernc.org/sqlite/@v/v1.59.0.mod",
+	"Zip": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/modernc.org/sqlite/@v/v1.59.0.zip",
+	"Dir": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/modernc.org/sqlite@v1.59.0",
+	"Sum": "h1:X1es1GpqBlS/5T+vbM4HLUdaa8OtQx468DF2vrx+38A=",
+	"GoModSum": "h1:+paeT2A3iPRHkQDwG7oA6Tk0zQd5woMEI8q7orfry8k="
+}
+{
+	"Path": "modernc.org/strutil",
+	"Version": "v1.2.1",
+	"Info": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/modernc.org/strutil/@v/v1.2.1.info",
+	"GoMod": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/modernc.org/strutil/@v/v1.2.1.mod",
+	"Zip": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/modernc.org/strutil/@v/v1.2.1.zip",
+	"Dir": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/modernc.org/strutil@v1.2.1",
+	"Sum": "h1:UneZBkQA+DX2Rp35KcM69cSsNES9ly8mQWD71HKlOA0=",
+	"GoModSum": "h1:EHkiggD70koQxjVdSBM3JKM7k6L0FbGE5eymy9i3B9A="
+}
+{
+	"Path": "modernc.org/token",
+	"Version": "v1.1.0",
+	"Info": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/modernc.org/token/@v/v1.1.0.info",
+	"GoMod": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/modernc.org/token/@v/v1.1.0.mod",
+	"Zip": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/modernc.org/token/@v/v1.1.0.zip",
+	"Dir": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/modernc.org/token@v1.1.0",
+	"Sum": "h1:Xl7Ap9dKaEs5kLoOQeQmPWevfnk/DM5qcLcYlA8ys6Y=",
+	"GoModSum": "h1:UGzOrNV1mAFSEB63lOFHIpNRUVMvYTc6yu1SMY/XTDM="
+}

@@ -1,0 +1,13 @@
+{
+  "ownedCluster": "/var/folders/82/drcfb4994p16rl49gxx9tj000000gn/T/vynic-web06-custom-b4n05i9_/pg",
+  "loopbackPort": 65327,
+  "disposableDatabaseCount": 9,
+  "allOwnedNamesVerified": true,
+  "databaseEnvironmentVariablesRemovedFromRunners": true,
+  "currentFreshMigrations": 75,
+  "stopped": true,
+  "portClosed": true,
+  "temporaryFixturesRetainedOnlyInStoppedPrivateCluster": true,
+  "liveServicesTouched": false,
+  "updatedAt": "2026-10-14T10:57:05.105598+00:00"
+}

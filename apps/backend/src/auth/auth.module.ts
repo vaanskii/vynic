@@ -1,3 +1,6 @@
+import { EdgeDeviceGuard } from '../edge/edge-device.guard';
+import { ManagerVenueLinkController } from './manager-venue-link.controller';
+import { ManagerVenueLinkService } from './manager-venue-link.service';
 import { Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
@@ -10,6 +13,8 @@ import { requireEnv } from '../shared/require-env';
 import { DeviceCredentialService } from './device-credential.service';
 import { LegacyPosTenantService } from './legacy-pos-tenant.service';
 import { ManagerTenantService } from './manager-tenant.service';
+import { ManagerActivationService } from './manager-activation.service';
+import { ManagerActivationController } from './manager-activation.controller';
 
 @Module({
   imports: [
@@ -19,8 +24,15 @@ import { ManagerTenantService } from './manager-tenant.service';
       signOptions: { expiresIn: '24h' },
     }),
   ],
-  controllers: [AuthController],
+  controllers: [
+    AuthController,
+    ManagerActivationController,
+    ManagerVenueLinkController,
+  ],
   providers: [
+    EdgeDeviceGuard,
+    ManagerActivationService,
+    ManagerVenueLinkService,
     AuthService,
     DeviceCredentialService,
     LegacyPosTenantService,
@@ -30,6 +42,8 @@ import { ManagerTenantService } from './manager-tenant.service';
     StaffPinVault,
   ],
   exports: [
+    ManagerVenueLinkService,
+    ManagerActivationService,
     JwtModule,
     AuthService,
     DeviceCredentialService,

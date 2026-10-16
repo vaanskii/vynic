@@ -1,0 +1,33 @@
+{
+  "check": "website-regression",
+  "result": {
+    "passed": 23,
+    "failed": 0,
+    "skipped": 0
+  },
+  "passedCases": [
+    "W3 website product / disposable PostgreSQL serves each host only its own restaurant, content, media and menu",
+    "W3 website product / disposable PostgreSQL ignores forged Venue identifiers in queries, bodies and headers",
+    "W3 website product / disposable PostgreSQL never returns a draft on a public route and publishing A leaves B untouched",
+    "W3 website product / disposable PostgreSQL revalidates a published site by ETag without letting a stale one linger",
+    "W3 website product / disposable PostgreSQL keeps preview authority Venue-scoped, private and separate from the owner session",
+    "W3 website product / disposable PostgreSQL refuses a preview token whose owner no longer holds the Venue",
+    "W3 website product / disposable PostgreSQL does not render a CUSTOM Venue as a generic site and refuses its generic menu",
+    "W3 website product / disposable PostgreSQL keeps an unentitled Venue off the public web and denies draft preparation",
+    "W3 website product / disposable PostgreSQL scopes menu presentation to one Venue and rejects borrowed item identifiers",
+    "W3 website product / disposable PostgreSQL applies presentation overrides and refuses unsafe media references",
+    "W3 website product / disposable PostgreSQL removes presentation with the item it describes, leaving no orphan record",
+    "W3 website product / disposable PostgreSQL answers an explicitly empty menu when the owner hides the section",
+    "W3 website product / disposable PostgreSQL reads content saved before a field existed without failing the page",
+    "Website Core disposable PostgreSQL / HTTP requires owner authority for settings, edits, preview and publish",
+    "Website Core disposable PostgreSQL / HTTP drafts stay private, preview is authenticated and no-store, explicit publish exposes each Venue only",
+    "Website Core disposable PostgreSQL / HTTP edits do not change published state; stale save/publish rejected and only A changes on publish",
+    "Website Core disposable PostgreSQL / HTTP forged IDs/forwarded headers do not override Host, unknown hosts have no local fallback",
+    "Website Core disposable PostgreSQL / HTTP CUSTOM is a marker only; NONE, disabled entitlement, domain and Venue block public SaaS",
+    "Website Core disposable PostgreSQL / HTTP cannot claim another Venue domain/slug, failed publish leaves published state unchanged",
+    "Website Core disposable PostgreSQL / HTTP concurrent edits accept one revision; audit failure rolls back content and revision",
+    "Website Core disposable PostgreSQL / HTTP rejects tenant fields, unsafe URLs, invalid hours, oversized content, and unknown themes",
+    "Website Core disposable PostgreSQL / HTTP trusted proxy authority fails closed and commercial suspension blocks SaaS",
+    "Website Core disposable PostgreSQL / HTTP publication preserves the assigned hostname and profiles remain sourced from Venue"
+  ]
+}

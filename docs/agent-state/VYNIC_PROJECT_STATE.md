@@ -51,10 +51,25 @@ current transport status.
   normalized email in 15-minute windows, before any account lookup, with the
   same limits as owner sign-in; there is no Platform MFA, email recovery or
   session revocation.
+- Website signup/signin/password-change inputs are bounded before password
+  work; `/api/auth` JSON/form bodies have an 8 KiB ceiling. Valid CSRF tokens
+  must be present and match. Per-process 15-minute windows admit at most 20
+  attempts per peer and 10 per normalized global identifier (or authenticated
+  user for password changes); successful attempts count and changing Host
+  cannot reset an identifier window. Real HTTP/PG regression passes in
+  `docs/SEC03_WEBSITE_AUTH_ADMISSION.md`. Shared multi-replica limits, session
+  revocation/refresh/logout semantics and Platform MFA/recovery remain open
+  SEC-03 release gates; this source qualification is not rollout evidence.
 - The staff plain-PIN vault (`staff:plain_pins`) is one encrypted `setting` row
   per Venue, and every read/write requires a resolved tenant. There is no
   bootstrap-Venue default: an unestablished Venue raises rather than being
   served the bootstrap Venue's credentials.
+- Staff creation, PIN changes and reactivation reject PINs held by another
+  active Staff in the same Venue, including Platform-managed access. Manager
+  role promotion checks retained credentials too. Manager CRUD, Platform access
+  and POS staff sync serialize on the Venue lock; credential and vault writes
+  are atomic. Unchanged legacy snapshots remain idempotent, but existing
+  duplicate Manager PINs still fail login until an authorized PIN change.
 - Cloud-originated POS work uses a persistent pull queue. The Edge initiates the
   connection, executes locally, journals the outcome, and acknowledges it.
 
@@ -145,7 +160,8 @@ current transport status.
   update masked displays immediately; Lock unlocks automatically on a matching PIN,
   while Login and Staff submit by action/Enter.
   Reservations, Menu, Packages, settings and Inventory search edit their actual
-  controllers live; keyboard docks keep the focused field visible. Standalone
+  controllers live; keyboard docks retain real field focus and a blinking caret,
+  reveal only obscured input, and do not resize the whole POS page. Standalone
   prompts own one visible input, while form keyboards have no second text box.
   Inventory remains read-only apart from search/filter controls. Management Center
   persists `posOnScreenInputEnabled` (default on); Manager does not load it.
@@ -157,6 +173,34 @@ current transport status.
   Login/lock date and time sit at the right edge; Home keeps a neutral work-date
   indicator beside the clock at compact/fullscreen widths. Regression proof:
   `test/widget/pos_interaction_pass_test.dart` under `apps/operations/`.
+
+- POS Home now uses a default-collapsed right action panel that allocates its
+  own layout width; the service dashboard and duplicate Reservations button
+  are removed. Quick checkout uses virtual takeaway and existing durable
+  Order/closure journals without a physical table. Local estimates and takeaway
+  collect optional full name/phone and search actual saved contacts/amount;
+  estimate deletion re-reads the current stored Manager role. Reservation
+  entry is compact with guest +/-; the staff lock keeps a 320 px PIN pad and
+  unchanged authentication/back protection. This is uncommitted source;
+  qualification and remaining gates: `docs/POS_CHECKOUT_RESERVATIONS.md`.
+
+- POS modal routes share a scoped theme and keyboard viewport. Admin, Home,
+  Order and estimate reservation entry use the same guarded form; guest fields,
+  admin PIN forms and Menu product add/edit forms are shared. Form headers remain
+  anchored while the dock opens; close/discard confirmations center in the usable
+  viewport. Count exposes reservation/edit/print directly without a management
+  modal; Takeaways uses two panes with direct menu editing and payment, separate
+  from order cancellation. At 1024×768 their main targets paint at about 48 px.
+  POS selects the bundled Georgian font at its root; Admin button/feedback
+  themes retain that font. Shared page/Admin/modal controls use the scaled
+  desktop touch target; short auxiliary windows keep a compact keyboard.
+  The approved connected Count workspace is implemented and shared with
+  Takeaways/Reservations; Menu/Order, payment/amount forms and internal Admin
+  use the same typography, controls and hierarchy. Compact Admin dropdowns
+  retain Georgian glyphs. Final source qualification is recorded below.
+  Source qualification, isolated screenshots, keyboard latency evidence and
+  existing printer aggregate failures: `docs/POS_UI_REWORK.md`. Native Windows
+  rendering/performance qualification has not been run for this rework.
 
 - Windows POS uses native borderless fullscreen with monitor/DPI refitting;
   Manager keeps its normal window. Login, About, the POS tray menu and Alt+F4
@@ -174,9 +218,11 @@ current transport status.
   Cloud claim/ack network waits do not own mutation admission; command execution
   and journal completion do, with a freeze recheck after claim. Local release profiles trust both 10.10.10.3 and
   172.20.10.2; changing networks does not rewrite installed endpoints.
-  Local POS publication is 1.0.12 / signed release 13, including shared input controls;
-  the one-command Windows build and signed HTTPS verification passed. Installation remains explicit. See
-  `docs/WINDOWS_POS_FULLSCREEN_QUIT.md`.
+  Local development POS publication is 1.0.14 / signed release 15, built from the
+  sealed POS-02 candidate and verified through the existing signed updater in the
+  Windows 11 ARM VM. The HTTPS server is running at 10.10.10.3:8443 with its
+  publication watcher disabled; signed metadata expires October 11. See
+  `docs/WINDOWS_POS_FULLSCREEN_QUIT.md` and `docs/POS02_WINDOWS_INSTALLER_HANDOFF.md`.
 
 - Windows POS has an opt-in Go Edge updater: signed Ed25519 release manifests,
   silent verified ZIP staging, explicit Georgian Update Now/Later in About,
@@ -206,7 +252,7 @@ current transport status.
   The Go source now skips repeated stabilization for an already verified ordinary
   launch, while requiring a fresh authenticated data-ready heartbeat; install,
   repair and rollback still stabilize. The explicitly approved Windows lab
-  upgrade now pins Edge 1.0.1 / bootstrap 3; POS publication is 1.0.12 / release 13.
+  upgrade pins Edge 1.0.1 / bootstrap 3; current POS publication is 1.0.14 / release 15.
   The lab serves Setup 1.0.8.0 built from the committed native source on the
   primary origin and both LAN profiles (reproducible; hashes in
   `docs/WINDOWS_DEFENDER_REVIEW.md`); the served bytes scanned clean on the VM.
@@ -233,6 +279,13 @@ current transport status.
   Phase 0: no operational Edge selection or cutover gate is enabled. Remaining
   writer coverage and cutover prerequisites: `docs/EDGE_PHASE2A_ORDERS_TABLES.md`;
   foundation/fencing: `docs/EDGE_PHASE1_FOUNDATION.md`, `docs/EDGE_PHASE0_PRIMARY_DEVICE.md`.
+- Current multi-POS work adds a separate ISOLATED_PROOF client with protocol 1.3,
+  explicit operational/control/audit/financial/Staff/policy entity kinds, one
+  dedicated flushed Hive frame, stable pending intents, exact result receipts
+  and contiguous replay retaining frozen effects. It is not attached to normal
+  POS boxes or startup. Scripted-transport tests are not actual Go/RPC/LAN proof;
+  full writer coverage, three-terminal acceptance and controlled cutover remain
+  required by `docs/POS_MULTI_TERMINAL_READINESS_PLAN.md`.
 - The latest completed sequence covers Money Integrity 1A/1B, POS enrollment
   1C, incremental audit sync, Edge Step 6C, Menu Identity Phases 4.5/4.6, and
   the Phase 5 Cloud Sale Ledger/Manager financial experience.
@@ -289,6 +342,14 @@ current transport status.
   `MenuConsumptionComponent` define what one sold Menu Item consumes. One
   generalized model covers direct bottled products, draft pours by volume and
   multi-ingredient recipes; editing a definition writes no `StockMovement`.
+- INV-01 F1 has a backend location foundation: one stable default per Venue,
+  historical Receiving/StockMovement location backfill, composite tenant FKs,
+  movement-derived per-location quantities and additive Manager location APIs.
+  Receipt selection and exact reversals retain their document location; old
+  version-1 POS consumption retains the default. D015 Venue-wide valuation is
+  unchanged. This is a partial candidate, not full Inventory: F2 transfers,
+  location UI and configured POS issue locations remain pending the product
+  decisions in `docs/INV01_LOCATIONS_TRANSFERS_CHECKPOINT.md`.
 - Inventory Step 4 snapshots new close-time consumption inside the durable POS
   Sale, then independently retries Device-authenticated effects to Cloud.
   Cloud atomically materializes `CONSUMPTION` and exact
@@ -324,6 +385,16 @@ current transport status.
   values under item locks, in Cloud acceptance order. Historical values are
   explicitly reconstructed; negative/unknown bases are provisional. Manager
   and read-only POS inspection show current values; checkout is unchanged.
+  Manager recipe/current stock labels distinguish current, provisional and
+  reconstructed bases from historical close-time COGS. Movement details show
+  frozen original/reversal values and their source. Financials separates fiscal
+  revenue, close payments/applied advance, recorded outflows and supplier debt;
+  revenue minus outflows is not presented as realized profit or full cashflow.
+  Manager consumption and Stock movement histories use bounded keyset pages,
+  load-more and complete-filter CSV export. A creation window excludes new/late
+  arrivals until refresh; reversal state is current per request, not an MVCC
+  snapshot. Legacy array/POS excerpt contracts remain. See
+  `docs/INV02_INV04_INVENTORY_PROVENANCE_HISTORY.md`.
   Manager Inventory is a main destination beside Financials with a Dashboard entry;
   it is removed from Management. Its home prioritizes new receiving, daily work
   and secondary supplier/Menu catalog maintenance. Receiving includes payment choices and supports self-purchase
@@ -464,6 +535,174 @@ current transport status.
   `docs/POS05_ORDER_TABLE_OWNERSHIP.md`. Windows smoke remains
   PENDING_NOT_RUN/HELD (`docs/POS05_WINDOWS_SMOKE.md`), using a clean frozen
   commit export. Physical release remains OPS-01.
+- POS-02 is an uncommitted implemented candidate, NOT_DONE until supported-model
+  physical printer acceptance and the owner reconciliation policy are resolved.
+  Legacy print_job:v1 rows remain readable; new routed print_job:v2 rows freeze
+  Device/queue/driver/port or TCP destination, station revision and capability
+  profile beside bytes/Venue/attempts/audit. A flushed sending marker precedes
+  TCP or Windows RAW submission; post-write failure and interrupted sending stay
+  uncertain without retry. Native timeouts retain identity/update admission until
+  the original platform call settles. Accepted bytes never confirm paper.
+  Optional compatible sound uses a separate flushed, spent per-attempt reservation
+  after primary delivery settles; unknown/unsupported sound skips and failures
+  do not alter print/cut/copy results. Isolated Windows amd64 POS Release
+  compilation/linking now passes in the existing Windows 11 ARM guest using
+  cached Flutter/MSVC/Firebase, with all 815 prepared source hashes unchanged.
+  The corrected launcher passes the 483-test/32-suite Windows selection and
+  48-file analysis. The actual read-only Win32 channel harness passes 208
+  assertions plus 110 fake-core assertions, covering UI replies, FIFO, admission
+  and a queued completion across teardown/recreation. No print documents or
+  product startup/install/publication occur. The 23 built artifact hashes match;
+  the retained archive's backslash entry names are not release-qualified.
+  Evidence: docs/proofs/POS_WINDOWS_NATIVE_abf7e6b3_2026-10-06/.
+  Driver/model/sound qualification and v2 reader/rollback compatibility remain
+  pending; blocked/in-flight Winspool and valid RAW jobs are not established by
+  the read-only harness.
+  The journal remains in Admin; its Home entry was removed.
+  Kitchen/bar/additional copies use Georgian Run/Cancel, fresh authenticated Staff,
+  stable request IDs and a recorded fixed operator reason. Receipt copies and
+  paper confirmation still require the unconfigured owner policy. Initial Order
+  confirmation and remote creation replay preserve durable admission.
+  The printer-scoped developer panel configures revisioned kitchen/bar/receipt/
+  additional TCP or locally inventoried Windows routes and explicit paper/raster/
+  cutter/sound capabilities. Legacy name/IP registrations remain unassigned.
+  Navigation, handlers and repository reads/writes enforce that scope; managers
+  alone cannot configure printers.
+  A detached explicit line/destination planner prepares frozen station effects;
+  shared operation/production dispatch integration is not yet activated.
+  A dedicated isolated proof client retains flushed pending requests, exact
+  outcomes and replay/effect receipts. Detached ordinary physical/takeaway
+  create, physical move and cancellation use complete canonical views, explicit
+  stable identity maps, frozen policy inputs and control CAS. A detached Manager
+  retained-line quantity/removal planner and validating adapter preserve exact
+  item-diff audits, retained UUIDs and existing fee/payment/ownership state.
+  Eight focused macOS suites pass 143 tests; all 19 new cases, including three
+  real local-Hive command-applier parity cases, also pass on Windows with clean
+  three-file analysis. Legacy UUID/wall-clock differences are explicit in the
+  parity comparison. New items, POS modification PRINT, status/fee changes and
+  production command ingestion/ACK remain pending. Evidence:
+  docs/proofs/POS_MANAGER_ITEMS_275688e1_2026-10-06/. These planners do not attach
+  to production Hive writers or establish full writer/LAN coverage; see
+  docs/POS_MULTI_TERMINAL_WRITER_COVERAGE.md. The isolated Go candidate now has
+  generated protocol-1.3 proof contracts, schema-6 SQLite store migrations,
+  signed origin enrollment and atomic business/effect/print admission. Actual
+  synthetic Dart-to-Go mutual TLS tests qualify that detached proof boundary;
+  production enrollment, complete business writers and older Edge rollback
+  after an upgrade remain unqualified.
+  The authoritative generic printer design is now
+  `docs/VYNIC_PRINT_ARCHITECTURE.md`: business routing -> logical station/job ->
+  physical attempt/fixed controller -> printer. The additive Go `printstation`
+  domain supports configurable LOCAL/shared stations, source-independent routing,
+  ordered compatible backups and strict station FIFO. Its existing-Raft adapter
+  and no-quorum SQLite LOCAL proof retain immutable admission and separate
+  attempts. Synthetic controller dispatch allows fallback only after definitive
+  non-submission; UNCERTAIN never retries or falls back. Queue leadership does
+  not move physical ownership. POS-02.B connects the station queue to
+  signed production configuration and authenticated Go peer RPC. Normal Flutter
+  admission, retained controller receipts, writer cutover and installed-service
+  qualification remain pending. The station storage now uses schema-2 normalized transactional rows and
+  checksum-addressed immutable payloads, deduplicated bounded snapshots and
+  explicit 30-day terminal-history compaction with an admission time floor.
+  Unresolved work and originals pinned by retained reprints are never expired.
+  Older stores/proof peers are refused; no automatic migration is supplied.
+  Production scheduling of retention, Flutter admission and
+  cutover remain pending; POS-02.B supplies authenticated peer queue transport. Current status is NOT_DONE; current storage evidence:
+  `docs/POS_PRINTER_PRODUCTION_INTEGRATION_REPORT_2026-10-09.md`.
+  Historical architecture proof: `docs/POS_PRINTER_ARCHITECTURE_REPORT_2026-10-09.md`.
+  The selected migration target retains Flutter rendering/business UI and uses
+  one independent Go service per Windows host. Explicit LOCAL queues operate
+  without shared quorum; VENUE_SHARED defaults to three full data-bearing voters,
+  with additional hosts as clients. An inert Hashicorp Raft/Bolt/SQLite queue
+  qualifies immutable majority admission, lost ACK, process SIGKILL/rejoin,
+  logical assignment and interrupted primary/beep uncertainty on a frozen
+  candidate. It cannot fence physical RAW output: the logical eligibility proof
+  deliberately refuses physical dispatch, and paused-old-writer/buffered-byte
+  counterexamples are retained. The native Go-owned helper passes actual
+  Windows Job Object/parent-death tests and inventory/invalid-request checks on
+  both amd64 and native ARM64; no valid print document is submitted. A runnable
+  held agent, authenticated loopback API/Dart client, explicit developer status
+  UI and installer/bundles now have isolated software qualification separately
+  from the current updater. The final 1,109-file export passes 623 Flutter tests
+  and 68-file analysis on macOS and Windows. Both shipped CLI architectures pass
+  Windows foreground lifecycle/queue tests under the interactive user; the
+  prepared POS amd64 Release build produces 23 pinned artifacts using cached SDKs.
+  These tests do not qualify the future service principal or physical output.
+  POS-02.A production provisioning is DONE: Device-authenticated, key-possession
+  enrollment derives Venue from the server; audited Platform CAS configuration
+  signs explicit station/controller and stable voter/client membership. Separate
+  Go identities use Windows MachineGuid, current-principal DPAPI and protected
+  storage with durable generation/revocation checks. Cached grants allow up to
+  seven offline days; learned revocation is immediate locally, unknown revocation
+  remains bounded by expiry. New POS joins as a client; controller eligibility is
+  independent of queue leadership. Real isolated HTTP/PostgreSQL-to-Go and native
+  Windows proofs: `docs/POS02_A_PROVISIONING.md`. Additive migration
+  `20261018120000_printer_provisioning` is tested only on disposable databases.
+  The candidate validator remains separate. No production credentials/service
+  activation or live Flutter change is implied. POS-02.B now wires the same protected
+  identities into real TCP/TLS peer RPC and Hashicorp Raft, with durable exact
+  station receipts, explicit stable 1/3-voter membership, client-only sources and
+  recoverable signed 1-to-3 expansion. Separate process/partition/crash and native
+  Windows evidence is in `docs/POS02_B_PEER_TRANSPORT.md`. Physical dispatch remains
+  HELD; production admission/cutover as a whole is NOT_DONE. POS-02.C
+  Flutter/local Go admission and business routing is in progress. A detached
+  Flutter station planner consumes Go's complete business-routing projection,
+  freezes compatible per-station bytes and emits exact Go job identities/JSON.
+  LOCAL ownership, precedence, fan-out and retry parity are tested; no normal
+  business caller or production admission API is attached. Authenticated Flutter
+  origin registration and durable submission remain next within C. Checkpoint:
+  `docs/POS02_C_FLUTTER_ADMISSION.md`.
+  Service-account/SCM/OS restart, printer
+  models, downstream fencing, production writer cutover and physical acceptance
+  remain pending. These new components do not replace production Hive or attach
+  a production printer writer to startup. October 6 evidence and its exact
+  18-case acceptance matrix: docs/POS_PRINTER_IMPLEMENTATION_REPORT_2026-10-06.md
+  and docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/.
+  The bound Cloud v2 reader controls every role and holds PREPARED, absent,
+  disabled or unsupported routes without local fallback. Sync preserves a
+  flushed last good configuration and refuses stale identity, downgrade and
+  changed data at the same revision. Publication/rollback hold native, identity,
+  local and updater admission; an unconfirmed restoration latches recovery
+  failure. The Owner/Platform backend prepares v2 under Venue/Device/Owner locks,
+  with CAS, immutable exact success/conflict receipts and transactional audit;
+  legacy writes refuse v2 and readers require header version 2. Preparation
+  never activates routes. Controlled compatibility/cutover proof remains required
+  before Cloud Windows routes can be activated.
+  Format-2 restore holds source queued work and validates rows before replacement;
+  cross-protocol duplicate IDs are rejected before replacement. Hive
+  remains v9. The generic printing design covers 1/2/3/4/10+ sources independently
+  of operational multi-POS authority; see `docs/VYNIC_PRINT_ARCHITECTURE.md`.
+  Historical evidence:
+  docs/POS02_PRINT_DELIVERY.md and
+  docs/POS02_ADMIN_REVISION.md. User-reported Windows native tests and basic ASCII
+  printing/cutting concern the earlier frozen candidate; supported-model
+  cable/paper/power/recovery acceptance remains pending.
+  The sealed `db74149c` preparation-only one-shot runner adds a persistent locked
+  per-window budget, reserve-before-render/connect/write, exact frozen-byte guards,
+  zero physical allowance by default and no refunds/replay after failure/restart.
+  macOS synthetic final-source acceptance passes 895 checks plus fake native-entry
+  and four budget-ledger process-kill/restart checkpoints. On October 4, the
+  authorized isolated Windows build of that sealed source was published as
+  development POS 1.0.14 / release 15, prepared source `0bf6dd5b`, artifact
+  `4534e35e`, using cached Flutter 3.44.2 and offline locked dependencies.
+  The existing Windows 11 ARM Parallels VM at 10.10.10.9 was migrated to the
+  signed 10.10.10.3 feed using the supported lab-network utility, then updated
+  through normal POS Update Now consent. All 24 installed artifact files match;
+  updater startup verification was SUCCESS and the app opened at PIN login for
+  user testing at that checkpoint. The October 6 read-only inventory finds no
+  running POS process and VM address 10.10.10.12. The data path, signing keys and
+  Edge 1.0.1/bootstrap 3 are unchanged.
+  All 23 original data files matched immediately after feed migration; active
+  Hive locks prevent a full post-launch byte comparison. Seven Windows product
+  suites pass 96 checks; the separate runner has 39 passes and one failure from
+  mixed Windows path separators in owned-output validation, refusing before
+  storage/transport. Its physical entry remains skipped, and the runner is not
+  shipped in the product. The corrected October 6 launcher regression now passes;
+  physical/driver gates and owner Receipt/paper policy still block DONE. No physical jobs,
+  commits, tooling installs or security/trust changes occurred. Signed metadata
+  expires October 11; the HTTPS server remains at `https://10.10.10.3:8443` with
+  its publication watcher disabled. Evidence:
+  `docs/proofs/POS02_WINDOWS_RECOVERY_2026-10-04/proof.json`; runbooks:
+  `docs/POS02_ONE_SHOT_ACCEPTANCE.md`, `docs/POS02_WINDOWS_INSTALLER_HANDOFF.md`.
 - MGR-01 is DONE from the POS's strictly validated
   saved configuration. Additive nullable Cloud Table metadata carries physical/
   virtual type, labels and ordering; an explicit complete membership claim retires
@@ -588,7 +827,17 @@ current transport status.
   Seating writes `UPDATE_RESERVATION` (to `in-progress`) beside the Order's
   `ACTIVATE_RESERVATION`; a delete writes the booking's last snapshot first.
   Legacy `reservation_cancelled` rows are read as `CANCEL_RESERVATION` and
-  never written again.
+  never written again. Future tentative holds use the distinct `hold` status,
+  block whole-day availability and require confirmation before seating/kitchen
+  work; they are not auto-activated or expired. Overdue holds remain visible.
+  POS reservation advances flush a recoverable receipt intent, count collection
+  on the original business day and transfer to the seated Order for one-time
+  settlement. Startup and complete restore replay pending receipts. Fully prepaid
+  closes require confirmation; excess advances and receipt reuse are refused.
+  Cancellation preserves received funds and deletion is refused. Automatic
+  refunds/forfeiture/transfer remain undecided. The additive Cloud mirror migration
+  `20261024120000_pos_reservation_advances` is qualified on disposable databases
+  only; `docs/POS_CHECKOUT_RESERVATIONS.md` records the exact source proof.
 - Current stock is derived, never stored: `SUM(StockMovement.quantityDeltaBase)`
   per Stock Item, computed in PostgreSQL as `Decimal`. There is no editable
   balance column. Receiving quantities are `Decimal(18,3)`, GEL totals `Decimal(18,2)`,
@@ -805,12 +1054,45 @@ current transport status.
   Upgrade POS before using these access actions. Platform user management supports
   SUPER_ADMIN and SUPPORT_READONLY with server-enforced read-only authority.
   See `docs/SAAS_PHASE2_CONTROL_PLANE.md` for policy, tests and deployment order.
+- Initial Manager activation uses one POS enrollment code with explicit first
+  Manager permission (default validity 30 minutes). Owner or Platform Admin can
+  issue it only before any Manager history exists. Redemption binds setup to the
+  enrolled Primary Device; POS asks for name/PIN without a second human code.
+  Ordinary/additional codes remain unprivileged. Additional POS waits for the
+  Primary registration or existing Staff delivery. Device authentication, current
+  issuer authority, expiry and POS/Manager entitlements gate completion; an
+  enrollment code alone or a Manager session cannot register. Legacy invitation
+  routes remain compatible. Platform cannot bypass first POS
+  registration by creating initial Staff. Completion, PIN
+  uniqueness, vault, audit and Edge delivery commit under the Venue lock; an
+  identical lost-response retry is idempotent. Activated Staff are platform-managed
+  so stale POS snapshots cannot restore their credentials. Existing Manager access
+  cannot be created/reset/disabled from the owner cabinet; Platform Admin retains
+  recovery, while authenticated POS/Manager operational permissions are unchanged.
+  POS ignores disabled identities when admitting PIN changes and fails closed on
+  ambiguous active PINs. First-run restaurant details and touch/keyboard preference
+  save before setup completion. Implementation and isolated tests do not establish
+  deployment or repair an existing account conflict.
 
 - Platform Admin can manage Organizations, Venues, plan assignment, feature
   overrides, WebsiteMode, domains, Devices, credentials, enrollment codes, and
   platform audit records. It can issue a fixed `NOOP` connection test.
 - Device credentials and enrollment codes are one-time values; verifier hashes
   are never returned by normal reads.
+- POS reconnect validates existing canonical Menu, baseline, pending commit,
+  mutation journal and restored Venue binding before replacing credentials.
+  Cross-Venue enrollment returns a conflict and preserves local identity/data;
+  missing Venue IDs in enrollment responses are rejected. Startup checks this
+  binding before operational recovery or seeding, with explicit recovery guidance
+  for already-mismatched installations. Same-Venue rotation remains supported.
+  Identity reload discards stale cached fields and redacts malformed-file errors;
+  POS startup uses the validated identity without a second post-recovery reload.
+  Synthetic unpaid Orders/Table ownership and pending Menu intent survive rejected
+  foreign enrollment/startup. Proof: `local_venue_binding_test.dart`,
+  `pos_startup_venue_test.dart` and `edge_device_credential_store_test.dart` under
+  `apps/operations/test/unit/`; scope and qualification:
+  `docs/POS_LOCAL_VENUE_STARTUP.md`. A real conflicting installation still needs
+  original-Venue reconnect or an explicitly controlled data handoff.
 - CustomerAccount owner access is separate from PlatformUser/Staff/WebsiteUser.
   Public `/request-access` collects an access request without creating account, tenant,
   session, plan or trial; the old signup POST is denied. Platform approval creates
@@ -826,6 +1108,13 @@ current transport status.
   immediate cancellation with reasons/audits. Owners can schedule and undo deferred
   changes; customer payment-success claims cannot activate access. CustomerAccount.organizationId is provenance
   only; live OrganizationMembership authorizes all owner operations.
+- UX-01 is DONE: active Homepage `HomeContact` opens the existing `/request-access`
+  flow with KA/EN copy and a keyboard-accessible link, replacing timeout-only fake
+  success. Existing application/client/service policies remain unchanged; only a
+  persisted pending request produces acceptance. Final proof: 186 frontend cases,
+  7 new real HTTP/PG persistence cases, 16 commercial regressions, 851 backend
+  aggregate passes and 375/768/1440 browser QA on synthetic loopback data.
+  See `docs/UX01_REAL_DEMO_REQUEST.md`; no deployment is implied.
 - Platform manages plan names/descriptions, prices/currency/period, retirement,
   included features and Website media quotas. Deliberate plan changes snapshot the
   agreed price; list-price edits and reselecting the same plan preserve agreements.
@@ -835,7 +1124,7 @@ current transport status.
   trial requests, plus locked Website/POS/Manager cards. Website/foundation,
   payment configuration, Manager credentials and POS setup are gated on the
   server. Internal Manager loginCode is hidden unless MANAGER_APP is effective.
-  Security disabling an existing Manager remains allowed after suspension.
+  Platform Admin can disable an existing Manager after suspension.
 - POS/Manager use fixed product entrypoints and isolated native build metadata.
   Manager supports Windows/macOS/Android/iOS; POS production is Windows only,
   with macOS debug development via `tool/dev.zsh` shortcuts. Those shortcuts
@@ -843,9 +1132,21 @@ current transport status.
   resolve, and open the POS developer panel without a token through
   `VYNIC_DEVELOPER_UNLOCK`, which release and lab builds never pass. New builds
   use VYNIC_ENV/VYNIC_API_URL, ship no .env and read no shared POS sync key.
+  Build helpers read only those two public keys from the source `.env`; its
+  original bytes remain intact with a separate additions block. macOS developer
+  shortcuts default to `http://api.vynic.localhost`, with explicit saved/shell
+  overrides restricted to developer builds. Manager remembers its selected Venue
+  per API origin; subsequent login asks only for PIN. New installations first
+  redeem a Platform Admin-only, 30-minute one-use Manager linking code. It requires
+  current issuer authority, MANAGER_APP access and an active Manager,
+  grants no Staff authentication, and does not change PINs. Different installations
+  cannot reuse it; same-installation retries are idempotent. Existing selections
+  and sessions remain compatible; the owner cabinet directs users to support. See
+  `docs/SINGLE_POS_ONBOARDING.md` for the current operator/user flow.
   Manager never initializes POS persistence/printing/ingest/sync.
-  POS setup requires only a name and remains unfinished across restart/Staff
-  delivery; missing identity/logo/menu never triggers Vankisi defaults.
+  POS setup requires a name, offers optional restaurant details and persists
+  touch/keyboard choice; it remains unfinished across restart/Staff delivery
+  until saved. Missing identity/logo/menu never triggers Vankisi defaults.
 - Device printer config is Cloud-authored, Device-authenticated pull and durable
   local cache. The owner portal configures printers without a developer token.
   Device names/features refresh every 10 seconds without restart; local menu
@@ -921,7 +1222,13 @@ current transport status.
   URL and menu authority, and `POST .../custom-website/check` reports runtime
   availability (REACHABLE/UNREACHABLE, UNKNOWN until checked) on demand: only
   that server-owned domain, DNS-pinned, non-public addresses refused, no
-  redirects, nothing stored. VenueDomain never carries a port; outside
+  redirects, nothing stored. WEB-05 adds stable public Venue correlation,
+  reviewed `expectedBuildId` metadata/audit and served HTML/manifest comparison;
+  five evidence facts and local/public observation environment are distinct.
+  Concurrent/stale replies cannot restore old verification. Source and local
+  Docker candidates are qualified; production acceptance remains open.
+  SETUP_PENDING/ERROR serving remains unchanged (operator tracking). See
+  `docs/WEB05_BUILD_IDENTITY.md`. VenueDomain never carries a port; outside
   production a Venue's `.localhost` domain is checked at its local frontend,
   port from `CUSTOM_WEBSITE_LOCAL_FRONTENDS=<siteKey>=<port>,…` (no default;
   unmapped = NOT_CONFIGURED, ignored and absent in production; D029).
@@ -935,8 +1242,15 @@ current transport status.
   left on POS authority (`needsCloudAuthority`) for repair. SAAS and CUSTOM
   share one Venue-level website foundation (`docs/WEBSITE_FOUNDATION.md`):
   hours, contact, socials and gallery live in `VenuePublicProfile` (live owner
-  edits via `PUT .../website/public-info`, projected into the SAAS payload),
-  and shared capabilities (MENU, HOURS, RESERVATIONS, GALLERY,
+  edits via `PUT .../website/public-info`, projected into the SAAS payload).
+  Vankisi reads this Host-bound public contract through its guarded info provider:
+  Footer/Contact, confirmed-payment contact email and the Atmosphere gallery
+  teaser reflect live owner edits without redeploying. Loading/error/retry,
+  fresh reads on route/focus and capability-off hiding are explicit; no static
+  business-data fallback. Bespoke narrative/design assets remain frontend-owned.
+  The informational binding check does not close WEB-05 deployment attestation
+  or implement a global site-launch gate. See `docs/WEB07_SHARED_INFORMATION.md`.
+  Shared capabilities (MENU, HOURS, RESERVATIONS, GALLERY,
   CUSTOMER_ACCOUNTS, ONLINE_PAYMENTS; events/banquets/ordering listed as not
   built) follow Features → per-Venue operator policy (`VenueWebsiteCapability`,
   default on, audited) → readiness, never the mode. `WebsiteCapabilityGuard`
@@ -965,12 +1279,17 @@ current transport status.
   website, menu, photos, hours, payments, POS devices, managers, subscription,
   settings) sharing one website draft with a save bar. SaaS provisioning assigns
   a collision-safe address with spaces removed. Existing assigned addresses never
-  follow display-name changes. Only ACTIVE Website owners can submit one pending
-  hostname request; Platform approval rechecks availability under lock and changes
-  the domain and draft/published identity atomically, deleting the old SaaS
-  hostname (no redirect). Trial owners cannot request changes; draft
-  saves/publication cannot choose an address, and operator domain registration
-  refuses the SaaS namespace. See `docs/WEBSITE_SAAS_HOSTNAMES.md`. The menu section is the
+  follow display-name changes. Website hostname changes are Platform Admin-only:
+  owners see their address and contact support; the old request POST returns 403
+  and draft saves/publication cannot choose an address. Platform can register
+  Vynic subdomains or external domains for SAAS/CUSTOM, including aliases, and
+  rename a stable domain with expected-hostname concurrency protection and atomic
+  audit. Renaming the assigned SAAS address moves draft/published mirrors and
+  revisions together without publishing unsaved content, and closes previous
+  pending requests. Assigned identities and disabled/retained names remain
+  protected across Venues. Apex/api/admin/preview/www platform origins are
+  protected. Existing historical requests remain reviewable. DNS/TLS and CUSTOM
+  frontend routing remain operator deployment work. See `docs/WEBSITE_SAAS_HOSTNAMES.md`. The menu section is the
   canonical category/subcategory/item/size tree with separate website presentation;
   canonical (CLOUD) Venues author it in the dashboard with per-node revisions and
   conflict choices, alongside their POS terminals; legacy POS-authority Venues
@@ -1018,6 +1337,42 @@ current transport status.
   and remain Cloud-side after disconnect or entitlement removal. Controlled legacy
   import is explicit, audited, idempotent and never runs in Prisma migrations.
   See `docs/WEBSITE_PHASE_W1.md` for rollout and disposable two-Venue proof.
+- WEB-06 is DONE at the read-only readiness boundary: Website capabilities,
+  merchant status and the CUSTOM operator view share `latestBogIntegrationStatus`,
+  selecting safe metadata
+  from the greatest Venue/BOG revision. Rotation no longer reads an older disabled
+  row; disconnect remains unavailable, and reconnect/newer revisions restore
+  readiness. Ten real HTTP/PostgreSQL cases plus W1 and Website regressions
+  preserve tenant isolation, entitlement/policy gating and historical credentials.
+  No payment creation/settlement rules, encrypted revisions or schema change.
+  It makes no money/hold policy changes; WEB-01/04 qualification is recorded below.
+  See `docs/WEB06_CURRENT_PAYMENT_READINESS.md`.
+- WEB-03 is DONE at the delivery boundary: server-owned payment outcomes and
+  immutable Website reservation CREATE/CANCEL intents commit together under
+  Venue -> booking locks. Worker queue admission, POS link and receipt commit
+  atomically; replicas/restarts retain one identity and snapshot. Scoped receipt
+  guards prevent terminal revival or payload rewrite. Existing Edge leases,
+  Primary fencing and Hive idempotency apply; cancellation waits for CREATE ACK.
+  Non-bootstrap unenrolled Venues wait for enrollment; only the frozen bootstrap
+  legacy outbox is admitted. Platform's read-only Website delivery panel shows
+  queued/claimed/ACK/failed/attention/unknown, plus historical untracked creation;
+  no historical replay, automatic repair/refund or new booking/payment policy.
+  Final proof: 26 new PG/HTTP cases, 1005 distinct backend passes, 176 frontend
+  passes and 28 existing POS/Hive convergence/journal passes. WEB-01/04 now
+  qualify the source money/hold boundary; real provider/fleet acceptance remains. See
+  `docs/WEB03_DURABLE_BOOKING_DELIVERY.md`.
+- WEB-01/04 are qualified in source with approved whole-day occupancy, frozen
+  ten-minute holds and BOG TTL, exact money snapshots, immutable sanitized receipt
+  observations, pinned reconciliation and monotonic refunds. Partial refunds keep
+  confirmed bookings; genuinely late/unproved expired payments require restaurant
+  owner review with no automatic restore/refund. Signed timely proof survives a
+  delayed callback or provider outage; reassigned occupancy is never stolen.
+  Owner/Platform read-only review survives entitlement loss. Vankisi redirects
+  verify the server outcome and preserve the cart unless CONFIRMED. New hold day
+  identities drive review and POS payloads. 32 new PG/HTTP cases, 1007 distinct
+  backend cases, 208 frontend and 6 SDK cases pass. 684 opt-in backend cases remain
+  unrun; live bank/fleet and stale/offline POS reconciliation remain release gates.
+  See `docs/WEB0104_BOOKING_HOLDS_PAYMENT_LEDGER.md` and D038.
 - Future SaaS operational work follows Website -> Cloud -> durable Venue command
   -> Edge -> POS; payment callbacks do not move through Go Edge.
 
@@ -1198,23 +1553,50 @@ current transport status.
 
 ## Known Blockers
 
-- Website reservation availability has no transactional hold; simultaneous
-  bookings can still allocate the same table.
+- Website holds serialize Cloud website bookings. Independent/offline POS and
+  stale mirror conflicts still require delivery evidence and operator review;
+  real bank/fleet acceptance remains a release gate.
 - Local POS diagnostics/error-log/restore-wipe remain developer-gated. Customer
   printer setup is available through the owner portal; physical remote test-print
   and real Windows coexistence/hardware validation remain release checks.
 - Production provider deployment (DNS/TLS issuance, registry publication, managed
   database, backups and host qualification) remains unprovisioned. The local
   production-like Compose/image foundation is implemented; see `docs/DEPLOYMENT.md`.
+- POS/Manager native traffic uses a dedicated origin, `api.<base domain>`
+  (`http://api.vynic.localhost`, `https://api.vynic.ge`), routed by Traefik only for
+  `/edge/`, `/mobile/`, `/auth/`, `/sync/`, `/socket.io/`, `/healthz`; every other
+  path there is a backend 404. `./scripts/docker.sh start-lan` opts into a
+  `<MAC_LAN_IP>:8088` listener (native paths only, one bound private IP) for
+  Windows/Parallels. Venue never comes from Host on these routes. POS Development
+  API URL: explicit `http://host` with no port means port 80; bare `host` stays `:3000`.
+  See `docs/DEPLOYMENT.md` "Native POS / Manager ingress".
 - Full legacy callback retirement depends on real fleet enrollment, not merely
   the existence of enrollment code.
+
+## Release Supply Chain
+
+- OPS-03 compatible dependency and lock-graph fixes are integrated but not deployed
+  across six npm projects. Offline inventory uses the existing npm Arborist reader
+  and CycloneDX emitter with node flags that retain shared runtime/dev dependencies;
+  required WASM lock closures are complete. All 12 build/runtime SBOMs qualify,
+  with 19 Python and 4 Node regression cases. The final OSV snapshot queried 1,733
+  public package/version pairs and matched 5 pairs / 11 IDs (initially 41 / 107),
+  with no critical IDs in that bounded scope; presence is not exploit reachability.
+  Private clean installs/builds passed, with 987 distinct backend cases, 284 web
+  cases and 7 website-manifest cases; 814 other opt-in backend cases remain unrun.
+  Intentional Prisma pins, unrelated fflate 0.8.3, source WIP, environment and
+  printers are preserved. Deepmerge major and Vankisi Sharp minor-boundary decisions,
+  unfixed build/test dependencies, Go graph/stdlib/call paths, image/OS layers,
+  SDK/native and candidate provenance remain release gates. No residual risk was
+  accepted. See `docs/OPS03_DEPENDENCY_REMEDIATION.md`; the initial container capture
+  remains historical inventory evidence, not installed-image attestation.
 
 ## Deferred Work
 
 - General Restaurant Backoffice, Venue Policy, custom roles/RBAC, Inventory
   historical Sale COGS / realized Gross Profit / Waste / Stocktake / inventory variance / expected
   yield and pour loss, cash management,
-  reservation holds and automatic SaaS billing/provider checkout. SaaS website ordering, SaaS online
+  hourly reservation slots and automatic SaaS billing/provider checkout. SaaS website ordering, SaaS online
   payments, generic customer accounts, additional themes, a page builder and
   custom-domain DNS/TLS automation remain deferred; the read-only generic SaaS
   website itself is implemented (W3).
@@ -1225,10 +1607,24 @@ current transport status.
 
 ## Current Migration Versions
 
-- Prisma migration tip: `20261015120000_menu09_client_compatibility` (nullable
-  Device capability/freshness/final-legacy-sync metadata and Venue cutover JSONB).
-  Fresh and immediate-previous/populated upgrades, all 65 checksums, Prisma
-  validation and empty schema diff pass on disposable PostgreSQL.
+- Prisma migration source tip: `20261023120000_manager_venue_link`
+  (additive ManagerVenueLink, Venue/Platform issuer foreign keys, verifier-only
+  storage). Fresh 77 and populated 76→77 upgrades preserve existing Venue/Device/
+  Staff/PIN/activation data and all 76 migration checksums; repeat deploy is a no-op.
+  Source qualification does not prove live deployment.
+- Previous migration: `20261022120000_single_pos_manager_setup`
+  (ordinary enrollment defaults false; nullable Manager setup enrollment/Device
+  links have composite Venue foreign keys). Fresh 76 and populated 75→76
+  synthetic upgrades preserve existing values and all 75 historical migration
+  checksums; repeat deployment is a no-op. This does not prove live deployment.
+- Previous migration: `20261021120000_custom_website_build_identity`
+  (nullable reviewed public build fingerprint; legacy values/statuses unchanged).
+  Fresh 75 and populated 74→75 synthetic upgrades preserve history; all 74
+  historical migration checksums and Prisma validation pass. Source presence
+  does not prove deployment. Previous website holds/ledger proof retains two
+  pre-existing printer runtime FK-name differences in its full-schema diff.
+- Previous migration: `20261020120000_website_payment_holds_ledger`
+  (additive money observations/whole-day occupancy; old rows remain UNTRACKED).
 - Previous migrations: `20261014120000_menu06_safe_retirement`,
   `20261013120000_menu03_exact_mutation_result`,
   `20261012120000_web02_restore_public_info_authority`.

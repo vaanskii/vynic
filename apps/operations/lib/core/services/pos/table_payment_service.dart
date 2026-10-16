@@ -1,3 +1,5 @@
+import 'package:vynic/core/ui/widgets/pos_dialog.dart';
+import 'package:vynic/core/ui/vynic_floor_tokens.dart';
 import 'package:vynic/core/services/pos/update/update_readiness.dart';
 import 'dart:ui' show FontFeature;
 
@@ -54,25 +56,54 @@ class TablePaymentService {
 
   // Shared design tokens — aligned with the redesigned POS surfaces
   // (take-away section / order detail) for a consistent look.
-  static const Color _panel = Colors.white;
-  static const Color _surface = Color(0xFFF6F7F9);
-  static const Color _border = Color(0xFFE5E7EB);
-  static const Color _text = Color(0xFF111827);
-  static const Color _muted = Color(0xFF6B7280);
-  static const Color _accent = Color(0xFF0F766E);
-  static const Color _cash = Color(0xFF047857);
-  static const Color _bank = Color(0xFF2563EB);
-  static const Color _split = Color(0xFF7C3AED);
-  static const Color _danger = Color(0xFFB91C1C);
-
-  static const List<BoxShadow> _dialogShadow = [
-    BoxShadow(color: Color(0x1F0F172A), blurRadius: 32, offset: Offset(0, 16)),
-  ];
+  static const Color _surface = VynicFloorTokens.canvas;
+  static const Color _border = VynicFloorTokens.panelBorder;
+  static const Color _text = VynicFloorTokens.text;
+  static const Color _muted = VynicFloorTokens.textMuted;
+  static const Color _accent = VynicFloorTokens.accentStrong;
+  static const Color _cash = VynicFloorTokens.successText;
+  static const Color _bank = VynicFloorTokens.accentText;
+  static const Color _split = VynicFloorTokens.accentStrong;
 
   Future<TablePaymentSelection?> collect() =>
       UpdateReadiness.track('collect', () => _updateTrackedCollect());
 
   Future<TablePaymentSelection?> _updateTrackedCollect() async {
+    if (grossTotal != null && advanceApplied > grossTotal! + 0.005) {
+      await showErrorToast(
+        context,
+        'ავანსი ანგარიშს აღემატება — თანხის დაბრუნება ან გადატანა მენეჯერთან გადაწყვიტეთ',
+      );
+      return null;
+    }
+    if (total.abs() < 0.005 && advanceApplied > 0) {
+      final confirmed = await showPosModal<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('ანგარიში სრულად დაფარულია'),
+          content: Text(
+            'ავანსი ${advanceApplied.toStringAsFixed(2)} ₾. დამატებით გადასახდელი: 0.00 ₾.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('უკან'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('ანგარიშის დახურვა'),
+            ),
+          ],
+        ),
+      );
+      return confirmed == true
+          ? const TablePaymentSelection(
+              method: TablePaymentMethod.cash,
+              cashAmount: 0,
+              bankAmount: 0,
+            )
+          : null;
+    }
     if (total <= 0) {
       await showErrorToast(context, 'გადახდამდე გადათვალეთ შეკვეთის ჯამი');
       return null;
@@ -199,221 +230,82 @@ class TablePaymentService {
   }
 
   Future<TablePaymentMethod?> _showMethodDialog() {
-    return showDialog<TablePaymentMethod>(
+    return showPosModal<TablePaymentMethod>(
       context: context,
       barrierDismissible: false,
-      builder: (dialogContext) {
-        return Dialog(
-          backgroundColor: Colors.transparent,
-          child: Container(
-            width: 600,
-            padding: const EdgeInsets.fromLTRB(28, 28, 28, 24),
-            decoration: BoxDecoration(
-              color: _panel,
-              borderRadius: BorderRadius.circular(24),
-              border: Border.all(color: _border),
-              boxShadow: _dialogShadow,
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    color: _accent.withValues(alpha: 0.10),
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: const Icon(
-                    Icons.point_of_sale_rounded,
-                    color: _accent,
-                    size: 26,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                const Text(
-                  'აირჩიეთ გადახდის მეთოდი',
-                  style: TextStyle(
-                    color: _text,
-                    fontSize: 20,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: -0.2,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                const Text(
-                  'Select payment method',
-                  style: TextStyle(color: _muted, fontSize: 13),
-                ),
-                const SizedBox(height: 16),
-                _buildAmountSummary(),
-                const SizedBox(height: 24),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    _buildModernMethodCard(
-                      dialogContext,
-                      label: 'ნაღდი ფული',
-                      englishLabel: 'Cash',
-                      icon: Icons.payments_rounded,
-                      color: _cash,
-                      method: TablePaymentMethod.cash,
-                    ),
-                    const SizedBox(width: 14),
-                    _buildModernMethodCard(
-                      dialogContext,
-                      label: 'ბარათით',
-                      englishLabel: 'Bank POS',
-                      icon: Icons.credit_card_rounded,
-                      color: _bank,
-                      method: TablePaymentMethod.bank,
-                    ),
-                    const SizedBox(width: 14),
-                    _buildModernMethodCard(
-                      dialogContext,
-                      label: 'გაყოფილი',
-                      englishLabel: 'Split',
-                      icon: Icons.call_split_rounded,
-                      color: _split,
-                      method: TablePaymentMethod.split,
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 20),
-                TextButton.icon(
-                  onPressed: () => Navigator.of(dialogContext).pop(),
-                  icon: const Icon(
-                    Icons.close_rounded,
-                    color: _muted,
-                    size: 18,
-                  ),
-                  label: const Text(
-                    'გაუქმება',
-                    style: TextStyle(
-                      color: _muted,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  style: TextButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 18,
-                      vertical: 10,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ),
-                ),
-              ],
-            ),
+      builder: (dialogContext) => PosFormDialog(
+        title: 'აირჩიეთ გადახდის მეთოდი',
+        subtitle: 'Select payment method',
+        width: 600,
+        onClose: () => Navigator.of(dialogContext).pop(),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: const Text('უკან დაბრუნება'),
           ),
-        );
-      },
+        ],
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _buildAmountSummary(),
+            const SizedBox(height: 24),
+            IntrinsicHeight(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  _buildModernMethodCard(
+                    dialogContext,
+                    label: 'ნაღდი ფული',
+                    englishLabel: 'Cash',
+                    icon: Icons.payments_rounded,
+                    color: _cash,
+                    method: TablePaymentMethod.cash,
+                  ),
+                  const SizedBox(width: 14),
+                  _buildModernMethodCard(
+                    dialogContext,
+                    label: 'ბარათით',
+                    englishLabel: 'Bank POS',
+                    icon: Icons.credit_card_rounded,
+                    color: _bank,
+                    method: TablePaymentMethod.bank,
+                  ),
+                  const SizedBox(width: 14),
+                  _buildModernMethodCard(
+                    dialogContext,
+                    label: 'გაყოფილი',
+                    englishLabel: 'Split',
+                    icon: Icons.call_split_rounded,
+                    color: _split,
+                    method: TablePaymentMethod.split,
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
   Future<bool> _showConfirmationDialog(String methodLabel) async {
-    final result = await showDialog<bool>(
+    final result = await showPosModal<bool>(
       context: context,
       barrierDismissible: false,
-      builder: (dialogContext) {
-        return Dialog(
-          backgroundColor: Colors.transparent,
-          child: Container(
-            width: 420,
-            padding: const EdgeInsets.all(28),
-            decoration: BoxDecoration(
-              color: _panel,
-              borderRadius: BorderRadius.circular(24),
-              border: Border.all(color: _border),
-              boxShadow: _dialogShadow,
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: _accent.withValues(alpha: 0.10),
-                    borderRadius: BorderRadius.circular(18),
-                  ),
-                  child: const Icon(
-                    Icons.lock_outline_rounded,
-                    color: _accent,
-                    size: 32,
-                  ),
-                ),
-                const SizedBox(height: 20),
-                const Text(
-                  'მაგიდის დახურვა',
-                  style: TextStyle(
-                    color: _text,
-                    fontSize: 20,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'ნამდვილად გსურთ დახურვა — $methodLabel?',
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    color: _muted,
-                    fontSize: 14,
-                    height: 1.4,
-                  ),
-                ),
-                const SizedBox(height: 24),
-                Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton(
-                        onPressed: () => Navigator.of(dialogContext).pop(false),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: _muted,
-                          side: const BorderSide(color: _border),
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        child: const Text(
-                          'გაუქმება',
-                          style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: ElevatedButton(
-                        onPressed: () => Navigator.of(dialogContext).pop(true),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: _accent,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          elevation: 0,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        child: const Text(
-                          'დახურვა',
-                          style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('მაგიდის დახურვა'),
+        content: Text('ნამდვილად გსურთ დახურვა — $methodLabel?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('გაუქმება'),
           ),
-        );
-      },
+          ElevatedButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text('დახურვა'),
+          ),
+        ],
+      ),
     );
     return result ?? false;
   }
@@ -436,7 +328,7 @@ class TablePaymentService {
           highlightColor: color.withValues(alpha: 0.10),
           splashColor: color.withValues(alpha: 0.12),
           child: Container(
-            height: 158,
+            constraints: const BoxConstraints(minHeight: 158),
             padding: const EdgeInsets.all(18),
             decoration: BoxDecoration(
               color: _surface,
@@ -444,6 +336,7 @@ class TablePaymentService {
               border: Border.all(color: _border),
             ),
             child: Column(
+              mainAxisSize: MainAxisSize.min,
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Container(
@@ -479,89 +372,44 @@ class TablePaymentService {
   }
 
   Future<String?> _showBankDialog() {
-    return showDialog<String>(
+    return showPosModal<String>(
       context: context,
       barrierDismissible: false,
-      builder: (dialogContext) {
-        return Dialog(
-          backgroundColor: Colors.transparent,
-          child: Container(
-            width: 520,
-            padding: const EdgeInsets.fromLTRB(28, 28, 28, 22),
-            decoration: BoxDecoration(
-              color: _panel,
-              borderRadius: BorderRadius.circular(24),
-              border: Border.all(color: _border),
-              boxShadow: _dialogShadow,
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Text(
-                  'აირჩიეთ ტერმინალი',
-                  style: TextStyle(
-                    color: _text,
-                    fontSize: 20,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: -0.2,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                const Text(
-                  'Select bank terminal',
-                  style: TextStyle(color: _muted, fontSize: 13),
-                ),
-                const SizedBox(height: 24),
-                Row(
-                  children: [
-                    _buildModernBankCard(
-                      dialogContext,
-                      label: 'TBC Bank',
-                      iconAsset: Icons.account_balance_rounded,
-                      color: const Color(0xFF0E69C3),
-                      value: 'tbc',
-                    ),
-                    const SizedBox(width: 14),
-                    _buildModernBankCard(
-                      dialogContext,
-                      label: 'Bank of Georgia',
-                      iconAsset: Icons.account_balance_rounded,
-                      color: const Color(0xFFFF8A00),
-                      value: 'bog',
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 20),
-                TextButton.icon(
-                  onPressed: () => Navigator.of(dialogContext).pop(),
-                  icon: const Icon(
-                    Icons.arrow_back_rounded,
-                    color: _muted,
-                    size: 18,
-                  ),
-                  label: const Text(
-                    'უკან',
-                    style: TextStyle(
-                      color: _muted,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  style: TextButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 18,
-                      vertical: 10,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ),
-                ),
-              ],
-            ),
+      builder: (dialogContext) => PosFormDialog(
+        title: 'აირჩიეთ ტერმინალი',
+        subtitle: 'Select bank terminal',
+        width: 520,
+        onClose: () => Navigator.of(dialogContext).pop(),
+        actions: [
+          TextButton.icon(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            icon: const Icon(Icons.arrow_back_rounded),
+            label: const Text('უკან'),
           ),
-        );
-      },
+        ],
+        child: IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _buildModernBankCard(
+                dialogContext,
+                label: 'TBC Bank',
+                iconAsset: Icons.account_balance_rounded,
+                color: const Color(0xFF0E69C3),
+                value: 'tbc',
+              ),
+              const SizedBox(width: 14),
+              _buildModernBankCard(
+                dialogContext,
+                label: 'Bank of Georgia',
+                iconAsset: Icons.account_balance_rounded,
+                color: const Color(0xFFFF8A00),
+                value: 'bog',
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 
@@ -582,7 +430,7 @@ class TablePaymentService {
           highlightColor: color.withValues(alpha: 0.10),
           splashColor: color.withValues(alpha: 0.12),
           child: Container(
-            height: 150,
+            constraints: const BoxConstraints(minHeight: 150),
             padding: const EdgeInsets.all(18),
             decoration: BoxDecoration(
               color: _surface,
@@ -590,6 +438,7 @@ class TablePaymentService {
               border: Border.all(color: _border),
             ),
             child: Column(
+              mainAxisSize: MainAxisSize.min,
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Container(
@@ -619,7 +468,7 @@ class TablePaymentService {
   }
 
   Future<TablePaymentSelection?> _showSplitDialog() {
-    return showDialog<TablePaymentSelection>(
+    return showPosModal<TablePaymentSelection>(
       context: context,
       barrierDismissible: false,
       builder: (dialogContext) {
@@ -665,254 +514,106 @@ class TablePaymentService {
             final hasAnyPayment = bankPortion > 0 || cashPortion > 0;
             final isValid = sumMatches && hasAnyPayment;
 
-            return Dialog(
-              backgroundColor: Colors.transparent,
-              child: Container(
-                width: 720,
-                height: 520,
-                clipBehavior: Clip.antiAlias,
-                decoration: BoxDecoration(
-                  color: _panel,
-                  borderRadius: BorderRadius.circular(24),
-                  border: Border.all(color: _border),
-                  boxShadow: _dialogShadow,
+            return PosFormDialog(
+              title: 'გაყოფილი გადახდა',
+              subtitle: 'Split payment',
+              width: 760,
+              onClose: () => Navigator.of(dialogContext).pop(),
+              actions: [
+                TextButton.icon(
+                  onPressed: () => Navigator.of(dialogContext).pop(),
+                  icon: const Icon(Icons.arrow_back_rounded),
+                  label: const Text('უკან'),
                 ),
-                child: Row(
-                  children: [
-                    // Left Pane (Details)
-                    Expanded(
-                      flex: 5,
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 20,
-                          vertical: 22,
+                ElevatedButton(
+                  onPressed: isValid
+                      ? () => Navigator.of(dialogContext).pop(
+                          TablePaymentSelection(
+                            method: TablePaymentMethod.split,
+                            cashAmount: _round(cashPortion),
+                            bankAmount: _round(bankPortion),
+                            bankProvider: selectedBank,
+                          ),
+                        )
+                      : null,
+                  child: const Text('დადასტურება'),
+                ),
+              ],
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    flex: 5,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        _buildAmountRow(
+                          label: 'სულ ჯამი',
+                          amount: total,
+                          highlight: false,
                         ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                        const SizedBox(height: 12),
+                        _buildAmountRow(
+                          label: 'ბანკი / Bank',
+                          amountText: inputValue,
+                          highlight: true,
+                        ),
+                        const SizedBox(height: 8),
+                        _buildAmountRow(
+                          label: 'ნაღდი / Cash',
+                          amount: cashPortion,
+                          highlight: false,
+                        ),
+                        const SizedBox(height: 14),
+                        Row(
                           children: [
-                            const Text(
-                              'გაყოფილი გადახდა',
-                              style: TextStyle(
-                                color: _text,
-                                fontSize: 20,
-                                fontWeight: FontWeight.w800,
-                                letterSpacing: -0.2,
+                            Expanded(
+                              child: _buildBankChip(
+                                label: 'TBC POS',
+                                selected: selectedBank == 'tbc',
+                                color: const Color(0xFF0E69C3),
+                                onTap: () =>
+                                    setState(() => selectedBank = 'tbc'),
                               ),
                             ),
-                            const SizedBox(height: 2),
-                            const Text(
-                              'Split payment',
-                              style: TextStyle(color: _muted, fontSize: 12),
-                            ),
-                            const SizedBox(height: 16),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 14,
-                                vertical: 12,
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: _buildBankChip(
+                                label: 'BOG POS',
+                                selected: selectedBank == 'bog',
+                                color: const Color(0xFFFF8A00),
+                                onTap: () =>
+                                    setState(() => selectedBank = 'bog'),
                               ),
-                              decoration: BoxDecoration(
-                                color: _accent.withValues(alpha: 0.08),
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(
-                                  color: _accent.withValues(alpha: 0.20),
-                                ),
-                              ),
-                              child: Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  const Text(
-                                    'სულ ჯამი',
-                                    style: TextStyle(
-                                      color: _muted,
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                  Text(
-                                    '₾${total.toStringAsFixed(2)}',
-                                    style: const TextStyle(
-                                      color: _accent,
-                                      fontSize: 24,
-                                      fontWeight: FontWeight.w900,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            const SizedBox(height: 12),
-                            _buildAmountRow(
-                              label: 'ბანკი / Bank',
-                              amountText: inputValue,
-                              highlight: true,
-                            ),
-                            const SizedBox(height: 8),
-                            _buildAmountRow(
-                              label: 'ნაღდი / Cash',
-                              amount: cashPortion,
-                              highlight: false,
-                            ),
-                            const SizedBox(height: 14),
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: _buildBankChip(
-                                    label: 'TBC POS',
-                                    selected: selectedBank == 'tbc',
-                                    color: const Color(0xFF0E69C3),
-                                    onTap: () =>
-                                        setState(() => selectedBank = 'tbc'),
-                                  ),
-                                ),
-                                const SizedBox(width: 10),
-                                Expanded(
-                                  child: _buildBankChip(
-                                    label: 'BOG POS',
-                                    selected: selectedBank == 'bog',
-                                    color: const Color(0xFFFF8A00),
-                                    onTap: () =>
-                                        setState(() => selectedBank = 'bog'),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const Spacer(),
-                            Row(
-                              children: [
-                                TextButton.icon(
-                                  onPressed: () =>
-                                      Navigator.of(dialogContext).pop(),
-                                  icon: const Icon(
-                                    Icons.arrow_back_rounded,
-                                    size: 18,
-                                    color: _muted,
-                                  ),
-                                  label: const Text(
-                                    'უკან',
-                                    style: TextStyle(
-                                      color: _muted,
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                  style: TextButton.styleFrom(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 14,
-                                      vertical: 12,
-                                    ),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(10),
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  child: ElevatedButton(
-                                    onPressed: isValid
-                                        ? () {
-                                            Navigator.of(dialogContext).pop(
-                                              TablePaymentSelection(
-                                                method:
-                                                    TablePaymentMethod.split,
-                                                cashAmount: _round(cashPortion),
-                                                bankAmount: _round(bankPortion),
-                                                bankProvider: selectedBank,
-                                              ),
-                                            );
-                                          }
-                                        : null,
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: _accent,
-                                      foregroundColor: Colors.white,
-                                      disabledBackgroundColor: _accent
-                                          .withValues(alpha: 0.30),
-                                      disabledForegroundColor: Colors.white
-                                          .withValues(alpha: 0.85),
-                                      elevation: 0,
-                                      padding: const EdgeInsets.symmetric(
-                                        vertical: 15,
-                                      ),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(12),
-                                      ),
-                                    ),
-                                    child: const Text(
-                                      'დადასტურება',
-                                      style: TextStyle(
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.w700,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ],
                             ),
                           ],
                         ),
-                      ),
+                      ],
                     ),
-                    // Right Pane (PinPad)
-                    Container(width: 1, color: _border),
-                    Expanded(
-                      flex: 4,
-                      child: Container(
-                        color: _surface,
-                        child: Center(
-                          child: SingleChildScrollView(
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 8.0,
-                                vertical: 16.0,
-                              ),
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  FittedBox(
-                                    fit: BoxFit.scaleDown,
-                                    child: PinPad(
-                                      onDigitPressed: handleDigit,
-                                      onClearPressed: handleClear,
-                                      onDeletePressed: handleDelete,
-                                      showDecimalButton: true,
-                                    ),
-                                  ),
-                                  if (!isValid) ...[
-                                    const SizedBox(height: 8),
-                                    Container(
-                                      margin: const EdgeInsets.symmetric(
-                                        horizontal: 12,
-                                      ),
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 12,
-                                        vertical: 6,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: _danger.withValues(alpha: 0.08),
-                                        borderRadius: BorderRadius.circular(8),
-                                        border: Border.all(
-                                          color: _danger.withValues(alpha: 0.4),
-                                        ),
-                                      ),
-                                      child: Text(
-                                        'თანხა უნდა უდრიდეს ₾${total.toStringAsFixed(2)}-ს',
-                                        textAlign: TextAlign.center,
-                                        style: const TextStyle(
-                                          color: _danger,
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.w600,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ],
-                              ),
-                            ),
-                          ),
+                  ),
+                  const SizedBox(width: 24),
+                  Expanded(
+                    flex: 4,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        PinPad(
+                          onDigitPressed: handleDigit,
+                          onClearPressed: handleClear,
+                          onDeletePressed: handleDelete,
+                          showDecimalButton: true,
                         ),
-                      ),
+                        if (!isValid) ...[
+                          const SizedBox(height: 8),
+                          PosFormError(
+                            'თანხა უნდა უდრიდეს ₾${total.toStringAsFixed(2)}-ს',
+                          ),
+                        ],
+                      ],
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             );
           },
@@ -975,6 +676,7 @@ class TablePaymentService {
         onTap: onTap,
         borderRadius: BorderRadius.circular(12),
         child: Container(
+          constraints: const BoxConstraints(minHeight: 56),
           padding: const EdgeInsets.symmetric(vertical: 12),
           alignment: Alignment.center,
           decoration: BoxDecoration(

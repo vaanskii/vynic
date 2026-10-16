@@ -16,9 +16,26 @@ import '../support/menu01_fixture.dart' show openMenu01, closeMenu01;
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
+  // The dedicated process harness supplies all three keys. Normal aggregate
+  // tests must not invoke a live proof accidentally; partial opt-in still fails.
+  final requested = [
+    'MENU09_HIVE_DIR',
+    'MENU09_HTTP_FIXTURE',
+    'MENU09_POS_STAGE',
+  ].any(Platform.environment.containsKey);
   test(
     'MENU09 native admission, offline durability, restart and fresh-machine gate',
     () async {
+      if (Platform.environment['MENU09_HIVE_DIR'] == null ||
+          Platform.environment['MENU09_HTTP_FIXTURE'] == null ||
+          ![
+            'writer',
+            'reader',
+          ].contains(Platform.environment['MENU09_POS_STAGE'])) {
+        throw StateError(
+          'MENU09 live proof requires HIVE_DIR, HTTP_FIXTURE and writer/reader POS_STAGE from its dedicated harness',
+        );
+      }
       HttpOverrides.global = null;
       final root = Platform.environment['MENU09_HIVE_DIR']!;
       if (!root.startsWith('/private/tmp/vynic_menu09_process_'))
@@ -229,5 +246,8 @@ void main() {
       }
     },
     timeout: const Timeout(Duration(minutes: 2)),
+    skip: requested
+        ? false
+        : 'Run tool/prove_menu09_gate.py with its disposable environment',
   );
 }

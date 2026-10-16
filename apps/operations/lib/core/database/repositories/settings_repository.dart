@@ -14,6 +14,7 @@ import 'package:vynic/core/models/table_layout.dart';
 import 'package:vynic/core/services/sync/sync_events.dart';
 import 'business_day_repository.dart';
 import '../database_core.dart';
+import 'package:vynic/core/services/security/developer_access.dart';
 
 /// POS settings stored in the `settings` box: printers, service fee,
 /// destructive-action password, language, monthly-report inputs, and the
@@ -423,13 +424,17 @@ class SettingsRepository {
   }
 
   static List<Map<String, dynamic>> getPrintersList() {
-    final stored = _settingsBox!.get('printersList');
-    if (stored is List) {
-      return List<Map<String, dynamic>>.from(
-        stored.map((item) => Map<String, dynamic>.from(item as Map)),
-      );
+    if (!DeveloperAccess.can(DeveloperScope.printers)) {
+      throw StateError('Developer printer access is required');
     }
-    return [];
+    final stored = _settingsBox!.get('printersList');
+    if (stored == null) return [];
+    if (stored is! List) {
+      throw StateError('Stored printer list is not a list');
+    }
+    return List<Map<String, dynamic>>.from(
+      stored.map((item) => Map<String, dynamic>.from(item as Map)),
+    );
   }
 
   static Future<void> savePrintersList(List<Map<String, dynamic>> printers) =>
@@ -441,7 +446,10 @@ class SettingsRepository {
   static Future<void> _updateTrackedSavePrintersList(
     List<Map<String, dynamic>> printers,
   ) async {
-    await _settingsBox!.put('printersList', printers);
+    if (!DeveloperAccess.can(DeveloperScope.printers)) {
+      throw StateError('Developer printer access is required');
+    }
+    await _settingsBox!.put('printersList', jsonDecode(jsonEncode(printers)));
     await _settingsBox!.put(
       'printerConfigUpdatedAt',
       DateTime.now().toIso8601String(),
@@ -466,6 +474,9 @@ class SettingsRepository {
     required String receiptIp,
     required int port,
   }) async {
+    if (!DeveloperAccess.can(DeveloperScope.printers)) {
+      throw StateError('Developer printer access is required');
+    }
     await _settingsBox!.put('printerKitchenIp', kitchenIp.trim());
     await _settingsBox!.put('printerReceiptIp', receiptIp.trim());
     await _settingsBox!.put('printerPort', port);

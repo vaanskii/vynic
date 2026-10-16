@@ -10,10 +10,14 @@
   "types": "./src/index.ts",
   "scripts": {
     "test": "vitest run",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test:manifest": "node --test scripts/manifest.node-tests.mjs"
   },
   "devDependencies": {
     "typescript": "~5.9.3",
     "vitest": "^4.1.11"
+  },
+  "overrides": {
+    "source-map-js": "1.2.2"
   }
 }

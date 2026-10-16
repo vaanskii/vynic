@@ -1,0 +1,29 @@
+
+> vankisi@0.0.0 build
+> tsc -b && vite build && node ../../packages/website-client/scripts/create-site-manifest.mjs dist src/config/siteIdentity.json
+
+[36mvite v6.4.3 [32mbuilding for production...[36m[39m
+transforming...
+[32m✓[39m 2457 modules transformed.
+rendering chunks...
+computing gzip size...
+[2mdist/[22m[32mindex.html                        [39m[1m[2m    0.98 kB[22m[1m[22m[2m │ gzip:   0.58 kB[22m
+[2mdist/[22m[2massets/[22m[32mHeaderFont-s5d5_i0x.ttf    [39m[1m[2m   38.60 kB[22m[1m[22m
+[2mdist/[22m[2massets/[22m[32mHeaderFontEN-BQtips11.otf  [39m[1m[2m  120.70 kB[22m[1m[22m
+[2mdist/[22m[2massets/[22m[32mfloor2-DbuIzEHw.svg        [39m[1m[2m  134.50 kB[22m[1m[22m[2m │ gzip:  14.54 kB[22m
+[2mdist/[22m[2massets/[22m[32mkhinkali-CywY4tEt.jpg      [39m[1m[2m  157.84 kB[22m[1m[22m
+[2mdist/[22m[2massets/[22m[32mphotoshoot1-jXps-RT6.jpg   [39m[1m[2m  232.14 kB[22m[1m[22m
+[2mdist/[22m[2massets/[22m[32mathmosphere2-AqKEKpLa.jpg  [39m[1m[2m  247.09 kB[22m[1m[22m
+[2mdist/[22m[2massets/[22m[32mathmosphere3-DJKww7qk.jpg  [39m[1m[2m  250.33 kB[22m[1m[22m
+[2mdist/[22m[2massets/[22m[32mfloor1-DvExa7zB.svg        [39m[1m[2m  275.03 kB[22m[1m[22m[2m │ gzip:  26.79 kB[22m
+[2mdist/[22m[2massets/[22m[32matmosphere-DlvAmkWK.jpg    [39m[1m[2m  279.35 kB[22m[1m[22m
+[2mdist/[22m[2massets/[22m[32mathmosphere1-CmRD3-H9.jpg  [39m[1m[2m  348.93 kB[22m[1m[22m
+[2mdist/[22m[2massets/[22m[35mindex-BXhHfWg_.css         [39m[1m[2m   97.11 kB[22m[1m[22m[2m │ gzip:  15.89 kB[22m
+[2mdist/[22m[2massets/[22m[36mindex-Bvy_VZfr.js          [39m[1m[33m1,595.41 kB[39m[22m[2m │ gzip: 466.87 kB[22m
+[33m
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.[39m
+[32m✓ built in 2.37s[39m
+Public CUSTOM build 5d2d01f9de47cbbc5331dc972b0eab69cdad316583faead6667669a13d832c56

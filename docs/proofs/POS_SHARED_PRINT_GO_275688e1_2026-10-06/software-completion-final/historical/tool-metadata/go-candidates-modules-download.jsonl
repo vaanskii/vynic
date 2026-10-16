@@ -1,0 +1,64 @@
+{
+	"Path": "google.golang.org/grpc",
+	"Version": "v1.83.2",
+	"Info": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/google.golang.org/grpc/@v/v1.83.2.info",
+	"GoMod": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/google.golang.org/grpc/@v/v1.83.2.mod",
+	"Zip": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/google.golang.org/grpc/@v/v1.83.2.zip",
+	"Dir": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/google.golang.org/grpc@v1.83.2",
+	"Sum": "h1:EManeRomTObA0BU7I8vXgg/78uE5MJ9M8B39EX2WscU=",
+	"GoModSum": "h1:YPI1hK3kDked6iHvgX3tR0y+nX/qpMFKhPgFsokw1S8=",
+	"Origin": {
+		"VCS": "git",
+		"URL": "https://github.com/grpc/grpc-go",
+		"Hash": "030ee8becb20ce4315d6bf2dfa26bdd876169dc4",
+		"Ref": "refs/tags/v1.83.2"
+	}
+}
+{
+	"Path": "golang.org/x/net",
+	"Version": "v0.56.0",
+	"Info": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/golang.org/x/net/@v/v0.56.0.info",
+	"GoMod": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/golang.org/x/net/@v/v0.56.0.mod",
+	"Zip": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/golang.org/x/net/@v/v0.56.0.zip",
+	"Dir": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/golang.org/x/net@v0.56.0",
+	"Sum": "h1:Rw8j/hFzGvJUZwNBXnAtf5sVDVt+65SK2C7IxCxZt5o=",
+	"GoModSum": "h1:D3Ku6r+V6JROoZK144D2XfMHFcMq/0zSfLelVTCFKec=",
+	"Origin": {
+		"VCS": "git",
+		"URL": "https://go.googlesource.com/net",
+		"Hash": "9e7fdbfadb32b0cc7524100014c5cf9b6adc7729",
+		"Ref": "refs/tags/v0.56.0"
+	}
+}
+{
+	"Path": "golang.org/x/text",
+	"Version": "v0.39.0",
+	"Info": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/golang.org/x/text/@v/v0.39.0.info",
+	"GoMod": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/golang.org/x/text/@v/v0.39.0.mod",
+	"Zip": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/golang.org/x/text/@v/v0.39.0.zip",
+	"Dir": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/golang.org/x/text@v0.39.0",
+	"Sum": "h1:UbZz4pLOvn600D6Oh6GGEI6VAmndrEBLv8/6BEXzyus=",
+	"GoModSum": "h1:3UwRclnC2g0TU9x8PZiyfOajCd1zaUNHF9cvqcQZ+ZM=",
+	"Origin": {
+		"VCS": "git",
+		"URL": "https://go.googlesource.com/text",
+		"Hash": "b326f3d3c814ab79b3c516f4ac03c2314d8df65f",
+		"Ref": "refs/tags/v0.39.0"
+	}
+}
+{
+	"Path": "golang.org/x/sys",
+	"Version": "v0.47.0",
+	"Info": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/golang.org/x/sys/@v/v0.47.0.info",
+	"GoMod": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/golang.org/x/sys/@v/v0.47.0.mod",
+	"Zip": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/golang.org/x/sys/@v/v0.47.0.zip",
+	"Dir": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/golang.org/x/sys@v0.47.0",
+	"Sum": "h1:o7XGOvZQCADBQQ4Y7VNq2dRWQR7JmOUW8Kxx4ZsNgWs=",
+	"GoModSum": "h1:4GL1E5IUh+htKOUEOaiffhrAeqysfVGipDYzABqnCmw=",
+	"Origin": {
+		"VCS": "git",
+		"URL": "https://go.googlesource.com/sys",
+		"Hash": "9e7e939dcafac07e8ab4cffa6e5fc74908413f00",
+		"Ref": "refs/tags/v0.47.0"
+	}
+}

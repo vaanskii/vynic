@@ -809,7 +809,7 @@ describeDatabase('Platform control plane (PostgreSQL)', () => {
       // shared with the other specs, which write platform audit events of
       // their own, and a global read would assert over theirs too.
       const events = (await audit.recent(500, 0)).filter(
-        (event) => event.actor.id === adminId,
+        (event) => event.actor?.id === adminId,
       );
       const actions = events.map((event) => event.action);
 
@@ -832,7 +832,7 @@ describeDatabase('Platform control plane (PostgreSQL)', () => {
         ]),
       );
       for (const event of events) {
-        expect(event.actor.id).toBe(adminId);
+        expect(event.actor?.id).toBe(adminId);
       }
 
       const serialized = JSON.stringify(events);

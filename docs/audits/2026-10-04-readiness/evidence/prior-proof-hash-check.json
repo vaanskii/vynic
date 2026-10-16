@@ -1,0 +1,169 @@
+[
+  {
+    "proof": "docs/proofs/MENU01_2026-10-01.json",
+    "status": "DONE",
+    "recognizedTopLevelFileHashes": 0,
+    "currentMatchCount": 0,
+    "currentChangedFiles": []
+  },
+  {
+    "proof": "docs/proofs/MENU02_2026-09-30.json",
+    "status": "DONE",
+    "recognizedTopLevelFileHashes": 0,
+    "currentMatchCount": 0,
+    "currentChangedFiles": []
+  },
+  {
+    "proof": "docs/proofs/MENU03_2026-10-01.json",
+    "status": "DONE",
+    "recognizedTopLevelFileHashes": 0,
+    "currentMatchCount": 0,
+    "currentChangedFiles": []
+  },
+  {
+    "proof": "docs/proofs/MENU06_2026-10-02.json",
+    "status": "DONE",
+    "recognizedTopLevelFileHashes": 27,
+    "currentMatchCount": 23,
+    "currentChangedFiles": [
+      "apps/backend/prisma/schema.prisma",
+      "apps/backend/src/customer/restaurant-foundation.controller.ts",
+      "apps/backend/test/menu06.fixture.ts",
+      "apps/backend/test/onboarding-app.fixture.ts"
+    ]
+  },
+  {
+    "proof": "docs/proofs/MENU09_2026-10-02.json",
+    "status": "DONE",
+    "recognizedTopLevelFileHashes": 38,
+    "currentMatchCount": 38,
+    "currentChangedFiles": []
+  },
+  {
+    "proof": "docs/proofs/POS01_2026-10-02.json",
+    "status": "DONE",
+    "recognizedTopLevelFileHashes": 23,
+    "currentMatchCount": 8,
+    "currentChangedFiles": [
+      "apps/operations/lib/apps/windows_pos/screens/home_screen.dart",
+      "apps/operations/lib/apps/windows_pos/screens/menu_screen.dart",
+      "apps/operations/lib/apps/windows_pos/screens/order_detail_screen.dart",
+      "apps/operations/lib/apps/windows_pos/widgets/admin/admin_close_day_section.dart",
+      "apps/operations/lib/apps/windows_pos/widgets/home/home_take_away_section.dart",
+      "apps/operations/lib/core/database/database_core.dart",
+      "apps/operations/lib/core/database/local_data_admission.dart",
+      "apps/operations/lib/core/database/repositories/backup_repository.dart",
+      "apps/operations/lib/core/database/repositories/order_repository.dart",
+      "apps/operations/lib/core/models/order.dart",
+      "apps/operations/lib/core/services/audit/audit_event_service.dart",
+      "apps/operations/lib/core/services/database_service.dart",
+      "apps/operations/lib/core/services/pos/update/update_readiness.dart",
+      "apps/operations/test/unit/audit_event_sequence_test.dart",
+      "apps/operations/test/unit/pos01_close_day_recovery_test.dart"
+    ]
+  },
+  {
+    "proof": "docs/proofs/POS01_NATIVE_2026-10-02.json",
+    "status": "PASS",
+    "recognizedTopLevelFileHashes": 0,
+    "currentMatchCount": 0,
+    "currentChangedFiles": []
+  },
+  {
+    "proof": "docs/proofs/POS03_2026-10-02.json",
+    "status": "DONE",
+    "recognizedTopLevelFileHashes": 20,
+    "currentMatchCount": 11,
+    "currentChangedFiles": [
+      "apps/operations/lib/apps/windows_pos/screens/order_detail_screen.dart",
+      "apps/operations/lib/core/database/database_core.dart",
+      "apps/operations/lib/core/database/repositories/audit_repository.dart",
+      "apps/operations/lib/core/database/repositories/backup_repository.dart",
+      "apps/operations/lib/core/services/pos/update/update_readiness.dart",
+      "apps/operations/test/unit/order_creation_audit_test.dart",
+      "apps/operations/test/unit/pos03_item_transfer_recovery_test.dart",
+      "docs/agent-state/VYNIC_PROJECT_STATE.md",
+      "docs/agent-state/VYNIC_CODE_MAP.md"
+    ]
+  },
+  {
+    "proof": "docs/proofs/POS03_AFTER_POS05_2026-10-02.json",
+    "status": "PASS",
+    "recognizedTopLevelFileHashes": 0,
+    "currentMatchCount": 0,
+    "currentChangedFiles": []
+  },
+  {
+    "proof": "docs/proofs/POS03_AFTER_POS05_COMMITTED_ec430880_2026-10-02.json",
+    "status": "PASS",
+    "recognizedTopLevelFileHashes": 0,
+    "currentMatchCount": 0,
+    "currentChangedFiles": []
+  },
+  {
+    "proof": "docs/proofs/POS03_NATIVE_2026-10-02.json",
+    "status": "PASS",
+    "recognizedTopLevelFileHashes": 0,
+    "currentMatchCount": 0,
+    "currentChangedFiles": []
+  },
+  {
+    "proof": "docs/proofs/POS05_COMMITTED_NATIVE_ec430880_2026-10-02.json",
+    "status": "PASS",
+    "recognizedTopLevelFileHashes": 0,
+    "currentMatchCount": 0,
+    "currentChangedFiles": []
+  },
+  {
+    "proof": "docs/proofs/POS05_COMMITTED_ec430880_2026-10-02.json",
+    "status": "VERIFIED_COMMITTED_SOURCE",
+    "recognizedTopLevelFileHashes": 382,
+    "currentMatchCount": 356,
+    "currentChangedFiles": [
+      "apps/operations/lib/apps/windows_pos/screens/admin_screen.dart",
+      "apps/operations/lib/apps/windows_pos/screens/developer_screen.dart",
+      "apps/operations/lib/apps/windows_pos/screens/home_screen.dart",
+      "apps/operations/lib/apps/windows_pos/screens/menu_screen.dart",
+      "apps/operations/lib/apps/windows_pos/screens/order_detail_screen.dart",
+      "apps/operations/lib/apps/windows_pos/screens/pos_first_run.dart",
+      "apps/operations/lib/apps/windows_pos/widgets/admin/admin_close_day_section.dart",
+      "apps/operations/lib/apps/windows_pos/widgets/admin/admin_reservations_section.dart",
+      "apps/operations/lib/apps/windows_pos/widgets/admin/printers/admin_printers_section.dart",
+      "apps/operations/lib/apps/windows_pos/widgets/home/home_calculator_page.dart",
+      "apps/operations/lib/apps/windows_pos/widgets/home/home_reservations_section.dart",
+      "apps/operations/lib/apps/windows_pos/widgets/home/home_take_away_section.dart",
+      "apps/operations/lib/apps/windows_pos/widgets/home/home_x_report_helper.dart",
+      "apps/operations/lib/core/database/database_core.dart",
+      "apps/operations/lib/core/database/repositories/backup_repository.dart",
+      "apps/operations/lib/core/database/repositories/settings_repository.dart",
+      "apps/operations/lib/core/services/edge/pos_enrollment_service.dart",
+      "apps/operations/lib/core/services/pos/pos_command_applier.dart",
+      "apps/operations/lib/core/services/pos/update/update_readiness.dart",
+      "apps/operations/lib/core/services/printing/escpos_kitchen_renderer.dart",
+      "apps/operations/lib/core/services/printing/escpos_receipt_renderer.dart",
+      "apps/operations/lib/core/services/printing/print_queue.dart",
+      "apps/operations/lib/core/services/printing/printer_connection.dart",
+      "apps/operations/lib/core/services/printing/printer_service.dart",
+      "apps/operations/lib/core/services/printing/printer_transport.dart",
+      "apps/operations/lib/core/services/sync/api_config.dart"
+    ]
+  },
+  {
+    "proof": "docs/proofs/SEC01_2026-09-29.json",
+    "status": "DONE",
+    "recognizedTopLevelFileHashes": 10,
+    "currentMatchCount": 7,
+    "currentChangedFiles": [
+      "apps/backend/src/website/menu/menu.service.ts",
+      "apps/backend/src/website/payment/booking-payment.spec.ts",
+      "apps/backend/src/website/payment/payment.controller.ts"
+    ]
+  },
+  {
+    "proof": "docs/proofs/SEC02_2026-09-30.json",
+    "status": "DONE",
+    "recognizedTopLevelFileHashes": 4,
+    "currentMatchCount": 4,
+    "currentChangedFiles": []
+  }
+]

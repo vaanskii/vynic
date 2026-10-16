@@ -1,0 +1,57 @@
+[
+  {
+    "path": "apps/edge/internal/printcluster/node.go",
+    "beforeSha256": "74e92c49eedef28b4d58dfcae7e0d11b76610f26d21bb6f200d40c21d4de6326",
+    "afterSha256": "3adfd3cf8b7414ff20c13c8b3041f6e8bd6259786ec178c49353ab880dc2dd7d"
+  },
+  {
+    "path": "apps/edge/internal/printcluster/state.go",
+    "beforeSha256": "40d7993388d5ac9ca163a75a21836b08f6c29f8b0e10dda9ce1b2029196c6854",
+    "afterSha256": "61e4c753010ddcb540e724f228722e01545a1dc8961aa8ef848e0d6c918ab90f"
+  },
+  {
+    "path": "apps/edge/internal/printcluster/station_local.go",
+    "beforeSha256": "5ff33eb6c09910a71226082e2ff2daad76cfc6e2d245bb7c1677ea32be01a186",
+    "afterSha256": "e486e6e8c3764c0b6abf6c07bfd234162867f4042f5087a7bd27aec56d9671e2"
+  },
+  {
+    "path": "apps/edge/internal/printcluster/stations.go",
+    "beforeSha256": "a5f35759d57871b5abd82bce3824d60939da108b98e1fc310bea88082554deaf",
+    "afterSha256": "cc4655216f5a1c043c43c70014094f63a27211ba871d167abc1dee5af6ca54bc"
+  },
+  {
+    "path": "apps/edge/internal/printcluster/transport.go",
+    "beforeSha256": "7daca3775a11a800bb10c124da81d9d1d7866ba3365a112e025704a363679f7b",
+    "afterSha256": "026a8cbdc0d5657c7cd55317bbe2d385c6ff7c3824c6c06a539a93993d9408d8"
+  },
+  {
+    "path": "apps/edge/internal/printcluster/types.go",
+    "beforeSha256": "21fc1fb7c809cf5993a5c68ce40cc04166c144dbcbbcb77677e5cc89bf39aac7",
+    "afterSha256": "857be5693c909b7377830ac400446a388365a2689eeb40392bc8b3dd3db3bda1"
+  },
+  {
+    "path": "docs/VYNIC_PRINT_ARCHITECTURE.md",
+    "beforeSha256": "aafaf54048dffc6d6cf19a204c3973a84a2aa670234cfa4ad7e2473c56c7d602",
+    "afterSha256": "5c24a989691ae94dda66a96a1786b2e60444dffbc3f94fcab39f8f0f3ce0ea1d"
+  },
+  {
+    "path": "docs/VYNIC_ROADMAP.md",
+    "beforeSha256": "43331009add471bad18b423128439bf6ef88c5b267102ce08df9c7e785e5adc1",
+    "afterSha256": "5e1966c5a7999712477270d4adc135c1791a45f5d1c90f5264f6a3c967cf406f"
+  },
+  {
+    "path": "docs/agent-state/VYNIC_CODE_MAP.md",
+    "beforeSha256": "2c46d1a9b4fbebea78020e72edaceda935f8167f21c44b84e291edb53d5dbd0b",
+    "afterSha256": "36762975dbbdc8de05fae812cd1174f3accdaf4ec1a32f3d410d5e8e23279d10"
+  },
+  {
+    "path": "docs/agent-state/VYNIC_DECISIONS.md",
+    "beforeSha256": "90e73d14cc766d123a845a20817f1164f79b047eae78e8b3cbf1ed3de55dc5ed",
+    "afterSha256": "4d29ba91723e4861bef3ee6186cd8a88d0d1dba0b96a6caedc4df595f66d69d1"
+  },
+  {
+    "path": "docs/agent-state/VYNIC_PROJECT_STATE.md",
+    "beforeSha256": "12e94dc6ed8c81b80ba2c8959f4f33dcfc2e7ccb6069899543c21288f4cefb5c",
+    "afterSha256": "8ef4a1af7931d631d70db52107749dc5d5927707db64cc9610250fccd07efc69"
+  }
+]

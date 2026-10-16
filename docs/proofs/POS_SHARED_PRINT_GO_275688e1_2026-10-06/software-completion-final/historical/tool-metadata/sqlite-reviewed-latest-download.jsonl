@@ -1,0 +1,16 @@
+{
+	"Path": "modernc.org/sqlite",
+	"Version": "v1.60.1",
+	"Info": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/modernc.org/sqlite/@v/v1.60.1.info",
+	"GoMod": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/modernc.org/sqlite/@v/v1.60.1.mod",
+	"Zip": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/modernc.org/sqlite/@v/v1.60.1.zip",
+	"Dir": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/modernc.org/sqlite@v1.60.1",
+	"Sum": "h1:/blz53O951KWFOso4QQvEs/Fq6cDBKLtMVrYNSeJVKw=",
+	"GoModSum": "h1:1dIoEagfDE72QytD5scH1lxARtaUgKgHC/NuApA27r0=",
+	"Origin": {
+		"VCS": "git",
+		"URL": "https://gitlab.com/cznic/sqlite",
+		"Hash": "b122d0417c01508beb55158faedeb64a0c5bfd8a",
+		"Ref": "refs/tags/v1.60.1"
+	}
+}

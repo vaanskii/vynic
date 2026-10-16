@@ -1,0 +1,119 @@
+{
+  "verdict": "PASS bounded inert loopback replicated-queue source; no remaining P1/P2 found in reviewed scope",
+  "sourceManifest": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/printcluster-owned-source-hashes.json",
+  "sourceManifestSha256": "a43c5b81ef7b143123f9a377c0abcfd058f0096bf8bae0f05eca709530c2cd8d",
+  "ownedFilesVerified": 21,
+  "ownedSourceHashes": {
+    "apps/edge/internal/printcluster/boundaries_test.go": "6a6eed7047b49dde05b49e402e9481d42a20fe72849e02cfcc196d2c76427456",
+    "apps/edge/internal/printcluster/cluster_test.go": "8118617df65e078fb51b629964a5fbb165033e76397e3f9427bd99c0d4a72ccd",
+    "apps/edge/internal/printcluster/node.go": "90a8fd63aa455e7dc06c5db1308b4df75f1c7943b8a22efa8e6b2c1759b5db0a",
+    "apps/edge/internal/printcluster/process_test.go": "e1b94bb3fb2ab6af004c3d4096ce3d8b1bb93f38047f057f144c0d3b1eeb8b51",
+    "apps/edge/internal/printcluster/projection.go": "89c5c4d97f00de6c00b3ebb4ccfafacf8e6cd65cbd462bbae37493b155abd62b",
+    "apps/edge/internal/printcluster/schema.sql": "e172bcd69670592daadf2b041ee60708abe73e4ea98e370dabe01917f9be4f5e",
+    "apps/edge/internal/printcluster/state.go": "fecb6b14729115c7c22f2b9b400ce60d406e6f36b3e8615ec363d35ec8a2febe",
+    "apps/edge/internal/printcluster/testdata/local_tcp.config.json": "5fb77a085478e13e841b4a9e504973fad13b54cb13260f809f2265f561fa6104",
+    "apps/edge/internal/printcluster/testdata/local_tcp.job.json": "4b2a9926ba64c7a2e3123993fe1586a9adbdfd44323e4ef1a1a7c6775cb1382f",
+    "apps/edge/internal/printcluster/testdata/shared_tcp.config.json": "631484beb05a8d5e53b0049bda893813c2ce247c15de5c1d82ccc4620d0b89f1",
+    "apps/edge/internal/printcluster/testdata/shared_tcp.job.json": "dfc155cc16c5f6b18c6ff80bff90c1994ae27040fb69d7afa1deaf4124bb1120",
+    "apps/edge/internal/printcluster/testdata/shared_usb.config.json": "1c8e94daf8dbd24a2c13e7c8c8e1ebf660f3d6f3e5989bd43f7f33d8adcf2e2b",
+    "apps/edge/internal/printcluster/testdata/shared_usb.job.json": "31e2179da2e87ea1b13376dc7dcd41cbe23ff4dd1e6e377fa43c7ea3dca15f97",
+    "apps/edge/internal/printcluster/testdata/unknown_beep.config.json": "2f02b5d6b6fb0dda028d819e0fccc42957d51996e4d3c3673dff207d558230c7",
+    "apps/edge/internal/printcluster/testdata/unknown_beep.job.json": "beca2a55a0554f39fa8e5fef7b04ce3c90398778ac43471874229cb2c87c5120",
+    "apps/edge/internal/printcluster/transport.go": "5a5844221232d1faddbbc767435eba9625cd0e3f15b9f0e0ed4b0d9ba06e27d7",
+    "apps/edge/internal/printcluster/types.go": "c21c89c70c015bf8addea454ab6c6f9b031393656cb86114309d36e2d496b8ae",
+    "apps/edge/go.mod": "ee1b4d46129d70ab34a6c12314daddd5f5a7b0122e28040a52677b359c86f37d",
+    "apps/edge/go.sum": "561b9a04ed2552e61d5187a89b023415fa4b9c5af1ea827a6707b7779234ca56",
+    "packages/contracts/generated/go/go.mod": "54ad4ea326560555ae16be9943353238cd66ede684166c1984cf96af9a344fe8",
+    "packages/contracts/generated/go/go.sum": "4d6021e7f1525d43b0713af9db44aead5817e2bbe9910d0f077172a363d4ea52"
+  },
+  "independentTests": {
+    "cluster-independent-frozen-boundaries.jsonl": {
+      "sha256": "3d416c469782716d398bb9e86656e324d618a4442e4af20a30d2e33057fe6fdc",
+      "topLevelPass": [
+        "TestStartedBeepAcrossElectionStaysHeldOtherPrinterProgresses",
+        "TestEffectiveModesFutureSchemaAndSnapshotFailure",
+        "TestOnlyTemporaryProofDirectories",
+        "TestExplicitTwoVoterFailSafeNeverFallsBack",
+        "TestAssignedPlusUnreferencedNullJobRestoreRefused",
+        "TestFixedFullDataMembershipPolicy"
+      ],
+      "failTests": [],
+      "packageResult": {
+        "Time": "2026-10-06T19:45:59.956046+04:00",
+        "Action": "pass",
+        "Package": "vynic.local/edge/internal/printcluster",
+        "Elapsed": 9.63
+      }
+    },
+    "cluster-independent-frozen-process.jsonl": {
+      "sha256": "3f95187252546a5bc574bb6399efb7f13e00c7af5b3783e20627b7a5bea08997",
+      "topLevelPass": [
+        "TestThreeProcessSIGKILLLeaderAndFourPOSRelayRecovery"
+      ],
+      "failTests": [],
+      "packageResult": {
+        "Time": "2026-10-06T19:47:22.453444+04:00",
+        "Action": "pass",
+        "Package": "vynic.local/edge/internal/printcluster",
+        "Elapsed": 7.921
+      }
+    },
+    "cluster-independent-frozen-process-race.jsonl": {
+      "sha256": "45c48f8e8cd5ab6118156eeba992654beb5dbf3d09b295b8d2e938cbb4369f86",
+      "topLevelPass": [
+        "TestThreeProcessSIGKILLLeaderAndFourPOSRelayRecovery"
+      ],
+      "failTests": [],
+      "packageResult": {
+        "Time": "2026-10-06T19:49:31.506573+04:00",
+        "Action": "pass",
+        "Package": "vynic.local/edge/internal/printcluster",
+        "Elapsed": 34.363
+      }
+    },
+    "cluster-independent-boundaries-authorized.jsonl": {
+      "sha256": "927cf58d905a4337366ff5174ef969023c4501503db4ade1cc7e8cfb80892d41",
+      "topLevelPass": [
+        "TestStartedBeepAcrossElectionStaysHeldOtherPrinterProgresses",
+        "TestEffectiveModesFutureSchemaAndSnapshotFailure",
+        "TestFixedFullDataMembershipPolicy"
+      ],
+      "failTests": [
+        "TestThreeProcessSIGKILLLeaderAndFourPOSRelayRecovery"
+      ],
+      "packageResult": {
+        "Time": "2026-10-06T19:44:45.520831+04:00",
+        "Action": "fail",
+        "Package": "vynic.local/edge/internal/printcluster",
+        "Elapsed": 69.921
+      }
+    }
+  },
+  "closedFindings": [
+    "All job entries are validated and decoded before cross-entry snapshot checks; mixed assigned plus unreferenced null job refuses without changing projection.",
+    "Actual SQLite WAL/FULL and one connection are verified; unknown schema, half-store loss and foreign local identity refuse startup; temporary proof roots only.",
+    "Immutable full-envelope/chunk/finalize receipts preserve exact accepted IDs/config/bytes; unfinalized chunks do not receive FIFO position.",
+    "Current config required for new admission; historical exact retry remains stable; endpoint aliases and ownership changes cannot bypass physical identity or unfinished work.",
+    "Started primary and started optional beep become uncertain on committed term/membership change. Uncertain beep holds same-printer FIFO; another printer progresses.",
+    "Leader-only logical claims and unique member Device/installation identities; stale term/member assignment refuses; fixed Device jobs hold on other leaders.",
+    "Explicit two full voters require both; one remaining voter cannot fall back. Default three full voters and optional five preserve quorum semantics; clients/nonvoters are not votes.",
+    "Strict primary profiles; optional unknown beep normalization matches all four actual Dart golden pairs while original config digest remains retained.",
+    "Reprints bind original physical/config/primary provenance plus fresh IDs and explicit audited actor/reason.",
+    "Projection publishes only after transactional durable save; snapshot writer errors and malformed restore refuse."
+  ],
+  "testFailureHistory": {
+    "retained": "cluster-independent-boundaries-authorized.jsonl",
+    "status": "Prefreeze race process run missed cold-rejoin deadline; other three selected checks passed. Final source changed large-job decode validation before freeze. Exact-final non-race and race runs pass. CPU/decode timing is a plausible contributor, not a proven sole cause; failed evidence is preserved."
+  },
+  "limits": [
+    "PhysicalDispatchStatus always denies. No shared physical sender or downstream epoch receiver exists; no RAW/ESC-POS HA or exactly-once physical guarantee.",
+    "Actual SIGKILL test uses three voter OS processes plus fourth relay on one macOS host over loopback, not computer power loss or real venue-LAN partition.",
+    "Actual multi-process replicated primary payload is 600 KiB. Separate 8 MiB chunk/snapshot proof is single-voter; no 8 MiB three-host qualification.",
+    "Synthetic loopback peer handshake/caller control is fixture trust, not production terminal authentication or live LAN enrollment. No normal startup attachment.",
+    "Leader-only logical execution means fixed USB ownership on a nonleader is held. Powered-off attached host cannot print.",
+    "Bounded proof retains max128 jobs/256 requests, max8 staged jobs/32 MiB staging, 12 MiB envelope and 64 MiB projection; not an unbounded production spool.",
+    "Controlled membership replacement, authenticated production forwarding/durable client outbox, service installation/account qualification, legacy writer fencing and reader/rollback cutover remain outside this proof.",
+    "Operator not-printed resolution is an audited synthetic assertion; it is not evidence that an old physical worker or buffered printer bytes were fenced.",
+    "This review does not promote opaque operational postimage APIs or qualify remaining business writer integration. Parent combined full-suite validation is separately recorded."
+  ]
+}

@@ -41,5 +41,10 @@
     "typescript": "latest",
     "typescript-eslint": "^8.69.0",
     "vitest": "^4.1.11"
+  },
+  "overrides": {
+    "brace-expansion@5": "5.0.12",
+    "source-map-js": "1.2.2",
+    "undici": "8.10.2"
   }
 }

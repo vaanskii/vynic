@@ -1,0 +1,11 @@
+{
+  "sourcePath": "apps/operations/test/unit/pos02_acceptance_runner_test.dart",
+  "beforeSha256": "d67e568689b27309d3c96d17d9f0595c22461d83a7d2fddb9c2628dda018bb6b",
+  "afterSha256": "e2731028006dd8bbc2a0d7e3fe4f8c374eeeda310bec1181681de9c898ef3209",
+  "change": "TEST_ONLY_CAPTURE_OS_LINK_TARGET_BEFORE_REFUSAL_AND_ASSERT_EXACT_PRESERVATION",
+  "runtimeSourceChanged": false,
+  "initialWindowsSuite": "479_PASS_4_TEST_PATH_ASSERTION_FAILURES",
+  "macTargetedTestsPassed": 52,
+  "macAnalyzer": "NO_ISSUES",
+  "windowsRerun": "PASS_483_TESTS_32_SELECTED_SUITES_48_ANALYSIS_ITEMS"
+}

@@ -1,0 +1,46 @@
+/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/bin/protoc-gen-go: go1.26.8
+	path	google.golang.org/protobuf/cmd/protoc-gen-go
+	mod	google.golang.org/protobuf	v1.36.11	h1:fV6ZwhNocDyBLK0dj+fg8ektcVegBBuEolpbTQyBNVE=
+	build	-buildmode=exe
+	build	-compiler=gc
+	build	DefaultGODEBUG=containermaxprocs=0,cryptocustomrand=1,decoratemappings=0,gotestjsonbuildtext=1,httpcookiemaxnum=0,multipathtcp=0,randseednop=0,rsa1024min=0,tlsmlkem=0,tlssecpmlkem=0,tlssha1=1,updatemaxprocs=0,urlmaxqueryparams=0,urlstrictcolons=0,x509rsacrt=0,x509sha256skid=0,x509usepolicies=0
+	build	CGO_ENABLED=1
+	build	CGO_CFLAGS=
+	build	CGO_CPPFLAGS=
+	build	CGO_CXXFLAGS=
+	build	CGO_LDFLAGS=
+	build	GOARCH=arm64
+	build	GOOS=darwin
+	build	GOARM64=v8.0
+/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/bin/protoc-gen-go-grpc: go1.26.8
+	path	google.golang.org/grpc/cmd/protoc-gen-go-grpc
+	mod	google.golang.org/grpc/cmd/protoc-gen-go-grpc	v1.6.2	h1:rgSNvqscFZ1JgV/4wH5GOsZFSFkR2Eua9As3KIr2LlM=
+	dep	google.golang.org/protobuf	v1.36.11	h1:fV6ZwhNocDyBLK0dj+fg8ektcVegBBuEolpbTQyBNVE=
+	build	-buildmode=exe
+	build	-compiler=gc
+	build	DefaultGODEBUG=cryptocustomrand=1,tlssecpmlkem=0,urlstrictcolons=0
+	build	CGO_ENABLED=1
+	build	CGO_CFLAGS=
+	build	CGO_CPPFLAGS=
+	build	CGO_CXXFLAGS=
+	build	CGO_LDFLAGS=
+	build	GOARCH=arm64
+	build	GOOS=darwin
+	build	GOARM64=v8.0
+/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/bin/govulncheck: go1.26.8
+	path	golang.org/x/vuln/cmd/govulncheck
+	mod	golang.org/x/vuln	v1.8.0	h1:clG4qBU6zH5VKjti8n5j8BBuYzoSha392xXMkXS351U=
+	dep	golang.org/x/mod	v0.41.0	h1:qJmnOUb4YB+FsEuM3HcWucdZASCPGhsX6uljO6pog0c=
+	dep	golang.org/x/sync	v0.23.0	h1:KameEIfc1IkluZyXWLn39Wd4tURc6GbCiISGiZm2bQk=
+	dep	golang.org/x/telemetry	v0.0.0-20260908163034-4bcc4b2ee518	h1:F5BWKvW126NXR74uxkxuc1jQHhm/rwm/J3rSiFyuRs4=
+	dep	golang.org/x/tools	v0.50.0	h1:c2ifzfcuY7L90lZ2aKd8S4K2NpASF08SZx9ZuJkHmSU=
+	build	-buildmode=exe
+	build	-compiler=gc
+	build	CGO_ENABLED=1
+	build	CGO_CFLAGS=
+	build	CGO_CPPFLAGS=
+	build	CGO_CXXFLAGS=
+	build	CGO_LDFLAGS=
+	build	GOARCH=arm64
+	build	GOOS=darwin
+	build	GOARM64=v8.0

@@ -1,0 +1,394 @@
+[
+  {
+    "file_name": "pos-admin-before.png",
+    "library_file_id": "libfile_bfd8fec50eac81919db3847b93bc8793",
+    "file_id": "file_00000000551081f5a702fb4c33e2d73d",
+    "xattrs": [
+      {
+        "name": "user.library-file-version",
+        "value": "0"
+      }
+    ]
+  },
+  {
+    "file_name": "pos-admin-after.png",
+    "library_file_id": "libfile_38bc2f0115608191b8e115efc6deda12",
+    "file_id": "file_0000000052c481f585c24b64ae65b5e5",
+    "xattrs": [
+      {
+        "name": "user.library-file-version",
+        "value": "0"
+      }
+    ]
+  },
+  {
+    "file_name": "pos-estimate-before.png",
+    "library_file_id": "libfile_93e3f9015b348191a03cb3c8f720c686",
+    "file_id": "file_000000003c0881f5a53cc40c918b55f3",
+    "xattrs": [
+      {
+        "name": "user.library-file-version",
+        "value": "0"
+      }
+    ]
+  },
+  {
+    "file_name": "pos-estimate-after.png",
+    "library_file_id": "libfile_e4d657a6f4dc8191aef7926c405558c5",
+    "file_id": "file_00000000f78881f588fb6871b628a6b2",
+    "xattrs": [
+      {
+        "name": "user.library-file-version",
+        "value": "0"
+      }
+    ]
+  },
+  {
+    "file_name": "pos-time-before.png",
+    "library_file_id": "libfile_93eb9b3f4a308191bb3497f6fbab0448",
+    "file_id": "file_00000000a34081f58cc67460bf47d0a3",
+    "xattrs": [
+      {
+        "name": "user.library-file-version",
+        "value": "0"
+      }
+    ]
+  },
+  {
+    "file_name": "pos-time-after.png",
+    "library_file_id": "libfile_884d4c26f92881919f055bcdb455201f",
+    "file_id": "file_00000000fee881f5a8878de2b032b711",
+    "xattrs": [
+      {
+        "name": "user.library-file-version",
+        "value": "0"
+      }
+    ]
+  },
+  {
+    "file_name": "pos-pin-before.png",
+    "library_file_id": "libfile_b8acd25c9b0481919e668dd79668c60d",
+    "file_id": "file_00000000fb2481f5ac361aa1023e9dc5",
+    "xattrs": [
+      {
+        "name": "user.library-file-version",
+        "value": "0"
+      }
+    ]
+  },
+  {
+    "file_name": "pos-pin-after.png",
+    "library_file_id": "libfile_42df7993ae988191843b1b134073a3f1",
+    "file_id": "file_000000004edc81f59215913f336e5e52",
+    "xattrs": [
+      {
+        "name": "user.library-file-version",
+        "value": "0"
+      }
+    ]
+  },
+  {
+    "file_name": "pos-admin-keyboard-after.png",
+    "library_file_id": "libfile_307159358ea08191a4f283b9e2496800",
+    "file_id": "file_000000007b3081f5aa7f73a48d690417",
+    "xattrs": [
+      {
+        "name": "user.library-file-version",
+        "value": "0"
+      }
+    ]
+  },
+  {
+    "file_name": "pos-confirmation-after.png",
+    "library_file_id": "libfile_c16b80f13cb0819192ad620d1712f911",
+    "file_id": "file_0000000086dc81f59bb63d6d9b4b0bbc",
+    "xattrs": [
+      {
+        "name": "user.library-file-version",
+        "value": "0"
+      }
+    ]
+  },
+  {
+    "file_name": "pos-contact-after.png",
+    "library_file_id": "libfile_dc4d9e7389f88191860068fc00774ead",
+    "file_id": "file_000000000c6481f5a7b322666476634d",
+    "xattrs": [
+      {
+        "name": "user.library-file-version",
+        "value": "0"
+      }
+    ]
+  },
+  {
+    "file_name": "pos-menu-after.png",
+    "library_file_id": "libfile_e9c5561e6e488191ad1c5197f14ce09b",
+    "file_id": "file_000000001fc481f58aae9f5ea7514bac",
+    "xattrs": [
+      {
+        "name": "user.library-file-version",
+        "value": "0"
+      }
+    ]
+  },
+  {
+    "file_name": "pos-count-before.png",
+    "library_file_id": "libfile_f931e3cff7308191b5ab62e05736029b",
+    "file_id": "file_00000000c00c81f5814cac90f07ecb90",
+    "xattrs": [
+      {
+        "name": "user.library-file-version",
+        "value": "0"
+      }
+    ]
+  },
+  {
+    "file_name": "pos-count-after.png",
+    "library_file_id": "libfile_e17610a4b7ac81919cde81ac4004f7e4",
+    "file_id": "file_000000007ad481f591fce25b64ff1bf7",
+    "xattrs": [
+      {
+        "name": "user.library-file-version",
+        "value": "0"
+      }
+    ]
+  },
+  {
+    "file_name": "pos-takeaway-before.png",
+    "library_file_id": "libfile_ea96ada747c881918e1617b72e1f89b0",
+    "file_id": "file_000000004c2081f587b36975361e1b47",
+    "xattrs": [
+      {
+        "name": "user.library-file-version",
+        "value": "0"
+      }
+    ]
+  },
+  {
+    "file_name": "pos-takeaway-after.png",
+    "library_file_id": "libfile_a5921edc974081919cedbfb8aa6bbc99",
+    "file_id": "file_00000000a73081f5b3d80e2ff1d53e13",
+    "xattrs": [
+      {
+        "name": "user.library-file-version",
+        "value": "0"
+      }
+    ]
+  },
+  {
+    "file_name": "count-design-candidate.png",
+    "library_file_id": "libfile_35db1c2c0f448191bb123f80b46d11c6",
+    "file_id": "file_000000009b1c81f585966bffea3ee7e1",
+    "xattrs": [
+      {
+        "name": "user.library-file-version",
+        "value": "0"
+      }
+    ]
+  },
+  {
+    "file_name": "count-design-candidate-long.png",
+    "library_file_id": "libfile_2f1d29a95f4c8191a27a114de0c4d1c4",
+    "file_id": "file_000000005df081f5a49c778271b13bda",
+    "xattrs": [
+      {
+        "name": "user.library-file-version",
+        "value": "0"
+      }
+    ]
+  },
+  {
+    "file_name": "count-design-candidate-empty.png",
+    "library_file_id": "libfile_203dc98ca7988191988212145679fad3",
+    "file_id": "file_000000004cc081f58db42caaee39a1bc",
+    "xattrs": [
+      {
+        "name": "user.library-file-version",
+        "value": "0"
+      }
+    ]
+  },
+  {
+    "local_path": "docs/proofs/POS_UI_REWORK/screenshots/pos-count-approved.png",
+    "library_file_id": "libfile_67acc71fb1748191a93be7e6c48d07c4",
+    "file_id": "file_00000000621881f5bd252ae19b1105c2",
+    "current_version_number": 0
+  },
+  {
+    "local_path": "docs/proofs/POS_UI_REWORK/screenshots/pos-takeaway-approved.png",
+    "library_file_id": "libfile_529e15a5edd881919da198dfa8903767",
+    "file_id": "file_00000000bf9c81f59a810059a399118d",
+    "current_version_number": 0
+  },
+  {
+    "local_path": "docs/proofs/POS_UI_REWORK/screenshots/pos-staff-approved.png",
+    "library_file_id": "libfile_33eb78b48de08191ae3294c5b32439f8",
+    "file_id": "file_00000000827881f5a27d4a1cdba9d861",
+    "current_version_number": 0
+  },
+  {
+    "file_name": "final-home-count.png",
+    "library_file_id": "libfile_c23d10141f84819199d42736f6a687e9",
+    "file_id": "file_00000000c76081f599ea89ec2732670c",
+    "xattrs": [
+      {
+        "name": "user.library-file-version",
+        "value": "0"
+      }
+    ]
+  },
+  {
+    "file_name": "final-home-takeaway.png",
+    "library_file_id": "libfile_1e36981c85c48191b7cb4de79a361ee2",
+    "file_id": "file_00000000058881f58a09708cf793d8fe",
+    "xattrs": [
+      {
+        "name": "user.library-file-version",
+        "value": "0"
+      }
+    ]
+  },
+  {
+    "file_name": "final-home-reservations.png",
+    "library_file_id": "libfile_994fc227620c8191917c7d609bddeea8",
+    "file_id": "file_00000000fdac81f5b9abd49c3e654f83",
+    "xattrs": [
+      {
+        "name": "user.library-file-version",
+        "value": "0"
+      }
+    ]
+  },
+  {
+    "file_name": "final-home-report.png",
+    "library_file_id": "libfile_100524eec7508191adffb976c0f3c898",
+    "file_id": "file_00000000b58881f5a927c9a50929289a",
+    "xattrs": [
+      {
+        "name": "user.library-file-version",
+        "value": "0"
+      }
+    ]
+  },
+  {
+    "file_name": "final-menu.png",
+    "library_file_id": "libfile_dce087e02c008191b23858f816444930",
+    "file_id": "file_00000000bbec81f58ba14b64881c366b",
+    "xattrs": [
+      {
+        "name": "user.library-file-version",
+        "value": "0"
+      }
+    ]
+  },
+  {
+    "file_name": "final-order.png",
+    "library_file_id": "libfile_1af33ac8c2ec8191b8f3aa8e0488b1a2",
+    "file_id": "file_00000000b95c81f588715dea3df18e07",
+    "xattrs": [
+      {
+        "name": "user.library-file-version",
+        "value": "0"
+      }
+    ]
+  },
+  {
+    "file_name": "final-login.png",
+    "library_file_id": "libfile_b8e005bca7dc819194e189742d86d04e",
+    "file_id": "file_000000003c8881f5b016aa5ea3923dac",
+    "xattrs": [
+      {
+        "name": "user.library-file-version",
+        "value": "0"
+      }
+    ]
+  },
+  {
+    "file_name": "final-admin-staff.png",
+    "library_file_id": "libfile_7a98b33e783c8191ad3897020d4206c7",
+    "file_id": "file_00000000fe9881f593a376cbaabda5cf",
+    "xattrs": [
+      {
+        "name": "user.library-file-version",
+        "value": "0"
+      }
+    ]
+  },
+  {
+    "file_name": "final-admin-menu.png",
+    "library_file_id": "libfile_071b2ccc08ac8191a9e9212cf5f742e9",
+    "file_id": "file_00000000289881f5b2a2e6131a7f679e",
+    "xattrs": [
+      {
+        "name": "user.library-file-version",
+        "value": "0"
+      }
+    ]
+  },
+  {
+    "file_name": "final-admin-reservations.png",
+    "library_file_id": "libfile_1ed81c86acbc819182a6f9c34e6e2fed",
+    "file_id": "file_00000000328081f5864e386829ad2dac",
+    "xattrs": [
+      {
+        "name": "user.library-file-version",
+        "value": "0"
+      }
+    ]
+  },
+  {
+    "file_name": "final-admin-settings.png",
+    "library_file_id": "libfile_8f5773e374a481918efd7367f745667c",
+    "file_id": "file_00000000249881f597d0e7b10bace1c9",
+    "xattrs": [
+      {
+        "name": "user.library-file-version",
+        "value": "0"
+      }
+    ]
+  },
+  {
+    "file_name": "final-admin-display.png",
+    "library_file_id": "libfile_97c98a86f2a88191b74929b20c23a05e",
+    "file_id": "file_0000000080d081f5891c767baf3459fc",
+    "xattrs": [
+      {
+        "name": "user.library-file-version",
+        "value": "0"
+      }
+    ]
+  },
+  {
+    "file_name": "final-payment-method.png",
+    "library_file_id": "libfile_b443ed68d6c481918b7c8d124d634746",
+    "file_id": "file_0000000090cc81f5b55ea4e2902e4747",
+    "xattrs": [
+      {
+        "name": "user.library-file-version",
+        "value": "0"
+      }
+    ]
+  },
+  {
+    "file_name": "final-payment-split-large.png",
+    "library_file_id": "libfile_1dc232cb97dc8191a2434112f8a1efdf",
+    "file_id": "file_00000000381c81f58dae88595aecdabe",
+    "xattrs": [
+      {
+        "name": "user.library-file-version",
+        "value": "0"
+      }
+    ]
+  },
+  {
+    "file_name": "final-reservation-preview.png",
+    "library_file_id": "libfile_a3d21edb88f881918860da66746eb08a",
+    "file_id": "file_00000000a20c81f583af4d52d830279b",
+    "xattrs": [
+      {
+        "name": "user.library-file-version",
+        "value": "0"
+      }
+    ]
+  }
+]

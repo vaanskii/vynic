@@ -1,0 +1,12 @@
+$ErrorActionPreference='Stop'
+$f=Get-Command flutter.bat -ErrorAction SilentlyContinue
+if($f){$fp=$f.Source}else{$fp=Join-Path $env:USERPROFILE 'develop\flutter\bin\flutter.bat'}
+$vs=Join-Path ${env:ProgramFiles(x86)} 'Microsoft Visual Studio\Installer\vswhere.exe'
+$install=if(Test-Path -LiteralPath $vs){& $vs -latest -products '*' -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath}else{$null}
+$cache=@(Get-ChildItem -Path (Join-Path $env:LOCALAPPDATA 'VynicLocalReleaseBuild\*\apps\operations\build\windows\x64\extracted\firebase_cpp_sdk_windows\include\firebase\version.h') -ErrorAction SilentlyContinue | Select-Object -ExpandProperty FullName)
+$go=Get-Command go.exe -ErrorAction SilentlyContinue
+$pos=@(Get-CimInstance Win32_Process -Filter "Name='vynic_pos.exe'" | Select-Object ProcessId,ExecutablePath,CreationDate)
+[pscustomobject]@{user=$env:USERNAME;localAppData=$env:LOCALAPPDATA;flutter=$fp;flutterPresent=(Test-Path -LiteralPath $fp);go=if($go){$go.Source}else{$null};visualStudio=$install;firebaseCache=$cache;sharedProof=(Test-Path -LiteralPath '\\Mac\Home\Developer\vynic\docs\proofs\POS_MULTI_TERMINAL_275688e1_2026-10-06\candidate-source.zip');posProcesses=$pos;queues=@(Get-Printer | Select-Object Name,DriverName,PortName)} | ConvertTo-Json -Depth 6
+if(!(Test-Path -LiteralPath $fp)){throw 'Cached Flutter missing'}
+& $fp --version --machine
+if($LASTEXITCODE -ne 0){exit $LASTEXITCODE}

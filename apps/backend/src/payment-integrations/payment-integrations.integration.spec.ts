@@ -116,7 +116,7 @@ const url = process.env.W1_TEST_DATABASE_URL;
           venueId: venue.id,
           websiteTableNumber: 'table1',
           posTableNumber: '1',
-          posFloor: '1',
+          posFloor: 'first',
         },
       });
       const f = await db.feature.findUniqueOrThrow({
@@ -296,7 +296,18 @@ const url = process.env.W1_TEST_DATABASE_URL;
       data: { effect: 'DISABLED' },
     });
     (axios.get as jest.Mock).mockResolvedValue({
-      data: { external_order_id: reservationId, status: 'completed' },
+      data: {
+        order_id: orderId,
+        external_order_id: reservationId,
+        order_status: { key: 'completed' },
+        capture: 'automatic',
+        purchase_units: {
+          currency_code: 'GEL',
+          request_amount: '1.00',
+          transfer_amount: '1.00',
+          refund_amount: '0.00',
+        },
+      },
     });
     (axios.post as jest.Mock).mockClear();
     await http()
@@ -342,7 +353,7 @@ const url = process.env.W1_TEST_DATABASE_URL;
       .set('Host', new URL(configs[1].returnOrigin).hostname)
       .set('callback-signature', 'test')
       .send(body)
-      .expect(201);
+      .expect(200);
     expect(
       bridge.pushConfirmedReservationToPos.mock.calls.at(-1)[0].venueId,
     ).toBe(venues[0].id);

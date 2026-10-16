@@ -1,0 +1,13 @@
+{
+  "passed": 7,
+  "failed": 0,
+  "cases": [
+    "UX-01 existing public request persistence / actual HTTP and PostgreSQL returns received only after a normalized pending request exists; provisions nothing",
+    "UX-01 existing public request persistence / actual HTTP and PostgreSQL invalid contact or unavailable plan fails without persisting an application",
+    "UX-01 existing public request persistence / actual HTTP and PostgreSQL a retry returns the exact pending-request conflict and keeps one request",
+    "UX-01 existing public request persistence / actual HTTP and PostgreSQL concurrent duplicate submissions admit one pending request",
+    "UX-01 existing public request persistence / actual HTTP and PostgreSQL email throttle remains authoritative rather than returning a new success",
+    "UX-01 existing public request persistence / actual HTTP and PostgreSQL IP throttle refuses the sixth application without creating its row",
+    "UX-01 existing public request persistence / actual HTTP and PostgreSQL storage failure returns 500, no received success or provisioned data; retry can persist"
+  ]
+}

@@ -1,0 +1,44 @@
+{
+  "method": "Independent read-only agent review",
+  "agent": "/root/pos02_review",
+  "remainingP1P2": [],
+  "sourceBindings": {
+    "apps/operations/tool/pos02_acceptance_ledger.dart": "06e9fe52d0bfa8d9de9093b98fdeecc097467ad24b16c98df43baddb5a5f3fa2",
+    "apps/operations/test/support/pos02_acceptance_runner.dart": "2f3b3329153c970f505e297658937ccbe465ea6dc0c6d7cda26b1ece465d487c",
+    "apps/operations/test/unit/pos02_acceptance_runner_test.dart": "83f53b87ce5b258c5db5fc5905d2e3636c260d0af675b0941943c0081daaa6c0",
+    "apps/operations/test/live/pos02_one_shot_acceptance_test.dart": "720495b898cb520a05488f89c1e229ac8012878da1c548b2dcceb0ff0d5e7eb6",
+    "apps/operations/tool/pos02_acceptance_ledger_probe.dart": "1d1eb52506a4a5de5ac8d2f66acb8916af9878d77a30fea607b17246a0fc1a65",
+    "apps/operations/tool/prove_pos02_acceptance_ledger.py": "f1a4b2b83dc4b8a270ac27f066b4ec4f51166aee498d69f8e2c24f01f150fbdf",
+    "apps/operations/tool/pos02_acceptance_request.dart": "e1c721fd222f5a3e5e421a02cd97d5de34d1b2faabde1c3050da409ddbd5939f"
+  },
+  "handoffBindings": {
+    "Run-Pos02-Acceptance.ps1": "7af48a73e948b2b75da1dc39c472c73b03ad487e0b23e09983ef4e8e7bb3f431",
+    "Verify-Source.ps1": "dd639af1ef71833577b64a6fbd52da40a536b3c4bd326aeb6eee3e54e6439ed2",
+    "acceptance-suites.json": "b07b50b3787fa8dc5e24ebd1a0ba65c9f36163082b56cae2855e0801519f69d3"
+  },
+  "resolvedFindings": [
+    "transport budget/mode at final boundary",
+    "expiry after durable flushes before connect/add",
+    "fresh owned Hive directory",
+    "reject partially open normal Hive/session and verify owned box paths",
+    "detach audit snapshots",
+    "structured cross-process lock proof and before/after source binding",
+    "config/observation/output validation before action",
+    "explicitly refuse unsupported fresh dry Go+copy"
+  ],
+  "executionByReviewer": false,
+  "deviceOrVmActionByReviewer": false,
+  "assembledBundleReview": {
+    "status": "PASS",
+    "method": "Independent read-only ZIP/JSON/file-hash/log inspection",
+    "sourceFiles": 883,
+    "integratedPaths": 44,
+    "newPaths": 7,
+    "distinctPassingChecks": 895,
+    "passingSuites": 73,
+    "oldAdminKitUnchanged": true,
+    "remainingP1P2": [],
+    "scriptsOrProcessesExecuted": false,
+    "sourceZipSha256": "6947ed4d955d5b3555c15f0cb8e1062191203bebe95d3c3cffe9bb38fd955c9e"
+  }
+}

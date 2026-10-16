@@ -1,0 +1,82 @@
+--- a/apps/operations/lib/core/database/repositories/order_table_mutation_repository.dart
++++ b/apps/operations/lib/core/database/repositories/order_table_mutation_repository.dart
+@@ -66,7 +66,10 @@
+     ...body,
+     'digest': PosBackupFormat.digest(body),
+   };
+-  static OrderTableMutationIntent decode(Object? value) {
++  static OrderTableMutationIntent decode(
++    Object? value, {
++    double? serviceFeeRate,
++  }) {
+     if (value is! Map) throw const FormatException('Missing ownership journal');
+     final raw = OrderTransferIntent.cloneMap(value);
+     final digest = raw.remove('digest');
+@@ -217,7 +220,10 @@
+                 1) {
+       throw const FormatException('Invalid ownership creation/move audit');
+     }
+-    OrderTableMutationRepository.validatePlan(intent);
++    OrderTableMutationRepository.validatePlan(
++      intent,
++      serviceFeeRate: serviceFeeRate,
++    );
+     return intent;
+   }
+ }
+@@ -253,9 +259,12 @@
+     return value;
+   }
+ 
+-  static void validatePlan(OrderTableMutationIntent intent) {
++  static void validatePlan(
++    OrderTableMutationIntent intent, {
++    double? serviceFeeRate,
++  }) {
+     if (intent.kind == 'cancel') {
+-      validateCancellation(intent);
++      validateCancellation(intent, serviceFeeRate: serviceFeeRate);
+       return;
+     }
+     if (intent.effects.any((e) => e['store'] == 'sales'))
+@@ -549,7 +558,10 @@
+     }
+   }
+ 
+-  static void validateCancellation(OrderTableMutationIntent intent) {
++  static void validateCancellation(
++    OrderTableMutationIntent intent, {
++    double? serviceFeeRate,
++  }) {
+     final rows = intent.effects;
+     final orderEffect = rows.singleWhere((e) => e['store'] == 'orders');
+     final before = OrderTransferIntent.orderImage(orderEffect['before']);
+@@ -655,6 +667,7 @@
+         request['reason'] as String?,
+         posSaleId: sale['posSaleId'] as String,
+         businessDate: intent.businessDate,
++        serviceFeeRate: serviceFeeRate,
+       );
+       if (sales.single['key'] != '${intent.id}:cancelled-sale' ||
+           !OrderTransferIntent.sameImage(expectedSale, sale))
+@@ -861,6 +874,7 @@
+     String? reason, {
+     required String posSaleId,
+     required String businessDate,
++    double? serviceFeeRate,
+   }) {
+     final subtotal = double.parse(
+       (order.getPackageSubtotal() + order.getAdditionalItemsSubtotal())
+@@ -902,7 +916,11 @@
+         'type': 'cancelled_order',
+         'orderId': order.orderId,
+         'subtotal': subtotal,
+-        'serviceFee': double.parse(order.getServiceFee().toStringAsFixed(2)),
++        'serviceFee': double.parse(
++          order
++              .getServiceFee(serviceFeeRate: serviceFeeRate)
++              .toStringAsFixed(2),
++        ),
+         'total': order.totalAmount,
+         'comment': reason ?? '',
+         'isFiscal': false,

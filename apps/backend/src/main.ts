@@ -4,6 +4,7 @@ import { ValidationPipe } from '@nestjs/common';
 import { json, urlencoded } from 'express';
 import cookieParser from 'cookie-parser';
 import { AppModule } from './app.module';
+import { websiteAuthBodyParsers } from './website/auth/auth-body-parsers';
 
 import { validateDeploymentEnvironment } from './shared/deployment-config';
 
@@ -43,6 +44,7 @@ async function bootstrap() {
   const isProduction = process.env.NODE_ENV === 'production';
   const allowedOrigins = new Set(buildAllowedOrigins());
 
+  app.use('/api/auth', ...websiteAuthBodyParsers());
   app.use(
     json({
       limit: '50mb',

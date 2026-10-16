@@ -26,7 +26,7 @@ POS A..J  ─┘   (revisioned,        ├─> Manager (reader)
 | SAAS `/api/website/menu`, CUSTOM `/api/menu` | Read Cloud rows by Host → VenueDomain | Unchanged; same canonical rows, WebsiteMode has no authority meaning |
 | Bootstrap v1 (`/edge/restaurant-foundation/bootstrap`) | Frozen staging snapshot, never activated | Kept for compatibility; superseded for the Menu by `/edge/menu/catalog` |
 | Seeds/imports (`scripts/seed-*.ts`, `initializeMenuFromJson`) | Direct rows / unused JSON seed | Unchanged (local fixtures); rows start at revision 1 |
-| Platform | Admission toggle `menuAuthority=CLOUD` + editing | Unchanged; new Venues are created CLOUD |
+| Platform | Admission toggle `menuAuthority=CLOUD` + editing | New Venues are created CLOUD; a Website-without-POS assignment still enables owner editing once, unless an operator already toggled it |
 | Edge | No Menu role | None (future LAN coordination only) |
 
 Identity: POS nodes already had stable UUIDs (Hive v8) and Cloud stored them

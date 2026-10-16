@@ -1,0 +1,18 @@
+{
+  "apps/vankisi-custom-web/src/services/website-info.ts": "29496ec0609c0b7f450ac403e77656baa4421404768222da4a38d5ae6e048cb1",
+  "apps/vankisi-custom-web/src/contexts/WebsiteInfoContext.ts": "cc43d51b8a2623aeaa86e6b80327ed3c33023af935ba71c38392830f1f0ce0f1",
+  "apps/vankisi-custom-web/src/contexts/WebsiteInfoProvider.tsx": "be4a446cc43a195b1b40735358c5c5bbd00a4391e10f9a21013515a4edb1d05c",
+  "apps/vankisi-custom-web/src/components/WebsiteInfo.tsx": "b4865938c7a1d0b1d3bb81832dfb04a803aba3b761fe05929945a5206f6f7787",
+  "apps/vankisi-custom-web/src/components/Footer.tsx": "e65d44adc463cba7f1625301b82b32edcf76577b5f72a384b7ab3562a364ae6b",
+  "apps/vankisi-custom-web/src/components/ImageWithSkeleton.tsx": "10c55ef42fa3e8fb7ccee3e0d24dfe4f09ef2a3781436a0f6d65e6d89d56a801",
+  "apps/vankisi-custom-web/src/pages/Contact.tsx": "6c85d10c210f9f3b0423acf4df4dd453dd98e5c45843fb5ee59a83caf9b5e411",
+  "apps/vankisi-custom-web/src/pages/Atmosphere.tsx": "1f0ecf1cf7320e3fb4527173c78fc8e8d23abba41d00737c7e1e31a52794c6dc",
+  "apps/vankisi-custom-web/src/pages/PaymentSuccess.tsx": "9748ea5247974da7697bcb21d11892e38352cde95b013a9e7a92b428baea07c3",
+  "apps/vankisi-custom-web/src/main.tsx": "bd396765a3d95e3fb3ea0234f336ab73692cc316443d6248edc20776315f4b66",
+  "apps/vankisi-custom-web/vite.config.ts": "66c28f53c1f6cd4ed46c7bff723f3fb7cf972943f8f78db3c5c8c122ceaca589",
+  "apps/platform-web/src/test/vankisi-shared-info.fixture.ts": "89226ba0257b87f966ffbad53b190625c07c181d8292c0a708f1f6065211635b",
+  "apps/platform-web/src/test/vankisi-shared-info.test.tsx": "d9ee8e8abe32e67e0a8a743250351729ae3887ca9d9f2cf5eccd3373b1128596",
+  "apps/platform-web/src/test/vankisi-footer-contact.test.tsx": "5381fca4a23a2ab665b8309da08d707841b006a44d4b6e360ae41a62abdd7c28",
+  "apps/platform-web/src/test/vankisi-payment-return.test.tsx": "ec5a2b2dbe49519b8e26790c6b4e7e5fed0910d6e2cd5e98a9bcabe6402ce805",
+  "apps/backend/src/website/core/web07-shared-info.integration.spec.ts": "b1403ff9a8fda55d14667f5310d7809dcfd6ac8844831944b5b2cc84c3a6a447"
+}

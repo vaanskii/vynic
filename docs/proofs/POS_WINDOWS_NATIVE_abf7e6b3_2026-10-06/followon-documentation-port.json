@@ -1,0 +1,24 @@
+{
+  "files": [
+    {
+      "path": "docs/POS_MULTI_TERMINAL_READINESS_PLAN.md",
+      "beforeSha256": "1f50c60665c08eda807da2add7b553ba268deeb7926dc29519961ada57c87a26",
+      "candidateSha256": "c4b145b8bf643d90091f8240500fef12cc264884efe0d26a1c5df3474fd42e99"
+    },
+    {
+      "path": "docs/POS_MULTI_TERMINAL_WRITER_COVERAGE.md",
+      "beforeSha256": "533e8d0e6b5a4d84e88ba6c965e0e0d6eeb673c0de221ed2e980b6af00162bfd",
+      "candidateSha256": "74f6e0e3ebf86e8300ce12dbc6503f2ced66330cc71c7a22ec0ab1586333b101"
+    },
+    {
+      "path": "docs/agent-state/VYNIC_PROJECT_STATE.md",
+      "beforeSha256": "6fbed450160b79827d86b8cea219104e2041d7064b2907be566e914a38a967cc",
+      "candidateSha256": "7765aa8874f0f8feecf27d9cfac6f49f5319e5671785ad46fb7a50a03bf28c91"
+    },
+    {
+      "path": "docs/agent-state/VYNIC_CODE_MAP.md",
+      "beforeSha256": "ef248868b8afb3399e586bff306f62834bde877cb8fdfdb4a49098d9a7c19eaf",
+      "candidateSha256": "ede49d13287b99a54a1df1d8500d1cd662bbfac4bc5efde132475c990958b115"
+    }
+  ]
+}

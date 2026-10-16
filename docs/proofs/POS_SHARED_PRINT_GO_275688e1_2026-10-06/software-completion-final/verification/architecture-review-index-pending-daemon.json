@@ -1,0 +1,31 @@
+{
+  "createdAtUtc": "2026-10-06T17:15:27.269194+00:00",
+  "scope": "Independent continuation reviews completed so far; not combined release qualification",
+  "reviews": {
+    "printerprovisioning-independent-review.json": {
+      "path": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/printerprovisioning-independent-review.json",
+      "sha256": "efee605a225833838925b4b9901bb02209fc336565f212f8774af80a99073aff"
+    },
+    "printer-agent-ui-independent-review.json": {
+      "path": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/printer-agent-ui-independent-review.json",
+      "sha256": "b967d2751b4fbb7c14386cbd07caabcb75912a56837dbdfb9cbc8bc8f1573e36"
+    },
+    "printer-agent-rpc-independent-review.json": {
+      "path": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/printer-agent-rpc-independent-review.json",
+      "sha256": "3ee756f1a9ad8b694cdb46c1269c93b551e5f3ef2aa09a75e6f310782cb1b114"
+    },
+    "native-arm64-independent-review.json": {
+      "path": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/native-arm64-independent-review.json",
+      "sha256": "3529aa893d6a583e421d6c68bacfa91e14156444d2c6d90d4190fc4063d3ee7a"
+    },
+    "actual-tcp-crash-independent-review.json": {
+      "path": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/actual-tcp-crash-independent-review.json",
+      "sha256": "0280a5387bc8c47d1d126de97a5e3298a92f423f7d1ed9d2380d3921fe04eaf2"
+    }
+  },
+  "pending": [
+    "Final daemon/CLI/installer source freeze and execution receipts; recent CA/purpose and Windows SQLite URI source fixes await final cohort.",
+    "Root final combined source snapshot and proportional integrated validation."
+  ],
+  "activation": "No production admission, physical printing or SCM installation approved."
+}

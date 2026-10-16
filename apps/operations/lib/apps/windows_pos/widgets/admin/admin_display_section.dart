@@ -490,8 +490,8 @@ class _OptionPill<T> extends StatelessWidget {
         borderRadius: BorderRadius.circular(8),
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 140),
-          constraints: const BoxConstraints(minHeight: 38),
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+          constraints: const BoxConstraints(minWidth: 56, minHeight: 56),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 18),
           decoration: BoxDecoration(
             color: selected ? AdminDesign.accentDark : Colors.white,
             borderRadius: BorderRadius.circular(8),

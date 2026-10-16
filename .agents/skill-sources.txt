@@ -33,3 +33,4 @@ dart-use-path-package                       flutter/skills            3f58a5512a
 dart-use-pattern-matching                   flutter/skills            3f58a5512a03c854b6c8b1128d6711e5e2d5055b  skills/dart-use-pattern-matching              -
 dart-use-primary-constructors               flutter/skills            3f58a5512a03c854b6c8b1128d6711e5e2d5055b  skills/dart-use-primary-constructors          -
 dart-write-documentation                    flutter/skills            3f58a5512a03c854b6c8b1128d6711e5e2d5055b  skills/dart-write-documentation               -
+flutter-ui-design                           thienqo/flutter-skills    5b89c05fcd817d284a97e970e410a9b806a29d40  skills/flutter-ui-design                       LICENSE

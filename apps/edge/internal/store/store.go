@@ -21,7 +21,9 @@ import (
 //go:embed migrations/*.sql
 var migrations embed.FS
 
-const SchemaVersion = 2
+// Opening earlier schema upgrades it to 6 even without proof activation. Older Edge
+// binaries must remain blocked from this state; there is no downgrade migration.
+const SchemaVersion = 6
 const applicationID = 1448693321
 
 type Store struct {

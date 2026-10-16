@@ -14,6 +14,7 @@ interface EnrollBody {
   platform?: unknown;
   displayName?: unknown;
   menuClient?: unknown;
+  managerSetupVersion?: unknown;
 }
 
 function text(value: unknown, field: string, max: number): string {
@@ -57,6 +58,7 @@ export class DeviceEnrollmentController {
           : undefined,
       clientIp: request.ip,
       menuClient: body.menuClient,
+      managerSetupVersion: body.managerSetupVersion,
     });
 
     return {

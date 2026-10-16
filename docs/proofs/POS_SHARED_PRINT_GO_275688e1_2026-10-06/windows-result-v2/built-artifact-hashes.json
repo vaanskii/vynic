@@ -1,0 +1,37 @@
+﻿[
+    {
+        "path":  "channel\\CMakeFiles\\3.31.6-msvc6\\CompilerIdCXX\\CompilerIdCXX.exe",
+        "bytes":  15360,
+        "sha256":  "d9d5e69f9a4884bb9fdbfbd8afae16e6e26e3ceb18cf0a1e5a32d1e0cc81c3db"
+    },
+    {
+        "path":  "channel\\Release\\flutter_windows.dll",
+        "bytes":  21284352,
+        "sha256":  "011e87e890b7bfbac89f63c763341ffb8393d2b4a617dd836c471a0cdaa1346f"
+    },
+    {
+        "path":  "channel\\Release\\windows_spooler_channel_test.exe",
+        "bytes":  159232,
+        "sha256":  "570efef0b5556a547b0628a27e0c723a621cb070510d9b5faea923e7afb950fb"
+    },
+    {
+        "path":  "channel\\Release\\windows_spooler_test.exe",
+        "bytes":  64000,
+        "sha256":  "6ca44e7ac238bcf7858b98c3dbc1dbddcc82ab479660aac9c460222637145fa5"
+    },
+    {
+        "path":  "helper\\CMakeFiles\\3.31.6-msvc6\\CompilerIdCXX\\CompilerIdCXX.exe",
+        "bytes":  15360,
+        "sha256":  "51acd642c8891515919a4ac03fc90084b7317dd3e2362ff304ec24c35696442e"
+    },
+    {
+        "path":  "helper\\Release\\print_helper_protocol_test.exe",
+        "bytes":  323584,
+        "sha256":  "5e1b133b53d3facb78880dd5ddcec24dd5359210f6b555d194d76f67213c5f76"
+    },
+    {
+        "path":  "helper\\Release\\vynic_print_helper.exe",
+        "bytes":  316416,
+        "sha256":  "b720e1eedc77ab574d769865e39f71506a5f3ebc9d93ab5166bc3f112203019d"
+    }
+]

@@ -1,0 +1,45 @@
+{
+  "atUtc": "2026-10-06T10:15:57.458817+00:00",
+  "scope": "One test file only: capture OS-reported link targets before refusal, require exact unchanged target afterward. No production/VM/sealed-proof edits.",
+  "source": "apps/operations/test/unit/pos02_acceptance_runner_test.dart",
+  "before": {
+    "path": "/tmp/vynic-readiness-20261006-a2nbcprb/windows-runner-fix/windows-link-target-baseline/apps/operations/test/unit/pos02_acceptance_runner_test.dart",
+    "sha256": "d67e568689b27309d3c96d17d9f0595c22461d83a7d2fddb9c2628dda018bb6b",
+    "bytes": 33045
+  },
+  "after": {
+    "path": "/tmp/vynic-readiness-20261006-a2nbcprb/source/apps/operations/test/unit/pos02_acceptance_runner_test.dart",
+    "sha256": "e2731028006dd8bbc2a0d7e3fe4f8c374eeeda310bec1181681de9c898ef3209",
+    "bytes": 33316
+  },
+  "patch": {
+    "path": "/tmp/vynic-readiness-20261006-a2nbcprb/windows-runner-fix/windows-link-target-test-only.patch",
+    "sha256": "078d21ee6f0fc25b42a393e1a2585be172b91b523b966bdc3e7a9bb2d613200b",
+    "bytes": 2302
+  },
+  "validation": {
+    "platform": "macOS cached SDK; Windows root rerun pending",
+    "tests": "PASS: 52/52 acceptance runner tests",
+    "analysis": "PASS: no issues found",
+    "format": "PASS: 1 file, 0 changed",
+    "whitespace": "PASS: git diff --no-index --check empty output (exit 1 denotes file differences)",
+    "git": "Isolated export has no .git; diff checked against saved task baseline"
+  },
+  "evidence": [
+    {
+      "path": "/tmp/vynic-readiness-20261006-a2nbcprb/windows-runner-fix/windows-link-target-tests.log",
+      "sha256": "961e33056963606f3ecad27a7a9d6af01825f4efd7df13401ae1f570f8fb04ff",
+      "bytes": 3876
+    },
+    {
+      "path": "/tmp/vynic-readiness-20261006-a2nbcprb/windows-runner-fix/windows-link-target-analysis.log",
+      "sha256": "0d5203078e13e1df43a315d4c02e2ff3042410b2be616f75ba83d02872d33e90",
+      "bytes": 96
+    },
+    {
+      "path": "/tmp/vynic-readiness-20261006-a2nbcprb/windows-runner-fix/windows-link-target-format.log",
+      "sha256": "1685974b88bd671112e17334bdc2abb8ef350e01ae026547459ec7a8307375ec",
+      "bytes": 46
+    }
+  ]
+}

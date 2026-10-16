@@ -109,8 +109,23 @@ async function admitCloudMenu(
   source: string,
 ) {
   const admission = await cloudMenuAdmission(tx, venueId);
+  if (!admission.canEnableCloud || admission.enabled) return;
   // First admission only: an operator who later disabled Cloud editing stays.
-  if (admission.authority === 'CLOUD' || !admission.canEnableCloud) return;
+  // New Venues start CLOUD (D030), so an earlier operator decision, not the
+  // authority, marks a Venue as already admitted.
+  if (
+    admission.authority === 'CLOUD' &&
+    (await tx.platformAuditEvent.count({
+      where: {
+        targetType: 'Venue',
+        targetId: venueId,
+        action: {
+          in: ['venue.cloud_menu_enabled', 'venue.cloud_menu_disabled'],
+        },
+      },
+    }))
+  )
+    return;
   await tx.venue.update({
     where: { id: venueId },
     data: { menuAuthority: 'CLOUD', cloudMenuEditingEnabled: true },

@@ -1,0 +1,38 @@
+{
+  "schema": 1,
+  "createdAtUtc": "2026-10-06T17:56:48.704116+00:00",
+  "status": "SOURCE_READY_FOR_INDEPENDENT_REVIEW",
+  "source": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/source-v2",
+  "checkedFiles": 1109,
+  "unchangedFiles": 1107,
+  "changedFiles": {
+    "apps/operations/test/unit/printer_agent_runtime_profile_test.dart": {
+      "beforeSHA256": "d4f7c08db3c086704f4fa480970fa3676693534ec29ad12b78a2849f8bc165d2",
+      "afterSHA256": "2418752a45d5fdbf1ee764071ba79869d76d4696a1ff4444ab62cdccf7db9a21",
+      "beforeBytes": 16346,
+      "afterBytes": 16627
+    },
+    "apps/operations/test/widget/printer_agent_status_card_test.dart": {
+      "beforeSHA256": "540c5df33fbf5e4efc67fd5a807a0322b2eb461e134bb15ff328cdcbf9f6243f",
+      "afterSHA256": "114da755f85c962c9cd73576fbd6d60331c2f29b17bbb26cdfaf10ea5e9277cf",
+      "beforeBytes": 22938,
+      "afterBytes": 23130
+    }
+  },
+  "patch": {
+    "path": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/windows-software-v2/fixture-native-paths-v2-final.patch",
+    "sha256": "a16668bc600ab79d50df087400f6d901026af6afe3ccc999a26b81fecba64e8d"
+  },
+  "productionAndDependencyEdits": false,
+  "preservedAssertions": true,
+  "fixturePathReplacements": {
+    "unit": 16,
+    "widget": 5
+  },
+  "builtinJoin": "File.fromUri(directory.uri.resolve(child)).path",
+  "formatCheckExitCode": 0,
+  "sourceEditsFrozen": true,
+  "testsRunOnV2": false,
+  "failedWindowsReceiptSHA256": "e75f84fcb038e216d89342720b430ceb445b5367a0bd5b625e3a34c523ee35d1",
+  "supersedesBeforeFinalCommentPlacement": "fixture-native-paths-v2-source-receipt.json"
+}

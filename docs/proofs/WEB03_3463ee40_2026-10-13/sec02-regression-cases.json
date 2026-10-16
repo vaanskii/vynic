@@ -1,0 +1,35 @@
+{
+  "check": "sec02-regression",
+  "result": {
+    "passed": 25,
+    "failed": 0,
+    "skipped": 0
+  },
+  "passedCases": [
+    "SEC-02 real PostgreSQL / Nest HTTP unverified victim-email signup returns zero guest bookings and zero private fields at either Venue",
+    "SEC-02 real PostgreSQL / Nest HTTP Venue 0 (CUSTOM / SAAS) /api/tables/reservations binds only the session user and Host; owner alone sees the confirmed booking",
+    "SEC-02 real PostgreSQL / Nest HTTP Venue 0 (CUSTOM / SAAS) /api/bog/create-order binds only the session user and Host; owner alone sees the confirmed booking",
+    "SEC-02 real PostgreSQL / Nest HTTP Venue 0 (CUSTOM / SAAS) /api/tables/reservations keeps anonymous creation operational and discards forged body ownership",
+    "SEC-02 real PostgreSQL / Nest HTTP Venue 0 (CUSTOM / SAAS) /api/bog/create-order keeps anonymous creation operational and discards forged body ownership",
+    "SEC-02 real PostgreSQL / Nest HTTP Venue 0 (CUSTOM / SAAS) ignores forged query identities and reservation ID; no guest claim endpoint exists",
+    "SEC-02 real PostgreSQL / Nest HTTP Venue 0 (CUSTOM / SAAS) anonymous and ordinary-user maps keep the public occupancy projection without private data",
+    "SEC-02 real PostgreSQL / Nest HTTP Venue 0 (CUSTOM / SAAS) denies anonymous, tampered and unrelated principal cookies on my reservations",
+    "SEC-02 real PostgreSQL / Nest HTTP Venue 0 (CUSTOM / SAAS) rechecks the live WebsiteUser and rejects a valid cookie after that identity is removed",
+    "SEC-02 real PostgreSQL / Nest HTTP Venue 1 (CUSTOM / SAAS) /api/tables/reservations binds only the session user and Host; owner alone sees the confirmed booking",
+    "SEC-02 real PostgreSQL / Nest HTTP Venue 1 (CUSTOM / SAAS) /api/bog/create-order binds only the session user and Host; owner alone sees the confirmed booking",
+    "SEC-02 real PostgreSQL / Nest HTTP Venue 1 (CUSTOM / SAAS) /api/tables/reservations keeps anonymous creation operational and discards forged body ownership",
+    "SEC-02 real PostgreSQL / Nest HTTP Venue 1 (CUSTOM / SAAS) /api/bog/create-order keeps anonymous creation operational and discards forged body ownership",
+    "SEC-02 real PostgreSQL / Nest HTTP Venue 1 (CUSTOM / SAAS) ignores forged query identities and reservation ID; no guest claim endpoint exists",
+    "SEC-02 real PostgreSQL / Nest HTTP Venue 1 (CUSTOM / SAAS) anonymous and ordinary-user maps keep the public occupancy projection without private data",
+    "SEC-02 real PostgreSQL / Nest HTTP Venue 1 (CUSTOM / SAAS) denies anonymous, tampered and unrelated principal cookies on my reservations",
+    "SEC-02 real PostgreSQL / Nest HTTP Venue 1 (CUSTOM / SAAS) rechecks the live WebsiteUser and rejects a valid cookie after that identity is removed",
+    "SEC-02 real PostgreSQL / Nest HTTP preserves historical authenticated ownership and does not require matching contact email",
+    "SEC-02 real PostgreSQL / Nest HTTP limits the restaurant administrator to its explicit adminVenueId",
+    "SEC-02 real PostgreSQL / Nest HTTP fails closed for unknown despite forged browser Venue identity",
+    "SEC-02 real PostgreSQL / Nest HTTP fails closed for disabled-host despite forged browser Venue identity",
+    "SEC-02 real PostgreSQL / Nest HTTP fails closed for disabled-venue despite forged browser Venue identity",
+    "SEC-02 real PostgreSQL / Nest HTTP keeps commercial and CUSTOMER_ACCOUNTS guards authoritative on ownership reads",
+    "SEC-02 real PostgreSQL / Nest HTTP payment status for Venue 0 never grants private booking access from an identifier",
+    "SEC-02 real PostgreSQL / Nest HTTP payment status for Venue 1 never grants private booking access from an identifier"
+  ]
+}

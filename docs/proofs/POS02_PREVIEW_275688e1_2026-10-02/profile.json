@@ -1,0 +1,20 @@
+{
+  "milestone": "POS-02",
+  "status": "PREVIEW_PREPARATION_VERIFIED_MILESTONE_NOT_DONE",
+  "baseCommit": "275688e1e5c5dc0e26e62705ab0c7670cf16d99a",
+  "sourceFileCount": 870,
+  "entrypoint": "tool/pos02_preview.dart",
+  "printerHost": "",
+  "appRole": "pos",
+  "environment": "development",
+  "freshSyntheticDatabaseEachLaunch": true,
+  "outboundHttpBlocked": true,
+  "normalPosBootstrapSkipped": true,
+  "automaticPrintsAtStartup": false,
+  "physicalPrintButtonEnabled": false,
+  "reconciliationPolicy": "unconfigured_read_only",
+  "windowsExecution": "NOT_PERFORMED",
+  "physicalAcceptance": "PENDING",
+  "unrelatedWipIncluded": false,
+  "platformWebIncluded": false
+}

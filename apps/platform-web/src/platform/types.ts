@@ -101,6 +101,7 @@ export interface ProductState {
 }
 
 export interface WebsiteAccess {
+  hostname?: string | null;
   provisioning?: {
     status: string;
     assignedSlug: string | null;
@@ -130,6 +131,9 @@ export interface CustomWebsite {
   status: CustomWebsiteStatus;
   siteKey: string | null;
   statusNote: string | null;
+  /** Additive; missing on an older backend is explicitly unverified. */
+  expectedBuildId?: string | null;
+  publicIdentity?: string;
   updatedAt: string | null;
   domains: Array<Pick<VenueDomain, "id" | "hostname" | "status" | "createdAt">>;
   /** Earliest ACTIVE public domain, else the earliest ACTIVE .localhost one. */
@@ -147,7 +151,10 @@ export interface CustomWebsite {
   payments: "NOT_INCLUDED" | "NOT_CONFIGURED" | "DISABLED" | "ENABLED";
   readiness: {
     complete: boolean;
-    checks: Record<"entitled" | "customMode" | "siteKey" | "activeDomain", boolean>;
+    checks: Record<
+      "entitled" | "customMode" | "siteKey" | "activeDomain",
+      boolean
+    >;
   };
   audit: Array<{
     id: string;
@@ -205,10 +212,39 @@ export interface CustomWebsiteCheck {
   url: string;
   frontend: { status: number | null; detail: string };
   api: {
-    state: "OK" | "WRONG_SITE" | "FAILED" | "NOT_CHECKED";
+    state: "OK" | "WRONG_SITE" | "UNVERIFIED" | "FAILED" | "NOT_CHECKED";
     status: number | null;
     detail: string;
   };
+  environment?: "LOCAL_DEVELOPMENT" | "LOCAL_DOCKER" | "PUBLIC_HTTPS";
+  build?: {
+    state: "VERIFIED" | "UNRECORDED" | "WRONG_BUILD" | "FAILED" | "NOT_CHECKED";
+    status: number | null;
+    detail: string;
+    observedBuildId: string | null;
+    expectedBuildId: string | null;
+    siteKey: string | null;
+  };
+  observationCurrent?: boolean;
+  checkedFor?: {
+    publicIdentity: string;
+    mode: string | null;
+    siteKey: string | null;
+    expectedBuildId: string | null;
+    bindingUpdatedAt: string | null;
+    status: string;
+    entitled: boolean;
+    hostname: string;
+    domainActive: boolean;
+  };
+  facts?: Record<
+    | "commercial"
+    | "domainRegistration"
+    | "rendererDeployed"
+    | "bindingIdentityVerified"
+    | "publicationLive",
+    boolean
+  >;
 }
 
 export interface VenueDomain {
@@ -242,6 +278,7 @@ export interface Device {
 export type EnrollmentStatus = "PENDING" | "ENROLLED" | "EXPIRED" | "CANCELLED";
 
 export interface DeviceEnrollment {
+  initialManagerSetup?: boolean;
   id: string;
   venueId: string;
   /** Half a code. Safe to show; it cannot enroll anything on its own. */
@@ -260,6 +297,7 @@ export interface DeviceEnrollment {
 }
 
 export interface IssuedEnrollment {
+  initialManagerSetup?: boolean;
   id: string;
   venueId: string;
   displayName: string;
@@ -335,4 +373,48 @@ export interface PlatformUserRow {
   displayName: string;
   role: PlatformRole;
   status: "ACTIVE" | "DISABLED";
+}
+
+export interface WebsiteDeliveryPage {
+  total: number;
+  offset: number;
+  limit: number;
+  primarySelected: boolean;
+  items: Array<{
+    id: string;
+    bookingStatus: string;
+    date: string;
+    timeSlot: string;
+    posReservationId: string | null;
+    tracking: "TRACKED" | "UNTRACKED";
+    deliveries: Array<{
+      kind: string;
+      status: string;
+      code: string | null;
+      attempts: number;
+      posReservationId: string;
+      commandId: string | null;
+      transport: string | null;
+    }>;
+  }>;
+}
+
+export interface WebsitePaymentReviewPage {
+  total: number;
+  offset: number;
+  limit: number;
+  financialDecisionOwner: "RESTAURANT_OWNER";
+  items: Array<{
+    bookingId: string;
+    date: string;
+    timeSlot: string;
+    bookingStatus: string;
+    paymentState: string;
+    expectedMinor: string | null;
+    grossPaidMinor: string | null;
+    refundedMinor: string | null;
+    currency: string | null;
+    reason: string;
+    paymentId: string | null;
+  }>;
 }

@@ -1,0 +1,557 @@
+{
+  "status": "QUERY_COMPLETED",
+  "queryBodySha256": "e948471fd9ac7be2589e0e3262cd467ebda39574ac038f016f58028e107300d6",
+  "pins": [
+    {
+      "platform": "macos",
+      "identity": "abseil-cpp-binary",
+      "repository": "https://github.com/google/abseil-cpp-binary.git",
+      "version": "1.2024072200.0",
+      "revision": "bbe8b69694d7873315fd3a4ad41efe043e1c07c5",
+      "branch": null
+    },
+    {
+      "platform": "macos",
+      "identity": "app-check",
+      "repository": "https://github.com/google/app-check.git",
+      "version": "11.3.0",
+      "revision": "bb4002485ff867768dec13bf904a2ddb050bd1b1",
+      "branch": null
+    },
+    {
+      "platform": "macos",
+      "identity": "firebase-ios-sdk",
+      "repository": "https://github.com/firebase/firebase-ios-sdk",
+      "version": "12.14.0",
+      "revision": "8d5b4189f1f482df8d5c58c9985ea70491ef5382",
+      "branch": null
+    },
+    {
+      "platform": "macos",
+      "identity": "google-ads-on-device-conversion-ios-sdk",
+      "repository": "https://github.com/googleads/google-ads-on-device-conversion-ios-sdk",
+      "version": "3.6.0",
+      "revision": "9bfcc6cf435b2e7c5562c1900b8680c594fa9a64",
+      "branch": null
+    },
+    {
+      "platform": "macos",
+      "identity": "googleappmeasurement",
+      "repository": "https://github.com/google/GoogleAppMeasurement.git",
+      "version": "12.14.0",
+      "revision": "219e564a8510e983e675c94f77f7f7c50049f22d",
+      "branch": null
+    },
+    {
+      "platform": "macos",
+      "identity": "googledatatransport",
+      "repository": "https://github.com/google/GoogleDataTransport.git",
+      "version": "10.1.0",
+      "revision": "617af071af9aa1d6a091d59a202910ac482128f9",
+      "branch": null
+    },
+    {
+      "platform": "macos",
+      "identity": "googleutilities",
+      "repository": "https://github.com/google/GoogleUtilities.git",
+      "version": "8.1.1",
+      "revision": "c46e5f8b7c23265f17c24ca7f9fa1b13ded7a822",
+      "branch": null
+    },
+    {
+      "platform": "macos",
+      "identity": "grpc-binary",
+      "repository": "https://github.com/google/grpc-binary.git",
+      "version": "1.69.1",
+      "revision": "75b31c842f664a0f46a2e590a570e370249fd8f6",
+      "branch": null
+    },
+    {
+      "platform": "macos",
+      "identity": "gtm-session-fetcher",
+      "repository": "https://github.com/google/gtm-session-fetcher.git",
+      "version": "5.3.0",
+      "revision": "c0ac7575d70050c2973ba2318bd5af47f8e8153a",
+      "branch": null
+    },
+    {
+      "platform": "macos",
+      "identity": "interop-ios-for-google-sdks",
+      "repository": "https://github.com/google/interop-ios-for-google-sdks.git",
+      "version": "101.0.0",
+      "revision": "040d087ac2267d2ddd4cca36c757d1c6a05fdbfe",
+      "branch": null
+    },
+    {
+      "platform": "macos",
+      "identity": "leveldb",
+      "repository": "https://github.com/firebase/leveldb.git",
+      "version": "1.22.5",
+      "revision": "a0bc79961d7be727d258d33d5a6b2f1023270ba1",
+      "branch": null
+    },
+    {
+      "platform": "macos",
+      "identity": "nanopb",
+      "repository": "https://github.com/firebase/nanopb.git",
+      "version": "2.30910.1",
+      "revision": "3851d94a41890dea16dc3db34caf60e585cb4163",
+      "branch": null
+    },
+    {
+      "platform": "macos",
+      "identity": "promises",
+      "repository": "https://github.com/google/promises.git",
+      "version": "2.4.1",
+      "revision": "f4a19a3c313dc2616c70bb49d29a799fb16be837",
+      "branch": null
+    },
+    {
+      "platform": "ios",
+      "identity": "abseil-cpp-binary",
+      "repository": "https://github.com/google/abseil-cpp-binary.git",
+      "version": "1.2024072200.0",
+      "revision": "bbe8b69694d7873315fd3a4ad41efe043e1c07c5",
+      "branch": null
+    },
+    {
+      "platform": "ios",
+      "identity": "app-check",
+      "repository": "https://github.com/google/app-check.git",
+      "version": "11.2.0",
+      "revision": "61b85103a1aeed8218f17c794687781505fbbef5",
+      "branch": null
+    },
+    {
+      "platform": "ios",
+      "identity": "dkcamera",
+      "repository": "https://github.com/zhangao0086/DKCamera",
+      "version": null,
+      "revision": "5c691d11014b910aff69f960475d70e65d9dcc96",
+      "branch": "master"
+    },
+    {
+      "platform": "ios",
+      "identity": "dkimagepickercontroller",
+      "repository": "https://github.com/zhangao0086/DKImagePickerController",
+      "version": null,
+      "revision": "0bdfeacefa308545adde07bef86e349186335915",
+      "branch": "4.3.9"
+    },
+    {
+      "platform": "ios",
+      "identity": "dkphotogallery",
+      "repository": "https://github.com/zhangao0086/DKPhotoGallery",
+      "version": null,
+      "revision": "311c1bc7a94f1538f82773a79c84374b12a2ef3d",
+      "branch": "master"
+    },
+    {
+      "platform": "ios",
+      "identity": "firebase-ios-sdk",
+      "repository": "https://github.com/firebase/firebase-ios-sdk",
+      "version": "12.14.0",
+      "revision": "8d5b4189f1f482df8d5c58c9985ea70491ef5382",
+      "branch": null
+    },
+    {
+      "platform": "ios",
+      "identity": "google-ads-on-device-conversion-ios-sdk",
+      "repository": "https://github.com/googleads/google-ads-on-device-conversion-ios-sdk",
+      "version": "3.6.0",
+      "revision": "9bfcc6cf435b2e7c5562c1900b8680c594fa9a64",
+      "branch": null
+    },
+    {
+      "platform": "ios",
+      "identity": "googleappmeasurement",
+      "repository": "https://github.com/google/GoogleAppMeasurement.git",
+      "version": "12.14.0",
+      "revision": "219e564a8510e983e675c94f77f7f7c50049f22d",
+      "branch": null
+    },
+    {
+      "platform": "ios",
+      "identity": "googledatatransport",
+      "repository": "https://github.com/google/GoogleDataTransport.git",
+      "version": "10.1.0",
+      "revision": "617af071af9aa1d6a091d59a202910ac482128f9",
+      "branch": null
+    },
+    {
+      "platform": "ios",
+      "identity": "googleutilities",
+      "repository": "https://github.com/google/GoogleUtilities.git",
+      "version": "8.1.0",
+      "revision": "60da361632d0de02786f709bdc0c4df340f7613e",
+      "branch": null
+    },
+    {
+      "platform": "ios",
+      "identity": "grpc-binary",
+      "repository": "https://github.com/google/grpc-binary.git",
+      "version": "1.69.1",
+      "revision": "75b31c842f664a0f46a2e590a570e370249fd8f6",
+      "branch": null
+    },
+    {
+      "platform": "ios",
+      "identity": "gtm-session-fetcher",
+      "repository": "https://github.com/google/gtm-session-fetcher.git",
+      "version": "5.3.0",
+      "revision": "c0ac7575d70050c2973ba2318bd5af47f8e8153a",
+      "branch": null
+    },
+    {
+      "platform": "ios",
+      "identity": "interop-ios-for-google-sdks",
+      "repository": "https://github.com/google/interop-ios-for-google-sdks.git",
+      "version": "101.0.0",
+      "revision": "040d087ac2267d2ddd4cca36c757d1c6a05fdbfe",
+      "branch": null
+    },
+    {
+      "platform": "ios",
+      "identity": "leveldb",
+      "repository": "https://github.com/firebase/leveldb.git",
+      "version": "1.22.5",
+      "revision": "a0bc79961d7be727d258d33d5a6b2f1023270ba1",
+      "branch": null
+    },
+    {
+      "platform": "ios",
+      "identity": "nanopb",
+      "repository": "https://github.com/firebase/nanopb.git",
+      "version": "2.30910.0",
+      "revision": "b7e1104502eca3a213b46303391ca4d3bc8ddec1",
+      "branch": null
+    },
+    {
+      "platform": "ios",
+      "identity": "promises",
+      "repository": "https://github.com/google/promises.git",
+      "version": "2.4.0",
+      "revision": "540318ecedd63d883069ae7f1ed811a2df00b6ac",
+      "branch": null
+    },
+    {
+      "platform": "ios",
+      "identity": "sdwebimage",
+      "repository": "https://github.com/SDWebImage/SDWebImage",
+      "version": "5.21.7",
+      "revision": "2de3a496eaf6df9a1312862adcfd54acd73c39c0",
+      "branch": null
+    },
+    {
+      "platform": "ios",
+      "identity": "swiftygif",
+      "repository": "https://github.com/kirualex/SwiftyGif.git",
+      "version": "5.4.5",
+      "revision": "4430cbc148baa3907651d40562d96325426f409a",
+      "branch": null
+    },
+    {
+      "platform": "ios",
+      "identity": "tocropviewcontroller",
+      "repository": "https://github.com/TimOliver/TOCropViewController",
+      "version": "2.8.0",
+      "revision": "d4a6d8100f4b886fdbc8ae399bf144ff3e9afb7e",
+      "branch": null
+    }
+  ],
+  "sdk": {
+    "frameworkVersion": "3.44.1",
+    "channel": "stable",
+    "repositoryUrl": "https://github.com/flutter/flutter.git",
+    "frameworkRevision": "924134a44c189315be2148659913dda1671cbe99",
+    "frameworkCommitDate": "2026-05-29 12:13:22 -0400",
+    "engineRevision": "c416acfeb8126e097f758c664aaa3da929e27da0",
+    "engineCommitDate": "2026-05-27 20:19:31.000Z",
+    "engineContentHash": "39b1f7043775b9578bbb26a1676e79c4e31c8b5e",
+    "engineBuildDate": "2026-05-27 13:50:43.210",
+    "dartSdkVersion": "3.12.1",
+    "devToolsVersion": "2.57.0",
+    "flutterVersion": "3.44.1"
+  },
+  "networkRequests": 1,
+  "sourceEnvCredentialsBusinessDataSent": false,
+  "results": [
+    {
+      "kind": "mapping control",
+      "query": {
+        "package": {
+          "ecosystem": "SwiftURL",
+          "name": "https://github.com/apple/swift-nio-http2"
+        },
+        "version": "1.0.0"
+      },
+      "vulns": []
+    },
+    {
+      "query": {
+        "package": {
+          "ecosystem": "SwiftURL",
+          "name": "https://github.com/google/abseil-cpp-binary.git"
+        },
+        "version": "1.2024072200.0"
+      },
+      "kind": "SwiftPM version",
+      "vulns": []
+    },
+    {
+      "query": {
+        "package": {
+          "ecosystem": "SwiftURL",
+          "name": "https://github.com/google/app-check.git"
+        },
+        "version": "11.3.0"
+      },
+      "kind": "SwiftPM version",
+      "vulns": []
+    },
+    {
+      "query": {
+        "package": {
+          "ecosystem": "SwiftURL",
+          "name": "https://github.com/firebase/firebase-ios-sdk"
+        },
+        "version": "12.14.0"
+      },
+      "kind": "SwiftPM version",
+      "vulns": []
+    },
+    {
+      "query": {
+        "package": {
+          "ecosystem": "SwiftURL",
+          "name": "https://github.com/googleads/google-ads-on-device-conversion-ios-sdk"
+        },
+        "version": "3.6.0"
+      },
+      "kind": "SwiftPM version",
+      "vulns": []
+    },
+    {
+      "query": {
+        "package": {
+          "ecosystem": "SwiftURL",
+          "name": "https://github.com/google/GoogleAppMeasurement.git"
+        },
+        "version": "12.14.0"
+      },
+      "kind": "SwiftPM version",
+      "vulns": []
+    },
+    {
+      "query": {
+        "package": {
+          "ecosystem": "SwiftURL",
+          "name": "https://github.com/google/GoogleDataTransport.git"
+        },
+        "version": "10.1.0"
+      },
+      "kind": "SwiftPM version",
+      "vulns": []
+    },
+    {
+      "query": {
+        "package": {
+          "ecosystem": "SwiftURL",
+          "name": "https://github.com/google/GoogleUtilities.git"
+        },
+        "version": "8.1.1"
+      },
+      "kind": "SwiftPM version",
+      "vulns": []
+    },
+    {
+      "query": {
+        "package": {
+          "ecosystem": "SwiftURL",
+          "name": "https://github.com/google/grpc-binary.git"
+        },
+        "version": "1.69.1"
+      },
+      "kind": "SwiftPM version",
+      "vulns": []
+    },
+    {
+      "query": {
+        "package": {
+          "ecosystem": "SwiftURL",
+          "name": "https://github.com/google/gtm-session-fetcher.git"
+        },
+        "version": "5.3.0"
+      },
+      "kind": "SwiftPM version",
+      "vulns": []
+    },
+    {
+      "query": {
+        "package": {
+          "ecosystem": "SwiftURL",
+          "name": "https://github.com/google/interop-ios-for-google-sdks.git"
+        },
+        "version": "101.0.0"
+      },
+      "kind": "SwiftPM version",
+      "vulns": []
+    },
+    {
+      "query": {
+        "package": {
+          "ecosystem": "SwiftURL",
+          "name": "https://github.com/firebase/leveldb.git"
+        },
+        "version": "1.22.5"
+      },
+      "kind": "SwiftPM version",
+      "vulns": []
+    },
+    {
+      "query": {
+        "package": {
+          "ecosystem": "SwiftURL",
+          "name": "https://github.com/firebase/nanopb.git"
+        },
+        "version": "2.30910.1"
+      },
+      "kind": "SwiftPM version",
+      "vulns": []
+    },
+    {
+      "query": {
+        "package": {
+          "ecosystem": "SwiftURL",
+          "name": "https://github.com/google/promises.git"
+        },
+        "version": "2.4.1"
+      },
+      "kind": "SwiftPM version",
+      "vulns": []
+    },
+    {
+      "query": {
+        "package": {
+          "ecosystem": "SwiftURL",
+          "name": "https://github.com/google/app-check.git"
+        },
+        "version": "11.2.0"
+      },
+      "kind": "SwiftPM version",
+      "vulns": []
+    },
+    {
+      "query": {
+        "commit": "5c691d11014b910aff69f960475d70e65d9dcc96"
+      },
+      "kind": "SwiftPM source commit",
+      "vulns": []
+    },
+    {
+      "query": {
+        "commit": "0bdfeacefa308545adde07bef86e349186335915"
+      },
+      "kind": "SwiftPM source commit",
+      "vulns": []
+    },
+    {
+      "query": {
+        "commit": "311c1bc7a94f1538f82773a79c84374b12a2ef3d"
+      },
+      "kind": "SwiftPM source commit",
+      "vulns": []
+    },
+    {
+      "query": {
+        "package": {
+          "ecosystem": "SwiftURL",
+          "name": "https://github.com/google/GoogleUtilities.git"
+        },
+        "version": "8.1.0"
+      },
+      "kind": "SwiftPM version",
+      "vulns": []
+    },
+    {
+      "query": {
+        "package": {
+          "ecosystem": "SwiftURL",
+          "name": "https://github.com/firebase/nanopb.git"
+        },
+        "version": "2.30910.0"
+      },
+      "kind": "SwiftPM version",
+      "vulns": []
+    },
+    {
+      "query": {
+        "package": {
+          "ecosystem": "SwiftURL",
+          "name": "https://github.com/google/promises.git"
+        },
+        "version": "2.4.0"
+      },
+      "kind": "SwiftPM version",
+      "vulns": []
+    },
+    {
+      "query": {
+        "package": {
+          "ecosystem": "SwiftURL",
+          "name": "https://github.com/SDWebImage/SDWebImage"
+        },
+        "version": "5.21.7"
+      },
+      "kind": "SwiftPM version",
+      "vulns": []
+    },
+    {
+      "query": {
+        "package": {
+          "ecosystem": "SwiftURL",
+          "name": "https://github.com/kirualex/SwiftyGif.git"
+        },
+        "version": "5.4.5"
+      },
+      "kind": "SwiftPM version",
+      "vulns": []
+    },
+    {
+      "query": {
+        "package": {
+          "ecosystem": "SwiftURL",
+          "name": "https://github.com/TimOliver/TOCropViewController"
+        },
+        "version": "2.8.0"
+      },
+      "kind": "SwiftPM version",
+      "vulns": []
+    },
+    {
+      "query": {
+        "commit": "924134a44c189315be2148659913dda1671cbe99"
+      },
+      "kind": "SDK frameworkRevision",
+      "vulns": []
+    },
+    {
+      "query": {
+        "commit": "c416acfeb8126e097f758c664aaa3da929e27da0"
+      },
+      "kind": "SDK engineRevision",
+      "vulns": []
+    },
+    {
+      "query": {
+        "commit": "fc3da898ea1664b8a8633f6ec03d2c2290bb3d01"
+      },
+      "kind": "Dart SDK source commit",
+      "vulns": []
+    }
+  ],
+  "mappingControlMatched": false,
+  "nativeAndSdkQueries": 26,
+  "matchedNativeAndSdkQueries": 0,
+  "uniqueNativeAndSdkIds": []
+}

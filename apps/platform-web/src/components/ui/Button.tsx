@@ -22,11 +22,11 @@ type ButtonProps =
       });
 
 const baseClass =
-  "group inline-flex min-h-11 items-center justify-center gap-2 rounded-[8px] px-5 py-3 text-sm font-semibold leading-none transition duration-200 ease-[cubic-bezier(0.16,1,0.3,1)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-vynic-plum active:translate-y-px disabled:opacity-60";
+  "group inline-flex min-h-11 items-center justify-center gap-2 rounded-[8px] px-5 py-3 text-sm font-semibold leading-none transition-[translate,scale,background-color,border-color,color,box-shadow] duration-200 ease-[cubic-bezier(0.16,1,0.3,1)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-vynic-plum motion-safe:not-disabled:hover:-translate-y-px motion-safe:not-disabled:active:translate-y-0 motion-safe:not-disabled:active:scale-[0.98] disabled:opacity-60";
 
 const variantClass: Record<ButtonVariant, string> = {
   primary:
-    "vynic-neu-primary bg-vynic-plum text-vynic-background shadow-[0_14px_30px_color-mix(in_srgb,var(--vynic-plum)_24%,transparent)] hover:bg-vynic-plum-dark",
+    "vynic-neu-primary bg-vynic-plum text-vynic-background shadow-[0_14px_30px_color-mix(in_srgb,var(--vynic-plum)_24%,transparent)] hover:bg-vynic-plum-dark hover:shadow-[0_18px_36px_color-mix(in_srgb,var(--vynic-plum)_32%,transparent)]",
   secondary:
     "vynic-neu-control border border-vynic-border bg-vynic-surface text-vynic-charcoal hover:border-vynic-plum hover:text-vynic-plum",
   plain:

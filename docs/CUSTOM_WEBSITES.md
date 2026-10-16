@@ -77,6 +77,7 @@ Organization → Venue → WEBSITE entitlement (plan + Trial/ACTIVE)
 | `siteKey` | The custom frontend build meant to serve this Venue, e.g. `vankisi-web`, `restaurant-x-web`. Not unique: one design may serve several branches. |
 | `status` | `SETUP_PENDING` · `READY` · `ACTIVE` · `ERROR`. No row = `NOT_CONFIGURED`. Tracking only. |
 | `statusNote` | Operator-internal, never public. |
+| `expectedBuildId` | Optional reviewed public artifact SHA-256. Null is legacy/unrecorded and cannot verify deployment. |
 
 ### Why a site key exists
 
@@ -102,8 +103,9 @@ Venue cannot answer "which frontend should be on this domain?":
    for SAAS (§3a).
 4. **Custom website** panel: record the frontend identity (`siteKey`).
 5. **Domains**: register the production domain(s). Replace = register new,
-   then release old. Disable keeps the name reserved. The SaaS namespace is
-   refused. All audited.
+   then release old, or use **Change hostname** with a reason. Vynic subdomains
+   such as `restaurant.vynic.ge` are allowed. Disable keeps the name reserved.
+   Platform-owned apex/api/admin/preview/www origins remain protected. All audited.
 6. Product/Payments: grant `ONLINE_PAYMENTS` if sold; the owner (or a controlled
    import) configures the Venue's own BOG credentials with a return origin on
    one of its ACTIVE domains.
@@ -124,12 +126,12 @@ Routes: `GET|PUT /platform/venues/:venueId/custom-website`,
 (`platform/platform-custom-website.controller.ts`,
 `website/custom/custom-website.service.ts`). SUPPORT_READONLY can read only.
 Audit: `venue.custom_website_site_key_changed`,
-`venue.custom_website_status_changed` (actor, Venue, from/to, note) in the same
+`venue.custom_website_status_changed`, `venue.custom_website_build_changed` (actor, Venue, from/to, note) in the same
 transaction as the change; the panel lists them with mode/domain/feature events.
 
 **Customers cannot** switch SAAS ↔ CUSTOM, choose a frontend, or claim a domain:
-there is no owner route for any of them, the generic draft editor refuses
-non-SAAS Venues, and the SaaS hostname-request flow is SAAS-only.
+there is no owner mutation route for any of them, the generic draft editor refuses
+non-SAAS Venues, and website addresses are read-only in the owner cabinet; customers contact support.
 
 ### 3a. Menu authority
 
@@ -160,12 +162,17 @@ status.
 | Availability | Meaning |
 | --- | --- |
 | `UNKNOWN` | Not checked in this view. Nothing is stored or monitored. |
-| `REACHABLE` | `GET /` on the primary domain answered 2xx/3xx. |
-| `UNREACHABLE` | No answer, 4xx/5xx, or the domain was refused (below). |
+| `REACHABLE` | `GET /` on the primary domain answered 2xx. |
+| `UNREACHABLE` | No answer, redirect, 4xx/5xx, or the domain was refused (below). |
 
-The same check also calls `/api/website/venue` through the domain
-and reports the backend as `OK` (answers for this Venue), `WRONG_SITE`,
-`FAILED` (for example `/api` not proxied) or `NOT_CHECKED`.
+The check also reads `/api/website/venue` and `/vynic-site-manifest.json`.
+Stable public Venue identity replaces name comparison; renderer/app key, reviewed
+build fingerprint and served HTML digest are checked separately. Older servers
+without identity are `UNVERIFIED`; missing/unrecorded manifests cannot verify a
+build. Commercial/domain/renderer/binding/publication evidence is displayed
+separately and stale observations are refused. Status remains operator tracking;
+SETUP_PENDING/ERROR public serving behavior is unchanged. Full contract, local
+candidate proof and production limits: [WEB05_BUILD_IDENTITY.md](WEB05_BUILD_IDENTITY.md).
 
 Safety (`website/custom/custom-website-runtime.ts`): the only destination is a
 server-owned ACTIVE `VenueDomain` of the Venue (the primary one, or its
@@ -174,8 +181,9 @@ The name is resolved once and every address must be public unicast (private,
 loopback, link-local, CGNAT, multicast, documentation, NAT64, IPv4-mapped
 private all refused), and the connection is pinned to the checked address
 (no rebinding). IP-literal domains are never contacted, redirects are not
-followed, answers are capped at 64 KB, 5 s timeout, one check per Venue per
-5 s, SUPER_ADMIN/operator only (SUPPORT_READONLY cannot trigger it). Production
+followed, all answer bodies are capped at 64 KB, partial responses fail, each
+request has a 5 s absolute deadline, and one in-flight check per Venue/service
+instance plus a 5 s interval is allowed, SUPER_ADMIN/operator only (SUPPORT_READONLY cannot trigger it). Production
 always uses `https://<primary domain>/` with the public-address rules above.
 A reachable frontend does not prove the right build is deployed: only
 frontends on the shared client refuse a mismatched `site.key`.
@@ -361,9 +369,10 @@ WEBSITE exactly as for SAAS (public API 403, owner website settings refused).
 
 - Page text/design for CUSTOM stays in each bespoke frontend by design.
 - Service fee (10%) and GEL are hardcoded in `BogService`.
-- `siteKey` for Vankisi must be recorded by an operator (`vankisi-web`, see
-  §3). `apps/vankisi-custom-web` does not check it (unchanged on purpose), so
-  misattachment detection covers only frontends built on the shared client.
+- Vankisi validates `vankisi-web` for supported shared information; the
+  operator checker also compares its emitted manifest/reviewed build and stable
+  Venue identity. This is not a new global public launch gate. Production host
+  and complete functional acceptance remain separate release checks.
 - No deployment automation, DNS/TLS automation or monitoring: status is an
   operator attestation and availability is an on-demand check that is not
   stored (no history or alerts).

@@ -1,0 +1,27 @@
+{
+  "candidateSourceManifest": "db74149c4680d05e16a3a1f53906b269bf76be3d1d71e78796119633d15ff51a",
+  "baseCommit": "275688e1e5c5dc0e26e62705ab0c7670cf16d99a",
+  "productSourceZipSha256": "0bf6dd5beeb9f4ff9533aea5babaae03f27790f56471099a1184cf6e27994db7",
+  "productSourceFiles": 550,
+  "nativePreparationChangedFiles": [
+    "apps/operations/lib/main.dart",
+    "apps/operations/macos/Runner/Configs/AppInfo.xcconfig",
+    "apps/operations/product-identity.json",
+    "apps/operations/pubspec.yaml",
+    "apps/operations/windows/CMakeLists.txt",
+    "apps/operations/windows/runner/Runner.rc",
+    "apps/operations/windows/runner/main.cpp"
+  ],
+  "deletedSeed": "apps/operations/data/menu.json",
+  "entrypoint": "lib/main_pos.dart",
+  "publishedProductReceipt": {
+    "product": "vynic-pos",
+    "version": "1.0.14",
+    "sourceSha256": "0bf6dd5beeb9f4ff9533aea5babaae03f27790f56471099a1184cf6e27994db7",
+    "environment": "development",
+    "apiOrigin": "http://10.10.10.3:3000"
+  },
+  "version": "1.0.14",
+  "release": 15,
+  "lockSha256": "3ad3d0f334fc95207c1536158db1f5a60239a55e955ffa63388fe157ab277f7e"
+}

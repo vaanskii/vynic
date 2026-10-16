@@ -1,3 +1,4 @@
+import { CustomerWebsitePaymentReviewsController } from './customer-website-payment-reviews.controller';
 import { MenuClientGuard } from '../menu-catalog/menu-client.guard';
 import { MenuRolloutService } from '../menu-catalog/menu-rollout.service';
 import {
@@ -71,6 +72,7 @@ import {
     EdgeDeviceGuard,
   ],
   controllers: [
+    CustomerWebsitePaymentReviewsController,
     PublicAccessRequestsController,
     PlatformAccessRequestsController,
     CustomerTrialRequestsController,

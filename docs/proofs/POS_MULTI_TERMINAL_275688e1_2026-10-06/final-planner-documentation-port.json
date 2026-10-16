@@ -1,0 +1,39 @@
+{
+  "plannerFiles": [
+    {
+      "path": "apps/operations/lib/core/services/edge/operational_proof/planning_view.dart",
+      "beforeSha256": null,
+      "candidateSha256": "38973bfff6f373abfa575be72c0d1af962ef8c6040c6d5134f92c9052872fe17"
+    },
+    {
+      "path": "apps/operations/lib/core/services/edge/operational_proof/intent_adapter.dart",
+      "beforeSha256": null,
+      "candidateSha256": "143e73f8606289f399431682f338ee898eb0f6f1afaf941a9310c4cf012f76e5"
+    },
+    {
+      "path": "apps/operations/lib/core/services/edge/operational_proof/ordinary_planner.dart",
+      "beforeSha256": null,
+      "candidateSha256": "2b63ba76ff9864e1c92099e7e62a863a7426552d3d4b3d8019e81f5cadd1875f"
+    },
+    {
+      "path": "apps/operations/lib/core/database/repositories/order_table_mutation_repository.dart",
+      "beforeSha256": "fd9f64eb578b9b5e6fc55f45cbfaebb4be2d94447bc87d2342b821f967072020",
+      "candidateSha256": "9939c54d5b6b9fc927f35ddac94548925d90fab47dea7e0446700b72ecd87a17"
+    },
+    {
+      "path": "apps/operations/test/unit/operational_ordinary_planner_test.dart",
+      "beforeSha256": null,
+      "candidateSha256": "bed0e69dc31b0ea4070c66c7de9f37a7ead2fc1bd716776f8b0d702f28fa172b"
+    }
+  ],
+  "documentationFiles": [
+    "docs/POS_MULTI_TERMINAL_READINESS_PLAN.md",
+    "docs/agent-state/VYNIC_PROJECT_STATE.md",
+    "docs/agent-state/VYNIC_CODE_MAP.md",
+    "docs/POS_MULTI_TERMINAL_WRITER_COVERAGE.md"
+  ],
+  "sourceVerification": "483 tests/32 suites; 48 analysis/format; 627 watched sources unchanged",
+  "independentReview": "NO_REMAINING_P1_P2_WITHIN_DETACHED_ISOLATED_SCOPE",
+  "productionAttached": false,
+  "milestoneDone": false
+}

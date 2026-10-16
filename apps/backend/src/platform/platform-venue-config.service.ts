@@ -1,8 +1,18 @@
 import {
-  isSaasNamespace,
   lockHostnames,
   releaseSaasIdentity,
+  saasHostname,
 } from '../website/provisioning/hostname';
+import {
+  assertPlatformHostnameAvailable,
+  platformHostname,
+  platformSaasLabel,
+} from './platform-domain-hostname';
+import {
+  emptyWebsiteContent,
+  readWebsiteContent,
+  websiteSlug,
+} from '../website/core/website-content';
 import {
   commercialState,
   requireCommercialFeature,
@@ -205,6 +215,11 @@ export class PlatformVenueConfigService {
         this.entitlements.websiteAccess(venueId),
       ]);
 
+    const provisioning = await this.prisma.venueWebsiteConfig.findUnique({
+      where: { venueId },
+      select: { status: true, assignedSlug: true, publishedAt: true },
+    });
+    const websiteBase = normalizeHostname(process.env.SAAS_WEBSITE_BASE_DOMAIN);
     return {
       venueId,
       commercialStatus:
@@ -232,10 +247,13 @@ export class PlatformVenueConfigService {
       commercialAccess: await this.entitlements.commercialAccess(venueId),
       website: {
         ...website,
-        provisioning: await this.prisma.venueWebsiteConfig.findUnique({
-          where: { venueId },
-          select: { status: true, assignedSlug: true, publishedAt: true },
-        }),
+        hostname:
+          website.configuredMode === 'SAAS' &&
+          provisioning?.assignedSlug &&
+          websiteBase
+            ? `${provisioning.assignedSlug}.${websiteBase}`
+            : null,
+        provisioning,
       },
     };
   }
@@ -433,22 +451,14 @@ export class PlatformVenueConfigService {
   ) {
     await this.directory.requireVenue(venueId);
     await requireCommercialFeature(this.prisma, venueId, 'WEBSITE');
-    const hostname = normalizeHostname(rawHostname);
-    if (!hostname) {
-      throw new BadRequestException('hostname is not a valid host');
-    }
-    // One SaaS binding per Venue: provisioning assigns it and only an
-    // approved hostname request moves it. Operators register custom domains.
-    if (isSaasNamespace(hostname))
-      throw new BadRequestException(
-        'SaaS website addresses are assigned by provisioning and changed through hostname review',
-      );
+    const hostname = platformHostname(rawHostname);
 
     try {
       return await this.prisma.$transaction(async (tx) => {
         await tx.$queryRaw`SELECT "id" FROM "pos"."Venue" WHERE "id"=${venueId} FOR UPDATE`;
         await requireCommercialFeature(tx, venueId, 'WEBSITE');
         await lockHostnames(tx);
+        await assertPlatformHostnameAvailable(tx, venueId, hostname);
         const domain = await tx.venueDomain.create({
           data: { venueId, hostname },
           select: DOMAIN_FIELDS,
@@ -475,6 +485,123 @@ export class PlatformVenueConfigService {
           `${hostname} is already registered to a venue`,
         );
       }
+      throw error;
+    }
+  }
+
+  /** Platform-only rename. Keep domain identity/status and move SaaS mirrors atomically. */
+  async renameDomain(
+    actor: PlatformPrincipal,
+    venueId: string,
+    domainId: string,
+    rawHostname: string,
+    expectedHostname: string,
+    reason: string,
+  ) {
+    const hostname = platformHostname(rawHostname);
+    try {
+      return await this.prisma.$transaction(async (tx) => {
+        await tx.$queryRaw`SELECT "id" FROM "pos"."Venue" WHERE "id"=${venueId} FOR UPDATE`;
+        await requireCommercialFeature(tx, venueId, 'WEBSITE');
+        await tx.$queryRaw`SELECT "venueId" FROM "pos"."VenueWebsiteConfig" WHERE "venueId"=${venueId} FOR UPDATE`;
+        await lockHostnames(tx);
+        const existing = await tx.venueDomain.findFirst({
+          where: { id: domainId, venueId },
+          select: DOMAIN_FIELDS,
+        });
+        if (!existing)
+          throw new NotFoundException('Domain not found for this venue');
+        // The target already held by this stable domain is also a lost-response retry.
+        if (existing.hostname === hostname) return existing;
+        if (existing.hostname !== normalizeHostname(expectedHostname))
+          throw new ConflictException(
+            'Hostname changed. Refresh before editing.',
+          );
+        await assertPlatformHostnameAvailable(tx, venueId, hostname);
+        const config = await tx.venueWebsiteConfig.findUnique({
+          where: { venueId },
+        });
+        const assigned = config?.assignedSlug
+          ? existing.hostname === saasHostname(config.assignedSlug)
+          : false;
+        if (assigned && config?.mode === 'SAAS') {
+          const label = platformSaasLabel(hostname);
+          if (!label)
+            throw new BadRequestException(
+              'The assigned SaaS address needs a Vynic subdomain. Register an external domain separately.',
+            );
+          const slug = websiteSlug(label);
+          await tx.venueWebsiteConfig.update({
+            where: { venueId },
+            data: {
+              assignedSlug: slug,
+              ...(config.published ? { slug } : {}),
+              draft: {
+                ...(config.draft
+                  ? readWebsiteContent(config.draft)
+                  : emptyWebsiteContent),
+                slug,
+              },
+              ...(config.published
+                ? {
+                    published: {
+                      ...readWebsiteContent(config.published),
+                      slug,
+                    },
+                  }
+                : {}),
+              revision: { increment: 1 },
+              ...(config.publishedRevision === config.revision
+                ? { publishedRevision: config.revision + 1 }
+                : {}),
+            },
+          });
+          await tx.websiteHostnameRequest.updateMany({
+            where: { venueId, status: 'PENDING' },
+            data: {
+              status: 'REJECTED',
+              reviewedBy: actor.platformUserId,
+              reviewedAt: new Date(),
+              reason: 'Closed by Platform Admin hostname change',
+            },
+          });
+        } else if (assigned) {
+          // A former SAAS identity retained after switching to CUSTOM must not reserve the old name.
+          await releaseSaasIdentity(tx, venueId, existing.hostname, {
+            platformUserId: actor.platformUserId,
+            source: 'PLATFORM',
+          });
+        }
+        const domain = await tx.venueDomain.update({
+          where: { id: domainId },
+          data: { hostname },
+          select: DOMAIN_FIELDS,
+        });
+        await tx.platformAuditEvent.create({
+          data: {
+            platformUserId: actor.platformUserId,
+            action: 'venue.domain_hostname_changed',
+            targetType: 'Venue',
+            targetId: venueId,
+            metadata: {
+              domainId,
+              from: existing.hostname,
+              to: hostname,
+              reason,
+              assignedSaasAddress: assigned && config?.mode === 'SAAS',
+            },
+          },
+        });
+        return domain;
+      });
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2002'
+      )
+        throw new ConflictException(
+          `${hostname} is already assigned to a venue`,
+        );
       throw error;
     }
   }
@@ -522,23 +649,32 @@ export class PlatformVenueConfigService {
     venueId: string,
     domainId: string,
   ) {
-    const existing = await this.requireDomain(venueId, domainId);
-    await this.prisma.$transaction(async (tx) => {
+    const released = await this.prisma.$transaction(async (tx) => {
       await tx.$queryRaw`SELECT "id" FROM "pos"."Venue" WHERE "id"=${venueId} FOR UPDATE`;
+      await lockHostnames(tx);
+      const existing = await tx.venueDomain.findFirst({
+        where: { id: domainId, venueId },
+      });
+      if (!existing)
+        throw new NotFoundException('Domain not found for this venue');
       await tx.venueDomain.delete({ where: { id: domainId } });
       // Releasing the SaaS binding also frees the name it reserved.
       await releaseSaasIdentity(tx, venueId, existing.hostname, {
         platformUserId: actor.platformUserId,
         source: 'PLATFORM',
       });
+      await tx.platformAuditEvent.create({
+        data: {
+          platformUserId: actor.platformUserId,
+          action: PlatformAuditAction.DOMAIN_RELEASED,
+          targetType: 'Venue',
+          targetId: venueId,
+          metadata: { hostname: existing.hostname },
+        },
+      });
+      return existing;
     });
-    await this.audit.record(
-      actor,
-      PlatformAuditAction.DOMAIN_RELEASED,
-      { type: 'Venue', id: venueId },
-      { hostname: existing.hostname },
-    );
-    return { released: existing.hostname };
+    return { released: released.hostname };
   }
 
   private async requireFeature(featureKey: string) {
@@ -549,18 +685,5 @@ export class PlatformVenueConfigService {
     if (!feature)
       throw new NotFoundException(`Feature ${featureKey} not found`);
     return feature;
-  }
-
-  private async requireDomain(venueId: string, domainId: string) {
-    const domain = await this.prisma.venueDomain.findUnique({
-      where: { id: domainId },
-      select: DOMAIN_FIELDS,
-    });
-    // Reported as missing rather than forbidden: a domain of another Venue is
-    // not this Venue's business to know about.
-    if (!domain || domain.venueId !== venueId) {
-      throw new NotFoundException('Domain not found for this venue');
-    }
-    return domain;
   }
 }

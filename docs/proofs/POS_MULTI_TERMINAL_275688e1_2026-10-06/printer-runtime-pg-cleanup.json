@@ -1,0 +1,12 @@
+{
+  "fixtureContainerId": "2184f126e925dc20297007eb4b8fa24eab2755a259e4cc09fe072b79e954723c",
+  "fixtureContainerName": "vynic-readiness-20261006-pg",
+  "proofReceiptsSaved": true,
+  "stoppedAfterProof": true,
+  "autoRemoved": true,
+  "finalInventoryContainsFixture": false,
+  "existingServicesCount": 6,
+  "existingServicesUntouched": true,
+  "publishedPorts": [],
+  "network": "none"
+}

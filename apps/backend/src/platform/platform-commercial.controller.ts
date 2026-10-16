@@ -73,6 +73,12 @@ export class PlatformCommercialController {
   @Get('venues/:venueId/managers') managers(@Param('venueId') id: string) {
     return this.service.managers(requireUuid(id, 'venueId'));
   }
+  @Post('venues/:venueId/manager-activation') activation(
+    @PlatformActor() actor: PlatformPrincipal,
+    @Param('venueId') id: string,
+  ) {
+    return this.service.activation(actor, requireUuid(id, 'venueId'));
+  }
   @Post('venues/:venueId/managers') create(
     @PlatformActor() actor: PlatformPrincipal,
     @Param('venueId') id: string,

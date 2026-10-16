@@ -44,6 +44,7 @@ export function SubscriptionPanel({
   const [end, setEnd] = useState("");
   const [reason, setReason] = useState("");
   const [reference, setReference] = useState("");
+  const [gift, setGift] = useState(false);
   const [override, setOverride] = useState("");
   const [quote, setQuote] = useState<BillingQuote | null>(null);
   const [confirm, setConfirm] = useState(false);
@@ -92,6 +93,7 @@ export function SubscriptionPanel({
               websiteMode:
                 assignsWebsite && websiteMode ? websiteMode : undefined,
               trialEndsAt: end ? new Date(end).toISOString() : undefined,
+              complimentary: action === "GRANT_ACTIVE" && gift,
               reason,
               classification: override,
               confirm: true,
@@ -101,6 +103,7 @@ export function SubscriptionPanel({
       setAction("");
       setQuote(null);
       setReference("");
+      setGift(false);
       setFeedback("Commercial access updated.");
       await refresh();
     },
@@ -122,26 +125,38 @@ export function SubscriptionPanel({
     ? ` Website: ${websiteMode === "CUSTOM" ? "custom, operator-managed" : websiteMode === "SAAS" ? "Vynic SaaS" : "keep current implementation"}.`
     : "";
   const current = sub?.assignment;
+  const serverNow = sub?.serverTime
+    ? new Date(sub.serverTime).getTime()
+    : subscription.dataUpdatedAt;
+  const trialSuspended =
+    sub?.status === "SUSPENDED" && sub.suspendedFrom === "TRIAL";
+  const trialExpired =
+    trialSuspended &&
+    (!sub.trialEndsAt || new Date(sub.trialEndsAt).getTime() <= serverNow);
   const currentMode = product.data?.website.configuredMode;
   const summary = quote
     ? quote.kind === "SCHEDULE_CHANGE"
       ? `${quote.planName} starts ${day(quote.effectiveAt)}. Current features remain until then. Renewal: ${money(quote.priceMinor, quote.currency)} / ${quote.billingPeriod.toLowerCase()}.`
       : `Confirm externally verified payment of ${money(quote.amountMinor, quote.currency)} for ${quote.planName}. ${quote.kind === "UPGRADE" ? `Renewal stays ${day(sub?.currentPeriodEndsAt)}.` : "The paid period begins on successful activation."}`
-    : ["TRIAL", "EXTEND_TRIAL"].includes(action)
-      ? `${selected?.name ?? current?.plan.name ?? "Selected plan"} Trial until ${day(end)}. Trial features are available immediately.${websiteSummary}`
-      : action === "GRANT_ACTIVE"
-        ? `Activate ${selected?.name ?? "selected plan"} now at ${money(selected?.priceMinor, selected?.currency)} per ${selected?.billingPeriod?.toLowerCase()}. This records a manual agreement, not a card payment.${websiteSummary}`
-        : ["CANCEL_NOW", "END_TRIAL"].includes(action)
-          ? "All commercial access ends now. Restaurant data and history are retained."
-          : action === "SUSPEND"
-            ? "Commercial access stops now. Local POS safe completion and settlement remain available."
-            : action === "SCHEDULE_CHANGE"
-              ? `${selected?.name ?? "Selected plan"} starts ${day(sub?.currentPeriodEndsAt)}. Current features remain until renewal.`
-              : action === "SCHEDULE_CANCEL"
-                ? `Access remains until ${day(sub?.currentPeriodEndsAt)}. No next renewal payment is due.`
-                : action === "RESUME"
-                  ? "Restore the current agreement only if its dates remain valid."
-                  : "Remove the scheduled change and keep the current agreement.";
+    : action === "EXTEND_TRIAL" && trialExpired
+      ? `Reactivate the expired ${current?.plan.name ?? ""} Trial until ${day(end)}. Trial features are available again immediately.`
+      : ["TRIAL", "EXTEND_TRIAL"].includes(action)
+        ? `${selected?.name ?? current?.plan.name ?? "Selected plan"} Trial until ${day(end)}. Trial features are available immediately.${websiteSummary}`
+        : action === "GRANT_ACTIVE" && gift
+          ? `Gift ${selected?.name ?? "selected plan"} for one ${selected?.billingPeriod?.toLowerCase() ?? "billing period"} at no charge. No payment is recorded. Afterwards renewal at ${money(selected?.priceMinor, selected?.currency)} per ${selected?.billingPeriod?.toLowerCase()} is due.${websiteSummary}`
+          : action === "GRANT_ACTIVE"
+            ? `Activate ${selected?.name ?? "selected plan"} now at ${money(selected?.priceMinor, selected?.currency)} per ${selected?.billingPeriod?.toLowerCase()}. This records a manual agreement, not a card payment.${websiteSummary}`
+            : ["CANCEL_NOW", "END_TRIAL"].includes(action)
+              ? "All commercial access ends now. Restaurant data and history are retained."
+              : action === "SUSPEND"
+                ? "Commercial access stops now. Local POS safe completion and settlement remain available."
+                : action === "SCHEDULE_CHANGE"
+                  ? `${selected?.name ?? "Selected plan"} starts ${day(sub?.currentPeriodEndsAt)}. Current features remain until renewal.`
+                  : action === "SCHEDULE_CANCEL"
+                    ? `Access remains until ${day(sub?.currentPeriodEndsAt)}. No next renewal payment is due.`
+                    : action === "RESUME"
+                      ? "Restore the current agreement only if its dates remain valid."
+                      : "Remove the scheduled change and keep the current agreement.";
   const needsPlan = [
     "TRIAL",
     "GRANT_ACTIVE",
@@ -165,25 +180,22 @@ export function SubscriptionPanel({
       <StatusBadge value={sub?.status ?? "NO_PLAN"} />
       <h3>{current?.plan.name ?? "No package assigned"}</h3>
       <dl className="platform-subscription-facts">
-        {sub?.status === "TRIAL" ? (
+        {sub?.status === "TRIAL" || trialSuspended ? (
           <>
             <div>
               <dt>Trial started</dt>
               <dd>{day(sub.startedAt)}</dd>
             </div>
             <div>
-              <dt>Trial ends</dt>
+              <dt>{trialExpired ? "Trial ended" : "Trial ends"}</dt>
               <dd>{day(sub.trialEndsAt)}</dd>
             </div>
             <div>
-              <dt>Remaining</dt>
+              <dt>{trialSuspended ? "Suspended since" : "Remaining"}</dt>
               <dd>
-                {remaining(
-                  sub.trialEndsAt,
-                  sub.serverTime
-                    ? new Date(sub.serverTime).getTime()
-                    : subscription.dataUpdatedAt,
-                )}
+                {trialSuspended
+                  ? day(sub.suspendedAt)
+                  : remaining(sub.trialEndsAt, serverNow)}
               </dd>
             </div>
           </>
@@ -196,6 +208,12 @@ export function SubscriptionPanel({
                 {current?.agreedBillingPeriod ?? "—"}
               </dd>
             </div>
+            {sub?.paymentState === "COMPLIMENTARY" && (
+              <div>
+                <dt>Current period</dt>
+                <dd>Gift, no charge</dd>
+              </div>
+            )}
             <div>
               <dt>Current period starts</dt>
               <dd>{day(sub?.currentPeriodStart)}</dd>
@@ -262,8 +280,8 @@ export function SubscriptionPanel({
                 if (["TRIAL", "EXTEND_TRIAL"].includes(next)) {
                   const date = new Date(
                     next === "EXTEND_TRIAL" && sub?.trialEndsAt
-                      ? sub.trialEndsAt
-                      : subscription.dataUpdatedAt,
+                      ? Math.max(new Date(sub.trialEndsAt).getTime(), serverNow)
+                      : serverNow,
                   );
                   date.setDate(
                     date.getDate() + (next === "EXTEND_TRIAL" ? 7 : 14),
@@ -283,6 +301,7 @@ export function SubscriptionPanel({
               {commercialActions(
                 sub?.status ?? "NO_PLAN",
                 !!sub?.billingManaged,
+                { from: sub?.suspendedFrom, trialExpired },
               ).map(([value, label]) => (
                 <option key={value} value={value}>
                   {label}
@@ -333,6 +352,16 @@ export function SubscriptionPanel({
               value={websiteMode}
               onChange={setWebsiteMode}
             />
+          )}
+          {action === "GRANT_ACTIVE" && (
+            <label className="platform-feature-row">
+              <input
+                type="checkbox"
+                checked={gift}
+                onChange={(e) => setGift(e.target.checked)}
+              />
+              Gift this period (no payment received)
+            </label>
           )}
           {["TRIAL", "EXTEND_TRIAL"].includes(action) && (
             <Field label="Trial end date and time (local timezone)">

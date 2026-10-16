@@ -1,3 +1,4 @@
+import 'package:vynic/core/ui/widgets/pos_dialog.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -340,7 +341,7 @@ class _AdminDeveloperSectionState extends State<AdminDeveloperSection> {
 
   Future<void> _resetPin(String username) async {
     final controller = TextEditingController();
-    final newPin = await showDialog<String>(
+    final newPin = await showPosModal<String>(
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: AdminDesign.panel,
@@ -517,7 +518,7 @@ class _AdminDeveloperSectionState extends State<AdminDeveloperSection> {
     required bool danger,
   }) async {
     final controller = TextEditingController();
-    final result = await showDialog<bool>(
+    final result = await showPosModal<bool>(
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setLocalState) {

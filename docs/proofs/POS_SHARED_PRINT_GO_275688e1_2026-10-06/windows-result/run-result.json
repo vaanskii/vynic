@@ -1,0 +1,15 @@
+﻿{
+    "status":  "FAILED",
+    "failure":  "helper-build failed with exit 1",
+    "guestBase":  "C:\\Users\\vaanskii\\AppData\\Local\\VynicReadinessGoHelpers\\237deec3-root-20261006",
+    "guestArchitecture":  "ARM64",
+    "sourceZipSHA256":  "de3a827b1ec45556a027af1359dec780e917a63ec3977f42bcfe979d80889b6e",
+    "printJobsBefore":  0,
+    "printJobsAfter":  0,
+    "documentsSubmitted":  0,
+    "sourceOnly":  true,
+    "serviceRegistration":  false,
+    "driverInstall":  false,
+    "productStarted":  false,
+    "machineRestarted":  false
+}

@@ -33,6 +33,16 @@ export function readSiteKey(value: unknown): string | null {
   return value.trim();
 }
 
+/** Public artifact SHA-256, not an authentication secret or security setting. */
+export function readBuildId(value: unknown): string | null {
+  if (value === null || value === '') return null;
+  if (typeof value !== 'string' || !/^[a-f0-9]{64}$/.test(value.trim()))
+    throw new BadRequestException(
+      'expectedBuildId must be a public build SHA-256 fingerprint',
+    );
+  return value.trim();
+}
+
 export const CUSTOM_WEBSITE_STATUSES = [
   CustomWebsiteStatus.SETUP_PENDING,
   CustomWebsiteStatus.READY,

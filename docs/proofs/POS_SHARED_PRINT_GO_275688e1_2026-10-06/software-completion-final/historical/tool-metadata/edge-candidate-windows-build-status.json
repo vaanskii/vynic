@@ -1,0 +1,1 @@
+{"exitCode": 0, "command": "GOOS=windows GOARCH=amd64 CGO_ENABLED=0 GOPROXY=off go build -mod=readonly ./...", "source": "security-candidate/apps/edge", "hardwareExecution": false}

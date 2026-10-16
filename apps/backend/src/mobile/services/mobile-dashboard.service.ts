@@ -76,6 +76,14 @@ export interface StaffRankEntry {
 }
 
 export interface FinancialsResponse {
+  metricDefinitions?: {
+    revenue: string;
+    collected: string;
+    outflows: string;
+    difference: string;
+    realizedProfitAvailable: false;
+    completeCashflowAvailable: false;
+  };
   procurement: Awaited<ReturnType<typeof procurementSummary>>;
   otherExpenses: string;
   salaryPayments: string;
@@ -568,6 +576,14 @@ export class MobileDashboardService {
 
     return {
       procurement,
+      metricDefinitions: {
+        revenue: 'FISCAL_SALE_VALUE_INCLUDING_APPLIED_ADVANCE',
+        collected: 'SALE_CLOSE_PAYMENTS_EXCLUDING_APPLIED_ADVANCE',
+        outflows: 'RECORDED_EXPENSES_AND_SUPPLIER_PAYROLL_OBLIGATION_PAYMENTS',
+        difference: 'REVENUE_MINUS_RECORDED_OUTFLOWS',
+        realizedProfitAvailable: false,
+        completeCashflowAvailable: false,
+      },
       otherExpenses: otherExpenses.toFixed(2),
       salaryPayments: salaryPayments.toFixed(2),
       legacySalaryPayments: legacySalaryPayments.toFixed(2),

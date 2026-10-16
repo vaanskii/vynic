@@ -317,12 +317,12 @@ void main() {
     );
     await tester.pumpAndSettle();
     expect(find.text('გასაყიდი ფასი: 2.50 ₾'), findsOneWidget);
-    expect(find.text('მიმდინარე თვითღირებულება: 0.65 ₾'), findsOneWidget);
+    expect(find.text('რეცეპტის მიმდინარე შეფასება: 0.65 ₾'), findsOneWidget);
     await tester.ensureVisible(
-      find.text('შენახული შემადგენლობით · საშუალო შესყიდვის ფასი'),
+      find.text('შენახული შემადგენლობით · მიმდინარე მარაგის ფასი'),
     );
     await tester.tap(
-      find.text('შენახული შემადგენლობით · საშუალო შესყიდვის ფასი'),
+      find.text('შენახული შემადგენლობით · მიმდინარე მარაგის ფასი'),
     );
     await tester.pumpAndSettle();
     expect(find.textContaining('0.6475 ₾'), findsOneWidget);
@@ -342,11 +342,11 @@ void main() {
       ),
     );
     expect(
-      find.text('მიმდინარე თვითღირებულება: ვერ გამოითვლება'),
+      find.text('რეცეპტის მიმდინარე შეფასება: ვერ გამოითვლება'),
       findsOneWidget,
     );
     expect(
-      find.text('ზოგი ინგრედიენტის შესყიდვის ფასი ჯერ არ გვაქვს.'),
+      find.text('ზოგი ინგრედიენტის ღირებულება უცნობია ან წინასწარია.'),
       findsOneWidget,
     );
     expect(find.textContaining('0.00'), findsNothing);

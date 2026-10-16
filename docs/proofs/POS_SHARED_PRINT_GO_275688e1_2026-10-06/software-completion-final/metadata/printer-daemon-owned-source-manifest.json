@@ -1,0 +1,118 @@
+{
+  "schemaVersion": 1,
+  "scope": "printer-daemon-software-held",
+  "sourceRoot": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/source",
+  "files": [
+    {
+      "path": "apps/edge/internal/printerdaemon/client_profile.go",
+      "bytes": 5344,
+      "sha256": "b993cbce9db3ae27a3a79a57e6dc22dac32d0d9a776b3fc42c0a71f0e9e7e07b"
+    },
+    {
+      "path": "apps/edge/internal/printerdaemon/config.go",
+      "bytes": 15049,
+      "sha256": "281cbabc9becc94e2e5d883e36280b728cc2510fbd3e7ab2af6486556b4b7b14"
+    },
+    {
+      "path": "apps/edge/internal/printerdaemon/config_test.go",
+      "bytes": 9447,
+      "sha256": "be77e7a6def6ede1bc5590d68e93ae42ea26a1d76b33e34cdbd172f0917874f4"
+    },
+    {
+      "path": "apps/edge/internal/printerdaemon/daemon.go",
+      "bytes": 9502,
+      "sha256": "616eda189fa0f3fadeb5f1e2749bb5242dbd554b65f98bdd29b25f5028851e43"
+    },
+    {
+      "path": "apps/edge/internal/printerdaemon/daemon_test.go",
+      "bytes": 15315,
+      "sha256": "a923c379e554b55ba9553cc9bc89cdfd0055ab891164acfc9379632f53f18906"
+    },
+    {
+      "path": "apps/edge/internal/printerdaemon/fixture_test.go",
+      "bytes": 11541,
+      "sha256": "1c5cf0fd4ce2e3afcbd87befe346e0172adf829e077119c4195043fd337ef500"
+    },
+    {
+      "path": "apps/edge/internal/printerdaemon/installer.go",
+      "bytes": 17172,
+      "sha256": "a61572274bdebd58ac22476409cf42fae43bee539bd9b0eddb9b4ab995f9e080"
+    },
+    {
+      "path": "apps/edge/internal/printerdaemon/installer_other.go",
+      "bytes": 808,
+      "sha256": "a5e715a3c6fb056b099f6cd072a826b33d6c2f6a9057c440e9f2361949cf1e66"
+    },
+    {
+      "path": "apps/edge/internal/printerdaemon/installer_test.go",
+      "bytes": 12720,
+      "sha256": "a1d871ba121ab285c57fa343b8e5b4bfaab8aef2b5d28011403cdfa7c8c2160b"
+    },
+    {
+      "path": "apps/edge/internal/printerdaemon/installer_windows.go",
+      "bytes": 3011,
+      "sha256": "88b37f94d22b147242d2f0379b3166d4097c51532e59671065e3ae05dbdc7345"
+    },
+    {
+      "path": "apps/edge/internal/printerdaemon/path.go",
+      "bytes": 1138,
+      "sha256": "1a51d772bbea79d2d080385444e6e9bb86e6a002203be699e1623a55a7240a40"
+    },
+    {
+      "path": "apps/edge/internal/printerdaemon/path_other.go",
+      "bytes": 147,
+      "sha256": "4484b0d4e78e104053583b0f423469916538ab4b753b19630dc61f1dc36f8864"
+    },
+    {
+      "path": "apps/edge/internal/printerdaemon/path_windows.go",
+      "bytes": 732,
+      "sha256": "c0985e8f32b5e81c863b324dcb962637ca097f283888f36336633843c0d3a755"
+    },
+    {
+      "path": "apps/edge/internal/printerdaemon/process_test.go",
+      "bytes": 8396,
+      "sha256": "226b604bac6fc8015b38dcf2e673201d8ea798de818029603c3e71601f909e2e"
+    },
+    {
+      "path": "apps/edge/cmd/printer-agent/main.go",
+      "bytes": 5410,
+      "sha256": "6ab8af8a404cb2836a99743a61e9ed86cd1aca789f56451fad9079be2e980d15"
+    },
+    {
+      "path": "apps/edge/cmd/printer-agent/main_test.go",
+      "bytes": 5406,
+      "sha256": "3079dfd644659e1b8e364e7e4cf407ab76f24ec10a0b11d0dd832ab49fc82f5a"
+    },
+    {
+      "path": "apps/edge/cmd/printer-agent/packaging.go",
+      "bytes": 2599,
+      "sha256": "b141697266b252f805774a4845b94a16481de2f30404a0b74f037e7547159dbd"
+    },
+    {
+      "path": "apps/edge/cmd/printer-agent/service_other.go",
+      "bytes": 282,
+      "sha256": "0198be875b43749d945e1ec870b95e3c38ab62563cdd8e1ae2306ea1a8d34f01"
+    },
+    {
+      "path": "apps/edge/cmd/printer-agent/service_windows.go",
+      "bytes": 726,
+      "sha256": "38ff232767e2132e3529ab8881fa75a28cb60cbcefbbc9fa01ed2490d75c3866"
+    },
+    {
+      "path": "apps/edge/packaging/windows/printer-agent/INSTALLATION_PLAN.md",
+      "bytes": 6036,
+      "sha256": "c2f4ac157caff4ba3fc0825c72185d602df6e49c3575e34c9b1d0a6aa6589e13"
+    },
+    {
+      "path": "apps/edge/packaging/windows/printer-agent/build-bundle.py",
+      "bytes": 737,
+      "sha256": "15c6472bbd5c7a9287ad20a8e93fe93457c7c5ead85b82a19629d587bdf73c8d"
+    }
+  ],
+  "sourceOnlyBoundaries": [
+    "no original checkout or frozen prior packet changes",
+    "physical and mutating admission permanently held",
+    "no SCM registration/account/ACL/firewall/credential/driver/physical operation",
+    "shared profile infrastructure only; production Raft/Device-origin/cutover bridge pending"
+  ]
+}

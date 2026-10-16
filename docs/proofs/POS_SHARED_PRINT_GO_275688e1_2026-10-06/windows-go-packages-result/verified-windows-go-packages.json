@@ -1,0 +1,5130 @@
+{
+  "schema": 1,
+  "createdAtUtc": "2026-10-06T16:34:28.737037+00:00",
+  "status": "passed",
+  "cohort": "Frozen V2 163-file source snapshot, seven cached amd64 executables on native Windows VM; future software-completion source excluded",
+  "guestReceipt": {
+    "path": "/Users/vaanskii/Developer/vynic/docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/windows-go-packages-result/windows-go-packages.json",
+    "bytes": 9418,
+    "sha256": "a0278f15814e55d1f86926d5c4bea7ef629aea4ed005f8095efecf5edc72d922"
+  },
+  "stageReceipt": {
+    "path": "/Users/vaanskii/Developer/vynic/docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/windows-go-packages-stage/stage-receipt.json",
+    "bytes": 2476,
+    "sha256": "6df33960c0f019889995f69bcd327e5288e73c662cf59e98db81c91a55680f3f"
+  },
+  "compilerReceipt": {
+    "path": "/Users/vaanskii/Developer/vynic/docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/windows-go-packages-stage/go-final-windows-package-tests.json",
+    "bytes": 9931,
+    "sha256": "57441bd7550ab4e0056ce34b36579ca56222ee5e58588bce9a7552963c79a404"
+  },
+  "sourceReceipt": {
+    "path": "/Users/vaanskii/Developer/vynic/docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/windows-go-packages-stage/go-final-source-snapshot.json",
+    "bytes": 27289,
+    "sha256": "d694adbe1410f005d6285396f81a7126cdc7b9fb9f44b08a01f7f3c5e523330a"
+  },
+  "sourceSnapshotHostAfterUnchanged": true,
+  "sourceFiles": 163,
+  "packages": {
+    "store": {
+      "status": "passed",
+      "exitCode": 0,
+      "elapsedMs": 5124,
+      "testBinary": "f88b9b38eaa3c71241b3176646de8216547a35895817ab28c6a7aed42686bf1c",
+      "workingDirectory": "C:\\Users\\vaanskii\\AppData\\Local\\VynicReadinessGoPackages\\frozen-v2-dc50e6bc33bb\\source\\apps\\edge\\internal\\store",
+      "stdout": {
+        "path": "/Users/vaanskii/Developer/vynic/docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/windows-go-packages-result/store.stdout.log",
+        "bytes": 19188,
+        "sha256": "a1c8215ce8338a6d8bd437426d074f468bc42bc12add26a2581e3895ca779a55"
+      },
+      "stderr": {
+        "path": "/Users/vaanskii/Developer/vynic/docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/windows-go-packages-result/store.stderr.log",
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "counts": {
+        "topLevelPass": 28,
+        "passRecords": 115,
+        "skipRecords": 2,
+        "failRecords": 0
+      },
+      "records": [
+        {
+          "status": "pass",
+          "test": "TestCoordinationAtomicConflictIdempotencyReplay",
+          "topLevel": true,
+          "elapsedSeconds": 0.15,
+          "logLine": 2,
+          "source": {
+            "path": "apps/edge/internal/store/coordination_test.go",
+            "line": 56,
+            "sha256": "d31845fb9646fc3649a334d09cc1add900be6d2b9df1ddf8cffebcbb10308d7a",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestCoordinationRollsBackEventAndStateWhenResultCannotPersist",
+          "topLevel": true,
+          "elapsedSeconds": 0.02,
+          "logLine": 4,
+          "source": {
+            "path": "apps/edge/internal/store/coordination_test.go",
+            "line": 172,
+            "sha256": "d31845fb9646fc3649a334d09cc1add900be6d2b9df1ddf8cffebcbb10308d7a",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestCoordinationMigrationFromPhase1",
+          "topLevel": true,
+          "elapsedSeconds": 0.06,
+          "logLine": 6,
+          "source": {
+            "path": "apps/edge/internal/store/coordination_test.go",
+            "line": 188,
+            "sha256": "d31845fb9646fc3649a334d09cc1add900be6d2b9df1ddf8cffebcbb10308d7a",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestCoordinationCrashRecovery",
+          "topLevel": true,
+          "elapsedSeconds": 0.2,
+          "logLine": 8,
+          "source": {
+            "path": "apps/edge/internal/store/coordination_test.go",
+            "line": 216,
+            "sha256": "d31845fb9646fc3649a334d09cc1add900be6d2b9df1ddf8cffebcbb10308d7a",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestCoordinationRejectsUnreplayableOrOutOfScopeDocuments",
+          "topLevel": true,
+          "elapsedSeconds": 0.03,
+          "logLine": 15,
+          "source": {
+            "path": "apps/edge/internal/store/coordination_test.go",
+            "line": 260,
+            "sha256": "d31845fb9646fc3649a334d09cc1add900be6d2b9df1ddf8cffebcbb10308d7a",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestCoordinationRejectsUnreplayableOrOutOfScopeDocuments/payment",
+          "topLevel": false,
+          "elapsedSeconds": 0.0,
+          "logLine": 16,
+          "source": {
+            "path": "apps/edge/internal/store/coordination_test.go",
+            "line": 260,
+            "sha256": "d31845fb9646fc3649a334d09cc1add900be6d2b9df1ddf8cffebcbb10308d7a",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestCoordinationRejectsUnreplayableOrOutOfScopeDocuments/line-type",
+          "topLevel": false,
+          "elapsedSeconds": 0.0,
+          "logLine": 17,
+          "source": {
+            "path": "apps/edge/internal/store/coordination_test.go",
+            "line": 260,
+            "sha256": "d31845fb9646fc3649a334d09cc1add900be6d2b9df1ddf8cffebcbb10308d7a",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestCoordinationRejectsUnreplayableOrOutOfScopeDocuments/line-field",
+          "topLevel": false,
+          "elapsedSeconds": 0.0,
+          "logLine": 18,
+          "source": {
+            "path": "apps/edge/internal/store/coordination_test.go",
+            "line": 260,
+            "sha256": "d31845fb9646fc3649a334d09cc1add900be6d2b9df1ddf8cffebcbb10308d7a",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestCoordinationRejectsUnreplayableOrOutOfScopeDocuments/timestamp",
+          "topLevel": false,
+          "elapsedSeconds": 0.0,
+          "logLine": 19,
+          "source": {
+            "path": "apps/edge/internal/store/coordination_test.go",
+            "line": 260,
+            "sha256": "d31845fb9646fc3649a334d09cc1add900be6d2b9df1ddf8cffebcbb10308d7a",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestCoordinationRejectsUnreplayableOrOutOfScopeDocuments/duplicate-line",
+          "topLevel": false,
+          "elapsedSeconds": 0.0,
+          "logLine": 20,
+          "source": {
+            "path": "apps/edge/internal/store/coordination_test.go",
+            "line": 260,
+            "sha256": "d31845fb9646fc3649a334d09cc1add900be6d2b9df1ddf8cffebcbb10308d7a",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestOperationalOriginSignedImmutableAndCurrentTerminal",
+          "topLevel": true,
+          "elapsedSeconds": 0.03,
+          "logLine": 33,
+          "source": {
+            "path": "apps/edge/internal/store/operational_queue_test.go",
+            "line": 115,
+            "sha256": "62277b7de6f7e8c43e1dffc45b7f3296634d8f3092cea00efa54253a0fa89561",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestOperationalOriginSignedImmutableAndCurrentTerminal/origin",
+          "topLevel": false,
+          "elapsedSeconds": 0.0,
+          "logLine": 34,
+          "source": {
+            "path": "apps/edge/internal/store/operational_queue_test.go",
+            "line": 115,
+            "sha256": "62277b7de6f7e8c43e1dffc45b7f3296634d8f3092cea00efa54253a0fa89561",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestOperationalOriginSignedImmutableAndCurrentTerminal/ca",
+          "topLevel": false,
+          "elapsedSeconds": 0.0,
+          "logLine": 35,
+          "source": {
+            "path": "apps/edge/internal/store/operational_queue_test.go",
+            "line": 115,
+            "sha256": "62277b7de6f7e8c43e1dffc45b7f3296634d8f3092cea00efa54253a0fa89561",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestOperationalOriginSignedImmutableAndCurrentTerminal/issuer",
+          "topLevel": false,
+          "elapsedSeconds": 0.0,
+          "logLine": 36,
+          "source": {
+            "path": "apps/edge/internal/store/operational_queue_test.go",
+            "line": 115,
+            "sha256": "62277b7de6f7e8c43e1dffc45b7f3296634d8f3092cea00efa54253a0fa89561",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestOperationalOriginSignedImmutableAndCurrentTerminal/grant",
+          "topLevel": false,
+          "elapsedSeconds": 0.0,
+          "logLine": 37,
+          "source": {
+            "path": "apps/edge/internal/store/operational_queue_test.go",
+            "line": 115,
+            "sha256": "62277b7de6f7e8c43e1dffc45b7f3296634d8f3092cea00efa54253a0fa89561",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestOperationalOriginSignedImmutableAndCurrentTerminal/purpose",
+          "topLevel": false,
+          "elapsedSeconds": 0.0,
+          "logLine": 38,
+          "source": {
+            "path": "apps/edge/internal/store/operational_queue_test.go",
+            "line": 115,
+            "sha256": "62277b7de6f7e8c43e1dffc45b7f3296634d8f3092cea00efa54253a0fa89561",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestOperationalOriginSignedImmutableAndCurrentTerminal/mode",
+          "topLevel": false,
+          "elapsedSeconds": 0.0,
+          "logLine": 39,
+          "source": {
+            "path": "apps/edge/internal/store/operational_queue_test.go",
+            "line": 115,
+            "sha256": "62277b7de6f7e8c43e1dffc45b7f3296634d8f3092cea00efa54253a0fa89561",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestOperationalOriginSignedImmutableAndCurrentTerminal/epoch",
+          "topLevel": false,
+          "elapsedSeconds": 0.0,
+          "logLine": 40,
+          "source": {
+            "path": "apps/edge/internal/store/operational_queue_test.go",
+            "line": 115,
+            "sha256": "62277b7de6f7e8c43e1dffc45b7f3296634d8f3092cea00efa54253a0fa89561",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestOperationalOriginSignedImmutableAndCurrentTerminal/unsigned",
+          "topLevel": false,
+          "elapsedSeconds": 0.0,
+          "logLine": 41,
+          "source": {
+            "path": "apps/edge/internal/store/operational_queue_test.go",
+            "line": 115,
+            "sha256": "62277b7de6f7e8c43e1dffc45b7f3296634d8f3092cea00efa54253a0fa89561",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestOperationalOriginSignedImmutableAndCurrentTerminal/wrong-origin",
+          "topLevel": false,
+          "elapsedSeconds": 0.0,
+          "logLine": 42,
+          "source": {
+            "path": "apps/edge/internal/store/operational_queue_test.go",
+            "line": 115,
+            "sha256": "62277b7de6f7e8c43e1dffc45b7f3296634d8f3092cea00efa54253a0fa89561",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestOperationalOriginSignedImmutableAndCurrentTerminal/wrong-ca",
+          "topLevel": false,
+          "elapsedSeconds": 0.0,
+          "logLine": 43,
+          "source": {
+            "path": "apps/edge/internal/store/operational_queue_test.go",
+            "line": 115,
+            "sha256": "62277b7de6f7e8c43e1dffc45b7f3296634d8f3092cea00efa54253a0fa89561",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestOperationalOriginSignedImmutableAndCurrentTerminal/missing-ca",
+          "topLevel": false,
+          "elapsedSeconds": 0.0,
+          "logLine": 44,
+          "source": {
+            "path": "apps/edge/internal/store/operational_queue_test.go",
+            "line": 115,
+            "sha256": "62277b7de6f7e8c43e1dffc45b7f3296634d8f3092cea00efa54253a0fa89561",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestOperationalQueuedAtomicReceiptsRetryRestartAndObserverOrigin",
+          "topLevel": true,
+          "elapsedSeconds": 0.06,
+          "logLine": 46,
+          "source": {
+            "path": "apps/edge/internal/store/operational_queue_test.go",
+            "line": 186,
+            "sha256": "62277b7de6f7e8c43e1dffc45b7f3296634d8f3092cea00efa54253a0fa89561",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestOperationalQueuedRefusalRollsBackEveryRecord",
+          "topLevel": true,
+          "elapsedSeconds": 0.22,
+          "logLine": 55,
+          "source": {
+            "path": "apps/edge/internal/store/operational_queue_test.go",
+            "line": 253,
+            "sha256": "62277b7de6f7e8c43e1dffc45b7f3296634d8f3092cea00efa54253a0fa89561",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestOperationalQueuedRefusalRollsBackEveryRecord/opaque-print",
+          "topLevel": false,
+          "elapsedSeconds": 0.02,
+          "logLine": 56,
+          "source": {
+            "path": "apps/edge/internal/store/operational_queue_test.go",
+            "line": 253,
+            "sha256": "62277b7de6f7e8c43e1dffc45b7f3296634d8f3092cea00efa54253a0fa89561",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestOperationalQueuedRefusalRollsBackEveryRecord/wrong-effect",
+          "topLevel": false,
+          "elapsedSeconds": 0.03,
+          "logLine": 57,
+          "source": {
+            "path": "apps/edge/internal/store/operational_queue_test.go",
+            "line": 253,
+            "sha256": "62277b7de6f7e8c43e1dffc45b7f3296634d8f3092cea00efa54253a0fa89561",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestOperationalQueuedRefusalRollsBackEveryRecord/wrong-host",
+          "topLevel": false,
+          "elapsedSeconds": 0.04,
+          "logLine": 58,
+          "source": {
+            "path": "apps/edge/internal/store/operational_queue_test.go",
+            "line": 253,
+            "sha256": "62277b7de6f7e8c43e1dffc45b7f3296634d8f3092cea00efa54253a0fa89561",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestOperationalQueuedRefusalRollsBackEveryRecord/wrong-origin",
+          "topLevel": false,
+          "elapsedSeconds": 0.03,
+          "logLine": 59,
+          "source": {
+            "path": "apps/edge/internal/store/operational_queue_test.go",
+            "line": 253,
+            "sha256": "62277b7de6f7e8c43e1dffc45b7f3296634d8f3092cea00efa54253a0fa89561",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestOperationalQueuedRefusalRollsBackEveryRecord/missing-registration",
+          "topLevel": false,
+          "elapsedSeconds": 0.03,
+          "logLine": 60,
+          "source": {
+            "path": "apps/edge/internal/store/operational_queue_test.go",
+            "line": 253,
+            "sha256": "62277b7de6f7e8c43e1dffc45b7f3296634d8f3092cea00efa54253a0fa89561",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestOperationalQueuedRefusalRollsBackEveryRecord/queue-insert",
+          "topLevel": false,
+          "elapsedSeconds": 0.03,
+          "logLine": 61,
+          "source": {
+            "path": "apps/edge/internal/store/operational_queue_test.go",
+            "line": 253,
+            "sha256": "62277b7de6f7e8c43e1dffc45b7f3296634d8f3092cea00efa54253a0fa89561",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestOperationalQueuedRefusalRollsBackEveryRecord/queue-capacity",
+          "topLevel": false,
+          "elapsedSeconds": 0.03,
+          "logLine": 62,
+          "source": {
+            "path": "apps/edge/internal/store/operational_queue_test.go",
+            "line": 253,
+            "sha256": "62277b7de6f7e8c43e1dffc45b7f3296634d8f3092cea00efa54253a0fa89561",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestOperationalQueuedConflictPersistsWithoutEffects",
+          "topLevel": true,
+          "elapsedSeconds": 0.03,
+          "logLine": 64,
+          "source": {
+            "path": "apps/edge/internal/store/operational_queue_test.go",
+            "line": 311,
+            "sha256": "62277b7de6f7e8c43e1dffc45b7f3296634d8f3092cea00efa54253a0fa89561",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestOperationalExpandedKindsRoundTripReplayAndSnapshot",
+          "topLevel": true,
+          "elapsedSeconds": 0.25,
+          "logLine": 73,
+          "source": {
+            "path": "apps/edge/internal/store/operational_test.go",
+            "line": 124,
+            "sha256": "776fa4d60204bbdfac854d48cfc07fc36e4df4c92252e4ae6c38ea1268afb152",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestOperationalExpandedKindsRoundTripReplayAndSnapshot/OPERATIONAL_CONTROL",
+          "topLevel": false,
+          "elapsedSeconds": 0.04,
+          "logLine": 74,
+          "source": {
+            "path": "apps/edge/internal/store/operational_test.go",
+            "line": 124,
+            "sha256": "776fa4d60204bbdfac854d48cfc07fc36e4df4c92252e4ae6c38ea1268afb152",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestOperationalExpandedKindsRoundTripReplayAndSnapshot/AUDIT_REPORT",
+          "topLevel": false,
+          "elapsedSeconds": 0.04,
+          "logLine": 75,
+          "source": {
+            "path": "apps/edge/internal/store/operational_test.go",
+            "line": 124,
+            "sha256": "776fa4d60204bbdfac854d48cfc07fc36e4df4c92252e4ae6c38ea1268afb152",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestOperationalExpandedKindsRoundTripReplayAndSnapshot/CLOSURE",
+          "topLevel": false,
+          "elapsedSeconds": 0.03,
+          "logLine": 76,
+          "source": {
+            "path": "apps/edge/internal/store/operational_test.go",
+            "line": 124,
+            "sha256": "776fa4d60204bbdfac854d48cfc07fc36e4df4c92252e4ae6c38ea1268afb152",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestOperationalExpandedKindsRoundTripReplayAndSnapshot/ADVANCE",
+          "topLevel": false,
+          "elapsedSeconds": 0.03,
+          "logLine": 77,
+          "source": {
+            "path": "apps/edge/internal/store/operational_test.go",
+            "line": 124,
+            "sha256": "776fa4d60204bbdfac854d48cfc07fc36e4df4c92252e4ae6c38ea1268afb152",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestOperationalExpandedKindsRoundTripReplayAndSnapshot/EXPENSE",
+          "topLevel": false,
+          "elapsedSeconds": 0.03,
+          "logLine": 78,
+          "source": {
+            "path": "apps/edge/internal/store/operational_test.go",
+            "line": 124,
+            "sha256": "776fa4d60204bbdfac854d48cfc07fc36e4df4c92252e4ae6c38ea1268afb152",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestOperationalExpandedKindsRoundTripReplayAndSnapshot/STAFF",
+          "topLevel": false,
+          "elapsedSeconds": 0.04,
+          "logLine": 79,
+          "source": {
+            "path": "apps/edge/internal/store/operational_test.go",
+            "line": 124,
+            "sha256": "776fa4d60204bbdfac854d48cfc07fc36e4df4c92252e4ae6c38ea1268afb152",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestOperationalExpandedKindsRoundTripReplayAndSnapshot/OPERATIONAL_POLICY",
+          "topLevel": false,
+          "elapsedSeconds": 0.03,
+          "logLine": 80,
+          "source": {
+            "path": "apps/edge/internal/store/operational_test.go",
+            "line": 124,
+            "sha256": "776fa4d60204bbdfac854d48cfc07fc36e4df4c92252e4ae6c38ea1268afb152",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestOperationalProofAuthorityIsSeparateSignedAndImmutable",
+          "topLevel": true,
+          "elapsedSeconds": 0.03,
+          "logLine": 97,
+          "source": {
+            "path": "apps/edge/internal/store/operational_test.go",
+            "line": 195,
+            "sha256": "776fa4d60204bbdfac854d48cfc07fc36e4df4c92252e4ae6c38ea1268afb152",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestOperationalProofAuthorityIsSeparateSignedAndImmutable/purpose",
+          "topLevel": false,
+          "elapsedSeconds": 0.0,
+          "logLine": 98,
+          "source": {
+            "path": "apps/edge/internal/store/operational_test.go",
+            "line": 195,
+            "sha256": "776fa4d60204bbdfac854d48cfc07fc36e4df4c92252e4ae6c38ea1268afb152",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestOperationalProofAuthorityIsSeparateSignedAndImmutable/mode",
+          "topLevel": false,
+          "elapsedSeconds": 0.0,
+          "logLine": 99,
+          "source": {
+            "path": "apps/edge/internal/store/operational_test.go",
+            "line": 195,
+            "sha256": "776fa4d60204bbdfac854d48cfc07fc36e4df4c92252e4ae6c38ea1268afb152",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestOperationalProofAuthorityIsSeparateSignedAndImmutable/version",
+          "topLevel": false,
+          "elapsedSeconds": 0.0,
+          "logLine": 100,
+          "source": {
+            "path": "apps/edge/internal/store/operational_test.go",
+            "line": 195,
+            "sha256": "776fa4d60204bbdfac854d48cfc07fc36e4df4c92252e4ae6c38ea1268afb152",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestOperationalProofAuthorityIsSeparateSignedAndImmutable/installation",
+          "topLevel": false,
+          "elapsedSeconds": 0.0,
+          "logLine": 101,
+          "source": {
+            "path": "apps/edge/internal/store/operational_test.go",
+            "line": 195,
+            "sha256": "776fa4d60204bbdfac854d48cfc07fc36e4df4c92252e4ae6c38ea1268afb152",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestOperationalProofAuthorityIsSeparateSignedAndImmutable/venue",
+          "topLevel": false,
+          "elapsedSeconds": 0.0,
+          "logLine": 102,
+          "source": {
+            "path": "apps/edge/internal/store/operational_test.go",
+            "line": 195,
+            "sha256": "776fa4d60204bbdfac854d48cfc07fc36e4df4c92252e4ae6c38ea1268afb152",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestOperationalProofAuthorityIsSeparateSignedAndImmutable/public-key",
+          "topLevel": false,
+          "elapsedSeconds": 0.0,
+          "logLine": 103,
+          "source": {
+            "path": "apps/edge/internal/store/operational_test.go",
+            "line": 195,
+            "sha256": "776fa4d60204bbdfac854d48cfc07fc36e4df4c92252e4ae6c38ea1268afb152",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestOperationalProofAuthorityIsSeparateSignedAndImmutable/zero-epoch",
+          "topLevel": false,
+          "elapsedSeconds": 0.0,
+          "logLine": 104,
+          "source": {
+            "path": "apps/edge/internal/store/operational_test.go",
+            "line": 195,
+            "sha256": "776fa4d60204bbdfac854d48cfc07fc36e4df4c92252e4ae6c38ea1268afb152",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestOperationalProofAuthorityIsSeparateSignedAndImmutable/overflow-epoch",
+          "topLevel": false,
+          "elapsedSeconds": 0.0,
+          "logLine": 105,
+          "source": {
+            "path": "apps/edge/internal/store/operational_test.go",
+            "line": 195,
+            "sha256": "776fa4d60204bbdfac854d48cfc07fc36e4df4c92252e4ae6c38ea1268afb152",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestOperationalProofAuthorityIsSeparateSignedAndImmutable/grant-id",
+          "topLevel": false,
+          "elapsedSeconds": 0.0,
+          "logLine": 106,
+          "source": {
+            "path": "apps/edge/internal/store/operational_test.go",
+            "line": 195,
+            "sha256": "776fa4d60204bbdfac854d48cfc07fc36e4df4c92252e4ae6c38ea1268afb152",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestOperationalProofAuthorityIsSeparateSignedAndImmutable/expired",
+          "topLevel": false,
+          "elapsedSeconds": 0.0,
+          "logLine": 107,
+          "source": {
+            "path": "apps/edge/internal/store/operational_test.go",
+            "line": 195,
+            "sha256": "776fa4d60204bbdfac854d48cfc07fc36e4df4c92252e4ae6c38ea1268afb152",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestOperationalProofAuthorityIsSeparateSignedAndImmutable/future",
+          "topLevel": false,
+          "elapsedSeconds": 0.0,
+          "logLine": 108,
+          "source": {
+            "path": "apps/edge/internal/store/operational_test.go",
+            "line": 195,
+            "sha256": "776fa4d60204bbdfac854d48cfc07fc36e4df4c92252e4ae6c38ea1268afb152",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestOperationalProofAuthorityIsSeparateSignedAndImmutable/long-validity",
+          "topLevel": false,
+          "elapsedSeconds": 0.0,
+          "logLine": 109,
+          "source": {
+            "path": "apps/edge/internal/store/operational_test.go",
+            "line": 195,
+            "sha256": "776fa4d60204bbdfac854d48cfc07fc36e4df4c92252e4ae6c38ea1268afb152",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestOperationalProofAuthorityIsSeparateSignedAndImmutable/tampered",
+          "topLevel": false,
+          "elapsedSeconds": 0.0,
+          "logLine": 110,
+          "source": {
+            "path": "apps/edge/internal/store/operational_test.go",
+            "line": 195,
+            "sha256": "776fa4d60204bbdfac854d48cfc07fc36e4df4c92252e4ae6c38ea1268afb152",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestOperationalProofAuthorityIsSeparateSignedAndImmutable/no-trust",
+          "topLevel": false,
+          "elapsedSeconds": 0.0,
+          "logLine": 111,
+          "source": {
+            "path": "apps/edge/internal/store/operational_test.go",
+            "line": 195,
+            "sha256": "776fa4d60204bbdfac854d48cfc07fc36e4df4c92252e4ae6c38ea1268afb152",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestOperationalProofAuthorityIsSeparateSignedAndImmutable/wrong-trust",
+          "topLevel": false,
+          "elapsedSeconds": 0.0,
+          "logLine": 112,
+          "source": {
+            "path": "apps/edge/internal/store/operational_test.go",
+            "line": 195,
+            "sha256": "776fa4d60204bbdfac854d48cfc07fc36e4df4c92252e4ae6c38ea1268afb152",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestOperationalProofAuthorityRequiresExistingFoundationBinding",
+          "topLevel": true,
+          "elapsedSeconds": 0.02,
+          "logLine": 114,
+          "source": {
+            "path": "apps/edge/internal/store/operational_test.go",
+            "line": 291,
+            "sha256": "776fa4d60204bbdfac854d48cfc07fc36e4df4c92252e4ae6c38ea1268afb152",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestOperationalReadDependencyConflictAndImmutableExactResults",
+          "topLevel": true,
+          "elapsedSeconds": 0.03,
+          "logLine": 122,
+          "source": {
+            "path": "apps/edge/internal/store/operational_test.go",
+            "line": 313,
+            "sha256": "776fa4d60204bbdfac854d48cfc07fc36e4df4c92252e4ae6c38ea1268afb152",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestOperationalReadDependencyConflictAndImmutableExactResults/revision",
+          "topLevel": false,
+          "elapsedSeconds": 0.0,
+          "logLine": 123,
+          "source": {
+            "path": "apps/edge/internal/store/operational_test.go",
+            "line": 313,
+            "sha256": "776fa4d60204bbdfac854d48cfc07fc36e4df4c92252e4ae6c38ea1268afb152",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestOperationalReadDependencyConflictAndImmutableExactResults/invalid-revision",
+          "topLevel": false,
+          "elapsedSeconds": 0.0,
+          "logLine": 124,
+          "source": {
+            "path": "apps/edge/internal/store/operational_test.go",
+            "line": 313,
+            "sha256": "776fa4d60204bbdfac854d48cfc07fc36e4df4c92252e4ae6c38ea1268afb152",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestOperationalReadDependencyConflictAndImmutableExactResults/empty-writes",
+          "topLevel": false,
+          "elapsedSeconds": 0.0,
+          "logLine": 125,
+          "source": {
+            "path": "apps/edge/internal/store/operational_test.go",
+            "line": 313,
+            "sha256": "776fa4d60204bbdfac854d48cfc07fc36e4df4c92252e4ae6c38ea1268afb152",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestOperationalReadDependencyConflictAndImmutableExactResults/effect",
+          "topLevel": false,
+          "elapsedSeconds": 0.0,
+          "logLine": 126,
+          "source": {
+            "path": "apps/edge/internal/store/operational_test.go",
+            "line": 313,
+            "sha256": "776fa4d60204bbdfac854d48cfc07fc36e4df4c92252e4ae6c38ea1268afb152",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestOperationalReadDependencyConflictAndImmutableExactResults/application-data",
+          "topLevel": false,
+          "elapsedSeconds": 0.0,
+          "logLine": 127,
+          "source": {
+            "path": "apps/edge/internal/store/operational_test.go",
+            "line": 313,
+            "sha256": "776fa4d60204bbdfac854d48cfc07fc36e4df4c92252e4ae6c38ea1268afb152",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestOperationalReadDependencyConflictAndImmutableExactResults/other-terminal",
+          "topLevel": false,
+          "elapsedSeconds": 0.0,
+          "logLine": 128,
+          "source": {
+            "path": "apps/edge/internal/store/operational_test.go",
+            "line": 313,
+            "sha256": "776fa4d60204bbdfac854d48cfc07fc36e4df4c92252e4ae6c38ea1268afb152",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestOperationalThreeClientsExactlyOneCASWinner",
+          "topLevel": true,
+          "elapsedSeconds": 0.03,
+          "logLine": 130,
+          "source": {
+            "path": "apps/edge/internal/store/operational_test.go",
+            "line": 373,
+            "sha256": "776fa4d60204bbdfac854d48cfc07fc36e4df4c92252e4ae6c38ea1268afb152",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestOperationalSnapshotAndReplayUseOneConsistentHeadDuringWrites",
+          "topLevel": true,
+          "elapsedSeconds": 0.04,
+          "logLine": 132,
+          "source": {
+            "path": "apps/edge/internal/store/operational_test.go",
+            "line": 420,
+            "sha256": "776fa4d60204bbdfac854d48cfc07fc36e4df4c92252e4ae6c38ea1268afb152",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestOperationalLostACKRestartAndFrozenEightMiBRaster",
+          "topLevel": true,
+          "elapsedSeconds": 2.27,
+          "logLine": 134,
+          "source": {
+            "path": "apps/edge/internal/store/operational_test.go",
+            "line": 457,
+            "sha256": "776fa4d60204bbdfac854d48cfc07fc36e4df4c92252e4ae6c38ea1268afb152",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestOperationalAtomicRollbackOfPostimagesEventsEffectsAndResult",
+          "topLevel": true,
+          "elapsedSeconds": 0.11,
+          "logLine": 141,
+          "source": {
+            "path": "apps/edge/internal/store/operational_test.go",
+            "line": 532,
+            "sha256": "776fa4d60204bbdfac854d48cfc07fc36e4df4c92252e4ae6c38ea1268afb152",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestOperationalAtomicRollbackOfPostimagesEventsEffectsAndResult/op_entity",
+          "topLevel": false,
+          "elapsedSeconds": 0.03,
+          "logLine": 142,
+          "source": {
+            "path": "apps/edge/internal/store/operational_test.go",
+            "line": 532,
+            "sha256": "776fa4d60204bbdfac854d48cfc07fc36e4df4c92252e4ae6c38ea1268afb152",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestOperationalAtomicRollbackOfPostimagesEventsEffectsAndResult/op_event",
+          "topLevel": false,
+          "elapsedSeconds": 0.02,
+          "logLine": 143,
+          "source": {
+            "path": "apps/edge/internal/store/operational_test.go",
+            "line": 532,
+            "sha256": "776fa4d60204bbdfac854d48cfc07fc36e4df4c92252e4ae6c38ea1268afb152",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestOperationalAtomicRollbackOfPostimagesEventsEffectsAndResult/op_effect",
+          "topLevel": false,
+          "elapsedSeconds": 0.02,
+          "logLine": 144,
+          "source": {
+            "path": "apps/edge/internal/store/operational_test.go",
+            "line": 532,
+            "sha256": "776fa4d60204bbdfac854d48cfc07fc36e4df4c92252e4ae6c38ea1268afb152",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestOperationalAtomicRollbackOfPostimagesEventsEffectsAndResult/op_request",
+          "topLevel": false,
+          "elapsedSeconds": 0.02,
+          "logLine": 145,
+          "source": {
+            "path": "apps/edge/internal/store/operational_test.go",
+            "line": 532,
+            "sha256": "776fa4d60204bbdfac854d48cfc07fc36e4df4c92252e4ae6c38ea1268afb152",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestOperationalAtomicRollbackOfPostimagesEventsEffectsAndResult/op_authority",
+          "topLevel": false,
+          "elapsedSeconds": 0.02,
+          "logLine": 146,
+          "source": {
+            "path": "apps/edge/internal/store/operational_test.go",
+            "line": 532,
+            "sha256": "776fa4d60204bbdfac854d48cfc07fc36e4df4c92252e4ae6c38ea1268afb152",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestOperationalWrongEpochTerminalAndTransactionalRevocation",
+          "topLevel": true,
+          "elapsedSeconds": 0.02,
+          "logLine": 148,
+          "source": {
+            "path": "apps/edge/internal/store/operational_test.go",
+            "line": 567,
+            "sha256": "776fa4d60204bbdfac854d48cfc07fc36e4df4c92252e4ae6c38ea1268afb152",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestOperationalTombstonesRetainIdentityAndCapacity",
+          "topLevel": true,
+          "elapsedSeconds": 0.3,
+          "logLine": 150,
+          "source": {
+            "path": "apps/edge/internal/store/operational_test.go",
+            "line": 629,
+            "sha256": "776fa4d60204bbdfac854d48cfc07fc36e4df4c92252e4ae6c38ea1268afb152",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestOperationalSequenceRevisionAndInputBounds",
+          "topLevel": true,
+          "elapsedSeconds": 0.09,
+          "logLine": 166,
+          "source": {
+            "path": "apps/edge/internal/store/operational_test.go",
+            "line": 688,
+            "sha256": "776fa4d60204bbdfac854d48cfc07fc36e4df4c92252e4ae6c38ea1268afb152",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestOperationalSequenceRevisionAndInputBounds/sequence-overflow",
+          "topLevel": false,
+          "elapsedSeconds": 0.02,
+          "logLine": 167,
+          "source": {
+            "path": "apps/edge/internal/store/operational_test.go",
+            "line": 688,
+            "sha256": "776fa4d60204bbdfac854d48cfc07fc36e4df4c92252e4ae6c38ea1268afb152",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestOperationalSequenceRevisionAndInputBounds/revision-overflow",
+          "topLevel": false,
+          "elapsedSeconds": 0.02,
+          "logLine": 168,
+          "source": {
+            "path": "apps/edge/internal/store/operational_test.go",
+            "line": 688,
+            "sha256": "776fa4d60204bbdfac854d48cfc07fc36e4df4c92252e4ae6c38ea1268afb152",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestOperationalSequenceRevisionAndInputBounds/request-and-document-bounds",
+          "topLevel": false,
+          "elapsedSeconds": 0.06,
+          "logLine": 169,
+          "source": {
+            "path": "apps/edge/internal/store/operational_test.go",
+            "line": 688,
+            "sha256": "776fa4d60204bbdfac854d48cfc07fc36e4df4c92252e4ae6c38ea1268afb152",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestOperationalSequenceRevisionAndInputBounds/request-and-document-bounds/document",
+          "topLevel": false,
+          "elapsedSeconds": 0.01,
+          "logLine": 170,
+          "source": {
+            "path": "apps/edge/internal/store/operational_test.go",
+            "line": 688,
+            "sha256": "776fa4d60204bbdfac854d48cfc07fc36e4df4c92252e4ae6c38ea1268afb152",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestOperationalSequenceRevisionAndInputBounds/request-and-document-bounds/effect",
+          "topLevel": false,
+          "elapsedSeconds": 0.01,
+          "logLine": 171,
+          "source": {
+            "path": "apps/edge/internal/store/operational_test.go",
+            "line": 688,
+            "sha256": "776fa4d60204bbdfac854d48cfc07fc36e4df4c92252e4ae6c38ea1268afb152",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestOperationalSequenceRevisionAndInputBounds/request-and-document-bounds/application-data",
+          "topLevel": false,
+          "elapsedSeconds": 0.01,
+          "logLine": 172,
+          "source": {
+            "path": "apps/edge/internal/store/operational_test.go",
+            "line": 688,
+            "sha256": "776fa4d60204bbdfac854d48cfc07fc36e4df4c92252e4ae6c38ea1268afb152",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestOperationalSequenceRevisionAndInputBounds/request-and-document-bounds/invalid-json",
+          "topLevel": false,
+          "elapsedSeconds": 0.0,
+          "logLine": 173,
+          "source": {
+            "path": "apps/edge/internal/store/operational_test.go",
+            "line": 688,
+            "sha256": "776fa4d60204bbdfac854d48cfc07fc36e4df4c92252e4ae6c38ea1268afb152",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestOperationalSequenceRevisionAndInputBounds/request-and-document-bounds/unknown-write-kind",
+          "topLevel": false,
+          "elapsedSeconds": 0.0,
+          "logLine": 174,
+          "source": {
+            "path": "apps/edge/internal/store/operational_test.go",
+            "line": 688,
+            "sha256": "776fa4d60204bbdfac854d48cfc07fc36e4df4c92252e4ae6c38ea1268afb152",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestOperationalSequenceRevisionAndInputBounds/request-and-document-bounds/unknown-read-kind",
+          "topLevel": false,
+          "elapsedSeconds": 0.0,
+          "logLine": 175,
+          "source": {
+            "path": "apps/edge/internal/store/operational_test.go",
+            "line": 688,
+            "sha256": "776fa4d60204bbdfac854d48cfc07fc36e4df4c92252e4ae6c38ea1268afb152",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestOperationalSequenceRevisionAndInputBounds/request-and-document-bounds/non-canonical-id",
+          "topLevel": false,
+          "elapsedSeconds": 0.0,
+          "logLine": 176,
+          "source": {
+            "path": "apps/edge/internal/store/operational_test.go",
+            "line": 688,
+            "sha256": "776fa4d60204bbdfac854d48cfc07fc36e4df4c92252e4ae6c38ea1268afb152",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestOperationalSequenceRevisionAndInputBounds/request-and-document-bounds/duplicate-write",
+          "topLevel": false,
+          "elapsedSeconds": 0.0,
+          "logLine": 177,
+          "source": {
+            "path": "apps/edge/internal/store/operational_test.go",
+            "line": 688,
+            "sha256": "776fa4d60204bbdfac854d48cfc07fc36e4df4c92252e4ae6c38ea1268afb152",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestOperationalSequenceRevisionAndInputBounds/request-and-document-bounds/duplicate-read",
+          "topLevel": false,
+          "elapsedSeconds": 0.0,
+          "logLine": 178,
+          "source": {
+            "path": "apps/edge/internal/store/operational_test.go",
+            "line": 688,
+            "sha256": "776fa4d60204bbdfac854d48cfc07fc36e4df4c92252e4ae6c38ea1268afb152",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestOperationalSequenceRevisionAndInputBounds/request-and-document-bounds/inconsistent-read-write",
+          "topLevel": false,
+          "elapsedSeconds": 0.0,
+          "logLine": 179,
+          "source": {
+            "path": "apps/edge/internal/store/operational_test.go",
+            "line": 688,
+            "sha256": "776fa4d60204bbdfac854d48cfc07fc36e4df4c92252e4ae6c38ea1268afb152",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestOperationalSequenceRevisionAndInputBounds/request-and-document-bounds/duplicate-effect",
+          "topLevel": false,
+          "elapsedSeconds": 0.0,
+          "logLine": 180,
+          "source": {
+            "path": "apps/edge/internal/store/operational_test.go",
+            "line": 688,
+            "sha256": "776fa4d60204bbdfac854d48cfc07fc36e4df4c92252e4ae6c38ea1268afb152",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestOperationalMigrationPreservesPopulatedPhase2A",
+          "topLevel": true,
+          "elapsedSeconds": 0.04,
+          "logLine": 182,
+          "source": {
+            "path": "apps/edge/internal/store/operational_test.go",
+            "line": 784,
+            "sha256": "776fa4d60204bbdfac854d48cfc07fc36e4df4c92252e4ae6c38ea1268afb152",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestOperationalMigrationPreservesPopulatedSchema3AndGuards",
+          "topLevel": true,
+          "elapsedSeconds": 0.05,
+          "logLine": 184,
+          "source": {
+            "path": "apps/edge/internal/store/operational_test.go",
+            "line": 946,
+            "sha256": "776fa4d60204bbdfac854d48cfc07fc36e4df4c92252e4ae6c38ea1268afb152",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestOperationalSchema4MigrationRejectsEntitySchemaDrift",
+          "topLevel": true,
+          "elapsedSeconds": 0.12,
+          "logLine": 192,
+          "source": {
+            "path": "apps/edge/internal/store/operational_test.go",
+            "line": 1040,
+            "sha256": "776fa4d60204bbdfac854d48cfc07fc36e4df4c92252e4ae6c38ea1268afb152",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestOperationalSchema4MigrationRejectsEntitySchemaDrift/DROP_TRIGGER_op_entity_update",
+          "topLevel": false,
+          "elapsedSeconds": 0.02,
+          "logLine": 193,
+          "source": {
+            "path": "apps/edge/internal/store/operational_test.go",
+            "line": 1040,
+            "sha256": "776fa4d60204bbdfac854d48cfc07fc36e4df4c92252e4ae6c38ea1268afb152",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestOperationalSchema4MigrationRejectsEntitySchemaDrift/DROP_TRIGGER_op_entity_delete",
+          "topLevel": false,
+          "elapsedSeconds": 0.01,
+          "logLine": 194,
+          "source": {
+            "path": "apps/edge/internal/store/operational_test.go",
+            "line": 1040,
+            "sha256": "776fa4d60204bbdfac854d48cfc07fc36e4df4c92252e4ae6c38ea1268afb152",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestOperationalSchema4MigrationRejectsEntitySchemaDrift/DROP_TRIGGER_op_entity_update;_CREATE_TRIGGER_op_entity_update_BEFORE_UPDATE_ON_op_entity_BEGIN_SELECT_1;_END",
+          "topLevel": false,
+          "elapsedSeconds": 0.02,
+          "logLine": 195,
+          "source": {
+            "path": "apps/edge/internal/store/operational_test.go",
+            "line": 1040,
+            "sha256": "776fa4d60204bbdfac854d48cfc07fc36e4df4c92252e4ae6c38ea1268afb152",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestOperationalSchema4MigrationRejectsEntitySchemaDrift/CREATE_TRIGGER_unexpected_entity_trigger_BEFORE_UPDATE_ON_op_entity_BEGIN_SELECT_1;_END",
+          "topLevel": false,
+          "elapsedSeconds": 0.02,
+          "logLine": 196,
+          "source": {
+            "path": "apps/edge/internal/store/operational_test.go",
+            "line": 1040,
+            "sha256": "776fa4d60204bbdfac854d48cfc07fc36e4df4c92252e4ae6c38ea1268afb152",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestOperationalSchema4MigrationRejectsEntitySchemaDrift/ALTER_TABLE_op_entity_ADD_COLUMN_unexpected_TEXT",
+          "topLevel": false,
+          "elapsedSeconds": 0.02,
+          "logLine": 197,
+          "source": {
+            "path": "apps/edge/internal/store/operational_test.go",
+            "line": 1040,
+            "sha256": "776fa4d60204bbdfac854d48cfc07fc36e4df4c92252e4ae6c38ea1268afb152",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestOperationalSchema4MigrationRejectsEntitySchemaDrift/CREATE_INDEX_unexpected_entity_index_ON_op_entity(revision)",
+          "topLevel": false,
+          "elapsedSeconds": 0.01,
+          "logLine": 198,
+          "source": {
+            "path": "apps/edge/internal/store/operational_test.go",
+            "line": 1040,
+            "sha256": "776fa4d60204bbdfac854d48cfc07fc36e4df4c92252e4ae6c38ea1268afb152",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "skip",
+          "test": "TestOperationalCrashWorker",
+          "topLevel": true,
+          "elapsedSeconds": 0.0,
+          "logLine": 201,
+          "source": {
+            "path": "apps/edge/internal/store/operational_test.go",
+            "line": 1089,
+            "sha256": "776fa4d60204bbdfac854d48cfc07fc36e4df4c92252e4ae6c38ea1268afb152",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestOperationalCrashRecoversWholeCommitAndRollsBackOpenTransaction",
+          "topLevel": true,
+          "elapsedSeconds": 0.21,
+          "logLine": 203,
+          "source": {
+            "path": "apps/edge/internal/store/operational_test.go",
+            "line": 1116,
+            "sha256": "776fa4d60204bbdfac854d48cfc07fc36e4df4c92252e4ae6c38ea1268afb152",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestStoreLockAndImmutableGrant",
+          "topLevel": true,
+          "elapsedSeconds": 0.02,
+          "logLine": 210,
+          "source": {
+            "path": "apps/edge/internal/store/store_test.go",
+            "line": 17,
+            "sha256": "a87ce36c2248fd63e65904e987dda0e625c93310db9d6cd6c255432db463dce6",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestStoreLockAndImmutableGrant/expired",
+          "topLevel": false,
+          "elapsedSeconds": 0.0,
+          "logLine": 211,
+          "source": {
+            "path": "apps/edge/internal/store/store_test.go",
+            "line": 17,
+            "sha256": "a87ce36c2248fd63e65904e987dda0e625c93310db9d6cd6c255432db463dce6",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestStoreLockAndImmutableGrant/foreign-installation",
+          "topLevel": false,
+          "elapsedSeconds": 0.0,
+          "logLine": 212,
+          "source": {
+            "path": "apps/edge/internal/store/store_test.go",
+            "line": 17,
+            "sha256": "a87ce36c2248fd63e65904e987dda0e625c93310db9d6cd6c255432db463dce6",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestStoreLockAndImmutableGrant/foreign-key",
+          "topLevel": false,
+          "elapsedSeconds": 0.0,
+          "logLine": 213,
+          "source": {
+            "path": "apps/edge/internal/store/store_test.go",
+            "line": 17,
+            "sha256": "a87ce36c2248fd63e65904e987dda0e625c93310db9d6cd6c255432db463dce6",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestStoreLockAndImmutableGrant/foreign-venue",
+          "topLevel": false,
+          "elapsedSeconds": 0.0,
+          "logLine": 214,
+          "source": {
+            "path": "apps/edge/internal/store/store_test.go",
+            "line": 17,
+            "sha256": "a87ce36c2248fd63e65904e987dda0e625c93310db9d6cd6c255432db463dce6",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestStoreLockAndImmutableGrant/tampered",
+          "topLevel": false,
+          "elapsedSeconds": 0.0,
+          "logLine": 215,
+          "source": {
+            "path": "apps/edge/internal/store/store_test.go",
+            "line": 17,
+            "sha256": "a87ce36c2248fd63e65904e987dda0e625c93310db9d6cd6c255432db463dce6",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestIncompatibleAndCorruptStoreFailsClosed",
+          "topLevel": true,
+          "elapsedSeconds": 0.17,
+          "logLine": 223,
+          "source": {
+            "path": "apps/edge/internal/store/store_test.go",
+            "line": 50,
+            "sha256": "a87ce36c2248fd63e65904e987dda0e625c93310db9d6cd6c255432db463dce6",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestIncompatibleAndCorruptStoreFailsClosed/newer",
+          "topLevel": false,
+          "elapsedSeconds": 0.02,
+          "logLine": 224,
+          "source": {
+            "path": "apps/edge/internal/store/store_test.go",
+            "line": 50,
+            "sha256": "a87ce36c2248fd63e65904e987dda0e625c93310db9d6cd6c255432db463dce6",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestIncompatibleAndCorruptStoreFailsClosed/foreign-app",
+          "topLevel": false,
+          "elapsedSeconds": 0.02,
+          "logLine": 225,
+          "source": {
+            "path": "apps/edge/internal/store/store_test.go",
+            "line": 50,
+            "sha256": "a87ce36c2248fd63e65904e987dda0e625c93310db9d6cd6c255432db463dce6",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestIncompatibleAndCorruptStoreFailsClosed/checksum",
+          "topLevel": false,
+          "elapsedSeconds": 0.02,
+          "logLine": 226,
+          "source": {
+            "path": "apps/edge/internal/store/store_test.go",
+            "line": 50,
+            "sha256": "a87ce36c2248fd63e65904e987dda0e625c93310db9d6cd6c255432db463dce6",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestIncompatibleAndCorruptStoreFailsClosed/missing-table",
+          "topLevel": false,
+          "elapsedSeconds": 0.03,
+          "logLine": 227,
+          "source": {
+            "path": "apps/edge/internal/store/store_test.go",
+            "line": 50,
+            "sha256": "a87ce36c2248fd63e65904e987dda0e625c93310db9d6cd6c255432db463dce6",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestIncompatibleAndCorruptStoreFailsClosed/ledger",
+          "topLevel": false,
+          "elapsedSeconds": 0.03,
+          "logLine": 228,
+          "source": {
+            "path": "apps/edge/internal/store/store_test.go",
+            "line": 50,
+            "sha256": "a87ce36c2248fd63e65904e987dda0e625c93310db9d6cd6c255432db463dce6",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestIncompatibleAndCorruptStoreFailsClosed/altered-shape",
+          "topLevel": false,
+          "elapsedSeconds": 0.03,
+          "logLine": 229,
+          "source": {
+            "path": "apps/edge/internal/store/store_test.go",
+            "line": 50,
+            "sha256": "a87ce36c2248fd63e65904e987dda0e625c93310db9d6cd6c255432db463dce6",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestAtomicPairAndRollback",
+          "topLevel": true,
+          "elapsedSeconds": 0.03,
+          "logLine": 231,
+          "source": {
+            "path": "apps/edge/internal/store/store_test.go",
+            "line": 95,
+            "sha256": "a87ce36c2248fd63e65904e987dda0e625c93310db9d6cd6c255432db463dce6",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "skip",
+          "test": "TestCrashWorker",
+          "topLevel": true,
+          "elapsedSeconds": 0.0,
+          "logLine": 234,
+          "source": {
+            "path": "apps/edge/internal/store/store_test.go",
+            "line": 130,
+            "sha256": "a87ce36c2248fd63e65904e987dda0e625c93310db9d6cd6c255432db463dce6",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestCrashRecoversCommittedWALAndRollsBackOpenTransaction",
+          "topLevel": true,
+          "elapsedSeconds": 0.22,
+          "logLine": 236,
+          "source": {
+            "path": "apps/edge/internal/store/store_test.go",
+            "line": 153,
+            "sha256": "a87ce36c2248fd63e65904e987dda0e625c93310db9d6cd6c255432db463dce6",
+            "windowsExcluded": false
+          }
+        }
+      ]
+    },
+    "server": {
+      "status": "passed",
+      "exitCode": 0,
+      "elapsedMs": 7156,
+      "testBinary": "cded3bef20097a35e7aa0b96ce63942c58e8d701dd405add6be51110365f252d",
+      "workingDirectory": "C:\\Users\\vaanskii\\AppData\\Local\\VynicReadinessGoPackages\\frozen-v2-dc50e6bc33bb\\source\\apps\\edge\\internal\\server",
+      "stdout": {
+        "path": "/Users/vaanskii/Developer/vynic/docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/windows-go-packages-result/server.stdout.log",
+        "bytes": 6752,
+        "sha256": "2dc0f96273081aebe1fa380ca59ab1f5f4a36852e81dab0aa9ad9a1e243c02a8"
+      },
+      "stderr": {
+        "path": "/Users/vaanskii/Developer/vynic/docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/windows-go-packages-result/server.stderr.log",
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "counts": {
+        "topLevelPass": 8,
+        "passRecords": 38,
+        "skipRecords": 1,
+        "failRecords": 0
+      },
+      "records": [
+        {
+          "status": "pass",
+          "test": "TestCoordinationRequiresAuthenticatedVenueVersionAndEpoch",
+          "topLevel": true,
+          "elapsedSeconds": 0.11,
+          "logLine": 10,
+          "source": {
+            "path": "apps/edge/internal/server/coordination_test.go",
+            "line": 16,
+            "sha256": "e3f38fc389553210fa347885e36a50b8ade7ff87e211641702ddfbe2b9647c87",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestCoordinationRequiresAuthenticatedVenueVersionAndEpoch/valid",
+          "topLevel": false,
+          "elapsedSeconds": 0.0,
+          "logLine": 11,
+          "source": {
+            "path": "apps/edge/internal/server/coordination_test.go",
+            "line": 16,
+            "sha256": "e3f38fc389553210fa347885e36a50b8ade7ff87e211641702ddfbe2b9647c87",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestCoordinationRequiresAuthenticatedVenueVersionAndEpoch/no-auth",
+          "topLevel": false,
+          "elapsedSeconds": 0.0,
+          "logLine": 12,
+          "source": {
+            "path": "apps/edge/internal/server/coordination_test.go",
+            "line": 16,
+            "sha256": "e3f38fc389553210fa347885e36a50b8ade7ff87e211641702ddfbe2b9647c87",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestCoordinationRequiresAuthenticatedVenueVersionAndEpoch/secret",
+          "topLevel": false,
+          "elapsedSeconds": 0.0,
+          "logLine": 13,
+          "source": {
+            "path": "apps/edge/internal/server/coordination_test.go",
+            "line": 16,
+            "sha256": "e3f38fc389553210fa347885e36a50b8ade7ff87e211641702ddfbe2b9647c87",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestCoordinationRequiresAuthenticatedVenueVersionAndEpoch/venue",
+          "topLevel": false,
+          "elapsedSeconds": 0.0,
+          "logLine": 14,
+          "source": {
+            "path": "apps/edge/internal/server/coordination_test.go",
+            "line": 16,
+            "sha256": "e3f38fc389553210fa347885e36a50b8ade7ff87e211641702ddfbe2b9647c87",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestCoordinationRequiresAuthenticatedVenueVersionAndEpoch/edge",
+          "topLevel": false,
+          "elapsedSeconds": 0.0,
+          "logLine": 15,
+          "source": {
+            "path": "apps/edge/internal/server/coordination_test.go",
+            "line": 16,
+            "sha256": "e3f38fc389553210fa347885e36a50b8ade7ff87e211641702ddfbe2b9647c87",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestCoordinationRequiresAuthenticatedVenueVersionAndEpoch/minor",
+          "topLevel": false,
+          "elapsedSeconds": 0.0,
+          "logLine": 16,
+          "source": {
+            "path": "apps/edge/internal/server/coordination_test.go",
+            "line": 16,
+            "sha256": "e3f38fc389553210fa347885e36a50b8ade7ff87e211641702ddfbe2b9647c87",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestCoordinationRequiresAuthenticatedVenueVersionAndEpoch/epoch",
+          "topLevel": false,
+          "elapsedSeconds": 0.0,
+          "logLine": 17,
+          "source": {
+            "path": "apps/edge/internal/server/coordination_test.go",
+            "line": 16,
+            "sha256": "e3f38fc389553210fa347885e36a50b8ade7ff87e211641702ddfbe2b9647c87",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestCoordinationRequiresAuthenticatedVenueVersionAndEpoch/capability",
+          "topLevel": false,
+          "elapsedSeconds": 0.0,
+          "logLine": 18,
+          "source": {
+            "path": "apps/edge/internal/server/coordination_test.go",
+            "line": 16,
+            "sha256": "e3f38fc389553210fa347885e36a50b8ade7ff87e211641702ddfbe2b9647c87",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "skip",
+          "test": "TestOperationalProofProcess",
+          "topLevel": true,
+          "elapsedSeconds": 0.0,
+          "logLine": 21,
+          "source": {
+            "path": "apps/edge/internal/server/operational_proof_test.go",
+            "line": 551,
+            "sha256": "2563c3c157ab8ec367134c3dc9301c51f4af748995e7f7b1fc995a0c9c0c5ca3",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestOperationalProofThreeProcessesGatewayAtomicRaceLostACKAndRestart",
+          "topLevel": true,
+          "elapsedSeconds": 3.31,
+          "logLine": 37,
+          "source": {
+            "path": "apps/edge/internal/server/operational_proof_test.go",
+            "line": 648,
+            "sha256": "2563c3c157ab8ec367134c3dc9301c51f4af748995e7f7b1fc995a0c9c0c5ca3",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestOperationalProofThreeProcessesGatewayAtomicRaceLostACKAndRestart/reissued-origin",
+          "topLevel": false,
+          "elapsedSeconds": 0.15,
+          "logLine": 38,
+          "source": {
+            "path": "apps/edge/internal/server/operational_proof_test.go",
+            "line": 648,
+            "sha256": "2563c3c157ab8ec367134c3dc9301c51f4af748995e7f7b1fc995a0c9c0c5ca3",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestOperationalProofThreeProcessesGatewayAtomicRaceLostACKAndRestart/wrong-ca",
+          "topLevel": false,
+          "elapsedSeconds": 0.12,
+          "logLine": 39,
+          "source": {
+            "path": "apps/edge/internal/server/operational_proof_test.go",
+            "line": 648,
+            "sha256": "2563c3c157ab8ec367134c3dc9301c51f4af748995e7f7b1fc995a0c9c0c5ca3",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestOperationalProofThreeProcessesGatewayAtomicRaceLostACKAndRestart/duplicate-SAN",
+          "topLevel": false,
+          "elapsedSeconds": 0.13,
+          "logLine": 40,
+          "source": {
+            "path": "apps/edge/internal/server/operational_proof_test.go",
+            "line": 648,
+            "sha256": "2563c3c157ab8ec367134c3dc9301c51f4af748995e7f7b1fc995a0c9c0c5ca3",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestOperationalProofThreeProcessesGatewayAtomicRaceLostACKAndRestart/encoded-SAN",
+          "topLevel": false,
+          "elapsedSeconds": 0.13,
+          "logLine": 41,
+          "source": {
+            "path": "apps/edge/internal/server/operational_proof_test.go",
+            "line": 648,
+            "sha256": "2563c3c157ab8ec367134c3dc9301c51f4af748995e7f7b1fc995a0c9c0c5ca3",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestOperationalProofThreeProcessesGatewayAtomicRaceLostACKAndRestart/foreign-Venue-certificate",
+          "topLevel": false,
+          "elapsedSeconds": 0.13,
+          "logLine": 42,
+          "source": {
+            "path": "apps/edge/internal/server/operational_proof_test.go",
+            "line": 648,
+            "sha256": "2563c3c157ab8ec367134c3dc9301c51f4af748995e7f7b1fc995a0c9c0c5ca3",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestOperationalProofThreeProcessesGatewayAtomicRaceLostACKAndRestart/base-cert-queued-result",
+          "topLevel": false,
+          "elapsedSeconds": 0.15,
+          "logLine": 43,
+          "source": {
+            "path": "apps/edge/internal/server/operational_proof_test.go",
+            "line": 648,
+            "sha256": "2563c3c157ab8ec367134c3dc9301c51f4af748995e7f7b1fc995a0c9c0c5ca3",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestOperationalProofThreeProcessesGatewayAtomicRaceLostACKAndRestart/wrong-Venue",
+          "topLevel": false,
+          "elapsedSeconds": 0.13,
+          "logLine": 44,
+          "source": {
+            "path": "apps/edge/internal/server/operational_proof_test.go",
+            "line": 648,
+            "sha256": "2563c3c157ab8ec367134c3dc9301c51f4af748995e7f7b1fc995a0c9c0c5ca3",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestOperationalProofThreeProcessesGatewayAtomicRaceLostACKAndRestart/wrong-epoch",
+          "topLevel": false,
+          "elapsedSeconds": 0.13,
+          "logLine": 45,
+          "source": {
+            "path": "apps/edge/internal/server/operational_proof_test.go",
+            "line": 648,
+            "sha256": "2563c3c157ab8ec367134c3dc9301c51f4af748995e7f7b1fc995a0c9c0c5ca3",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestOperationalProofThreeProcessesGatewayAtomicRaceLostACKAndRestart/wrong-host",
+          "topLevel": false,
+          "elapsedSeconds": 0.17,
+          "logLine": 46,
+          "source": {
+            "path": "apps/edge/internal/server/operational_proof_test.go",
+            "line": 648,
+            "sha256": "2563c3c157ab8ec367134c3dc9301c51f4af748995e7f7b1fc995a0c9c0c5ca3",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestOperationalProofThreeProcessesGatewayAtomicRaceLostACKAndRestart/wrong-envelope-origin",
+          "topLevel": false,
+          "elapsedSeconds": 0.2,
+          "logLine": 47,
+          "source": {
+            "path": "apps/edge/internal/server/operational_proof_test.go",
+            "line": 648,
+            "sha256": "2563c3c157ab8ec367134c3dc9301c51f4af748995e7f7b1fc995a0c9c0c5ca3",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestOperationalProofThreeProcessesGatewayAtomicRaceLostACKAndRestart/request-origin",
+          "topLevel": false,
+          "elapsedSeconds": 0.14,
+          "logLine": 48,
+          "source": {
+            "path": "apps/edge/internal/server/operational_proof_test.go",
+            "line": 648,
+            "sha256": "2563c3c157ab8ec367134c3dc9301c51f4af748995e7f7b1fc995a0c9c0c5ca3",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestOperationalProofThreeProcessesGatewayAtomicRaceLostACKAndRestart/unknown-wire-field",
+          "topLevel": false,
+          "elapsedSeconds": 0.13,
+          "logLine": 49,
+          "source": {
+            "path": "apps/edge/internal/server/operational_proof_test.go",
+            "line": 648,
+            "sha256": "2563c3c157ab8ec367134c3dc9301c51f4af748995e7f7b1fc995a0c9c0c5ca3",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestOperationalProofThreeProcessesGatewayAtomicRaceLostACKAndRestart/changed-mode",
+          "topLevel": false,
+          "elapsedSeconds": 0.14,
+          "logLine": 50,
+          "source": {
+            "path": "apps/edge/internal/server/operational_proof_test.go",
+            "line": 648,
+            "sha256": "2563c3c157ab8ec367134c3dc9301c51f4af748995e7f7b1fc995a0c9c0c5ca3",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestOperationalProofFreshCertificateTerminalRevocationAndFoundationIsolation",
+          "topLevel": true,
+          "elapsedSeconds": 0.13,
+          "logLine": 52,
+          "source": {
+            "path": "apps/edge/internal/server/operational_proof_test.go",
+            "line": 808,
+            "sha256": "2563c3c157ab8ec367134c3dc9301c51f4af748995e7f7b1fc995a0c9c0c5ca3",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestOperationalProofConstructorPreflightsServerPinWithX509",
+          "topLevel": true,
+          "elapsedSeconds": 0.19,
+          "logLine": 59,
+          "source": {
+            "path": "apps/edge/internal/server/operational_proof_test.go",
+            "line": 886,
+            "sha256": "2563c3c157ab8ec367134c3dc9301c51f4af748995e7f7b1fc995a0c9c0c5ca3",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestOperationalProofConstructorPreflightsServerPinWithX509/SAN",
+          "topLevel": false,
+          "elapsedSeconds": 0.04,
+          "logLine": 60,
+          "source": {
+            "path": "apps/edge/internal/server/operational_proof_test.go",
+            "line": 886,
+            "sha256": "2563c3c157ab8ec367134c3dc9301c51f4af748995e7f7b1fc995a0c9c0c5ca3",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestOperationalProofConstructorPreflightsServerPinWithX509/EKU",
+          "topLevel": false,
+          "elapsedSeconds": 0.04,
+          "logLine": 61,
+          "source": {
+            "path": "apps/edge/internal/server/operational_proof_test.go",
+            "line": 886,
+            "sha256": "2563c3c157ab8ec367134c3dc9301c51f4af748995e7f7b1fc995a0c9c0c5ca3",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestOperationalProofConstructorPreflightsServerPinWithX509/expired",
+          "topLevel": false,
+          "elapsedSeconds": 0.04,
+          "logLine": 62,
+          "source": {
+            "path": "apps/edge/internal/server/operational_proof_test.go",
+            "line": 886,
+            "sha256": "2563c3c157ab8ec367134c3dc9301c51f4af748995e7f7b1fc995a0c9c0c5ca3",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestOperationalProofConstructorPreflightsServerPinWithX509/not-yet-valid",
+          "topLevel": false,
+          "elapsedSeconds": 0.03,
+          "logLine": 63,
+          "source": {
+            "path": "apps/edge/internal/server/operational_proof_test.go",
+            "line": 886,
+            "sha256": "2563c3c157ab8ec367134c3dc9301c51f4af748995e7f7b1fc995a0c9c0c5ca3",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestOperationalProofConstructorPreflightsServerPinWithX509/extra-SAN",
+          "topLevel": false,
+          "elapsedSeconds": 0.04,
+          "logLine": 64,
+          "source": {
+            "path": "apps/edge/internal/server/operational_proof_test.go",
+            "line": 886,
+            "sha256": "2563c3c157ab8ec367134c3dc9301c51f4af748995e7f7b1fc995a0c9c0c5ca3",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestPairingAuthenticationAndRestart",
+          "topLevel": true,
+          "elapsedSeconds": 0.05,
+          "logLine": 70,
+          "source": {
+            "path": "apps/edge/internal/server/server_test.go",
+            "line": 55,
+            "sha256": "3e32421759ec9839c7064d6111c44ee01f76192111793e2e421f43ba991a4520",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestPairingAuthenticationAndRestart/consumed_ticket_rejects_changed_identity_and_secret",
+          "topLevel": false,
+          "elapsedSeconds": 0.0,
+          "logLine": 71,
+          "source": {
+            "path": "apps/edge/internal/server/server_test.go",
+            "line": 55,
+            "sha256": "3e32421759ec9839c7064d6111c44ee01f76192111793e2e421f43ba991a4520",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestPairingAuthenticationAndRestart/bad_credential",
+          "topLevel": false,
+          "elapsedSeconds": 0.0,
+          "logLine": 72,
+          "source": {
+            "path": "apps/edge/internal/server/server_test.go",
+            "line": 55,
+            "sha256": "3e32421759ec9839c7064d6111c44ee01f76192111793e2e421f43ba991a4520",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestPairingAuthenticationAndRestart/scope_and_protocol_refusal",
+          "topLevel": false,
+          "elapsedSeconds": 0.0,
+          "logLine": 73,
+          "source": {
+            "path": "apps/edge/internal/server/server_test.go",
+            "line": 55,
+            "sha256": "3e32421759ec9839c7064d6111c44ee01f76192111793e2e421f43ba991a4520",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestPairingAuthenticationAndRestart/session_replay_and_collision",
+          "topLevel": false,
+          "elapsedSeconds": 0.0,
+          "logLine": 74,
+          "source": {
+            "path": "apps/edge/internal/server/server_test.go",
+            "line": 55,
+            "sha256": "3e32421759ec9839c7064d6111c44ee01f76192111793e2e421f43ba991a4520",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestPairingExpiryAndInvalidTicket",
+          "topLevel": true,
+          "elapsedSeconds": 0.02,
+          "logLine": 76,
+          "source": {
+            "path": "apps/edge/internal/server/server_test.go",
+            "line": 207,
+            "sha256": "3e32421759ec9839c7064d6111c44ee01f76192111793e2e421f43ba991a4520",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestConcurrentTicketConsumption",
+          "topLevel": true,
+          "elapsedSeconds": 0.02,
+          "logLine": 78,
+          "source": {
+            "path": "apps/edge/internal/server/server_test.go",
+            "line": 227,
+            "sha256": "3e32421759ec9839c7064d6111c44ee01f76192111793e2e421f43ba991a4520",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestShutdownDrainsThenBoundsActiveStreams",
+          "topLevel": true,
+          "elapsedSeconds": 3.02,
+          "logLine": 80,
+          "source": {
+            "path": "apps/edge/internal/server/server_test.go",
+            "line": 265,
+            "sha256": "3e32421759ec9839c7064d6111c44ee01f76192111793e2e421f43ba991a4520",
+            "windowsExcluded": false
+          }
+        }
+      ]
+    },
+    "printqueue": {
+      "status": "passed",
+      "exitCode": 0,
+      "elapsedMs": 2148,
+      "testBinary": "b3e4db66c08ba1126d93978c59d4504a31724aaee80157fa667f4215e9051b6e",
+      "workingDirectory": "C:\\Users\\vaanskii\\AppData\\Local\\VynicReadinessGoPackages\\frozen-v2-dc50e6bc33bb\\source\\apps\\edge\\internal\\printqueue",
+      "stdout": {
+        "path": "/Users/vaanskii/Developer/vynic/docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/windows-go-packages-result/printqueue.stdout.log",
+        "bytes": 8437,
+        "sha256": "b90650ae4f8cf40e53666709c1db449eb0bddac4e9ce3bf5a6425b5a79647756"
+      },
+      "stderr": {
+        "path": "/Users/vaanskii/Developer/vynic/docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/windows-go-packages-result/printqueue.stderr.log",
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "counts": {
+        "topLevelPass": 19,
+        "passRecords": 55,
+        "skipRecords": 0,
+        "failRecords": 0
+      },
+      "records": [
+        {
+          "status": "pass",
+          "test": "TestAtomicCanonicalPrintAdmissionRollbackAndExactRetry",
+          "topLevel": true,
+          "elapsedSeconds": 0.1,
+          "logLine": 2,
+          "source": {
+            "path": "apps/edge/internal/printqueue/atomic_test.go",
+            "line": 29,
+            "sha256": "c08336fea3436945cce4d3cdba7dd42eec0888527acc9465a1cd200ce64d3c31",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestUnsupportedUnknownAndMalformedBeepDoesNotLosePrimary",
+          "topLevel": true,
+          "elapsedSeconds": 0.14,
+          "logLine": 12,
+          "source": {
+            "path": "apps/edge/internal/printqueue/atomic_test.go",
+            "line": 112,
+            "sha256": "c08336fea3436945cce4d3cdba7dd42eec0888527acc9465a1cd200ce64d3c31",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestUnsupportedUnknownAndMalformedBeepDoesNotLosePrimary/{\"capability\":\"unknown\",\"enabled\":true}",
+          "topLevel": false,
+          "elapsedSeconds": 0.02,
+          "logLine": 13,
+          "source": {
+            "path": "apps/edge/internal/printqueue/atomic_test.go",
+            "line": 112,
+            "sha256": "c08336fea3436945cce4d3cdba7dd42eec0888527acc9465a1cd200ce64d3c31",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestUnsupportedUnknownAndMalformedBeepDoesNotLosePrimary/{\"capability\":\"epsonEscA97Pattern\",\"enabled\":\"bad\"}",
+          "topLevel": false,
+          "elapsedSeconds": 0.02,
+          "logLine": 14,
+          "source": {
+            "path": "apps/edge/internal/printqueue/atomic_test.go",
+            "line": 112,
+            "sha256": "c08336fea3436945cce4d3cdba7dd42eec0888527acc9465a1cd200ce64d3c31",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestUnsupportedUnknownAndMalformedBeepDoesNotLosePrimary/{\"capability\":\"unsupported\",\"enabled\":true}",
+          "topLevel": false,
+          "elapsedSeconds": 0.02,
+          "logLine": 15,
+          "source": {
+            "path": "apps/edge/internal/printqueue/atomic_test.go",
+            "line": 112,
+            "sha256": "c08336fea3436945cce4d3cdba7dd42eec0888527acc9465a1cd200ce64d3c31",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestUnsupportedUnknownAndMalformedBeepDoesNotLosePrimary/\"malformed\"",
+          "topLevel": false,
+          "elapsedSeconds": 0.02,
+          "logLine": 16,
+          "source": {
+            "path": "apps/edge/internal/printqueue/atomic_test.go",
+            "line": 112,
+            "sha256": "c08336fea3436945cce4d3cdba7dd42eec0888527acc9465a1cd200ce64d3c31",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestUnsupportedUnknownAndMalformedBeepDoesNotLosePrimary/null",
+          "topLevel": false,
+          "elapsedSeconds": 0.02,
+          "logLine": 17,
+          "source": {
+            "path": "apps/edge/internal/printqueue/atomic_test.go",
+            "line": 112,
+            "sha256": "c08336fea3436945cce4d3cdba7dd42eec0888527acc9465a1cd200ce64d3c31",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestUnsupportedUnknownAndMalformedBeepDoesNotLosePrimary/{\"Capability\":\"epsonEscA97Pattern\",\"Enabled\":true}",
+          "topLevel": false,
+          "elapsedSeconds": 0.02,
+          "logLine": 18,
+          "source": {
+            "path": "apps/edge/internal/printqueue/atomic_test.go",
+            "line": 112,
+            "sha256": "c08336fea3436945cce4d3cdba7dd42eec0888527acc9465a1cd200ce64d3c31",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestUnsupportedUnknownAndMalformedBeepDoesNotLosePrimary/{\"capability\":\"epsonEscA97Pattern\",\"enabled\":true,\"extra\":1}",
+          "topLevel": false,
+          "elapsedSeconds": 0.02,
+          "logLine": 19,
+          "source": {
+            "path": "apps/edge/internal/printqueue/atomic_test.go",
+            "line": 112,
+            "sha256": "c08336fea3436945cce4d3cdba7dd42eec0888527acc9465a1cd200ce64d3c31",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestUnsupportedUnknownAndMalformedBeepDoesNotLosePrimary/{\"capability\":\"epsonEscA97Pattern\"}",
+          "topLevel": false,
+          "elapsedSeconds": 0.01,
+          "logLine": 20,
+          "source": {
+            "path": "apps/edge/internal/printqueue/atomic_test.go",
+            "line": 112,
+            "sha256": "c08336fea3436945cce4d3cdba7dd42eec0888527acc9465a1cd200ce64d3c31",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestDartEnvelopeInteroperability",
+          "topLevel": true,
+          "elapsedSeconds": 0.01,
+          "logLine": 24,
+          "source": {
+            "path": "apps/edge/internal/printqueue/queue_test.go",
+            "line": 198,
+            "sha256": "94e518d9e9d45e1ab33c94c85138dab0acd5ea4266c01f7e169be5e27bc51f6b",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestDartEnvelopeInteroperability/tcp",
+          "topLevel": false,
+          "elapsedSeconds": 0.01,
+          "logLine": 25,
+          "source": {
+            "path": "apps/edge/internal/printqueue/queue_test.go",
+            "line": 198,
+            "sha256": "94e518d9e9d45e1ab33c94c85138dab0acd5ea4266c01f7e169be5e27bc51f6b",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestDartEnvelopeInteroperability/windowsSpooler",
+          "topLevel": false,
+          "elapsedSeconds": 0.0,
+          "logLine": 26,
+          "source": {
+            "path": "apps/edge/internal/printqueue/queue_test.go",
+            "line": 198,
+            "sha256": "94e518d9e9d45e1ab33c94c85138dab0acd5ea4266c01f7e169be5e27bc51f6b",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestDecoderRejectsAmbiguousOrMutatedIdentity",
+          "topLevel": true,
+          "elapsedSeconds": 0.01,
+          "logLine": 38,
+          "source": {
+            "path": "apps/edge/internal/printqueue/queue_test.go",
+            "line": 226,
+            "sha256": "94e518d9e9d45e1ab33c94c85138dab0acd5ea4266c01f7e169be5e27bc51f6b",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestDecoderRejectsAmbiguousOrMutatedIdentity/fraction",
+          "topLevel": false,
+          "elapsedSeconds": 0.0,
+          "logLine": 39,
+          "source": {
+            "path": "apps/edge/internal/printqueue/queue_test.go",
+            "line": 226,
+            "sha256": "94e518d9e9d45e1ab33c94c85138dab0acd5ea4266c01f7e169be5e27bc51f6b",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestDecoderRejectsAmbiguousOrMutatedIdentity/null_zero_field",
+          "topLevel": false,
+          "elapsedSeconds": 0.0,
+          "logLine": 40,
+          "source": {
+            "path": "apps/edge/internal/printqueue/queue_test.go",
+            "line": 226,
+            "sha256": "94e518d9e9d45e1ab33c94c85138dab0acd5ea4266c01f7e169be5e27bc51f6b",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestDecoderRejectsAmbiguousOrMutatedIdentity/case_alias",
+          "topLevel": false,
+          "elapsedSeconds": 0.0,
+          "logLine": 41,
+          "source": {
+            "path": "apps/edge/internal/printqueue/queue_test.go",
+            "line": 226,
+            "sha256": "94e518d9e9d45e1ab33c94c85138dab0acd5ea4266c01f7e169be5e27bc51f6b",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestDecoderRejectsAmbiguousOrMutatedIdentity/destination_case_alias",
+          "topLevel": false,
+          "elapsedSeconds": 0.0,
+          "logLine": 42,
+          "source": {
+            "path": "apps/edge/internal/printqueue/queue_test.go",
+            "line": 226,
+            "sha256": "94e518d9e9d45e1ab33c94c85138dab0acd5ea4266c01f7e169be5e27bc51f6b",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestDecoderRejectsAmbiguousOrMutatedIdentity/uppercase_uuid",
+          "topLevel": false,
+          "elapsedSeconds": 0.0,
+          "logLine": 43,
+          "source": {
+            "path": "apps/edge/internal/printqueue/queue_test.go",
+            "line": 226,
+            "sha256": "94e518d9e9d45e1ab33c94c85138dab0acd5ea4266c01f7e169be5e27bc51f6b",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestDecoderRejectsAmbiguousOrMutatedIdentity/hash_mismatch",
+          "topLevel": false,
+          "elapsedSeconds": 0.0,
+          "logLine": 44,
+          "source": {
+            "path": "apps/edge/internal/printqueue/queue_test.go",
+            "line": 226,
+            "sha256": "94e518d9e9d45e1ab33c94c85138dab0acd5ea4266c01f7e169be5e27bc51f6b",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestDecoderRejectsAmbiguousOrMutatedIdentity/unknown",
+          "topLevel": false,
+          "elapsedSeconds": 0.0,
+          "logLine": 45,
+          "source": {
+            "path": "apps/edge/internal/printqueue/queue_test.go",
+            "line": 226,
+            "sha256": "94e518d9e9d45e1ab33c94c85138dab0acd5ea4266c01f7e169be5e27bc51f6b",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestDecoderRejectsAmbiguousOrMutatedIdentity/DNS",
+          "topLevel": false,
+          "elapsedSeconds": 0.0,
+          "logLine": 46,
+          "source": {
+            "path": "apps/edge/internal/printqueue/queue_test.go",
+            "line": 226,
+            "sha256": "94e518d9e9d45e1ab33c94c85138dab0acd5ea4266c01f7e169be5e27bc51f6b",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestDecoderRejectsAmbiguousOrMutatedIdentity/missing",
+          "topLevel": false,
+          "elapsedSeconds": 0.0,
+          "logLine": 47,
+          "source": {
+            "path": "apps/edge/internal/printqueue/queue_test.go",
+            "line": 226,
+            "sha256": "94e518d9e9d45e1ab33c94c85138dab0acd5ea4266c01f7e169be5e27bc51f6b",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestDecoderRejectsAmbiguousOrMutatedIdentity/zero_revision",
+          "topLevel": false,
+          "elapsedSeconds": 0.0,
+          "logLine": 48,
+          "source": {
+            "path": "apps/edge/internal/printqueue/queue_test.go",
+            "line": 226,
+            "sha256": "94e518d9e9d45e1ab33c94c85138dab0acd5ea4266c01f7e169be5e27bc51f6b",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestAliasEndpointAndFrozenRetry",
+          "topLevel": true,
+          "elapsedSeconds": 0.02,
+          "logLine": 50,
+          "source": {
+            "path": "apps/edge/internal/printqueue/queue_test.go",
+            "line": 266,
+            "sha256": "94e518d9e9d45e1ab33c94c85138dab0acd5ea4266c01f7e169be5e27bc51f6b",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestWindowsQueueCanonicalOwnership",
+          "topLevel": true,
+          "elapsedSeconds": 0.01,
+          "logLine": 52,
+          "source": {
+            "path": "apps/edge/internal/printqueue/queue_test.go",
+            "line": 315,
+            "sha256": "94e518d9e9d45e1ab33c94c85138dab0acd5ea4266c01f7e169be5e27bc51f6b",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestFIFOAndIndependentPrinterDuringLostACK",
+          "topLevel": true,
+          "elapsedSeconds": 0.04,
+          "logLine": 54,
+          "source": {
+            "path": "apps/edge/internal/printqueue/queue_test.go",
+            "line": 332,
+            "sha256": "94e518d9e9d45e1ab33c94c85138dab0acd5ea4266c01f7e169be5e27bc51f6b",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestThreeClientFIFOAndOptionalBeepSeparate",
+          "topLevel": true,
+          "elapsedSeconds": 0.02,
+          "logLine": 56,
+          "source": {
+            "path": "apps/edge/internal/printqueue/queue_test.go",
+            "line": 408,
+            "sha256": "94e518d9e9d45e1ab33c94c85138dab0acd5ea4266c01f7e169be5e27bc51f6b",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestStopTimeoutRetainsLifetimeAndRestartIsConservative",
+          "topLevel": true,
+          "elapsedSeconds": 0.04,
+          "logLine": 58,
+          "source": {
+            "path": "apps/edge/internal/printqueue/queue_test.go",
+            "line": 455,
+            "sha256": "94e518d9e9d45e1ab33c94c85138dab0acd5ea4266c01f7e169be5e27bc51f6b",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestEveryFlushedDispatchBoundaryRestart",
+          "topLevel": true,
+          "elapsedSeconds": 0.1,
+          "logLine": 65,
+          "source": {
+            "path": "apps/edge/internal/printqueue/queue_test.go",
+            "line": 518,
+            "sha256": "94e518d9e9d45e1ab33c94c85138dab0acd5ea4266c01f7e169be5e27bc51f6b",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestEveryFlushedDispatchBoundaryRestart/startedFlushed",
+          "topLevel": false,
+          "elapsedSeconds": 0.02,
+          "logLine": 66,
+          "source": {
+            "path": "apps/edge/internal/printqueue/queue_test.go",
+            "line": 518,
+            "sha256": "94e518d9e9d45e1ab33c94c85138dab0acd5ea4266c01f7e169be5e27bc51f6b",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestEveryFlushedDispatchBoundaryRestart/primaryFlushed",
+          "topLevel": false,
+          "elapsedSeconds": 0.02,
+          "logLine": 67,
+          "source": {
+            "path": "apps/edge/internal/printqueue/queue_test.go",
+            "line": 518,
+            "sha256": "94e518d9e9d45e1ab33c94c85138dab0acd5ea4266c01f7e169be5e27bc51f6b",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestEveryFlushedDispatchBoundaryRestart/beepReservedFlushed",
+          "topLevel": false,
+          "elapsedSeconds": 0.02,
+          "logLine": 68,
+          "source": {
+            "path": "apps/edge/internal/printqueue/queue_test.go",
+            "line": 518,
+            "sha256": "94e518d9e9d45e1ab33c94c85138dab0acd5ea4266c01f7e169be5e27bc51f6b",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestEveryFlushedDispatchBoundaryRestart/beepFlushed",
+          "topLevel": false,
+          "elapsedSeconds": 0.02,
+          "logLine": 69,
+          "source": {
+            "path": "apps/edge/internal/printqueue/queue_test.go",
+            "line": 518,
+            "sha256": "94e518d9e9d45e1ab33c94c85138dab0acd5ea4266c01f7e169be5e27bc51f6b",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestEveryFlushedDispatchBoundaryRestart/completedFlushed",
+          "topLevel": false,
+          "elapsedSeconds": 0.02,
+          "logLine": 70,
+          "source": {
+            "path": "apps/edge/internal/printqueue/queue_test.go",
+            "line": 518,
+            "sha256": "94e518d9e9d45e1ab33c94c85138dab0acd5ea4266c01f7e169be5e27bc51f6b",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestOldSchemaAndRealSenderFailClosed",
+          "topLevel": true,
+          "elapsedSeconds": 0.04,
+          "logLine": 72,
+          "source": {
+            "path": "apps/edge/internal/printqueue/queue_test.go",
+            "line": 582,
+            "sha256": "94e518d9e9d45e1ab33c94c85138dab0acd5ea4266c01f7e169be5e27bc51f6b",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestThreeIndependentRelaysToTwoPrinterExecutor",
+          "topLevel": true,
+          "elapsedSeconds": 0.15,
+          "logLine": 75,
+          "source": {
+            "path": "apps/edge/internal/printqueue/relay_test.go",
+            "line": 24,
+            "sha256": "461fecdc579447f719d5a96432bb392464db52bdbc7a78abafc62b9855a01eae",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestPrimaryCapabilitiesMustBeImplementedBeforeAdmission",
+          "topLevel": true,
+          "elapsedSeconds": 0.0,
+          "logLine": 83,
+          "source": {
+            "path": "apps/edge/internal/printqueue/review_test.go",
+            "line": 13,
+            "sha256": "2fe38f3b959c29a35b1eef20d906c1839d7da17310c5e187d010a4d075e3e32e",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestPrimaryCapabilitiesMustBeImplementedBeforeAdmission/protocol",
+          "topLevel": false,
+          "elapsedSeconds": 0.0,
+          "logLine": 84,
+          "source": {
+            "path": "apps/edge/internal/printqueue/review_test.go",
+            "line": 13,
+            "sha256": "2fe38f3b959c29a35b1eef20d906c1839d7da17310c5e187d010a4d075e3e32e",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestPrimaryCapabilitiesMustBeImplementedBeforeAdmission/paperWidthMm",
+          "topLevel": false,
+          "elapsedSeconds": 0.0,
+          "logLine": 85,
+          "source": {
+            "path": "apps/edge/internal/printqueue/review_test.go",
+            "line": 13,
+            "sha256": "2fe38f3b959c29a35b1eef20d906c1839d7da17310c5e187d010a4d075e3e32e",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestPrimaryCapabilitiesMustBeImplementedBeforeAdmission/rasterWidthDots",
+          "topLevel": false,
+          "elapsedSeconds": 0.0,
+          "logLine": 86,
+          "source": {
+            "path": "apps/edge/internal/printqueue/review_test.go",
+            "line": 13,
+            "sha256": "2fe38f3b959c29a35b1eef20d906c1839d7da17310c5e187d010a4d075e3e32e",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestPrimaryCapabilitiesMustBeImplementedBeforeAdmission/language",
+          "topLevel": false,
+          "elapsedSeconds": 0.0,
+          "logLine": 87,
+          "source": {
+            "path": "apps/edge/internal/printqueue/review_test.go",
+            "line": 13,
+            "sha256": "2fe38f3b959c29a35b1eef20d906c1839d7da17310c5e187d010a4d075e3e32e",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestPrimaryCapabilitiesMustBeImplementedBeforeAdmission/cutter",
+          "topLevel": false,
+          "elapsedSeconds": 0.0,
+          "logLine": 88,
+          "source": {
+            "path": "apps/edge/internal/printqueue/review_test.go",
+            "line": 13,
+            "sha256": "2fe38f3b959c29a35b1eef20d906c1839d7da17310c5e187d010a4d075e3e32e",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestPrimaryCapabilitiesMustBeImplementedBeforeAdmission/encoding",
+          "topLevel": false,
+          "elapsedSeconds": 0.0,
+          "logLine": 89,
+          "source": {
+            "path": "apps/edge/internal/printqueue/review_test.go",
+            "line": 13,
+            "sha256": "2fe38f3b959c29a35b1eef20d906c1839d7da17310c5e187d010a4d075e3e32e",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestContradictoryNativeResultsAreUncertain",
+          "topLevel": true,
+          "elapsedSeconds": 0.07,
+          "logLine": 96,
+          "source": {
+            "path": "apps/edge/internal/printqueue/review_test.go",
+            "line": 40,
+            "sha256": "2fe38f3b959c29a35b1eef20d906c1839d7da17310c5e187d010a4d075e3e32e",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestContradictoryNativeResultsAreUncertain/created_native_job",
+          "topLevel": false,
+          "elapsedSeconds": 0.02,
+          "logLine": 97,
+          "source": {
+            "path": "apps/edge/internal/printqueue/review_test.go",
+            "line": 40,
+            "sha256": "2fe38f3b959c29a35b1eef20d906c1839d7da17310c5e187d010a4d075e3e32e",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestContradictoryNativeResultsAreUncertain/write_attempted",
+          "topLevel": false,
+          "elapsedSeconds": 0.01,
+          "logLine": 98,
+          "source": {
+            "path": "apps/edge/internal/printqueue/review_test.go",
+            "line": 40,
+            "sha256": "2fe38f3b959c29a35b1eef20d906c1839d7da17310c5e187d010a4d075e3e32e",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestContradictoryNativeResultsAreUncertain/partial_bytes",
+          "topLevel": false,
+          "elapsedSeconds": 0.01,
+          "logLine": 99,
+          "source": {
+            "path": "apps/edge/internal/printqueue/review_test.go",
+            "line": 40,
+            "sha256": "2fe38f3b959c29a35b1eef20d906c1839d7da17310c5e187d010a4d075e3e32e",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestContradictoryNativeResultsAreUncertain/unknown_state",
+          "topLevel": false,
+          "elapsedSeconds": 0.01,
+          "logLine": 100,
+          "source": {
+            "path": "apps/edge/internal/printqueue/review_test.go",
+            "line": 40,
+            "sha256": "2fe38f3b959c29a35b1eef20d906c1839d7da17310c5e187d010a4d075e3e32e",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestContradictoryNativeResultsAreUncertain/accepted_without_write",
+          "topLevel": false,
+          "elapsedSeconds": 0.02,
+          "logLine": 101,
+          "source": {
+            "path": "apps/edge/internal/printqueue/review_test.go",
+            "line": 40,
+            "sha256": "2fe38f3b959c29a35b1eef20d906c1839d7da17310c5e187d010a4d075e3e32e",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestLiveOldGuardKeepsHeadQueuedAndOtherPrinterContinues",
+          "topLevel": true,
+          "elapsedSeconds": 0.02,
+          "logLine": 103,
+          "source": {
+            "path": "apps/edge/internal/printqueue/review_test.go",
+            "line": 70,
+            "sha256": "2fe38f3b959c29a35b1eef20d906c1839d7da17310c5e187d010a4d075e3e32e",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestCompletedNotSentClaimRecoversWithoutReprinting",
+          "topLevel": true,
+          "elapsedSeconds": 0.02,
+          "logLine": 105,
+          "source": {
+            "path": "apps/edge/internal/printqueue/review_test.go",
+            "line": 114,
+            "sha256": "2fe38f3b959c29a35b1eef20d906c1839d7da17310c5e187d010a4d075e3e32e",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestQueueCapacityAndConfigChangeRetainExactReceipts",
+          "topLevel": true,
+          "elapsedSeconds": 0.31,
+          "logLine": 107,
+          "source": {
+            "path": "apps/edge/internal/printqueue/review_test.go",
+            "line": 163,
+            "sha256": "2fe38f3b959c29a35b1eef20d906c1839d7da17310c5e187d010a4d075e3e32e",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestMultipleDatabaseConnectionsCannotPassDurabilityProbe",
+          "topLevel": true,
+          "elapsedSeconds": 0.01,
+          "logLine": 109,
+          "source": {
+            "path": "apps/edge/internal/printqueue/review_test.go",
+            "line": 206,
+            "sha256": "2fe38f3b959c29a35b1eef20d906c1839d7da17310c5e187d010a4d075e3e32e",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestFaultObserverCannotMutateFrozenSendBytes",
+          "topLevel": true,
+          "elapsedSeconds": 0.01,
+          "logLine": 111,
+          "source": {
+            "path": "apps/edge/internal/printqueue/review_test.go",
+            "line": 215,
+            "sha256": "2fe38f3b959c29a35b1eef20d906c1839d7da17310c5e187d010a4d075e3e32e",
+            "windowsExcluded": false
+          }
+        }
+      ]
+    },
+    "printhost": {
+      "status": "passed",
+      "exitCode": 0,
+      "elapsedMs": 1104,
+      "testBinary": "6314038ec90b7ae6f51b97ec86e1284e178cbbcd096e3c55b5e09d0d6239e564",
+      "workingDirectory": "C:\\Users\\vaanskii\\AppData\\Local\\VynicReadinessGoPackages\\frozen-v2-dc50e6bc33bb\\source\\apps\\edge\\internal\\printhost",
+      "stdout": {
+        "path": "/Users/vaanskii/Developer/vynic/docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/windows-go-packages-result/printhost.stdout.log",
+        "bytes": 4567,
+        "sha256": "19e813adea0ee613d6704e6d047b1ed12f7da2428f21af174e602f17f0c45be7"
+      },
+      "stderr": {
+        "path": "/Users/vaanskii/Developer/vynic/docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/windows-go-packages-result/printhost.stderr.log",
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "counts": {
+        "topLevelPass": 19,
+        "passRecords": 32,
+        "skipRecords": 0,
+        "failRecords": 0
+      },
+      "records": [
+        {
+          "status": "pass",
+          "test": "TestPinsAndTopologyRefuseBeforeOpeningResources",
+          "topLevel": true,
+          "elapsedSeconds": 0.01,
+          "logLine": 11,
+          "source": {
+            "path": "apps/edge/internal/printhost/host_test.go",
+            "line": 80,
+            "sha256": "03c2253726ef07528a1f93ff561c04cd834afeb95573e0dc5c414e3aabbf13fb",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestPinsAndTopologyRefuseBeforeOpeningResources/foreign_role",
+          "topLevel": false,
+          "elapsedSeconds": 0.0,
+          "logLine": 12,
+          "source": {
+            "path": "apps/edge/internal/printhost/host_test.go",
+            "line": 80,
+            "sha256": "03c2253726ef07528a1f93ff561c04cd834afeb95573e0dc5c414e3aabbf13fb",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestPinsAndTopologyRefuseBeforeOpeningResources/malformed_venue",
+          "topLevel": false,
+          "elapsedSeconds": 0.0,
+          "logLine": 13,
+          "source": {
+            "path": "apps/edge/internal/printhost/host_test.go",
+            "line": 80,
+            "sha256": "03c2253726ef07528a1f93ff561c04cd834afeb95573e0dc5c414e3aabbf13fb",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestPinsAndTopologyRefuseBeforeOpeningResources/old_helper",
+          "topLevel": false,
+          "elapsedSeconds": 0.0,
+          "logLine": 14,
+          "source": {
+            "path": "apps/edge/internal/printhost/host_test.go",
+            "line": 80,
+            "sha256": "03c2253726ef07528a1f93ff561c04cd834afeb95573e0dc5c414e3aabbf13fb",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestPinsAndTopologyRefuseBeforeOpeningResources/old_reader",
+          "topLevel": false,
+          "elapsedSeconds": 0.0,
+          "logLine": 15,
+          "source": {
+            "path": "apps/edge/internal/printhost/host_test.go",
+            "line": 80,
+            "sha256": "03c2253726ef07528a1f93ff561c04cd834afeb95573e0dc5c414e3aabbf13fb",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestPinsAndTopologyRefuseBeforeOpeningResources/old_database",
+          "topLevel": false,
+          "elapsedSeconds": 0.0,
+          "logLine": 16,
+          "source": {
+            "path": "apps/edge/internal/printhost/host_test.go",
+            "line": 80,
+            "sha256": "03c2253726ef07528a1f93ff561c04cd834afeb95573e0dc5c414e3aabbf13fb",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestPinsAndTopologyRefuseBeforeOpeningResources/zero_revision",
+          "topLevel": false,
+          "elapsedSeconds": 0.0,
+          "logLine": 17,
+          "source": {
+            "path": "apps/edge/internal/printhost/host_test.go",
+            "line": 80,
+            "sha256": "03c2253726ef07528a1f93ff561c04cd834afeb95573e0dc5c414e3aabbf13fb",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestPinsAndTopologyRefuseBeforeOpeningResources/future_revision",
+          "topLevel": false,
+          "elapsedSeconds": 0.0,
+          "logLine": 18,
+          "source": {
+            "path": "apps/edge/internal/printhost/host_test.go",
+            "line": 80,
+            "sha256": "03c2253726ef07528a1f93ff561c04cd834afeb95573e0dc5c414e3aabbf13fb",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestPinsAndTopologyRefuseBeforeOpeningResources/unknown_profile",
+          "topLevel": false,
+          "elapsedSeconds": 0.0,
+          "logLine": 19,
+          "source": {
+            "path": "apps/edge/internal/printhost/host_test.go",
+            "line": 80,
+            "sha256": "03c2253726ef07528a1f93ff561c04cd834afeb95573e0dc5c414e3aabbf13fb",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestPinsAndTopologyRefuseBeforeOpeningResources/unbound_artifact",
+          "topLevel": false,
+          "elapsedSeconds": 0.0,
+          "logLine": 20,
+          "source": {
+            "path": "apps/edge/internal/printhost/host_test.go",
+            "line": 80,
+            "sha256": "03c2253726ef07528a1f93ff561c04cd834afeb95573e0dc5c414e3aabbf13fb",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestSharedPhysicalSenderRemainsHeld",
+          "topLevel": true,
+          "elapsedSeconds": 0.0,
+          "logLine": 22,
+          "source": {
+            "path": "apps/edge/internal/printhost/host_test.go",
+            "line": 115,
+            "sha256": "03c2253726ef07528a1f93ff561c04cd834afeb95573e0dc5c414e3aabbf13fb",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestHealthChecksEveryFrozenPinAndOldReader",
+          "topLevel": true,
+          "elapsedSeconds": 0.0,
+          "logLine": 24,
+          "source": {
+            "path": "apps/edge/internal/printhost/host_test.go",
+            "line": 136,
+            "sha256": "03c2253726ef07528a1f93ff561c04cd834afeb95573e0dc5c414e3aabbf13fb",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestTrustedPinChangeLatchesWithoutClientMismatchDenial",
+          "topLevel": true,
+          "elapsedSeconds": 0.0,
+          "logLine": 26,
+          "source": {
+            "path": "apps/edge/internal/printhost/host_test.go",
+            "line": 168,
+            "sha256": "03c2253726ef07528a1f93ff561c04cd834afeb95573e0dc5c414e3aabbf13fb",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestStopWaitsCommitAndRetainsOwnershipAfterDeadline",
+          "topLevel": true,
+          "elapsedSeconds": 0.01,
+          "logLine": 28,
+          "source": {
+            "path": "apps/edge/internal/printhost/host_test.go",
+            "line": 199,
+            "sha256": "03c2253726ef07528a1f93ff561c04cd834afeb95573e0dc5c414e3aabbf13fb",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestCloseFailureRetainsOwnerAndVisibleDiagnostic",
+          "topLevel": true,
+          "elapsedSeconds": 0.0,
+          "logLine": 30,
+          "source": {
+            "path": "apps/edge/internal/printhost/host_test.go",
+            "line": 232,
+            "sha256": "03c2253726ef07528a1f93ff561c04cd834afeb95573e0dc5c414e3aabbf13fb",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestHostGuardExcludesSecondRoleUntilActualDrain",
+          "topLevel": true,
+          "elapsedSeconds": 0.01,
+          "logLine": 32,
+          "source": {
+            "path": "apps/edge/internal/printhost/host_test.go",
+            "line": 252,
+            "sha256": "03c2253726ef07528a1f93ff561c04cd834afeb95573e0dc5c414e3aabbf13fb",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestConcurrentAdmissionsAndHealthAreDrained",
+          "topLevel": true,
+          "elapsedSeconds": 0.01,
+          "logLine": 34,
+          "source": {
+            "path": "apps/edge/internal/printhost/host_test.go",
+            "line": 295,
+            "sha256": "03c2253726ef07528a1f93ff561c04cd834afeb95573e0dc5c414e3aabbf13fb",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestStopDuringOpenPreventsWorkerStartAndWaitsResourceOwner",
+          "topLevel": true,
+          "elapsedSeconds": 0.01,
+          "logLine": 36,
+          "source": {
+            "path": "apps/edge/internal/printhost/host_test.go",
+            "line": 335,
+            "sha256": "03c2253726ef07528a1f93ff561c04cd834afeb95573e0dc5c414e3aabbf13fb",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestSharedClusterPinsAreExplicitAndImmutable",
+          "topLevel": true,
+          "elapsedSeconds": 0.0,
+          "logLine": 38,
+          "source": {
+            "path": "apps/edge/internal/printhost/host_test.go",
+            "line": 368,
+            "sha256": "03c2253726ef07528a1f93ff561c04cd834afeb95573e0dc5c414e3aabbf13fb",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestHealthHoldCopiesDoNotMutateTrustedEvidence",
+          "topLevel": true,
+          "elapsedSeconds": 0.0,
+          "logLine": 40,
+          "source": {
+            "path": "apps/edge/internal/printhost/host_test.go",
+            "line": 390,
+            "sha256": "03c2253726ef07528a1f93ff561c04cd834afeb95573e0dc5c414e3aabbf13fb",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestActualQueueP1StallAllowsP2BusinessAndPrintAndDrainsBeep",
+          "topLevel": true,
+          "elapsedSeconds": 0.16,
+          "logLine": 42,
+          "source": {
+            "path": "apps/edge/internal/printhost/queue_lifecycle_test.go",
+            "line": 163,
+            "sha256": "a2bae11d7234158ef94f239fad4ac8f92c3ed9a1d93f75b577939f5aac7b3fc9",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestRecoveredStartedRemainsUncertainWithoutReplay",
+          "topLevel": true,
+          "elapsedSeconds": 0.06,
+          "logLine": 44,
+          "source": {
+            "path": "apps/edge/internal/printhost/queue_lifecycle_test.go",
+            "line": 274,
+            "sha256": "a2bae11d7234158ef94f239fad4ac8f92c3ed9a1d93f75b577939f5aac7b3fc9",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestCanceledActualQueueProbeDoesNotStopHealthyHost",
+          "topLevel": true,
+          "elapsedSeconds": 0.04,
+          "logLine": 46,
+          "source": {
+            "path": "apps/edge/internal/printhost/queue_lifecycle_test.go",
+            "line": 344,
+            "sha256": "a2bae11d7234158ef94f239fad4ac8f92c3ed9a1d93f75b577939f5aac7b3fc9",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestControlServiceKeepsStopPendingUntilActualDrain",
+          "topLevel": true,
+          "elapsedSeconds": 0.0,
+          "logLine": 48,
+          "source": {
+            "path": "apps/edge/internal/printhost/service_test.go",
+            "line": 28,
+            "sha256": "2c0bb78ea73507e3c6fa3a3f38df5de4d2d166ae3e5b3facd82a73cab0a4e51e",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestControlServiceObservesTrustedRuntimeFailureWithoutSCMCommand",
+          "topLevel": true,
+          "elapsedSeconds": 0.0,
+          "logLine": 52,
+          "source": {
+            "path": "apps/edge/internal/printhost/service_test.go",
+            "line": 82,
+            "sha256": "2c0bb78ea73507e3c6fa3a3f38df5de4d2d166ae3e5b3facd82a73cab0a4e51e",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestControlServiceObservesTrustedRuntimeFailureWithoutSCMCommand/pin_mismatch",
+          "topLevel": false,
+          "elapsedSeconds": 0.0,
+          "logLine": 53,
+          "source": {
+            "path": "apps/edge/internal/printhost/service_test.go",
+            "line": 82,
+            "sha256": "2c0bb78ea73507e3c6fa3a3f38df5de4d2d166ae3e5b3facd82a73cab0a4e51e",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestControlServiceObservesTrustedRuntimeFailureWithoutSCMCommand/storage_failure",
+          "topLevel": false,
+          "elapsedSeconds": 0.0,
+          "logLine": 54,
+          "source": {
+            "path": "apps/edge/internal/printhost/service_test.go",
+            "line": 82,
+            "sha256": "2c0bb78ea73507e3c6fa3a3f38df5de4d2d166ae3e5b3facd82a73cab0a4e51e",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestControlServiceCallerCancellationKeepsRunning",
+          "topLevel": true,
+          "elapsedSeconds": 0.05,
+          "logLine": 58,
+          "source": {
+            "path": "apps/edge/internal/printhost/service_test.go",
+            "line": 163,
+            "sha256": "2c0bb78ea73507e3c6fa3a3f38df5de4d2d166ae3e5b3facd82a73cab0a4e51e",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestControlServiceCallerCancellationKeepsRunning/canceled_health",
+          "topLevel": false,
+          "elapsedSeconds": 0.0,
+          "logLine": 59,
+          "source": {
+            "path": "apps/edge/internal/printhost/service_test.go",
+            "line": 163,
+            "sha256": "2c0bb78ea73507e3c6fa3a3f38df5de4d2d166ae3e5b3facd82a73cab0a4e51e",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestControlServiceCallerCancellationKeepsRunning/deadline_admission",
+          "topLevel": false,
+          "elapsedSeconds": 0.05,
+          "logLine": 60,
+          "source": {
+            "path": "apps/edge/internal/printhost/service_test.go",
+            "line": 163,
+            "sha256": "2c0bb78ea73507e3c6fa3a3f38df5de4d2d166ae3e5b3facd82a73cab0a4e51e",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestMissingOwnerRefusesBeforeResourceOpen",
+          "topLevel": true,
+          "elapsedSeconds": 0.0,
+          "logLine": 62,
+          "source": {
+            "path": "apps/edge/internal/printhost/service_test.go",
+            "line": 246,
+            "sha256": "2c0bb78ea73507e3c6fa3a3f38df5de4d2d166ae3e5b3facd82a73cab0a4e51e",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestLocalAgentMayCoLocateButSharedPinsRequireStableMembership",
+          "topLevel": true,
+          "elapsedSeconds": 0.0,
+          "logLine": 64,
+          "source": {
+            "path": "apps/edge/internal/printhost/service_test.go",
+            "line": 262,
+            "sha256": "2c0bb78ea73507e3c6fa3a3f38df5de4d2d166ae3e5b3facd82a73cab0a4e51e",
+            "windowsExcluded": false
+          }
+        }
+      ]
+    },
+    "printcluster": {
+      "status": "passed",
+      "exitCode": 0,
+      "elapsedMs": 54588,
+      "testBinary": "499823899f0ca0e15b987a7ca66827c2207403db663a74b2e61e5c88789d927c",
+      "workingDirectory": "C:\\Users\\vaanskii\\AppData\\Local\\VynicReadinessGoPackages\\frozen-v2-dc50e6bc33bb\\source\\apps\\edge\\internal\\printcluster",
+      "stdout": {
+        "path": "/Users/vaanskii/Developer/vynic/docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/windows-go-packages-result/printcluster.stdout.log",
+        "bytes": 14162,
+        "sha256": "dec6c98e8d18e9be636528ff9c056e36669d264efbf5a01b35c91e982ce13209"
+      },
+      "stderr": {
+        "path": "/Users/vaanskii/Developer/vynic/docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/windows-go-packages-result/printcluster.stderr.log",
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "counts": {
+        "topLevelPass": 24,
+        "passRecords": 85,
+        "skipRecords": 1,
+        "failRecords": 0
+      },
+      "records": [
+        {
+          "status": "pass",
+          "test": "TestStartedBeepAcrossElectionStaysHeldOtherPrinterProgresses",
+          "topLevel": true,
+          "elapsedSeconds": 3.32,
+          "logLine": 2,
+          "source": {
+            "path": "apps/edge/internal/printcluster/boundaries_test.go",
+            "line": 20,
+            "sha256": "6a6eed7047b49dde05b49e402e9481d42a20fe72849e02cfcc196d2c76427456",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestIndependentLOCALDurableQueueWorksDuringActualSharedQuorumLoss",
+          "topLevel": true,
+          "elapsedSeconds": 1.64,
+          "logLine": 4,
+          "source": {
+            "path": "apps/edge/internal/printcluster/boundaries_test.go",
+            "line": 91,
+            "sha256": "6a6eed7047b49dde05b49e402e9481d42a20fe72849e02cfcc196d2c76427456",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestStagingCapacityScopeAndChunkReceipts",
+          "topLevel": true,
+          "elapsedSeconds": 0.01,
+          "logLine": 6,
+          "source": {
+            "path": "apps/edge/internal/printcluster/boundaries_test.go",
+            "line": 163,
+            "sha256": "6a6eed7047b49dde05b49e402e9481d42a20fe72849e02cfcc196d2c76427456",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestEffectiveModesFutureSchemaAndSnapshotFailure",
+          "topLevel": true,
+          "elapsedSeconds": 0.01,
+          "logLine": 8,
+          "source": {
+            "path": "apps/edge/internal/printcluster/boundaries_test.go",
+            "line": 213,
+            "sha256": "6a6eed7047b49dde05b49e402e9481d42a20fe72849e02cfcc196d2c76427456",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestLeaderOnlyClaimAndReprintProvenance",
+          "topLevel": true,
+          "elapsedSeconds": 1.76,
+          "logLine": 10,
+          "source": {
+            "path": "apps/edge/internal/printcluster/boundaries_test.go",
+            "line": 268,
+            "sha256": "6a6eed7047b49dde05b49e402e9481d42a20fe72849e02cfcc196d2c76427456",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestMissingJobSnapshotDoesNotPanic",
+          "topLevel": true,
+          "elapsedSeconds": 1.45,
+          "logLine": 12,
+          "source": {
+            "path": "apps/edge/internal/printcluster/boundaries_test.go",
+            "line": 300,
+            "sha256": "6a6eed7047b49dde05b49e402e9481d42a20fe72849e02cfcc196d2c76427456",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestTwoPOSPlusThirdFullReplicaMajority",
+          "topLevel": true,
+          "elapsedSeconds": 2.42,
+          "logLine": 15,
+          "source": {
+            "path": "apps/edge/internal/printcluster/boundaries_test.go",
+            "line": 326,
+            "sha256": "6a6eed7047b49dde05b49e402e9481d42a20fe72849e02cfcc196d2c76427456",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestOnlyTemporaryProofDirectories",
+          "topLevel": true,
+          "elapsedSeconds": 0.0,
+          "logLine": 17,
+          "source": {
+            "path": "apps/edge/internal/printcluster/boundaries_test.go",
+            "line": 359,
+            "sha256": "6a6eed7047b49dde05b49e402e9481d42a20fe72849e02cfcc196d2c76427456",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestExplicitTwoVoterFailSafeNeverFallsBack",
+          "topLevel": true,
+          "elapsedSeconds": 2.47,
+          "logLine": 19,
+          "source": {
+            "path": "apps/edge/internal/printcluster/boundaries_test.go",
+            "line": 370,
+            "sha256": "6a6eed7047b49dde05b49e402e9481d42a20fe72849e02cfcc196d2c76427456",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestAssignedPlusUnreferencedNullJobRestoreRefused",
+          "topLevel": true,
+          "elapsedSeconds": 1.41,
+          "logLine": 21,
+          "source": {
+            "path": "apps/edge/internal/printcluster/boundaries_test.go",
+            "line": 394,
+            "sha256": "6a6eed7047b49dde05b49e402e9481d42a20fe72849e02cfcc196d2c76427456",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestActualDartContractGoldens",
+          "topLevel": true,
+          "elapsedSeconds": 0.0,
+          "logLine": 27,
+          "source": {
+            "path": "apps/edge/internal/printcluster/cluster_test.go",
+            "line": 272,
+            "sha256": "821fe8230f0ca133ec5aa2a0b9b58f0b69493ae6278310e6d5bd876d5e05e1ea",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestActualDartContractGoldens/shared_tcp",
+          "topLevel": false,
+          "elapsedSeconds": 0.0,
+          "logLine": 28,
+          "source": {
+            "path": "apps/edge/internal/printcluster/cluster_test.go",
+            "line": 272,
+            "sha256": "821fe8230f0ca133ec5aa2a0b9b58f0b69493ae6278310e6d5bd876d5e05e1ea",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestActualDartContractGoldens/local_tcp",
+          "topLevel": false,
+          "elapsedSeconds": 0.0,
+          "logLine": 29,
+          "source": {
+            "path": "apps/edge/internal/printcluster/cluster_test.go",
+            "line": 272,
+            "sha256": "821fe8230f0ca133ec5aa2a0b9b58f0b69493ae6278310e6d5bd876d5e05e1ea",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestActualDartContractGoldens/shared_usb",
+          "topLevel": false,
+          "elapsedSeconds": 0.0,
+          "logLine": 30,
+          "source": {
+            "path": "apps/edge/internal/printcluster/cluster_test.go",
+            "line": 272,
+            "sha256": "821fe8230f0ca133ec5aa2a0b9b58f0b69493ae6278310e6d5bd876d5e05e1ea",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestActualDartContractGoldens/unknown_beep",
+          "topLevel": false,
+          "elapsedSeconds": 0.0,
+          "logLine": 31,
+          "source": {
+            "path": "apps/edge/internal/printcluster/cluster_test.go",
+            "line": 272,
+            "sha256": "821fe8230f0ca133ec5aa2a0b9b58f0b69493ae6278310e6d5bd876d5e05e1ea",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestStrictContractAndFrozenVisibleFields",
+          "topLevel": true,
+          "elapsedSeconds": 0.01,
+          "logLine": 51,
+          "source": {
+            "path": "apps/edge/internal/printcluster/cluster_test.go",
+            "line": 288,
+            "sha256": "821fe8230f0ca133ec5aa2a0b9b58f0b69493ae6278310e6d5bd876d5e05e1ea",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestStrictContractAndFrozenVisibleFields/unknown_key",
+          "topLevel": false,
+          "elapsedSeconds": 0.0,
+          "logLine": 52,
+          "source": {
+            "path": "apps/edge/internal/printcluster/cluster_test.go",
+            "line": 288,
+            "sha256": "821fe8230f0ca133ec5aa2a0b9b58f0b69493ae6278310e6d5bd876d5e05e1ea",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestStrictContractAndFrozenVisibleFields/route_not_uuid",
+          "topLevel": false,
+          "elapsedSeconds": 0.0,
+          "logLine": 53,
+          "source": {
+            "path": "apps/edge/internal/printcluster/cluster_test.go",
+            "line": 288,
+            "sha256": "821fe8230f0ca133ec5aa2a0b9b58f0b69493ae6278310e6d5bd876d5e05e1ea",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestStrictContractAndFrozenVisibleFields/uppercase_uuid",
+          "topLevel": false,
+          "elapsedSeconds": 0.0,
+          "logLine": 54,
+          "source": {
+            "path": "apps/edge/internal/printcluster/cluster_test.go",
+            "line": 288,
+            "sha256": "821fe8230f0ca133ec5aa2a0b9b58f0b69493ae6278310e6d5bd876d5e05e1ea",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestStrictContractAndFrozenVisibleFields/fraction_revision",
+          "topLevel": false,
+          "elapsedSeconds": 0.0,
+          "logLine": 55,
+          "source": {
+            "path": "apps/edge/internal/printcluster/cluster_test.go",
+            "line": 288,
+            "sha256": "821fe8230f0ca133ec5aa2a0b9b58f0b69493ae6278310e6d5bd876d5e05e1ea",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestStrictContractAndFrozenVisibleFields/zero_revision",
+          "topLevel": false,
+          "elapsedSeconds": 0.0,
+          "logLine": 56,
+          "source": {
+            "path": "apps/edge/internal/printcluster/cluster_test.go",
+            "line": 288,
+            "sha256": "821fe8230f0ca133ec5aa2a0b9b58f0b69493ae6278310e6d5bd876d5e05e1ea",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestStrictContractAndFrozenVisibleFields/primary_changed",
+          "topLevel": false,
+          "elapsedSeconds": 0.0,
+          "logLine": 57,
+          "source": {
+            "path": "apps/edge/internal/printcluster/cluster_test.go",
+            "line": 288,
+            "sha256": "821fe8230f0ca133ec5aa2a0b9b58f0b69493ae6278310e6d5bd876d5e05e1ea",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestStrictContractAndFrozenVisibleFields/primary_unknown_core",
+          "topLevel": false,
+          "elapsedSeconds": 0.0,
+          "logLine": 58,
+          "source": {
+            "path": "apps/edge/internal/printcluster/cluster_test.go",
+            "line": 288,
+            "sha256": "821fe8230f0ca133ec5aa2a0b9b58f0b69493ae6278310e6d5bd876d5e05e1ea",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestStrictContractAndFrozenVisibleFields/unknown_renderer_held",
+          "topLevel": false,
+          "elapsedSeconds": 0.0,
+          "logLine": 59,
+          "source": {
+            "path": "apps/edge/internal/printcluster/cluster_test.go",
+            "line": 288,
+            "sha256": "821fe8230f0ca133ec5aa2a0b9b58f0b69493ae6278310e6d5bd876d5e05e1ea",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestStrictContractAndFrozenVisibleFields/tenant_malformed",
+          "topLevel": false,
+          "elapsedSeconds": 0.0,
+          "logLine": 60,
+          "source": {
+            "path": "apps/edge/internal/printcluster/cluster_test.go",
+            "line": 288,
+            "sha256": "821fe8230f0ca133ec5aa2a0b9b58f0b69493ae6278310e6d5bd876d5e05e1ea",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestStrictContractAndFrozenVisibleFields/reprint_self",
+          "topLevel": false,
+          "elapsedSeconds": 0.0,
+          "logLine": 61,
+          "source": {
+            "path": "apps/edge/internal/printcluster/cluster_test.go",
+            "line": 288,
+            "sha256": "821fe8230f0ca133ec5aa2a0b9b58f0b69493ae6278310e6d5bd876d5e05e1ea",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestStrictContractAndFrozenVisibleFields/shared_fixed_tcp_owner_rejected",
+          "topLevel": false,
+          "elapsedSeconds": 0.0,
+          "logLine": 62,
+          "source": {
+            "path": "apps/edge/internal/printcluster/cluster_test.go",
+            "line": 288,
+            "sha256": "821fe8230f0ca133ec5aa2a0b9b58f0b69493ae6278310e6d5bd876d5e05e1ea",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestStrictContractAndFrozenVisibleFields/foreign_cluster_owner",
+          "topLevel": false,
+          "elapsedSeconds": 0.0,
+          "logLine": 63,
+          "source": {
+            "path": "apps/edge/internal/printcluster/cluster_test.go",
+            "line": 288,
+            "sha256": "821fe8230f0ca133ec5aa2a0b9b58f0b69493ae6278310e6d5bd876d5e05e1ea",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestStrictContractAndFrozenVisibleFields/control_host",
+          "topLevel": false,
+          "elapsedSeconds": 0.0,
+          "logLine": 64,
+          "source": {
+            "path": "apps/edge/internal/printcluster/cluster_test.go",
+            "line": 288,
+            "sha256": "821fe8230f0ca133ec5aa2a0b9b58f0b69493ae6278310e6d5bd876d5e05e1ea",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestStrictContractAndFrozenVisibleFields/extra_destination",
+          "topLevel": false,
+          "elapsedSeconds": 0.0,
+          "logLine": 65,
+          "source": {
+            "path": "apps/edge/internal/printcluster/cluster_test.go",
+            "line": 288,
+            "sha256": "821fe8230f0ca133ec5aa2a0b9b58f0b69493ae6278310e6d5bd876d5e05e1ea",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestStrictContractAndFrozenVisibleFields/duplicate_nested_key",
+          "topLevel": false,
+          "elapsedSeconds": 0.0,
+          "logLine": 66,
+          "source": {
+            "path": "apps/edge/internal/printcluster/cluster_test.go",
+            "line": 288,
+            "sha256": "821fe8230f0ca133ec5aa2a0b9b58f0b69493ae6278310e6d5bd876d5e05e1ea",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestStrictContractAndFrozenVisibleFields/overdeep",
+          "topLevel": false,
+          "elapsedSeconds": 0.0,
+          "logLine": 67,
+          "source": {
+            "path": "apps/edge/internal/printcluster/cluster_test.go",
+            "line": 288,
+            "sha256": "821fe8230f0ca133ec5aa2a0b9b58f0b69493ae6278310e6d5bd876d5e05e1ea",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestStrictContractAndFrozenVisibleFields/mutation_job",
+          "topLevel": false,
+          "elapsedSeconds": 0.0,
+          "logLine": 68,
+          "source": {
+            "path": "apps/edge/internal/printcluster/cluster_test.go",
+            "line": 288,
+            "sha256": "821fe8230f0ca133ec5aa2a0b9b58f0b69493ae6278310e6d5bd876d5e05e1ea",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestStrictContractAndFrozenVisibleFields/mutation_config",
+          "topLevel": false,
+          "elapsedSeconds": 0.0,
+          "logLine": 69,
+          "source": {
+            "path": "apps/edge/internal/printcluster/cluster_test.go",
+            "line": 288,
+            "sha256": "821fe8230f0ca133ec5aa2a0b9b58f0b69493ae6278310e6d5bd876d5e05e1ea",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestFixedFullDataMembershipPolicy",
+          "topLevel": true,
+          "elapsedSeconds": 0.01,
+          "logLine": 83,
+          "source": {
+            "path": "apps/edge/internal/printcluster/cluster_test.go",
+            "line": 352,
+            "sha256": "821fe8230f0ca133ec5aa2a0b9b58f0b69493ae6278310e6d5bd876d5e05e1ea",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestFixedFullDataMembershipPolicy/1",
+          "topLevel": false,
+          "elapsedSeconds": 0.0,
+          "logLine": 84,
+          "source": {
+            "path": "apps/edge/internal/printcluster/cluster_test.go",
+            "line": 352,
+            "sha256": "821fe8230f0ca133ec5aa2a0b9b58f0b69493ae6278310e6d5bd876d5e05e1ea",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestFixedFullDataMembershipPolicy/2",
+          "topLevel": false,
+          "elapsedSeconds": 0.0,
+          "logLine": 85,
+          "source": {
+            "path": "apps/edge/internal/printcluster/cluster_test.go",
+            "line": 352,
+            "sha256": "821fe8230f0ca133ec5aa2a0b9b58f0b69493ae6278310e6d5bd876d5e05e1ea",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestFixedFullDataMembershipPolicy/3",
+          "topLevel": false,
+          "elapsedSeconds": 0.0,
+          "logLine": 86,
+          "source": {
+            "path": "apps/edge/internal/printcluster/cluster_test.go",
+            "line": 352,
+            "sha256": "821fe8230f0ca133ec5aa2a0b9b58f0b69493ae6278310e6d5bd876d5e05e1ea",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestFixedFullDataMembershipPolicy/5",
+          "topLevel": false,
+          "elapsedSeconds": 0.0,
+          "logLine": 87,
+          "source": {
+            "path": "apps/edge/internal/printcluster/cluster_test.go",
+            "line": 352,
+            "sha256": "821fe8230f0ca133ec5aa2a0b9b58f0b69493ae6278310e6d5bd876d5e05e1ea",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestFixedFullDataMembershipPolicy/four_voters_refused",
+          "topLevel": false,
+          "elapsedSeconds": 0.0,
+          "logLine": 88,
+          "source": {
+            "path": "apps/edge/internal/printcluster/cluster_test.go",
+            "line": 352,
+            "sha256": "821fe8230f0ca133ec5aa2a0b9b58f0b69493ae6278310e6d5bd876d5e05e1ea",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestFixedFullDataMembershipPolicy/witness_refused",
+          "topLevel": false,
+          "elapsedSeconds": 0.0,
+          "logLine": 89,
+          "source": {
+            "path": "apps/edge/internal/printcluster/cluster_test.go",
+            "line": 352,
+            "sha256": "821fe8230f0ca133ec5aa2a0b9b58f0b69493ae6278310e6d5bd876d5e05e1ea",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestFixedFullDataMembershipPolicy/non-loopback_refused",
+          "topLevel": false,
+          "elapsedSeconds": 0.0,
+          "logLine": 90,
+          "source": {
+            "path": "apps/edge/internal/printcluster/cluster_test.go",
+            "line": 352,
+            "sha256": "821fe8230f0ca133ec5aa2a0b9b58f0b69493ae6278310e6d5bd876d5e05e1ea",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestFixedFullDataMembershipPolicy/port_overflow_refused",
+          "topLevel": false,
+          "elapsedSeconds": 0.0,
+          "logLine": 91,
+          "source": {
+            "path": "apps/edge/internal/printcluster/cluster_test.go",
+            "line": 352,
+            "sha256": "821fe8230f0ca133ec5aa2a0b9b58f0b69493ae6278310e6d5bd876d5e05e1ea",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestFixedFullDataMembershipPolicy/duplicate_id_refused",
+          "topLevel": false,
+          "elapsedSeconds": 0.0,
+          "logLine": 92,
+          "source": {
+            "path": "apps/edge/internal/printcluster/cluster_test.go",
+            "line": 352,
+            "sha256": "821fe8230f0ca133ec5aa2a0b9b58f0b69493ae6278310e6d5bd876d5e05e1ea",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestFixedFullDataMembershipPolicy/duplicate_device_refused",
+          "topLevel": false,
+          "elapsedSeconds": 0.0,
+          "logLine": 93,
+          "source": {
+            "path": "apps/edge/internal/printcluster/cluster_test.go",
+            "line": 352,
+            "sha256": "821fe8230f0ca133ec5aa2a0b9b58f0b69493ae6278310e6d5bd876d5e05e1ea",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestFixedFullDataMembershipPolicy/duplicate_installation_refused",
+          "topLevel": false,
+          "elapsedSeconds": 0.0,
+          "logLine": 94,
+          "source": {
+            "path": "apps/edge/internal/printcluster/cluster_test.go",
+            "line": 352,
+            "sha256": "821fe8230f0ca133ec5aa2a0b9b58f0b69493ae6278310e6d5bd876d5e05e1ea",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestFixedFullDataMembershipPolicy/LOCAL_not_three",
+          "topLevel": false,
+          "elapsedSeconds": 0.0,
+          "logLine": 95,
+          "source": {
+            "path": "apps/edge/internal/printcluster/cluster_test.go",
+            "line": 352,
+            "sha256": "821fe8230f0ca133ec5aa2a0b9b58f0b69493ae6278310e6d5bd876d5e05e1ea",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestThreeFullVotersMajorityDedupConfigFreezeAndRestart",
+          "topLevel": true,
+          "elapsedSeconds": 4.26,
+          "logLine": 104,
+          "source": {
+            "path": "apps/edge/internal/printcluster/cluster_test.go",
+            "line": 385,
+            "sha256": "821fe8230f0ca133ec5aa2a0b9b58f0b69493ae6278310e6d5bd876d5e05e1ea",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestThreeFullVotersMajorityDedupConfigFreezeAndRestart/fan-in_2_3_4_preserves_original_origin_and_receipt",
+          "topLevel": false,
+          "elapsedSeconds": 0.38,
+          "logLine": 105,
+          "source": {
+            "path": "apps/edge/internal/printcluster/cluster_test.go",
+            "line": 385,
+            "sha256": "821fe8230f0ca133ec5aa2a0b9b58f0b69493ae6278310e6d5bd876d5e05e1ea",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestThreeFullVotersMajorityDedupConfigFreezeAndRestart/fan-in_2_3_4_preserves_original_origin_and_receipt/2",
+          "topLevel": false,
+          "elapsedSeconds": 0.1,
+          "logLine": 106,
+          "source": {
+            "path": "apps/edge/internal/printcluster/cluster_test.go",
+            "line": 385,
+            "sha256": "821fe8230f0ca133ec5aa2a0b9b58f0b69493ae6278310e6d5bd876d5e05e1ea",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestThreeFullVotersMajorityDedupConfigFreezeAndRestart/fan-in_2_3_4_preserves_original_origin_and_receipt/3",
+          "topLevel": false,
+          "elapsedSeconds": 0.13,
+          "logLine": 107,
+          "source": {
+            "path": "apps/edge/internal/printcluster/cluster_test.go",
+            "line": 385,
+            "sha256": "821fe8230f0ca133ec5aa2a0b9b58f0b69493ae6278310e6d5bd876d5e05e1ea",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestThreeFullVotersMajorityDedupConfigFreezeAndRestart/fan-in_2_3_4_preserves_original_origin_and_receipt/4",
+          "topLevel": false,
+          "elapsedSeconds": 0.16,
+          "logLine": 108,
+          "source": {
+            "path": "apps/edge/internal/printcluster/cluster_test.go",
+            "line": 385,
+            "sha256": "821fe8230f0ca133ec5aa2a0b9b58f0b69493ae6278310e6d5bd876d5e05e1ea",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestThreeFullVotersMajorityDedupConfigFreezeAndRestart/changed_input_and_actor_rejected",
+          "topLevel": false,
+          "elapsedSeconds": 0.05,
+          "logLine": 109,
+          "source": {
+            "path": "apps/edge/internal/printcluster/cluster_test.go",
+            "line": 385,
+            "sha256": "821fe8230f0ca133ec5aa2a0b9b58f0b69493ae6278310e6d5bd876d5e05e1ea",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestThreeFullVotersMajorityDedupConfigFreezeAndRestart/committed_configuration_does_not_follow_later_endpoint_edit",
+          "topLevel": false,
+          "elapsedSeconds": 0.42,
+          "logLine": 110,
+          "source": {
+            "path": "apps/edge/internal/printcluster/cluster_test.go",
+            "line": 385,
+            "sha256": "821fe8230f0ca133ec5aa2a0b9b58f0b69493ae6278310e6d5bd876d5e05e1ea",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestThreeFullVotersMajorityDedupConfigFreezeAndRestart/cold_restart_all_stores_exact_retained_receipt",
+          "topLevel": false,
+          "elapsedSeconds": 1.49,
+          "logLine": 111,
+          "source": {
+            "path": "apps/edge/internal/printcluster/cluster_test.go",
+            "line": 385,
+            "sha256": "821fe8230f0ca133ec5aa2a0b9b58f0b69493ae6278310e6d5bd876d5e05e1ea",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestLeaderLossInterruptionsAndOptionalBeepBarriers",
+          "topLevel": true,
+          "elapsedSeconds": 3.66,
+          "logLine": 118,
+          "source": {
+            "path": "apps/edge/internal/printcluster/cluster_test.go",
+            "line": 515,
+            "sha256": "821fe8230f0ca133ec5aa2a0b9b58f0b69493ae6278310e6d5bd876d5e05e1ea",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestLeaderLossInterruptionsAndOptionalBeepBarriers/new_leader_marks_started_uncertain_and_never_resends",
+          "topLevel": false,
+          "elapsedSeconds": 0.03,
+          "logLine": 119,
+          "source": {
+            "path": "apps/edge/internal/printcluster/cluster_test.go",
+            "line": 515,
+            "sha256": "821fe8230f0ca133ec5aa2a0b9b58f0b69493ae6278310e6d5bd876d5e05e1ea",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestLeaderLossInterruptionsAndOptionalBeepBarriers/operator_settlement_allows_next_immutable_job",
+          "topLevel": false,
+          "elapsedSeconds": 0.02,
+          "logLine": 120,
+          "source": {
+            "path": "apps/edge/internal/printcluster/cluster_test.go",
+            "line": 515,
+            "sha256": "821fe8230f0ca133ec5aa2a0b9b58f0b69493ae6278310e6d5bd876d5e05e1ea",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestLeaderLossInterruptionsAndOptionalBeepBarriers/optional_beep_holds_FIFO_until_settled_then_never_repeats",
+          "topLevel": false,
+          "elapsedSeconds": 0.03,
+          "logLine": 121,
+          "source": {
+            "path": "apps/edge/internal/printcluster/cluster_test.go",
+            "line": 515,
+            "sha256": "821fe8230f0ca133ec5aa2a0b9b58f0b69493ae6278310e6d5bd876d5e05e1ea",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestLeaderLossInterruptionsAndOptionalBeepBarriers/manual_reprint_fresh_IDs_committed_actor_and_reason",
+          "topLevel": false,
+          "elapsedSeconds": 0.02,
+          "logLine": 122,
+          "source": {
+            "path": "apps/edge/internal/printcluster/cluster_test.go",
+            "line": 515,
+            "sha256": "821fe8230f0ca133ec5aa2a0b9b58f0b69493ae6278310e6d5bd876d5e05e1ea",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestLeaderLossInterruptionsAndOptionalBeepBarriers/old_node_rejoins_without_independent_recovery",
+          "topLevel": false,
+          "elapsedSeconds": 0.01,
+          "logLine": 123,
+          "source": {
+            "path": "apps/edge/internal/printcluster/cluster_test.go",
+            "line": 515,
+            "sha256": "821fe8230f0ca133ec5aa2a0b9b58f0b69493ae6278310e6d5bd876d5e05e1ea",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestMinorityCannotAcceptOrUsePausedOldClaim",
+          "topLevel": true,
+          "elapsedSeconds": 3.69,
+          "logLine": 127,
+          "source": {
+            "path": "apps/edge/internal/printcluster/cluster_test.go",
+            "line": 627,
+            "sha256": "821fe8230f0ca133ec5aa2a0b9b58f0b69493ae6278310e6d5bd876d5e05e1ea",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestNonvoterAndClientDoNotCountTowardQuorum",
+          "topLevel": true,
+          "elapsedSeconds": 2.36,
+          "logLine": 131,
+          "source": {
+            "path": "apps/edge/internal/printcluster/cluster_test.go",
+            "line": 676,
+            "sha256": "821fe8230f0ca133ec5aa2a0b9b58f0b69493ae6278310e6d5bd876d5e05e1ea",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestNonvoterAndClientDoNotCountTowardQuorum/stable_pinned_CAS_membership",
+          "topLevel": false,
+          "elapsedSeconds": 0.0,
+          "logLine": 132,
+          "source": {
+            "path": "apps/edge/internal/printcluster/cluster_test.go",
+            "line": 676,
+            "sha256": "821fe8230f0ca133ec5aa2a0b9b58f0b69493ae6278310e6d5bd876d5e05e1ea",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestNonvoterAndClientDoNotCountTowardQuorum/one_voter_plus_nonvoter_is_not_majority",
+          "topLevel": false,
+          "elapsedSeconds": 0.5,
+          "logLine": 133,
+          "source": {
+            "path": "apps/edge/internal/printcluster/cluster_test.go",
+            "line": 676,
+            "sha256": "821fe8230f0ca133ec5aa2a0b9b58f0b69493ae6278310e6d5bd876d5e05e1ea",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestFullRasterChunkingSnapshotRestoreAndBounds",
+          "topLevel": true,
+          "elapsedSeconds": 11.46,
+          "logLine": 138,
+          "source": {
+            "path": "apps/edge/internal/printcluster/cluster_test.go",
+            "line": 745,
+            "sha256": "821fe8230f0ca133ec5aa2a0b9b58f0b69493ae6278310e6d5bd876d5e05e1ea",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestFullRasterChunkingSnapshotRestoreAndBounds/no_admission_from_incomplete_majority_durable_staging",
+          "topLevel": false,
+          "elapsedSeconds": 0.06,
+          "logLine": 139,
+          "source": {
+            "path": "apps/edge/internal/printcluster/cluster_test.go",
+            "line": 745,
+            "sha256": "821fe8230f0ca133ec5aa2a0b9b58f0b69493ae6278310e6d5bd876d5e05e1ea",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestFullRasterChunkingSnapshotRestoreAndBounds/snapshot_includes_staged_bytes_and_rejects_tampering_atomically",
+          "topLevel": false,
+          "elapsedSeconds": 0.25,
+          "logLine": 140,
+          "source": {
+            "path": "apps/edge/internal/printcluster/cluster_test.go",
+            "line": 745,
+            "sha256": "821fe8230f0ca133ec5aa2a0b9b58f0b69493ae6278310e6d5bd876d5e05e1ea",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestFullRasterChunkingSnapshotRestoreAndBounds/changed_duplicate_or_out-of-range_chunk_refused",
+          "topLevel": false,
+          "elapsedSeconds": 0.14,
+          "logLine": 141,
+          "source": {
+            "path": "apps/edge/internal/printcluster/cluster_test.go",
+            "line": 745,
+            "sha256": "821fe8230f0ca133ec5aa2a0b9b58f0b69493ae6278310e6d5bd876d5e05e1ea",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestProjectionRollbackReplayAndMalformedSnapshots",
+          "topLevel": true,
+          "elapsedSeconds": 0.01,
+          "logLine": 147,
+          "source": {
+            "path": "apps/edge/internal/printcluster/cluster_test.go",
+            "line": 845,
+            "sha256": "821fe8230f0ca133ec5aa2a0b9b58f0b69493ae6278310e6d5bd876d5e05e1ea",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestProjectionRollbackReplayAndMalformedSnapshots/nil_journal",
+          "topLevel": false,
+          "elapsedSeconds": 0.0,
+          "logLine": 148,
+          "source": {
+            "path": "apps/edge/internal/printcluster/cluster_test.go",
+            "line": 845,
+            "sha256": "821fe8230f0ca133ec5aa2a0b9b58f0b69493ae6278310e6d5bd876d5e05e1ea",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestProjectionRollbackReplayAndMalformedSnapshots/foreign_pin",
+          "topLevel": false,
+          "elapsedSeconds": 0.0,
+          "logLine": 149,
+          "source": {
+            "path": "apps/edge/internal/printcluster/cluster_test.go",
+            "line": 845,
+            "sha256": "821fe8230f0ca133ec5aa2a0b9b58f0b69493ae6278310e6d5bd876d5e05e1ea",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestProjectionRollbackReplayAndMalformedSnapshots/bad_config_bytes",
+          "topLevel": false,
+          "elapsedSeconds": 0.0,
+          "logLine": 150,
+          "source": {
+            "path": "apps/edge/internal/printcluster/cluster_test.go",
+            "line": 845,
+            "sha256": "821fe8230f0ca133ec5aa2a0b9b58f0b69493ae6278310e6d5bd876d5e05e1ea",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestProjectionRollbackReplayAndMalformedSnapshots/contradictory_enum_and_missing_journal",
+          "topLevel": false,
+          "elapsedSeconds": 0.0,
+          "logLine": 151,
+          "source": {
+            "path": "apps/edge/internal/printcluster/cluster_test.go",
+            "line": 845,
+            "sha256": "821fe8230f0ca133ec5aa2a0b9b58f0b69493ae6278310e6d5bd876d5e05e1ea",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestDurableHalfLossAndForeignIdentityRefused",
+          "topLevel": true,
+          "elapsedSeconds": 0.04,
+          "logLine": 156,
+          "source": {
+            "path": "apps/edge/internal/printcluster/cluster_test.go",
+            "line": 911,
+            "sha256": "821fe8230f0ca133ec5aa2a0b9b58f0b69493ae6278310e6d5bd876d5e05e1ea",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestDurableHalfLossAndForeignIdentityRefused/raft.bolt",
+          "topLevel": false,
+          "elapsedSeconds": 0.01,
+          "logLine": 157,
+          "source": {
+            "path": "apps/edge/internal/printcluster/cluster_test.go",
+            "line": 911,
+            "sha256": "821fe8230f0ca133ec5aa2a0b9b58f0b69493ae6278310e6d5bd876d5e05e1ea",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestDurableHalfLossAndForeignIdentityRefused/projection.sqlite",
+          "topLevel": false,
+          "elapsedSeconds": 0.01,
+          "logLine": 158,
+          "source": {
+            "path": "apps/edge/internal/printcluster/cluster_test.go",
+            "line": 911,
+            "sha256": "821fe8230f0ca133ec5aa2a0b9b58f0b69493ae6278310e6d5bd876d5e05e1ea",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestDurableHalfLossAndForeignIdentityRefused/changed_pin_address",
+          "topLevel": false,
+          "elapsedSeconds": 0.02,
+          "logLine": 159,
+          "source": {
+            "path": "apps/edge/internal/printcluster/cluster_test.go",
+            "line": 911,
+            "sha256": "821fe8230f0ca133ec5aa2a0b9b58f0b69493ae6278310e6d5bd876d5e05e1ea",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestEndpointAliasesAndFixedDeviceLogicalExecutor",
+          "topLevel": true,
+          "elapsedSeconds": 1.99,
+          "logLine": 161,
+          "source": {
+            "path": "apps/edge/internal/printcluster/cluster_test.go",
+            "line": 952,
+            "sha256": "821fe8230f0ca133ec5aa2a0b9b58f0b69493ae6278310e6d5bd876d5e05e1ea",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestFiveFullVotersRequireThree",
+          "topLevel": true,
+          "elapsedSeconds": 1.96,
+          "logLine": 163,
+          "source": {
+            "path": "apps/edge/internal/printcluster/cluster_test.go",
+            "line": 1004,
+            "sha256": "821fe8230f0ca133ec5aa2a0b9b58f0b69493ae6278310e6d5bd876d5e05e1ea",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestSnapshotResultReceiptStable",
+          "topLevel": true,
+          "elapsedSeconds": 1.84,
+          "logLine": 165,
+          "source": {
+            "path": "apps/edge/internal/printcluster/cluster_test.go",
+            "line": 1035,
+            "sha256": "821fe8230f0ca133ec5aa2a0b9b58f0b69493ae6278310e6d5bd876d5e05e1ea",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "skip",
+          "test": "TestRaftProcessFixture",
+          "topLevel": true,
+          "elapsedSeconds": 0.0,
+          "logLine": 168,
+          "source": {
+            "path": "apps/edge/internal/printcluster/process_test.go",
+            "line": 77,
+            "sha256": "e1b94bb3fb2ab6af004c3d4096ce3d8b1bb93f38047f057f144c0d3b1eeb8b51",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestThreeProcessSIGKILLLeaderAndFourPOSRelayRecovery",
+          "topLevel": true,
+          "elapsedSeconds": 7.98,
+          "logLine": 176,
+          "source": {
+            "path": "apps/edge/internal/printcluster/process_test.go",
+            "line": 305,
+            "sha256": "e1b94bb3fb2ab6af004c3d4096ce3d8b1bb93f38047f057f144c0d3b1eeb8b51",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestThreeProcessSIGKILLLeaderAndFourPOSRelayRecovery/identical_job_actual_2_process_POS_relays",
+          "topLevel": false,
+          "elapsedSeconds": 0.42,
+          "logLine": 177,
+          "source": {
+            "path": "apps/edge/internal/printcluster/process_test.go",
+            "line": 305,
+            "sha256": "e1b94bb3fb2ab6af004c3d4096ce3d8b1bb93f38047f057f144c0d3b1eeb8b51",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestThreeProcessSIGKILLLeaderAndFourPOSRelayRecovery/identical_job_actual_3_process_POS_relays",
+          "topLevel": false,
+          "elapsedSeconds": 0.77,
+          "logLine": 178,
+          "source": {
+            "path": "apps/edge/internal/printcluster/process_test.go",
+            "line": 305,
+            "sha256": "e1b94bb3fb2ab6af004c3d4096ce3d8b1bb93f38047f057f144c0d3b1eeb8b51",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestThreeProcessSIGKILLLeaderAndFourPOSRelayRecovery/identical_job_actual_4_process_POS_relays",
+          "topLevel": false,
+          "elapsedSeconds": 1.35,
+          "logLine": 179,
+          "source": {
+            "path": "apps/edge/internal/printcluster/process_test.go",
+            "line": 305,
+            "sha256": "e1b94bb3fb2ab6af004c3d4096ce3d8b1bb93f38047f057f144c0d3b1eeb8b51",
+            "windowsExcluded": false
+          }
+        }
+      ]
+    },
+    "printeligibility": {
+      "status": "passed",
+      "exitCode": 0,
+      "elapsedMs": 1213,
+      "testBinary": "c79d6f27da15fc50a5a04fb941fa2363ca779d96214aea3ab3fb6908e9abe2bd",
+      "workingDirectory": "C:\\Users\\vaanskii\\AppData\\Local\\VynicReadinessGoPackages\\frozen-v2-dc50e6bc33bb\\source\\apps\\edge\\internal\\printeligibility",
+      "stdout": {
+        "path": "/Users/vaanskii/Developer/vynic/docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/windows-go-packages-result/printeligibility.stdout.log",
+        "bytes": 721,
+        "sha256": "22ca3cca6f6c90da26fbb4555f3e791855cdcc982ca34de14c3d879957ffdb57"
+      },
+      "stderr": {
+        "path": "/Users/vaanskii/Developer/vynic/docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/windows-go-packages-result/printeligibility.stderr.log",
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "counts": {
+        "topLevelPass": 5,
+        "passRecords": 5,
+        "skipRecords": 0,
+        "failRecords": 0
+      },
+      "records": [
+        {
+          "status": "pass",
+          "test": "TestLeaseAndBootEvidenceCannotAuthorizeSharedPhysicalDispatch",
+          "topLevel": true,
+          "elapsedSeconds": 0.0,
+          "logLine": 2,
+          "source": {
+            "path": "apps/edge/internal/printeligibility/gate_test.go",
+            "line": 35,
+            "sha256": "8470d2132bd9e5f7c6c897bae551dce302b0eb673d2441fe41382df8f0e85004",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestGenerationHighWaterSurvivesQuorumLossAndClockRegression",
+          "topLevel": true,
+          "elapsedSeconds": 0.0,
+          "logLine": 4,
+          "source": {
+            "path": "apps/edge/internal/printeligibility/gate_test.go",
+            "line": 67,
+            "sha256": "8470d2132bd9e5f7c6c897bae551dce302b0eb673d2441fe41382df8f0e85004",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestBindingAndRetainedJobIdentityCannotBeRewrittenByHigherIndex",
+          "topLevel": true,
+          "elapsedSeconds": 0.0,
+          "logLine": 6,
+          "source": {
+            "path": "apps/edge/internal/printeligibility/gate_test.go",
+            "line": 94,
+            "sha256": "8470d2132bd9e5f7c6c897bae551dce302b0eb673d2441fe41382df8f0e85004",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestExpectedUnsafeLeaseOnlyRAWPausedSenderCounterexample",
+          "topLevel": true,
+          "elapsedSeconds": 0.01,
+          "logLine": 8,
+          "source": {
+            "path": "apps/edge/internal/printeligibility/gate_test.go",
+            "line": 119,
+            "sha256": "8470d2132bd9e5f7c6c897bae551dce302b0eb673d2441fe41382df8f0e85004",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestBufferedTCPBytesSurviveSenderSocketClose",
+          "topLevel": true,
+          "elapsedSeconds": 0.0,
+          "logLine": 10,
+          "source": {
+            "path": "apps/edge/internal/printeligibility/gate_test.go",
+            "line": 205,
+            "sha256": "8470d2132bd9e5f7c6c897bae551dce302b0eb673d2441fe41382df8f0e85004",
+            "windowsExcluded": false
+          }
+        }
+      ]
+    },
+    "printtransport": {
+      "status": "passed",
+      "exitCode": 0,
+      "elapsedMs": 1196,
+      "testBinary": "24eb7968003bb0195d94b9cdab36232f977e9153fcc2f6a13a58045bf4203516",
+      "workingDirectory": "C:\\Users\\vaanskii\\AppData\\Local\\VynicReadinessGoPackages\\frozen-v2-dc50e6bc33bb\\source\\apps\\edge\\internal\\printtransport",
+      "stdout": {
+        "path": "/Users/vaanskii/Developer/vynic/docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/windows-go-packages-result/printtransport.stdout.log",
+        "bytes": 5061,
+        "sha256": "34c58c9e3ea1c91947aa86c6d86d5fa357b895125284c4243e1d1e9d4631dd35"
+      },
+      "stderr": {
+        "path": "/Users/vaanskii/Developer/vynic/docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/windows-go-packages-result/printtransport.stderr.log",
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "counts": {
+        "topLevelPass": 12,
+        "passRecords": 38,
+        "skipRecords": 0,
+        "failRecords": 0
+      },
+      "records": [
+        {
+          "status": "pass",
+          "test": "TestHelperOutcomeAndNoCommitRetry",
+          "topLevel": true,
+          "elapsedSeconds": 0.01,
+          "logLine": 9,
+          "source": {
+            "path": "apps/edge/internal/printtransport/helper_test.go",
+            "line": 72,
+            "sha256": "0d4a5ccd85664fb1c7ce28337de60e5f422ddd5708fce9ebcde467e37e563d99",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestHelperOutcomeAndNoCommitRetry/prewrite_refusal",
+          "topLevel": false,
+          "elapsedSeconds": 0.01,
+          "logLine": 10,
+          "source": {
+            "path": "apps/edge/internal/printtransport/helper_test.go",
+            "line": 72,
+            "sha256": "0d4a5ccd85664fb1c7ce28337de60e5f422ddd5708fce9ebcde467e37e563d99",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestHelperOutcomeAndNoCommitRetry/accepted",
+          "topLevel": false,
+          "elapsedSeconds": 0.0,
+          "logLine": 11,
+          "source": {
+            "path": "apps/edge/internal/printtransport/helper_test.go",
+            "line": 72,
+            "sha256": "0d4a5ccd85664fb1c7ce28337de60e5f422ddd5708fce9ebcde467e37e563d99",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestHelperOutcomeAndNoCommitRetry/native_prewrite",
+          "topLevel": false,
+          "elapsedSeconds": 0.0,
+          "logLine": 12,
+          "source": {
+            "path": "apps/edge/internal/printtransport/helper_test.go",
+            "line": 72,
+            "sha256": "0d4a5ccd85664fb1c7ce28337de60e5f422ddd5708fce9ebcde467e37e563d99",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestHelperOutcomeAndNoCommitRetry/partial_uncertainty",
+          "topLevel": false,
+          "elapsedSeconds": 0.0,
+          "logLine": 13,
+          "source": {
+            "path": "apps/edge/internal/printtransport/helper_test.go",
+            "line": 72,
+            "sha256": "0d4a5ccd85664fb1c7ce28337de60e5f422ddd5708fce9ebcde467e37e563d99",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestHelperOutcomeAndNoCommitRetry/ACK_lost",
+          "topLevel": false,
+          "elapsedSeconds": 0.0,
+          "logLine": 14,
+          "source": {
+            "path": "apps/edge/internal/printtransport/helper_test.go",
+            "line": 72,
+            "sha256": "0d4a5ccd85664fb1c7ce28337de60e5f422ddd5708fce9ebcde467e37e563d99",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestHelperOutcomeAndNoCommitRetry/READY_lost",
+          "topLevel": false,
+          "elapsedSeconds": 0.0,
+          "logLine": 15,
+          "source": {
+            "path": "apps/edge/internal/printtransport/helper_test.go",
+            "line": 72,
+            "sha256": "0d4a5ccd85664fb1c7ce28337de60e5f422ddd5708fce9ebcde467e37e563d99",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestHelperOutcomeAndNoCommitRetry/contradictory_early_write",
+          "topLevel": false,
+          "elapsedSeconds": 0.0,
+          "logLine": 16,
+          "source": {
+            "path": "apps/edge/internal/printtransport/helper_test.go",
+            "line": 72,
+            "sha256": "0d4a5ccd85664fb1c7ce28337de60e5f422ddd5708fce9ebcde467e37e563d99",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestHelperTimeoutRetainsOriginalLifetimeAndGuard",
+          "topLevel": true,
+          "elapsedSeconds": 0.0,
+          "logLine": 18,
+          "source": {
+            "path": "apps/edge/internal/printtransport/helper_test.go",
+            "line": 132,
+            "sha256": "0d4a5ccd85664fb1c7ce28337de60e5f422ddd5708fce9ebcde467e37e563d99",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestHelperFrameAndResultBounds",
+          "topLevel": true,
+          "elapsedSeconds": 0.0,
+          "logLine": 20,
+          "source": {
+            "path": "apps/edge/internal/printtransport/helper_test.go",
+            "line": 182,
+            "sha256": "0d4a5ccd85664fb1c7ce28337de60e5f422ddd5708fce9ebcde467e37e563d99",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestGuardIdentityActiveCallAndIdempotentClose",
+          "topLevel": true,
+          "elapsedSeconds": 0.0,
+          "logLine": 22,
+          "source": {
+            "path": "apps/edge/internal/printtransport/helper_test.go",
+            "line": 212,
+            "sha256": "0d4a5ccd85664fb1c7ce28337de60e5f422ddd5708fce9ebcde467e37e563d99",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestWindowsJobContainsChildAndStdinHasNoInheritedWriter",
+          "topLevel": true,
+          "elapsedSeconds": 0.12,
+          "logLine": 24,
+          "source": {
+            "path": "apps/edge/internal/printtransport/helper_windows_test.go",
+            "line": 127,
+            "sha256": "feb123a3e952a62e5116024d5b434e2b72be7ccdc71e1b327211931ed3e8ce13",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestWindowsUnsupportedJobListFailsBeforeProcessCreation",
+          "topLevel": true,
+          "elapsedSeconds": 0.03,
+          "logLine": 27,
+          "source": {
+            "path": "apps/edge/internal/printtransport/helper_windows_test.go",
+            "line": 156,
+            "sha256": "feb123a3e952a62e5116024d5b434e2b72be7ccdc71e1b327211931ed3e8ce13",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestWindowsParentDeathTerminatesChildAndFreshGuardAcquires",
+          "topLevel": true,
+          "elapsedSeconds": 0.15,
+          "logLine": 29,
+          "source": {
+            "path": "apps/edge/internal/printtransport/helper_windows_test.go",
+            "line": 175,
+            "sha256": "feb123a3e952a62e5116024d5b434e2b72be7ccdc71e1b327211931ed3e8ce13",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestWindowsActualHelperReadOnlyAndInvalidRequests",
+          "topLevel": true,
+          "elapsedSeconds": 0.33,
+          "logLine": 38,
+          "source": {
+            "path": "apps/edge/internal/printtransport/helper_windows_test.go",
+            "line": 269,
+            "sha256": "feb123a3e952a62e5116024d5b434e2b72be7ccdc71e1b327211931ed3e8ce13",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestWindowsActualHelperReadOnlyAndInvalidRequests/empty",
+          "topLevel": false,
+          "elapsedSeconds": 0.04,
+          "logLine": 39,
+          "source": {
+            "path": "apps/edge/internal/printtransport/helper_windows_test.go",
+            "line": 269,
+            "sha256": "feb123a3e952a62e5116024d5b434e2b72be7ccdc71e1b327211931ed3e8ce13",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestWindowsActualHelperReadOnlyAndInvalidRequests/extra_inventory_field",
+          "topLevel": false,
+          "elapsedSeconds": 0.05,
+          "logLine": 40,
+          "source": {
+            "path": "apps/edge/internal/printtransport/helper_windows_test.go",
+            "line": 269,
+            "sha256": "feb123a3e952a62e5116024d5b434e2b72be7ccdc71e1b327211931ed3e8ce13",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestWindowsActualHelperReadOnlyAndInvalidRequests/missing",
+          "topLevel": false,
+          "elapsedSeconds": 0.04,
+          "logLine": 41,
+          "source": {
+            "path": "apps/edge/internal/printtransport/helper_windows_test.go",
+            "line": 269,
+            "sha256": "feb123a3e952a62e5116024d5b434e2b72be7ccdc71e1b327211931ed3e8ce13",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestWindowsActualHelperReadOnlyAndInvalidRequests/zero",
+          "topLevel": false,
+          "elapsedSeconds": 0.04,
+          "logLine": 42,
+          "source": {
+            "path": "apps/edge/internal/printtransport/helper_windows_test.go",
+            "line": 269,
+            "sha256": "feb123a3e952a62e5116024d5b434e2b72be7ccdc71e1b327211931ed3e8ce13",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestWindowsActualHelperReadOnlyAndInvalidRequests/partial_prefix",
+          "topLevel": false,
+          "elapsedSeconds": 0.03,
+          "logLine": 43,
+          "source": {
+            "path": "apps/edge/internal/printtransport/helper_windows_test.go",
+            "line": 269,
+            "sha256": "feb123a3e952a62e5116024d5b434e2b72be7ccdc71e1b327211931ed3e8ce13",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestWindowsActualHelperReadOnlyAndInvalidRequests/partial_body",
+          "topLevel": false,
+          "elapsedSeconds": 0.03,
+          "logLine": 44,
+          "source": {
+            "path": "apps/edge/internal/printtransport/helper_windows_test.go",
+            "line": 269,
+            "sha256": "feb123a3e952a62e5116024d5b434e2b72be7ccdc71e1b327211931ed3e8ce13",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestTCPFailureBoundariesAndOneWrite",
+          "topLevel": true,
+          "elapsedSeconds": 0.0,
+          "logLine": 53,
+          "source": {
+            "path": "apps/edge/internal/printtransport/tcp_test.go",
+            "line": 77,
+            "sha256": "6588d48b0f00be575789adf9b26349d50f7102f7d9faf01f51ce1b2ab665e9d4",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestTCPFailureBoundariesAndOneWrite/dial",
+          "topLevel": false,
+          "elapsedSeconds": 0.0,
+          "logLine": 54,
+          "source": {
+            "path": "apps/edge/internal/printtransport/tcp_test.go",
+            "line": 77,
+            "sha256": "6588d48b0f00be575789adf9b26349d50f7102f7d9faf01f51ce1b2ab665e9d4",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestTCPFailureBoundariesAndOneWrite/deadline",
+          "topLevel": false,
+          "elapsedSeconds": 0.0,
+          "logLine": 55,
+          "source": {
+            "path": "apps/edge/internal/printtransport/tcp_test.go",
+            "line": 77,
+            "sha256": "6588d48b0f00be575789adf9b26349d50f7102f7d9faf01f51ce1b2ab665e9d4",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestTCPFailureBoundariesAndOneWrite/zero_error",
+          "topLevel": false,
+          "elapsedSeconds": 0.0,
+          "logLine": 56,
+          "source": {
+            "path": "apps/edge/internal/printtransport/tcp_test.go",
+            "line": 77,
+            "sha256": "6588d48b0f00be575789adf9b26349d50f7102f7d9faf01f51ce1b2ab665e9d4",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestTCPFailureBoundariesAndOneWrite/partial_error",
+          "topLevel": false,
+          "elapsedSeconds": 0.0,
+          "logLine": 57,
+          "source": {
+            "path": "apps/edge/internal/printtransport/tcp_test.go",
+            "line": 77,
+            "sha256": "6588d48b0f00be575789adf9b26349d50f7102f7d9faf01f51ce1b2ab665e9d4",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestTCPFailureBoundariesAndOneWrite/short_write",
+          "topLevel": false,
+          "elapsedSeconds": 0.0,
+          "logLine": 58,
+          "source": {
+            "path": "apps/edge/internal/printtransport/tcp_test.go",
+            "line": 77,
+            "sha256": "6588d48b0f00be575789adf9b26349d50f7102f7d9faf01f51ce1b2ab665e9d4",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestTCPFailureBoundariesAndOneWrite/close_error",
+          "topLevel": false,
+          "elapsedSeconds": 0.0,
+          "logLine": 59,
+          "source": {
+            "path": "apps/edge/internal/printtransport/tcp_test.go",
+            "line": 77,
+            "sha256": "6588d48b0f00be575789adf9b26349d50f7102f7d9faf01f51ce1b2ab665e9d4",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestTCPFailureBoundariesAndOneWrite/accepted",
+          "topLevel": false,
+          "elapsedSeconds": 0.0,
+          "logLine": 60,
+          "source": {
+            "path": "apps/edge/internal/printtransport/tcp_test.go",
+            "line": 77,
+            "sha256": "6588d48b0f00be575789adf9b26349d50f7102f7d9faf01f51ce1b2ab665e9d4",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestRejectBeforeDialAndFreezeBytes",
+          "topLevel": true,
+          "elapsedSeconds": 0.0,
+          "logLine": 68,
+          "source": {
+            "path": "apps/edge/internal/printtransport/tcp_test.go",
+            "line": 123,
+            "sha256": "6588d48b0f00be575789adf9b26349d50f7102f7d9faf01f51ce1b2ab665e9d4",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestRejectBeforeDialAndFreezeBytes/empty",
+          "topLevel": false,
+          "elapsedSeconds": 0.0,
+          "logLine": 69,
+          "source": {
+            "path": "apps/edge/internal/printtransport/tcp_test.go",
+            "line": 123,
+            "sha256": "6588d48b0f00be575789adf9b26349d50f7102f7d9faf01f51ce1b2ab665e9d4",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestRejectBeforeDialAndFreezeBytes/large",
+          "topLevel": false,
+          "elapsedSeconds": 0.0,
+          "logLine": 70,
+          "source": {
+            "path": "apps/edge/internal/printtransport/tcp_test.go",
+            "line": 123,
+            "sha256": "6588d48b0f00be575789adf9b26349d50f7102f7d9faf01f51ce1b2ab665e9d4",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestRejectBeforeDialAndFreezeBytes/worker_pin",
+          "topLevel": false,
+          "elapsedSeconds": 0.0,
+          "logLine": 71,
+          "source": {
+            "path": "apps/edge/internal/printtransport/tcp_test.go",
+            "line": 123,
+            "sha256": "6588d48b0f00be575789adf9b26349d50f7102f7d9faf01f51ce1b2ab665e9d4",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestRejectBeforeDialAndFreezeBytes/mixed_transport",
+          "topLevel": false,
+          "elapsedSeconds": 0.0,
+          "logLine": 72,
+          "source": {
+            "path": "apps/edge/internal/printtransport/tcp_test.go",
+            "line": 123,
+            "sha256": "6588d48b0f00be575789adf9b26349d50f7102f7d9faf01f51ce1b2ab665e9d4",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestRejectBeforeDialAndFreezeBytes/DNS",
+          "topLevel": false,
+          "elapsedSeconds": 0.0,
+          "logLine": 73,
+          "source": {
+            "path": "apps/edge/internal/printtransport/tcp_test.go",
+            "line": 123,
+            "sha256": "6588d48b0f00be575789adf9b26349d50f7102f7d9faf01f51ce1b2ab665e9d4",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestRejectBeforeDialAndFreezeBytes/frozen_after_admission",
+          "topLevel": false,
+          "elapsedSeconds": 0.0,
+          "logLine": 74,
+          "source": {
+            "path": "apps/edge/internal/printtransport/tcp_test.go",
+            "line": 123,
+            "sha256": "6588d48b0f00be575789adf9b26349d50f7102f7d9faf01f51ce1b2ab665e9d4",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestCancelWriteRemainsUncertainAndGuardBusy",
+          "topLevel": true,
+          "elapsedSeconds": 0.0,
+          "logLine": 76,
+          "source": {
+            "path": "apps/edge/internal/printtransport/tcp_test.go",
+            "line": 174,
+            "sha256": "6588d48b0f00be575789adf9b26349d50f7102f7d9faf01f51ce1b2ab665e9d4",
+            "windowsExcluded": false
+          }
+        },
+        {
+          "status": "pass",
+          "test": "TestDestinationAndHelperPins",
+          "topLevel": true,
+          "elapsedSeconds": 0.0,
+          "logLine": 78,
+          "source": {
+            "path": "apps/edge/internal/printtransport/tcp_test.go",
+            "line": 204,
+            "sha256": "6588d48b0f00be575789adf9b26349d50f7102f7d9faf01f51ce1b2ab665e9d4",
+            "windowsExcluded": false
+          }
+        }
+      ]
+    }
+  },
+  "counts": {
+    "topLevelPass": 115,
+    "passRecords": 368,
+    "skipRecords": 4,
+    "failRecords": 0
+  },
+  "excludedByBuildTags": [
+    {
+      "test": "TestQueueSIGKILLHelper",
+      "source": {
+        "path": "apps/edge/internal/printqueue/crash_unix_test.go",
+        "line": 41,
+        "sha256": "2f8e544f1d3d3e988a291fc8aa5f30f43f724089b0c693d4adbc0e22e004aacf",
+        "windowsExcluded": true
+      },
+      "observed": "not-run",
+      "reason": "Build constraint !windows; not compiled into Windows executable"
+    },
+    {
+      "test": "TestActualSIGKILLDurabilityAndNoReplay",
+      "source": {
+        "path": "apps/edge/internal/printqueue/crash_unix_test.go",
+        "line": 89,
+        "sha256": "2f8e544f1d3d3e988a291fc8aa5f30f43f724089b0c693d4adbc0e22e004aacf",
+        "windowsExcluded": true
+      },
+      "observed": "not-run",
+      "reason": "Build constraint !windows; not compiled into Windows executable"
+    },
+    {
+      "test": "TestCompetingProcessCannotRecoverOrSubmit",
+      "source": {
+        "path": "apps/edge/internal/printqueue/crash_unix_test.go",
+        "line": 218,
+        "sha256": "2f8e544f1d3d3e988a291fc8aa5f30f43f724089b0c693d4adbc0e22e004aacf",
+        "windowsExcluded": true
+      },
+      "observed": "not-run",
+      "reason": "Build constraint !windows; not compiled into Windows executable"
+    }
+  ],
+  "prlctlLog": {
+    "path": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/printer-validation/windows-go-packages-prlctl.log",
+    "bytes": 70788,
+    "sha256": "5e721e1038d1d4275f1c3fb90fbab93dbf8fa3a8ca0164cd2c75e6c4982acdc3"
+  },
+  "launchReceipt": {
+    "path": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/printer-validation/windows-go-packages-launch.json",
+    "bytes": 994,
+    "sha256": "ef6ad04b194b995bc798e505aa527a72acdc3b68619c8634f8b6f9a74da5f5a8"
+  },
+  "nativeHelper": {
+    "sha256": "b720e1eedc77ab574d769865e39f71506a5f3ebc9d93ab5166bc3f112203019d",
+    "originalProofReadOnly": "/Users/vaanskii/Developer/vynic/docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/windows-result-v2/vynic_print_helper.exe",
+    "scope": "Queue inventory plus malformed/empty requests; no document-capable submission fixture"
+  },
+  "safetyCounters": {
+    "printJobsBefore": 0,
+    "printJobsAfter": 0,
+    "documentsSubmitted": 0,
+    "validRAWCalls": 0,
+    "serviceRegistrations": 0,
+    "driverInstalls": 0,
+    "productStarts": 0,
+    "machineRestarts": 0,
+    "VMSettingsChanges": 0,
+    "persistentCredentialChanges": 0
+  },
+  "platformLabels": {
+    "processKill": "Windows os.Process.Kill uses TerminateProcess; test function/log retains historical SIGKILL name",
+    "restart": "Actual synthetic Raft process kill/cold rejoin and read-only helper parent death; no actual registered service restart or OS reboot",
+    "replicas": "Separate local Windows OS processes on one Windows VM using synthetic loopback; not independent physical POS machines",
+    "race": "These cached Windows binaries are not race-instrumented; previous macOS normal/race receipts remain separate",
+    "paper": "ACCEPTED/SUBMITTED are software outcomes; no paper DELIVERED proof"
+  },
+  "limits": [
+    "Frozen V2 163-file cohort only; future service/installer/RPC/UI source excluded.",
+    "Loopback synthetic transports and temporary test certificates/SQLite only.",
+    "Windows os.Process.Kill means TerminateProcess, not literal Unix SIGKILL.",
+    "Non-Windows queue SIGKILL/competing-process tests are excluded by build tags.",
+    "SCM registration, service installation, actual service restart, OS reboot/power loss and physical printer acceptance not run.",
+    "ACCEPTED or SUBMITTED never claims paper DELIVERED."
+  ],
+  "matrixBaseline": {
+    "path": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/printer-validation/acceptance-matrix-v8-baseline.json",
+    "bytes": 146369,
+    "sha256": "42e98fcead35c11171c9389dd31b7614b4788a7c8c096e4fe3a8841a876842d5"
+  },
+  "history": "Older packets and matrix v8 baseline retained unchanged; this new observed Windows package packet is separate evidence for parent final report"
+}

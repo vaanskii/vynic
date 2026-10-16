@@ -1,0 +1,25 @@
+{
+  "scope": "Actual current service code with in-memory fakes; not PostgreSQL/provider/HTTP proof",
+  "results": [
+    {
+      "id": "MGR-02",
+      "reproduced": true,
+      "result": "Cloud table cleared and success returned; zero POS dispatches."
+    },
+    {
+      "id": "MGR-05",
+      "reproduced": true,
+      "result": "Failure creating replacement leaves the previously deleted lines absent; no transaction boundary requested."
+    },
+    {
+      "id": "WEB-03",
+      "reproduced": true,
+      "result": "Persisted link plus enqueue failure leaves confirmed booking; duplicate outcome does not retry bridge."
+    },
+    {
+      "id": "WEB-04",
+      "reproduced": true,
+      "result": "Delayed pending outcome overwrites CONFIRMED; service has no monotonic transition check."
+    }
+  ]
+}

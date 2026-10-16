@@ -56,9 +56,12 @@ const routes = ['/api/bog/create-order', '/api/tables/reservations'];
     const originalKey = process.env.PAYMENT_INTEGRATION_MASTER_KEY;
     const originalCookieKey = process.env.COOKIE_ENCRYPTION_KEY;
     const http = () => request(app.getHttpServer() as Server);
+    let bookingDay = 0;
     const body = (i: number, extra: Record<string, unknown> = {}) => ({
       selectedTables: ['table1'],
-      selectedDate: '2026-12-10',
+      selectedDate: new Date(Date.UTC(2030, 0, ++bookingDay))
+        .toISOString()
+        .slice(0, 10),
       selectedTime: '18:00',
       menuItems: [{ id: fixtures[i].itemId, quantity: 1 }],
       ...extra,

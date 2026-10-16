@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, type ImgHTMLAttributes } from 'react';
 
-interface ImageWithSkeletonProps extends React.ImgHTMLAttributes<HTMLImageElement> {
+interface ImageWithSkeletonProps extends ImgHTMLAttributes<HTMLImageElement> {
   containerClassName?: string;
   skeletonClassName?: string;
 }

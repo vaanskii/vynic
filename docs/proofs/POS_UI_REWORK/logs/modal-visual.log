@@ -1,0 +1,13 @@
+00:00 +0: loading /Users/vaanskii/Developer/vynic/apps/operations/test/widget/pos_modal_visual_test.dart
+00:00 +0: time isolated modal visual
+00:00 +1: pin isolated modal visual
+00:00 +2: contact isolated modal visual
+00:00 +3: menu isolated modal visual
+00:01 +4: confirmation isolated modal visual
+00:01 +5: admin isolated reservation visual and touch latency
+MODAL_PROFILE admin open: 640ms scheduled, 96576us host
+MODAL_PROFILE admin touch keyboard first build: 16ms
+00:01 +6: estimate isolated reservation visual and touch latency
+MODAL_PROFILE estimate open: 640ms scheduled, 74053us host
+MODAL_PROFILE estimate touch keyboard first build: 16ms
+00:01 +7: All tests passed!

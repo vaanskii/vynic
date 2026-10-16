@@ -7,6 +7,7 @@ import 'package:http/testing.dart';
 import 'package:vynic/core/services/edge/edge_device_credential_store.dart';
 import 'package:vynic/core/services/edge/edge_enrollment_client.dart';
 import 'package:vynic/core/services/edge/pos_enrollment_service.dart';
+import 'package:vynic/core/services/sync/api_config.dart';
 
 /// POS self-enrollment: what a terminal sends, what it keeps, and what it
 /// refuses to do to itself.
@@ -299,6 +300,24 @@ void main() {
       );
     });
 
+    test('a *.localhost declaration never replaces a working LAN address', () {
+      // api.vynic.localhost resolves to the terminal itself on Windows/LAN.
+      expect(
+        PosEnrollmentService.resolveBackendUrl(
+          enrolledThrough: 'http://10.10.10.3:8088',
+          offered: 'http://api.vynic.localhost',
+        ),
+        'http://10.10.10.3:8088',
+      );
+      expect(
+        PosEnrollmentService.resolveBackendUrl(
+          enrolledThrough: 'http://api.vynic.localhost',
+          offered: 'http://api.vynic.localhost',
+        ),
+        'http://api.vynic.localhost',
+      );
+    });
+
     test('ignores an unusable answer', () {
       expect(
         PosEnrollmentService.resolveBackendUrl(
@@ -306,6 +325,37 @@ void main() {
           offered: 'not a url at all',
         ),
         'http://10.0.0.3:3000',
+      );
+    });
+  });
+
+  group('Development API URL normalization', () {
+    test('explicit scheme without a port means the scheme default port', () {
+      expect(
+        ApiConfig.normalizeEditableBackendUrl('http://api.vynic.localhost'),
+        'http://api.vynic.localhost',
+      );
+      expect(
+        ApiConfig.normalizeEditableBackendUrl('http://api.vynic.localhost/'),
+        'http://api.vynic.localhost',
+      );
+      expect(
+        ApiConfig.normalizeEditableBackendUrl('https://api.vynic.ge'),
+        'https://api.vynic.ge',
+      );
+    });
+
+    test('keeps an explicit LAN port', () {
+      expect(
+        ApiConfig.normalizeEditableBackendUrl('http://10.10.10.3:8088'),
+        'http://10.10.10.3:8088',
+      );
+    });
+
+    test('a bare address is still the direct backend on :3000', () {
+      expect(
+        ApiConfig.normalizeEditableBackendUrl('10.10.10.3'),
+        'http://10.10.10.3:3000',
       );
     });
   });

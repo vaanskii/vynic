@@ -1,0 +1,214 @@
+[
+  {
+    "image": "backend",
+    "findingInstances": 122,
+    "uniqueRules": 121,
+    "scoreDerivedSeverity": {
+      "LOW": 47,
+      "MODERATE": 29,
+      "HIGH": 40,
+      "CRITICAL": 5
+    },
+    "packageTypeOccurrences": {
+      "deb": 71,
+      "npm": 51
+    },
+    "critical": [
+      {
+        "id": "CVE-2026-12087",
+        "score": 9.1,
+        "packages": [
+          "pkg:deb/debian/perl@5.36.0-7%2Bdeb12u3?os_distro=bookworm&os_name=debian&os_version=12"
+        ],
+        "fixedVersion": "5.36.0-7+deb12u4"
+      },
+      {
+        "id": "CVE-2026-13221",
+        "score": 9.1,
+        "packages": [
+          "pkg:deb/debian/perl@5.36.0-7%2Bdeb12u3?os_distro=bookworm&os_name=debian&os_version=12"
+        ],
+        "fixedVersion": "5.36.0-7+deb12u4"
+      },
+      {
+        "id": "CVE-2026-42496",
+        "score": 9.1,
+        "packages": [
+          "pkg:deb/debian/perl@5.36.0-7%2Bdeb12u3?os_distro=bookworm&os_name=debian&os_version=12"
+        ],
+        "fixedVersion": "5.36.0-7+deb12u4"
+      },
+      {
+        "id": "CVE-2026-90711",
+        "score": 9.1,
+        "packages": [
+          "pkg:npm/proxy-addr@2.0.7"
+        ],
+        "fixedVersion": "2.0.8"
+      },
+      {
+        "id": "CVE-2026-8376",
+        "score": 9.8,
+        "packages": [
+          "pkg:deb/debian/perl@5.36.0-7%2Bdeb12u3?os_distro=bookworm&os_name=debian&os_version=12"
+        ],
+        "fixedVersion": "5.36.0-7+deb12u4"
+      }
+    ]
+  },
+  {
+    "image": "reverse-proxy",
+    "findingInstances": 63,
+    "uniqueRules": 55,
+    "scoreDerivedSeverity": {
+      "LOW": 6,
+      "MODERATE": 8,
+      "HIGH": 35,
+      "CRITICAL": 6
+    },
+    "packageTypeOccurrences": {
+      "golang": 52,
+      "apk": 11
+    },
+    "critical": [
+      {
+        "id": "CVE-2026-75803",
+        "score": 9.1,
+        "packages": [
+          "pkg:apk/alpine/openssl@3.5.7-r0?os_name=alpine&os_version=3.24"
+        ],
+        "fixedVersion": "3.5.8-r0"
+      },
+      {
+        "id": "CVE-2026-78663",
+        "score": 9.1,
+        "packages": [
+          "pkg:golang/golang.org/x/net@0.57.0",
+          "pkg:golang/stdlib@1.26.5"
+        ],
+        "fixedVersion": "1.26.9"
+      },
+      {
+        "id": "CVE-2026-88007",
+        "score": 9.1,
+        "packages": [
+          "pkg:golang/github.com/traefik/traefik@3.6.25#v3"
+        ],
+        "fixedVersion": "3.7.13"
+      },
+      {
+        "id": "CVE-2026-39821",
+        "score": 9.6,
+        "packages": [
+          "pkg:golang/stdlib@1.26.5"
+        ],
+        "fixedVersion": "1.26.6"
+      },
+      {
+        "id": "CVE-2026-56857",
+        "score": 9.8,
+        "packages": [
+          "pkg:golang/stdlib@1.26.5"
+        ],
+        "fixedVersion": "1.26.9"
+      },
+      {
+        "id": "CVE-2026-63073",
+        "score": 9.8,
+        "packages": [
+          "pkg:apk/alpine/openssl@3.5.7-r0?os_name=alpine&os_version=3.24"
+        ],
+        "fixedVersion": "3.5.8-r0"
+      }
+    ]
+  },
+  {
+    "image": "postgres",
+    "findingInstances": 157,
+    "uniqueRules": 157,
+    "scoreDerivedSeverity": {
+      "LOW": 67,
+      "MODERATE": 34,
+      "HIGH": 47,
+      "CRITICAL": 9
+    },
+    "packageTypeOccurrences": {
+      "deb": 97,
+      "golang": 60
+    },
+    "critical": [
+      {
+        "id": "CVE-2026-12087",
+        "score": 9.1,
+        "packages": [
+          "pkg:deb/debian/perl@5.36.0-7%2Bdeb12u3?os_distro=bookworm&os_name=debian&os_version=12"
+        ],
+        "fixedVersion": "5.36.0-7+deb12u4"
+      },
+      {
+        "id": "CVE-2026-13221",
+        "score": 9.1,
+        "packages": [
+          "pkg:deb/debian/perl@5.36.0-7%2Bdeb12u3?os_distro=bookworm&os_name=debian&os_version=12"
+        ],
+        "fixedVersion": "5.36.0-7+deb12u4"
+      },
+      {
+        "id": "CVE-2026-42496",
+        "score": 9.1,
+        "packages": [
+          "pkg:deb/debian/perl@5.36.0-7%2Bdeb12u3?os_distro=bookworm&os_name=debian&os_version=12"
+        ],
+        "fixedVersion": "5.36.0-7+deb12u4"
+      },
+      {
+        "id": "CVE-2026-75803",
+        "score": 9.1,
+        "packages": [
+          "pkg:deb/debian/openssl@3.0.20-1~deb12u2?os_distro=bookworm&os_name=debian&os_version=12"
+        ],
+        "fixedVersion": "3.0.22-1~deb12u1"
+      },
+      {
+        "id": "CVE-2026-78663",
+        "score": 9.1,
+        "packages": [
+          "pkg:golang/stdlib@1.24.6"
+        ],
+        "fixedVersion": "1.26.9"
+      },
+      {
+        "id": "CVE-2026-39821",
+        "score": 9.6,
+        "packages": [
+          "pkg:golang/stdlib@1.24.6"
+        ],
+        "fixedVersion": "1.25.13"
+      },
+      {
+        "id": "CVE-2026-56857",
+        "score": 9.8,
+        "packages": [
+          "pkg:golang/stdlib@1.24.6"
+        ],
+        "fixedVersion": "1.26.9"
+      },
+      {
+        "id": "CVE-2026-8376",
+        "score": 9.8,
+        "packages": [
+          "pkg:deb/debian/perl@5.36.0-7%2Bdeb12u3?os_distro=bookworm&os_name=debian&os_version=12"
+        ],
+        "fixedVersion": "5.36.0-7+deb12u4"
+      },
+      {
+        "id": "CVE-2025-68121",
+        "score": 10.0,
+        "packages": [
+          "pkg:golang/stdlib@1.24.6"
+        ],
+        "fixedVersion": "1.24.13"
+      }
+    ]
+  }
+]

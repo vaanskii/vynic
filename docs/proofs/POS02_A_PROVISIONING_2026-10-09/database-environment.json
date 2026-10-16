@@ -1,0 +1,11 @@
+{
+  "databases": [
+    "pos02a_provisioning",
+    "pos02a_upgrade"
+  ],
+  "host": "127.0.0.1",
+  "port": 49591,
+  "root": "/private/tmp/vynic-pos02a-pg-qkeoi2z8",
+  "restaurantDatabasesAccessed": false,
+  "deployment": "isolated test instance only"
+}

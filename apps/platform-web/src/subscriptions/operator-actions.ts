@@ -1,6 +1,7 @@
 export function commercialActions(
   status: string,
   managed: boolean,
+  suspension?: { from?: string | null; trialExpired?: boolean },
 ): string[][] {
   switch (status) {
     case "NO_PLAN":
@@ -33,12 +34,31 @@ export function commercialActions(
         ["SUSPEND", "Suspend"],
       ];
     case "SUSPENDED":
-      return [
-        ["RESUME", "Resume"],
-        ["CANCEL_NOW", "Cancel"],
-      ];
+      if (managed)
+        return [
+          ["RESUME", "Resume"],
+          ["CANCEL_NOW", "Cancel"],
+        ];
+      // An expired Trial cannot be resumed as-is: reactivate it with a new end
+      // date, replace it with a new Trial, or assign a paid plan.
+      return suspension?.from === "TRIAL" && suspension.trialExpired
+        ? [
+            ["EXTEND_TRIAL", "Extend Trial and reactivate"],
+            ["TRIAL", "Start new Trial"],
+            ["GRANT_ACTIVE", "Assign paid plan"],
+            ["CANCEL_NOW", "Cancel"],
+          ]
+        : [
+            ["RESUME", "Resume"],
+            ["TRIAL", "Start new Trial"],
+            ["GRANT_ACTIVE", "Assign paid plan"],
+            ["CANCEL_NOW", "Cancel"],
+          ];
     case "CANCELLED":
-      return [["GRANT_ACTIVE", "Assign new plan"]];
+      return [
+        ["TRIAL", "Start Trial"],
+        ["GRANT_ACTIVE", "Assign new plan"],
+      ];
     default:
       return [];
   }

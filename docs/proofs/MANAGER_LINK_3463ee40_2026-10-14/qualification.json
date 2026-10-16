@@ -1,0 +1,182 @@
+{
+  "status": "PASS_SOURCE_AND_ISOLATED_TESTS_NOT_DEPLOYED",
+  "qualifiedAtUtc": "2026-10-14T15:26:12.554355+00:00",
+  "head": "3463ee406184fec7f53818416e11d0e5f5602c87",
+  "uncommitted": true,
+  "design": {
+    "issuance": "POST /platform/venues/:venueId/manager-links; current ACTIVE SUPER_ADMIN only. SUPPORT_READONLY GET only, owner has no issuance/cancel path.",
+    "readiness": "Current ACTIVE Venue + MANAGER_APP + at least one active MANAGER/ADMIN. Cannot bootstrap initial Staff.",
+    "code": "20 Crockford base32 characters;8 indexed public selector +12 secret characters (60-bit secret), Argon2id verifier;30-minute expiry;5 durable failed verifications.",
+    "redemption": "POST /auth/manager-link {code,installationId}; no client Venue authority. Venue/issuer/features rechecked; Venue row serializes single-use consumption and audit.",
+    "retry": "Same installation UUID + same code may retry within expiry after lost reply; different installation denied. UUID is retry identity, not authentication/attestation.",
+    "subsequentLogin": "Returned public Venue metadata remembered per backend origin; PIN and existing unique-active-Staff match still required; link grants no session, no Staff creation, no PIN write.",
+    "compatibility": "Existing remembered Venue selections and Staff sessions remain; legacy lookup retained for old clients, new first-time UI uses real one-use code.",
+    "reissueCancel": "Supersedes unused codes; consumed links and installed Staff sessions are not revoked."
+  },
+  "backend": {
+    "managerLinkHttpPg": {
+      "success": true,
+      "numPassedTests": 17,
+      "numFailedTests": 0,
+      "numPendingTests": 0
+    },
+    "aggregate": {
+      "success": true,
+      "numPassedTests": 864,
+      "numFailedTests": 0,
+      "numPendingTests": 886
+    },
+    "previousFocusedPosActivationEnrollmentPgPassed": 50,
+    "newFocusedPgPassed": 17,
+    "aggregatePassedOverlapFocused": 0,
+    "aggregateSkippedCasesQualifiedSeparately": 67,
+    "distinctPassed": 931,
+    "remainingUnrunOptIns": 819,
+    "build": "PASS",
+    "newServiceControllerTestLint": {
+      "errors": 0,
+      "warnings": 0
+    }
+  },
+  "frontend": {
+    "aggregate": {
+      "success": true,
+      "numPassedTests": 256,
+      "numFailedTests": 0,
+      "numPendingTests": 0
+    },
+    "typecheckBuild": "PASS",
+    "changedComponentsNewTestLint": {
+      "errors": 0,
+      "warnings": 0
+    },
+    "existingBundleWarning": true
+  },
+  "flutter": {
+    "aggregate": {
+      "success": true,
+      "passed": 2635,
+      "failed": 0,
+      "skipped": 17
+    },
+    "managerFocused": {
+      "success": true,
+      "passed": 18,
+      "failed": 0,
+      "skipped": 0
+    },
+    "productionFlags": {
+      "success": true,
+      "passed": 6,
+      "failed": 0,
+      "skipped": 0
+    },
+    "productionCasesOverlapDefault": true,
+    "analyzeChanged6Files": "PASS;0 issues",
+    "nativeMacosDeveloperBuilds": {
+      "pos": {
+        "exitCode": 0,
+        "workspace": "/Users/vaanskii/Developer/vynic/apps/operations/.dart_tool/vynic-dev/pos/apps/operations",
+        "debugOnly": true,
+        "launched": false
+      },
+      "manager": {
+        "exitCode": 0,
+        "workspace": "/Users/vaanskii/Developer/vynic/apps/operations/.dart_tool/vynic-dev/manager/apps/operations",
+        "debugOnly": true,
+        "launched": false
+      }
+    },
+    "nativeAppsLaunched": false,
+    "fixtureDiagnosis": {
+      "before": "2 Go fixture binaries absent; MENU09 accidentally ran without its dedicated environment",
+      "goWireFixtures": "Real binary builds via tool/test.py; both actual wire tests passed",
+      "sdk": {
+        "version": "1.26.9",
+        "source": "https://go.dev/dl/?mode=json",
+        "officialChecksumVerified": true,
+        "installedGlobally": false
+      },
+      "menu09Default": "Dedicated live opt-in, explicitly skipped in default aggregate",
+      "incompleteMenu09OptIn": {
+        "expectedFailureConfirmed": true,
+        "actual": {
+          "success": false,
+          "passed": 0,
+          "failed": 1,
+          "skipped": 0
+        },
+        "refusedBeforeHttpAndFileAccess": true
+      },
+      "dedicatedFullMenu09Proof": "Not rerun; remains separate",
+      "runnerTemporaryWireFolderRemoved": true
+    }
+  },
+  "migration": {
+    "status": "PASS",
+    "fromMigrations": 76,
+    "toMigrations": 77,
+    "all76HistoricalMigrationChecksumsUnchanged": true,
+    "venueDeviceStaffPinHashAndActivationValuesUnchanged": true,
+    "initialLinkTableEmpty": true,
+    "repeatDeploy": "NOOP",
+    "liveDataTouched": false
+  },
+  "env": {
+    "wholeOperationsEnvAndExampleUnchangedThisContinuation": true,
+    "priorValuesAndPublicAdditionsPreserved": true,
+    "newKeysThisContinuation": [],
+    "onlyPublicKeysUsedForDefines": [
+      "VYNIC_ENV",
+      "VYNIC_API_URL"
+    ],
+    "envAssets": false
+  },
+  "tooling": {
+    "publicBuildConfigProductTestsPassed": 8,
+    "newDefaultFlutterRunner": "apps/operations/tool/test.py"
+  },
+  "cleanup": {
+    "ownedCluster": "STOPPED",
+    "port": 62055,
+    "portClosed": true,
+    "postmasterPidAbsent": true,
+    "testRunnerWireTemporaryDirectoryRemoved": true,
+    "liveServicesChanged": false,
+    "ops01Retried": false
+  },
+  "boundaries": {
+    "liveCodeIssuance": false,
+    "realCredentialsTransmittedOrPinsChanged": false,
+    "liveDataEdited": false,
+    "liveServicesRestarted": false,
+    "deployed": false,
+    "committed": false,
+    "pushed": false,
+    "ops01": "PAUSED; no retry",
+    "multiPosProductionAuthority": "POS-02.C separate"
+  },
+  "limitations": [
+    "17 dedicated/live Flutter cases skipped, including MENU09; their release proofs are not established by default aggregate.",
+    "Backend819 opt-in cases remain unrun after67 separate focused qualifications.",
+    "Existing backend lint debt from earlier work and frontend bundle warning remain; new linking implementation/test lint is clean.",
+    "macOS debug builds do not qualify Windows/mobile release, production deployment or real enrollment.",
+    "Legacy lookup remains compatible; new first-time UI uses the expiring single-use code. Linking selects Venue and does not become a PIN authentication factor.",
+    "Installation UUID is public retry identity, not authentication or device attestation.",
+    "Existing duplicate PIN conflicts need an authorized unique PIN change; no real user data was repaired.",
+    "Stopped PG data, private logs, temporary SDK and manual fixture binaries retained for reproducibility; runner-owned transient wire directory removed."
+  ],
+  "commands": {
+    "dockerUserRun": [
+      "cd /Users/vaanskii/Developer/vynic",
+      "./scripts/docker.sh rebuild backend platform-web"
+    ],
+    "posSeparateTerminal": "python3 /Users/vaanskii/Developer/vynic/apps/operations/tool/dev.py pos",
+    "managerSeparateTerminal": "python3 /Users/vaanskii/Developer/vynic/apps/operations/tool/dev.py manager",
+    "restart": "q existing Flutter run, then full relaunch; hot restart retains compiled defines",
+    "order": "Backend migration77 + Platform UI before fresh Manager linking client"
+  },
+  "review": "Self-review plus real HTTP/PG and native builds; no separate agent review claimed",
+  "privateLogs": "/var/folders/82/drcfb4994p16rl49gxx9tj000000gn/T/vynic-manager-link-_gxef3c7",
+  "gitDiffCheck": "PASS"
+}

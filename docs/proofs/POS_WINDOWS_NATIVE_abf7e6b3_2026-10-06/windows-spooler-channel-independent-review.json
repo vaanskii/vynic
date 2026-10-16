@@ -1,0 +1,76 @@
+{
+  "reviewer": "/root/windows_runner_fix",
+  "atUtc": "2026-10-06T10:45:10.804821+00:00",
+  "verdict": "PASS for the bounded read-only Win32 qualification; no remaining blocking finding.",
+  "scope": "Independent source review and hash verification only. Reviewer performed no native run, VM operation, source edit, product startup or physical action. Review JSON/Markdown are the only files written.",
+  "sourceRoot": "/tmp/vynic-readiness-20261006-a2nbcprb/source/apps/operations/windows",
+  "manifest": {
+    "path": "/tmp/vynic-readiness-20261006-a2nbcprb/windows-spooler-channel-harness-sha256.json",
+    "sha256": "26bee184ca1a363c96e28fbcf0bbb0bb50893e7b98fdb2f8b0ea668cab11aabb",
+    "allSevenMatched": true
+  },
+  "sourceSha256": {
+    "tests/CMakeLists.txt": "fd4021883de3b4e98712695b46aa6e04b16ff5ae58977902cf44b8b3912f42be",
+    "tests/windows_spooler_test.cpp": "d68ea69bc9ff2167848860d8a18482ecedeac48edf8d69e4eeba5d75577007b8",
+    "tests/windows_spooler_channel_test.cpp": "cfac9a776024cbd71b65b301714c24f64ed7b0db44f958b0af7586a94fe36a8f",
+    "runner/windows_spooler.h": "75a307ac62916cedf1db39c33fc92bb1f1312b0d62b551b8e33c0ed4da821056",
+    "runner/windows_spooler.cpp": "db67699562cb477ece7e82569e9c3ecb2a4389865ba124e47d0de34e6ae015ec",
+    "runner/windows_spooler_channel.h": "8da79f824905bcd4ca3fcf6547a9fc5239654709b4e5c31798cd6a21430ca0dc",
+    "runner/windows_spooler_channel.cpp": "158bd4da5339f897bab2a688ff1a8df87e3f68e6cfe6b6c7333f4f186275b9d3"
+  },
+  "runtimeFour": "Unchanged versus manifest and read-only hash comparison with original workspace.",
+  "safety": [
+    "Only admitted native operation is real EnumPrintersW. submitRaw fixtures have no arguments, an empty byte vector, or the empty vector plus an extra key.",
+    "Channel validation rejects all submit fixtures before work admission; core SubmitRaw also rejects empty bytes before inventory, OpenPrinterW or StartDocPrinterW.",
+    "Portable fake-API executable has nonempty synthetic bytes but is a separate target with no Winspool linkage or real SpoolerApi.",
+    "Opt-in CMake compiles cached standard_codec.cc and core_implementations.cc, links cached flutter_windows.dll.lib and copies the existing DLL. No engine/controller/product creation or run path is called."
+  ],
+  "codecAndReplyManager": [
+    "Actual cached MethodChannel constructs EngineMethodResult; its ReplyManager in core_implementations.cc sends one binary callback then clears it.",
+    "Method calls decode into owned values. Harness copies encoded envelopes and decoded values while SDK reply buffers remain valid.",
+    "Messenger and Context outlive channel shutdown. Per-call callbacks retain shared Reply objects; worker shared state contains no Flutter pointers."
+  ],
+  "uiAndBounds": [
+    "Real message-only HWND dispatches posted completion messages on the captured main/UI thread. Fake messenger checks reply and handler-registration thread affinity.",
+    "Exactly four pending calls are admitted before pumping; the fifth synchronously returns dispatch/writeAttempted=false. Completed worker results still count toward this pending bound.",
+    "A single worker plus reply-ID assertions verifies FIFO delivery. Error/unknown/shutdown replies are decoded through real envelopes and observed exactly once.",
+    "Each live inventory independently validates list count, three descriptor fields, valid UTF-8 and byte/UTF-16-unit limits; no live snapshot equality requirement remains.",
+    "WaitForQueuedCompletion uses filtered PM_NOREMOVE, checks a 26-second deadline, and waits in 25-ms increments. Pump batches are limited to 128 messages; CTest process timeout is 30 seconds.",
+    "CloseChannel nulls the HWND callback owner before reset; runtime shutdown unregisters handler, stops/clears worker state under the PostMessage mutex, settles pending replies on UI, and never joins the detached worker."
+  ],
+  "shutdownStageActuallyCovered": "Earlier completion messages are checked drained. After two new inventory calls, at least one worker result has completed and posted a notification while both UI replies remain pending. That queued notification is retained across destruction, then dispatched into the recreated empty channel before any new work is admitted. Old replies remain exactly once; fresh read-only work succeeds.",
+  "limits": [
+    "The second shutdown request may be queued, running or completed. The test does not force a blocked/in-flight Winspool call or prove every possible shutdown interleaving.",
+    "No Flutter engine is initialized. This exercises native channel/codec/ReplyManager and Win32 dispatch using a fake BinaryMessenger, not the live engine C-API messenger path.",
+    "The one-second close check is an observed timing bound; forced blocked-worker behavior is established only by source inspection, not by an injected blocked Winspool call."
+  ],
+  "resolvedFindings": [
+    "Initial P2 reliability finding: independent live inventories were required to have identical encoded bytes. Final cfac9a77 source removes that assumption and checks every inventory separately.",
+    "Initial shutdown/recreation coverage limitation: no stale completion was forced. Final source deterministically retains and pumps a queued completion notification."
+  ],
+  "cachedPrimaryReferences": [
+    {
+      "path": "/Users/vaanskii/Developer/vynic/docs/proofs/POS_WINDOWS_NATIVE_abf7e6b3_2026-10-06/sdk-wrapper/core_implementations.cc",
+      "sha256": "c0de8b2c1df4d25abb336a62364fb8dd4810536e8eb28da0601b1e3ed969a777"
+    },
+    {
+      "path": "/Users/vaanskii/Developer/vynic/docs/proofs/POS_WINDOWS_NATIVE_abf7e6b3_2026-10-06/sdk-wrapper/standard_codec.cc",
+      "sha256": "3d75b7f17d482e0047672ea5e3cb7adf309976e7877fd3c5cc04d293ba671641"
+    },
+    {
+      "path": "/Users/vaanskii/Developer/vynic/docs/proofs/POS_WINDOWS_NATIVE_abf7e6b3_2026-10-06/sdk-wrapper/include/flutter/method_channel.h",
+      "sha256": "560bd71ef4c34b302f32747cdbc42f27db0f3310ba9af3837bae0b41b06ff87b"
+    },
+    {
+      "path": "/Users/vaanskii/Developer/vynic/docs/proofs/POS_WINDOWS_NATIVE_abf7e6b3_2026-10-06/sdk-wrapper/include/flutter/engine_method_result.h",
+      "sha256": "3300d3fe6ac2282de919076e17dfad9c014832e8ce1fd0794897bdfad60bccfd"
+    }
+  ],
+  "nativeExecutionReportedByParent": {
+    "attribution": "Parent /root message; independent reviewer did not rerun Windows or inspect its new run logs.",
+    "buildAndLink": "PASS with cached MSVC/Flutter in a separate fresh directory",
+    "channel": "CTest PASS; 208 assertions; one queue; zero documents; 0.09 seconds",
+    "portableFake": "CTest PASS; 110 assertions; 0.10 seconds",
+    "integrity": "Parent reports all 7 source, 815 product and 43 cached SDK hashes unchanged; initial-run artifacts and old sealed 69-file packet retained separately."
+  }
+}

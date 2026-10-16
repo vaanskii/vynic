@@ -1,0 +1,33 @@
+{
+  "status": "PASS",
+  "ownedTemporaryCopyOnly": true,
+  "temporaryDirectoryRemoved": true,
+  "runtimeTestsRepeated": false,
+  "WindowsScriptsExecuted": false,
+  "cases": [
+    {
+      "case": "valid complete evidence",
+      "exitCode": 0,
+      "expectedPass": true,
+      "message": "{\n  \"status\": \"PASS\",\n  \"sourceFiles\": 876,\n  \"ownedPathsChecked\": 0,\n  \"savedPassingChecks\": 855,\n  \"acceptanceSuites\": 72,\n  \"nativeSigkillRestartCheckpoints\": 102,\n  \"nativeSourceBindings\": 394,\n  \"windowsCurrentRevision\": \"PENDING_NOT_RUN\",\n  \"physicalAcceptance\": \"PENDING\",\n  \"milestoneDone\": false\n}"
+    },
+    {
+      "case": "truncated checkpoint array",
+      "exitCode": 1,
+      "expectedPass": false,
+      "message": "Native checkpoint record count mismatch"
+    },
+    {
+      "case": "duplicated checkpoint identity",
+      "exitCode": 1,
+      "expectedPass": false,
+      "message": "Native checkpoint identities/matrix mismatch"
+    },
+    {
+      "case": "unexpected checkpoint identity",
+      "exitCode": 1,
+      "expectedPass": false,
+      "message": "Native checkpoint identities/matrix mismatch"
+    }
+  ]
+}

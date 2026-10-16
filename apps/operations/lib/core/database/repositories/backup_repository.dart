@@ -43,6 +43,7 @@ import 'closure_journal_repository.dart';
 import 'close_day_journal_repository.dart';
 import 'order_transfer_journal_repository.dart';
 import 'order_table_mutation_repository.dart';
+import 'print_job_repository.dart';
 import 'package:vynic/core/services/pos/order_item_transfer.dart';
 import '../transactions/close_day_transaction.dart';
 import '../database_core.dart';
@@ -523,6 +524,19 @@ class BackupRepository {
       }
       out[name] = rows;
     }
+    final printIds = <String>{};
+    for (final row in out['meta']!.entries) {
+      if (row.key is String && (row.key as String).startsWith('print_job:')) {
+        if (!PrintJobRepository.knownKey(row.key as String))
+          throw const FormatException('Unknown print job protocol in backup');
+        final job = PrintJobRepository.decode(row.key, row.value);
+        if (!printIds.add(job.id)) {
+          throw const FormatException(
+            'Conflicting print job identities in backup',
+          );
+        }
+      }
+    }
     final menu = out['menuCanonical']!;
     final dayClose = out['meta']![CloseDayJournalRepository.key];
     if (dayClose != null) {
@@ -937,6 +951,8 @@ class BackupRepository {
     );
     // Restore already owns admission; finish the restored transition before
     // Menu recovery, rebuilt ACKs or any UI/worker can admit business writes.
+    await ReservationRepository.recoverAdvanceReceipts();
+    await PrintJobRepository.recover(restored: true, underExclusive: true);
     await OrderEditRepository.recoverPending(underExclusive: true);
     await TableRepairRepository.recoverPending(underExclusive: true);
     await OrderTableMutationRepository.recoverPending(underExclusive: true);
@@ -1123,6 +1139,12 @@ class BackupRepository {
           .toList(),
       'isTakeAway': reservation.isTakeAway,
       'linkedOrderId': reservation.linkedOrderId,
+      if (reservation.advanceAmount > 0) ...{
+        'advanceAmount': reservation.advanceAmount,
+        'advanceCollectedOn': reservation.advanceCollectedOn,
+        'advanceReceiptId': reservation.advanceReceiptId,
+        if (reservation.advanceReceiptPending) 'advanceReceiptPending': true,
+      },
     };
   }
 
@@ -1164,6 +1186,8 @@ class BackupRepository {
       'createdAt': draft.createdAt.toIso8601String(),
       'createdBy': draft.createdBy,
       'displayName': draft.displayName,
+      'customerName': draft.customerName,
+      'customerPhone': draft.customerPhone,
     };
   }
 
@@ -1602,7 +1626,8 @@ class BackupRepository {
                             ) ||
                             key.startsWith(
                               OrderTableMutationRepository.prefix,
-                            )),
+                            ) ||
+                            key.startsWith('print_job:')),
                   ) ??
                   false) ||
               (DatabaseCore.metaBox?.containsKey(
@@ -1617,7 +1642,7 @@ class BackupRepository {
               (DatabaseCore.closureJournalBox?.isNotEmpty ?? false) ||
               EdgeCommandJournal.snapshot().isNotEmpty)) {
         throw StateError(
-          'Legacy import requires a destination without Menu/closure/command recovery state',
+          'Legacy import requires a destination without Menu/closure/command/print recovery state',
         );
       }
       final pause = Stopwatch()..start();
@@ -2210,6 +2235,10 @@ class BackupRepository {
           : preOrders,
       isTakeAway: json['isTakeAway'] as bool? ?? false,
       linkedOrderId: (json['linkedOrderId'] as num?)?.toInt(),
+      advanceAmount: (json['advanceAmount'] as num?)?.toDouble() ?? 0,
+      advanceCollectedOn: json['advanceCollectedOn'] as String?,
+      advanceReceiptId: json['advanceReceiptId'] as String?,
+      advanceReceiptPending: json['advanceReceiptPending'] == true,
     );
   }
 
@@ -2270,6 +2299,8 @@ class BackupRepository {
       createdAt: _parseRequiredDate(json['createdAt'] as String?),
       createdBy: json['createdBy'] as String? ?? 'unknown',
       displayName: json['displayName'] as String?,
+      customerName: json['customerName'] as String?,
+      customerPhone: json['customerPhone'] as String?,
     );
   }
 

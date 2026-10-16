@@ -188,6 +188,9 @@ export class SubscriptionService {
             where: { id: planId, status: 'ACTIVE' },
           });
           if (!plan) throw new BadRequestException('Active plan required');
+          // A gift covers this first period only; the agreed plan price
+          // applies from the next renewal.
+          const complimentary = body.complimentary === true;
           await tx.venuePlanAssignment.upsert({
             where: { venueId },
             create: {
@@ -218,7 +221,7 @@ export class SubscriptionService {
             billingAnchorAt: now,
             currentPeriodStart: now,
             currentPeriodEndsAt: nextRenewal(now, plan.billingPeriod, now),
-            paymentState: 'MANUAL',
+            paymentState: complimentary ? 'COMPLIMENTARY' : 'MANUAL',
             trialEndedAt: sub.status === 'TRIAL' ? now : sub.trialEndedAt,
             trialEndsAt: sub.status === 'TRIAL' ? now : sub.trialEndsAt,
             suspendedAt: null,
@@ -231,14 +234,25 @@ export class SubscriptionService {
             planId,
             priceMinor: plan.priceMinor,
             currency: plan.currency,
-            source: 'MANUAL_AGREEMENT',
+            source: complimentary ? 'COMPLIMENTARY' : 'MANUAL_AGREEMENT',
           };
           break;
         }
 
         case 'EXTEND_TRIAL': {
-          if (sub.status !== 'TRIAL')
-            throw new ConflictException('Only a current Trial can be extended');
+          // An expired Trial (reconciled to SUSPENDED) is reactivated only by
+          // this explicit, confirmed operator extension; RESUME never revives it.
+          const lapsed =
+            sub.status === 'SUSPENDED' &&
+            sub.suspendedFrom === 'TRIAL' &&
+            !sub.billingManaged &&
+            (!sub.trialEndsAt || sub.trialEndsAt <= now);
+          if (sub.status !== 'TRIAL' && !lapsed)
+            throw new ConflictException(
+              'Only a current or expired Trial can be extended',
+            );
+          if (lapsed && body.confirm !== true)
+            throw new BadRequestException('Confirm reactivating the Trial');
           const end = new Date(String(body.trialEndsAt));
           if (
             !Number.isFinite(end.getTime()) ||
@@ -248,10 +262,19 @@ export class SubscriptionService {
             throw new BadRequestException(
               'Choose an end date after the current Trial end',
             );
-          data = { trialEndsAt: end };
+          data = lapsed
+            ? {
+                status: 'TRIAL',
+                trialEndsAt: end,
+                trialEndedAt: null,
+                suspendedAt: null,
+                suspendedFrom: null,
+              }
+            : { trialEndsAt: end };
           detail = {
             before: sub.trialEndsAt?.toISOString() ?? null,
             after: end.toISOString(),
+            ...(lapsed && { reactivated: true }),
           };
           break;
         }

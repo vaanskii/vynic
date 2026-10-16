@@ -1,0 +1,8 @@
+{
+  "backendFinalWithOwnedPostgres": {
+    "passed": 918,
+    "failed": 0,
+    "skipped": 895
+  },
+  "ownedCluster": "STOPPED"
+}

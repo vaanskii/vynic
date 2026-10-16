@@ -1,4 +1,5 @@
 import 'manager_data_read.dart';
+import '../../models/inventory_history_page.dart';
 import 'manager_operation_request.dart';
 import 'table_repair_request.dart';
 import 'order_edit_request.dart';
@@ -1354,6 +1355,37 @@ class MobileApiService {
   // ── Recipes / technological cards ─────────────────────────────────────
 
   /// Menu-oriented: every Menu Item, marked configured or not.
+  static Future<InventoryHistoryPage> getInventoryHistoryPage({
+    String? stockItemId,
+    String? from,
+    String? to,
+    bool unmapped = false,
+    String? cursor,
+  }) async {
+    final scope = tableRepairScope;
+    final session = AuthTokenService.authHeader['Authorization'];
+    final path = stockItemId == null
+        ? '/mobile/inventory/consumptions/page'
+        : '/mobile/inventory/stock-items/${Uri.encodeComponent(stockItemId)}/movements';
+    final query = Uri(
+      queryParameters: {
+        'unmapped': '$unmapped',
+        if (from != null) 'from': from,
+        if (to != null) 'to': to,
+        if (cursor != null) 'cursor': cursor,
+      },
+    ).query;
+    final response = await _get('$path?$query');
+    if (!isCurrentTableRepairScope(scope) ||
+        session != AuthTokenService.authHeader['Authorization'])
+      throw StateError('Manager session changed');
+    if (response.statusCode != 200)
+      throw Exception(_apiError('Inventory history', response));
+    return InventoryHistoryPage.fromJson(
+      Map<String, dynamic>.from(jsonDecode(response.body) as Map),
+    );
+  }
+
   static Future<List<Map<String, dynamic>>> getConsumptions({
     String? from,
     String? to,

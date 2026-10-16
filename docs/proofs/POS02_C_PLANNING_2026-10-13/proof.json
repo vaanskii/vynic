@@ -1,0 +1,51 @@
+{
+  "stage": "POS-02.C",
+  "status": "IN_PROGRESS",
+  "checkpoint": "Detached station business routing and frozen Go job interoperability",
+  "overallPOS02": "NOT_DONE",
+  "date": "2026-10-13",
+  "head": "3463ee406184fec7f53818416e11d0e5f5602c87",
+  "ownedSourceFiles": [
+    "apps/edge/internal/printstation/planning.go",
+    "apps/edge/internal/printstation/planning_test.go",
+    "apps/operations/lib/core/services/printing/station_print_plan.dart",
+    "apps/operations/test/unit/station_print_plan_test.dart",
+    "apps/operations/tool/station_print_fixture.dart"
+  ],
+  "checks": {
+    "flutter": {
+      "passed": 64,
+      "newStationPlanningTests": 30,
+      "failed": 0,
+      "suites": [
+        "station_print_plan_test.dart",
+        "print_routing_plan_test.dart",
+        "cluster_print_effect_test.dart",
+        "printer_agent_client_test.dart"
+      ],
+      "actualGoTlsFixture": true
+    },
+    "goStation": {
+      "passedTestRecords": 38,
+      "skips": [],
+      "failures": [],
+      "actualDartScenarios": 9,
+      "log": "station-tests.jsonl"
+    },
+    "targetedFlutterAnalyze": "PASS",
+    "dartFormat": "PASS",
+    "goFormat": "PASS",
+    "goVet": "PASS",
+    "independentStaticReview": "No actionable findings"
+  },
+  "notProven": [
+    "Authenticated production Flutter-origin registration",
+    "Durable Flutter-to-Go station submission and recovery",
+    "Normal business call-site integration",
+    "Windows execution of this checkpoint",
+    "Production writer cutover and rollback",
+    "Physical printing"
+  ],
+  "sourceHashes": "source-hashes.json",
+  "commitsCreated": []
+}

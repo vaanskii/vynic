@@ -1,3 +1,4 @@
+import 'package:vynic/core/ui/widgets/pos_dialog.dart';
 import 'package:vynic/core/contracts/manager_login.dart';
 import 'package:vynic/core/services/manager_app/manager_app_preferences.dart';
 import 'dart:async';
@@ -147,7 +148,7 @@ class _LoginScreenState extends State<LoginScreen> {
           ManagerAppPreferences.loginVenueCode ??
           ManagerLoginContract.rolloutVenueCode,
     );
-    final venueCode = await showDialog<String>(
+    final venueCode = await showPosModal<String>(
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('რესტორანი'),
@@ -285,7 +286,7 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _openEnrollment() async {
-    await showDialog<void>(
+    await showPosModal<void>(
       context: context,
       builder: (dialogContext) => Dialog(
         backgroundColor: Colors.transparent,

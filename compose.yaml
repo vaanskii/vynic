@@ -82,6 +82,8 @@ services:
       - --entrypoints.web.address=:8080
       - --entrypoints.websecure.address=:8443
       - --entrypoints.health.address=:8082
+      # Native LAN listener. Inert unless compose.lan.yaml publishes it and sets NATIVE_LAN.
+      - --entrypoints.native.address=:8088
       - --providers.file.directory=/etc/traefik/dynamic
       - --ping=true
       - --ping.entrypoint=health
@@ -92,6 +94,7 @@ services:
       BASE_DOMAIN: ${SAAS_WEBSITE_BASE_DOMAIN}
       CUSTOM_HOST: ${CUSTOM_HOST:?Set CUSTOM_HOST}
       PROXY_TLS: ${PROXY_TLS:-false}
+      NATIVE_LAN: "false"
     volumes: [./deploy/traefik:/etc/traefik/dynamic:ro]
     networks:
       app: {ipv4_address: 172.30.89.2}

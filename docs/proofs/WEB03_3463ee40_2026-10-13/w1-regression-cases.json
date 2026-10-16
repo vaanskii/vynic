@@ -1,0 +1,18 @@
+{
+  "check": "w1-regression",
+  "result": {
+    "passed": 8,
+    "failed": 0,
+    "skipped": 0
+  },
+  "passedCases": [
+    "W1 disposable PostgreSQL / HTTP denies other owners and encrypts credentials; APIs and audit contain no secrets",
+    "W1 disposable PostgreSQL / HTTP requires entitlement; CUSTOM Host selects credentials ignoring body venue",
+    "W1 disposable PostgreSQL / HTTP rotation/disconnect audited, new payments denied; status retains original credentials",
+    "W1 disposable PostgreSQL / HTTP callback ignores Host, rejects invalid signature and mismatched stored payment reference",
+    "W1 disposable PostgreSQL / HTTP sanitizes provider failures including axios credential-bearing errors",
+    "W1 disposable PostgreSQL / HTTP enforces composite tenancy in PostgreSQL and rolls back a failed audit",
+    "W1 disposable PostgreSQL / HTTP provider HTTP failures expose no credentials in response or logs",
+    "W1 disposable PostgreSQL / HTTP explicit legacy CLI is idempotent, binds existing payments and grants no access"
+  ]
+}

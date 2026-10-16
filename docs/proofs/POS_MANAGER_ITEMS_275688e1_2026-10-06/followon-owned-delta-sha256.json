@@ -1,0 +1,12 @@
+{
+  "apps/operations/windows/tests/CMakeLists.txt": "fd4021883de3b4e98712695b46aa6e04b16ff5ae58977902cf44b8b3912f42be",
+  "apps/operations/windows/tests/windows_spooler_channel_test.cpp": "cfac9a776024cbd71b65b301714c24f64ed7b0db44f958b0af7586a94fe36a8f",
+  "apps/operations/lib/core/services/edge/operational_proof/manager_items_planner.dart": "86635d11eed2929e8a7fd454a2d0485fe99c7ef52cfe86c66037700c41e635fd",
+  "apps/operations/lib/core/services/edge/operational_proof/manager_items_adapter.dart": "34f1a77a254d32832003094d156022a1f30764bb9b2f019322d48fea716a2ad2",
+  "apps/operations/test/unit/operational_manager_items_test.dart": "3b4fee3bc637b053afecc07c37bfc5a29a87991b548a00effab15ffcc1f44a5d",
+  "docs/POS_MULTI_TERMINAL_READINESS_PLAN.md": "c4b145b8bf643d90091f8240500fef12cc264884efe0d26a1c5df3474fd42e99",
+  "docs/POS_MULTI_TERMINAL_WRITER_COVERAGE.md": "74f6e0e3ebf86e8300ce12dbc6503f2ced66330cc71c7a22ec0ab1586333b101",
+  "docs/agent-state/VYNIC_PROJECT_STATE.md": "7765aa8874f0f8feecf27d9cfac6f49f5319e5671785ad46fb7a50a03bf28c91",
+  "docs/agent-state/VYNIC_CODE_MAP.md": "ede49d13287b99a54a1df1d8500d1cd662bbfac4bc5efde132475c990958b115",
+  "apps/operations/test/unit/pos02_acceptance_runner_test.dart": "e2731028006dd8bbc2a0d7e3fe4f8c374eeeda310bec1181681de9c898ef3209"
+}

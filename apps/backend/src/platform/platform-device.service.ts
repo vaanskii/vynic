@@ -85,6 +85,11 @@ export class PlatformDeviceService {
     return this.enrollments.create(actor, venueId, input);
   }
 
+  async setupEligibility(actor: PlatformPrincipal, venueId: string) {
+    await this.directory.requireVenue(venueId);
+    return this.enrollments.setupEligibility(actor, venueId);
+  }
+
   async listEnrollments(venueId: string) {
     await this.directory.requireVenue(venueId);
     return this.enrollments.list(venueId);

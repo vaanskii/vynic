@@ -1,5 +1,6 @@
 import 'package:vynic/core/database/local_data_admission.dart';
 import 'dart:async';
+import '../../printing/print_identity_admission.dart';
 
 /// One process-wide admission barrier. Only the Windows POS updater enables it.
 /// Persisted open entities and durable Cloud outboxes are deliberately absent.
@@ -19,12 +20,16 @@ class UpdateReadiness {
     'closeDay' => 'მიმდინარეობს დღის დახურვა',
     'transferItems' => 'მიმდინარეობს პროდუქტების გადატანა',
     'cancelOrder' => 'მიმდინარეობს შეკვეთის გაუქმება',
+    'Print transmission' => 'მიმდინარეობს პრინტერზე გაგზავნა',
     'Cloud command' => 'სრულდება სერვერიდან მიღებული ოპერაცია',
     'Hive write' || 'Hive model write' => 'მიმდინარეობს მონაცემების შენახვა',
     _ => 'მიმდინარეობს ლოკალური ოპერაცია',
   };
 
   static String? get blockedReason {
+    if (PrintIdentityAdmission.activeSubmissions > 0) {
+      return operationLabel('Print transmission');
+    }
     if (LocalDataAdmission.failure != null) return 'საჭიროა ოპერაციის აღდგენა';
     if (LocalDataAdmission.exclusiveOperation == 'closeDay')
       return operationLabel('closeDay');

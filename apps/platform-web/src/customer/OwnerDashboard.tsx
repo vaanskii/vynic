@@ -97,7 +97,6 @@ export function OwnerDashboard({
         menu: "WEBSITE",
         hours: "WEBSITE",
         photos: "WEBSITE",
-        payments: "ONLINE_PAYMENTS",
       } as Record<string, string>
     )[key];
     if (feature && !venue.features.includes(feature)) return false;
@@ -242,7 +241,7 @@ export function OwnerDashboard({
           />
         )}
         {section === "managers" && available(section) && (
-          <ManagersSection {...common} />
+          <ManagersSection key={venue.venue.id} {...common} />
         )}
         {section === "subscription" && (
           <SubscriptionSection

@@ -1,0 +1,18 @@
+$ErrorActionPreference='Stop';$ProgressPreference='SilentlyContinue'
+$shared='\\Mac\Home\Developer\vynic\docs\proofs\POS_WINDOWS_NATIVE_abf7e6b3_2026-10-06'
+$stage=Get-Content -LiteralPath (Join-Path $shared 'windows-stage.json') -Raw | ConvertFrom-Json
+$job=$stage.job;$op=Join-Path $job 'apps\operations';$path=Join-Path $op 'test\unit\pos02_acceptance_runner_test.dart'
+if((Get-FileHash -LiteralPath $path -Algorithm SHA256).Hash.ToLowerInvariant() -ne 'd67e568689b27309d3c96d17d9f0595c22461d83a7d2fddb9c2628dda018bb6b'){throw 'Original test source changed'}
+Copy-Item -LiteralPath (Join-Path $shared 'pos02_acceptance_runner_test.corrected.dart') -Destination $path
+$manifest=Get-Content -LiteralPath (Join-Path $shared 'prepared-source-v2-sha256.json') -Raw | ConvertFrom-Json
+function Assert-Source {foreach($e in $manifest.PSObject.Properties){$p=Join-Path $job $e.Name;if((Get-FileHash -LiteralPath $p -Algorithm SHA256).Hash.ToLowerInvariant() -ne $e.Value){throw ('Source mismatch: '+$e.Name)}}}
+Assert-Source
+$env:FLUTTER_SUPPRESS_ANALYTICS='true';$env:DART_SUPPRESS_ANALYTICS='true';$env:CI='true'
+$env:HTTP_PROXY='http://127.0.0.1:9';$env:HTTPS_PROXY='http://127.0.0.1:9';$env:NO_PROXY='127.0.0.1,localhost,::1'
+Set-Location -LiteralPath $op
+& $stage.flutter test --no-pub --reporter expanded test/unit/pos02_acceptance_runner_test.dart
+if($LASTEXITCODE -ne 0){throw ('Corrected launcher tests failed: '+$LASTEXITCODE)}
+& $stage.flutter analyze --no-pub test/unit/pos02_acceptance_runner_test.dart
+if($LASTEXITCODE -ne 0){throw ('Corrected launcher analysis failed: '+$LASTEXITCODE)}
+Assert-Source
+Write-Output 'CORRECTION_OK_52_WINDOWS_LAUNCHER_TESTS_SOURCE_UNCHANGED'

@@ -1,0 +1,98 @@
+[
+  {
+    "app": "vankisi-custom-web",
+    "imageId": "sha256:5ccb5323f77bde5ab57bc4078ee8cd0a6a44188cde5db8986017f377895b3523",
+    "wholeArtifactMatches": true,
+    "result": {
+      "checkedAt": "2026-10-14T10:27:59.935Z",
+      "hostname": "artifact-proof.vynic.localhost",
+      "url": "http://artifact-proof.vynic.localhost:63878/",
+      "environment": "LOCAL_DEVELOPMENT",
+      "availability": "REACHABLE",
+      "frontend": {
+        "status": 200,
+        "detail": "Frontend answers"
+      },
+      "api": {
+        "state": "OK",
+        "status": 200,
+        "detail": "Stable Venue and CUSTOM binding match"
+      },
+      "build": {
+        "status": 200,
+        "observedBuildId": "e4f9b7131589c89bcd8c619433421fb1c29532163c2c700f938cc0f05db041ce",
+        "expectedBuildId": "e4f9b7131589c89bcd8c619433421fb1c29532163c2c700f938cc0f05db041ce",
+        "siteKey": "vankisi-web",
+        "state": "VERIFIED",
+        "detail": "Served HTML and recorded CUSTOM build fingerprint match"
+      },
+      "rendererDeployed": true,
+      "bindingIdentityVerified": true
+    },
+    "productionAccepted": false
+  },
+  {
+    "app": "restaurant-web",
+    "imageId": "sha256:05c17ba2ba32253d8856e99ebcc419438cffe3d94e6af5bd22b8da3f9367b70e",
+    "wholeArtifactMatches": true,
+    "result": {
+      "checkedAt": "2026-10-14T10:27:59.945Z",
+      "hostname": "artifact-proof.vynic.localhost",
+      "url": "http://artifact-proof.vynic.localhost:63882/",
+      "environment": "LOCAL_DEVELOPMENT",
+      "availability": "REACHABLE",
+      "frontend": {
+        "status": 200,
+        "detail": "Frontend answers"
+      },
+      "api": {
+        "state": "OK",
+        "status": 200,
+        "detail": "Stable Venue and CUSTOM binding match"
+      },
+      "build": {
+        "status": 200,
+        "observedBuildId": "021f8126b71451cd0da2f9a114115d6f9ca02f47a6e8140a024f6115cb489b7b",
+        "expectedBuildId": "e4f9b7131589c89bcd8c619433421fb1c29532163c2c700f938cc0f05db041ce",
+        "siteKey": null,
+        "state": "WRONG_BUILD",
+        "detail": "Served HTML or renderer/app key differs from the manifest/binding"
+      },
+      "rendererDeployed": true,
+      "bindingIdentityVerified": false
+    },
+    "productionAccepted": false
+  },
+  {
+    "app": "platform-web",
+    "imageId": "sha256:bea6222b612fa18acef3fdd92d8f04d3af4b217f01e49ec1ff5d0d29a243d81e",
+    "wholeArtifactMatches": null,
+    "result": {
+      "checkedAt": "2026-10-14T10:27:59.947Z",
+      "hostname": "artifact-proof.vynic.localhost",
+      "url": "http://artifact-proof.vynic.localhost:63886/",
+      "environment": "LOCAL_DEVELOPMENT",
+      "availability": "REACHABLE",
+      "frontend": {
+        "status": 200,
+        "detail": "Frontend answers"
+      },
+      "api": {
+        "state": "OK",
+        "status": 200,
+        "detail": "Stable Venue and CUSTOM binding match"
+      },
+      "build": {
+        "state": "FAILED",
+        "status": 404,
+        "detail": "No valid build manifest; deployment is unverified",
+        "observedBuildId": null,
+        "expectedBuildId": "e4f9b7131589c89bcd8c619433421fb1c29532163c2c700f938cc0f05db041ce",
+        "siteKey": null
+      },
+      "rendererDeployed": false,
+      "bindingIdentityVerified": false
+    },
+    "productionAccepted": false
+  }
+]

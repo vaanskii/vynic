@@ -1,3 +1,4 @@
+import 'package:vynic/core/ui/widgets/pos_dialog.dart';
 import 'dart:io';
 import 'dart:typed_data';
 
@@ -17,7 +18,7 @@ class ReceiptPreviewDialog extends StatelessWidget {
   final Uint8List pngBytes;
 
   static Future<void> show(BuildContext context, Uint8List bytes) {
-    return showDialog(
+    return showPosModal(
       context: context,
       builder: (context) => ReceiptPreviewDialog(pngBytes: bytes),
     );

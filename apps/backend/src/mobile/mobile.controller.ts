@@ -2,6 +2,7 @@ import { UseInterceptors } from '@nestjs/common';
 import { CommercialProjectionInterceptor } from '../entitlements/commercial-projection.interceptor';
 import { VenueEntitlementsService } from '../entitlements/venue-entitlements.service';
 import { SaleConsumptionService } from '../inventory/sale-consumption.service';
+import type { StockLocationInput } from '../inventory/stock-locations';
 import {
   Controller,
   ForbiddenException,
@@ -134,12 +135,55 @@ export class MobileController {
   }
 
   @RequiresFeature(FeatureKeys.INVENTORY)
+  @Get('inventory/consumptions/page')
+  consumptionPage(
+    @ManagerTenant() tenant: TenantContext,
+    @Query() query: import('../inventory/history-page').HistoryQuery,
+  ) {
+    return this.consumption.page(tenant, query);
+  }
+
+  @RequiresFeature(FeatureKeys.INVENTORY)
   @Get('inventory/consumptions/:id')
   consumptionDetail(
     @ManagerTenant() tenant: TenantContext,
     @Param('id') id: string,
   ) {
     return this.consumption.detail(tenant, id);
+  }
+
+  @RequiresFeature(FeatureKeys.INVENTORY)
+  @Get('inventory/locations')
+  inventoryLocations(@ManagerTenant() tenant: TenantContext) {
+    return this.inventory.locations(tenant);
+  }
+
+  @RequiresFeature(FeatureKeys.INVENTORY)
+  @Post('inventory/locations')
+  createInventoryLocation(
+    @ManagerAuth() actor: ManagerAuthContext,
+    @Body() input: StockLocationInput,
+  ) {
+    return this.inventory.createLocation(actor, input);
+  }
+
+  @RequiresFeature(FeatureKeys.INVENTORY)
+  @Patch('inventory/locations/:id')
+  renameInventoryLocation(
+    @ManagerAuth() actor: ManagerAuthContext,
+    @Param('id') id: string,
+    @Body() input: StockLocationInput,
+  ) {
+    return this.inventory.renameLocation(actor, id, input);
+  }
+
+  @RequiresFeature(FeatureKeys.INVENTORY)
+  @Get('inventory/stock-items/:id/locations')
+  inventoryLocationBalances(
+    @ManagerTenant() tenant: TenantContext,
+    @Param('id') id: string,
+  ) {
+    return this.inventory.locationBalances(tenant, id);
   }
 
   @RequiresFeature(FeatureKeys.INVENTORY)
@@ -180,6 +224,16 @@ export class MobileController {
     @Body() payload: StockItemInput,
   ) {
     return this.inventory.updateStockItem(actor, id, payload);
+  }
+
+  @RequiresFeature(FeatureKeys.INVENTORY)
+  @Get('inventory/stock-items/:id/movements')
+  stockMovementPage(
+    @ManagerTenant() tenant: TenantContext,
+    @Param('id') id: string,
+    @Query() query: import('../inventory/history-page').HistoryQuery,
+  ) {
+    return this.inventory.movementPage(tenant, id, query);
   }
 
   @RequiresFeature(FeatureKeys.INVENTORY)

@@ -14,6 +14,7 @@ import {
   decryptPaymentConfig,
 } from './payment-config.crypto';
 import type { Prisma } from '@prisma/client';
+import { latestBogIntegrationStatus } from './payment-integration-status';
 
 export type BogConfig = {
   clientId: string;
@@ -31,11 +32,7 @@ export class PaymentIntegrationsService {
   ) {}
 
   async status(venueId: string) {
-    const row = await this.db.paymentIntegration.findFirst({
-      where: { venueId, provider: 'BOG' },
-      orderBy: { revision: 'desc' },
-      select: { enabled: true, revision: true, createdAt: true },
-    });
+    const row = await latestBogIntegrationStatus(this.db, venueId);
     return {
       provider: 'BOG',
       configured: !!row?.enabled,

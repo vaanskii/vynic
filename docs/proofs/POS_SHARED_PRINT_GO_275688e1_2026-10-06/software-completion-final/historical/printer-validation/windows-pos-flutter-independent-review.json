@@ -1,0 +1,86 @@
+{
+  "verdict": "PASS bounded Windows native POS build plus selected Flutter tests and analysis; not product activation",
+  "evidenceRoot": "/Users/vaanskii/Developer/vynic/docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06",
+  "evidenceHashes": {
+    "windows-pos-stage/source-manifest.json": "ea31ff93e41fa2e3a0c3f2f4c8daf44827aaec425c57c83ab22267bc168b88fa",
+    "windows-pos-stage/source.zip": "d89ff1817d7a715cc32f2641a1afb59724973d12a76d7dc9f8b6fffaadf765ea",
+    "windows-pos-prepared-stage/source-manifest.json": "5ecd47010ddba432a6a223c7768fde0098498c87cba40caf5358d3afb1d358f8",
+    "windows-pos-prepared-stage/source.zip": "9658d3ace23b36c9991298813a3ac23191e36d8c0c5b9006c58747f8fbd271a9",
+    "windows-pos-prepared-stage/stage-receipt.json": "73020355e1c417247d840afea51096fccdd18f87c25a125197dbcb74e03b6fa5",
+    "windows-pos-prepared-stage/product-preparation.json": "85fcdc6164835517584a9705cc9957a073a1c742e3be2f80cd65fa6bbb6f92a0",
+    "windows-pos-prepared-stage/build.ps.txt": "86ca981f502aceb9f9873136ff801faa253b6e0434840a8646fe76b3e21ad939",
+    "windows-pos-prepared-result/windows-pos-build.json": "0eb26c809168c57fd23dfa9772825240e6dc287b0dad14702c1c6e0ef3889681",
+    "windows-pos-prepared-result/windows-pos-build.log": "03f61ce107e22146e8a0b4a2d3885096aa62e181f3766fa21ebc81e1b63ce57c",
+    "windows-pos-prepared-result/offline-pub-get.log": "30229f9d0b6e8f121372205ec994858e2208d3f237440ee516b1058e6ad20a97",
+    "windows-pos-prepared-result/native-pos-build.zip": "17a16203fad6a4e2dfc4860dffc53e339acf921c955e216289e9cbf4429da30c",
+    "windows-pos-prepared-result/built-artifact-sha256.json": "829e6f5adc2bd0384950d555e380bf7ae3fa002b5be84374411a2f08aa675d04",
+    "windows-pos-prepared-result/firebase-sdk-sha256-before.json": "8e68de1c1568c80a71e090073382b5d93b5d51a3fbfaf4e55fc406fad7b8c0a3",
+    "windows-pos-prepared-result/firebase-sdk-sha256-after.json": "8e68de1c1568c80a71e090073382b5d93b5d51a3fbfaf4e55fc406fad7b8c0a3",
+    "windows-pos-result/windows-pos-build.json": "0315b4a0958483f79ab890ef4f2e87806def43b8b90e841372a66b28f42145f8",
+    "windows-flutter-tests/run.ps.txt": "d6a29f5cd768050dabd6a5d259e1846f98e2b77ff60b4d130941a4eaeff4edbd",
+    "windows-flutter-tests/flutter-final-test-selection.json": "44f3f571aeb5193358a5ed144ea0bab38b2e8abacf0b3023d3c682d4158a1afd",
+    "windows-flutter-tests/flutter-final-analysis-selection.json": "7e4bb802736ed8199b9e83388347b6938f63e7eb820a6262828b8751cba71d5c",
+    "windows-flutter-tests/operational-proof-server-windows.test.exe": "f61d5b985d10356701bc4eb9974dd5762c9d31cdb7a6c6a65012bdda8fc4e231",
+    "windows-flutter-result/flutter-tests.jsonl": "b8ae471c667d6583f91c0520e3070d8a288960c22f9ba848776ddc2ba31ef6ab",
+    "windows-flutter-result/windows-flutter-tests.json": "f838601332a81a330344f9e56aa341a3aa6a86875142dedff209058d48eaad90",
+    "windows-flutter-analysis-stage/run.ps.txt": "bf1f302645039cefad35e6317625fe122998d406ad1ea8fdc4cf9d9cfbe7aa58",
+    "windows-flutter-analysis-result/windows-flutter-analysis.json": "758bd182962516a786b5564ec8578988126d7b2fe37ca4788c525b170a5fa014",
+    "windows-flutter-analysis-result/analysis.log": "741a6d82ba5e1aa814379b054183d9cc30528772569f5d69ea615be259048d42"
+  },
+  "sourceDerivation": {
+    "genericFiles": 898,
+    "genericZipSHA256": "d89ff1817d7a715cc32f2641a1afb59724973d12a76d7dc9f8b6fffaadf765ea",
+    "preparedFiles": 898,
+    "preparedZipSHA256": "9658d3ace23b36c9991298813a3ac23191e36d8c0c5b9006c58747f8fbd271a9",
+    "exactDeclaredChanges": 8,
+    "changes": "Six existing metadata/entrypoint files changed, product-identity.json added, seed menu removed. All other generic files retain exact hashes.",
+    "officialPreparationIndependentlyReproducedFiles": 565,
+    "independentReproductionRoot": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/pos-preparation-independent-w3e_2ddf",
+    "toolSHA256": "90aa1c0ec15ccb12d13e3fb2da881b50f551687b8cf4520f4c98e4555ef57e5a",
+    "checks": "All898 entries in both source archives verified against manifests, names unique/canonical; generic manifest matches current isolated source. Frozen official product.py prepare(pos) executed only on temporary copied source; all565 outputs match prepared archive."
+  },
+  "nativeBuild": {
+    "artifactFiles": 23,
+    "archiveSHA256": "17a16203fad6a4e2dfc4860dffc53e339acf921c955e216289e9cbf4429da30c",
+    "exeSHA256": "5c5f4b911caa3d329c52e7b891d8cce0a6ab5f933a19f3f56ac17389fc6e1504",
+    "PEMachine": "0x8664 amd64",
+    "guestArchitecture": "ARM64",
+    "POSVersionStringsVerified": true,
+    "portableForwardSlashPaths": true,
+    "allArchiveHashesVerified": true,
+    "cachedFirebaseFilesUnchanged": 182,
+    "firebaseVersion": "13.5.0",
+    "buildLog": "Successful vynic_pos.exe release-mode compile,97.1s; development/local-lab defines and loopback invalid API origin."
+  },
+  "windowsTests": {
+    "selectedSuites": 36,
+    "actualSuitesVerifiedAgainstSelection": 36,
+    "visibleSuccessfulTests": 535,
+    "hiddenSuccessfulTests": 48,
+    "skipped": 0,
+    "errorEvents": 0,
+    "doneSuccess": true,
+    "machineElapsedMs": 115964,
+    "wireTests": 19,
+    "actualDartGoMutualTLSLostACKReopen": "PASS unskipped, pinned Go fixture f61d5b985d10356701bc4eb9974dd5762c9d31cdb7a6c6a65012bdda8fc4e231"
+  },
+  "analysis": {
+    "files": 59,
+    "exitCode": 0,
+    "log": "No issues found!",
+    "sourceHashesBeforeAndAfter": 898,
+    "fixtureHashCheck": "Verified before supplemental analysis; script does not claim a second fixture hash check afterward."
+  },
+  "retainedFailures": [
+    "Initial generic build compiled under Manager-default native metadata; wrapper failed because vynic_pos.exe did not exist. It remains FAILED; separate POS-prepared build passed.",
+    "Initial Windows Flutter wrapper ran535 tests successfully but failed starting dart.bat because git was absent. Its nested-array metadata incorrectly reports1 suite/1 analysis file. Original receipt remains FAILED, analysis did not run there. Counts here derive from actual machine events and selection files.",
+    "Supplemental analysis used existing cached native dart.exe,59 explicit selectors and before/after guest source hashes; no package installation or persistent PATH change."
+  ],
+  "limits": [
+    "No application launch, installation, signing, publishing, service/driver operations or physical jobs; reported print jobs0 before/after.",
+    "Prepared native build and generic test source identities differ only by declared product preparation; do not describe them as one byte-identical runtime or committed release.",
+    "amd64 binary built/tested within ARM64 Windows guest; no native-arm64 product qualification.",
+    "No visual POS acceptance, actual restaurant data workflow, real printer model/cutter/beep qualification, SCM account qualification, shared RAW fencing or production authority activation.",
+    "Windows test pass does not complete the unimplemented multi-terminal business writer coverage or remove deployment/rollback gates."
+  ]
+}

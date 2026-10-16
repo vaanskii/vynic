@@ -1,0 +1,14 @@
+{
+  "status": "PASS",
+  "fromMigrations": 75,
+  "toMigrations": 76,
+  "historicalMigrationChecksumsUnchanged": true,
+  "historicalVenueDeviceStaffPinAndActivationValuesUnchanged": true,
+  "oldOrdinaryEnrollmentPrivilege": false,
+  "oldActivationLinks": [
+    null,
+    null
+  ],
+  "repeatMigrationDeploy": "NOOP",
+  "liveDataTouched": false
+}

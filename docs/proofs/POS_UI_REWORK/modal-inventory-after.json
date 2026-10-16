@@ -1,0 +1,537 @@
+[
+  {
+    "file": "apps/operations/lib/apps/windows_pos/screens/menu_screen.dart",
+    "line": 331,
+    "api": "showPosModal"
+  },
+  {
+    "file": "apps/operations/lib/apps/windows_pos/screens/menu_screen.dart",
+    "line": 1061,
+    "api": "showPosModal"
+  },
+  {
+    "file": "apps/operations/lib/apps/windows_pos/screens/menu_screen.dart",
+    "line": 2019,
+    "api": "showPosModal"
+  },
+  {
+    "file": "apps/operations/lib/apps/windows_pos/screens/menu_screen.dart",
+    "line": 2031,
+    "api": "showPosModal"
+  },
+  {
+    "file": "apps/operations/lib/apps/windows_pos/screens/menu_screen.dart",
+    "line": 2054,
+    "api": "showPosModal"
+  },
+  {
+    "file": "apps/operations/lib/apps/windows_pos/screens/menu_screen.dart",
+    "line": 2468,
+    "api": "showPosModal"
+  },
+  {
+    "file": "apps/operations/lib/apps/windows_pos/screens/menu_screen.dart",
+    "line": 2483,
+    "api": "showPosModal"
+  },
+  {
+    "file": "apps/operations/lib/apps/windows_pos/screens/admin_screen.dart",
+    "line": 480,
+    "api": "showPosModal"
+  },
+  {
+    "file": "apps/operations/lib/apps/windows_pos/screens/admin_screen.dart",
+    "line": 2390,
+    "api": "showPosModal"
+  },
+  {
+    "file": "apps/operations/lib/apps/windows_pos/screens/admin_screen.dart",
+    "line": 2442,
+    "api": "showPosModal"
+  },
+  {
+    "file": "apps/operations/lib/apps/windows_pos/screens/admin_screen.dart",
+    "line": 2626,
+    "api": "showPosModal"
+  },
+  {
+    "file": "apps/operations/lib/apps/windows_pos/screens/admin_screen.dart",
+    "line": 2706,
+    "api": "showPosModal"
+  },
+  {
+    "file": "apps/operations/lib/apps/windows_pos/screens/admin_screen.dart",
+    "line": 3140,
+    "api": "showPosModal"
+  },
+  {
+    "file": "apps/operations/lib/apps/windows_pos/screens/admin_screen.dart",
+    "line": 3700,
+    "api": "showPosModal"
+  },
+  {
+    "file": "apps/operations/lib/apps/windows_pos/screens/admin_screen.dart",
+    "line": 3792,
+    "api": "showPosModal"
+  },
+  {
+    "file": "apps/operations/lib/apps/windows_pos/screens/login_screen.dart",
+    "line": 151,
+    "api": "showPosModal"
+  },
+  {
+    "file": "apps/operations/lib/apps/windows_pos/screens/login_screen.dart",
+    "line": 289,
+    "api": "showPosModal"
+  },
+  {
+    "file": "apps/operations/lib/apps/windows_pos/screens/order_detail_screen.dart",
+    "line": 869,
+    "api": "showPosModal"
+  },
+  {
+    "file": "apps/operations/lib/apps/windows_pos/screens/order_detail_screen.dart",
+    "line": 961,
+    "api": "showPosModal"
+  },
+  {
+    "file": "apps/operations/lib/apps/windows_pos/screens/order_detail_screen.dart",
+    "line": 1078,
+    "api": "showPosModal"
+  },
+  {
+    "file": "apps/operations/lib/apps/windows_pos/screens/order_detail_screen.dart",
+    "line": 1200,
+    "api": "showPosModal"
+  },
+  {
+    "file": "apps/operations/lib/apps/windows_pos/screens/order_detail_screen.dart",
+    "line": 1571,
+    "api": "showPosModal"
+  },
+  {
+    "file": "apps/operations/lib/apps/windows_pos/screens/order_detail_screen.dart",
+    "line": 1827,
+    "api": "showPosModal"
+  },
+  {
+    "file": "apps/operations/lib/apps/windows_pos/screens/order_detail_screen.dart",
+    "line": 1853,
+    "api": "showPosModal"
+  },
+  {
+    "file": "apps/operations/lib/apps/windows_pos/screens/order_detail_screen.dart",
+    "line": 2031,
+    "api": "showPosModal"
+  },
+  {
+    "file": "apps/operations/lib/apps/windows_pos/screens/order_detail_screen.dart",
+    "line": 2058,
+    "api": "showPosModal"
+  },
+  {
+    "file": "apps/operations/lib/apps/windows_pos/screens/order_detail_screen.dart",
+    "line": 2264,
+    "api": "showPosModal"
+  },
+  {
+    "file": "apps/operations/lib/apps/windows_pos/widgets/reservation_creation_sheet.dart",
+    "line": 49,
+    "api": "showPosModal"
+  },
+  {
+    "file": "apps/operations/lib/apps/windows_pos/widgets/reservation_creation_sheet.dart",
+    "line": 155,
+    "api": "showPosModal"
+  },
+  {
+    "file": "apps/operations/lib/apps/windows_pos/widgets/reservation_creation_sheet.dart",
+    "line": 257,
+    "api": "showPosModal"
+  },
+  {
+    "file": "apps/operations/lib/apps/windows_pos/widgets/receipt_preview_dialog.dart",
+    "line": 21,
+    "api": "showPosModal"
+  },
+  {
+    "file": "apps/operations/lib/apps/windows_pos/widgets/pos_quit_action.dart",
+    "line": 15,
+    "api": "showPosModal"
+  },
+  {
+    "file": "apps/operations/lib/apps/windows_pos/widgets/receipt_language_picker_dialog.dart",
+    "line": 11,
+    "api": "showPosModal"
+  },
+  {
+    "file": "apps/operations/lib/apps/windows_pos/widgets/estimate_customer_dialog.dart",
+    "line": 21,
+    "api": "showPosModal"
+  },
+  {
+    "file": "apps/operations/lib/apps/windows_pos/widgets/reservations_management_section.dart",
+    "line": 1021,
+    "api": "showPosModal"
+  },
+  {
+    "file": "apps/operations/lib/apps/windows_pos/widgets/reservations_management_section.dart",
+    "line": 1074,
+    "api": "showPosModal"
+  },
+  {
+    "file": "apps/operations/lib/apps/windows_pos/widgets/order/order_detail_content_section.dart",
+    "line": 319,
+    "api": "showPosModal"
+  },
+  {
+    "file": "apps/operations/lib/apps/windows_pos/widgets/order/order_detail_content_section.dart",
+    "line": 638,
+    "api": "showPosModal"
+  },
+  {
+    "file": "apps/operations/lib/apps/windows_pos/widgets/order/order_detail_content_section.dart",
+    "line": 718,
+    "api": "showPosModal"
+  },
+  {
+    "file": "apps/operations/lib/apps/windows_pos/widgets/order/order_detail_content_section.dart",
+    "line": 1268,
+    "api": "showPosModal"
+  },
+  {
+    "file": "apps/operations/lib/apps/windows_pos/widgets/order/order_detail_content_section.dart",
+    "line": 1280,
+    "api": "showPosModal"
+  },
+  {
+    "file": "apps/operations/lib/apps/windows_pos/widgets/order/order_detail_content_section.dart",
+    "line": 1314,
+    "api": "showPosModal"
+  },
+  {
+    "file": "apps/operations/lib/apps/windows_pos/widgets/home/home_reservations_section.dart",
+    "line": 1165,
+    "api": "showPosModal"
+  },
+  {
+    "file": "apps/operations/lib/apps/windows_pos/widgets/home/home_take_away_section.dart",
+    "line": 147,
+    "api": "showPosModal"
+  },
+  {
+    "file": "apps/operations/lib/apps/windows_pos/widgets/home/home_take_away_section.dart",
+    "line": 219,
+    "api": "showPosModal"
+  },
+  {
+    "file": "apps/operations/lib/apps/windows_pos/widgets/home/home_reservation_table_assignment_dialog.dart",
+    "line": 66,
+    "api": "showPosModal"
+  },
+  {
+    "file": "apps/operations/lib/apps/windows_pos/widgets/home/home_reservation_table_assignment_dialog.dart",
+    "line": 96,
+    "api": "showPosModal"
+  },
+  {
+    "file": "apps/operations/lib/apps/windows_pos/widgets/home/home_reservation_menu_preview.dart",
+    "line": 27,
+    "api": "showPosModal"
+  },
+  {
+    "file": "apps/operations/lib/apps/windows_pos/widgets/home/home_calculator_page.dart",
+    "line": 253,
+    "api": "showPosModal"
+  },
+  {
+    "file": "apps/operations/lib/apps/windows_pos/widgets/home/home_calculator_page.dart",
+    "line": 324,
+    "api": "showPosModal"
+  },
+  {
+    "file": "apps/operations/lib/apps/windows_pos/widgets/home/home_calculator_page.dart",
+    "line": 610,
+    "api": "showPosModal"
+  },
+  {
+    "file": "apps/operations/lib/apps/windows_pos/widgets/home/home_calculator_page.dart",
+    "line": 669,
+    "api": "showPosModal"
+  },
+  {
+    "file": "apps/operations/lib/apps/windows_pos/widgets/update/pos_update_ui.dart",
+    "line": 25,
+    "api": "showPosModal"
+  },
+  {
+    "file": "apps/operations/lib/apps/windows_pos/widgets/admin/admin_menu_section.dart",
+    "line": 879,
+    "api": "showPosModal"
+  },
+  {
+    "file": "apps/operations/lib/apps/windows_pos/widgets/admin/admin_menu_section.dart",
+    "line": 1732,
+    "api": "showPosModal"
+  },
+  {
+    "file": "apps/operations/lib/apps/windows_pos/widgets/admin/admin_menu_section.dart",
+    "line": 1849,
+    "api": "showPosModal"
+  },
+  {
+    "file": "apps/operations/lib/apps/windows_pos/widgets/admin/admin_menu_section.dart",
+    "line": 1944,
+    "api": "showPosModal"
+  },
+  {
+    "file": "apps/operations/lib/apps/windows_pos/widgets/admin/admin_menu_section.dart",
+    "line": 1990,
+    "api": "showPosModal"
+  },
+  {
+    "file": "apps/operations/lib/apps/windows_pos/widgets/admin/admin_menu_section.dart",
+    "line": 2078,
+    "api": "showPosModal"
+  },
+  {
+    "file": "apps/operations/lib/apps/windows_pos/widgets/admin/admin_menu_section.dart",
+    "line": 2159,
+    "api": "showPosModal"
+  },
+  {
+    "file": "apps/operations/lib/apps/windows_pos/widgets/admin/admin_menu_section.dart",
+    "line": 2211,
+    "api": "showPosModal"
+  },
+  {
+    "file": "apps/operations/lib/apps/windows_pos/widgets/admin/admin_menu_section.dart",
+    "line": 2305,
+    "api": "showPosModal"
+  },
+  {
+    "file": "apps/operations/lib/apps/windows_pos/widgets/admin/admin_menu_section.dart",
+    "line": 2363,
+    "api": "showPosModal"
+  },
+  {
+    "file": "apps/operations/lib/apps/windows_pos/widgets/admin/admin_menu_section.dart",
+    "line": 2412,
+    "api": "showPosModal"
+  },
+  {
+    "file": "apps/operations/lib/apps/windows_pos/widgets/admin/admin_audit_log_section.dart",
+    "line": 774,
+    "api": "showPosModal"
+  },
+  {
+    "file": "apps/operations/lib/apps/windows_pos/widgets/admin/admin_developer_section.dart",
+    "line": 344,
+    "api": "showPosModal"
+  },
+  {
+    "file": "apps/operations/lib/apps/windows_pos/widgets/admin/admin_developer_section.dart",
+    "line": 521,
+    "api": "showPosModal"
+  },
+  {
+    "file": "apps/operations/lib/apps/windows_pos/widgets/admin/admin_packages_section.dart",
+    "line": 519,
+    "api": "showPosModal"
+  },
+  {
+    "file": "apps/operations/lib/apps/windows_pos/widgets/admin/admin_packages_section.dart",
+    "line": 652,
+    "api": "showPosModal"
+  },
+  {
+    "file": "apps/operations/lib/apps/windows_pos/widgets/admin/admin_packages_section.dart",
+    "line": 855,
+    "api": "showPosModal"
+  },
+  {
+    "file": "apps/operations/lib/apps/windows_pos/widgets/admin/admin_packages_section.dart",
+    "line": 953,
+    "api": "showPosModal"
+  },
+  {
+    "file": "apps/operations/lib/apps/windows_pos/widgets/admin/admin_packages_section.dart",
+    "line": 989,
+    "api": "showPosModal"
+  },
+  {
+    "file": "apps/operations/lib/apps/windows_pos/widgets/admin/admin_packages_section.dart",
+    "line": 1332,
+    "api": "showPosModal"
+  },
+  {
+    "file": "apps/operations/lib/apps/windows_pos/widgets/admin/admin_packages_section.dart",
+    "line": 1521,
+    "api": "showPosModal"
+  },
+  {
+    "file": "apps/operations/lib/apps/windows_pos/widgets/admin/admin_packages_section.dart",
+    "line": 1959,
+    "api": "showPosModal"
+  },
+  {
+    "file": "apps/operations/lib/apps/windows_pos/widgets/admin/admin_packages_section.dart",
+    "line": 1971,
+    "api": "showPosModal"
+  },
+  {
+    "file": "apps/operations/lib/apps/windows_pos/widgets/admin/admin_packages_section.dart",
+    "line": 2007,
+    "api": "showPosModal"
+  },
+  {
+    "file": "apps/operations/lib/apps/windows_pos/widgets/admin/admin_sales_section.dart",
+    "line": 308,
+    "api": "showPosModal"
+  },
+  {
+    "file": "apps/operations/lib/apps/windows_pos/widgets/admin/admin_staff_section.dart",
+    "line": 113,
+    "api": "showPosModal"
+  },
+  {
+    "file": "apps/operations/lib/apps/windows_pos/widgets/admin/admin_staff_section.dart",
+    "line": 726,
+    "api": "showPosModal"
+  },
+  {
+    "file": "apps/operations/lib/apps/windows_pos/widgets/admin/admin_staff_section.dart",
+    "line": 751,
+    "api": "showPosModal"
+  },
+  {
+    "file": "apps/operations/lib/apps/windows_pos/widgets/admin/admin_staff_section.dart",
+    "line": 776,
+    "api": "showPosModal"
+  },
+  {
+    "file": "apps/operations/lib/apps/windows_pos/widgets/admin/admin_staff_section.dart",
+    "line": 808,
+    "api": "showPosModal"
+  },
+  {
+    "file": "apps/operations/lib/apps/windows_pos/widgets/admin/admin_staff_section.dart",
+    "line": 878,
+    "api": "showPosModal"
+  },
+  {
+    "file": "apps/operations/lib/apps/windows_pos/widgets/admin/admin_inventory_section.dart",
+    "line": 148,
+    "api": "showPosModal"
+  },
+  {
+    "file": "apps/operations/lib/apps/windows_pos/widgets/admin/developer_unlock_dialog.dart",
+    "line": 20,
+    "api": "showPosModal"
+  },
+  {
+    "file": "apps/operations/lib/apps/windows_pos/widgets/admin/admin_reservations_section.dart",
+    "line": 1088,
+    "api": "showPosModal"
+  },
+  {
+    "file": "apps/operations/lib/apps/windows_pos/widgets/admin/admin_reservations_section.dart",
+    "line": 1127,
+    "api": "showPosModal"
+  },
+  {
+    "file": "apps/operations/lib/apps/windows_pos/widgets/admin/admin_error_log_section.dart",
+    "line": 186,
+    "api": "showPosModal"
+  },
+  {
+    "file": "apps/operations/lib/apps/windows_pos/widgets/admin/admin_close_day_section.dart",
+    "line": 1048,
+    "api": "showPosModal"
+  },
+  {
+    "file": "apps/operations/lib/apps/windows_pos/widgets/admin/admin_close_day_section.dart",
+    "line": 1222,
+    "api": "showPosModal"
+  },
+  {
+    "file": "apps/operations/lib/apps/windows_pos/widgets/admin/admin_close_day_section.dart",
+    "line": 1623,
+    "api": "showPosModal"
+  },
+  {
+    "file": "apps/operations/lib/apps/windows_pos/widgets/admin/admin_close_day_section.dart",
+    "line": 2284,
+    "api": "showPosModal"
+  },
+  {
+    "file": "apps/operations/lib/apps/windows_pos/widgets/admin/admin_close_day_section.dart",
+    "line": 2396,
+    "api": "showPosModal"
+  },
+  {
+    "file": "apps/operations/lib/apps/windows_pos/widgets/admin/menu_sync_banner.dart",
+    "line": 218,
+    "api": "showPosModal"
+  },
+  {
+    "file": "apps/operations/lib/apps/windows_pos/widgets/admin/backup_password_dialog.dart",
+    "line": 9,
+    "api": "showPosModal"
+  },
+  {
+    "file": "apps/operations/lib/apps/windows_pos/widgets/admin/printers/additional_printers_section.dart",
+    "line": 57,
+    "api": "showPosModal"
+  },
+  {
+    "file": "apps/operations/lib/apps/windows_pos/widgets/admin/printers/additional_printers_section.dart",
+    "line": 72,
+    "api": "showPosModal"
+  },
+  {
+    "file": "apps/operations/lib/apps/windows_pos/widgets/admin/table_layouts/admin_table_layouts_section.dart",
+    "line": 210,
+    "api": "showPosModal"
+  },
+  {
+    "file": "apps/operations/lib/apps/windows_pos/widgets/admin/table_layouts/admin_table_layouts_section.dart",
+    "line": 254,
+    "api": "showPosModal"
+  },
+  {
+    "file": "apps/operations/lib/apps/windows_pos/widgets/admin/table_layouts/admin_table_layouts_section.dart",
+    "line": 303,
+    "api": "showPosModal"
+  },
+  {
+    "file": "apps/operations/lib/apps/windows_pos/widgets/admin/table_layouts/floor_editor/floor_editor_screen.dart",
+    "line": 117,
+    "api": "showPosModal"
+  },
+  {
+    "file": "apps/operations/lib/apps/windows_pos/widgets/admin/table_layouts/floor_editor/floor_editor_preview.dart",
+    "line": 26,
+    "api": "showPosModal"
+  },
+  {
+    "file": "apps/operations/lib/apps/windows_pos/widgets/shared/print_jobs.dart",
+    "line": 88,
+    "api": "showPosModal"
+  },
+  {
+    "file": "apps/operations/lib/apps/windows_pos/widgets/shared/print_jobs.dart",
+    "line": 338,
+    "api": "showPosModal"
+  },
+  {
+    "file": "apps/operations/lib/apps/windows_pos/widgets/shared/print_jobs.dart",
+    "line": 351,
+    "api": "showPosModal"
+  },
+  {
+    "file": "apps/operations/lib/apps/windows_pos/widgets/shared/print_jobs.dart",
+    "line": 364,
+    "api": "showPosModal"
+  }
+]

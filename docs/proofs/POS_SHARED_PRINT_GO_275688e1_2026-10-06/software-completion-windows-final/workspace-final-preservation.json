@@ -1,0 +1,86 @@
+{
+  "recordedAtUTC": "2026-10-06T18:27:18.692141+00:00",
+  "repository": {
+    "head": "275688e1e5c5dc0e26e62705ab0c7670cf16d99a",
+    "branch": "codex/docker-deployment-foundation",
+    "stash": "9df454225caec647f67ad4f70ef6038dbbbe41d6",
+    "stagedFiles": ""
+  },
+  "reviewedPaths": 156,
+  "unrelatedPreimagesUnchanged": 666,
+  "frozenSourceAndCopyFilesUnchanged": 1109,
+  "preservedFiveRuntimeDifferences": {
+    "apps/operations/lib/apps/windows_pos/screens/pos_first_run.dart": {
+      "workspaceSHA256": "4e5d4f7fb0efda229352a6342b75311a8d892413181e762952a99a57eb80c8b4",
+      "qualifiedCandidateSHA256": "0845ba703992b0ec5a92e1519ac02f3952d6def2d78e512443518116ae431684"
+    },
+    "apps/operations/lib/core/services/edge/pos_enrollment_service.dart": {
+      "workspaceSHA256": "a4511f09db5304349a0efa566a2b27a51522ff44607896c3b0279ba09ec822e2",
+      "qualifiedCandidateSHA256": "4a25a70e4a5aec6ff4a9dd02d2e6d9068584b4d74308e58b08e3fecb40c642df"
+    },
+    "apps/operations/lib/core/services/sync/api_config.dart": {
+      "workspaceSHA256": "ce85828bcfd3ffdfd8706521648fcc84d88a976a55f0ffd01906a04cb6db76cb",
+      "qualifiedCandidateSHA256": "df718dd7708bcf0f427acb6ab2572e8ed821e050692cd442ffa6aaed7df0f2dc"
+    },
+    "apps/operations/macos/Podfile.lock": {
+      "workspaceSHA256": "2f2ebb75920cdeb9708e8c6d2b6c1f90d27fbcb27a0405c66bb3459dac876d0b",
+      "qualifiedCandidateSHA256": "7aaa15192e53e90cab51f0340e4c335c1319078e66f577a07437ebaba1c58199"
+    },
+    "apps/operations/test/unit/pos_enrollment_test.dart": {
+      "workspaceSHA256": "beb81f40a7df3f9f86af19c4d8113fdf908b775778b5ba6208521c5dc03bd6f9",
+      "qualifiedCandidateSHA256": "6db242e5755a8e3f8d9e42b327c1d08ba00812abe132907190871c16f6cda57c"
+    }
+  },
+  "preservedSevenHistoricalDifferences": {
+    "apps/operations/flutter_01.log": {
+      "workspaceSHA256": "0225674b91f215172daea78ae9a629e6372a033c3ecbf318cdfc63547859a422",
+      "qualifiedCandidateSHA256": "80d4551b9b83d104aff9bab0c32b38d918cb980f778d071a67b9027fc0368a0a",
+      "action": "PRESERVE_WORKSPACE_EXCLUDE_FROM_PORT",
+      "role": "retained generated/cache/log input"
+    },
+    "apps/operations/flutter_02.log": {
+      "workspaceSHA256": null,
+      "qualifiedCandidateSHA256": "dd98ca1c8593b2b625bf1beccaef1d9cfaef0c1e5ea1ee5cf1440c68b5c5ed63",
+      "action": "PRESERVE_WORKSPACE_EXCLUDE_FROM_PORT",
+      "role": "retained generated/cache/log input"
+    },
+    "apps/operations/lib/apps/windows_pos/screens/pos_first_run.dart": {
+      "workspaceSHA256": "4e5d4f7fb0efda229352a6342b75311a8d892413181e762952a99a57eb80c8b4",
+      "qualifiedCandidateSHA256": "0845ba703992b0ec5a92e1519ac02f3952d6def2d78e512443518116ae431684",
+      "action": "PRESERVE_WORKSPACE_EXCLUDE_FROM_PORT",
+      "role": "retained WIP/runtime"
+    },
+    "apps/operations/lib/core/services/edge/pos_enrollment_service.dart": {
+      "workspaceSHA256": "a4511f09db5304349a0efa566a2b27a51522ff44607896c3b0279ba09ec822e2",
+      "qualifiedCandidateSHA256": "4a25a70e4a5aec6ff4a9dd02d2e6d9068584b4d74308e58b08e3fecb40c642df",
+      "action": "PRESERVE_WORKSPACE_EXCLUDE_FROM_PORT",
+      "role": "retained WIP/runtime"
+    },
+    "apps/operations/lib/core/services/sync/api_config.dart": {
+      "workspaceSHA256": "ce85828bcfd3ffdfd8706521648fcc84d88a976a55f0ffd01906a04cb6db76cb",
+      "qualifiedCandidateSHA256": "df718dd7708bcf0f427acb6ab2572e8ed821e050692cd442ffa6aaed7df0f2dc",
+      "action": "PRESERVE_WORKSPACE_EXCLUDE_FROM_PORT",
+      "role": "retained WIP/runtime"
+    },
+    "apps/operations/macos/Podfile.lock": {
+      "workspaceSHA256": "2f2ebb75920cdeb9708e8c6d2b6c1f90d27fbcb27a0405c66bb3459dac876d0b",
+      "qualifiedCandidateSHA256": "7aaa15192e53e90cab51f0340e4c335c1319078e66f577a07437ebaba1c58199",
+      "action": "PRESERVE_WORKSPACE_EXCLUDE_FROM_PORT",
+      "role": "retained generated/cache/log input"
+    },
+    "apps/operations/test/unit/pos_enrollment_test.dart": {
+      "workspaceSHA256": "beb81f40a7df3f9f86af19c4d8113fdf908b775778b5ba6208521c5dc03bd6f9",
+      "qualifiedCandidateSHA256": "6db242e5755a8e3f8d9e42b327c1d08ba00812abe132907190871c16f6cda57c",
+      "action": "PRESERVE_WORKSPACE_EXCLUDE_FROM_PORT",
+      "role": "retained WIP/runtime"
+    }
+  },
+  "oldSoftware621ArtifactsUnchanged": true,
+  "earlierArtifactsUnchanged": 180,
+  "diffCheckExit": 0,
+  "committed": false,
+  "pushed": false,
+  "exactCommittedRuntimeQualified": false,
+  "dirtyWorkspaceRuntimeQualified": false,
+  "POS02Status": "NOT_DONE"
+}

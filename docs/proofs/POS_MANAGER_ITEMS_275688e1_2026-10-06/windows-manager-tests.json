@@ -1,0 +1,12 @@
+﻿{
+    "job":  "C:\\Users\\vaanskii\\AppData\\Local\\VynicReadinessNative\\abf7e6b3-zgovo5qh",
+    "sourceFiles":  818,
+    "newManagerSourceFiles":  3,
+    "sourceUnchanged":  true,
+    "selectedSuite":  "test/unit/operational_manager_items_test.dart",
+    "analysisFiles":  3,
+    "physicalJobs":  0,
+    "installedProductStarted":  false,
+    "productionAttached":  false,
+    "sourceManifest":  "windows-input-source-sha256.json"
+}

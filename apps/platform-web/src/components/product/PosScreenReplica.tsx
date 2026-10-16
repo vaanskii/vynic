@@ -15,7 +15,7 @@ import {
   X,
 } from "@phosphor-icons/react";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { useReducedMotion } from "motion/react";
+import { useInView, useReducedMotion } from "motion/react";
 import type { ScreenshotSpec } from "../../data/siteContent";
 import { useLocale } from "../../lib/i18n";
 
@@ -41,6 +41,8 @@ export function PosScreenReplica({
   const [liveStage, setLiveStage] = useState(0);
   const [liveTransitioning, setLiveTransitioning] = useState(false);
   const reduceMotion = useReducedMotion();
+  // The live floor only ticks while it is on screen.
+  const inView = useInView(frameRef, { amount: 0.2 });
   const baseHeight = kind === "floor" ? 474 : 500;
 
   useEffect(() => {
@@ -48,7 +50,7 @@ export function PosScreenReplica({
   }, [liveStage, onLiveStageChange]);
 
   useEffect(() => {
-    if (!live || kind !== "floor" || reduceMotion) return;
+    if (!live || kind !== "floor" || reduceMotion || !inView) return;
 
     let transitionTimeout: number | undefined;
     const interval = window.setInterval(() => {
@@ -62,7 +64,7 @@ export function PosScreenReplica({
       window.clearInterval(interval);
       window.clearTimeout(transitionTimeout);
     };
-  }, [kind, live, reduceMotion]);
+  }, [inView, kind, live, reduceMotion]);
 
   useLayoutEffect(() => {
     const frame = frameRef.current;

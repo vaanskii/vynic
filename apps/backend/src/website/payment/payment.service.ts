@@ -1,3 +1,4 @@
+import { WEBSITE_PAYMENT_TTL_MINUTES } from './bog-payment-facts';
 import {
   Injectable,
   BadGatewayException,
@@ -101,7 +102,8 @@ export class BogService {
         success: `${returnOrigin}/${language}/payment-success?reservation_id=${reservationId}`,
         fail: `${returnOrigin}/${language}/payment-fail?reservation_id=${reservationId}`,
       },
-      ttl: 30,
+      ttl: WEBSITE_PAYMENT_TTL_MINUTES,
+      capture: 'automatic',
     };
 
     try {
@@ -146,6 +148,34 @@ export class BogService {
         },
       );
       if (response.data.external_order_id !== reservation.id) throw Error();
+      return response.data;
+    } catch {
+      throw new BadGatewayException('Payment provider status failed');
+    }
+  }
+
+  /** Callback authority is booking -> pinned integration, including lost create
+   * replies where the signed bank reference has not yet been bound locally. */
+  async getPaymentDetailsForReservation(
+    reservationId: string,
+    orderId: string,
+  ): Promise<unknown> {
+    const booking = await this.db.websiteReservation.findUnique({
+      where: { id: reservationId },
+    });
+    if (!booking?.paymentIntegrationId)
+      throw new NotFoundException('Payment not found');
+    if (!orderId || (booking.paymentId && booking.paymentId !== orderId))
+      throw new BadRequestException('Payment reference mismatch');
+    const token = await this.getAccessToken(
+      booking.venueId,
+      booking.paymentIntegrationId,
+    );
+    try {
+      const response = await axios.get<unknown>(
+        `https://api.bog.ge/payments/v1/receipt/${encodeURIComponent(orderId)}`,
+        { headers: { Authorization: `Bearer ${token}` }, timeout: 15000 },
+      );
       return response.data;
     } catch {
       throw new BadGatewayException('Payment provider status failed');

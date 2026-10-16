@@ -1,0 +1,16 @@
+[
+  "apps/backend/prisma/migrations/20261018120000_printer_provisioning/migration.sql",
+  "apps/backend/src/printer-provisioning/contract.ts",
+  "apps/backend/src/printer-provisioning/controller.ts",
+  "apps/backend/src/printer-provisioning/provisioning.integration.spec.ts",
+  "apps/backend/src/printer-provisioning/service.ts",
+  "apps/edge/cmd/printer-provision/main.go",
+  "apps/edge/internal/printerprovisioning/production.go",
+  "apps/edge/internal/printerprovisioning/production_cloud.go",
+  "apps/edge/internal/printerprovisioning/production_machine_other.go",
+  "apps/edge/internal/printerprovisioning/production_machine_windows.go",
+  "apps/edge/internal/printerprovisioning/production_store.go",
+  "apps/edge/internal/printerprovisioning/production_test.go",
+  "apps/edge/internal/printerprovisioning/production_windows_test.go",
+  "docs/POS02_A_PROVISIONING.md"
+]

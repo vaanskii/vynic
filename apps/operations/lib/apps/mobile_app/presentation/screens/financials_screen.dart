@@ -362,8 +362,14 @@ class _FinancialsScreenState extends State<FinancialsScreen>
       _data!['totalOutflows'] ?? _data!['expenses'],
     );
     final double profit = revenue - expenses;
-    final double cash = (_data!['cashRevenue'] ?? 0).toDouble();
-    final double card = (_data!['cardRevenue'] ?? 0).toDouble();
+    final double cash = ledger.isNotEmpty
+        ? _number(ledger['cashCollected'])
+        : _number(_data!['cashRevenue']);
+    final double card = ledger.isNotEmpty
+        ? _number(ledger['tbcCollected']) +
+              _number(ledger['bogCollected']) +
+              _number(ledger['legacyCardCollected'])
+        : _number(_data!['cardRevenue']);
 
     return RefreshIndicator(
       color: MobileGlassTheme.primary,
@@ -493,41 +499,37 @@ class _FinancialsScreenState extends State<FinancialsScreen>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'გაყიდვები − გასავლები',
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final value = Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'გაყიდვები − გასავლები',
+                    style: TextStyle(
+                      color: MobileGlassTheme.textSecondary,
+                      fontSize: 14,
+                    ),
+                  ),
+                  SizedBox(height: 4),
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      _data?['differenceExact'] != null
+                          ? '₾${_data!["differenceExact"]}'
+                          : _gel(profit.abs()),
                       style: TextStyle(
-                        color: MobileGlassTheme.textSecondary,
-                        fontSize: 14,
+                        color: MobileGlassTheme.textPrimary,
+                        fontSize: 36,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: -1,
                       ),
                     ),
-                    SizedBox(height: 4),
-                    FittedBox(
-                      fit: BoxFit.scaleDown,
-                      alignment: Alignment.centerLeft,
-                      child: Text(
-                        _data?['differenceExact'] != null
-                            ? '₾${_data!["differenceExact"]}'
-                            : _gel(profit.abs()),
-                        style: TextStyle(
-                          color: MobileGlassTheme.textPrimary,
-                          fontSize: 36,
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: -1,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Container(
+                  ),
+                ],
+              );
+              final badge = Container(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 12,
                   vertical: 6,
@@ -539,6 +541,7 @@ class _FinancialsScreenState extends State<FinancialsScreen>
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Row(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
                     Icon(
                       positive
@@ -551,7 +554,7 @@ class _FinancialsScreenState extends State<FinancialsScreen>
                     ),
                     SizedBox(width: 4),
                     Text(
-                      '${margin.toStringAsFixed(1)}%',
+                      '${margin.toStringAsFixed(1)}% სხვაობა',
                       style: TextStyle(
                         color: positive
                             ? MobileGlassTheme.good
@@ -562,10 +565,32 @@ class _FinancialsScreenState extends State<FinancialsScreen>
                     ),
                   ],
                 ),
-              ),
-            ],
+              );
+              return constraints.maxWidth < 360
+                  ? Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [value, const SizedBox(height: 8), badge],
+                    )
+                  : Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(child: value),
+                        const SizedBox(width: 12),
+                        badge,
+                      ],
+                    );
+            },
           ),
           SizedBox(height: 22),
+          Text(
+            'სხვაობა არ არის რეალიზებული მოგება ან სრული ფულადი ნაკადი. გაყიდვები შეიცავს გამოყენებულ ავანსს; გასავლები მოიცავს აღრიცხულ ხარჯებსა და მომწოდებლის, ხელფასის და ვალდებულების გადახდებს.',
+            key: const Key('financial-metric-definition'),
+            style: TextStyle(
+              color: MobileGlassTheme.textSecondary,
+              fontSize: 12,
+            ),
+          ),
+          SizedBox(height: 16),
           Row(
             children: [
               Expanded(
@@ -585,7 +610,7 @@ class _FinancialsScreenState extends State<FinancialsScreen>
               ),
               Expanded(
                 child: _MiniStatBlock(
-                  title: 'ხარჯი',
+                  title: 'აღრიცხული გასავლები',
                   amount: _data?['totalOutflows'] != null
                       ? '₾${_data!["totalOutflows"]}'
                       : _gel(expenses),
@@ -696,16 +721,29 @@ class _FinancialsScreenState extends State<FinancialsScreen>
 
   Widget _buildLedgerPaymentCard(Map<String, dynamic> ledger) {
     final rows = <(String, double, Color)>[
+      ('ნაღდი', _number(ledger['cashCollected']), const Color(0xFF34D399)),
       ('TBC', _number(ledger['tbcCollected']), const Color(0xFF38BDF8)),
       ('BOG', _number(ledger['bogCollected']), const Color(0xFFF59E0B)),
-      ('ავანსი', _number(ledger['advanceApplied']), const Color(0xFF8B5CF6)),
+      (
+        'ძველი ბარათი',
+        _number(ledger['legacyCardCollected']),
+        const Color(0xFF94A3B8),
+      ),
     ];
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const _SectionHeader(title: 'ბარათები და ავანსი'),
+          const _SectionHeader(title: 'დახურვებზე მიღებული თანხა'),
+          Text(
+            'გამოყენებული ავანსი: ${ledger['advanceApplied'] ?? '—'} ₾ · წინასწარ მიღებული თანხაა და ამ დახურვებზე მიღებულ თანხაში არ შედის.',
+            key: const Key('financial-advance-definition'),
+            style: TextStyle(
+              color: MobileGlassTheme.textSecondary,
+              fontSize: 12,
+            ),
+          ),
           const SizedBox(height: 16),
           _GlassCard(
             borderRadius: BorderRadius.circular(24),
@@ -1689,8 +1727,10 @@ class _MiniStatBlock extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
+        Wrap(
+          alignment: WrapAlignment.center,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          spacing: 8,
           children: [
             Container(
               padding: const EdgeInsets.all(4),
@@ -1700,9 +1740,9 @@ class _MiniStatBlock extends StatelessWidget {
               ),
               child: Icon(icon, color: color, size: 12),
             ),
-            SizedBox(width: 8),
             Text(
               title,
+              textAlign: TextAlign.center,
               style: TextStyle(
                 color: MobileGlassTheme.textSecondary,
                 fontSize: 13,

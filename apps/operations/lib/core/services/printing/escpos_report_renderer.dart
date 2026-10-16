@@ -6,6 +6,7 @@ import 'package:image/image.dart' as imglib;
 
 import '../database_service.dart';
 import 'escpos_bitmap.dart';
+import 'printer_capability_profile.dart';
 
 /// Renders X/Z text reports into ESC/POS raster bytes.
 class EscposReportRenderer {
@@ -45,18 +46,80 @@ class EscposReportRenderer {
     return value;
   }
 
-  /// Generate a 1-bit bitmap image of the report.
+  /// Complete report commands, including initialization, feed and selected cut.
+  /// Omitted profiles preserve the legacy 576-dot/full-cut output.
+  static Future<List<int>> generateBytes({
+    required String reportText,
+    required String reportType,
+    required Future<ui.Image?> Function() loadReceiptLogoImage,
+    required Future<Rect> Function(ui.Image image) getReceiptLogoContentRect,
+    required ({String name, String address, String phone}) venue,
+    PrinterCapabilityProfile? capabilityProfile,
+  }) async {
+    final profile =
+        capabilityProfile ??
+        PrinterCapabilityProfile.genericEscposRaster(
+          cutter: PrinterCutter.full,
+        );
+    if (!profile.hasImplementedRenderer) {
+      throw UnsupportedError(
+        'Printer command language has no implemented renderer',
+      );
+    }
+    final raster = await generateImage(
+      reportText: reportText,
+      reportType: reportType,
+      loadReceiptLogoImage: loadReceiptLogoImage,
+      getReceiptLogoContentRect: getReceiptLogoContentRect,
+      venue: venue,
+      capabilityProfile: profile,
+    );
+    if (raster == null || raster.isEmpty) {
+      throw StateError('Required report raster could not be rendered');
+    }
+    return [
+      0x1b,
+      0x40,
+      ...raster,
+      0x0a,
+      0x0a,
+      0x0a,
+      0x0a,
+      0x0a,
+      0x0a,
+      ...switch (profile.cutter) {
+        PrinterCutter.none => <int>[],
+        PrinterCutter.full => [0x1d, 0x56, 0x00],
+        PrinterCutter.partial => [0x1d, 0x56, 0x01],
+      },
+    ];
+  }
+
+  /// Generate only the 1-bit report raster, without initialization/feed/cut.
   static Future<List<int>?> generateImage({
     required String reportText,
     required String reportType,
     required Future<ui.Image?> Function() loadReceiptLogoImage,
     required Future<Rect> Function(ui.Image image) getReceiptLogoContentRect,
     required ({String name, String address, String phone}) venue,
+    PrinterCapabilityProfile? capabilityProfile,
   }) async {
+    final profile =
+        capabilityProfile ??
+        PrinterCapabilityProfile.genericEscposRaster(
+          cutter: PrinterCutter.full,
+        );
+    if (!profile.hasImplementedRenderer) {
+      throw UnsupportedError(
+        'Printer command language has no implemented renderer',
+      );
+    }
     try {
       final recorder = ui.PictureRecorder();
       final canvas = Canvas(recorder);
       const double width = 576;
+      final rasterScale = profile.rasterWidthDots / width;
+      if (rasterScale != 1) canvas.scale(rasterScale);
       double currentY = 28;
 
       // Painted last (BlendMode.dstOver, below the content) at the exact
@@ -229,7 +292,10 @@ class EscposReportRenderer {
       canvas.drawRect(Rect.fromLTWH(0, 0, width, finalHeight), bgPaint);
 
       final picture = recorder.endRecording();
-      final img = await picture.toImage(width.toInt(), finalHeight.toInt());
+      final img = await picture.toImage(
+        profile.rasterWidthDots,
+        (finalHeight * rasterScale).toInt(),
+      );
       final byteData = await img.toByteData(format: ui.ImageByteFormat.rawRgba);
 
       if (byteData == null) {

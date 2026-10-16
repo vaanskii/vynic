@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite --host",
-    "build": "tsc -b && vite build",
+    "build": "tsc -b && vite build && node ../../packages/website-client/scripts/create-site-manifest.mjs dist src/config/siteIdentity.json",
     "lint": "eslint .",
     "preview": "vite preview"
   },
@@ -14,13 +14,13 @@
     "@react-three/drei": "^10.7.7",
     "@react-three/fiber": "^9.6.1",
     "@tailwindcss/vite": "^4.1.10",
-    "axios": "^1.12.1",
+    "axios": "^1.20.0",
     "gsap": "^3.13.0",
     "lucide-react": "^1.8.0",
     "react": "^19.1.0",
     "react-datepicker": "^8.7.0",
     "react-dom": "^19.1.0",
-    "react-router-dom": "^7.6.3",
+    "react-router-dom": "^7.18.3",
     "swiper": "^12.0.3",
     "tailwindcss": "^4.1.10",
     "three": "^0.184.0"
@@ -39,7 +39,21 @@
     "sharp": "^0.34.5",
     "typescript": "~5.8.3",
     "typescript-eslint": "^8.34.1",
-    "vite": "^6.3.5",
+    "vite": "^6.4.3",
     "vite-plugin-svgr": "^4.3.0"
+  },
+  "overrides": {
+    "@babel/core": "7.29.6",
+    "@humanfs/node": "0.16.8",
+    "brace-expansion@1": "1.1.21",
+    "brace-expansion@2": "2.1.7",
+    "browserslist": "4.28.7",
+    "form-data": "4.0.6",
+    "js-yaml@4": "4.3.2",
+    "nanoid": "3.3.18",
+    "postcss": "8.5.23",
+    "source-map-js": "1.2.2",
+    "tar": "7.5.21",
+    "fflate@0.6": "0.6.11"
   }
 }

@@ -1,0 +1,26 @@
+{
+  "kind": "DART_KERNEL_ONLY",
+  "command": [
+    "/opt/homebrew/bin/flutter",
+    "assemble",
+    "-dTargetPlatform=darwin",
+    "-dBuildMode=debug",
+    "-dTargetFile=lib/main_pos.dart",
+    "-dTrackWidgetCreation=true",
+    "-dDartObfuscation=false",
+    "-dTreeShakeIcons=false",
+    "--output=/tmp/vynic-readiness-20261006-a2nbcprb/pos-kernel",
+    "kernel_snapshot_program"
+  ],
+  "exitCode": 0,
+  "log": "integrated-pos-kernel-build.log",
+  "logSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "artifacts": {
+    ".dart_tool/flutter_build/ffbadf67c853b21cf8f204761198ef49/app.dill": "48de90e56249f6f2122c1e7dae4844720bfc1a38712372913f413b8fa8dcbfb5"
+  },
+  "sourceReceipt": "integrated-readiness-receipt.json",
+  "sourceReceiptSha256": "50a8549fb91e234b066a7468025f66fdf1dd7c174f33ff4c8155486f2fd9552d",
+  "sourceUnchanged": true,
+  "nativeWindowsBuild": false,
+  "nativeMacBuild": false
+}

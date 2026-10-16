@@ -151,8 +151,16 @@ export class PlatformVenuesController {
   }
 
   @Put(':venueId/menu-management/cloud')
-  enableCloudMenu(@PlatformActor() actor: PlatformPrincipal, @Param('venueId') venueId: string, @Body() body: { enabled?: unknown }) {
-    return this.config.enableCloudMenu(actor, requireUuid(venueId, 'venueId'), body.enabled);
+  enableCloudMenu(
+    @PlatformActor() actor: PlatformPrincipal,
+    @Param('venueId') venueId: string,
+    @Body() body: { enabled?: unknown },
+  ) {
+    return this.config.enableCloudMenu(
+      actor,
+      requireUuid(venueId, 'venueId'),
+      body.enabled,
+    );
   }
 
   @Put(':venueId/plan')
@@ -230,6 +238,23 @@ export class PlatformVenuesController {
     );
   }
 
+  @Patch(':venueId/domains/:domainId')
+  async renameDomain(
+    @PlatformActor() actor: PlatformPrincipal,
+    @Param('venueId') venueId: string,
+    @Param('domainId') domainId: string,
+    @Body() body: Record<string, unknown>,
+  ) {
+    return this.config.renameDomain(
+      actor,
+      requireUuid(venueId, 'venueId'),
+      requireUuid(domainId, 'domainId'),
+      requireText(body.hostname, 'hostname', { max: 253 }),
+      requireText(body.expectedHostname, 'expectedHostname', { max: 253 }),
+      requireText(body.reason, 'reason', { max: 1000 }),
+    );
+  }
+
   @Put(':venueId/domains/:domainId/status')
   async setDomainStatus(
     @PlatformActor() actor: PlatformPrincipal,
@@ -260,6 +285,17 @@ export class PlatformVenuesController {
 
   // ── Device enrollment ─────────────────────────────────────────────────────
 
+  @Get(':venueId/initial-manager-setup')
+  setupEligibility(
+    @PlatformActor() actor: PlatformPrincipal,
+    @Param('venueId') venueId: string,
+  ) {
+    return this.devices.setupEligibility(
+      actor,
+      requireUuid(venueId, 'venueId'),
+    );
+  }
+
   @Get(':venueId/enrollments')
   async listEnrollments(@Param('venueId') venueId: string) {
     return this.devices.listEnrollments(requireUuid(venueId, 'venueId'));
@@ -271,8 +307,18 @@ export class PlatformVenuesController {
     @PlatformActor() actor: PlatformPrincipal,
     @Param('venueId') venueId: string,
     @Body()
-    body: { displayName?: unknown; platform?: unknown; ttlMinutes?: unknown },
+    body: {
+      displayName?: unknown;
+      platform?: unknown;
+      ttlMinutes?: unknown;
+      initialManagerSetup?: unknown;
+    },
   ) {
+    if (
+      body.initialManagerSetup !== undefined &&
+      typeof body.initialManagerSetup !== 'boolean'
+    )
+      throw new BadRequestException('initialManagerSetup must be boolean');
     return this.devices.createEnrollment(
       actor,
       requireUuid(venueId, 'venueId'),
@@ -280,6 +326,7 @@ export class PlatformVenuesController {
         displayName: requireText(body.displayName, 'displayName'),
         platform: requireText(body.platform, 'platform', { max: 32 }),
         ttlMinutes: readTtlMinutes(body.ttlMinutes),
+        initialManagerSetup: body.initialManagerSetup,
       },
     );
   }

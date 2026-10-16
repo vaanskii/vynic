@@ -1,5 +1,5 @@
 import { FloorEditorDemo } from "./FloorEditorDemo";
-import { Reveal } from "../ui/Reveal";
+import { MotionMedia } from "../motion/MotionMedia";
 import { SectionHeading } from "../ui/SectionHeading";
 import { useLocale } from "../../lib/i18n";
 
@@ -12,9 +12,9 @@ export function FloorPlanSection() {
           title={copy.floor.title}
           body={copy.floor.body}
         />
-        <Reveal className="mt-12">
+        <MotionMedia className="mt-12">
           <FloorEditorDemo />
-        </Reveal>
+        </MotionMedia>
       </div>
     </section>
   );

@@ -1,0 +1,1345 @@
+{
+  "head": "275688e1e5c5dc0e26e62705ab0c7670cf16d99a",
+  "branch": "codex/docker-deployment-foundation",
+  "stash": [
+    "stash@{0} 9df454225caec647f67ad4f70ef6038dbbbe41d6 On main: reorg-wip-holdout"
+  ],
+  "index": [],
+  "entries": [
+    {
+      "status": " M",
+      "path": ".env.docker.example",
+      "sha256": "b6f3dcef568a42632e4f454be5ffad3a7ebdc9c7fdb0d320d0933df184ee8cde"
+    },
+    {
+      "status": " M",
+      "path": ".env.production.example",
+      "sha256": "236e7eba797e914af0b699c5712a6bb86144c5b6a3104e7d9e11330ebf0340db"
+    },
+    {
+      "status": " M",
+      "path": "apps/backend/src/customer/commercial-access.integration.spec.ts",
+      "sha256": "6c50c46532c138b1385628326edff177110058177ce6659fe2ebb0bda1abe16c"
+    },
+    {
+      "status": " M",
+      "path": "apps/backend/src/dev-origins.spec.ts",
+      "sha256": "a9286e281ff1acb93220c570f3dc62f9cfd56d898123bb15e36a22154903f865"
+    },
+    {
+      "status": " M",
+      "path": "apps/backend/src/dev-origins.ts",
+      "sha256": "c26fde879be51dccb39e7c3df33342479b70b6268a8f3df95c7c19488d523c2a"
+    },
+    {
+      "status": " M",
+      "path": "apps/backend/src/subscriptions/subscription.integration.spec.ts",
+      "sha256": "a2f9d331ee793452581c3c364fab22fec1f619dd8a1f29994231c63edcbd09f2"
+    },
+    {
+      "status": " M",
+      "path": "apps/backend/src/subscriptions/subscription.service.ts",
+      "sha256": "a576913281d3b6bcc1731d631e5459c5a1cc2597ccb8d0dff2f37e7f91292689"
+    },
+    {
+      "status": " M",
+      "path": "apps/backend/src/website/custom/custom-website.integration.spec.ts",
+      "sha256": "c7458bfb9beb362347ed601d189d470df2bf44af6df5c98b9000a7d5f25f2c6b"
+    },
+    {
+      "status": " M",
+      "path": "apps/backend/src/website/provisioning/website-provisioning.integration.spec.ts",
+      "sha256": "9c1bf36aa0a07e580b14979143eed3b145f4e8535228bdae56a3e45df4aed66b"
+    },
+    {
+      "status": " M",
+      "path": "apps/backend/src/website/provisioning/website-provisioning.ts",
+      "sha256": "83b453426cbfd9700bfac01baf6b60053c4d1ba0f6cfb507bbcebf510f6723bc"
+    },
+    {
+      "status": " M",
+      "path": "apps/operations/lib/apps/windows_pos/screens/pos_first_run.dart",
+      "sha256": "4e5d4f7fb0efda229352a6342b75311a8d892413181e762952a99a57eb80c8b4"
+    },
+    {
+      "status": " M",
+      "path": "apps/operations/lib/core/services/edge/pos_enrollment_service.dart",
+      "sha256": "a4511f09db5304349a0efa566a2b27a51522ff44607896c3b0279ba09ec822e2"
+    },
+    {
+      "status": " M",
+      "path": "apps/operations/lib/core/services/sync/api_config.dart",
+      "sha256": "ce85828bcfd3ffdfd8706521648fcc84d88a976a55f0ffd01906a04cb6db76cb"
+    },
+    {
+      "status": " M",
+      "path": "apps/operations/test/unit/pos_enrollment_test.dart",
+      "sha256": "beb81f40a7df3f9f86af19c4d8113fdf908b775778b5ba6208521c5dc03bd6f9"
+    },
+    {
+      "status": " M",
+      "path": "apps/platform-web/src/components/layout/Navbar.tsx",
+      "sha256": "5ddb95884d722f283d865efde45e333fdd494397166de0ad628e98e249fcc1b3"
+    },
+    {
+      "status": " M",
+      "path": "apps/platform-web/src/components/product/PosScreenReplica.tsx",
+      "sha256": "5e4691ce0c654ced9336cf4f2d4dfc57e657cfde6d38af329222ff617cd9fc8f"
+    },
+    {
+      "status": " M",
+      "path": "apps/platform-web/src/components/product/ProductLaunchMenu.tsx",
+      "sha256": "bc9a5341067e3d3ac309b3839405b19de25a951beebf497e1fa78a9e039dd4e7"
+    },
+    {
+      "status": " M",
+      "path": "apps/platform-web/src/components/sections/FloorPlanSection.tsx",
+      "sha256": "7edb682e648f2d3b77b7adb2ea8248e3129707e3b58f5f6e9e5ea582042d0a90"
+    },
+    {
+      "status": " M",
+      "path": "apps/platform-web/src/components/sections/Hero.tsx",
+      "sha256": "0cc6a597744e4a38d8e44578d0065a199f3b6607d4120851cb5e4bef0df64aed"
+    },
+    {
+      "status": " M",
+      "path": "apps/platform-web/src/components/sections/ProductTour.tsx",
+      "sha256": "80a39b2c25ab466c22c8db508c34ab120b3cbbe6d5159372acaea2b49dca2df8"
+    },
+    {
+      "status": " M",
+      "path": "apps/platform-web/src/components/ui/Button.tsx",
+      "sha256": "5aa88e7a7d2fdbe2cf74608852c33b5222a0caee4e4ce306ed762fdb42ba1c6e"
+    },
+    {
+      "status": " M",
+      "path": "apps/platform-web/src/components/ui/Reveal.tsx",
+      "sha256": "542f6edcfc03dc7d2c75e14b51e1808f35f84179a2b68657c7db07e0f182235a"
+    },
+    {
+      "status": " M",
+      "path": "apps/platform-web/src/components/ui/SectionHeading.tsx",
+      "sha256": "30213e796b97d0677d5089e5690e00e1006de8aebfb95816518244b00d033812"
+    },
+    {
+      "status": " M",
+      "path": "apps/platform-web/src/lib/motion.ts",
+      "sha256": "dd638281b523eb525b6c5e21f7b8f83486a7cbc3a7261acb5f7d17b8b537619a"
+    },
+    {
+      "status": " M",
+      "path": "apps/platform-web/src/pages/HomePage.tsx",
+      "sha256": "72469c7ca6f0a05dca173b5127fbdd72d94107c01a68bd001778914664e42f38"
+    },
+    {
+      "status": " M",
+      "path": "apps/platform-web/src/platform/pages/venue/SubscriptionPanel.tsx",
+      "sha256": "985031f47a5dd5b7c0cb67077dd86988522e2c57f6d62f8c5e5d2162c9bd2b33"
+    },
+    {
+      "status": " M",
+      "path": "apps/platform-web/src/styles/index.css",
+      "sha256": "067e6c6a57617767b96ed5e78728ea0b2ea1009fab85588f02bd3b7fdca5ec20"
+    },
+    {
+      "status": " M",
+      "path": "apps/platform-web/src/subscriptions/operator-actions.ts",
+      "sha256": "0ddbdb108e5d6588a11cb74c3bd7fd1fea376848d77f0c5d2bf43549a56d5f3a"
+    },
+    {
+      "status": " M",
+      "path": "apps/platform-web/src/subscriptions/types.ts",
+      "sha256": "661d18edc90a63ac9d9f9e963d9f863002b41efff096f2d0612a6ad8bcc993b9"
+    },
+    {
+      "status": " M",
+      "path": "apps/platform-web/src/test/commercial-control-ux.test.tsx",
+      "sha256": "c15615fbe5eb3c7ead3c17a5ee2fd67e0ab052d447dd51a2c022565446314596"
+    },
+    {
+      "status": " M",
+      "path": "apps/platform-web/src/test/subscription-lifecycle.test.tsx",
+      "sha256": "ef846e16344f2b03c57a82fc30faad4eec3b448b24b572b6e2ada35dea8bed56"
+    },
+    {
+      "status": " M",
+      "path": "compose.local.yaml",
+      "sha256": "b768fb294b3b193d5889d004000a71698386a8efdf4b8fa1b214dfe0f8fa3d3e"
+    },
+    {
+      "status": " M",
+      "path": "compose.yaml",
+      "sha256": "ee71e021b7391db5c2d53447f09d665a4c90aa551af012498d12d3b773144824"
+    },
+    {
+      "status": " M",
+      "path": "deploy/traefik/routes.yml",
+      "sha256": "2ec45fcbb76a751738d357b6d2d68ad1e5b3e9fd57a337714d3cca934b672e2c"
+    },
+    {
+      "status": " M",
+      "path": "docs/CANONICAL_MENU_SYNC.md",
+      "sha256": "5bdfeee1e75c628a49412ed1899b7ee022de8a2ef70401a8c980166743033356"
+    },
+    {
+      "status": " M",
+      "path": "docs/COMMERCIAL_SUBSCRIPTION_LIFECYCLE.md",
+      "sha256": "1e14aa72d46f2a87e70b30a36593cfcc032d0c7945942fd76b1c93d7f951e3a1"
+    },
+    {
+      "status": " M",
+      "path": "docs/DEPLOYMENT.md",
+      "sha256": "d0365a90c6f2eaa19464b97c8fd906e1cb5f35ef78131e7d04b3a6769a5e55ec"
+    },
+    {
+      "status": " M",
+      "path": "docs/DEPLOYMENT_PROOF.md",
+      "sha256": "fbc66efc01b40b731608d8a3664051e7f186c06a47af225231ff6ec7b51cca46"
+    },
+    {
+      "status": " M",
+      "path": "docs/agent-state/VYNIC_CODE_MAP.md",
+      "sha256": "aee9733dc8cc2e33fb13422c2a1bd1ee28fab22cdd34f5f76174610091fc2622"
+    },
+    {
+      "status": " M",
+      "path": "docs/agent-state/VYNIC_DECISIONS.md",
+      "sha256": "391ad1e91b98fcafcd5f46964a4913db5d4e42feefc3e0a692ac314fb4a2f6fc"
+    },
+    {
+      "status": " M",
+      "path": "docs/agent-state/VYNIC_PROJECT_STATE.md",
+      "sha256": "1cf627ff6b5f08d9b6bb351e1dbeb86907294b633df26fdb1f1c730656665b56"
+    },
+    {
+      "status": " M",
+      "path": "scripts/docker.sh",
+      "sha256": "6b3d7c7e2834d9ba00fdf2a588504c5c8b07eaf1dec35f55730d3aa41f694bc8"
+    },
+    {
+      "status": "??",
+      "path": ".claude/launch.json",
+      "sha256": "6bd0455559c258e988069490247c6ad38efc500044b0e424b64f598f441110ec"
+    },
+    {
+      "status": "??",
+      "path": "apps/operations/test/live/native_ingress_live_test.dart",
+      "sha256": "efd6c0b98fabde49ecfb99665ea1ccf25c8cdf59af6ea76b97547318a0d5a44d"
+    },
+    {
+      "status": "??",
+      "path": "apps/platform-web/src/components/motion/MotionMedia.tsx",
+      "sha256": "e4d89041b5b5edaedf352dcf485e0973e1fdfb17634804d5455fd9476ae34e29"
+    },
+    {
+      "status": "??",
+      "path": "apps/platform-web/src/components/motion/SplitWords.tsx",
+      "sha256": "cd90cf7097aee17c0be6f9435d04219edf7866c43ba78f036881092c58e07a0c"
+    },
+    {
+      "status": "??",
+      "path": "apps/platform-web/src/components/motion/usePointerDepth.ts",
+      "sha256": "591ba4da87b8f3312aaff74268949c79b5a5f474a250f545d158eac601d83942"
+    },
+    {
+      "status": "??",
+      "path": "apps/platform-web/src/components/sections/PlatformStory.tsx",
+      "sha256": "c591257c8d0101123dfa0bcc0dc5c6a69bec6c58b7326bc7fed680310b23626d"
+    },
+    {
+      "status": "??",
+      "path": "apps/platform-web/src/test/site-motion.test.tsx",
+      "sha256": "2b5cfd024f7652f52eb8c8381ad503f1db3815e707b55ad846fcd9202de6700f"
+    },
+    {
+      "status": "??",
+      "path": "compose.lan.yaml",
+      "sha256": "245a879e8491c33513dcb258dddf46205b30528b59e19d0d535ec7522579b1b3"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/2026-09-29-f7bb982/AUDIT_CHECKLIST.md",
+      "sha256": "44a92a0deb7b9432f4b615ad84834183fb8a844b0b810e1374d16f96ab769a4e"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/2026-09-29-f7bb982/EVIDENCE_AND_MATRICES.md",
+      "sha256": "501a19237555f4586c3a14916ad18c34dd672a2bdbc3c61ed4c92761f8c08019"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/2026-09-29-f7bb982/IMPLEMENTATION_ROADMAP.md",
+      "sha256": "6582b679e445f520dff22838a1d59989bdec10244032b6f4c744bb5be2386ad9"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/2026-09-29-f7bb982/INVENTORY_MANAGER_FINDINGS.md",
+      "sha256": "72a00311a83f100d064ae9be3919a576affa95e6d2a65d48b9d888fa4eefc71e"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/2026-09-29-f7bb982/INVENTORY_MANAGER_UX.md",
+      "sha256": "5b24404462d64642f37cb23d01d982912437923e5c7a9d912c01043dbc8e3468"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/2026-09-29-f7bb982/MARKET_BENCHMARK.md",
+      "sha256": "9fccb6e9e23c157ca08e4610744ff59f027c5cf74ec7224a1bf651c887c79ac1"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/2026-09-29-f7bb982/MASTER_BACKLOG.md",
+      "sha256": "10003926f45c9203fc9eecd0318fc3c9e4cbdbe7a3a18597a83e85eddf2671d1"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/2026-09-29-f7bb982/POS_MENU_EDGE.md",
+      "sha256": "f4abef7c22f620b0ca516d4c2d14437cc24626d0220d7b658f0c4f5697c9488c"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/2026-09-29-f7bb982/README.md",
+      "sha256": "3aa8639755716e0547476d3446e0971c5d92157a4b1faa00ba25ec313cbcc957"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/2026-09-29-f7bb982/RESOURCE_MANIFEST.md",
+      "sha256": "51c3aa40c823e8071f0af51f56f95c1132c7f877f14293617e3dd10c19246abd"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/2026-09-29-f7bb982/SECURITY_AND_RELIABILITY.md",
+      "sha256": "92a994adbea7af360c1c8ba2858ba5a8faf1ebfeb1f7068dc3bc9cc9a0e02812"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/2026-09-29-f7bb982/SYSTEM_AND_ARCHITECTURE.md",
+      "sha256": "f2378e4a36d35c262a42490418c806f49f71eee33a18007deaa63c19c2723241"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/2026-09-29-f7bb982/UI_UX_AUDIT.md",
+      "sha256": "1151d52bd3d0d238bd2b739babb14f101d586cd383d6f56b3d9547cf415ca2dc"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/2026-09-29-f7bb982/VYNIC_MASTER_STABILIZATION_AND_RELEASE_PLAN_2026-09-29.md",
+      "sha256": "ef4aa7a343a86e809aea151da2938ee38c265bd3559680687725217e6f0a5a8f"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/2026-09-29-f7bb982/WEB_COMMERCIAL_SECURITY.md",
+      "sha256": "3831867b566387fb9446e5d97c2e672d1bd354e8e928f5cbc35728c1a763476c"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/.gitignore",
+      "sha256": "e476d41f5fe892f8b28f294d5454c5225ca60a50a4dc8c782c0f53b051bc6c5a"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/AGENTS.md",
+      "sha256": "c59e72fc9090855ff01deecbdef7cb71d69c9db03d4ec690bca8be3d394b3b14"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/BRIEF.md",
+      "sha256": "31985cbeef10aa6b624a5290e8017f3de63ec78aae09d57937b976c91fb2ee77"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/CAPTIONS_GE.md",
+      "sha256": "ad3875f6d5986c607dddeea74261a460da2796532c7b9608a27f377bf7677635"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/CLAUDE.md",
+      "sha256": "c59e72fc9090855ff01deecbdef7cb71d69c9db03d4ec690bca8be3d394b3b14"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/MOTION_DIRECTION.md",
+      "sha256": "db1636ecab8fa91747eb6ea666435d4e62126dc3f19f0681502f5420098709d7"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/README.md",
+      "sha256": "becb66b480211443280db7c12b229061992e49322d0d0fc4c0ef8c8e827f824c"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/STORYBOARD.md",
+      "sha256": "548af7cb0a8a02930a2be9dc36d345070e7aaa88b67a7e4c5bef384303ea9c92"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/VOICEOVER_GE.md",
+      "sha256": "4cddcc4522f5fe962ae1a85b98c3c481b41253cd81ce9bc154140a6458959230"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/VOICEOVER_GE_V2.md",
+      "sha256": "5f77f3338c825a2612b7b40ff0b2fec39844a658fd9ee718d11f9a6b137a2660"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/VOICEOVER_TIMING.md",
+      "sha256": "603a8ee261c17bdb73f10ba9a30e0622c5b57ba5f677f09951c2d1c16bd5e502"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/assets/audio/music.wav",
+      "sha256": "0155561e0912dbe3cffa7b8ddfb5e9d08c9914ebe5283fe838404721b91cdc49"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/assets/audio/sfx.wav",
+      "sha256": "27c7c1b8797c0c79731657e5a532455afc23dee3b96b7cf6795d0c8337a167fa"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/assets/audio/vo/vo-01.wav",
+      "sha256": "a2a08575325f29184a19b053a353785ecc979a2d11d37a725e3eb2ddb68c65f2"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/assets/audio/vo/vo-02.wav",
+      "sha256": "a03179e11cd9795fff1c7892fbf58a16e6c165c0824724546bd53b7e6f45a8ec"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/assets/audio/vo/vo-03.wav",
+      "sha256": "1a9c7b58376d00587af9049a7f64c7b591061b68907f3c1664c5598a8acfc8aa"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/assets/audio/vo/vo-04.wav",
+      "sha256": "27f4ad9c804fcedcf0c0dcece4cdb7233389b71b0ac06d798891d883edf5243a"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/assets/audio/vo/vo-05.wav",
+      "sha256": "3f5f267516c3bf8d94cc003f60e457e71476fe8749323e6f30aff59a4b690d3e"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/assets/audio/vo/vo-06.wav",
+      "sha256": "914ca8a76dbbefe88f3e157902546d2a10e48b483eb10513e169c7c352ed1dcc"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/assets/audio/vo/vo-07.wav",
+      "sha256": "476896be0917eb37120cc4de33d93f4575347217dc6ed0527ae7c91e2df2e51a"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/assets/audio/vo/vo-08.wav",
+      "sha256": "053cffc045630cc823f43045a9d10d83a4bb722c8ad612cd1f27ef8c74393a5b"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/assets/audio/vo/vo-09.wav",
+      "sha256": "99e5b593eb1b202ac5363bd6562fc8b0c8867338c4972ffc71fb439fa069eb93"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/assets/audio/vo/vo-11.wav",
+      "sha256": "5782117030f07c1744a485d28720acdb5d7a016c19517af5860142345d6380bd"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/assets/audio/vo/vo-12.wav",
+      "sha256": "09962acb57affef617515d760f7d9765c292843f5551fbd65a43c371f526ae45"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/assets/fonts/FONTS.md",
+      "sha256": "3220bcbb45ff442e89f71af9155e9ad7c2ac8f8a84fcbe37a3697c65bbf00878"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/assets/fonts/Geist-Bold.ttf",
+      "sha256": "f032f37d12e82a37977fd1159c01e1a14415672244d2e6865d57e28c74886d03"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/assets/fonts/Geist-OFL.txt",
+      "sha256": "930853ee1daa68554d9e35c8a9175affb74f699fad9a5da6ee5ebe76379d9137"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/assets/fonts/Geist-Regular.ttf",
+      "sha256": "09af32bab931f1ccc6e4776c5c39c8ea6c0d59b096f6f6c2959b1fdf18df0901"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/assets/fonts/Geist-SemiBold.ttf",
+      "sha256": "4c11a19d17e7a608f797e6a7e1f266778cc75510861f61063acaa2c0dec7c906"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/assets/fonts/GeistMono-Variable-latin.woff2",
+      "sha256": "b7ac144b394cbd81052d6397ec0c33397977b1d7e9bc095e744e652a378c6fb3"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/assets/fonts/NotoSansGeorgian.ttf",
+      "sha256": "d96c44584566c7106f7fdea7c07ad09f63e481bf9066e89b1d14195a967d4ca2"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/assets/fonts/NotoSerif-Italic.ttf",
+      "sha256": "749e80e313ef711f9373c6cce17c72297ef05490b3dcda7967d1d5d90bf1183f"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/assets/fonts/NotoSerifGeorgian-Bold.ttf",
+      "sha256": "f7fc391a93f8d50a5e19649c2e6706a00c9c8412cd820c860fc2e3c28c2c5084"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/assets/fonts/NotoSerifGeorgian-Regular.ttf",
+      "sha256": "eea3e8415a37dd496dbb6fad16e95b1513d3fc14863c6cc8886456f273eb1cdf"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/assets/fonts/Vankisi-HeaderFont.ttf",
+      "sha256": "a64e987042fedb59d4e6ef4b86ad1b63d8a5297f9dc170c95599167f81cc73d3"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/assets/img/saas/g1.jpg",
+      "sha256": "24b93366398a7e1d8c2eda73629a7665cc04f62fad45799f70939f8e2c82426e"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/assets/img/saas/g2.jpg",
+      "sha256": "51b5717e7e2b9ba608387b6f2b174137dffaa7892e54b14a73254d11998bc215"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/assets/img/saas/g3.jpg",
+      "sha256": "944e0bb5fee058d650f2d182d41b6e59671ea4289912b93550764d9f4c71037a"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/assets/img/saas/g4.jpg",
+      "sha256": "a7640c907a43fc6c409220536d5793ae38f4e11ea4672a63406e8b298bed49d7"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/assets/img/saas/hero.jpg",
+      "sha256": "157f34b5a85b6b973ac0fa245eea9b960d07fb1fc74344f07487ca35e897beed"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/assets/img/vankisi/atmosphere.jpg",
+      "sha256": "b2db62656decabdecacdc0ab78d634b331ce723ccb5c2009f90a5a81a95b927b"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/assets/img/vankisi/khinkali.jpg",
+      "sha256": "1c7f3519461e2cbde750adf47a4378ce342db525a71b8b0ee3b3a716a9ac8b65"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/assets/img/vankisi/logo.svg",
+      "sha256": "d479d4085c116187b722fd66f0c746c8807bf377245eb47ed9768f0570f243c1"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/assets/img/vankisi/signaturedish.jpg",
+      "sha256": "a0ba803b4bfa504d7e3d38ca5ec28f9f9e359810ca5726c9f6cdb88e0b51feb4"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/audio/lib.mjs",
+      "sha256": "4977b49fd6ccfd4f50acd8175b4558b8f48e4b1a916d28b4a087cbedfbab3b23"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/audio/music.mjs",
+      "sha256": "8c43f3dd8ddd2b014917fe73b034b61da75cee018cb8fce3ba7a3a6d92595ca4"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/audio/sfx.mjs",
+      "sha256": "6f23df80a02341e33878b760dd62c859fbcbd453c081b4cd85ed9949d86f1372"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/audio/tts.mjs",
+      "sha256": "0ee58e252446ee80ab0699b21d8d3dddc88a543882581e46aa85393d2e44a6ab"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/audio/vo-lines.json",
+      "sha256": "a77de1262247cf64adc02cf5712615be9e6efdcae54bc93c7fef48ddd0d03d82"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/audio/vo-v2-lines.json",
+      "sha256": "0e8f35c573795a068c97749e3545b99a64d68386f5b2720a21c53cb391a3c3e0"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/audio/voice-review.mjs",
+      "sha256": "cd699d978e383eff6acff614c9431b56938c23acdf65ec033261501dc8a6208f"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/film.css",
+      "sha256": "35663e16df15f95924dd8a13553781e0aa602156d98752d44e3f30a67d0c9154"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/hyperframes.json",
+      "sha256": "ad5dadeef78a520800a9e5cdd27a92ff5ac37f11b6a07f611b6b52b9f8c79a17"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/index.html",
+      "sha256": "b09af3c5c601e17a8f52391fd7d2501f55c17769b0b44e87c12a6532f1b9eacd"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/meta.json",
+      "sha256": "787073bb39ca83660fe6d0b4455e6f0a92c976e8760c33258cee656c6de6b53b"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/package.json",
+      "sha256": "f97091b30a8012a3568586fcf335df8b8eb95167cfdd4a0cdb3a2af373d8da71"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/real-ui/REAL_UI_NOTES.md",
+      "sha256": "67b4ee3096def713c804df0d7d5cd160422fdacc0651ea692baefc637310df4b"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/real-ui/STYLE_NOTES.md",
+      "sha256": "215a0aaa573f48e8fc2479f5fa6103a50f64746dca6f956f02e113de200b604f"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/real-ui/assets/audio/music.wav",
+      "sha256": "a1d12731affdd05a9463cca13acdd5c71bd6b44b9a57d2a50d2d79629d2ee5da"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/real-ui/assets/audio/sfx.wav",
+      "sha256": "f49d563933c52af8c8993a0a8bd92bf3dca338befab63eaed441cbcaa5d95b3a"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/real-ui/assets/fonts/FONTS.md",
+      "sha256": "3220bcbb45ff442e89f71af9155e9ad7c2ac8f8a84fcbe37a3697c65bbf00878"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/real-ui/assets/fonts/Geist-Bold.ttf",
+      "sha256": "f032f37d12e82a37977fd1159c01e1a14415672244d2e6865d57e28c74886d03"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/real-ui/assets/fonts/Geist-OFL.txt",
+      "sha256": "930853ee1daa68554d9e35c8a9175affb74f699fad9a5da6ee5ebe76379d9137"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/real-ui/assets/fonts/Geist-Regular.ttf",
+      "sha256": "09af32bab931f1ccc6e4776c5c39c8ea6c0d59b096f6f6c2959b1fdf18df0901"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/real-ui/assets/fonts/Geist-SemiBold.ttf",
+      "sha256": "4c11a19d17e7a608f797e6a7e1f266778cc75510861f61063acaa2c0dec7c906"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/real-ui/assets/fonts/GeistMono-Variable-latin.woff2",
+      "sha256": "b7ac144b394cbd81052d6397ec0c33397977b1d7e9bc095e744e652a378c6fb3"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/real-ui/assets/fonts/NotoSansGeorgian.ttf",
+      "sha256": "d96c44584566c7106f7fdea7c07ad09f63e481bf9066e89b1d14195a967d4ca2"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/real-ui/assets/fonts/NotoSerif-Italic.ttf",
+      "sha256": "749e80e313ef711f9373c6cce17c72297ef05490b3dcda7967d1d5d90bf1183f"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/real-ui/assets/fonts/NotoSerifGeorgian-Bold.ttf",
+      "sha256": "f7fc391a93f8d50a5e19649c2e6706a00c9c8412cd820c860fc2e3c28c2c5084"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/real-ui/assets/fonts/NotoSerifGeorgian-Regular.ttf",
+      "sha256": "eea3e8415a37dd496dbb6fad16e95b1513d3fc14863c6cc8886456f273eb1cdf"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/real-ui/assets/fonts/Vankisi-HeaderFont.ttf",
+      "sha256": "a64e987042fedb59d4e6ef4b86ad1b63d8a5297f9dc170c95599167f81cc73d3"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/real-ui/assets/img/saas/g1.jpg",
+      "sha256": "24b93366398a7e1d8c2eda73629a7665cc04f62fad45799f70939f8e2c82426e"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/real-ui/assets/img/saas/g2.jpg",
+      "sha256": "51b5717e7e2b9ba608387b6f2b174137dffaa7892e54b14a73254d11998bc215"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/real-ui/assets/img/saas/g3.jpg",
+      "sha256": "944e0bb5fee058d650f2d182d41b6e59671ea4289912b93550764d9f4c71037a"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/real-ui/assets/img/saas/g4.jpg",
+      "sha256": "a7640c907a43fc6c409220536d5793ae38f4e11ea4672a63406e8b298bed49d7"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/real-ui/assets/img/saas/hero.jpg",
+      "sha256": "157f34b5a85b6b973ac0fa245eea9b960d07fb1fc74344f07487ca35e897beed"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/real-ui/assets/img/vankisi/atmosphere.jpg",
+      "sha256": "b2db62656decabdecacdc0ab78d634b331ce723ccb5c2009f90a5a81a95b927b"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/real-ui/assets/img/vankisi/khinkali.jpg",
+      "sha256": "1c7f3519461e2cbde750adf47a4378ce342db525a71b8b0ee3b3a716a9ac8b65"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/real-ui/assets/img/vankisi/logo.svg",
+      "sha256": "d479d4085c116187b722fd66f0c746c8807bf377245eb47ed9768f0570f243c1"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/real-ui/assets/img/vankisi/signaturedish.jpg",
+      "sha256": "a0ba803b4bfa504d7e3d38ca5ec28f9f9e359810ca5726c9f6cdb88e0b51feb4"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/real-ui/assets/ui/mgr_01_dash_before.png",
+      "sha256": "93bc3b7d5c0bae159edf6fcf016b67f70e4d9a78907905b1c836308d413522c8"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/real-ui/assets/ui/mgr_02_pull.png",
+      "sha256": "8d31ff593a5b314bff3aaa8d8179270418a48ab215081e6753637bcab07a2f78"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/real-ui/assets/ui/mgr_03_dash_after.png",
+      "sha256": "c06660920558d00bb0539247734b1bced54c450cd8e5ac9cd9fceda8e99692a4"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/real-ui/assets/ui/mgr_04_dash_scrolled.png",
+      "sha256": "93aa84c8e7f37db9b26ba954d4c8717c4c3b7213a920fffd34552e0be713ecc4"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/real-ui/assets/ui/mgr_05_tables.png",
+      "sha256": "90d2561681cef14574d97197309b19daadd955d7bdd24f8b2d62dd1e51d634fe"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/real-ui/assets/ui/mgr_06_inventory.png",
+      "sha256": "0a513996788db6ebbe22ca0431bd28a9a9716473bc8b19be57a3bbe514807cbd"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/real-ui/assets/ui/mgr_07_reservations.png",
+      "sha256": "f9365fc4cdded98b61da05bce6880a6916dc434f3cfdf02577b6c7a967d6afce"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/real-ui/assets/ui/mgr_08_recv_editor.png",
+      "sha256": "a41cd410852fc95865ff83f65f21c42fb8d9604ab968cc80c0bb5c7dffbf61fa"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/real-ui/assets/ui/mgr_09_recv_lines.png",
+      "sha256": "26dcdb9e1b7379cd58f602368fbbf6212b7cba775b89995d567b57471fb70fa2"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/real-ui/assets/ui/mgr_09b_recv_payment.png",
+      "sha256": "4dbdc145939059d7909be3f08ebb4bb6ae09f7175cc2cc4e14ac4efda2d6e462"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/real-ui/assets/ui/mgr_09c_recv_review.png",
+      "sha256": "a74ad5dcb1fa9d2fda3bafd628b638fdea9cafa088154c14a4d4bde4c1a8b47a"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/real-ui/assets/ui/mgr_09d_after_save.png",
+      "sha256": "bfa2a86beaf9a42d04463d0f9514b6d88410f98415877dd260da3ea8efac7100"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/real-ui/assets/ui/mgr_09e_stock.png",
+      "sha256": "3f2a4a84bff9e3b25c7450d90dc63c38f661a7bdc7780ee93e4b51cdc76b5d8d"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/real-ui/assets/ui/mgr_10_res_detail.png",
+      "sha256": "72eb8ef4e0bedd0127c3e6261a4879bf739956ba87538bf1818ffa8b9f63f0dd"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/real-ui/assets/ui/mgr_11_res_confirmed.png",
+      "sha256": "011ff8de3e242ef2cf10de3edfe644503b566c47f8fdb75ed1aadcd0419ff488"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/real-ui/assets/ui/pos_01_floor.png",
+      "sha256": "145b48f329c8491a133d7feb6dc13cfb21bf6d69c5f6210e3ada4f6480c9f088"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/real-ui/assets/ui/pos_02_editor_empty.png",
+      "sha256": "f4b721c0d5ce816e8eeefeabf35082146fd679166a37e9a110de619a7ded68bd"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/real-ui/assets/ui/pos_03_item1.png",
+      "sha256": "9b6688536634e7cb188b90eabb570d69dccb83224424787344ac8ddf3a2a67a8"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/real-ui/assets/ui/pos_03a_pad.png",
+      "sha256": "4938c1dbabca5ba77d65795ca431c523fa443f3cc549a3f166f0522d0e8ae421"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/real-ui/assets/ui/pos_04_item2.png",
+      "sha256": "33e86ba764ebd83edfd72d3c86c60b032dda23b154dfc912301fecc43295d896"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/real-ui/assets/ui/pos_05_item3.png",
+      "sha256": "eace4169d3d1d5f6d79b878f6d5e0842c85a0932f65e853cca1dc87bc63b0367"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/real-ui/assets/ui/pos_06_detail_pending.png",
+      "sha256": "720f0ed6a36298e0574e9e1303b0e453caa5e3f674eb0f69b8b16dfbc842241e"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/real-ui/assets/ui/pos_07_detail_confirmed.png",
+      "sha256": "c7e6b7e609e9f03a70d7281d488e34047ec377838facd63959b09b99bd047d8a"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/real-ui/assets/ui/pos_08_floor_after.png",
+      "sha256": "a9aa1d4d683f8ae7f08d21e260250ddb33aaf9595271d9a8a7520a74c1249014"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/real-ui/assets/ui/pos_10_calc.png",
+      "sha256": "695d193f1dcdede06dc595ad41927fd046c58c4d35b54ce23956aba89278f094"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/real-ui/assets/ui/pos_11_takeaway.png",
+      "sha256": "0537606540cc24b1a321a43f7542be1dce353ef750949bcdbc209fcf1e0fc87c"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/real-ui/assets/ui/pos_12_reservations.png",
+      "sha256": "f5deb010fd3060b65e961b95b4f62fe26312ae6b46d846050b091052cb4aba0f"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/real-ui/assets/ui/pos_14_xreport.png",
+      "sha256": "6a89693d21eac6bef86a73b8e465646f85ce87194b8c24fe74938148d6f49fb9"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/real-ui/assets/ui/pos_20_admin.png",
+      "sha256": "e62277c52c8de2f68a3aa1c9ac910c5c8dcc9586912279118d214eaadbcdf8d7"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/real-ui/assets/ui/pos_21_admin_menu.png",
+      "sha256": "654edbe2ca3635335d28474631a117b81707b0d0a3a4558ec12fdbeff6a021bd"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/real-ui/assets/ui/pos_22_admin_tables.png",
+      "sha256": "a3be562df74f89277b1bb32b9c68dffc49af92635c8fa35cf8660129da97318a"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/real-ui/assets/ui/pos_23_admin_close.png",
+      "sha256": "cfa7e07d7acbedbc68c65c27b27ac717efb506b4be10e3c0d9f3631df3b8b4ec"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/real-ui/assets/ui/pos_24_admin_res.png",
+      "sha256": "d01a0ebd35662c8f9a7c75b47fc7994424f47242c8bdc6097f6b5430e9c2e2a9"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/real-ui/assets/ui/pos_25_admin_inventory.png",
+      "sha256": "52562f1e627aee72048ada361141be9a7a9a22dfb226512837835740758d77a5"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/real-ui/audio/music.mjs",
+      "sha256": "84e4ea28508637d9ad91870fe00476cce48b93c4c69a446837d38800577cdd9a"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/real-ui/audio/sfx.mjs",
+      "sha256": "f4724d12547cc34bf325210f01c09e085363254598409e3129d2695cc56b9739"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/real-ui/base.css",
+      "sha256": "35663e16df15f95924dd8a13553781e0aa602156d98752d44e3f30a67d0c9154"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/real-ui/capture/debug_res_test.dart",
+      "sha256": "27d59ea188e1297224faa87cd816928f007eb35c8cfe83aebad67d6755747679"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/real-ui/capture/fonts.dart",
+      "sha256": "fb20f59a66ccd8bea7479d0b234cca65b1d5e70881197b006cc8012177861e59"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/real-ui/capture/harness.dart",
+      "sha256": "4c04509fa701463bb8e49b3cca6bdc0ab32b2babcf15762e9cc96bf37700a09b"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/real-ui/capture/manager_api.dart",
+      "sha256": "232d7aa3724a93ec84e64a33e9c1d6a284d48f36162f7f489e2e74546fcc57e2"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/real-ui/capture/manager_capture_test.dart",
+      "sha256": "80f2ba66292fe922c568a60e7e9dbcfd10dccabea9e6ca33c9073e2b21b5507c"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/real-ui/capture/mgr_rects.json",
+      "sha256": "4f9631da5ad3c161b1deeba97377087ca55970c5c7575ec25d48be976ec2961a"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/real-ui/capture/pos_flow_capture_test.dart",
+      "sha256": "937f33ae44953619dad8594b75446f2a6a9c2eaa2cc50b2a3609f1432278ac23"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/real-ui/capture/pos_home_capture_test.dart",
+      "sha256": "e4b4667bc48439eb4fcc26df13913e9cb1451f25294a3777c606e1e3fb9eb338"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/real-ui/capture/pos_rects.json",
+      "sha256": "a9bedeb1d31c4737339fec82763d6b5e62ef0f5089544a4500c7a7eb7a17a9be"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/real-ui/capture/run.sh",
+      "sha256": "b8a31cad6d7cb88ee754015703eea2dac0b8c90f20ebda4829398cfd1beca6eb"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/real-ui/capture/seed.dart",
+      "sha256": "588658c88952b175c922758df79576730f35aefaa0a9b9621a295ce0d240e0f8"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/real-ui/fast.css",
+      "sha256": "9fd6b2f1c04ee30ff8511ebfec1123c3b55c6b34b24bbe75707d3c2aa38f08c3"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/real-ui/hyperframes.json",
+      "sha256": "ad5dadeef78a520800a9e5cdd27a92ff5ac37f11b6a07f611b6b52b9f8c79a17"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/real-ui/index.html",
+      "sha256": "373e14dfcdd8c753ded8281adad3b6e2e19d5bc8db9db65a4b7e84f288df4a2d"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/real-ui/meta.json",
+      "sha256": "8bc130ba4f295821b4db0ff316047451efb7ef3953240b5b6be0c940339ee8a6"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/real-ui/package.json",
+      "sha256": "b1a47a3281e9377309f387f165fd0870572cadc6236cacc26e13779b6cd5f259"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/real-ui/timeline.js",
+      "sha256": "8393ce32daf9b39974e8d6fbd2462eeb2fdf610f77f2041d53944858dd64d0f0"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/real-ui/tools/deliver.sh",
+      "sha256": "24c6cf3a5866d1432b442068933c3dcbcc75aed8a7ea330de101ac7fa08d44a8"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/real-ui/tools/inline.py",
+      "sha256": "b6e2e6b9c87dbfe870f06af523ee4351aa34ad6fefab77f694cd7cd5439802d7"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/style-refine/STYLE_NOTES.md",
+      "sha256": "215a0aaa573f48e8fc2479f5fa6103a50f64746dca6f956f02e113de200b604f"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/style-refine/assets/audio/music.wav",
+      "sha256": "48166a8ecfcd1ed05ad7c65182bda1b3f141196988085f23fafd547656f9bda9"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/style-refine/assets/audio/sfx.wav",
+      "sha256": "717d9183548f449207f8b0165ff7b5d1754f932b5038961ae3da34dd18fa1b0c"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/style-refine/assets/fonts/FONTS.md",
+      "sha256": "3220bcbb45ff442e89f71af9155e9ad7c2ac8f8a84fcbe37a3697c65bbf00878"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/style-refine/assets/fonts/Geist-Bold.ttf",
+      "sha256": "f032f37d12e82a37977fd1159c01e1a14415672244d2e6865d57e28c74886d03"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/style-refine/assets/fonts/Geist-OFL.txt",
+      "sha256": "930853ee1daa68554d9e35c8a9175affb74f699fad9a5da6ee5ebe76379d9137"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/style-refine/assets/fonts/Geist-Regular.ttf",
+      "sha256": "09af32bab931f1ccc6e4776c5c39c8ea6c0d59b096f6f6c2959b1fdf18df0901"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/style-refine/assets/fonts/Geist-SemiBold.ttf",
+      "sha256": "4c11a19d17e7a608f797e6a7e1f266778cc75510861f61063acaa2c0dec7c906"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/style-refine/assets/fonts/GeistMono-Variable-latin.woff2",
+      "sha256": "b7ac144b394cbd81052d6397ec0c33397977b1d7e9bc095e744e652a378c6fb3"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/style-refine/assets/fonts/NotoSansGeorgian.ttf",
+      "sha256": "d96c44584566c7106f7fdea7c07ad09f63e481bf9066e89b1d14195a967d4ca2"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/style-refine/assets/fonts/NotoSerif-Italic.ttf",
+      "sha256": "749e80e313ef711f9373c6cce17c72297ef05490b3dcda7967d1d5d90bf1183f"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/style-refine/assets/fonts/NotoSerifGeorgian-Bold.ttf",
+      "sha256": "f7fc391a93f8d50a5e19649c2e6706a00c9c8412cd820c860fc2e3c28c2c5084"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/style-refine/assets/fonts/NotoSerifGeorgian-Regular.ttf",
+      "sha256": "eea3e8415a37dd496dbb6fad16e95b1513d3fc14863c6cc8886456f273eb1cdf"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/style-refine/assets/fonts/Vankisi-HeaderFont.ttf",
+      "sha256": "a64e987042fedb59d4e6ef4b86ad1b63d8a5297f9dc170c95599167f81cc73d3"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/style-refine/assets/img/saas/g1.jpg",
+      "sha256": "24b93366398a7e1d8c2eda73629a7665cc04f62fad45799f70939f8e2c82426e"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/style-refine/assets/img/saas/g2.jpg",
+      "sha256": "51b5717e7e2b9ba608387b6f2b174137dffaa7892e54b14a73254d11998bc215"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/style-refine/assets/img/saas/g3.jpg",
+      "sha256": "944e0bb5fee058d650f2d182d41b6e59671ea4289912b93550764d9f4c71037a"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/style-refine/assets/img/saas/g4.jpg",
+      "sha256": "a7640c907a43fc6c409220536d5793ae38f4e11ea4672a63406e8b298bed49d7"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/style-refine/assets/img/saas/hero.jpg",
+      "sha256": "157f34b5a85b6b973ac0fa245eea9b960d07fb1fc74344f07487ca35e897beed"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/style-refine/assets/img/vankisi/atmosphere.jpg",
+      "sha256": "b2db62656decabdecacdc0ab78d634b331ce723ccb5c2009f90a5a81a95b927b"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/style-refine/assets/img/vankisi/khinkali.jpg",
+      "sha256": "1c7f3519461e2cbde750adf47a4378ce342db525a71b8b0ee3b3a716a9ac8b65"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/style-refine/assets/img/vankisi/logo.svg",
+      "sha256": "d479d4085c116187b722fd66f0c746c8807bf377245eb47ed9768f0570f243c1"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/style-refine/assets/img/vankisi/signaturedish.jpg",
+      "sha256": "a0ba803b4bfa504d7e3d38ca5ec28f9f9e359810ca5726c9f6cdb88e0b51feb4"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/style-refine/audio/music.mjs",
+      "sha256": "f6f89e0f7debbaa71df13f7d6251627c1be9bbed039edd90df57037cab93716c"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/style-refine/audio/sfx.mjs",
+      "sha256": "b7567077932ecbe563dbf7f4439c7364369705044b45d724c416551546623ae7"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/style-refine/base.css",
+      "sha256": "35663e16df15f95924dd8a13553781e0aa602156d98752d44e3f30a67d0c9154"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/style-refine/fast.css",
+      "sha256": "1a3ef2489c3bceab89601c6ba1718bd5387a4433bf0f424ee5f0c87c66b2e097"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/style-refine/hyperframes.json",
+      "sha256": "ad5dadeef78a520800a9e5cdd27a92ff5ac37f11b6a07f611b6b52b9f8c79a17"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/style-refine/index.html",
+      "sha256": "555efbe4bb640c5e7b5b445b227165463c5062e7fec16892e800a505995c6fbf"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/style-refine/meta.json",
+      "sha256": "789b7c16fd078632da1d2eadd6ec02670c16e5980f08a0c75fee23609b7bb531"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/style-refine/package.json",
+      "sha256": "a2ab07d3e0407db11ad4361a7e4a873c82169e814e4b0308cd4a3d1112b68ea7"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/style-refine/timeline.js",
+      "sha256": "af22e74c0d34d0cfe7a22791f8f5f13f2d9c52c184d669666560289c6aa458a4"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/style-refine/tools/deliver.sh",
+      "sha256": "fc1db9e6e79a65fcd50dc8726d6926a55eb8b2460b5e6472753ab072fea0bf01"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/style-refine/tools/inline.py",
+      "sha256": "b6e2e6b9c87dbfe870f06af523ee4351aa34ad6fefab77f694cd7cd5439802d7"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-launch-film/tools/deliver.sh",
+      "sha256": "67d44e52e2dc1197c349057e9d72c22238e2f1a7877d6511345266c40ade315a"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-product-film/.gitignore",
+      "sha256": "a01c408a0d7b3d60a7ca13b4ac03c1fb2668553671b02e9fe030bfe7b1e16fb4"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-product-film/.media/preferences.json",
+      "sha256": "32325a6a14ce42d3f7c0896d86c083bf409904a315407d2c0de9526d364d4e4e"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-product-film/AGENTS.md",
+      "sha256": "c59e72fc9090855ff01deecbdef7cb71d69c9db03d4ec690bca8be3d394b3b14"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-product-film/BRIEF.md",
+      "sha256": "ecf3b8022dde7b0fbdfc3da98f01d51cd10c5fe97c50fb7839a8136f8129d306"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-product-film/CLAUDE.md",
+      "sha256": "c59e72fc9090855ff01deecbdef7cb71d69c9db03d4ec690bca8be3d394b3b14"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-product-film/MOTION_DIRECTION.md",
+      "sha256": "42863ea5f61fa3ebe048bae7a5ef3fbe3610adab33c7215a30a0c0cbbe4692f7"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-product-film/README.md",
+      "sha256": "9814bc596c895e4b275f8a5f575f116a4ce49412a6469ce7a37413ae897b2809"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-product-film/STORYBOARD.md",
+      "sha256": "e8af8ccb4c2ec614fdfabf518e5775bc3f52418b8f047cc864826fd62fa5f09c"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-product-film/assets/audio/vynic-score.wav",
+      "sha256": "4da66b76ca881053aaf194fa47f2cc2547371c3205b14633fa95160b1580799f"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-product-film/assets/fonts/CormorantGaramond-400-latin.woff2",
+      "sha256": "8048ac209bec741e1c29cd0cfac5aac1c0c2ba8c3ddbd4a58fa9bd92ef5c63c2"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-product-film/assets/fonts/CormorantGaramond-700-latin.woff2",
+      "sha256": "21a0fc1c5c22708cf4aa0c147fd32982e25bf9e21efec0ca31a4495ba41753eb"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-product-film/assets/fonts/FONTS.md",
+      "sha256": "69896120f5e314cd080716d7a6f30f04ac828372193629c8caa9aab343630756"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-product-film/assets/fonts/Geist-Bold.ttf",
+      "sha256": "f032f37d12e82a37977fd1159c01e1a14415672244d2e6865d57e28c74886d03"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-product-film/assets/fonts/Geist-OFL.txt",
+      "sha256": "930853ee1daa68554d9e35c8a9175affb74f699fad9a5da6ee5ebe76379d9137"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-product-film/assets/fonts/Geist-Regular.ttf",
+      "sha256": "09af32bab931f1ccc6e4776c5c39c8ea6c0d59b096f6f6c2959b1fdf18df0901"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-product-film/assets/fonts/Geist-SemiBold.ttf",
+      "sha256": "4c11a19d17e7a608f797e6a7e1f266778cc75510861f61063acaa2c0dec7c906"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-product-film/assets/fonts/GeistMono-Variable-latin.woff2",
+      "sha256": "b7ac144b394cbd81052d6397ec0c33397977b1d7e9bc095e744e652a378c6fb3"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-product-film/assets/fonts/NotoSans-Bold.ttf",
+      "sha256": "3a08a47daa00cade516425c15c57615aef2fd418ec9811a7b9f465088f92cc05"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-product-film/assets/fonts/NotoSans-Regular.ttf",
+      "sha256": "f5f552c8c5edb61fe6efb824baf4d4de47b1a8689ab4925ff43f7bd6a4ebece5"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-product-film/assets/fonts/NotoSerif-Bold.ttf",
+      "sha256": "96656aa5cec8f1d6fd0e804c1fad397e1a1cfa082e6642124e0bda68cd8363ce"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-product-film/assets/fonts/NotoSerif-Italic.ttf",
+      "sha256": "749e80e313ef711f9373c6cce17c72297ef05490b3dcda7967d1d5d90bf1183f"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-product-film/assets/fonts/NotoSerif-Regular.ttf",
+      "sha256": "19e72cd8d595fae5bd74a5206f5d938512e1183d4fed7abb1ec1be1d7efa5f88"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-product-film/audio/synth.mjs",
+      "sha256": "7010d97a06b8f3e551521adbd25add420d3c750d4d9137c384baa701a003bbd7"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-product-film/frame.md",
+      "sha256": "8d876e84da180d4bf4a4ba63b070ecf9db7bbc54ee5c16deae543c46cd0ab9e9"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-product-film/hyperframes.json",
+      "sha256": "ad5dadeef78a520800a9e5cdd27a92ff5ac37f11b6a07f611b6b52b9f8c79a17"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-product-film/index.html",
+      "sha256": "774c628e69b968940d4f3a08f83f3979606da4b414c80bbd50a0c26cd2c82baa"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-product-film/meta.json",
+      "sha256": "7a3f8f8d0d897d454203affce4f15e496884d8e1c04778bd1b15e1cd6ee0215f"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-product-film/package.json",
+      "sha256": "9521239befb7dfab276837dc6707ff77e522de6613764c97adcc15d036374c3d"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-product-film/tools/contact-sheet.sh",
+      "sha256": "6e1e1b899c52de70ab3d2a71555a7960204ca140beff2f04179dc8adc3d888c4"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-product-film/tools/render-preview.sh",
+      "sha256": "42165debf726b4cef8b2daca4a8bf2e05a51fd367e6642b97a20d30c90474e25"
+    },
+    {
+      "status": "??",
+      "path": "experiments/hyperframes/vynic-product-film/tools/strip-audio.sh",
+      "sha256": "85a1f9e981e882b9c0df7a9e75d7e8defb871f754a3a18fdf2827726a389d789"
+    }
+  ]
+}

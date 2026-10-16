@@ -1,0 +1,17 @@
+{
+  "baseCommit": "275688e1e5c5dc0e26e62705ab0c7670cf16d99a",
+  "priorSealedSourceManifestSha256": "abf7e6b346ec5ab81a6ce2ce23fe1cba8f3bec2b318b63f45e120bc3030de9ef",
+  "priorSealedSourceArchive": "../POS_MULTI_TERMINAL_275688e1_2026-10-06/candidate-source.zip",
+  "priorSealedSourceArchiveSha256": "6d49ca2a2f211ba927172a4dfd385c806201570c9decd80dc196d09e1083ae68",
+  "followonDeltaFiles": 10,
+  "followonOwnedDeltaArchiveSha256": "345c750458db317999fa597e9545a91c62fc8fb46accc943fbca5fa4dd20fa37",
+  "reconstructedSourceFiles": 936,
+  "reconstructedSourceManifestSha256": "0260995eddeba8dbfca9e4cb6da8af7601b84e586dd9d4275918157b54851334",
+  "nativeBuildQualificationAppliesToPreparedManifest": "../POS_WINDOWS_NATIVE_abf7e6b3_2026-10-06/prepared-source-sha256.json",
+  "windowsManagerQualificationAppliesToManifest": "windows-input-source-sha256.json",
+  "exactCommittedRuntimeQualified": false,
+  "milestones": {
+    "POS02": "NOT_DONE",
+    "EDGE01": "NOT_DONE"
+  }
+}

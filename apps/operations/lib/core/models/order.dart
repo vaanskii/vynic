@@ -463,8 +463,20 @@ class Order extends HiveObject with UpdateTrackedHiveObject {
   /// What the guest consumed: the balance still due plus the advance already
   /// taken. This is the value of the sale, and it does not move when a
   /// deposit is collected earlier.
-  double get grossAmount =>
-      double.parse((totalAmount + effectiveAdvanceAmount).toStringAsFixed(2));
+  double get grossAmount {
+    // A displayed balance is clamped at zero. Adding an excess deposit back
+    // would inflate the sale, so recover that boundary through the existing
+    // price calculation with the deposit removed.
+    if (totalAmount.abs() < 0.005 && effectiveAdvanceAmount > 0) {
+      final beforeAdvance = clone()..advanceAmount = 0;
+      beforeAdvance.managerEditProjection = managerEditProjection;
+      beforeAdvance.recalculateTotal();
+      return beforeAdvance.totalAmount;
+    }
+    return double.parse(
+      (totalAmount + effectiveAdvanceAmount).toStringAsFixed(2),
+    );
+  }
 
   void _adopt(Order other) {
     orderId = other.orderId;

@@ -1,0 +1,98 @@
+{
+  "lib/apps/windows_pos/screens/home_screen.dart": {
+    "added": 64,
+    "removed": 14
+  },
+  "lib/apps/windows_pos/screens/menu_screen.dart": {
+    "added": 79,
+    "removed": 4
+  },
+  "lib/apps/windows_pos/widgets/home/home_calculator_page.dart": {
+    "added": 48,
+    "removed": 29
+  },
+  "lib/apps/windows_pos/widgets/home/home_calculator_section.dart": {
+    "added": 21,
+    "removed": 16
+  },
+  "lib/apps/windows_pos/widgets/home/home_reservations_section.dart": {
+    "added": 37,
+    "removed": 4
+  },
+  "lib/apps/windows_pos/widgets/home/home_tables_dashboard_section.dart": {
+    "added": 373,
+    "removed": 1065
+  },
+  "lib/apps/windows_pos/widgets/home/home_take_away_section.dart": {
+    "added": 50,
+    "removed": 3
+  },
+  "lib/apps/windows_pos/widgets/reservation_creation_sheet.dart": {
+    "added": 345,
+    "removed": 205
+  },
+  "lib/apps/windows_pos/widgets/staff_lock_screen.dart": {
+    "added": 13,
+    "removed": 9
+  },
+  "lib/apps/windows_pos/widgets/table_selection_widget.dart": {
+    "added": 75,
+    "removed": 8
+  },
+  "lib/core/database/repositories/backup_repository.dart": {
+    "added": 15,
+    "removed": 0
+  },
+  "lib/core/database/repositories/order_repository.dart": {
+    "added": 13,
+    "removed": 0
+  },
+  "lib/core/database/repositories/order_table_mutation_repository.dart": {
+    "added": 8,
+    "removed": 0
+  },
+  "lib/core/database/repositories/quick_order_repository.dart": {
+    "added": 52,
+    "removed": 0
+  },
+  "lib/core/database/repositories/reservation_repository.dart": {
+    "added": 194,
+    "removed": 2
+  },
+  "lib/core/database/repositories/sales_repository.dart": {
+    "added": 29,
+    "removed": 2
+  },
+  "lib/core/models/quick_order_draft.dart": {
+    "added": 26,
+    "removed": 0
+  },
+  "lib/core/models/quick_order_draft.g.dart": {
+    "added": 8,
+    "removed": 2
+  },
+  "lib/core/models/reservation.dart": {
+    "added": 15,
+    "removed": 0
+  },
+  "lib/core/models/reservation.g.dart": {
+    "added": 14,
+    "removed": 2
+  },
+  "lib/core/models/reservation_status.dart": {
+    "added": 5,
+    "removed": 0
+  },
+  "lib/core/models/staff_role.dart": {
+    "added": 3,
+    "removed": 0
+  },
+  "lib/core/models/user.dart": {
+    "added": 2,
+    "removed": 0
+  },
+  "lib/core/services/database_service.dart": {
+    "added": 14,
+    "removed": 0
+  }
+}

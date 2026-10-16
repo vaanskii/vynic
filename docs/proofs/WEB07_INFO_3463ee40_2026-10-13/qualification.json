@@ -1,0 +1,155 @@
+{
+  "status": "PASS_WEB07_SUPPORTED_SHARED_INFO_SOURCE_BOUNDARY",
+  "head": "3463ee406184fec7f53818416e11d0e5f5602c87",
+  "qualifiedAtUtc": "2026-10-13T17:56:45.462721+00:00",
+  "uncommitted": true,
+  "ownershipDecision": "Existing D026/D028 and WEBSITE_FOUNDATION; no new source of truth",
+  "consumers": [
+    "Footer",
+    "Contact",
+    "Atmosphere owner gallery teaser",
+    "PaymentSuccess confirmed contact"
+  ],
+  "finalChecks": [
+    {
+      "name": "backend-types",
+      "exitCode": 0
+    },
+    {
+      "name": "backend-new-lint",
+      "exitCode": 0
+    },
+    {
+      "name": "frontend-aggregate",
+      "exitCode": 0,
+      "passed": 233,
+      "failed": 0,
+      "skipped": 0
+    },
+    {
+      "name": "platform-build",
+      "exitCode": 0
+    },
+    {
+      "name": "vankisi-build",
+      "exitCode": 0
+    },
+    {
+      "name": "vankisi-new-lint",
+      "exitCode": 0
+    },
+    {
+      "name": "frontend-new-lint",
+      "exitCode": 0
+    }
+  ],
+  "backendAggregate": {
+    "success": true,
+    "numPassedTestSuites": 73,
+    "numFailedTestSuites": 0,
+    "numPendingTestSuites": 62,
+    "numPassedTests": 851,
+    "numFailedTests": 0,
+    "numPendingTests": 848,
+    "numTotalTests": 1699
+  },
+  "additionalHttpPg": {
+    "success": true,
+    "numPassedTestSuites": 1,
+    "numFailedTestSuites": 0,
+    "numPendingTestSuites": 0,
+    "numPassedTests": 8,
+    "numFailedTests": 0,
+    "numPendingTests": 0,
+    "numTotalTests": 8
+  },
+  "backendPassedCaseRecords": 859,
+  "caseIdentity": "Test file + ordinal + fullName; parameterized cases with identical titles remain separate records",
+  "optInCasesNotRunThisPhase": 840,
+  "focusedFrontend": {
+    "success": true,
+    "numPassedTestSuites": 7,
+    "numFailedTestSuites": 0,
+    "numPendingTestSuites": 0,
+    "numPassedTests": 41,
+    "numFailedTests": 0,
+    "numPendingTests": 0,
+    "numTotalTests": 41
+  },
+  "newSharedInfoFrontendCases": 22,
+  "lint": {
+    "newOrChangedInfoCodeAndTests": {
+      "errors": 0,
+      "warnings": 0
+    },
+    "AtmosphereInherited": {
+      "errors": 1,
+      "warnings": 0,
+      "rule": "@typescript-eslint/no-explicit-any",
+      "ruleAndMessageUnchanged": true
+    }
+  },
+  "gitDiffCheck": "PASS",
+  "browser": {
+    "method": "CUA real components/providers; actual HTTP with synthetic owner public JSON exported by PG/HTTP test",
+    "cacheProof": "Same before request URL; public,max-age=3600 and ETag; focus after synthetic edit revalidates and displays current public values",
+    "crossOrigin": "Only content-type requested by preflight; no new CORS header allowed",
+    "widths": [
+      375,
+      768,
+      1440
+    ],
+    "overflow": false,
+    "unitLocales": [
+      "ka",
+      "en",
+      "ru"
+    ],
+    "browserLocales": [
+      "ka",
+      "en"
+    ],
+    "galleryLoaded": true,
+    "errorRetryFocus": "2px solid",
+    "capabilityOffHidesHoursAndGallery": true,
+    "wrongBindingHidesInfo": true,
+    "tab": "CLOSED",
+    "viewport": "RESET",
+    "imageFixture": "Synthetic managed asset URL served repository JPEG bytes, not real upload"
+  },
+  "boundaries": {
+    "backendProductionImplementationChanged": false,
+    "schemaOrMigrationChanged": false,
+    "paymentVerificationAndCartRuntimeChanged": false,
+    "realUserDataOrCredentialsChanged": false,
+    "bookingAdmissionPolicyChanged": false,
+    "globalCustomDeploymentAttestation": "NOT_IMPLEMENTED_WEB05_OPEN",
+    "newsletterImplemented": false,
+    "realServicesRestarted": false,
+    "deployed": false,
+    "committed": false,
+    "pushed": false,
+    "bankOrHardwareExercised": false
+  },
+  "cleanup": {
+    "ownedServices": {
+      "ownedPreview": {
+        "port": 59844,
+        "listening": false
+      },
+      "ownedPostgres": {
+        "port": 55038,
+        "listening": false
+      }
+    },
+    "privateLogs": "/tmp/vynic-web07-info-xhmpmucj"
+  },
+  "sourceHashes": "source-hashes.json",
+  "limitations": [
+    "Local source/fixture qualification only; production build, Host/proxy/DNS/TLS/media acceptance remains WEB05/OPS work.",
+    "Backend aggregate skipped 848 opt-in cases; new HTTP/PG run covers 8 of those, leaving 840 not executed in this phase. Earlier financial/POS proof is separate and was not redundantly rerun.",
+    "Bespoke narrative/design assets and existing booking time-choice lists retained; no opening-hours booking admission enforcement.",
+    "Existing newsletter and legal/accessibility placeholder links remain deferred.",
+    "POS02.C continues independently; INV01.F2 product decisions remain unapproved."
+  ]
+}

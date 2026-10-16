@@ -1,0 +1,36 @@
+{
+  "check": "web03",
+  "result": {
+    "passed": 26,
+    "failed": 0,
+    "skipped": 0
+  },
+  "passedCases": [
+    "WEB-03 durable payment handoff / PostgreSQL + real HTTP rejects unsigned callbacks and wrong payment reference before creating intents",
+    "WEB-03 durable payment handoff / PostgreSQL + real HTTP commits paid status + immutable snapshot together, without a premature POS link",
+    "WEB-03 durable payment handoff / PostgreSQL + real HTTP rolls back the payment outcome when the intent cannot be persisted",
+    "WEB-03 durable payment handoff / PostgreSQL + real HTTP concurrent duplicate callbacks retain one snapshot and one allocated identity",
+    "WEB-03 durable payment handoff / PostgreSQL + real HTTP EdgeCommand fault leaves paid booking recoverable, no orphan link/queue",
+    "WEB-03 durable payment handoff / PostgreSQL + real HTTP reservations fault leaves paid booking recoverable, no orphan link/queue",
+    "WEB-03 durable payment handoff / PostgreSQL + real HTTP lost callback reply/restart and later guest/menu edits never change admitted work",
+    "WEB-03 durable payment handoff / PostgreSQL + real HTTP lost ACK redelivers the same command ID/payload, then terminal success is never revived",
+    "WEB-03 durable payment handoff / PostgreSQL + real HTTP terminal failure and missing receipts stay visible and are never automatically replayed",
+    "WEB-03 durable payment handoff / PostgreSQL + real HTTP no Device leaves intent pending; later enrollment admits it once",
+    "WEB-03 durable payment handoff / PostgreSQL + real HTTP disabled Primary never falls back to LAN or a secondary terminal",
+    "WEB-03 durable payment handoff / PostgreSQL + real HTTP table conflict becomes explicit attention without rebooking or automatic retry",
+    "WEB-03 durable payment handoff / PostgreSQL + real HTTP cancellation persists before create admission and waits for the same create ACK",
+    "WEB-03 durable payment handoff / PostgreSQL + real HTTP unresolved create outcome puts cancellation into operator attention",
+    "WEB-03 durable payment handoff / PostgreSQL + real HTTP historical links and confirmed rows remain untracked; no new IDs or replay",
+    "WEB-03 durable payment handoff / PostgreSQL + real HTTP historical cancellation uses its existing POS identity",
+    "WEB-03 durable payment handoff / PostgreSQL + real HTTP same-organization venues and different organizations cannot cross FK, claims or status reads",
+    "WEB-03 durable payment handoff / PostgreSQL + real HTTP Platform/support can read; customer tokens, anonymous access and write attempts are refused",
+    "WEB-03 durable payment handoff / PostgreSQL + real HTTP bootstrap legacy outbox and booking link commit together; pruned receipt is unknown, not replayed",
+    "WEB-03 durable payment handoff / PostgreSQL + real HTTP preserves existing partial_completed payment mapping",
+    "WEB-03 durable payment handoff / PostgreSQL + real HTTP preserves existing auth_requested payment mapping",
+    "WEB-03 durable payment handoff / PostgreSQL + real HTTP collision allocation reserves a different identity for the second booking",
+    "WEB-03 durable payment handoff / PostgreSQL + real HTTP a pre-existing different command cannot be rewritten or revived by handoff retry",
+    "WEB-03 durable payment handoff / PostgreSQL + real HTTP post-commit notification failure cannot replay committed queue work",
+    "WEB-03 durable payment handoff / PostgreSQL + real HTTP unsupported stored table identity is visible attention, not an endless queue retry",
+    "WEB-03 durable payment handoff / PostgreSQL + real HTTP generic enqueue cannot rewrite or revive an outbox-owned terminal command"
+  ]
+}

@@ -1,0 +1,179 @@
+{
+  "task": "WEB-03 durable Website booking delivery",
+  "qualificationBoundary": "code + isolated DB/HTTP + jsdom + temporary Hive; not production admission",
+  "qualifiedAtUtc": "2026-10-13T13:07:10.691688+00:00",
+  "head": "3463ee406184fec7f53818416e11d0e5f5602c87",
+  "workingTree": "preserved pre-existing changes; no commit/push",
+  "sourceCount": 692,
+  "sourcesStableAcrossQualificationAndProof": true,
+  "sourceManifest": "qualified-sources.json",
+  "checks": [
+    {
+      "name": "web03",
+      "exitCode": 0,
+      "passed": 26,
+      "failed": 0,
+      "skipped": 0
+    },
+    {
+      "name": "web06-regression",
+      "exitCode": 0,
+      "passed": 7,
+      "failed": 0,
+      "skipped": 0
+    },
+    {
+      "name": "w1-regression",
+      "exitCode": 0,
+      "passed": 8,
+      "failed": 0,
+      "skipped": 0
+    },
+    {
+      "name": "website-regression",
+      "exitCode": 0,
+      "passed": 23,
+      "failed": 0,
+      "skipped": 0
+    },
+    {
+      "name": "sec01-regression",
+      "exitCode": 0,
+      "passed": 45,
+      "failed": 0,
+      "skipped": 0
+    },
+    {
+      "name": "sec02-regression",
+      "exitCode": 0,
+      "passed": 25,
+      "failed": 0,
+      "skipped": 0
+    },
+    {
+      "name": "tenant-regression",
+      "exitCode": 0,
+      "passed": 20,
+      "failed": 0,
+      "skipped": 0
+    },
+    {
+      "name": "backend-aggregate",
+      "exitCode": 0,
+      "passed": 851,
+      "failed": 0,
+      "skipped": 801
+    },
+    {
+      "name": "backend-typecheck",
+      "exitCode": 0
+    },
+    {
+      "name": "backend-build",
+      "exitCode": 0
+    },
+    {
+      "name": "backend-new-lint",
+      "exitCode": 0
+    },
+    {
+      "name": "backend-touched-lint",
+      "exitCode": 1
+    },
+    {
+      "name": "prisma-validate",
+      "exitCode": 0
+    },
+    {
+      "name": "frontend-aggregate",
+      "exitCode": 0,
+      "passed": 176,
+      "failed": 0,
+      "skipped": 0
+    },
+    {
+      "name": "frontend-build",
+      "exitCode": 0
+    },
+    {
+      "name": "frontend-new-lint",
+      "exitCode": 0
+    },
+    {
+      "name": "frontend-touched-lint",
+      "exitCode": 1
+    },
+    {
+      "name": "contracts",
+      "exitCode": 0
+    }
+  ],
+  "distinctBackendPassed": 1005,
+  "aggregateFocusedOverlap": 0,
+  "caseIdentity": "filename + fullName + parameter occurrence (one existing test title is shared by three distinct malformed-key parameters)",
+  "aggregateOptInSkipped": 801,
+  "optInCasesRunSeparately": 154,
+  "remainingOptInNotRun": 647,
+  "frontendPassed": 176,
+  "flutterConvergenceJournal": {
+    "passed": 28,
+    "failed": 0,
+    "skipped": 0,
+    "doneSuccess": true
+  },
+  "migration": {
+    "database": "disposable_web03_upgrade_6f636636",
+    "historicalRowsByteIdentical": true,
+    "rows": 2,
+    "automaticallyCreatedIntents": 0,
+    "migrationReplay": "PASS"
+  },
+  "freshFullMigrationInstall": "PASS for every independent focused/aggregate DB",
+  "lint": {
+    "newSourceTests": "clean",
+    "newTouchedDiagnostics": 0,
+    "retainedBackendErrors": 13,
+    "retainedFrontendErrors": 1,
+    "fullRepositoryLint": "not run; no claim of a clean baseline"
+  },
+  "format": "PASS for changed implementation/new tests; existing shared test-fixture style preserved",
+  "diffCheck": "PASS",
+  "limitations": [
+    "No real bank requests/credentials; signature acceptance is stubbed in the new HTTP fixture",
+    "No actual deployed-process kill; recovery tested through retained rows and fresh worker instances",
+    "No physical POS/Windows/Mac/network/hardware qualification",
+    "No browser screenshot; frontend state/interaction verification uses jsdom",
+    "Historical deliveries remain untracked/unknown; no auto-replay/repair",
+    "Existing day-level availability, pricing and provider payment-state mappings retained; WEB-01/04 unresolved",
+    "647 opt-in backend cases not run; 14 scoped pre-existing lint errors unchanged"
+  ],
+  "safety": {
+    "onlySyntheticOwnedDatabases": true,
+    "liveDataEdited": false,
+    "liveDeployment": false,
+    "liveServiceRestart": false,
+    "DNSOrTLSChanged": false,
+    "push": false,
+    "commit": false,
+    "realCredentialsGeneratedOrTransmitted": false,
+    "ownedPostgresStopped": {
+      "ownedCluster": "/tmp/vynic-web03-5ct0zm85/pg",
+      "statusExitCode": 3,
+      "postmasterPidAbsent": true,
+      "liveServicesRestarted": false
+    }
+  },
+  "remainingDecisions": [
+    "WEB-01 whole-day/time-slot and expired-hold late-payment policy",
+    "WEB-04 provider authorized/captured/partial/refund mapping and operational exception owner",
+    "INV01 F2 previously pending product choices; not chosen",
+    "POS02.C concurrent checkout preserved; not duplicated"
+  ],
+  "artifactsSha256": {
+    "upgrade-proof.json": "9d7982dbc77874d58e36cc8131ae49ad3a67f2315e2217b1c1cb464197ec5d6a",
+    "lint-comparison.json": "35c91d5494d1584b4be5c9fd91824c79fce704098407a5a4fb356fc24b5155eb",
+    "cleanup.json": "151a84e0a737aa01e644633b9c844ac273731ab6d721f5610a23fd4c410f1303",
+    "qualified-sources.json": "8133c96eeb99b7e40d11ff6f5c7f59aae158e6de7722b0b38616d373ab5ea6fd",
+    "checks.json": "33ab1a4fbbad61adcfd569765f6bacc1309f83f1855bbcf69d49f2aab93c80ba"
+  }
+}

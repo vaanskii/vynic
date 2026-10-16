@@ -1,0 +1,10 @@
+$ErrorActionPreference='Stop';$ProgressPreference='SilentlyContinue'
+$job=Join-Path $env:LOCALAPPDATA 'VynicReadinessNative\abf7e6b3-zgovo5qh'
+$source=Join-Path $job 'apps\operations\windows\flutter\ephemeral\cpp_client_wrapper'
+$dest='\\Mac\Home\Developer\vynic\docs\proofs\POS_WINDOWS_NATIVE_abf7e6b3_2026-10-06\sdk-wrapper'
+if(!(Test-Path -LiteralPath $source)){throw 'Existing built Flutter wrapper absent'}
+if(Test-Path -LiteralPath $dest){throw 'Task SDK header copy already exists'}
+New-Item -ItemType Directory -Path $dest | Out-Null
+Copy-Item -LiteralPath (Join-Path $source 'include') -Destination (Join-Path $dest 'include') -Recurse
+Copy-Item -LiteralPath (Join-Path $source 'standard_codec.cc') -Destination (Join-Path $dest 'standard_codec.cc')
+Write-Output ('READONLY_WRAPPER_COPY '+$source)

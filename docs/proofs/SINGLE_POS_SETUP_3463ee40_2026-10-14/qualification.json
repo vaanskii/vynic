@@ -1,0 +1,286 @@
+{
+  "status": "QUALIFIED_POS_SETUP_AND_CONFIG_MANAGER_EXISTING_SELECTION_VERIFIED",
+  "qualifiedAtUtc": "2026-10-14T14:17:12.696714+00:00",
+  "head": "3463ee406184fec7f53818416e11d0e5f5602c87",
+  "uncommitted": true,
+  "scope": {
+    "singlePosEnrollmentAndFirstManagerNamePin": "IMPLEMENTED",
+    "ordinaryAdditionalPosNoBootstrap": "IMPLEMENTED",
+    "managerVenueBinding": {
+      "entry": "EXISTING_REUSABLE_RESTAURANT_LOGIN_CODE",
+      "userEntryFrequency": "once per installation/API origin; selection survives reopen and ordinary logout",
+      "pinOnlySubsequentLogin": true,
+      "newServerConsumedOneUseCodeOrLink": "NOT_IMPLEMENTED",
+      "newQrDeepLink": "NOT_IMPLEMENTED",
+      "approvedWrittenProposalReference": "../ONBOARDING_FLOW_PROPOSAL_3463ee40_2026-10-14/proposal.md; table and S item retain existing identifier/selection",
+      "broaderInterpretationGap": "If approval intended a new server single-use Manager linking mechanism, that requirement is not fulfilled by this source; explanatory copy is not claimed as such a mechanism."
+    },
+    "publicEnvConfig": "APPENDED_AND_CONSUMED; prior preservation evidence retained",
+    "existingManagerRecovery": "PLATFORM_ADMIN_ONLY; operational Staff permissions retained"
+  },
+  "backend": {
+    "aggregate": {
+      "passed": 864,
+      "failed": 0,
+      "skipped": 869,
+      "success": true
+    },
+    "singleSetupHttpPg": {
+      "passed": 16,
+      "failed": 0,
+      "skipped": 0,
+      "success": true
+    },
+    "legacyActivationHttpPg": {
+      "passed": 15,
+      "failed": 0,
+      "skipped": 0,
+      "success": true
+    },
+    "legacyEnrollmentHttpPg": {
+      "passed": 19,
+      "failed": 0,
+      "skipped": 0,
+      "success": true
+    },
+    "overlap": {
+      "focusedPassed": 50,
+      "focusedAlreadyPassedInAggregate": 0,
+      "focusedAggregateSkippedCasesRunSeparately": 50,
+      "distinctPassed": 914,
+      "remainingOptInsNotRun": 819,
+      "identity": "relative test path + fullName + occurrence ordinal for repeated parameterized titles"
+    }
+  },
+  "frontend": {
+    "aggregate": {
+      "passed": 253,
+      "failed": 0,
+      "skipped": 0,
+      "success": true
+    },
+    "backendBuild": "PASS",
+    "platformTypecheckAndBuild": "PASS; existing large-bundle warning remains",
+    "qa": "jsdom interaction fixtures; no new live browser session"
+  },
+  "flutter": {
+    "finalFocusedOnboarding": {
+      "success": true,
+      "passed": 37,
+      "failed": 0,
+      "skipped": 0
+    },
+    "managerDefaultRegression": {
+      "success": true,
+      "passed": 16,
+      "failed": 0,
+      "skipped": 0
+    },
+    "productionCompileFlagRegression": {
+      "success": true,
+      "passed": 6,
+      "failed": 0,
+      "skipped": 0
+    },
+    "productionCasesOverlapDefault": "6 cases rerun under production defines; not added to distinct default count",
+    "analyzeChanged11Files": "PASS;0 issues",
+    "formatChanged11Files": "PASS;0 changes",
+    "nativeDeveloperBuilds": {
+      "pos": {
+        "exitCode": 0,
+        "workspace": "/Users/vaanskii/Developer/vynic/apps/operations/.dart_tool/vynic-dev/pos/apps/operations",
+        "debugOnly": true,
+        "launched": false
+      },
+      "manager": {
+        "exitCode": 0,
+        "workspace": "/Users/vaanskii/Developer/vynic/apps/operations/.dart_tool/vynic-dev/manager/apps/operations",
+        "debugOnly": true,
+        "launched": false
+      }
+    },
+    "nativeMetadata": {
+      "pos": {
+        "environment": "development",
+        "apiOrigin": "http://api.vynic.localhost",
+        "bundleId": "ge.vynic.pos",
+        "appPath": "/Users/vaanskii/Developer/vynic/apps/operations/.dart_tool/vynic-dev/pos/apps/operations/build/macos/Build/Products/Debug/Vynic POS.app",
+        "legacyPrivateKeysInDefines": false,
+        "envAssets": false,
+        "launched": false
+      },
+      "manager": {
+        "environment": "development",
+        "apiOrigin": "http://api.vynic.localhost",
+        "bundleId": "ge.vynic.manager",
+        "appPath": "/Users/vaanskii/Developer/vynic/apps/operations/.dart_tool/vynic-dev/manager/apps/operations/build/macos/Build/Products/Debug/Vynic Manager.app",
+        "legacyPrivateKeysInDefines": false,
+        "envAssets": false,
+        "launched": false
+      }
+    },
+    "broadRun": {
+      "success": false,
+      "passed": 2628,
+      "failed": 3,
+      "skipped": 17,
+      "status": "NOT_GREEN_EXTERNAL_FIXTURE_PREREQUISITES",
+      "sourceStage": "Before final WAITING_PRIMARY and wording/test refinements; final focused suites above cover those refinements",
+      "errors": [
+        {
+          "test": "actual child-process mTLS health, exact held retries and result refusal",
+          "prerequisite": "VYNIC_PRINTER_AGENT_GO_FIXTURE compiled binary absent"
+        },
+        {
+          "test": "actual Dart→Go mutual TLS loses ACK, flushes before send, reopens and retains other-origin receipts",
+          "prerequisite": "VYNIC_OPERATIONAL_PROOF_GO_FIXTURE compiled binary absent"
+        },
+        {
+          "test": "MENU09 native admission, offline durability, restart and fresh-machine gate",
+          "prerequisite": "MENU09_HIVE_DIR / MENU09_HTTP_FIXTURE dedicated live harness absent"
+        }
+      ],
+      "goSdkAvailable": false
+    }
+  },
+  "migration": {
+    "status": "PASS",
+    "fromMigrations": 75,
+    "toMigrations": 76,
+    "historicalMigrationChecksumsUnchanged": true,
+    "historicalVenueDeviceStaffPinAndActivationValuesUnchanged": true,
+    "oldOrdinaryEnrollmentPrivilege": false,
+    "oldActivationLinks": [
+      null,
+      null
+    ],
+    "repeatMigrationDeploy": "NOOP",
+    "liveDataTouched": false
+  },
+  "configuration": {
+    "files": [
+      {
+        "file": "apps/operations/.env",
+        "originalByteCount": 2937,
+        "existingBytesPreservedExactly": true,
+        "appendedKeys": [
+          "VYNIC_ENV",
+          "VYNIC_API_URL"
+        ],
+        "publicOnly": true,
+        "finalAppendedBlockValidated": true,
+        "originalComparison": "Verified at append time; no original env copy retained in proof or private snapshots"
+      },
+      {
+        "file": "apps/operations/.env.example",
+        "originalByteCount": 823,
+        "existingBytesPreservedExactly": true,
+        "appendedKeys": [
+          "VYNIC_ENV",
+          "VYNIC_API_URL"
+        ],
+        "publicOnly": true,
+        "finalAppendedBlockValidated": true,
+        "originalComparison": "Verified at append time; no original env copy retained in proof or private snapshots"
+      }
+    ],
+    "valuesWereNotLogged": true,
+    "onlyPublicKeysPassedToFlutterBuild": [
+      "VYNIC_ENV",
+      "VYNIC_API_URL"
+    ],
+    "updatedAt": "2026-10-14T14:12:40.088712+00:00"
+  },
+  "tooling": {
+    "publicBuildConfigAndProductTests": {
+      "passed": 8,
+      "failed": 0
+    },
+    "publicKeys": [
+      "VYNIC_ENV",
+      "VYNIC_API_URL"
+    ],
+    "legacyEnvKeysForwardedAsDartDefines": false
+  },
+  "lint": {
+    "changedBoundaryAndNewBackendTestAddedErrors": 0,
+    "newBackendTestErrors": 0,
+    "newBackendTestWarnings": 0,
+    "inheritedBackendErrorsOnUnchangedSource": 4,
+    "baselineEvidence": {
+      "remaining": [
+        {
+          "file": "apps/backend/src/customer/customer.controller.ts",
+          "rule": "@typescript-eslint/no-base-to-string",
+          "line": 181,
+          "surroundingSourceUnchangedFromBaseline": true
+        },
+        {
+          "file": "apps/backend/src/customer/customer.controller.ts",
+          "rule": "@typescript-eslint/no-unnecessary-type-assertion",
+          "line": 213,
+          "surroundingSourceUnchangedFromBaseline": true
+        },
+        {
+          "file": "apps/backend/src/customer/customer.controller.ts",
+          "rule": "@typescript-eslint/no-unsafe-assignment",
+          "line": 261,
+          "surroundingSourceUnchangedFromBaseline": true
+        },
+        {
+          "file": "apps/backend/src/customer/customer.service.ts",
+          "rule": "@typescript-eslint/no-unused-vars",
+          "line": 8,
+          "surroundingSourceUnchangedFromBaseline": true
+        }
+      ],
+      "addedDiagnosticsInChangedImplementation": 0
+    },
+    "platformChangedComponentsAndNewTestErrors": 0,
+    "platformWarnings": 0
+  },
+  "cleanup": {
+    "ownedCluster": "STOPPED",
+    "port": 56321,
+    "portClosed": true,
+    "postmasterPidAbsent": true,
+    "liveServicesChanged": false,
+    "ops01Retried": false
+  },
+  "boundaries": {
+    "realEnrollmentOrActivation": false,
+    "realCredentialIssuanceOrUserPinChanges": false,
+    "realDataEditsOrResets": false,
+    "liveServicesRestarted": false,
+    "deployed": false,
+    "committed": false,
+    "pushed": false,
+    "ops01": "PAUSED; no restore retry",
+    "pos02c": "SEPARATE; no multi-POS operational cutover claim"
+  },
+  "commands": {
+    "dockerUserRun": [
+      "cd /Users/vaanskii/Developer/vynic",
+      "./scripts/docker.sh rebuild backend platform-web",
+      "./scripts/docker.sh status",
+      "curl -fsS http://api.vynic.localhost/healthz"
+    ],
+    "posSeparateTerminal": "python3 /Users/vaanskii/Developer/vynic/apps/operations/tool/dev.py pos",
+    "managerSeparateTerminal": "python3 /Users/vaanskii/Developer/vynic/apps/operations/tool/dev.py manager",
+    "restart": "q existing Flutter run, then relaunch; hot restart does not change compiled defines"
+  },
+  "limitations": [
+    "Manager linking uses the existing reusable restaurant code, not a new single-use token or link.",
+    "Broad Flutter run retains3 external fixture setup failures; no full Flutter aggregate PASS claimed.",
+    "869 aggregate opt-ins were skipped;50 ran separately,819 remain unrun in this qualification.",
+    "Four existing backend lint errors and the existing frontend large-bundle warning remain.",
+    "macOS debug source/build qualification does not qualify Windows/mobile release, production deployment or live enrollment.",
+    "No real data conflict is repaired automatically; an existing duplicate PIN requires an authorized unique PIN change.",
+    "Current Docker deployment still requires the user-controlled rebuild/migration; dirty checkout contains preserved unrelated WIP."
+  ],
+  "review": {
+    "method": "Self-review against principal/Venue/Primary/history/expiry/retry/unique-PIN invariants plus real HTTP/PG tests",
+    "separateAgentReview": false
+  },
+  "privateLogs": "/var/folders/82/drcfb4994p16rl49gxx9tj000000gn/T/vynic-single-pos-setup-8i91wjhf"
+}

@@ -1,0 +1,22 @@
+{
+  "window": {
+    "protocol": 1,
+    "baseCandidate": "d194367f8fd0e2f6d9dcfea86f52d09cb605b32779b7904613b00466bd084de8",
+    "candidateSha256": "db74149c4680d05e16a3a1f53906b269bf76be3d1d71e78796119633d15ff51a",
+    "windowId": "pos02-unapproved-zero",
+    "approval": "UNAPPROVED; preparation only",
+    "startsAt": "2026-10-02T22:24:22.229305Z",
+    "expiresAt": "2026-10-02T22:26:22.229305Z",
+    "allowance": 0,
+    "host": "10.10.10.5",
+    "port": 9100,
+    "target": "kitchen",
+    "model": "UNDECIDED",
+    "firmware": "UNDECIDED",
+    "paperMm": 80,
+    "action": "original",
+    "actionId": "pos02-unapproved-zero",
+    "jobId": "pos02-unapproved-zero"
+  },
+  "go": false
+}

@@ -1,0 +1,49 @@
+{
+	"Path": "google.golang.org/protobuf",
+	"Version": "v1.36.11",
+	"Info": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/google.golang.org/protobuf/@v/v1.36.11.info",
+	"GoMod": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/google.golang.org/protobuf/@v/v1.36.11.mod",
+	"Zip": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/google.golang.org/protobuf/@v/v1.36.11.zip",
+	"Dir": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/google.golang.org/protobuf@v1.36.11",
+	"Sum": "h1:fV6ZwhNocDyBLK0dj+fg8ektcVegBBuEolpbTQyBNVE=",
+	"GoModSum": "h1:HTf+CrKn2C3g5S8VImy6tdcUvCska2kB7j23XfzDpco=",
+	"Origin": {
+		"VCS": "git",
+		"URL": "https://go.googlesource.com/protobuf",
+		"Hash": "96a179180f0ad6bba9b1e7b6e38d0affb0168e9a",
+		"Ref": "refs/tags/v1.36.11"
+	}
+}
+{
+	"Path": "google.golang.org/grpc/cmd/protoc-gen-go-grpc",
+	"Version": "v1.6.2",
+	"Info": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/google.golang.org/grpc/cmd/protoc-gen-go-grpc/@v/v1.6.2.info",
+	"GoMod": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/google.golang.org/grpc/cmd/protoc-gen-go-grpc/@v/v1.6.2.mod",
+	"Zip": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/google.golang.org/grpc/cmd/protoc-gen-go-grpc/@v/v1.6.2.zip",
+	"Dir": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.6.2",
+	"Sum": "h1:rgSNvqscFZ1JgV/4wH5GOsZFSFkR2Eua9As3KIr2LlM=",
+	"GoModSum": "h1:iMEtFwDlAhjDU9L5mY6U1XLwlIId/G3h+QcBHDIvrJ8=",
+	"Origin": {
+		"VCS": "git",
+		"URL": "https://github.com/grpc/grpc-go",
+		"Subdir": "cmd/protoc-gen-go-grpc",
+		"Hash": "1c63fa5f5492fb6cb4cabf9847999ce469505f49",
+		"Ref": "refs/tags/cmd/protoc-gen-go-grpc/v1.6.2"
+	}
+}
+{
+	"Path": "golang.org/x/vuln",
+	"Version": "v1.8.0",
+	"Info": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/golang.org/x/vuln/@v/v1.8.0.info",
+	"GoMod": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/golang.org/x/vuln/@v/v1.8.0.mod",
+	"Zip": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/golang.org/x/vuln/@v/v1.8.0.zip",
+	"Dir": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/golang.org/x/vuln@v1.8.0",
+	"Sum": "h1:clG4qBU6zH5VKjti8n5j8BBuYzoSha392xXMkXS351U=",
+	"GoModSum": "h1:Fzm4XK3Hbl1ZvZ7JpNTEWb7CJWOZ7m2LX0GLu4Fsrwo=",
+	"Origin": {
+		"VCS": "git",
+		"URL": "https://go.googlesource.com/vuln",
+		"Hash": "709015412431dd2b5b28a53c06c70bc02d49074c",
+		"Ref": "refs/tags/v1.8.0"
+	}
+}

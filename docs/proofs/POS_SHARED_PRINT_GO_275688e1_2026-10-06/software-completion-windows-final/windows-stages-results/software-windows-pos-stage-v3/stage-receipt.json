@@ -1,0 +1,29 @@
+{
+  "schema": 1,
+  "createdAtUtc": "2026-10-06T17:59:48.733764+00:00",
+  "finalSourceReceiptSHA256": "faaaec2f1ece4f8259353666000eb4c0d3aee6143e73ae7fdf90772a937b581b",
+  "files": 1109,
+  "sourceZipSHA256": "c34f868986cb6015d43639a2cb20276660801ea8e16282eb5ce37060e5f96463",
+  "sourceManifestSHA256": "5c109431d067276a007a9b50d26076117e6624c937051316db62c6bd30d592f3",
+  "testSuites": 39,
+  "analysisFiles": 68,
+  "fixtures": {
+    "operational-proof-server-windows.test.exe": {
+      "sha256": "2c9370e4c4cfdb55094f63a26a2bf5b45bff43868a1a2c14a0f47c2654c70abb",
+      "bytes": 26370560
+    },
+    "printer-agent-server-windows.test.exe": {
+      "sha256": "f335745e38be573f5ec031478eab4b524a8069c811324ac2a5d39876b676e894",
+      "bytes": 25833472
+    }
+  },
+  "firebaseSdk": "C:\\Users\\vaanskii\\AppData\\Local\\VynicLocalReleaseBuild\\e7a0ffd0bb571781\\apps\\operations\\build\\windows\\x64\\extracted\\firebase_cpp_sdk_windows",
+  "firebaseVersion": "13.5.0",
+  "firebaseVersionHeaderSha256": "8485c4305c02638bca186a082a7c3b94040f995bc542664f3be002610847da24",
+  "guestJobSuffix": "VynicReadinessNative/software-1a63ebf3cde4-pos",
+  "executionStatus": "AWAIT_REVIEWED_V2_SOURCE_AND_GUEST_SESSION",
+  "physicalJobs": 0,
+  "productStarted": false,
+  "serviceOperations": false,
+  "sourceScope": "Frozen v2 cohort after two reviewed test-only native-path fixes; all predecessor receipts immutable"
+}

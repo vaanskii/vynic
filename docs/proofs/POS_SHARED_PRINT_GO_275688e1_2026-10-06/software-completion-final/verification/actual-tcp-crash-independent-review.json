@@ -1,0 +1,31 @@
+{
+  "schema": 1,
+  "verdict": "PASS_BOUNDED_ACTUAL_LOOPBACK_TCP_CRASH_FIXTURES",
+  "ownerReceipt": {
+    "path": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/actual-tcp-crash-qualification.json",
+    "sha256": "e502df1d058e3b39f548e37f024f13915c500c24b44882126fef0948ba5d6148"
+  },
+  "source": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/source/apps/edge/internal/printqueue/crash_tcp_test.go",
+  "sourceSHA256": "3a986e72c2f38d0b6eb17e4cd9c434bd46f8665255df50ad923c1899f6e75c4a",
+  "executionEvidenceIndependentlyParsed": {
+    "normal": "PASS",
+    "race": "PASS",
+    "eachPassRecords": 3,
+    "observedPartialBytes": 8192,
+    "primaryBytes": 2097152,
+    "fullAfterWriteBytes": 16
+  },
+  "reviewedAssertions": [
+    "Selected literal loopback endpoint only; actual process SIGKILL.",
+    "Before kill: durable STARTED, actual Write-entry marker, real prefix bytes at receiver; no observed return marker. After kill: drained exact prefix shorter than full payload.",
+    "Second boundary: actual Send returned Submitted with complete primary/cut bytes at receiver, before durable primary disposition.",
+    "Both: reopened SQLite integrity ok, UNCERTAIN hold, zero automatic recovery calls, exact original acceptance receipt, one job/attempt."
+  ],
+  "qualificationLimits": [
+    "DuringWrite observes actual prefix delivery, Write entered and no persisted return marker at kill; it does not locate instruction-exact syscall state because wrapper return/marker gap exists.",
+    "AfterWrite observes complete immutable bytes/cut and Submitted before queue settlement; Submitted is not paper delivered.",
+    "Only macOS tested here; Windows TerminateProcess/SCM/OS/physical acceptance are distinct."
+  ],
+  "openP1": [],
+  "openP2": []
+}

@@ -43,7 +43,8 @@ class HomeReservationsHelper {
       final reservationDateString = reservation.reservationDate
           .toIso8601String()
           .split('T')[0];
-      if (reservationDateString.compareTo(currentDateString) < 0) {
+      if (reservationDateString.compareTo(currentDateString) < 0 &&
+          normalizeStatus(reservation.status) != 'hold') {
         continue;
       }
 
@@ -53,7 +54,7 @@ class HomeReservationsHelper {
           normalizedStatus.startsWith('cancelled') ||
           normalizedStatus.startsWith('canceled');
 
-      if (isConfirmed || isCancelled) {
+      if (isConfirmed || isCancelled || normalizedStatus == 'hold') {
         filtered.add(reservation);
       }
     }

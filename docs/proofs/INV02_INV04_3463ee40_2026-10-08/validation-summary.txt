@@ -1,0 +1,71 @@
+backend-aggregate-final.log
+Test Suites: 53 skipped, 74 passed, 74 of 127 total
+Tests:       713 skipped, 858 passed, 1571 total
+
+backend-auth-pg.log
+Test Suites: 4 passed, 4 total
+Tests:       55 passed, 55 total
+
+backend-commercial-pg.log
+Test Suites: 1 passed, 1 total
+Tests:       16 passed, 16 total
+
+backend-mgr01-pg.log
+Test Suites: 1 passed, 1 total
+Tests:       19 passed, 19 total
+
+backend-platform-pg.log
+Test Suites: 1 passed, 1 total
+Tests:       43 passed, 43 total
+
+backend-foundation-pg.log
+Test Suites: 1 passed, 1 total
+Tests:       8 passed, 8 total
+
+inventory-focused.log
+Test Suites: 6 passed, 6 total
+Tests:       60 passed, 60 total
+
+flutter-aggregate-final.log
+03:08 +2597 ~16: All tests passed!
+
+flutter-new-final.log
+00:02 +13: All tests passed!
+
+flutter-financial-final.log
+00:02 +26: All tests passed!
+
+flutter-mgr05-recheck.log
+00:21 +15: All tests passed!
+
+flutter-aggregate-default-concurrency-failure.log
+The test description was:
+  The test description was: actual editor 320.0 retains pending draft through repeated navigation and accurate POS result
+01:38 +2595 ~16 -1: Some tests failed.
+
+menu09-native-final.log
+{"status": "PASS", "nativePids": [10673, 10742], "backendPids": [10621, 10690]}
+
+web-aggregate.log
+ Test Files  25 passed (25)
+
+web-build.log
+✓ built in 339ms
+
+backend-build.log
+
+
+tsc-final.log
+
+
+dart-final.log
+No issues found! (ran in 4.4s)
+
+dart-session-final.log
+No issues found! (ran in 1.6s)
+
+lint-new-final.log
+
+
+prettier-final.log
+All matched files use Prettier code style!

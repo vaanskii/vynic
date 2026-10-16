@@ -1,0 +1,66 @@
+[
+  {
+    "file": "apps/backend/src/local-tools/deletion-matrix.ts",
+    "beforeErrors": 0,
+    "beforeWarnings": 0,
+    "afterErrors": 0,
+    "afterWarnings": 0,
+    "newDiagnostics": []
+  },
+  {
+    "file": "apps/backend/src/platform/platform.module.ts",
+    "beforeErrors": 0,
+    "beforeWarnings": 0,
+    "afterErrors": 0,
+    "afterWarnings": 0,
+    "newDiagnostics": []
+  },
+  {
+    "file": "apps/backend/src/pos/pos-command-dispatcher.service.ts",
+    "beforeErrors": 0,
+    "beforeWarnings": 0,
+    "afterErrors": 0,
+    "afterWarnings": 0,
+    "newDiagnostics": []
+  },
+  {
+    "file": "apps/backend/src/website/reservation/reservation.service.ts",
+    "beforeErrors": 7,
+    "beforeWarnings": 0,
+    "afterErrors": 7,
+    "afterWarnings": 0,
+    "newDiagnostics": []
+  },
+  {
+    "file": "apps/backend/src/website/reservation/website-pos-reservation-bridge.service.ts",
+    "beforeErrors": 6,
+    "beforeWarnings": 0,
+    "afterErrors": 6,
+    "afterWarnings": 0,
+    "newDiagnostics": []
+  },
+  {
+    "file": "apps/platform-web/src/platform/api.ts",
+    "beforeErrors": 1,
+    "beforeWarnings": 0,
+    "afterErrors": 1,
+    "afterWarnings": 0,
+    "newDiagnostics": []
+  },
+  {
+    "file": "apps/platform-web/src/platform/pages/venue/VenueWebsiteTab.tsx",
+    "beforeErrors": 0,
+    "beforeWarnings": 0,
+    "afterErrors": 0,
+    "afterWarnings": 0,
+    "newDiagnostics": []
+  },
+  {
+    "file": "apps/platform-web/src/test/platform-test-utils.tsx",
+    "beforeErrors": 0,
+    "beforeWarnings": 0,
+    "afterErrors": 0,
+    "afterWarnings": 0,
+    "newDiagnostics": []
+  }
+]

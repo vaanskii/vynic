@@ -1,0 +1,76 @@
+{
+  "files": [
+    {
+      "diagnostics": "",
+      "exitCode": 1,
+      "path": "apps/edge/internal/printeragent/server.go"
+    },
+    {
+      "diagnostics": "",
+      "exitCode": 1,
+      "path": "apps/edge/internal/printeragent/server_test.go"
+    },
+    {
+      "diagnostics": "",
+      "exitCode": 1,
+      "path": "apps/edge/internal/printeragent/AUTHORITY_BRIDGE.md"
+    },
+    {
+      "diagnostics": "",
+      "exitCode": 1,
+      "path": "packages/contracts/proto/vynic/edge/v1/printer_agent.proto"
+    },
+    {
+      "diagnostics": "",
+      "exitCode": 1,
+      "path": "packages/contracts/generated/go/vynic/edge/v1/printer_agent.pb.go"
+    },
+    {
+      "diagnostics": "",
+      "exitCode": 1,
+      "path": "packages/contracts/generated/go/vynic/edge/v1/printer_agent_grpc.pb.go"
+    },
+    {
+      "diagnostics": "",
+      "exitCode": 1,
+      "path": "packages/contracts/generated/edge_dart/lib/src/generated/vynic/edge/v1/printer_agent.pb.dart"
+    },
+    {
+      "diagnostics": "",
+      "exitCode": 1,
+      "path": "packages/contracts/generated/edge_dart/lib/src/generated/vynic/edge/v1/printer_agent.pbenum.dart"
+    },
+    {
+      "diagnostics": "",
+      "exitCode": 1,
+      "path": "packages/contracts/generated/edge_dart/lib/src/generated/vynic/edge/v1/printer_agent.pbgrpc.dart"
+    },
+    {
+      "diagnostics": "",
+      "exitCode": 1,
+      "path": "packages/contracts/generated/edge_dart/lib/src/generated/vynic/edge/v1/printer_agent.pbjson.dart"
+    },
+    {
+      "diagnostics": "",
+      "exitCode": 1,
+      "path": "packages/contracts/generated/edge_dart/lib/vynic_edge_contracts.dart"
+    },
+    {
+      "diagnostics": "",
+      "exitCode": 1,
+      "path": "apps/operations/lib/core/services/printing/printer_agent_profile.dart"
+    },
+    {
+      "diagnostics": "",
+      "exitCode": 1,
+      "path": "apps/operations/lib/core/services/printing/printer_agent_client.dart"
+    },
+    {
+      "diagnostics": "",
+      "exitCode": 1,
+      "path": "apps/operations/test/unit/printer_agent_client_test.dart"
+    }
+  ],
+  "note": "No-index exit 1 means the new-file addition differs, not a whitespace error; every command has zero diagnostics.",
+  "result": "PASS"
+}

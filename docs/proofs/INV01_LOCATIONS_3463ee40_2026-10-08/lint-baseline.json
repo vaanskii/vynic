@@ -1,0 +1,47 @@
+[
+  {
+    "file": "apps/backend/src/inventory/inventory.service.ts",
+    "baselineHashMatchesStart": true,
+    "beforeErrors": 82,
+    "afterErrors": 82,
+    "beforeWarnings": 4,
+    "afterWarnings": 4,
+    "addedDiagnostics": 0
+  },
+  {
+    "file": "apps/backend/src/inventory/receiving.service.ts",
+    "baselineHashMatchesStart": true,
+    "beforeErrors": 90,
+    "afterErrors": 90,
+    "beforeWarnings": 0,
+    "afterWarnings": 0,
+    "addedDiagnostics": 0
+  },
+  {
+    "file": "apps/backend/src/inventory/inventory-audit.ts",
+    "baselineHashMatchesStart": true,
+    "beforeErrors": 1,
+    "afterErrors": 1,
+    "beforeWarnings": 0,
+    "afterWarnings": 0,
+    "addedDiagnostics": 0
+  },
+  {
+    "file": "apps/backend/src/mobile/mobile.controller.ts",
+    "baselineHashMatchesStart": true,
+    "beforeErrors": 7,
+    "afterErrors": 7,
+    "beforeWarnings": 0,
+    "afterWarnings": 0,
+    "addedDiagnostics": 0
+  },
+  {
+    "file": "apps/backend/src/local-tools/deletion-matrix.ts",
+    "baselineHashMatchesStart": true,
+    "beforeErrors": 0,
+    "afterErrors": 0,
+    "beforeWarnings": 0,
+    "afterWarnings": 0,
+    "addedDiagnostics": 0
+  }
+]

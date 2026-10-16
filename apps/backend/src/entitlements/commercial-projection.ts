@@ -11,6 +11,8 @@ const derivedCostFields = new Set([
   'issueUnitCost',
   'issueValue',
   'valuationStatus',
+  'valuationSequence',
+  'valueOrigin',
 ]);
 export function withoutProfitability(value: unknown): any {
   if (Array.isArray(value)) return value.map(withoutProfitability);

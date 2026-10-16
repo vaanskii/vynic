@@ -11,11 +11,13 @@ import { ConfigService } from '@nestjs/config';
 import { CustomWebsiteStatus, Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma.service';
 import { VenueEntitlementsService } from '../../entitlements/venue-entitlements.service';
+import { latestBogIntegrationStatus } from '../../payment-integrations/payment-integration-status';
 import {
   CUSTOM_WEBSITE_STATUSES,
   customReadiness,
   paymentStatus,
   readSiteKey,
+  readBuildId,
   requiresReadiness,
 } from './custom-website';
 import {
@@ -33,16 +35,19 @@ import {
   parseLocalFrontends,
   type LocalFrontendRegistry,
 } from './custom-website-local';
+import { websiteVenueIdentity } from '../core/website-identity';
 
 /** Platform audit actions owned by CUSTOM website provisioning. */
 export const CustomWebsiteAuditAction = {
   SITE_KEY_CHANGED: 'venue.custom_website_site_key_changed',
+  BUILD_CHANGED: 'venue.custom_website_build_changed',
   STATUS_CHANGED: 'venue.custom_website_status_changed',
 } as const;
 
 /** Audit actions an operator reviewing a CUSTOM site needs to see together. */
 const CUSTOM_AUDIT_ACTIONS = [
   CustomWebsiteAuditAction.SITE_KEY_CHANGED,
+  CustomWebsiteAuditAction.BUILD_CHANGED,
   CustomWebsiteAuditAction.STATUS_CHANGED,
   'venue.website_mode_changed',
   'venue.domain_registered',
@@ -75,6 +80,7 @@ export class CustomWebsiteService {
   ) {}
 
   private readonly lastChecks = new Map<string, number>();
+  private readonly runningChecks = new Set<string>();
 
   /**
    * Where local CUSTOM frontends run, or null in production, where local
@@ -135,10 +141,7 @@ export class CustomWebsiteService {
           select: { id: true, hostname: true, status: true, createdAt: true },
           orderBy: { hostname: 'asc' },
         }),
-        this.db.paymentIntegration.findFirst({
-          where: { venueId, provider: 'BOG' },
-          select: { enabled: true },
-        }),
+        latestBogIntegrationStatus(this.db, venueId),
       ],
     );
     return {
@@ -208,6 +211,8 @@ export class CustomWebsiteService {
       status: facts.binding?.status ?? 'NOT_CONFIGURED',
       siteKey: facts.binding?.siteKey ?? null,
       statusNote: facts.binding?.statusNote ?? null,
+      expectedBuildId: facts.binding?.expectedBuildId ?? null,
+      publicIdentity: websiteVenueIdentity(venueId),
       updatedAt: facts.binding?.updatedAt ?? null,
       domains: facts.domains,
       primaryDomain,
@@ -269,11 +274,15 @@ export class CustomWebsiteService {
     const hasKey = 'siteKey' in body;
     const hasStatus = 'status' in body;
     const hasNote = 'statusNote' in body;
-    if (!hasKey && !hasStatus && !hasNote)
+    const hasBuild = 'expectedBuildId' in body;
+    if (!hasKey && !hasStatus && !hasNote && !hasBuild)
       throw new BadRequestException('Nothing to change');
     const siteKey = hasKey ? readSiteKey(body.siteKey) : undefined;
     const status = hasStatus ? readStatus(body.status) : undefined;
     const statusNote = hasNote ? readNote(body.statusNote) : undefined;
+    const expectedBuildId = hasBuild
+      ? readBuildId(body.expectedBuildId)
+      : undefined;
 
     await this.db.$transaction(async (tx) => {
       const venue = await tx.$queryRaw<
@@ -293,6 +302,12 @@ export class CustomWebsiteService {
       });
       const next = {
         siteKey: siteKey === undefined ? (before?.siteKey ?? null) : siteKey,
+        expectedBuildId:
+          expectedBuildId === undefined
+            ? hasKey && siteKey !== before?.siteKey
+              ? null
+              : (before?.expectedBuildId ?? null)
+            : expectedBuildId,
         status: status ?? before?.status ?? CustomWebsiteStatus.SETUP_PENDING,
         statusNote:
           statusNote === undefined ? (before?.statusNote ?? null) : statusNote,
@@ -314,12 +329,31 @@ export class CustomWebsiteService {
             readiness: readiness.checks,
           });
       }
+      if (
+        before &&
+        before.siteKey === next.siteKey &&
+        before.status === next.status &&
+        before.statusNote === next.statusNote &&
+        before.expectedBuildId === next.expectedBuildId
+      )
+        return; // Exact metadata retry must not invalidate a completed observation.
       await tx.customWebsiteBinding.upsert({
         where: { venueId },
         create: { venueId, ...next },
         update: next,
       });
       const events: Prisma.PlatformAuditEventCreateManyInput[] = [];
+      if ((before?.expectedBuildId ?? null) !== next.expectedBuildId)
+        events.push({
+          platformUserId: actor.platformUserId,
+          action: CustomWebsiteAuditAction.BUILD_CHANGED,
+          targetType: 'Venue',
+          targetId: venueId,
+          metadata: {
+            from: before?.expectedBuildId ?? null,
+            to: next.expectedBuildId,
+          },
+        });
       if ((before?.siteKey ?? null) !== next.siteKey)
         events.push({
           platformUserId: actor.platformUserId,
@@ -367,7 +401,14 @@ export class CustomWebsiteService {
       select: {
         name: true,
         websiteConfig: { select: { mode: true } },
-        customWebsite: { select: { siteKey: true } },
+        customWebsite: {
+          select: {
+            siteKey: true,
+            status: true,
+            expectedBuildId: true,
+            updatedAt: true,
+          },
+        },
         domains: {
           where: { status: 'ACTIVE' },
           select: { hostname: true, status: true, createdAt: true },
@@ -401,13 +442,94 @@ export class CustomWebsiteService {
     }
     const now = Date.now();
     const last = this.lastChecks.get(venueId);
-    if (last !== undefined && now - last < CHECK_INTERVAL_MS)
+    if (
+      this.runningChecks.has(venueId) ||
+      (last !== undefined && now - last < CHECK_INTERVAL_MS)
+    )
       throw new HttpException(
         'A check just ran; try again in a few seconds',
         HttpStatus.TOO_MANY_REQUESTS,
       );
     this.lastChecks.set(venueId, now);
-    return checkCustomWebsite(target, { venueName: venue.name });
+    this.runningChecks.add(venueId);
+    try {
+      const before = await this.checkContext(venueId, target.hostname);
+      if (
+        !before.domainActive ||
+        before.mode !== 'CUSTOM' ||
+        before.siteKey !== venue.customWebsite?.siteKey
+      )
+        throw new ConflictException(
+          'Website binding/domain changed; run a fresh check',
+        );
+      const result = await checkCustomWebsite(target, {
+        venueIdentity: before.publicIdentity,
+        siteKey: before.siteKey,
+        buildId: before.expectedBuildId,
+      });
+      const after = await this.checkContext(venueId, target.hostname);
+      const observationCurrent =
+        JSON.stringify(before) === JSON.stringify(after);
+      const bindingIdentityVerified =
+        result.bindingIdentityVerified && observationCurrent;
+      return {
+        ...result,
+        bindingIdentityVerified,
+        observationCurrent,
+        checkedFor: before,
+        facts: {
+          commercial: after.entitled,
+          domainRegistration: after.domainActive,
+          rendererDeployed: result.rendererDeployed && observationCurrent,
+          bindingIdentityVerified,
+          publicationLive:
+            observationCurrent &&
+            after.entitled &&
+            after.domainActive &&
+            after.mode === 'CUSTOM' &&
+            after.status === 'ACTIVE' &&
+            bindingIdentityVerified &&
+            result.availability === 'REACHABLE',
+        },
+      };
+    } finally {
+      this.runningChecks.delete(venueId);
+    }
+  }
+
+  /** Fresh server facts before/after network observation; no client selectors. */
+  private async checkContext(venueId: string, hostname: string) {
+    const [venue, access] = await Promise.all([
+      this.db.venue.findUniqueOrThrow({
+        where: { id: venueId },
+        select: {
+          websiteConfig: { select: { mode: true } },
+          customWebsite: {
+            select: {
+              siteKey: true,
+              status: true,
+              expectedBuildId: true,
+              updatedAt: true,
+            },
+          },
+          domains: { select: { hostname: true, status: true } },
+        },
+      }),
+      this.entitlements.websiteAccess(venueId),
+    ]);
+    return {
+      publicIdentity: websiteVenueIdentity(venueId),
+      mode: venue.websiteConfig?.mode ?? null,
+      siteKey: venue.customWebsite?.siteKey ?? null,
+      expectedBuildId: venue.customWebsite?.expectedBuildId ?? null,
+      bindingUpdatedAt: venue.customWebsite?.updatedAt.toISOString() ?? null,
+      status: venue.customWebsite?.status ?? 'NOT_CONFIGURED',
+      entitled: access.entitled,
+      hostname,
+      domainActive: venue.domains.some(
+        (domain) => domain.hostname === hostname && domain.status === 'ACTIVE',
+      ),
+    };
   }
 }
 

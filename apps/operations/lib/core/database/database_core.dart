@@ -1,6 +1,8 @@
 import 'package:vynic/core/database/repositories/order_edit_repository.dart';
 import 'repositories/table_repair_repository.dart';
 import 'repositories/order_table_mutation_repository.dart';
+import 'repositories/reservation_repository.dart';
+import 'repositories/print_job_repository.dart';
 import 'package:vynic/core/database/repositories/backup_repository.dart';
 import 'package:vynic/core/services/pos/update/tracked_box.dart';
 import 'dart:io';
@@ -17,6 +19,7 @@ import 'package:vynic/core/models/package.dart';
 import 'package:vynic/core/models/sale_record.dart';
 import 'package:vynic/core/services/menu/menu_local_store.dart';
 import 'package:vynic/core/services/edge/edge_device_credential_store.dart';
+import 'local_venue_binding.dart';
 
 import 'package:vynic/core/database/hive_migration_service.dart';
 import 'package:vynic/core/database/transactions/close_day_transaction.dart';
@@ -75,6 +78,28 @@ class DatabaseCore {
 
   static late String dataDirectoryPath;
   static int dbVersion = HiveMigrationService.initialVersion;
+
+  static void validateVenueBinding(String venueId) {
+    final canonical = menuCanonicalBox;
+    final journal = menuJournalBox;
+    final settings = settingsBox;
+    validateLocalVenueBinding(
+      venueId: venueId,
+      restoredVenueId: settings != null && settings.isOpen
+          ? settings.get('restoreVenueBinding') as String?
+          : null,
+      canonical: canonical != null && canonical.isOpen
+          ? canonical.get(MenuLocalStore.stateKey)
+          : null,
+      baseline: canonical != null && canonical.isOpen
+          ? canonical.get(MenuLocalStore.baselineKey)
+          : null,
+      pendingCommit: canonical != null && canonical.isOpen
+          ? canonical.get(MenuLocalStore.commitKey)
+          : null,
+      journal: journal != null && journal.isOpen ? journal.values : const [],
+    );
+  }
 
   /// Resolves the per-machine data directory, initializes Hive, registers
   /// adapters, opens every box, and runs pending schema migrations.
@@ -209,7 +234,11 @@ class DatabaseCore {
     );
 
     await EdgeDeviceCredentialStore.load();
+    final venueId = EdgeDeviceCredentialStore.venueId;
+    if (venueId != null) validateVenueBinding(venueId);
     await BackupRepository.recoverInterruptedRestore();
+    await ReservationRepository.recoverAdvanceReceipts();
+    await PrintJobRepository.recover();
     await OrderEditRepository.recoverPending();
     await TableRepairRepository.recoverPending();
     await OrderTableMutationRepository.recoverPending();

@@ -68,7 +68,10 @@ class OrderTableMutationIntent {
     ...body,
     'digest': PosBackupFormat.digest(body),
   };
-  static OrderTableMutationIntent decode(Object? value) {
+  static OrderTableMutationIntent decode(
+    Object? value, {
+    double? serviceFeeRate,
+  }) {
     if (value is! Map) throw const FormatException('Missing ownership journal');
     final raw = OrderTransferIntent.cloneMap(value);
     final digest = raw.remove('digest');
@@ -219,7 +222,10 @@ class OrderTableMutationIntent {
                 1) {
       throw const FormatException('Invalid ownership creation/move audit');
     }
-    OrderTableMutationRepository.validatePlan(intent);
+    OrderTableMutationRepository.validatePlan(
+      intent,
+      serviceFeeRate: serviceFeeRate,
+    );
     return intent;
   }
 }
@@ -255,9 +261,12 @@ abstract final class OrderTableMutationRepository {
     return value;
   }
 
-  static void validatePlan(OrderTableMutationIntent intent) {
+  static void validatePlan(
+    OrderTableMutationIntent intent, {
+    double? serviceFeeRate,
+  }) {
     if (intent.kind == 'cancel') {
-      validateCancellation(intent);
+      validateCancellation(intent, serviceFeeRate: serviceFeeRate);
       return;
     }
     if (intent.effects.any((e) => e['store'] == 'sales'))
@@ -489,6 +498,14 @@ abstract final class OrderTableMutationRepository {
             'Ownership activation Reservation is not eligible',
           );
         }
+        if (order.advanceAmount !=
+                ((before['advanceAmount'] as num?)?.toDouble() ?? 0) ||
+            order.advanceCollectedOn != before['advanceCollectedOn'] ||
+            order.advanceReceiptId != before['advanceReceiptId']) {
+          throw const FormatException(
+            'Activation advance differs from frozen reservation',
+          );
+        }
         expected['linkedOrderId'] = order.orderId;
         expected['status'] = 'in-progress';
       } else {
@@ -551,7 +568,10 @@ abstract final class OrderTableMutationRepository {
     }
   }
 
-  static void validateCancellation(OrderTableMutationIntent intent) {
+  static void validateCancellation(
+    OrderTableMutationIntent intent, {
+    double? serviceFeeRate,
+  }) {
     final rows = intent.effects;
     final orderEffect = rows.singleWhere((e) => e['store'] == 'orders');
     final before = OrderTransferIntent.orderImage(orderEffect['before']);
@@ -657,6 +677,7 @@ abstract final class OrderTableMutationRepository {
         request['reason'] as String?,
         posSaleId: sale['posSaleId'] as String,
         businessDate: intent.businessDate,
+        serviceFeeRate: serviceFeeRate,
       );
       if (sales.single['key'] != '${intent.id}:cancelled-sale' ||
           !OrderTransferIntent.sameImage(expectedSale, sale))
@@ -863,6 +884,7 @@ abstract final class OrderTableMutationRepository {
     String? reason, {
     required String posSaleId,
     required String businessDate,
+    double? serviceFeeRate,
   }) {
     final subtotal = double.parse(
       (order.getPackageSubtotal() + order.getAdditionalItemsSubtotal())
@@ -904,7 +926,11 @@ abstract final class OrderTableMutationRepository {
         'type': 'cancelled_order',
         'orderId': order.orderId,
         'subtotal': subtotal,
-        'serviceFee': double.parse(order.getServiceFee().toStringAsFixed(2)),
+        'serviceFee': double.parse(
+          order
+              .getServiceFee(serviceFeeRate: serviceFeeRate)
+              .toStringAsFixed(2),
+        ),
         'total': order.totalAmount,
         'comment': reason ?? '',
         'isFiscal': false,

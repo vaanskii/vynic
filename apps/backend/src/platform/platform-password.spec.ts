@@ -2,7 +2,12 @@ import { PlatformCommercialService } from './platform-commercial.service';
 import * as argon2 from 'argon2';
 
 describe('Admin password length', () => {
-  const actor = { platformUserId: 'admin', role: 'SUPER_ADMIN' } as const;
+  const actor = {
+    platformUserId: 'admin',
+    email: 'admin@test.invalid',
+    displayName: 'Synthetic admin',
+    role: 'SUPER_ADMIN',
+  } as const;
   const body = { email: 'new@test.invalid', displayName: 'Test admin', role: 'SUPER_ADMIN' };
   function fixture() {
     const create = jest.fn().mockImplementation(async ({ data }) => ({ id: 'new-admin', ...data }));

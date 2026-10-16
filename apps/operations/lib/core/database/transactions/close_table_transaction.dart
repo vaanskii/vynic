@@ -207,6 +207,33 @@ class CloseTableTransaction {
       );
     }
 
+    if (isFiscal &&
+        (money.amountDueNow < -0.005 ||
+            money.collectedNow < 0 ||
+            !money.gross.isFinite ||
+            !money.collectedNow.isFinite)) {
+      return const ClosureResult(
+        outcome: ClosureOutcome.moneyMismatch,
+        detail:
+            'ავანსი ანგარიშს აღემატება — თანხის დაბრუნება ან გადატანა მენეჯერთან გადაწყვიტეთ',
+      );
+    }
+    if (existing == null &&
+        order.advanceReceiptId != null &&
+        money.advanceApplied > 0) {
+      final receipt = SalesRepository.findAdvanceReceipt(
+        order.advanceReceiptId!,
+      );
+      if (receipt?['reservationId'] != null &&
+          receipt?['appliedToClosureId'] != null) {
+        return const ClosureResult(
+          outcome: ClosureOutcome.moneyMismatch,
+          detail:
+              'ჯავშნის ავანსი უკვე გამოყენებულია; საჭიროა ჩანაწერის შემოწმება',
+        );
+      }
+    }
+
     // Internal closure preserves the order's operational value while making
     // no claim that money changed hands. Normalize at this authoritative
     // boundary so an older caller that still supplies an automatic cash

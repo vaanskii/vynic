@@ -1,0 +1,40 @@
+﻿{
+    "schema":  1,
+    "status":  "FAILED",
+    "failure":  "Selected Flutter tests failed: 1",
+    "startedUtc":  "2026-10-06T17:49:47.9367063Z",
+    "finishedUtc":  "2026-10-06T17:51:57.5169105Z",
+    "SID":  "S-1-5-21-611125631-3759947118-1641436196-1000",
+    "currentUser":  "VANSKI\\vaanskii",
+    "job":  "C:\\Users\\vaanskii\\AppData\\Local\\VynicReadinessNative\\software-2bd986d1ac2a-flutter-v2",
+    "sourceReceiptSHA256":  "193e4800e5d0733a30bc6c8d4ac993590219363941e69a787bba5ac3681c8f68",
+    "sourceFiles":  1109,
+    "sourceBefore":  true,
+    "sourceAfter":  false,
+    "testSuites":  39,
+    "analysisFiles":  68,
+    "testExitCode":  1,
+    "analysisExitCode":  null,
+    "fixtures":  {
+                     "operational-proof-server-windows.test.exe":  {
+                                                                       "sha256":  "2c9370e4c4cfdb55094f63a26a2bf5b45bff43868a1a2c14a0f47c2654c70abb",
+                                                                       "bytes":  26370560
+                                                                   },
+                     "printer-agent-server-windows.test.exe":  {
+                                                                   "sha256":  "f335745e38be573f5ec031478eab4b524a8069c811324ac2a5d39876b676e894",
+                                                                   "bytes":  25833472
+                                                               }
+                 },
+    "guestArchitecture":  "ARM64",
+    "fixtureArchitecture":  "amd64",
+    "printJobsBefore":  0,
+    "printJobsAfter":  0,
+    "physicalJobs":  0,
+    "productStarted":  false,
+    "installed":  false,
+    "published":  false,
+    "serviceOperations":  false,
+    "driverOperations":  false,
+    "VMSettingsChanged":  false,
+    "persistentCredentialsChanged":  false
+}

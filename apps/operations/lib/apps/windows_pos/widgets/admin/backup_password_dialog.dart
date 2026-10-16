@@ -1,3 +1,4 @@
+import 'package:vynic/core/ui/widgets/pos_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:vynic/apps/windows_pos/widgets/admin/shared/admin_design.dart';
 
@@ -5,7 +6,7 @@ class BackupPasswordDialog extends StatefulWidget {
   const BackupPasswordDialog({super.key, required this.creating});
   final bool creating;
   static Future<String?> show(BuildContext context, {required bool creating}) =>
-      showDialog<String>(
+      showPosModal<String>(
         context: context,
         builder: (_) => BackupPasswordDialog(creating: creating),
       );

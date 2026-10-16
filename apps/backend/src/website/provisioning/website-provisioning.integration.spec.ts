@@ -65,6 +65,26 @@ const url = process.env.TENANT_INTEGRATION_DATABASE_URL;
           .set(bearer(owner.access_token))
           .expect(200)
       ).body.venues[0];
+    /** Existing pre-policy requests retain review/retention coverage; no owner writer is used. */
+    const legacyRequest = async (
+      owner: { venueId: string; access_token: string },
+      slug: string,
+    ) => {
+      const config = await db.venueWebsiteConfig.findUniqueOrThrow({
+        where: { venueId: owner.venueId },
+      });
+      return db.websiteHostnameRequest.create({
+        data: {
+          venueId: owner.venueId,
+          requestedBy: new JwtService().decode<{ sub: string }>(
+            owner.access_token,
+          ).sub,
+          slug,
+          hostname: `${slug}.vynic.localhost`,
+          currentHostname: `${config.assignedSlug}.vynic.localhost`,
+        },
+      });
+    };
     const platformVenue = async (name: string) => {
       const org = (
         await http()
@@ -126,7 +146,7 @@ const url = process.env.TENANT_INTEGRATION_DATABASE_URL;
       await db?.$disconnect();
     });
 
-    it('assigns stable collision-safe addresses and enforces paid review, concurrency, tenancy and shutdown', async () => {
+    it('assigns stable addresses, blocks owner changes and retains historical review, tenancy and shutdown', async () => {
       const requested = await submit('ownership');
       const prepared = (
         await review(requested.id, {
@@ -233,19 +253,13 @@ const url = process.env.TENANT_INTEGRATION_DATABASE_URL;
             .send({ slug: prefix + tag }),
         ),
       );
-      expect(responses.map((r) => r.status).sort()).toEqual([201, 409]);
-      const pending = responses.find((r) => r.status === 201)!.body;
+      expect(responses.map((r) => r.status)).toEqual([403, 403]);
+      expect(
+        await db.websiteHostnameRequest.count({ where: { venueId: id } }),
+      ).toBe(0);
+      const pending = await legacyRequest(owner, 'paid-a-' + tag);
       const oldHost = settings.draft.slug + '.vynic.localhost';
-      const pendingSlug = pending.hostname.split('.')[0];
-      expect(pending).toEqual({
-        id: expect.any(String),
-        hostname: pending.hostname,
-        currentHostname: oldHost,
-        status: 'PENDING',
-        createdAt: expect.any(String),
-        reviewedAt: null,
-        reason: null,
-      });
+      const pendingSlug = pending.slug;
       const listed = (
         await http()
           .get(path + '/hostname-requests')
@@ -297,23 +311,23 @@ const url = process.env.TENANT_INTEGRATION_DATABASE_URL;
         .post(path + '/hostname-requests')
         .set(bearer(owner.access_token))
         .send({ slug: pendingSlug })
-        .expect(409);
+        .expect(403);
       await http()
         .post(path + '/hostname-requests')
         .set(bearer(owner.access_token))
         .send({ slug: 'vynic' })
-        .expect(400);
-      // Operators register custom domains only; the SaaS namespace is reviewed.
+        .expect(403);
+      // Platform Admin may register an additional Vynic hostname without changing the assigned identity.
       await http()
         .post(`/platform/venues/${id}/domains`)
         .set(bearer(admin))
         .send({ hostname: 'second-' + tag + '.vynic.localhost' })
-        .expect(400);
+        .expect(201);
       expect(
         await db.venueDomain.count({
           where: { venueId: id, hostname: { endsWith: '.vynic.localhost' } },
         }),
-      ).toBe(1);
+      ).toBe(2);
       expect(
         (
           await db.venueWebsiteConfig.findUniqueOrThrow({
@@ -335,13 +349,7 @@ const url = process.env.TENANT_INTEGRATION_DATABASE_URL;
         .get(`/customer/venues/${other.id}/website/hostname-requests`)
         .set(bearer(owner.access_token))
         .expect(404);
-      const next = (
-        await http()
-          .post(path + '/hostname-requests')
-          .set(bearer(owner.access_token))
-          .send({ slug: 'rejected-' + tag })
-          .expect(201)
-      ).body;
+      const next = await legacyRequest(owner, 'rejected-' + tag);
       await http()
         .post(`/platform/venues/${id}/hostname-requests/${next.id}/review`)
         .set(bearer(admin))
@@ -353,7 +361,6 @@ const url = process.env.TENANT_INTEGRATION_DATABASE_URL;
       expect(audits.map((a) => a.action)).toEqual(
         expect.arrayContaining([
           'website.hostname_assigned',
-          'website.hostname_change_requested',
           'website.hostname_change_approved',
           'website.hostname_change_rejected',
           'subscription.extend_trial',
@@ -413,7 +420,11 @@ const url = process.env.TENANT_INTEGRATION_DATABASE_URL;
             .get(`/customer/venues/${owner.venueId}/website`)
             .set(bearer(owner.access_token))
             .expect(200)
-        ).body;
+        ).body as {
+          hostname: string;
+          hostnameChangeAllowed: boolean;
+          draft: typeof emptyWebsiteContent;
+        };
         return { ...owner, settings };
       };
       const ask = (
@@ -431,7 +442,7 @@ const url = process.env.TENANT_INTEGRATION_DATABASE_URL;
           .send({ status, reason: 'Disposable decision' });
       const a = await activeOwner('race-a', 'SAAS');
       const b = await activeOwner('race-b', 'SAAS');
-      expect(a.settings.hostnameChangeAllowed).toBe(true);
+      expect(a.settings.hostnameChangeAllowed).toBe(false);
       const contested = 'contested-' + tag;
       // Both see the name as available: the browser check is advisory only.
       for (const owner of [a, b])
@@ -445,8 +456,8 @@ const url = process.env.TENANT_INTEGRATION_DATABASE_URL;
               .expect(200)
           ).body,
         ).toMatchObject({ valid: true, available: true });
-      const requestA = (await ask(a, contested).expect(201)).body;
-      const requestB = (await ask(b, contested).expect(201)).body;
+      const requestA = await legacyRequest(a, contested);
+      const requestB = await legacyRequest(b, contested);
       // Venue B's operator decision lands first; its old binding keeps DISABLED.
       const bOld = await db.venueDomain.findUniqueOrThrow({
         where: { hostname: b.settings.hostname },
@@ -506,7 +517,7 @@ const url = process.env.TENANT_INTEGRATION_DATABASE_URL;
         activeHostname: `${contested}.vynic.localhost`,
       });
       // After a decision another request may follow.
-      await ask(a, 'after-reject-' + tag).expect(201);
+      await ask(a, 'after-reject-' + tag).expect(403);
       const custom = await activeOwner('race-custom', 'CUSTOM');
       expect(custom.settings).toMatchObject({
         mode: 'CUSTOM',
@@ -552,7 +563,11 @@ const url = process.env.TENANT_INTEGRATION_DATABASE_URL;
         planId: websitePlanId,
         websiteMode: 'SAAS',
       }).expect(201);
-      const first = (await website(a).expect(200)).body;
+      const first = (await website(a).expect(200)).body as {
+        hostname: string;
+        revision: number;
+        draft: typeof emptyWebsiteContent;
+      };
       const stem = `reclaimkitchen${tag}`;
       expect(first.hostname).toBe(`${stem}.vynic.localhost`);
       const saved = (
@@ -570,7 +585,7 @@ const url = process.env.TENANT_INTEGRATION_DATABASE_URL;
         .set(bearer(a.access_token))
         .send({ expectedRevision: saved.revision })
         .expect(201);
-      await ask(a, `stale-${tag}`).expect(201);
+      await legacyRequest(a, `stale-${tag}`);
       await act(a.venueId, { action: 'SUSPEND' }).expect(201);
       const lapsedAt = new Date();
       await lifecycle.reconcile(a.venueId, lapsedAt);
@@ -589,7 +604,12 @@ const url = process.env.TENANT_INTEGRATION_DATABASE_URL;
       expect((await website(b).expect(200)).body.hostname).toBe(
         `${stem}-2.vynic.localhost`,
       );
-      await ask(b, stem).expect(409);
+      await ask(b, stem).expect(403);
+      await http()
+        .post(`/platform/venues/${b.venueId}/domains`)
+        .set(bearer(admin))
+        .send({ hostname: first.hostname })
+        .expect(409);
 
       await lifecycle.reconcile(
         a.venueId,
@@ -630,7 +650,7 @@ const url = process.env.TENANT_INTEGRATION_DATABASE_URL;
             .expect(200)
         ).body,
       ).toMatchObject({ available: true });
-      const claim = (await ask(b, stem).expect(201)).body;
+      const claim = await legacyRequest(b, stem);
       await http()
         .post(
           `/platform/venues/${b.venueId}/hostname-requests/${claim.id}/review`,
@@ -799,12 +819,15 @@ const url = process.env.TENANT_INTEGRATION_DATABASE_URL;
         posIncluded: false,
       });
       await http()
-        .put(`/customer/venues/${venueId}/catalog/category`)
+        .post(`/customer/venues/${venueId}/catalog/mutations`)
         .set(bearer(owner.access_token))
         .send({
-          expectedRevision: catalog.revision,
-          nameKa: 'სალათები',
-          nameEn: 'Salads',
+          mutationId: randomUUID(),
+          entityType: 'CATEGORY',
+          operation: 'UPSERT',
+          entityId: randomUUID(),
+          expectedRevision: 0,
+          patch: { nameKa: 'სალათები', nameEn: 'Salads' },
         })
         .expect(200);
       expect(await db.menuCategory.count({ where: { venueId } })).toBe(1);
@@ -886,12 +909,15 @@ const url = process.env.TENANT_INTEGRATION_DATABASE_URL;
         posIncluded: false,
       });
       await http()
-        .put(`/customer/venues/${owner.venueId}/catalog/category`)
+        .post(`/customer/venues/${owner.venueId}/catalog/mutations`)
         .set(bearer(owner.access_token))
         .send({
-          expectedRevision: catalog.revision,
-          nameKa: 'სალათები',
-          nameEn: 'Salads',
+          mutationId: randomUUID(),
+          entityType: 'CATEGORY',
+          operation: 'UPSERT',
+          entityId: randomUUID(),
+          expectedRevision: 0,
+          patch: { nameKa: 'სალათები', nameEn: 'Salads' },
         })
         .expect(200);
       expect(
@@ -904,10 +930,10 @@ const url = process.env.TENANT_INTEGRATION_DATABASE_URL;
             action: 'venue.cloud_menu_enabled',
           },
         }),
-      ).toMatchObject({ metadata: { from: 'POS', enabled: true } });
+      ).toMatchObject({ metadata: { from: 'CLOUD', enabled: true } });
     });
 
-    it('never hands a POS-bundled Website package to Cloud menu authority', async () => {
+    it('never enables owner menu editing for a POS-bundled Website package', async () => {
       const { id } = await platformVenue('POS and website');
       const posWebsite = await db.plan.findUniqueOrThrow({
         where: { key: 'POS_WEBSITE' },
@@ -928,7 +954,9 @@ const url = process.env.TENANT_INTEGRATION_DATABASE_URL;
           where: { id },
           select: { menuAuthority: true, cloudMenuEditingEnabled: true },
         }),
-      ).toEqual({ menuAuthority: 'POS', cloudMenuEditingEnabled: false });
+        // New Venues are canonical (D030); a POS package still leaves owner
+        // editing to an explicit operator decision.
+      ).toEqual({ menuAuthority: 'CLOUD', cloudMenuEditingEnabled: false });
     });
 
     it('manual Trial on a NO_PLAN Venue ends in the same state as an approval', async () => {

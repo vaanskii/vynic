@@ -1,0 +1,65 @@
+[
+  {
+    "file": "apps/backend/src/entitlements/commercial-projection.ts",
+    "baselineMatchesBefore": true,
+    "beforeErrors": 0,
+    "afterErrors": 0,
+    "beforeWarnings": 0,
+    "afterWarnings": 0,
+    "addedDiagnostics": 0
+  },
+  {
+    "file": "apps/backend/src/inventory/inventory-cost.service.ts",
+    "baselineMatchesBefore": true,
+    "beforeErrors": 0,
+    "afterErrors": 0,
+    "beforeWarnings": 0,
+    "afterWarnings": 0,
+    "addedDiagnostics": 0
+  },
+  {
+    "file": "apps/backend/src/inventory/inventory.service.ts",
+    "baselineMatchesBefore": true,
+    "beforeErrors": 86,
+    "afterErrors": 82,
+    "beforeWarnings": 4,
+    "afterWarnings": 4,
+    "addedDiagnostics": 0
+  },
+  {
+    "file": "apps/backend/src/inventory/receiving.service.ts",
+    "baselineMatchesBefore": true,
+    "beforeErrors": 127,
+    "afterErrors": 90,
+    "beforeWarnings": 0,
+    "afterWarnings": 0,
+    "addedDiagnostics": 0
+  },
+  {
+    "file": "apps/backend/src/inventory/sale-consumption.service.ts",
+    "baselineMatchesBefore": true,
+    "beforeErrors": 48,
+    "afterErrors": 48,
+    "beforeWarnings": 6,
+    "afterWarnings": 6,
+    "addedDiagnostics": 0
+  },
+  {
+    "file": "apps/backend/src/mobile/mobile.controller.ts",
+    "baselineMatchesBefore": true,
+    "beforeErrors": 7,
+    "afterErrors": 7,
+    "beforeWarnings": 0,
+    "afterWarnings": 0,
+    "addedDiagnostics": 0
+  },
+  {
+    "file": "apps/backend/src/mobile/services/mobile-dashboard.service.ts",
+    "baselineMatchesBefore": true,
+    "beforeErrors": 114,
+    "afterErrors": 114,
+    "beforeWarnings": 7,
+    "afterWarnings": 7,
+    "addedDiagnostics": 0
+  }
+]

@@ -1,0 +1,68 @@
+{
+  "numPassedTests": 10,
+  "numFailedTests": 0,
+  "numPendingTests": 0,
+  "success": true,
+  "cases": [
+    {
+      "file": "apps/backend/src/payment-integrations/web06-readiness.integration.spec.ts",
+      "ordinal": 0,
+      "name": "WEB-06 current BOG readiness / real HTTP and PostgreSQL SAAS r1 -> r2 keeps payment/reservation readiness on the current enabled revision",
+      "status": "passed"
+    },
+    {
+      "file": "apps/backend/src/payment-integrations/web06-readiness.integration.spec.ts",
+      "ordinal": 1,
+      "name": "WEB-06 current BOG readiness / real HTTP and PostgreSQL CUSTOM r1 -> r2 keeps payment/reservation readiness on the current enabled revision",
+      "status": "passed"
+    },
+    {
+      "file": "apps/backend/src/payment-integrations/web06-readiness.integration.spec.ts",
+      "ordinal": 2,
+      "name": "WEB-06 current BOG readiness / real HTTP and PostgreSQL uses revision order even when historical timestamps are out of order",
+      "status": "passed"
+    },
+    {
+      "file": "apps/backend/src/payment-integrations/web06-readiness.integration.spec.ts",
+      "ordinal": 3,
+      "name": "WEB-06 current BOG readiness / real HTTP and PostgreSQL disconnect reports the latest disabled revision; reconnect keeps all previous revisions",
+      "status": "passed"
+    },
+    {
+      "file": "apps/backend/src/payment-integrations/web06-readiness.integration.spec.ts",
+      "ordinal": 4,
+      "name": "WEB-06 current BOG readiness / real HTTP and PostgreSQL keeps missing-config Venue isolated and refuses another owner payment settings",
+      "status": "passed"
+    },
+    {
+      "file": "apps/backend/src/payment-integrations/web06-readiness.integration.spec.ts",
+      "ordinal": 5,
+      "name": "WEB-06 current BOG readiness / real HTTP and PostgreSQL status reads expose no secrets, need no decryption key and never rewrite stored history",
+      "status": "passed"
+    },
+    {
+      "file": "apps/backend/src/payment-integrations/web06-readiness.integration.spec.ts",
+      "ordinal": 6,
+      "name": "WEB-06 current BOG readiness / real HTTP and PostgreSQL keeps entitlement and explicit capability policy independent of configured readiness",
+      "status": "passed"
+    },
+    {
+      "file": "apps/backend/src/payment-integrations/web06-readiness.integration.spec.ts",
+      "ordinal": 7,
+      "name": "WEB-06 current BOG readiness / real HTTP and PostgreSQL CUSTOM operator status follows the greatest revision across rotation, clock skew, disable and reconnect",
+      "status": "passed"
+    },
+    {
+      "file": "apps/backend/src/payment-integrations/web06-readiness.integration.spec.ts",
+      "ordinal": 8,
+      "name": "WEB-06 current BOG readiness / real HTTP and PostgreSQL CUSTOM status keeps missing configuration, entitlement and Platform authority scoped to each Venue",
+      "status": "passed"
+    },
+    {
+      "file": "apps/backend/src/payment-integrations/web06-readiness.integration.spec.ts",
+      "ordinal": 9,
+      "name": "WEB-06 current BOG readiness / real HTTP and PostgreSQL CUSTOM status requires no decryption key, discloses no credentials and preserves pinned history",
+      "status": "passed"
+    }
+  ]
+}

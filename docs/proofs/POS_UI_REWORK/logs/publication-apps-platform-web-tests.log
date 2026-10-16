@@ -1,0 +1,6 @@
+
+> vynic-website@0.1.0 test
+> vitest run --maxWorkers=2 --reporter=json --outputFile=/tmp/vynic-publication-validation/apps-platform-web-tests.json
+
+Not implemented: Window's scrollTo() method
+JSON report written to /tmp/vynic-publication-validation/apps-platform-web-tests.json

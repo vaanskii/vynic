@@ -1,0 +1,178 @@
+[
+  {
+    "query": {
+      "package": {
+        "ecosystem": "Go",
+        "name": "golang.org/x/net"
+      },
+      "version": "v0.58.0"
+    },
+    "advisories": [
+      {
+        "id": "GO-2026-6603",
+        "summary": "HTTP/2 server memory exhaustion due to Trailer headers in net/http",
+        "severity": "UNSPECIFIED",
+        "source": "https://osv.dev/vulnerability/GO-2026-6603"
+      },
+      {
+        "id": "GO-2026-6610",
+        "summary": "HTTP/2 transport accepts malformed framing-related headers in net/http",
+        "severity": "UNSPECIFIED",
+        "source": "https://osv.dev/vulnerability/GO-2026-6610"
+      },
+      {
+        "id": "GO-2026-6611",
+        "summary": "Excessive CPU consumption from repeated initial window changes in net/http",
+        "severity": "UNSPECIFIED",
+        "source": "https://osv.dev/vulnerability/GO-2026-6611"
+      },
+      {
+        "id": "GO-2026-6612",
+        "summary": "Double flow control refund on HTTP/2 server streams in net/http",
+        "severity": "UNSPECIFIED",
+        "source": "https://osv.dev/vulnerability/GO-2026-6612"
+      },
+      {
+        "id": "GO-2026-6617",
+        "summary": "HTTP/2 server crash due to HPACK encoder race in net/http",
+        "severity": "UNSPECIFIED",
+        "source": "https://osv.dev/vulnerability/GO-2026-6617"
+      }
+    ],
+    "locations": [
+      {
+        "project": "apps/edge/go.mod",
+        "location": null,
+        "developmentOnly": null
+      },
+      {
+        "project": "packages/contracts/generated/go/go.mod",
+        "location": null,
+        "developmentOnly": null
+      }
+    ],
+    "scopeAssessment": "Unchanged shared Edge/generated module v0.58.0; fixed 0.60.0. Full effective Go graph, standard-library scan and actual HTTP/2 call paths remain open. Printer/generated boundary was not modified.",
+    "riskAccepted": false
+  },
+  {
+    "query": {
+      "package": {
+        "ecosystem": "npm",
+        "name": "braces"
+      },
+      "version": "3.0.3"
+    },
+    "advisories": [
+      {
+        "id": "GHSA-vfj7-8cjw-p6xm",
+        "summary": "braces vulnerable to stack-exhaustion denial of service through deeply nested patterns",
+        "severity": "HIGH",
+        "source": "https://osv.dev/vulnerability/GHSA-vfj7-8cjw-p6xm"
+      }
+    ],
+    "locations": [
+      {
+        "project": "apps/backend",
+        "location": "node_modules/braces",
+        "developmentOnly": true
+      },
+      {
+        "project": "apps/vankisi-custom-web",
+        "location": "node_modules/braces",
+        "developmentOnly": true
+      }
+    ],
+    "scopeAssessment": "Development: backend ts-loader/micromatch and Vankisi lint/glob paths. No fixed-version event in advisory; no HTTP pattern input path established.",
+    "riskAccepted": false
+  },
+  {
+    "query": {
+      "package": {
+        "ecosystem": "npm",
+        "name": "deepmerge-ts"
+      },
+      "version": "7.1.5"
+    },
+    "advisories": [
+      {
+        "id": "GHSA-ggr8-5vv4-36mx",
+        "summary": "DeepmergeTS has stack exhaustion when merging recursive object graphs",
+        "severity": "HIGH",
+        "source": "https://osv.dev/vulnerability/GHSA-ggr8-5vv4-36mx"
+      }
+    ],
+    "locations": [
+      {
+        "project": "apps/backend",
+        "location": "node_modules/deepmerge-ts",
+        "developmentOnly": false
+      }
+    ],
+    "scopeAssessment": "Declared backend runtime graph via @prisma/config 6.19.3; source HTTP handlers do not call this merge. Advisory requires recursive object pairs, which plain JSON alone does not create. Fixed 8.0.0 is a major upgrade; Prisma pins preserved.",
+    "riskAccepted": false
+  },
+  {
+    "query": {
+      "package": {
+        "ecosystem": "npm",
+        "name": "sharp"
+      },
+      "version": "0.34.5"
+    },
+    "advisories": [
+      {
+        "id": "GHSA-f88m-g3jw-g9cj",
+        "summary": "sharp inherited vulnerabilities in libvips: CVE-2026-33327, CVE-2026-33328, CVE-2026-35590, CVE-2026-35591",
+        "severity": "HIGH",
+        "source": "https://osv.dev/vulnerability/GHSA-f88m-g3jw-g9cj"
+      },
+      {
+        "id": "GHSA-rgj7-g3m4-5g8c",
+        "summary": "sharp: Vulnerabilities in libheif: GHSA-g89c-p67h-r497 and GHSA-2jg2-4ch7-h545",
+        "severity": "HIGH",
+        "source": "https://osv.dev/vulnerability/GHSA-rgj7-g3m4-5g8c"
+      },
+      {
+        "id": "GHSA-wq5f-xc86-pv6w",
+        "summary": "sharp : Vulnerability in librsvg dependency CVE-2026-96889",
+        "severity": "HIGH",
+        "source": "https://osv.dev/vulnerability/GHSA-wq5f-xc86-pv6w"
+      }
+    ],
+    "locations": [
+      {
+        "project": "apps/vankisi-custom-web",
+        "location": "node_modules/sharp",
+        "developmentOnly": true
+      }
+    ],
+    "scopeAssessment": "Vankisi development image tooling, not the backend upload path (backend now 0.35.5). Fixed current line requires 0.35; existing Vankisi ^0.34.5 minor boundary preserved pending compatibility decision.",
+    "riskAccepted": false
+  },
+  {
+    "query": {
+      "package": {
+        "ecosystem": "npm",
+        "name": "sprintf-js"
+      },
+      "version": "1.0.3"
+    },
+    "advisories": [
+      {
+        "id": "GHSA-hp3w-g68c-fv3c",
+        "summary": "sprintf-js vulnerable to denial of service through unbounded precision specifiers",
+        "severity": "MODERATE",
+        "source": "https://osv.dev/vulnerability/GHSA-hp3w-g68c-fv3c"
+      }
+    ],
+    "locations": [
+      {
+        "project": "apps/backend",
+        "location": "node_modules/sprintf-js",
+        "developmentOnly": true
+      }
+    ],
+    "scopeAssessment": "Development: backend ts-jest -> js-yaml 3 -> argparse. Advisory requires attacker-controlled format precision; no application request format path established. No fixed-version event.",
+    "riskAccepted": false
+  }
+]

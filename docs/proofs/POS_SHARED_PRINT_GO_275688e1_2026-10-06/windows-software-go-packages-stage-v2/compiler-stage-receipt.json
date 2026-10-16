@@ -1,0 +1,53 @@
+{
+  "schema": 1,
+  "createdAtUtc": "2026-10-06T17:27:37.499973+00:00",
+  "status": "PASS_COMPILE_AND_STAGE_ONLY",
+  "sourceReceiptSHA256": "193e4800e5d0733a30bc6c8d4ac993590219363941e69a787bba5ac3681c8f68",
+  "compilerReceiptSHA256": "8bfc2090a539154f579e7d5199e4e4aa1f720d9c330fdc90f7ce67461e0fa1e6",
+  "sourceFiles": 1109,
+  "PEArtifacts": 10,
+  "archiveEntriesVerified": true,
+  "sourceBeforeAfterUnchanged": true,
+  "VMCommandsIssued": 0,
+  "WindowsExecution": "NOT_RUN_APPROVAL_BLOCKED",
+  "physicalJobs": 0,
+  "SCMRegistrations": 0,
+  "machineRestarts": 0,
+  "originalOrPriorPacketEdits": 0,
+  "artifacts": {
+    "amd64-packages-cli.zip": {
+      "sha256": "e967fd7210300c16c98e45d1392a2d823f1e3a55347a54cc3c8fdda74b261000",
+      "bytes": 67394446
+    },
+    "arm64-packages-cli.zip": {
+      "sha256": "e9be28386f0c7676be01c106dc3fa646a278c2ba1db7cf69e6d2e9d6e61a1cf4",
+      "bytes": 62485269
+    },
+    "binary-manifest.json": {
+      "sha256": "1d26e2cce3a135c1569db72d0c11416f72d65140812f0d7181f4d8ea2fd54aae",
+      "bytes": 2654
+    },
+    "compiler-receipt.json": {
+      "sha256": "8bfc2090a539154f579e7d5199e4e4aa1f720d9c330fdc90f7ce67461e0fa1e6",
+      "bytes": 23755
+    },
+    "final-cohort-source.json": {
+      "sha256": "193e4800e5d0733a30bc6c8d4ac993590219363941e69a787bba5ac3681c8f68",
+      "bytes": 208675
+    },
+    "runtime-instructions.json": {
+      "sha256": "d430aa3d14a796d323b6810b2d270fe09c270b879bdfadbd558261b4dc3a1bfb",
+      "bytes": 1859
+    },
+    "source-manifest.json": {
+      "sha256": "6af4b4d81805fca382880c78c482f9f958aee14c94e740d64d6b4f7ef9578661",
+      "bytes": 202028
+    },
+    "source1109.zip": {
+      "sha256": "3e5ef93b8b908d7037db66b8f69a9a5d719aaecd78dba71a0c4432019500a9b5",
+      "bytes": 5765987
+    }
+  },
+  "limits": "Ready for parent-reviewed authorization, not Windows runtime/physical qualification. Prior native7-package packet and matrixV8 unchanged.",
+  "metadataNote": "Daemon owner compiled earlier same-byte source from software-completion/source; these binaries explicitly use final-cohort snapshot paths and may have different Go build IDs/file path embeddings. This packet pins only its exact1109 final inputs."
+}

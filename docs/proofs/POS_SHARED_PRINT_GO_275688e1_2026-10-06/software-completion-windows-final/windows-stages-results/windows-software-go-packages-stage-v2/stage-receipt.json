@@ -1,0 +1,109 @@
+{
+  "schema": 2,
+  "createdAtUtc": "2026-10-06T17:58:38.050929+00:00",
+  "sourceReceiptSHA256": "faaaec2f1ece4f8259353666000eb4c0d3aee6143e73ae7fdf90772a937b581b",
+  "compilerStageReceiptSHA256": "deb1832d9d580f807e74ce1ecac57813c17c981d27151a9692aff154f02f3d01",
+  "originalCompilerSourceReceiptSHA256": "193e4800e5d0733a30bc6c8d4ac993590219363941e69a787bba5ac3681c8f68",
+  "sourceDelta": [
+    {
+      "path": "apps/operations/test/unit/printer_agent_runtime_profile_test.dart",
+      "originalSHA256": "d4f7c08db3c086704f4fa480970fa3676693534ec29ad12b78a2849f8bc165d2",
+      "replacementSHA256": "2418752a45d5fdbf1ee764071ba79869d76d4696a1ff4444ab62cdccf7db9a21"
+    },
+    {
+      "path": "apps/operations/test/widget/printer_agent_status_card_test.dart",
+      "originalSHA256": "540c5df33fbf5e4efc67fd5a807a0322b2eb461e134bb15ff328cdcbf9f6243f",
+      "replacementSHA256": "114da755f85c962c9cd73576fbd6d60331c2f29b17bbb26cdfaf10ea5e9277cf"
+    }
+  ],
+  "allGoAndProtoSourcesByteIdenticalToCompilerInputs": true,
+  "preflightReceiptSHA256": "351bae1ab6f72632abe0d09849db453362bcc5c83f66e35ed6507b53f540f10e",
+  "sourceFiles": 1109,
+  "compilerPEFiles": 10,
+  "packagedBundleFiles": 8,
+  "verifiedBuildInputs": [
+    {
+      "target": "windows/amd64",
+      "repositoryInputsMatched": 57,
+      "externalSDKAndModuleInputsMatched": 1757
+    },
+    {
+      "target": "windows/arm64",
+      "repositoryInputsMatched": 57,
+      "externalSDKAndModuleInputsMatched": 1740
+    }
+  ],
+  "artifacts": {
+    "agent-build-inputs.json": {
+      "bytes": 923669,
+      "sha256": "8265133677ed972e72c0e666e28002577b1b747ae7caa770acae787dfdface40"
+    },
+    "amd64-packaged-bundle.zip": {
+      "bytes": 13379523,
+      "sha256": "2ab73664bc483b7dde22ac995e6f7c25725d10cdd3fef44118636f03008340dc"
+    },
+    "amd64-packages-cli.zip": {
+      "bytes": 67394446,
+      "sha256": "e967fd7210300c16c98e45d1392a2d823f1e3a55347a54cc3c8fdda74b261000"
+    },
+    "arm64-packaged-bundle.zip": {
+      "bytes": 12382935,
+      "sha256": "eeab03452dd87bd378397d70f94799d37b0d3f22dcca97f362b0016fcf495f00"
+    },
+    "arm64-packages-cli.zip": {
+      "bytes": 62485269,
+      "sha256": "e9be28386f0c7676be01c106dc3fa646a278c2ba1db7cf69e6d2e9d6e61a1cf4"
+    },
+    "binary-manifest.json": {
+      "bytes": 2654,
+      "sha256": "1d26e2cce3a135c1569db72d0c11416f72d65140812f0d7181f4d8ea2fd54aae"
+    },
+    "compiler-receipt.json": {
+      "bytes": 23755,
+      "sha256": "8bfc2090a539154f579e7d5199e4e4aa1f720d9c330fdc90f7ce67461e0fa1e6"
+    },
+    "compiler-stage-receipt.json": {
+      "bytes": 2192,
+      "sha256": "deb1832d9d580f807e74ce1ecac57813c17c981d27151a9692aff154f02f3d01"
+    },
+    "final-cohort-source.json": {
+      "bytes": 208681,
+      "sha256": "faaaec2f1ece4f8259353666000eb4c0d3aee6143e73ae7fdf90772a937b581b"
+    },
+    "packaged-bundle-manifest.json": {
+      "bytes": 2481,
+      "sha256": "5d2eae46eda33862d7b071e0f739a6b0584745991f9295346c68b3066e4f33c2"
+    },
+    "preflight-retry-receipt.json": {
+      "bytes": 3663,
+      "sha256": "351bae1ab6f72632abe0d09849db453362bcc5c83f66e35ed6507b53f540f10e"
+    },
+    "printer-daemon-owned-source-manifest.json": {
+      "bytes": 4328,
+      "sha256": "551a32eb428ca46726640a2c2f89701762a2460214a7eb1b682df9e4eea6f18e"
+    },
+    "run.ps1": {
+      "bytes": 10683,
+      "sha256": "ba879f52f65dcd335dfadd3af360b4175b819c91a9bae10e30100f5133260bcc"
+    },
+    "source-ancestry.json": {
+      "bytes": 872,
+      "sha256": "a889860825b8c854170bdf37920db88c60f1dcc335f1739dfd66966300429c9a"
+    },
+    "source-manifest.json": {
+      "bytes": 202028,
+      "sha256": "00781c667fe9b8f4e4d4ff33b124e6b32002ccc7861329b476a7e6619bfad7ab"
+    },
+    "source1109.zip": {
+      "bytes": 5780933,
+      "sha256": "e0f5752abcd96e0fe6ddf93ad19a6f00d146134ff68096da27cc0a1ee96d20f2"
+    }
+  },
+  "guestBaseSuffix": "VynicReadinessPrinterAgent/software-v2-d6f8ecef582b",
+  "VM": "9830bac8-34c6-46f7-9062-cd8f62f7a127",
+  "currentSID": "S-1-5-21-611125631-3759947118-1641436196-1000",
+  "authorization": "Parent confirmed exact identical-preflight retry success and authorized four staged Go packages for EACHamd64/ARM64 with actual packaged CLI; synthetic fixtures/current-user/zero physical jobs only.",
+  "scope": "Foreground packaged CLI software qualification, no SCM/service installation/OS restart/physical activation.",
+  "sealedEarlierPacketsPreserved": true,
+  "VMCommandsIssuedDuringStaging": 0
+}

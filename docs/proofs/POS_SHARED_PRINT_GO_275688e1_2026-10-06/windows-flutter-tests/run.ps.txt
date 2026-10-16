@@ -1,0 +1,47 @@
+$ErrorActionPreference='Stop';$ProgressPreference='SilentlyContinue'
+Set-StrictMode -Version Latest
+$shared='\\Mac\Home\Developer\vynic\docs\proofs\POS_SHARED_PRINT_GO_275688e1_2026-10-06'
+$stage=Join-Path $shared 'windows-flutter-tests'
+$results=Join-Path $shared 'windows-flutter-result'
+$job=Join-Path $env:LOCALAPPDATA 'VynicReadinessNative\final535-20261006'
+if (!(Test-Path -LiteralPath $job) -or (Test-Path -LiteralPath $results)) { throw 'Expected exact generic source or fresh result directory missing' }
+New-Item -ItemType Directory -Path $results | Out-Null
+$manifest=Get-Content -Raw (Join-Path $shared 'windows-pos-stage\source-manifest.json') | ConvertFrom-Json
+function Assert-Source {
+  foreach($entry in $manifest.PSObject.Properties) {
+    $p=Join-Path $job $entry.Name
+    if ((Get-FileHash -LiteralPath $p -Algorithm SHA256).Hash.ToLowerInvariant() -ne $entry.Value.sha256) { throw ('Frozen source mismatch: '+$entry.Name) }
+  }
+}
+$fixture=Join-Path $job 'operational-proof-server-windows.test.exe'
+if (Test-Path -LiteralPath $fixture) { throw 'Fixture path occupied' }
+Copy-Item -LiteralPath (Join-Path $stage 'operational-proof-server-windows.test.exe') -Destination $fixture
+$fixtureSHA='f61d5b985d10356701bc4eb9974dd5762c9d31cdb7a6c6a65012bdda8fc4e231'
+if ((Get-FileHash -LiteralPath $fixture -Algorithm SHA256).Hash.ToLowerInvariant() -ne $fixtureSHA) { throw 'Fixture SHA mismatch' }
+$env:VYNIC_OPERATIONAL_PROOF_GO_FIXTURE=$fixture
+$env:FLUTTER_SUPPRESS_ANALYTICS='true';$env:DART_SUPPRESS_ANALYTICS='true';$env:CI='true'
+$env:HTTP_PROXY='http://127.0.0.1:9';$env:HTTPS_PROXY='http://127.0.0.1:9';$env:NO_PROXY='127.0.0.1,localhost,::1'
+$flutter=Join-Path $env:USERPROFILE 'develop\flutter\bin\flutter.bat'
+$dart=Join-Path $env:USERPROFILE 'develop\flutter\bin\dart.bat'
+$tests=@(Get-Content -Raw (Join-Path $stage 'flutter-final-test-selection.json') | ConvertFrom-Json)
+$analysis=@(Get-Content -Raw (Join-Path $stage 'flutter-final-analysis-selection.json') | ConvertFrom-Json)
+$status='FAILED';$failure=$null;$testExit=$null;$analysisExit=$null
+$jobsBefore=@(Get-CimInstance -ClassName Win32_PrintJob)
+try {
+  Assert-Source
+  Set-Location -LiteralPath (Join-Path $job 'apps\operations')
+  & $flutter test --no-pub --machine @tests *> (Join-Path $results 'flutter-tests.jsonl')
+  $testExit=$LASTEXITCODE
+  if ($testExit -ne 0) { throw ('Windows Flutter tests failed: '+$testExit) }
+  & $dart analyze @analysis *> (Join-Path $results 'analysis.log')
+  $analysisExit=$LASTEXITCODE
+  if ($analysisExit -ne 0) { throw ('Windows Dart analysis failed: '+$analysisExit) }
+  Assert-Source
+  if ((Get-FileHash -LiteralPath $fixture -Algorithm SHA256).Hash.ToLowerInvariant() -ne $fixtureSHA) { throw 'Fixture changed' }
+  $status='PASS'
+} catch { $failure=$_.ToString() } finally {
+  $jobsAfter=@(Get-CimInstance -ClassName Win32_PrintJob)
+  [ordered]@{status=$status;failure=$failure;job=$job;sourceFiles=@($manifest.PSObject.Properties).Count;sourceUnchanged=($status -eq 'PASS');testSuites=$tests.Count;analysisFiles=$analysis.Count;testExitCode=$testExit;analysisExitCode=$analysisExit;fixtureSHA256=$fixtureSHA;productStarted=$false;installed=$false;serviceOperations=$false;driverOperations=$false;printJobsBefore=$jobsBefore.Count;printJobsAfter=$jobsAfter.Count;physicalJobs=0} | ConvertTo-Json -Depth 5 | Set-Content -Encoding UTF8 (Join-Path $results 'windows-flutter-tests.json')
+}
+if ($status -ne 'PASS') { throw $failure }
+Write-Output 'WINDOWS_FLUTTER_TESTS_PASS_SOURCE_HASHES_UNCHANGED'

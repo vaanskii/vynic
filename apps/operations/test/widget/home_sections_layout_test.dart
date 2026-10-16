@@ -1,6 +1,8 @@
+import 'package:vynic/core/ui/vynic_floor_tokens.dart';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:vynic/apps/windows_pos/widgets/shared/pos_workflow_actions.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
 
@@ -159,7 +161,10 @@ Widget _calculator() => HomeCalculatorSection(
   onItemQuantityChanged: (_, _, _) {},
   serviceFeeAvailable: true,
   canManageDrafts: true,
-  onOpenDraftManage: (_) {},
+  onConfirmDraft: (_) {},
+  onRenameDraft: (_) {},
+  onPreviewDraft: (_) {},
+  onDeleteDraft: (_) {},
   onClearAllDrafts: () {},
   primaryColor: const Color(0xFF1E3A8A),
   secondaryColor: const Color(0xFF2563EB),
@@ -354,22 +359,30 @@ void main() {
     }
   });
 
-  testWidgets('figures are shown on the shared metric card', (tester) async {
-    tester.view.physicalSize = const Size(1440, 900);
-    tester.view.devicePixelRatio = 1.0;
-    addTearDown(tester.view.reset);
+  testWidgets(
+    'section summaries retain their figures in the current composition',
+    (tester) async {
+      tester.view.physicalSize = const Size(1440, 900);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.reset);
 
-    for (final (name, build) in <(String, Widget Function())>[
-      ('დათვლა', _calculator),
-      ('გატანები', _takeAway),
-      ('რეზერვაცია', _reservationsSection),
-      ('X', _xReport),
-    ]) {
-      await tester.pumpWidget(_wrap(const Size(1440, 900), build()));
-      await tester.pump();
-      expect(find.byType(PosMetricCard), findsWidgets, reason: name);
-    }
-  });
+      for (final (name, build) in <(String, Widget Function())>[
+        ('დათვლა', _calculator),
+        ('გატანები', _takeAway),
+        ('რეზერვაცია', _reservationsSection),
+        ('X', _xReport),
+      ]) {
+        await tester.pumpWidget(_wrap(const Size(1440, 900), build()));
+        await tester.pump();
+        if (name == 'დათვლა') {
+          expect(find.textContaining('სრული ღირებულება'), findsOneWidget);
+          expect(find.byType(PosWorkspace), findsOneWidget);
+        } else {
+          expect(find.byType(PosMetricCard), findsWidgets, reason: name);
+        }
+      }
+    },
+  );
 
   testWidgets('the X report ranks waiters by their takings', (tester) async {
     tester.view.physicalSize = const Size(1440, 900);
@@ -451,38 +464,29 @@ void main() {
     }
   });
 
-  testWidgets('take-away actions sit in a rail, sorted by what they do', (
-    tester,
-  ) async {
-    tester.view.physicalSize = const Size(1440, 900);
-    tester.view.devicePixelRatio = 1.0;
-    addTearDown(tester.view.reset);
-
-    await tester.pumpWidget(_wrap(const Size(1440, 900), _takeAway()));
-    await tester.pump();
-
-    expect(find.text('სრული დეტალები'), findsOneWidget);
-
-    // Closing takes money, cancelling voids — they used to share a red.
-    final close = tester.widget<PosActionButton>(
-      find
-          .ancestor(
-            of: find.text('შეკვეთის დახურვა'),
-            matching: find.byType(PosActionButton),
-          )
-          .first,
-    );
-    final cancel = tester.widget<PosActionButton>(
-      find
-          .ancestor(
-            of: find.text('გაუქმება'),
-            matching: find.byType(PosActionButton),
-          )
-          .first,
-    );
-    expect(close.tone, PosActionTone.money);
-    expect(cancel.tone, PosActionTone.danger);
-  });
+  testWidgets(
+    'takeaway has direct editing/payment and distinct destructive action',
+    (tester) async {
+      tester.view.physicalSize = const Size(1440, 900);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      await tester.pumpWidget(_wrap(const Size(1440, 900), _takeAway()));
+      await tester.pump();
+      expect(find.text('სრული დეტალები'), findsNothing);
+      expect(find.text('ისტორია და სხვა'), findsOneWidget);
+      final payment = tester.widget<PosWorkflowButton>(
+        find.widgetWithText(PosWorkflowButton, 'გადახდა'),
+      );
+      expect(payment.primary, isTrue);
+      final cancel = tester.widget<TextButton>(
+        find.widgetWithText(TextButton, 'შეკვეთის გაუქმება'),
+      );
+      expect(
+        cancel.style!.foregroundColor!.resolve({}),
+        VynicFloorTokens.dangerText,
+      );
+    },
+  );
 
   testWidgets('the action rail stays on the right, never a scrolling strip', (
     tester,

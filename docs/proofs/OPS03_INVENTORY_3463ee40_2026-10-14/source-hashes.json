@@ -1,0 +1,7 @@
+{
+  "scripts/release_inventory.py": "3a4023dc0487e4ebd96295c145e336e264c9eb14a53df9dcb314c24ef2cd7542",
+  "scripts/release_inventory_test.py": "8b578ab8f99d7b0c6a78ada8c0d0e701a7c6deb6c4024045caec673e3fa19b20",
+  "docs/OPS03_RELEASE_INVENTORY.md": "ab6db1c8da013522e3eb661250f222441f65037ddd9e604ac9a6b999b39d7e66",
+  "docs/agent-state/VYNIC_PROJECT_STATE.md": "474de2c4d365f051f995d5b12025bad1eb24b4c5efaa84b7eff5eb1d778b49c3",
+  "docs/agent-state/VYNIC_CODE_MAP.md": "4660a9642ea98b07e6f491f18da5ca69c3c5145deeb38bb5ac60b51347944d2a"
+}

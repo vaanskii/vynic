@@ -1,0 +1,1 @@
+{"exitCode": 0, "command": "govulncheck -json -scan=symbol ./...", "source": "security-candidate/apps/edge"}

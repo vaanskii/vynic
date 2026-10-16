@@ -1,0 +1,1 @@
+{"exitCode": 0, "command": "GOPROXY=off go vet -mod=readonly ./...", "source": "security-candidate/apps/edge"}

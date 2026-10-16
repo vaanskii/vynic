@@ -50,6 +50,8 @@ export type VenueProfile = {
 /** `GET /api/website/venue` */
 export type CustomSiteBootstrap = {
   schemaVersion: 1;
+  /** Additive public correlation; absent on older servers, never tenant authority. */
+  identity?: { venue: string };
   mode: "SAAS" | "CUSTOM";
   /** The CUSTOM frontend bound to this Venue; null when a SAAS site serves it. */
   site: { key: string | null; status: CustomSiteStatus } | null;
@@ -135,7 +137,7 @@ export type BookingResult = {
 
 export type PaymentStatus = {
   success: boolean;
-  status?: "CONFIRMED" | "FAILED" | "PENDING";
+  status?: "CONFIRMED" | "FAILED" | "PENDING" | "REVIEW";
   message?: string;
 };
 

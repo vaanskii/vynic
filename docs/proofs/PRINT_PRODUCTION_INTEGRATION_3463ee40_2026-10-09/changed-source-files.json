@@ -1,0 +1,78 @@
+{
+  "apps/edge/internal/printstation/retention_test.go": {
+    "before": null,
+    "after": "f9ae6bcc8c4c802d22540ba722db2bfc1398567bc7765916f9e8ec23266a0d18"
+  },
+  "apps/edge/internal/printstation/retention.go": {
+    "before": null,
+    "after": "8e4606b6d8e7e562008648e2d3b31a4b52401ed4f74ee617295417000ee98e8e"
+  },
+  "apps/edge/internal/printstation/state.go": {
+    "before": "1803fd56aa9b4a6f62dbccfcab4237fca76a534f41d0a65e6ec239be725cdc54",
+    "after": "bf8ddc666911e4c2e7dbfd32e84a303e3b9f74f8054df6dc7f03fc74ef5e6d1d"
+  },
+  "apps/edge/internal/printcluster/transport.go": {
+    "before": "5a5844221232d1faddbbc767435eba9625cd0e3f15b9f0e0ed4b0d9ba06e27d7",
+    "after": "7daca3775a11a800bb10c124da81d9d1d7866ba3365a112e025704a363679f7b"
+  },
+  "apps/edge/internal/printcluster/normalized_test.go": {
+    "before": null,
+    "after": "375df6b4473b192aea3f826cb854260b5fd33ef0c73eda24850d99e6865c5dbe"
+  },
+  "apps/edge/internal/printcluster/station_local.go": {
+    "before": "ce2d210bdbd793581c0746ac320734bb27fde50c3046533923af316baf6df6c8",
+    "after": "5ff33eb6c09910a71226082e2ff2daad76cfc6e2d245bb7c1677ea32be01a186"
+  },
+  "apps/edge/internal/printcluster/snapshot_payloads.go": {
+    "before": null,
+    "after": "2d0d0d88250bada012c950df8bc084fd39a8351e5209a2c5a3929df1aecf3c0e"
+  },
+  "apps/edge/internal/printcluster/normalized_reopen_test.go": {
+    "before": null,
+    "after": "1b9c48ba8a2a801f34b2b457ea668fb1a87bb62d0a13a17d52b00adf7d071abc"
+  },
+  "apps/edge/internal/printcluster/cluster_test.go": {
+    "before": "821fe8230f0ca133ec5aa2a0b9b58f0b69493ae6278310e6d5bd876d5e05e1ea",
+    "after": "4ec26fc1a2a85d4c1d0d682509ee33a6cae565d4559a8e47bbb3ae8a8e4199c0"
+  },
+  "apps/edge/internal/printcluster/schema.sql": {
+    "before": "e172bcd69670592daadf2b041ee60708abe73e4ea98e370dabe01917f9be4f5e",
+    "after": "5a6843f116d43b6086d3d284df7f9b5fa1f8eb116cbd0b02b7c32688a4e7bca2"
+  },
+  "apps/edge/internal/printcluster/types.go": {
+    "before": "f26aa6dc21e50d53b0ced01037017bdecc71aef637be296a0f158d539e3606f2",
+    "after": "21fc1fb7c809cf5993a5c68ce40cc04166c144dbcbbcb77677e5cc89bf39aac7"
+  },
+  "apps/edge/internal/printcluster/stations.go": {
+    "before": "fa1809d97eb74049e3ccacebf2dc1dd0bc230bf0e3439295e9c9f9bced386091",
+    "after": "a5f35759d57871b5abd82bce3824d60939da108b98e1fc310bea88082554deaf"
+  },
+  "apps/edge/internal/printcluster/station_performance_test.go": {
+    "before": "6a3f6cba7f1df660e33451531a81657769eb189f6b1e9b949609995f16fa87a9",
+    "after": "14d6db58a260afb0f75d918ef76510428cc9860826a4c2bca1beb7ae2a955291"
+  },
+  "apps/edge/internal/printcluster/normalized.go": {
+    "before": null,
+    "after": "208f29971a9966576e8015531d9c3b360152ce9f6babf59b278d64d525f9a2cd"
+  },
+  "apps/edge/internal/printcluster/clone.go": {
+    "before": null,
+    "after": "b8f5eb9258c9d46df3fad857d479f8e08194bea2f8f64c9482dc5b4c584dd895"
+  },
+  "apps/edge/internal/printcluster/state.go": {
+    "before": "c6c19c40c7709f619e0aa1844e5170561543e52b79d5a95db7ff0ad527178884",
+    "after": "40d7993388d5ac9ca163a75a21836b08f6c29f8b0e10dda9ce1b2029196c6854"
+  },
+  "apps/edge/internal/printcluster/boundaries_test.go": {
+    "before": "6a6eed7047b49dde05b49e402e9481d42a20fe72849e02cfcc196d2c76427456",
+    "after": "331bd60fa88d62694545d167ec6bfa0b5f3090fcd8ead4448add5cd15bfcd348"
+  },
+  "apps/edge/internal/printcluster/projection.go": {
+    "before": "d43fdb80ddac6cd2adde014cc3077e6a80ac07a709739385e7d899dde09832aa",
+    "after": "6541196eefbcdeca877e064aa198a94803f77afdae43a0a0b5e167b262f52da5"
+  },
+  "apps/edge/internal/printcluster/node.go": {
+    "before": "90a8fd63aa455e7dc06c5db1308b4df75f1c7943b8a22efa8e6b2c1759b5db0a",
+    "after": "74e92c49eedef28b4d58dfcae7e0d11b76610f26d21bb6f200d40c21d4de6326"
+  }
+}

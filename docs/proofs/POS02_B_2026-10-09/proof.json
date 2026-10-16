@@ -1,0 +1,379 @@
+{
+  "substage": "POS-02.B",
+  "status": "DONE",
+  "overallPOS02": "NOT_DONE",
+  "generatedAtUTC": "2026-10-09T18:20:05.421965+00:00",
+  "branch": "codex/docker-deployment-foundation",
+  "head": "3463ee406184fec7f53818416e11d0e5f5602c87",
+  "commitsCreated": [],
+  "scope": "Authenticated Venue peer RPC, real Raft networking and stable logical station queue membership only",
+  "process": {
+    "passedRecords": 37,
+    "skippedTests": [
+      "TestPeerProcess"
+    ],
+    "failed": 0,
+    "log": "process-final.jsonl"
+  },
+  "race": {
+    "passedRecords": 14,
+    "skippedTests": [],
+    "failed": 0,
+    "log": "race-final.jsonl"
+  },
+  "regression": {
+    "passedRecords": 400,
+    "skippedTests": [
+      "TestPrinterAgentProcess",
+      "TestProductionBackendExport",
+      "TestProductionBackendVerify",
+      "TestRaftProcessFixture",
+      "TestStationSoftwarePerformance",
+      "TestStationSpoolProcessChild"
+    ],
+    "failed": 0,
+    "log": "regression-final.jsonl"
+  },
+  "performanceRun": {
+    "passedRecords": 4,
+    "skippedTests": [],
+    "failed": 0,
+    "log": "performance-final.jsonl"
+  },
+  "performance": [
+    {
+      "maxMs": 62.159,
+      "p50Ms": 31.532,
+      "p95Ms": 31.532,
+      "payloadBytes": 4096,
+      "payloads": "distinct per job",
+      "samplesMs": [
+        31.532,
+        62.159
+      ],
+      "sources": 1,
+      "transport": "separate-process TCP TLS1.3 loopback",
+      "voters": 1
+    },
+    {
+      "maxMs": 71.365,
+      "p50Ms": 62.317,
+      "p95Ms": 62.317,
+      "payloadBytes": 524288,
+      "payloads": "distinct per job",
+      "samplesMs": [
+        62.317,
+        71.365
+      ],
+      "sources": 1,
+      "transport": "separate-process TCP TLS1.3 loopback",
+      "voters": 1
+    },
+    {
+      "maxMs": 199.885,
+      "p50Ms": 120.162,
+      "p95Ms": 181.202,
+      "payloadBytes": 4096,
+      "payloads": "distinct per job",
+      "samplesMs": [
+        99.783,
+        119.882,
+        120.162,
+        174.797,
+        181.202,
+        199.885
+      ],
+      "sources": 3,
+      "transport": "separate-process TCP TLS1.3 loopback",
+      "voters": 3
+    },
+    {
+      "maxMs": 249.306,
+      "p50Ms": 226.037,
+      "p95Ms": 246.461,
+      "payloadBytes": 524288,
+      "payloads": "distinct per job",
+      "samplesMs": [
+        145.763,
+        210.615,
+        226.037,
+        226.785,
+        246.461,
+        249.306
+      ],
+      "sources": 3,
+      "transport": "separate-process TCP TLS1.3 loopback",
+      "voters": 3
+    },
+    {
+      "maxMs": 290.45,
+      "p50Ms": 194.918,
+      "p95Ms": 275.333,
+      "payloadBytes": 4096,
+      "payloads": "distinct per job",
+      "samplesMs": [
+        154.69,
+        170.629,
+        179.601,
+        181.845,
+        181.915,
+        182.347,
+        182.583,
+        182.87,
+        185.538,
+        194.918,
+        211.451,
+        214.377,
+        216.34,
+        227.353,
+        229.576,
+        241.793,
+        259.817,
+        259.954,
+        275.333,
+        290.45
+      ],
+      "sources": 10,
+      "transport": "separate-process TCP TLS1.3 loopback",
+      "voters": 3
+    },
+    {
+      "maxMs": 524.815,
+      "p50Ms": 361.061,
+      "p95Ms": 511.826,
+      "payloadBytes": 524288,
+      "payloads": "distinct per job",
+      "samplesMs": [
+        276.472,
+        280.838,
+        342.973,
+        343.547,
+        343.723,
+        345.385,
+        353.753,
+        354.347,
+        358.483,
+        361.061,
+        366.374,
+        376.117,
+        377.958,
+        378.457,
+        382.357,
+        383.88,
+        478.12,
+        494.683,
+        511.826,
+        524.815
+      ],
+      "sources": 10,
+      "transport": "separate-process TCP TLS1.3 loopback",
+      "voters": 3
+    }
+  ],
+  "windows": {
+    "sha256": "DD5D32F85FBA306E9D293A00837810092909AD7A9752D347BB3949C850428C5F",
+    "exitCode": 0,
+    "stage": "C:\\WINDOWS\\TEMP\\vynic-pos02b-d6a9d911dbf0409f9640b26582043475",
+    "printerIO": false,
+    "architecture": "ARM64",
+    "serviceInstalled": false,
+    "principal": "nt authority\\system",
+    "passedRecords": 37,
+    "skippedTests": [
+      "TestPeerProcess"
+    ],
+    "initialVmState": "stopped",
+    "finalVmState": "stopped",
+    "SCMTested": false,
+    "nativeArchitecture": "ARM64",
+    "amd64": "cross-build only",
+    "log": "windows-native.log"
+  },
+  "requirements": {
+    "A_standalone": {
+      "status": "PASS",
+      "evidence": "TestPeerProcessTopology/1"
+    },
+    "B_two_fixed_host_client": {
+      "status": "PASS",
+      "evidence": "TestPeerProcessTopology/2"
+    },
+    "C_three_full_voters": {
+      "status": "PASS",
+      "evidence": "TestPeerProcessTopology/3"
+    },
+    "D_four_sources": {
+      "status": "PASS",
+      "evidence": "TestPeerProcessTopology/4"
+    },
+    "E_ten_sources": {
+      "status": "PASS",
+      "evidence": "TestPeerProcessTopology/10"
+    },
+    "F_independent_stations": {
+      "status": "PASS",
+      "evidence": "TestPeerProcessTopology"
+    },
+    "G_new_client_existing_venue": {
+      "status": "PASS",
+      "evidence": "TestPeerProcessJoinAndExpansion"
+    },
+    "H_unknown_unauthenticated_peer": {
+      "status": "PASS",
+      "evidence": "TestPeerProcessForeignIdentity/unknown; TestPeerProcessUnauthenticatedAndOversize"
+    },
+    "I_foreign_venue": {
+      "status": "PASS",
+      "evidence": "TestPeerProcessForeignIdentity/foreignVenue"
+    },
+    "J_expired_revoked_grants": {
+      "status": "PASS",
+      "evidence": "TestPeerProcessSecurity; TestPeerProcessOpenConnectionRevocation; TestPeerProcessOpenConnectionExpiry"
+    },
+    "K_tampered_membership": {
+      "status": "PASS",
+      "evidence": "TestPeerProcessLocalScopeAndTamperedMembership; TestPeerProcessSecurity/tampered_grant"
+    },
+    "L_exact_duplicate": {
+      "status": "PASS",
+      "evidence": "TestPeerProcessTopology"
+    },
+    "M_lost_ACK": {
+      "status": "PASS",
+      "evidence": "TestPeerProcessRecovery"
+    },
+    "N_source_exit": {
+      "status": "PASS",
+      "evidence": "TestPeerProcessRecovery"
+    },
+    "O_leader_SIGKILL": {
+      "status": "PASS",
+      "evidence": "TestPeerProcessRecovery (Unix); TerminateProcess on Windows"
+    },
+    "P_majority_recovery": {
+      "status": "PASS",
+      "evidence": "TestPeerProcessRecovery"
+    },
+    "Q_minority_partition": {
+      "status": "PASS",
+      "evidence": "TestPeerProcessTCPPartition"
+    },
+    "R_replica_rejoin": {
+      "status": "PASS",
+      "evidence": "TestPeerProcessRecovery"
+    },
+    "S_wrong_cluster": {
+      "status": "PASS",
+      "evidence": "TestPeerProcessForeignIdentity/wrongCluster"
+    },
+    "T_certificate_mismatch": {
+      "status": "PASS",
+      "evidence": "TestPeerProcessForeignIdentity/mismatchedCertificate"
+    },
+    "U_stale_generation": {
+      "status": "PASS",
+      "evidence": "TestPeerProcessSecurity/stale_generation"
+    },
+    "V_physical_writer_held": {
+      "status": "PASS",
+      "evidence": "all topology status assertions; runtime exposes no physical operation"
+    },
+    "controlled_interrupted_expansion": {
+      "status": "PASS",
+      "evidence": "TestPeerProcessInterruptedExpansion"
+    },
+    "local_no_raft": {
+      "status": "PASS",
+      "evidence": "TestPeerProcessLocalOnly"
+    },
+    "offline_window_clock_rollback": {
+      "status": "PASS",
+      "evidence": "TestPeerProcessOfflineWindow; TestPeerProcessSecurity/clock_rollback"
+    },
+    "no_implicit_or_lost_store_bootstrap": {
+      "status": "PASS",
+      "evidence": "TestPeerProcessNoImplicitBootstrap; TestPeerProcessLostStoreRefusesReplacement"
+    }
+  },
+  "validation": {
+    "go": "go1.26.8 darwin/arm64",
+    "goVet": "PASS",
+    "gofmt": "PASS",
+    "gitDiffCheck": "PASS",
+    "crossBuild": [
+      "windows/arm64",
+      "windows/amd64"
+    ]
+  },
+  "network": {
+    "realTCP": true,
+    "mutualTLS": "1.3",
+    "identity": "POS-02.A ProductionStore",
+    "grants": "disposable Ed25519-signed VYNIC_PRINTER_PRODUCTION test grants",
+    "processIsolation": true,
+    "transportSimulation": false,
+    "physicalMultiPCLAN": "NOT_RUN",
+    "frameMaxBytes": 16777216,
+    "snapshotMaxBytes": 67108864,
+    "inboundConnections": 32,
+    "activeApplicationRequests": 8,
+    "outboundCalls": 32,
+    "clientRoundsMax": 6,
+    "clientDeadlineSeconds": 12
+  },
+  "membership": {
+    "modes": [
+      "LOCAL_ONLY",
+      "SINGLE_REPLICA",
+      "THREE_REPLICAS"
+    ],
+    "clientAutoPromotion": false,
+    "offlineQuorumShrink": false,
+    "supportedChange": "signed client joins and controlled 1-to-3 expansion",
+    "initialBootstrap": "explicit first configuration revision=1 only",
+    "lostQueue": "identity marker denies replacement",
+    "heldChanges": [
+      "voter removal/replacement",
+      "voter endpoint movement"
+    ]
+  },
+  "offlinePolicy": {
+    "maxSeconds": 604800,
+    "unknownRevocation": "next verified refresh or signed expiry",
+    "learnedRevocation": "denied immediately on next operation, persisted",
+    "trustedOSClockAndProtectedStorageRequired": true
+  },
+  "schema": {
+    "prismaChanges": false,
+    "normalizedQueueSQLVersion": 2,
+    "productionPinVersion": 2,
+    "additiveLocalTable": "runtime_queue in the protected identity SQLite store"
+  },
+  "safety": {
+    "physicalPrinterIO": false,
+    "physicalWriter": "HELD",
+    "FlutterHiveWriterChanged": false,
+    "productionServicesInstalledOrActivated": false,
+    "firewallOrDriversChanged": false,
+    "restaurantStorageAccessed": false,
+    "productionCredentialsCreated": false,
+    "oldProofFilesUnchanged": 1233,
+    "resetStashRebasePush": false,
+    "VMRestoredStopped": true
+  },
+  "limitations": [
+    "One-Mac loopback qualifies software transport, not physical multi-PC LAN",
+    "No arbitrary voter replacement/removal or endpoint transition",
+    "Seven-day cached authority can expire during prolonged offline use",
+    "No automatic Cloud renewal scheduler or Windows SCM/service account qualification",
+    "No Flutter admission, controller physical receipts, Hive cutover/rollback or printer activation",
+    "No physical printer/hardware qualification"
+  ],
+  "nextSubstage": "POS-02.C \u2014 Flutter/local Go admission and business routing",
+  "nextSubstageStarted": false,
+  "masterPlan": "Sequential; printer exception only; other milestones unchanged",
+  "changedExistingFiles": 11,
+  "newStageFiles": 8,
+  "historicalReports": "preserved unchanged",
+  "sourceFilesHashed": 203
+}

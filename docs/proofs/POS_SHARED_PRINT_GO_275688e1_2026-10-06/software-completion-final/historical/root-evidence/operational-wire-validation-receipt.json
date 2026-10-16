@@ -1,0 +1,114 @@
+{
+  "sourceRoot": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/source",
+  "ownedManifestSha256": "c8e9bc4cd6dc9de7f7261769024c937e347e99bc46fabe99fde45e7108d739b8",
+  "schemaVersion": 6,
+  "normalFoundationProtocol": "1.1, FOUNDATION_ONLY, business_mutations_enabled=false",
+  "proofProtocol": "1.3, ISOLATED_PROOF; separate explicit fixture constructor",
+  "GoValidation": {
+    "log": "operational-authenticated-wire-final-test.jsonl",
+    "statistics": {
+      "vynic.local/edge/internal/server": {
+        "passRecords": 38,
+        "failRecords": 0,
+        "skipRecords": 1,
+        "topLevelPass": 8,
+        "topLevelSkip": 1
+      },
+      "vynic.local/edge/internal/store": {
+        "passRecords": 115,
+        "failRecords": 0,
+        "skipRecords": 2,
+        "topLevelPass": 28,
+        "topLevelSkip": 2
+      }
+    },
+    "cases": 153,
+    "workerEntrySkips": 3,
+    "actualProcessWire": {
+      "gatewayProcesses": 1,
+      "independentClientProcesses": 3,
+      "mutualTLS": "1.3",
+      "twoSyntheticPhysicalRegistries": true,
+      "physicalTransportCreated": false,
+      "serverSideLostNetworkACK": true,
+      "clientAndGatewayRestart": true,
+      "immutableResultAndQueueReceipts": true,
+      "scopeCAoriginHostEpochEnvelopeRefusals": true
+    }
+  },
+  "DartValidation": {
+    "log": "operational-wire-dart-final-fixed-test.log",
+    "passed": 65,
+    "newWireTests": 19,
+    "existingClientTests": 46,
+    "actualDartToGoMutualTLS": true,
+    "actualTemporaryHive": true,
+    "flushBeforeCommit": true,
+    "lostACKReopen": true,
+    "historicalACKAfterOtherOriginReplay": true,
+    "mismatchedServerPinRefused": true,
+    "pinValidityCallbackTests": true,
+    "analysis": "operational-wire-dart-final-fixed-analysis.log",
+    "format": "operational-wire-dart-final-fixed-format.log"
+  },
+  "limits": {
+    "operationalJournalBytes": 134217728,
+    "queueJournalBytesSeparate": 134217728,
+    "queueRetainedJobs": 4096,
+    "queueSettlementReserveBytesPerJob": 32768,
+    "requestBytes": 16777216,
+    "effectBytes": 12582912,
+    "primaryBytes": 8389632,
+    "productionSizingClaim": false
+  },
+  "trustPrecondition": "Go constructor crypto/x509 validates intended SAN and sole serverAuth purpose plus validity before handing exact fixture leaf pin to Dart; Dart uses zero trusted roots and exact DER/time/SNI callback. Future production provisioning requires qualified signed pin attestation; no parser/dependency added.",
+  "remainingGates": [
+    "Opaque proof postimages remain unattached to production; full typed writer coverage/admission and rollback fencing pending.",
+    "Printer cluster v2 is separate agent-owned inert logical admission, not proven by this v1 gateway fixture.",
+    "This does not implement three-host consensus, automatic physical takeover or live gateway availability.",
+    "No physical printer, persistent Windows SCM registration, live credentials or LAN cutover performed.",
+    "Combined root/race/security qualification of the full latest source remains parent/dependency-owner work; independent bounded review passed."
+  ],
+  "ownedManifest": "operational-wire-owned-hashes.json",
+  "sourceManifest": "operational-wire-source-manifest.json",
+  "sourceManifestSha256": "a32a175fdf3454dc4f1c040822577eb35e379dd2b4ac57dc1441a4cb7dce9f03",
+  "generationReceipt": "operational-wire-generation-receipt.json",
+  "generationReceiptSha256": "133ba0009f37de3ee1ba685d9daf1fade42335af2d2ffa5799376f0fe9de7f24",
+  "whitespaceCheck": "operational-wire-diff-check.json",
+  "whitespaceCheckSha256": "133a785e92526ccc189b057d1da48e02e77c21dce1d6f80a25ea6f71070ded63",
+  "evidenceLogHashes": {
+    "operational-authenticated-wire-final-test.jsonl": "319b5040433032ca0a8f84aca75ef44806a11f37bda5391903ed91a68be46274",
+    "operational-authenticated-wire-final-test.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "operational-wire-dart-final-fixed-test.log": "aabdbaa14c0c4fa9248067963ac479a5edcf5abd13bb94976a7fe00df9c85aee",
+    "operational-wire-dart-final-fixed-analysis.log": "278f835cba575cee0e3dfe5020ada0d31e7f00846104fa294ae61b356729e761",
+    "operational-wire-dart-final-fixed-format.log": "3f48ca976b74ae5cd933c7ba982c43f885d1008df606ac0136d9a6f1cc4f9c68"
+  },
+  "independentReview": {
+    "path": "printer-validation/operational-wire-independent-review.json",
+    "sha256": "29716dd3eb1637dd99e443ebcaff7412af2ae349a837501135f4535fdae30463",
+    "verdict": "PASS bounded isolated authenticated operational proof and atomic v1 print queue admission; no remaining identified P1/P2"
+  },
+  "reproduce": {
+    "Go": {
+      "workdir": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/source/apps/edge",
+      "environment": "source /tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/tool-env.sh; GOPROXY=off; GOTOOLCHAIN=local",
+      "testSelection": [
+        "./internal/store",
+        "./internal/server"
+      ],
+      "command": "go test -mod=readonly -count=1 -json ./internal/store ./internal/server",
+      "permission": "Loopback test listeners require the authorized narrow test escalation in this sandbox."
+    },
+    "Dart": {
+      "workdir": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/source/apps/operations",
+      "fixtureEnvironment": "VYNIC_OPERATIONAL_PROOF_GO_FIXTURE=/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/operational-proof-server.test",
+      "command": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/flutter-sdk/bin/flutter --suppress-analytics test --no-pub test/unit/operational_proof_wire_test.dart test/unit/operational_proof_client_test.dart",
+      "analyzedFormattedFiles": [
+        "lib/core/services/edge/operational_proof/domain.dart",
+        "lib/core/services/edge/operational_proof/client.dart",
+        "lib/core/services/edge/operational_proof/grpc_transport.dart",
+        "test/unit/operational_proof_wire_test.dart"
+      ]
+    }
+  }
+}

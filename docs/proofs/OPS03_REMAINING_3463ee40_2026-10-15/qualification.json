@@ -1,0 +1,78 @@
+{
+  "status": "BOUNDED_READ_ONLY_QUALIFICATION_COMPLETE_WITH_RELEASE_GAPS",
+  "imageResults": [
+    {
+      "image": "backend",
+      "findingInstances": 122,
+      "uniqueRules": 121,
+      "scoreDerivedSeverity": {
+        "LOW": 47,
+        "MODERATE": 29,
+        "HIGH": 40,
+        "CRITICAL": 5
+      }
+    },
+    {
+      "image": "reverse-proxy",
+      "findingInstances": 63,
+      "uniqueRules": 55,
+      "scoreDerivedSeverity": {
+        "LOW": 6,
+        "MODERATE": 8,
+        "HIGH": 35,
+        "CRITICAL": 6
+      }
+    },
+    {
+      "image": "postgres",
+      "findingInstances": 157,
+      "uniqueRules": 157,
+      "scoreDerivedSeverity": {
+        "LOW": 67,
+        "MODERATE": 34,
+        "HIGH": 47,
+        "CRITICAL": 9
+      }
+    }
+  ],
+  "backendSBOMComponents": 667,
+  "inspectableImages": 3,
+  "unavailableFrontendImageObjects": 3,
+  "native": {
+    "swiftPinOccurrences": 32,
+    "macosPins": 13,
+    "iosPins": 19,
+    "nativeAndSdkQueries": 26,
+    "matchedQueries": 0,
+    "positiveMappingControl": false,
+    "qualifiedClean": false,
+    "limitations": [
+      "Negative control means lookup coverage is not independently validated; zero matches is not native/SDK clean evidence",
+      "SwiftPM wrappers do not attest embedded C/C++ binaries",
+      "Android resolved dependency graph and Windows release native artifacts unqualified"
+    ]
+  },
+  "recommendedBundle": [
+    "Remove Vankisi unused direct dev sharp dependency after isolated clean-install/build confirmation",
+    "Qualify only @prisma/config -> deepmerge-ts 8.0.0 scoped override, retaining Prisma/client 6.19.3; integrate only after explicit approval and regression"
+  ],
+  "upstreamBlockers": {
+    "braces": "Published latest 3.0.3 affected; upstream PR72 closed without fixed release",
+    "sprintf-js": "Published latest 1.1.3 affected; upstream issue237 open; do not force Jest downgrade",
+    "latestPrismaConfig": "7.10.0 still pins deepmerge-ts 7.1.5"
+  },
+  "goPrintScope": "DEFERRED_PRINTER_LAST_NO_REPO_GO_EXECUTION_OR_EDITS",
+  "boundaries": {
+    "dependencyChanges": false,
+    "installedSoftware": false,
+    "newCredentials": false,
+    "liveDataTouched": false,
+    "servicesChanged": false,
+    "deployed": false,
+    "pushed": false
+  },
+  "privateEvidence": "/var/folders/82/drcfb4994p16rl49gxx9tj000000gn/T/vynic-ops03-readonly-m5dm0f48",
+  "finalChecks": "PASS_SOURCE_ENV_BYTES_AND_DIFF_CHECK",
+  "frontendOSInventory": "three running frontend installed-package inventories PASS; image objects unavailable; no full image scan",
+  "nextMilestone": "User-requested POS quick checkout, table/reservation and estimate UX/accounting"
+}

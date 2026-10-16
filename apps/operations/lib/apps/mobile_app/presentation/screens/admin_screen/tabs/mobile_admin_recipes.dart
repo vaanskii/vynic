@@ -858,7 +858,7 @@ class CurrentRecipeCostPanel extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Text(
-          'მიმდინარე თვითღირებულება: ${cost?.total == null ? 'ვერ გამოითვლება' : '${cost!.total} ₾'}',
+          'რეცეპტის მიმდინარე შეფასება: ${cost?.total == null ? 'ვერ გამოითვლება' : '${cost!.total} ₾'}',
           style: TextStyle(color: AdminTheme.text, fontWeight: FontWeight.w700),
         ),
         if (cost == null || cost!.status == 'NO_ACTIVE_RECIPE')
@@ -868,7 +868,16 @@ class CurrentRecipeCostPanel extends StatelessWidget {
           ),
         if (cost?.status == 'MISSING_COMPONENT_COST')
           Text(
-            'ზოგი ინგრედიენტის შესყიდვის ფასი ჯერ არ გვაქვს.',
+            'ზოგი ინგრედიენტის ღირებულება უცნობია ან წინასწარია.',
+            style: TextStyle(color: AdminTheme.warn),
+          ),
+        Text(
+          'მიმდინარე მარაგის მოძრავი საშუალო და შენახული რეცეპტი. ეს არ არის გაყიდვის დახურვის ისტორიული თვითღირებულება.',
+          style: TextStyle(color: AdminTheme.textMuted, fontSize: 12),
+        ),
+        if (cost?.includesReconstructedHistory == true)
+          Text(
+            'შეიცავს ისტორიიდან აღდგენილ შეფასებებს.',
             style: TextStyle(color: AdminTheme.warn),
           ),
         if (cost != null && cost!.components.isNotEmpty)
@@ -876,7 +885,7 @@ class CurrentRecipeCostPanel extends StatelessWidget {
             key: const PageStorageKey('inventory-recipe-cost-details'),
             tilePadding: EdgeInsets.zero,
             title: Text(
-              'შენახული შემადგენლობით · საშუალო შესყიდვის ფასი',
+              'შენახული შემადგენლობით · მიმდინარე მარაგის ფასი',
               style: TextStyle(color: AdminTheme.textMuted, fontSize: 12),
             ),
             children: [
@@ -891,13 +900,15 @@ class CurrentRecipeCostPanel extends StatelessWidget {
                       ),
                       subtitle: Text(
                         component.unitCost == null
-                            ? 'შესყიდვის ისტორია არ არის'
+                            ? component.status == 'PROVISIONAL'
+                                  ? 'წინასწარი შეფასება — სანდო ღირებულება ვერ გამოითვლება'
+                                  : 'შესყიდვის ისტორია არ არის'
                             : '${_quantityText(component.quantity)} ${_unitShort(component.baseUnit)} × ${_quantityText(component.unitCost!)} ₾ / ${_unitShort(component.baseUnit)} = ${_quantityText(component.cost!)} ₾',
                         style: TextStyle(color: AdminTheme.textMuted),
                       ),
                     ),
                   Text(
-                    'დათვლილია დადასტურებული მიღებებიდან. გაუქმებული მიღებები არ შედის. შემადგენლობის ცვლილება გამოჩნდება შენახვის შემდეგ.',
+                    'დათვლილია მიღებების, ჩამოწერებისა და აღდგენების გაყინული ღირებულებებიდან. შემადგენლობის ცვლილება გამოჩნდება შენახვის შემდეგ.',
                     style: TextStyle(color: AdminTheme.textDim, fontSize: 11),
                   ),
                 ],

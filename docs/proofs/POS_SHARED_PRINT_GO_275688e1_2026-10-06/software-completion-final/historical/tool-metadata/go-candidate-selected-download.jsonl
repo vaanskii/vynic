@@ -1,0 +1,80 @@
+{
+	"Path": "google.golang.org/grpc",
+	"Version": "v1.83.2",
+	"Info": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/google.golang.org/grpc/@v/v1.83.2.info",
+	"GoMod": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/google.golang.org/grpc/@v/v1.83.2.mod",
+	"Zip": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/google.golang.org/grpc/@v/v1.83.2.zip",
+	"Dir": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/google.golang.org/grpc@v1.83.2",
+	"Sum": "h1:EManeRomTObA0BU7I8vXgg/78uE5MJ9M8B39EX2WscU=",
+	"GoModSum": "h1:YPI1hK3kDked6iHvgX3tR0y+nX/qpMFKhPgFsokw1S8=",
+	"Origin": {
+		"VCS": "git",
+		"URL": "https://github.com/grpc/grpc-go",
+		"Hash": "030ee8becb20ce4315d6bf2dfa26bdd876169dc4",
+		"Ref": "refs/tags/v1.83.2"
+	}
+}
+{
+	"Path": "golang.org/x/net",
+	"Version": "v0.58.0",
+	"Info": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/golang.org/x/net/@v/v0.58.0.info",
+	"GoMod": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/golang.org/x/net/@v/v0.58.0.mod",
+	"Zip": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/golang.org/x/net/@v/v0.58.0.zip",
+	"Dir": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/golang.org/x/net@v0.58.0",
+	"Sum": "h1:ynWG7rqYi4ccpTEuPZ2QGWHktVEM9DMCj9yzDE0Q7To=",
+	"GoModSum": "h1:YwCddHnFlT7eLQqVprV19OnhLGtc5xOKgE0RyqgfWAU=",
+	"Origin": {
+		"VCS": "git",
+		"URL": "https://go.googlesource.com/net",
+		"Hash": "acc78e0d2b2c855c0c4fbdcfe5f42a9e3d0f9778",
+		"Ref": "refs/tags/v0.58.0"
+	}
+}
+{
+	"Path": "golang.org/x/text",
+	"Version": "v0.41.0",
+	"Info": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/golang.org/x/text/@v/v0.41.0.info",
+	"GoMod": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/golang.org/x/text/@v/v0.41.0.mod",
+	"Zip": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/golang.org/x/text/@v/v0.41.0.zip",
+	"Dir": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/golang.org/x/text@v0.41.0",
+	"Sum": "h1:vz/seA0lnX87Othu2f/0L24RcgrXD9/YFTSuGjj3rH8=",
+	"GoModSum": "h1:jvf1O8ajNzZqhSrQBPbutR/EB83Cc0CFrezNQIwbb5M=",
+	"Origin": {
+		"VCS": "git",
+		"URL": "https://go.googlesource.com/text",
+		"Hash": "acdba6655fd45cdb5ab73c9d6a8981333bd65a39",
+		"Ref": "refs/tags/v0.41.0"
+	}
+}
+{
+	"Path": "golang.org/x/sys",
+	"Version": "v0.47.0",
+	"Info": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/golang.org/x/sys/@v/v0.47.0.info",
+	"GoMod": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/golang.org/x/sys/@v/v0.47.0.mod",
+	"Zip": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/golang.org/x/sys/@v/v0.47.0.zip",
+	"Dir": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/golang.org/x/sys@v0.47.0",
+	"Sum": "h1:o7XGOvZQCADBQQ4Y7VNq2dRWQR7JmOUW8Kxx4ZsNgWs=",
+	"GoModSum": "h1:4GL1E5IUh+htKOUEOaiffhrAeqysfVGipDYzABqnCmw=",
+	"Origin": {
+		"VCS": "git",
+		"URL": "https://go.googlesource.com/sys",
+		"Hash": "9e7e939dcafac07e8ab4cffa6e5fc74908413f00",
+		"Ref": "refs/tags/v0.47.0"
+	}
+}
+{
+	"Path": "google.golang.org/genproto/googleapis/rpc",
+	"Version": "v0.0.0-20260526163538-3dc84a4a5aaa",
+	"Info": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/google.golang.org/genproto/googleapis/rpc/@v/v0.0.0-20260526163538-3dc84a4a5aaa.info",
+	"GoMod": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/google.golang.org/genproto/googleapis/rpc/@v/v0.0.0-20260526163538-3dc84a4a5aaa.mod",
+	"Zip": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/google.golang.org/genproto/googleapis/rpc/@v/v0.0.0-20260526163538-3dc84a4a5aaa.zip",
+	"Dir": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/google.golang.org/genproto/googleapis/rpc@v0.0.0-20260526163538-3dc84a4a5aaa",
+	"Sum": "h1:mZHHdPZl0dbGHCflZgAq/Q468DWVFcU2whhB2KAo8fk=",
+	"GoModSum": "h1:4Hqkh8ycfw05ld/3BWL7rJOSfebL2Q+DVDeRgYgxUU8=",
+	"Origin": {
+		"VCS": "git",
+		"URL": "https://github.com/googleapis/go-genproto",
+		"Subdir": "googleapis/rpc",
+		"Hash": "3dc84a4a5aaa87331e10f51e22e90d961f986894"
+	}
+}

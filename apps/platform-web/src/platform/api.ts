@@ -94,9 +94,13 @@ const json = (value: object) => JSON.stringify(value);
 export const localToolsApi = {
   capability: () => request<{ enabled: boolean }>("/platform/developer-tools"),
   remove: (kind: "venue" | "organization", id: string, confirmation: string) =>
-    request<{ mediaCleanup: { failures: string[] } }>(`/platform/developer-tools/${kind === "venue" ? "venues" : "organizations"}/${encodeURIComponent(id)}/delete`, {
-      method: "POST", body: json({ confirmation }),
-    }),
+    request<{ mediaCleanup: { failures: string[] } }>(
+      `/platform/developer-tools/${kind === "venue" ? "venues" : "organizations"}/${encodeURIComponent(id)}/delete`,
+      {
+        method: "POST",
+        body: json({ confirmation }),
+      },
+    ),
 };
 
 export const authApi = {
@@ -123,6 +127,14 @@ export const platformApi = {
       method: "POST",
       body: JSON.stringify({ status, reason }),
     }),
+  websitePaymentReviews: (venueId: string, offset = 0) =>
+    request<import("./types").WebsitePaymentReviewPage>(
+      `/platform/venues/${venueId}/website-payment-reviews?offset=${offset}`,
+    ),
+  websiteDeliveries: (venueId: string, offset = 0) =>
+    request<import("./types").WebsiteDeliveryPage>(
+      `/platform/venues/${venueId}/website-deliveries?offset=${offset}`,
+    ),
   paymentStatus: (venueId: string) =>
     request<{ configured: boolean; entitled: boolean }>(
       `/platform/venues/${venueId}/payments/bog`,
@@ -158,6 +170,11 @@ export const platformApi = {
     }),
   managers: (id: string) =>
     request<ManagerAccess[]>(`/platform/venues/${id}/managers`),
+  managerActivation: (id: string) =>
+    request<{ code: string; expiresAt: string; venueCode: string }>(
+      `/platform/venues/${id}/manager-activation`,
+      { method: "POST", body: json({}) },
+    ),
   managerAccess: (
     id: string,
     action: "create" | "reset" | "disable",
@@ -282,7 +299,9 @@ export const platformApi = {
     request<CustomWebsite>(`/platform/venues/${venueId}/custom-website`),
   updateCustomWebsite: (
     venueId: string,
-    body: Partial<Pick<CustomWebsite, "siteKey" | "statusNote">> & {
+    body: Partial<
+      Pick<CustomWebsite, "siteKey" | "statusNote" | "expectedBuildId">
+    > & {
       status?: Exclude<CustomWebsite["status"], "NOT_CONFIGURED">;
     },
   ) =>
@@ -311,6 +330,17 @@ export const platformApi = {
       method: "POST",
       body: json({ hostname }),
     }),
+  renameDomain: (
+    venueId: string,
+    domainId: string,
+    hostname: string,
+    expectedHostname: string,
+    reason: string,
+  ) =>
+    request<VenueDomain>(`/platform/venues/${venueId}/domains/${domainId}`, {
+      method: "PATCH",
+      body: json({ hostname, expectedHostname, reason }),
+    }),
   setDomainStatus: (venueId: string, domainId: string, status: DomainStatus) =>
     request<VenueDomain>(
       `/platform/venues/${venueId}/domains/${domainId}/status`,
@@ -328,9 +358,13 @@ export const platformApi = {
     ),
   enrollments: (venueId: string) =>
     request<DeviceEnrollment[]>(`/platform/venues/${venueId}/enrollments`),
+  setupEligibility: (venueId: string) => request<{ eligible: boolean; reason: string | null }>(`/platform/venues/${venueId}/initial-manager-setup`),
+  managerLinks: (venueId: string) => request<{ id: string; status: string; expiresAt: string; consumedAt: string | null; cancelledAt: string | null }[]>(`/platform/venues/${venueId}/manager-links`),
+  issueManagerLink: (venueId: string) => request<{ id: string; code: string; expiresAt: string }>(`/platform/venues/${venueId}/manager-links`, { method: "POST", body: json({}) }),
+  cancelManagerLink: (venueId: string, id: string) => request(`/platform/venues/${venueId}/manager-links/${id}/cancel`, { method: "POST", body: json({}) }),
   createEnrollment: (
     venueId: string,
-    input: { displayName: string; platform: string; ttlMinutes?: number },
+    input: { displayName: string; platform: string; ttlMinutes?: number; initialManagerSetup?: boolean },
   ) =>
     request<IssuedEnrollment>(`/platform/venues/${venueId}/enrollments`, {
       method: "POST",

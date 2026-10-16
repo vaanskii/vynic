@@ -1,0 +1,57 @@
+{
+  "numPassedTests": 8,
+  "numFailedTests": 0,
+  "numPendingTests": 0,
+  "numTotalTests": 8,
+  "success": true,
+  "cases": [
+    {
+      "file": "apps/backend/src/payment-integrations/payment-integrations.integration.spec.ts",
+      "ordinal": 0,
+      "name": "W1 disposable PostgreSQL / HTTP denies other owners and encrypts credentials; APIs and audit contain no secrets",
+      "status": "passed"
+    },
+    {
+      "file": "apps/backend/src/payment-integrations/payment-integrations.integration.spec.ts",
+      "ordinal": 1,
+      "name": "W1 disposable PostgreSQL / HTTP requires entitlement; CUSTOM Host selects credentials ignoring body venue",
+      "status": "passed"
+    },
+    {
+      "file": "apps/backend/src/payment-integrations/payment-integrations.integration.spec.ts",
+      "ordinal": 2,
+      "name": "W1 disposable PostgreSQL / HTTP rotation/disconnect audited, new payments denied; status retains original credentials",
+      "status": "passed"
+    },
+    {
+      "file": "apps/backend/src/payment-integrations/payment-integrations.integration.spec.ts",
+      "ordinal": 3,
+      "name": "W1 disposable PostgreSQL / HTTP callback ignores Host, rejects invalid signature and mismatched stored payment reference",
+      "status": "passed"
+    },
+    {
+      "file": "apps/backend/src/payment-integrations/payment-integrations.integration.spec.ts",
+      "ordinal": 4,
+      "name": "W1 disposable PostgreSQL / HTTP sanitizes provider failures including axios credential-bearing errors",
+      "status": "passed"
+    },
+    {
+      "file": "apps/backend/src/payment-integrations/payment-integrations.integration.spec.ts",
+      "ordinal": 5,
+      "name": "W1 disposable PostgreSQL / HTTP enforces composite tenancy in PostgreSQL and rolls back a failed audit",
+      "status": "passed"
+    },
+    {
+      "file": "apps/backend/src/payment-integrations/payment-integrations.integration.spec.ts",
+      "ordinal": 6,
+      "name": "W1 disposable PostgreSQL / HTTP provider HTTP failures expose no credentials in response or logs",
+      "status": "passed"
+    },
+    {
+      "file": "apps/backend/src/payment-integrations/payment-integrations.integration.spec.ts",
+      "ordinal": 7,
+      "name": "W1 disposable PostgreSQL / HTTP explicit legacy CLI is idempotent, binds existing payments and grants no access",
+      "status": "passed"
+    }
+  ]
+}

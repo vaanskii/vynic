@@ -1,0 +1,362 @@
+[
+  {
+    "path": "apps/backend/prisma/migrations/20261015120000_printer_runtime_preparation/migration.sql",
+    "beforeSha256": null,
+    "candidateSha256": "cd85a8168291815bcad59d821e136d45f4af348c003745e30fa6b6c44cb82d99"
+  },
+  {
+    "path": "apps/backend/prisma/schema.prisma",
+    "beforeSha256": "4bb3615bb309d0315eb186fdd835b5ef2aa8fa540074eca085c6c0d6690283ac",
+    "candidateSha256": "50e6df09eede76e0446e27d95885d1b8e448fb71177357a04199d1c85a1300b0"
+  },
+  {
+    "path": "apps/backend/src/customer/customer.controller.ts",
+    "beforeSha256": "945b3978048421387cc9a51fe84f11a4d0fee0cd29308b38e021147245365379",
+    "candidateSha256": "175206a5e53ef31a5efaaaca72a7721bb06ef20b666b54c5b06e9b81cf7adc1a"
+  },
+  {
+    "path": "apps/backend/src/customer/customer.service.ts",
+    "beforeSha256": "cfe1e489894a0649c8354357ed9974f506ac9f20627282318be34a35cb04778b",
+    "candidateSha256": "64a1a9700cb0a34f6fe7c2c24c5c12b8f68bdaa2abd87127af5217bc540c8012"
+  },
+  {
+    "path": "apps/backend/src/customer/printer-runtime-config.spec.ts",
+    "beforeSha256": null,
+    "candidateSha256": "89f31fd4aa14113656368f3afe3b40161d22eac9116f6d24d83c7fd3b2bf83d9"
+  },
+  {
+    "path": "apps/backend/src/customer/printer-runtime-config.ts",
+    "beforeSha256": null,
+    "candidateSha256": "de487e4da88ac68226ea694ba8bd1961a889afc48b92d39080f947ab672624c5"
+  },
+  {
+    "path": "apps/backend/src/customer/printer-runtime-persistence.spec.ts",
+    "beforeSha256": null,
+    "candidateSha256": "f5b4fcbdab0ea70017771cc495eaa0b8da5054fcfbfa5b798df827b6b9cb7cf7"
+  },
+  {
+    "path": "apps/backend/src/customer/printer-runtime-persistence.ts",
+    "beforeSha256": null,
+    "candidateSha256": "cf2002779fc564c3a4964d82768f53cb49262a486ac57682130d3b9cc8255b13"
+  },
+  {
+    "path": "apps/operations/lib/apps/windows_pos/widgets/admin/printers/additional_printers_section.dart",
+    "beforeSha256": "5fff0d23317f380561b39a35bdb58efe92161a53a9ab81f74b157eaf1aecd871",
+    "candidateSha256": "4e5fbac9889674bef40655a7e4bca501621bf05b93698bebdbe0ddbb45d4dd23"
+  },
+  {
+    "path": "apps/operations/lib/apps/windows_pos/widgets/shared/print_jobs.dart",
+    "beforeSha256": "b633117a50a3a39259c6a0a68518fb8b111e6fdb86db47313dd3e581b0e4064a",
+    "candidateSha256": "3e9974aad72b0d8e52334ab9afd748fb719eeaf036dd40ceef3574e249d88ef9"
+  },
+  {
+    "path": "apps/operations/lib/core/database/repositories/backup_repository.dart",
+    "beforeSha256": "fc696b0e00bd4ca073017ee6a97374bad790bd9f7c043255dacc9d12d0ecfee2",
+    "candidateSha256": "9d78ab77f1845e0cf434b5fc02b2d01f979ec6dc3a9c44879407666ae8686e94"
+  },
+  {
+    "path": "apps/operations/lib/core/database/repositories/order_table_mutation_repository.dart",
+    "beforeSha256": "fd9f64eb578b9b5e6fc55f45cbfaebb4be2d94447bc87d2342b821f967072020",
+    "candidateSha256": "9939c54d5b6b9fc927f35ddac94548925d90fab47dea7e0446700b72ecd87a17"
+  },
+  {
+    "path": "apps/operations/lib/core/database/repositories/print_job_repository.dart",
+    "beforeSha256": "fbd8889faa4c353025e6abe2f4db4e3d30f6f4c2dcad3c80906547f3f28e6053",
+    "candidateSha256": "ab048700066876e8f845cb4533875bd5c3b439c4824f25edb1e77bbb09bdd5a1"
+  },
+  {
+    "path": "apps/operations/lib/core/services/edge/edge_device_credential_store.dart",
+    "beforeSha256": "c7959d7f65783a62c08d6b71f21c5fc660a475d95b5b1160546df248416f3456",
+    "candidateSha256": "2015a817e6026d52fa669816ecf8cc56a45ec1a9df81c949f07c5f7f25fd8191"
+  },
+  {
+    "path": "apps/operations/lib/core/services/edge/operational_proof/client.dart",
+    "beforeSha256": null,
+    "candidateSha256": "8dd5b07ca905aec3240c0b077e06845ea92488dc89724b74da57eac6704c4338"
+  },
+  {
+    "path": "apps/operations/lib/core/services/edge/operational_proof/domain.dart",
+    "beforeSha256": null,
+    "candidateSha256": "e14f30e884ae492b172f5ca310395c6932f0f08902beff89e0527f5ccf131c1c"
+  },
+  {
+    "path": "apps/operations/lib/core/services/edge/operational_proof/frame_store.dart",
+    "beforeSha256": null,
+    "candidateSha256": "95d5893daa62522d96c6688e6b8195c1af4dd191a84b54788877e102a0b22c53"
+  },
+  {
+    "path": "apps/operations/lib/core/services/edge/operational_proof/intent_adapter.dart",
+    "beforeSha256": null,
+    "candidateSha256": "143e73f8606289f399431682f338ee898eb0f6f1afaf941a9310c4cf012f76e5"
+  },
+  {
+    "path": "apps/operations/lib/core/services/edge/operational_proof/ordinary_planner.dart",
+    "beforeSha256": null,
+    "candidateSha256": "2b63ba76ff9864e1c92099e7e62a863a7426552d3d4b3d8019e81f5cadd1875f"
+  },
+  {
+    "path": "apps/operations/lib/core/services/edge/operational_proof/planning_view.dart",
+    "beforeSha256": null,
+    "candidateSha256": "38973bfff6f373abfa575be72c0d1af962ef8c6040c6d5134f92c9052872fe17"
+  },
+  {
+    "path": "apps/operations/lib/core/services/edge/runtime_config_sync.dart",
+    "beforeSha256": "ae4712bb485ca2fbb356160806192f9ddbc7b16340b516c24a3a57297b30fe80",
+    "candidateSha256": "dc6ccdf1d78edde3555748d2ccfebbaa8e755e0f3b21126a104067be03f545e5"
+  },
+  {
+    "path": "apps/operations/lib/core/services/pos/update/update_readiness.dart",
+    "beforeSha256": "180fe2f78bbf84f91e041a30e3676a26998781db3438e541f138efa42a01343a",
+    "candidateSha256": "8c5c2eb4ec430e2f295bb52789137a11d4794286feafd5b885d5828ed2954500"
+  },
+  {
+    "path": "apps/operations/lib/core/services/printing/cloud_printer_runtime.dart",
+    "beforeSha256": null,
+    "candidateSha256": "aaa433484757ffb0f44c234ba0d6dd9898a7c40bb5eb0117507aaaa16568857c"
+  },
+  {
+    "path": "apps/operations/lib/core/services/printing/escpos_kitchen_renderer.dart",
+    "beforeSha256": "a24d1934be602ab37d8c301d18ae62fbd8335d92998f18f9c587274c06b98473",
+    "candidateSha256": "45621980f1c914fecc507256a2f13af7109890702d2724a4ddfb2eaae6c27976"
+  },
+  {
+    "path": "apps/operations/lib/core/services/printing/escpos_receipt_renderer.dart",
+    "beforeSha256": "da6a1a0433ec2531b2b09ecfd9c94d91f0eb54b697264a0c909cc69b033401f9",
+    "candidateSha256": "cb06a00b585cb85c037f1694fed15623b656fc705707f95b509f0149cff535fb"
+  },
+  {
+    "path": "apps/operations/lib/core/services/printing/escpos_report_renderer.dart",
+    "beforeSha256": "d491118d89d3f184c89c694fbef9b77dfa059da955b5413ad2eea86e1b42b5a6",
+    "candidateSha256": "4823ac0c50ede2a0826067baa7ce3c872c40d8533965f658d05962b11ac9ad7a"
+  },
+  {
+    "path": "apps/operations/lib/core/services/printing/local_printer_catalog.dart",
+    "beforeSha256": "c7142ae7c653d41cf0319e430356e8b47e31666abec1d12cb116dff74a26c1ce",
+    "candidateSha256": "b786a4a1e6097583e5b817431fa89ed01c31a3c4ece8c4ce407d8c86e5447428"
+  },
+  {
+    "path": "apps/operations/lib/core/services/printing/optional_printer_beep.dart",
+    "beforeSha256": null,
+    "candidateSha256": "44f8b456a2a084afc09b15d7682c07e4c811eaeb0ca0e16f2116a5ae67773034"
+  },
+  {
+    "path": "apps/operations/lib/core/services/printing/print_identity_admission.dart",
+    "beforeSha256": null,
+    "candidateSha256": "7dbf8bfa62ae99a06923106b9aae452e9ee69370fd536d58454f79873d10ab26"
+  },
+  {
+    "path": "apps/operations/lib/core/services/printing/print_job.dart",
+    "beforeSha256": "4be584c07b66ec79b42b30569d6a760a0261a2fc79a2bb7ea4c055ae161daf72",
+    "candidateSha256": "fbfd85cdcd65c9ed30154d1c74cec80993d4d0733ecdfa1066e6f8bbc986f493"
+  },
+  {
+    "path": "apps/operations/lib/core/services/printing/print_queue.dart",
+    "beforeSha256": "77b761cec692bfabc4281a5b1977ed4bfe0691d612d4d726bee25f4fafd3229d",
+    "candidateSha256": "68b9a5f1dd5e640ffde24a00cb43bc32413a04f75da8223b65ec4c915c9be678"
+  },
+  {
+    "path": "apps/operations/lib/core/services/printing/print_reconciliation.dart",
+    "beforeSha256": "676544e2d8f53f624c4ea6c2540f48d2718a932521deb9b46daca07e2234b09d",
+    "candidateSha256": "8489b8793ebdcb81292b4ecb85cac5b8c479f16a06896d84de0b05c88d654b8e"
+  },
+  {
+    "path": "apps/operations/lib/core/services/printing/print_routing_plan.dart",
+    "beforeSha256": null,
+    "candidateSha256": "42573d0f0965c23f5097dac6c9c691e624d8c38d21c586dad03e74a43de54336"
+  },
+  {
+    "path": "apps/operations/lib/core/services/printing/printer_capability_profile.dart",
+    "beforeSha256": null,
+    "candidateSha256": "804623bc7c6249306e08b5475afed8ccd5440fa75e74b5aea4d05af5d274fedd"
+  },
+  {
+    "path": "apps/operations/lib/core/services/printing/printer_destination.dart",
+    "beforeSha256": null,
+    "candidateSha256": "54f062aa97cf53266fbc7a808a325a6f6a5f4af97c418b5a10a07ae13ff64191"
+  },
+  {
+    "path": "apps/operations/lib/core/services/printing/printer_service.dart",
+    "beforeSha256": "2cc2c9f228d3bc0388b88b94ce7c0491e4fb2f0538f7a8322753322d56c96535",
+    "candidateSha256": "09829e9aace669c3573aecf0f2616d0439767ac4566ddd03a423c2667c300de6"
+  },
+  {
+    "path": "apps/operations/lib/core/services/printing/windows_spooler_transport.dart",
+    "beforeSha256": null,
+    "candidateSha256": "0efb38362c59ac80921804740a84faab78fcfdfb5e0e3d336706b23a808acf1f"
+  },
+  {
+    "path": "apps/operations/test/support/pos02_preview_harness.dart",
+    "beforeSha256": "f2f739fdb38eca03b7c8771599d3db605606b43630ed6a867705851e965e3e3e",
+    "candidateSha256": "83f4798b16fc054cbc195586bff346f37a61462e3347566360324826c627cc31"
+  },
+  {
+    "path": "apps/operations/test/unit/cloud_printer_runtime_sync_test.dart",
+    "beforeSha256": null,
+    "candidateSha256": "d2573cf833f6a849b4f8a30355d43b77447fa354d0b1d878e09ca4c6fa8a3631"
+  },
+  {
+    "path": "apps/operations/test/unit/cloud_printer_runtime_test.dart",
+    "beforeSha256": null,
+    "candidateSha256": "5b77ea50382ec80112e9e85c3533adb5e1954aa6ddba9aace4859158d3b4802f"
+  },
+  {
+    "path": "apps/operations/test/unit/escpos_capability_renderer_test.dart",
+    "beforeSha256": null,
+    "candidateSha256": "dc72fc2950026e291db768876472896ecaf63db48c77417aee6ac7334ab8c9aa"
+  },
+  {
+    "path": "apps/operations/test/unit/operational_ordinary_planner_test.dart",
+    "beforeSha256": null,
+    "candidateSha256": "bed0e69dc31b0ea4070c66c7de9f37a7ead2fc1bd716776f8b0d702f28fa172b"
+  },
+  {
+    "path": "apps/operations/test/unit/operational_proof_client_test.dart",
+    "beforeSha256": null,
+    "candidateSha256": "ac90249cf5d7c0fd4120cdf3072454b6701b0faf24ed88cfbb71a9ed3ddd48fd"
+  },
+  {
+    "path": "apps/operations/test/unit/optional_printer_beep_test.dart",
+    "beforeSha256": null,
+    "candidateSha256": "cf07f4d6e3f1042b8858a6fd7d4af7d1bdec78c2d380e9cde38f3ced686f49a2"
+  },
+  {
+    "path": "apps/operations/test/unit/pos02_acceptance_runner_test.dart",
+    "beforeSha256": "83f53b87ce5b258c5db5fc5905d2e3636c260d0af675b0941943c0081daaa6c0",
+    "candidateSha256": "d67e568689b27309d3c96d17d9f0595c22461d83a7d2fddb9c2628dda018bb6b"
+  },
+  {
+    "path": "apps/operations/test/unit/pos02_preview_safety_test.dart",
+    "beforeSha256": "1343a4a440f535c582c24612a304efb9670728bcb1f15005ae4ea708a34f9992",
+    "candidateSha256": "8ee6764e8b4276213db22f44311f10427474fe818e60b82e630053256a07aa7a"
+  },
+  {
+    "path": "apps/operations/test/unit/print_identity_credential_admission_test.dart",
+    "beforeSha256": null,
+    "candidateSha256": "b96641dc09a6c6e0f7961f7cdc26bdc822b105c5738f87355e1f5a35e76f6a10"
+  },
+  {
+    "path": "apps/operations/test/unit/print_routing_plan_test.dart",
+    "beforeSha256": null,
+    "candidateSha256": "4083c0b0902d871a2ba4acf91027088d5f023d9262e75d83ca556cbe641ab150"
+  },
+  {
+    "path": "apps/operations/test/unit/printer_capability_profile_test.dart",
+    "beforeSha256": null,
+    "candidateSha256": "8102ef39551f430ec9489de4295e03de96c508a7e7387060d215657ab230db3f"
+  },
+  {
+    "path": "apps/operations/test/unit/printer_destination_test.dart",
+    "beforeSha256": null,
+    "candidateSha256": "5cef41ce4be0c50c40e908be03cf959f336bae02936e7c62bacc68da0695b943"
+  },
+  {
+    "path": "apps/operations/test/unit/printer_route_catalog_test.dart",
+    "beforeSha256": null,
+    "candidateSha256": "b08a362af548124703de2a390c052fb602d561fc3b5405f24f4d3d6903828c0c"
+  },
+  {
+    "path": "apps/operations/test/unit/routed_print_delivery_test.dart",
+    "beforeSha256": null,
+    "candidateSha256": "11190318153d2eda798aeb53507071bd8761f3ebe1d8dfd4d492147d6ee9d54b"
+  },
+  {
+    "path": "apps/operations/test/unit/windows_spooler_transport_test.dart",
+    "beforeSha256": null,
+    "candidateSha256": "75ea3990b836b49b4b30826fb100d653aef2815f5c4c925b9f7d4448ddb46743"
+  },
+  {
+    "path": "apps/operations/test/widget/printer_route_configuration_test.dart",
+    "beforeSha256": null,
+    "candidateSha256": "3fdc4e73a931d0a6c1ffd582b55e0e0e1643fc58296a6175d499f0583691f03e"
+  },
+  {
+    "path": "apps/operations/test/widget/production_print_copy_test.dart",
+    "beforeSha256": null,
+    "candidateSha256": "57a75dc25fd9c1a1e9a03374e308f44e53de9a5b7a917bf121c0f1b918697e4f"
+  },
+  {
+    "path": "apps/operations/tool/pos02_acceptance_request.dart",
+    "beforeSha256": "e1c721fd222f5a3e5e421a02cd97d5de34d1b2faabde1c3050da409ddbd5939f",
+    "candidateSha256": "ac6944f7436dab78101ed1ccecff1a6d4fb6e530a26e44e45afaf84d6699f668"
+  },
+  {
+    "path": "apps/operations/windows/runner/CMakeLists.txt",
+    "beforeSha256": "7e7a0eea507598f7debe987832bac534437cdb1fd0c77e28687487afa045acce",
+    "candidateSha256": "5e88bff3c5389e4e027f46d0fec3e66f13cbae839629e1f402a55065e424874b"
+  },
+  {
+    "path": "apps/operations/windows/runner/flutter_window.cpp",
+    "beforeSha256": "316ca05a86faa63d8c8377979f2624dac82f828cdef1efd8f4e44ea83ee7942f",
+    "candidateSha256": "4711ca99df19df14caa17db7a753432b9b61e38556915e451a29b05f630fc35c"
+  },
+  {
+    "path": "apps/operations/windows/runner/flutter_window.h",
+    "beforeSha256": "5bfc344bb00d4728a3d50b1fe23381eb230e22a9e764119b16d97a0514ba0782",
+    "candidateSha256": "baa732f98148d681bd7f86172098c00f777f33a10e55ba42cb338fc5ffd94519"
+  },
+  {
+    "path": "apps/operations/windows/runner/windows_spooler.cpp",
+    "beforeSha256": null,
+    "candidateSha256": "db67699562cb477ece7e82569e9c3ecb2a4389865ba124e47d0de34e6ae015ec"
+  },
+  {
+    "path": "apps/operations/windows/runner/windows_spooler.h",
+    "beforeSha256": null,
+    "candidateSha256": "75a307ac62916cedf1db39c33fc92bb1f1312b0d62b551b8e33c0ed4da821056"
+  },
+  {
+    "path": "apps/operations/windows/runner/windows_spooler_channel.cpp",
+    "beforeSha256": null,
+    "candidateSha256": "158bd4da5339f897bab2a688ff1a8df87e3f68e6cfe6b6c7333f4f186275b9d3"
+  },
+  {
+    "path": "apps/operations/windows/runner/windows_spooler_channel.h",
+    "beforeSha256": null,
+    "candidateSha256": "8da79f824905bcd4ca3fcf6547a9fc5239654709b4e5c31798cd6a21430ca0dc"
+  },
+  {
+    "path": "apps/operations/windows/tests/CMakeLists.txt",
+    "beforeSha256": null,
+    "candidateSha256": "a596af6b86f1f05bd4f3527a96ea036de810b0b0dd0f174eac81594b67409996"
+  },
+  {
+    "path": "apps/operations/windows/tests/windows_spooler_test.cpp",
+    "beforeSha256": null,
+    "candidateSha256": "d68ea69bc9ff2167848860d8a18482ecedeac48edf8d69e4eeba5d75577007b8"
+  },
+  {
+    "path": "docs/POS_MULTI_TERMINAL_READINESS_PLAN.md",
+    "beforeSha256": null,
+    "candidateSha256": "1f50c60665c08eda807da2add7b553ba268deeb7926dc29519961ada57c87a26"
+  },
+  {
+    "path": "docs/POS_MULTI_TERMINAL_WRITER_COVERAGE.md",
+    "beforeSha256": null,
+    "candidateSha256": "533e8d0e6b5a4d84e88ba6c965e0e0d6eeb673c0de221ed2e980b6af00162bfd"
+  },
+  {
+    "path": "docs/agent-state/VYNIC_CODE_MAP.md",
+    "beforeSha256": "a53edc09c918accb4c69f634fdd07c792b0b15fce4231d91c2a079a9e9860bc5",
+    "candidateSha256": "ef248868b8afb3399e586bff306f62834bde877cb8fdfdb4a49098d9a7c19eaf"
+  },
+  {
+    "path": "docs/agent-state/VYNIC_PROJECT_STATE.md",
+    "beforeSha256": "792a278c538f7f382ac3fb8ae4795612971c3c96911bf37da050ec05a2789c8c",
+    "candidateSha256": "6fbed450160b79827d86b8cea219104e2041d7064b2907be566e914a38a967cc"
+  },
+  {
+    "path": "docs/audits/2026-09-29-f7bb982/MASTER_BACKLOG.md",
+    "beforeSha256": "10003926f45c9203fc9eecd0318fc3c9e4cbdbe7a3a18597a83e85eddf2671d1",
+    "candidateSha256": "4d8bb02a8eb2805db1bd7c23348ce437a5f544e6966b333c8aed51f9bb4a7c64"
+  },
+  {
+    "path": "docs/audits/2026-09-29-f7bb982/VYNIC_MASTER_STABILIZATION_AND_RELEASE_PLAN_2026-09-29.md",
+    "beforeSha256": "ef4aa7a343a86e809aea151da2938ee38c265bd3559680687725217e6f0a5a8f",
+    "candidateSha256": "61acfada83aeb1068aa2782bc9472b3c4b0b35a6d77bbaceaa53c33fea1a0bba"
+  },
+  {
+    "path": "docs/audits/2026-10-04-readiness/READINESS_AUDIT.md",
+    "beforeSha256": "2fa69a1039f11173c33256be28adaafac93ed44d502c0be7b32729358fd72645",
+    "candidateSha256": "9ef56d9a7643bb26b289c2ee235be86f185bd242cede1bcd2ea8c0e450c8b85f"
+  }
+]

@@ -1,0 +1,24 @@
+{
+  "status": "PASS",
+  "operations": "CGO0 offline cross-builds and local bundle-only byte copying; no foreground/service execution or print attempts",
+  "architectures": [
+    {
+      "architecture": "amd64",
+      "independentlyBuiltAgent": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/printer-daemon-independent/printer-agent-windows-amd64.exe",
+      "sha256": "a5ef474a67d62326436c48e073731b59062cc104545032574af671dc70b882cc",
+      "bytes": 24817152,
+      "independentAgentMatchesProducer": true,
+      "reproducedBundleRuns": 2,
+      "allFourFilesMatchProducer": true
+    },
+    {
+      "architecture": "arm64",
+      "independentlyBuiltAgent": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/printer-daemon-independent/printer-agent-windows-arm64.exe",
+      "sha256": "dbdd278544ba542a9161a9bb4fbe411b31a410789af0a0bb583d4a00a78bbf71",
+      "bytes": 23291392,
+      "independentAgentMatchesProducer": true,
+      "reproducedBundleRuns": 2,
+      "allFourFilesMatchProducer": true
+    }
+  ]
+}

@@ -1,0 +1,38 @@
+{
+  "schema": 1,
+  "createdAtUtc": "2026-10-06T18:01:50.976783+00:00",
+  "status": "STAGED_EXACT_FROZEN_V2_NOT_EXECUTED",
+  "sourceReceiptSHA256": "faaaec2f1ece4f8259353666000eb4c0d3aee6143e73ae7fdf90772a937b581b",
+  "files": 1109,
+  "suites": 39,
+  "analysisFiles": 68,
+  "stages": {
+    "flutter": {
+      "path": "/Users/vaanskii/Developer/vynic/docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/software-windows-flutter-stage-v3",
+      "runnerArtifactsSHA256": "bbcc14b8ed7670098d5b3a74a730297b4dbc5869fbc101833dc321aaaf634ab9",
+      "guestJobSuffix": "VynicReadinessNative/software-1a63ebf3cde4-flutter",
+      "sourceZipSHA256": "e0f5752abcd96e0fe6ddf93ad19a6f00d146134ff68096da27cc0a1ee96d20f2",
+      "manifestSHA256": "941aa8e6dd33023d63fd3b5e31eff5eedddfb06f2fc01159b761ee30e817de43"
+    },
+    "pos": {
+      "path": "/Users/vaanskii/Developer/vynic/docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/software-windows-pos-stage-v3",
+      "runnerArtifactsSHA256": "102ac6a252f7d556ddd132eb9e24d384804a135e63c8d42289b2675a90292a4b",
+      "guestJobSuffix": "VynicReadinessNative/software-1a63ebf3cde4-pos",
+      "sourceZipSHA256": "c34f868986cb6015d43639a2cb20276660801ea8e16282eb5ce37060e5f96463",
+      "manifestSHA256": "5c109431d067276a007a9b50d26076117e6624c937051316db62c6bd30d592f3"
+    }
+  },
+  "exactSourceDeltaFromFirstWindowsFailure": [
+    "apps/operations/test/unit/printer_agent_runtime_profile_test.dart",
+    "apps/operations/test/widget/printer_agent_status_card_test.dart"
+  ],
+  "unchangedEdgeAndContractSourceFiles": 221,
+  "reusedCompiledFixtures": {
+    "operational": "2c9370e4c4cfdb55094f63a26a2bf5b45bff43868a1a2c14a0f47c2654c70abb",
+    "printerAgent": "f335745e38be573f5ec031478eab4b524a8069c811324ac2a5d39876b676e894"
+  },
+  "officialProductPreparationDeltas": 8,
+  "allPriorStageAndFailedResultFilesUntouched": true,
+  "WindowsTestsRunOnV2": false,
+  "WindowsBuildRunOnV2": false
+}

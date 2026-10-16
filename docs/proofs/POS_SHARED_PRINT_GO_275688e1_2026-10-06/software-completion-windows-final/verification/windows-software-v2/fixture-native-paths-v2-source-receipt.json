@@ -1,0 +1,39 @@
+{
+  "schema": 1,
+  "createdAtUtc": "2026-10-06T17:56:11.748279+00:00",
+  "source": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/source-v2",
+  "oldSourceReceiptSHA256": "193e4800e5d0733a30bc6c8d4ac993590219363941e69a787bba5ac3681c8f68",
+  "checkedFiles": 1109,
+  "changes": {
+    "apps/operations/test/unit/printer_agent_runtime_profile_test.dart": {
+      "beforeSHA256": "d4f7c08db3c086704f4fa480970fa3676693534ec29ad12b78a2849f8bc165d2",
+      "afterSHA256": "2418752a45d5fdbf1ee764071ba79869d76d4696a1ff4444ab62cdccf7db9a21",
+      "beforeBytes": 16346,
+      "afterBytes": 16627
+    },
+    "apps/operations/test/widget/printer_agent_status_card_test.dart": {
+      "beforeSHA256": "540c5df33fbf5e4efc67fd5a807a0322b2eb461e134bb15ff328cdcbf9f6243f",
+      "afterSHA256": "ca423ed6a77ad50b8fc8b322e6903a4eecc9d649daa706b521b1cb8684192687",
+      "beforeBytes": 22938,
+      "afterBytes": 23130
+    }
+  },
+  "unchangedFiles": 1107,
+  "patch": {
+    "path": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/windows-software-v2/fixture-native-paths-v2.patch",
+    "sha256": "c6f791495595a9ae44c1db3bbdd6cd893e2739c0fe77b678d42aef25bcacb996"
+  },
+  "productionAndDependenciesUnchanged": true,
+  "preservedNegativeInputs": [
+    "relative profile/credential values",
+    "outside symlink and directory escape",
+    "identity/installation/scope/profile/TLS pin assertions"
+  ],
+  "fixturePathReplacements": {
+    "unit": 16,
+    "widget": 5
+  },
+  "nativePathHelper": "File.fromUri(directory.uri.resolve(child)).path",
+  "sourceEditsFrozen": true,
+  "testsRunOnV2": false
+}

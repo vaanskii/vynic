@@ -9,9 +9,24 @@ import 'package:vynic/core/database/database_core.dart';
 import 'package:vynic/core/database/repositories/inventory_repository.dart';
 import 'package:vynic/core/services/edge/edge_transport_client.dart';
 import 'package:vynic/core/services/edge/inventory_projection_sync_service.dart';
+import 'package:vynic/core/services/edge/sale_consumption_sync_service.dart';
 
 void main() {
   late Directory tempDir;
+
+  InventoryProjectionSyncService service(InventoryProjectionClient client) {
+    final sync = InventoryProjectionSyncService(
+      client: client,
+      effects: SaleConsumptionSyncService(
+        credential: () => null,
+        client: MockClient((_) async {
+          throw StateError('No sale effects are provisioned in this fixture');
+        }),
+      ),
+    );
+    addTearDown(sync.shutdown);
+    return sync;
+  }
 
   setUpAll(() async {
     tempDir = await Directory.systemTemp.createTemp('inventory_projection');
@@ -58,9 +73,9 @@ void main() {
         );
       }),
     );
-    final service = InventoryProjectionSyncService(client: client);
+    final sync = service(client);
 
-    expect(await service.syncOnce(), EdgeTransportOutcome.ok);
+    expect(await sync.syncOnce(), EdgeTransportOutcome.ok);
     expect(requested.path, '/edge/inventory/catalog');
     expect(requested.queryParameters['version'], '5');
     expect(requested.queryParameters, {'version': '5'});
@@ -86,9 +101,9 @@ void main() {
       credential: () => 'vynic-device-v1.device.secret',
       httpClient: MockClient((_) async => http.Response('offline', 503)),
     );
-    final service = InventoryProjectionSyncService(client: client);
+    final sync = service(client);
 
-    expect(await service.syncOnce(), EdgeTransportOutcome.serverError);
+    expect(await sync.syncOnce(), EdgeTransportOutcome.serverError);
     expect(InventoryRepository.getStockItems().single.id, 'kept');
   });
 }

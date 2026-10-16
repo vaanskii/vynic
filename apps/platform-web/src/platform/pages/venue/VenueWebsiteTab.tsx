@@ -1,3 +1,5 @@
+import { WebsitePaymentReviewsPanel } from "./WebsitePaymentReviewsPanel";
+import { WebsiteDeliveriesPanel } from "./WebsiteDeliveriesPanel";
 import { CustomWebsitePanel } from "./CustomWebsitePanel";
 import { WebsiteCapabilitiesPanel } from "./WebsiteCapabilitiesPanel";
 import { HostnameReviews } from "./HostnameReviews";
@@ -40,6 +42,9 @@ export function VenueWebsiteTab({ venueId }: { venueId: string }) {
   const [modeConfirm, setModeConfirm] = useState(false);
   const [domainOpen, setDomainOpen] = useState(false);
   const [hostname, setHostname] = useState("");
+  const [editingDomain, setEditingDomain] = useState<VenueDomain | null>(null);
+  const [editHostname, setEditHostname] = useState("");
+  const [editReason, setEditReason] = useState("");
   const [domainAction, setDomainAction] = useState<DomainAction | null>(null);
   const [feedback, setFeedback] = useState<string | null>(null);
   const refreshProduct = async () => {
@@ -91,6 +96,29 @@ export function VenueWebsiteTab({ venueId }: { venueId: string }) {
       setFeedback("Domain lifecycle updated.");
     },
   });
+  const rename = useMutation({
+    mutationFn: () =>
+      platformApi.renameDomain(
+        venueId,
+        editingDomain!.id,
+        editHostname,
+        editingDomain!.hostname,
+        editReason,
+      ),
+    onSuccess: async () => {
+      await Promise.all([
+        refreshDomains(),
+        refreshProduct(),
+        queryClient.invalidateQueries({
+          queryKey: ["hostname-requests", venueId],
+        }),
+      ]);
+      setEditingDomain(null);
+      setFeedback(
+        "Hostname changed. Check DNS, TLS and the website route for the new address.",
+      );
+    },
+  });
 
   if (product.isPending || domains.isPending)
     return <LoadingState label="Loading website configuration" />;
@@ -113,11 +141,12 @@ export function VenueWebsiteTab({ venueId }: { venueId: string }) {
   // The one SaaS binding; every other registered hostname is a custom domain.
   const saasHostname =
     website.configuredMode === "SAAS" && assignedSlug
-      ? (domains.data.find((d) => d.hostname.startsWith(`${assignedSlug}.`))
-          ?.hostname ?? null)
+      ? website.hostname !== undefined
+        ? website.hostname
+        : (domains.data.find((d) => d.hostname.startsWith(`${assignedSlug}.`))
+            ?.hostname ?? null)
       : null;
-  const isSaasDomain = (hostname: string) =>
-    !!assignedSlug && hostname.startsWith(`${assignedSlug}.`);
+  const isSaasDomain = (hostname: string) => saasHostname === hostname;
   const customDomains = domains.data.filter((d) => !isSaasDomain(d.hostname));
 
   return (
@@ -220,6 +249,11 @@ export function VenueWebsiteTab({ venueId }: { venueId: string }) {
           </div>
         </Panel>
       </div>
+      <WebsitePaymentReviewsPanel
+        key={`payments-${venueId}`}
+        venueId={venueId}
+      />
+      <WebsiteDeliveriesPanel key={venueId} venueId={venueId} />
       {website.configuredMode === "CUSTOM" ? (
         <CustomWebsitePanel venueId={venueId} />
       ) : null}
@@ -254,7 +288,7 @@ export function VenueWebsiteTab({ venueId }: { venueId: string }) {
       </Panel>
       <Panel
         title="Domains"
-        description="Register custom domains here. The SaaS address is assigned by provisioning and changed only through hostname review. DNS and TLS are managed separately."
+        description="Register Vynic subdomains or external domains, and change existing hostnames. Customers contact support for changes. DNS, TLS and custom website routing are managed separately."
         action={
           <Button tone="primary" onClick={() => setDomainOpen(true)}>
             <Plus size={16} /> Register domain
@@ -298,6 +332,17 @@ export function VenueWebsiteTab({ venueId }: { venueId: string }) {
                   <td>{formatDateTime(domain.createdAt)}</td>
                   <td>
                     <div className="platform-table__actions">
+                      <Button
+                        tone="quiet"
+                        onClick={() => {
+                          rename.reset();
+                          setEditingDomain(domain);
+                          setEditHostname(domain.hostname);
+                          setEditReason("");
+                        }}
+                      >
+                        Change hostname
+                      </Button>
                       <Button
                         tone="quiet"
                         onClick={() =>
@@ -381,6 +426,65 @@ export function VenueWebsiteTab({ venueId }: { venueId: string }) {
           </Field>
           <FormError>
             {register.error ? errorMessage(register.error) : undefined}
+          </FormError>
+        </form>
+      </Dialog>
+      <Dialog
+        open={!!editingDomain}
+        onOpenChange={(open) => {
+          if (!open) setEditingDomain(null);
+        }}
+        title="Change hostname"
+        description={`Replace ${editingDomain?.hostname ?? "the current hostname"}. The old hostname will stop resolving to this restaurant. DNS, TLS and website routing must match the new address.`}
+        footer={
+          <>
+            <Button onClick={() => setEditingDomain(null)}>Cancel</Button>
+            <Button
+              tone="primary"
+              type="submit"
+              form="rename-domain"
+              disabled={
+                rename.isPending ||
+                !editHostname.trim() ||
+                editHostname === editingDomain?.hostname ||
+                !editReason.trim()
+              }
+            >
+              Save hostname
+            </Button>
+          </>
+        }
+      >
+        <form
+          id="rename-domain"
+          className="platform-form"
+          onSubmit={(event) => {
+            event.preventDefault();
+            rename.mutate();
+          }}
+        >
+          <Field
+            label="New hostname"
+            hint="Example: restaurant.vynic.ge or restaurant.example.com"
+          >
+            <Input
+              value={editHostname}
+              onChange={(event) => setEditHostname(event.target.value)}
+              required
+              maxLength={253}
+              autoFocus
+            />
+          </Field>
+          <Field label="Change reason">
+            <Input
+              value={editReason}
+              onChange={(event) => setEditReason(event.target.value)}
+              required
+              maxLength={1000}
+            />
+          </Field>
+          <FormError>
+            {rename.error ? errorMessage(rename.error) : undefined}
           </FormError>
         </form>
       </Dialog>

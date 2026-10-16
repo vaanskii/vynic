@@ -1,3 +1,4 @@
+import 'package:vynic/core/ui/widgets/pos_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:vynic/apps/windows_pos/widgets/admin/shared/admin_design.dart';
 import 'package:vynic/core/services/menu/menu_mutation_journal.dart';
@@ -214,7 +215,7 @@ class _AdoptCard extends StatelessWidget {
           const SizedBox(height: 12),
           FilledButton(
             onPressed: () async {
-              final confirmed = await showDialog<bool>(
+              final confirmed = await showPosModal<bool>(
                 context: context,
                 builder: (context) => AlertDialog(
                   title: const Text('Cloud მენიუს გამოყენება'),

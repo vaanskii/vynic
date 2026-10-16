@@ -1,0 +1,11 @@
+{
+  "name": "vynic-launch-real-ui",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "audio": "node audio/music.mjs && node audio/sfx.mjs",
+    "build": "python3 tools/inline.py",
+    "check": "python3 tools/inline.py && npx --yes hyperframes@0.8.96 check",
+    "render": "python3 tools/inline.py && npx --yes hyperframes@0.8.96 render --docker --quality delivery --crf 12 --resolution landscape-4k --fps 30 --output renders/real-ui-master_2160p30.mp4 && bash tools/deliver.sh"
+  }
+}

@@ -1,0 +1,44 @@
+{
+  "success": true,
+  "numPassedTestSuites": 1,
+  "numFailedTestSuites": 0,
+  "numPendingTestSuites": 0,
+  "numPassedTests": 8,
+  "numFailedTests": 0,
+  "numPendingTests": 0,
+  "numTotalTests": 8,
+  "tests": [
+    {
+      "name": "WEB-07 owner -> shared public information / real HTTP + PostgreSQL owner live profile/info edits reach CUSTOM and SAAS without another page publication",
+      "status": "passed"
+    },
+    {
+      "name": "WEB-07 owner -> shared public information / real HTTP + PostgreSQL foreign owner cannot change contact/profile or public information",
+      "status": "passed"
+    },
+    {
+      "name": "WEB-07 owner -> shared public information / real HTTP + PostgreSQL Host decides the public Venue despite query/body-like tenant selectors",
+      "status": "passed"
+    },
+    {
+      "name": "WEB-07 owner -> shared public information / real HTTP + PostgreSQL stale owner revision is refused; editing invalid content leaves the current public snapshot",
+      "status": "passed"
+    },
+    {
+      "name": "WEB-07 owner -> shared public information / real HTTP + PostgreSQL a saved edit changes ETag and an old conditional request receives current information",
+      "status": "passed"
+    },
+    {
+      "name": "WEB-07 owner -> shared public information / real HTTP + PostgreSQL operator-off hours/gallery are projected empty and cannot be restored by owner writes",
+      "status": "passed"
+    },
+    {
+      "name": "WEB-07 owner -> shared public information / real HTTP + PostgreSQL deliberate empty contact is not replaced by legacy hardcoded values",
+      "status": "passed"
+    },
+    {
+      "name": "WEB-07 owner -> shared public information / real HTTP + PostgreSQL CUSTOM identity and setup status remain server-owned, and unpublished SAAS does not expose info",
+      "status": "passed"
+    }
+  ]
+}

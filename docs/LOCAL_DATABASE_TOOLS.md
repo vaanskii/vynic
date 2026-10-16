@@ -132,7 +132,7 @@ that condition; it does not guess which incarnation owns them.
 
 ## Deletion matrix
 
-All 81 Prisma models are classified below. `V` means target Venue IDs for a scoped
+All Prisma models are classified below. `V` means target Venue IDs for a scoped
 action, every row for full reset; Organization deletion uses all of its Venue IDs.
 Inherited scope follows the named parent relation, including nullable legacy audit
 Venue IDs. Rows are deleted child-first; counts are measured before any cascades.
@@ -148,6 +148,7 @@ Venue IDs. Rows are deleted child-first; counts are measured before any cascades
 | `SupplierPayment` | V by `venueId` |
 | `ReceivingLine` | V through `receiving` |
 | `Receiving` | V by `venueId` |
+| `StockLocation` | V by `venueId`, after movements and Receivings; shared Venue defaults/history are not reassigned. |
 | `SupplierProduct` | V by `venueId` |
 | `StockItemPurchaseUnit` | V by `venueId` |
 | `StockItem` | V by `venueId` |
@@ -156,6 +157,7 @@ Venue IDs. Rows are deleted child-first; counts are measured before any cascades
 | `PayrollPayment` | V by `venueId` |
 | `PayrollPeriod` | V by `venueId` |
 | `StaffCompensation` | V by `venueId` |
+| `ManagerActivation` | V by `venueId`; initial registration grant removed with the Venue. |
 | `Staff` | V by `venueId` |
 | `ObligationPayment` | V by `venueId` |
 | `ObligationReserveEntry` | V by `venueId` |
@@ -192,6 +194,7 @@ Venue IDs. Rows are deleted child-first; counts are measured before any cascades
 | `PushDevice` | V by `venueId` |
 | `PosCallbackOutbox` | V by `venueId` |
 | `EdgeCommand` | V by `venueId` |
+| `DevicePrinterRuntimeRequest` | V by `venueId`; child-first before Device. |
 | `DeviceEnrollment` | V by `venueId` |
 | `Device` | V by `venueId` |
 | `EdgeFoundationInstallation` | V by `venueId` |

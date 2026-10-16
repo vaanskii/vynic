@@ -1,0 +1,29 @@
+{
+  "createdAtUTC": "2026-10-06T15:30:07.108794+00:00",
+  "baseCommit": "275688e1e5c5dc0e26e62705ab0c7670cf16d99a",
+  "scope": "34 exact frozen inputs; Windows nonphysical helper/channel qualification only",
+  "sourceCount": 34,
+  "sourceBeforeCopyAfterEqual": true,
+  "artifacts": {
+    "print-helper-sdk-sha256.json": {
+      "sha256": "774b989ac815f9029a02e01c309b20153d6a850d8d03d34e09cbf687ed6b673a",
+      "bytes": 4492
+    },
+    "printtransport-packet.json": {
+      "sha256": "1809e72286d069abc9edf69209d47a23e99f8c81be390d498344c466adb8e833",
+      "bytes": 1386
+    },
+    "printtransport-source-manifest.json": {
+      "sha256": "638458ddc270fa3638c52f2a7bc491e6327bebbf2a46caba9fb451f64bae680f",
+      "bytes": 7137
+    },
+    "printtransport-windows.test.exe": {
+      "sha256": "5ea12d153ce2ed408d0661595bd3c3afa41d7c969d81c1b87bdd956897f7d125",
+      "bytes": 5940224
+    },
+    "source.zip": {
+      "sha256": "1f318eab633481898c1c88f43dfbcda432ffdf7c3ec56ded69c4359195b8377f",
+      "bytes": 64181
+    }
+  }
+}

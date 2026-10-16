@@ -6,6 +6,7 @@ import {
   Body,
   Controller,
   Get,
+  Headers,
   Param,
   Post,
   Put,
@@ -24,6 +25,7 @@ import { EdgeDeviceGuard } from '../edge/edge-device.guard';
 import { EdgeDevice } from '../edge/edge-device-context';
 import type { EdgeDeviceContext } from '../edge/edge-device-context';
 import { VenueEntitlementsService } from '../entitlements/venue-entitlements.service';
+import { printerRuntimeConfigForReader } from './printer-runtime-persistence';
 
 @Controller('customer/auth')
 export class CustomerAuthController {
@@ -97,31 +99,44 @@ export class CustomerController {
   @Post('venues/:venueId/managers') manager(
     @CustomerActor() actor: CustomerPrincipal,
     @Param('venueId') id: string,
-    @Body() body: Record<string, unknown>,
   ) {
-    return this.service.manager(actor, id, 'create', body);
+    return this.service.manager(actor, id);
+  }
+  @Post('venues/:venueId/manager-activation') managerActivation(
+    @CustomerActor() actor: CustomerPrincipal,
+    @Param('venueId') id: string,
+  ) {
+    return this.service.managerActivation(actor, id);
   }
   @Post('venues/:venueId/managers/:staffId/reset') reset(
     @CustomerActor() actor: CustomerPrincipal,
     @Param('venueId') id: string,
-    @Param('staffId') staffId: string,
-    @Body() body: Record<string, unknown>,
   ) {
-    return this.service.manager(actor, id, 'reset', body, staffId);
+    return this.service.manager(actor, id);
   }
   @Post('venues/:venueId/managers/:staffId/disable') disable(
     @CustomerActor() actor: CustomerPrincipal,
     @Param('venueId') id: string,
-    @Param('staffId') staffId: string,
-    @Body() body: Record<string, unknown>,
   ) {
-    return this.service.manager(actor, id, 'disable', body, staffId);
+    return this.service.manager(actor, id);
+  }
+  @Get('venues/:venueId/initial-manager-setup') setupEligibility(
+    @CustomerActor() actor: CustomerPrincipal,
+    @Param('venueId') id: string,
+  ) {
+    return this.service.setupEligibility(actor, id);
   }
   @Post('venues/:venueId/enrollments') enrollment(
     @CustomerActor() actor: CustomerPrincipal,
     @Param('venueId') id: string,
+    @Body() body?: { initialManagerSetup?: unknown },
   ) {
-    return this.service.enrollment(actor, id);
+    if (
+      body?.initialManagerSetup !== undefined &&
+      typeof body.initialManagerSetup !== 'boolean'
+    )
+      throw new BadRequestException('initialManagerSetup must be boolean');
+    return this.service.enrollment(actor, id, body?.initialManagerSetup);
   }
   @Post('venues/:venueId/enrollments/:enrollmentId/cancel') cancel(
     @CustomerActor() actor: CustomerPrincipal,
@@ -270,7 +285,10 @@ export class DeviceRuntimeConfigController {
     private readonly db: PrismaService,
     private readonly entitlements: VenueEntitlementsService,
   ) {}
-  @Get() async config(@EdgeDevice() actor: EdgeDeviceContext) {
+  @Get() async config(
+    @EdgeDevice() actor: EdgeDeviceContext,
+    @Headers('x-vynic-printer-reader-version') readerVersion?: string,
+  ) {
     const device = await this.db.device.findFirstOrThrow({
       where: { id: actor.deviceId, venueId: actor.venueId },
       include: {
@@ -279,6 +297,11 @@ export class DeviceRuntimeConfigController {
         },
       },
     });
+    const runtimeConfig = printerRuntimeConfigForReader(
+      device.runtimeConfig,
+      { deviceId: device.id, venueId: device.venueId },
+      readerVersion,
+    );
     return {
       version: 1,
       venue: device.venue,
@@ -286,7 +309,7 @@ export class DeviceRuntimeConfigController {
       device: {
         id: device.id,
         displayName: device.displayName,
-        runtimeConfig: device.runtimeConfig,
+        runtimeConfig,
       },
     };
   }

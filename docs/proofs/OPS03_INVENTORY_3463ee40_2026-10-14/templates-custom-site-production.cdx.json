@@ -1,0 +1,44 @@
+{
+  "$schema": "http://cyclonedx.org/schema/bom-1.5.schema.json",
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.5",
+  "serialNumber": "urn:uuid:a6ef8c4c-1c44-401d-92b4-412ce0bf2446",
+  "version": 1,
+  "metadata": {
+    "timestamp": "2026-10-14T18:03:56.632Z",
+    "lifecycles": [
+      {
+        "phase": "pre-build"
+      }
+    ],
+    "tools": [
+      {
+        "vendor": "npm",
+        "name": "cli",
+        "version": "11.13.0"
+      }
+    ],
+    "component": {
+      "bom-ref": "vynic-custom-site-template@0.1.0",
+      "type": "library",
+      "name": "custom-site",
+      "version": "0.1.0",
+      "scope": "required",
+      "purl": "pkg:npm/vynic-custom-site-template@0.1.0",
+      "properties": [
+        {
+          "name": "cdx:npm:package:private",
+          "value": "true"
+        }
+      ],
+      "externalReferences": []
+    }
+  },
+  "components": [],
+  "dependencies": [
+    {
+      "ref": "vynic-custom-site-template@0.1.0",
+      "dependsOn": []
+    }
+  ]
+}

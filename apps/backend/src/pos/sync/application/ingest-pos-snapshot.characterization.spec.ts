@@ -1081,7 +1081,11 @@ describe('POST /sync/manager-data — staff sync', () => {
 
   it('updates role only for an existing member sent without a pin, and never writes the vault', async () => {
     const h = makeHarness({
-      'staff.findUnique': () => ({ username: 'mary' }),
+      'staff.findUnique': () => ({
+        username: 'mary',
+        role: 'MANAGER',
+        isActive: true,
+      }),
       'staff.findMany': () => [{ username: 'mary' }],
     });
 
@@ -1116,7 +1120,11 @@ describe('POST /sync/manager-data — staff sync', () => {
 
   it('leaves staffNeedingPin off the response when nothing is missing', async () => {
     const h = makeHarness({
-      'staff.findUnique': () => ({ username: 'mary' }),
+      'staff.findUnique': () => ({
+        username: 'mary',
+        role: 'MANAGER',
+        isActive: true,
+      }),
       'staff.findMany': () => [{ username: 'mary' }],
     });
 
@@ -1129,7 +1137,11 @@ describe('POST /sync/manager-data — staff sync', () => {
 
   it('does not issue a delete when every server member is still present', async () => {
     const h = makeHarness({
-      'staff.findUnique': () => ({ username: 'mary' }),
+      'staff.findUnique': () => ({
+        username: 'mary',
+        role: 'MANAGER',
+        isActive: true,
+      }),
       'staff.findMany': () => [{ username: 'mary' }],
     });
 

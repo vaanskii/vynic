@@ -110,6 +110,8 @@ class DatabaseService {
     required bool includeServiceFee,
     required double serviceFeeRate,
     String? displayName,
+    String? customerName,
+    String? customerPhone,
   }) => QuickOrderRepository.saveQuickOrderDraft(
     createdBy: createdBy,
     items: items,
@@ -117,6 +119,8 @@ class DatabaseService {
     includeServiceFee: includeServiceFee,
     serviceFeeRate: serviceFeeRate,
     displayName: displayName,
+    customerName: customerName,
+    customerPhone: customerPhone,
   );
 
   static Future<QuickOrderDraft> updateQuickOrderDraft({
@@ -127,6 +131,9 @@ class DatabaseService {
     required bool includeServiceFee,
     required double serviceFeeRate,
     String? displayName,
+    String? customerName,
+    String? customerPhone,
+    bool replaceCustomerDetails = false,
   }) => QuickOrderRepository.updateQuickOrderDraft(
     id: id,
     createdBy: createdBy,
@@ -135,6 +142,9 @@ class DatabaseService {
     includeServiceFee: includeServiceFee,
     serviceFeeRate: serviceFeeRate,
     displayName: displayName,
+    customerName: customerName,
+    customerPhone: customerPhone,
+    replaceCustomerDetails: replaceCustomerDetails,
   );
 
   static Future<void> deleteQuickOrderDraft(String id) =>
@@ -1513,6 +1523,8 @@ class DatabaseService {
     bool isTakeAway = false,
     int? linkedOrderId,
     String status = 'pending',
+    double advanceAmount = 0,
+    String? id,
     AuditSource source = AuditSource.pos,
   }) => ReservationRepository.createReservation(
     customerName: customerName,
@@ -1528,6 +1540,8 @@ class DatabaseService {
     isTakeAway: isTakeAway,
     linkedOrderId: linkedOrderId,
     status: status,
+    advanceAmount: advanceAmount,
+    id: id,
     source: source,
   );
 

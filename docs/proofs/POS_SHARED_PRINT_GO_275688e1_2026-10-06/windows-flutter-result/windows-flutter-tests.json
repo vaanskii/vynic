@@ -1,0 +1,19 @@
+﻿{
+    "status":  "FAILED",
+    "failure":  "git : The term \u0027git\u0027 is not recognized as the name of a cmdlet, function, script file, or operable program. Check the ",
+    "job":  "C:\\Users\\vaanskii\\AppData\\Local\\VynicReadinessNative\\final535-20261006",
+    "sourceFiles":  898,
+    "sourceUnchanged":  false,
+    "testSuites":  1,
+    "analysisFiles":  1,
+    "testExitCode":  0,
+    "analysisExitCode":  null,
+    "fixtureSHA256":  "f61d5b985d10356701bc4eb9974dd5762c9d31cdb7a6c6a65012bdda8fc4e231",
+    "productStarted":  false,
+    "installed":  false,
+    "serviceOperations":  false,
+    "driverOperations":  false,
+    "printJobsBefore":  0,
+    "printJobsAfter":  0,
+    "physicalJobs":  0
+}

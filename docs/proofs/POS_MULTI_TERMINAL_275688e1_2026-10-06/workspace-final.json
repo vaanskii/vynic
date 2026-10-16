@@ -1,0 +1,18 @@
+{
+  "recordedAtUtc": "2026-10-06T09:59:05.126975+00:00",
+  "head": "275688e1e5c5dc0e26e62705ab0c7670cf16d99a",
+  "branch": "codex/docker-deployment-foundation",
+  "indexEmpty": true,
+  "stash": [
+    "9df454225caec647f67ad4f70ef6038dbbbe41d6 On main: reorg-wip-holdout"
+  ],
+  "gitDiffCheckExitCode": 0,
+  "ownedFiles": 72,
+  "ownedMatchTestedCandidate": true,
+  "unrelatedStartupFiles": 451,
+  "unrelatedHashesUnchanged": true,
+  "changedUnrelated": [],
+  "unportedGoOriginalsUnchanged": true,
+  "committed": false,
+  "pushed": false
+}

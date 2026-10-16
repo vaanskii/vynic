@@ -3,6 +3,7 @@
 import argparse,json,os,shutil,subprocess,sys
 from pathlib import Path
 from urllib.parse import urlparse
+from build_config import public_build_config
 
 def prepare(product, destination):
     source=Path(__file__).resolve().parents[1]
@@ -37,7 +38,11 @@ def prepare(product, destination):
     return destination
 
 def main():
-    p=argparse.ArgumentParser();p.add_argument('action',choices=['build','run','prepare']);p.add_argument('product',choices=['pos','manager']);p.add_argument('platform',choices=['windows','macos','android','ios']);p.add_argument('--environment',choices=['development','staging','production'],default='development');p.add_argument('--api-url');p.add_argument('--output',required=True);p.add_argument('--device');p.add_argument('--no-codesign',action='store_true');args=p.parse_args()
+    p=argparse.ArgumentParser();p.add_argument('action',choices=['build','run','prepare']);p.add_argument('product',choices=['pos','manager']);p.add_argument('platform',choices=['windows','macos','android','ios']);p.add_argument('--environment',choices=['development','staging','production']);p.add_argument('--api-url');p.add_argument('--config',type=Path,default=Path(__file__).resolve().parents[1]/'.env');p.add_argument('--output',required=True);p.add_argument('--device');p.add_argument('--no-codesign',action='store_true');args=p.parse_args()
+    try: config=public_build_config(args.config)
+    except ValueError as error: p.error(str(error))
+    args.environment=args.environment or config.get('VYNIC_ENV','development')
+    args.api_url=args.api_url or config.get('VYNIC_API_URL')
     if args.product=='pos' and args.platform!='windows':p.error('Vynic POS supports Windows only')
     if args.action=='build' and args.environment=='development':p.error('Build requires staging or production; use run for development')
     if args.environment!='development':

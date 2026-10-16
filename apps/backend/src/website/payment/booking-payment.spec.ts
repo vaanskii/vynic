@@ -134,6 +134,12 @@ function setup() {
   };
   const stored: Stored[] = [];
   const db = {
+    venue: { findUnique: jest.fn().mockResolvedValue({ id: tenant.venueId }) },
+    $queryRaw: jest.fn().mockResolvedValue([{ id: tenant.venueId }]),
+    websiteReservationDayHold: {
+      findFirst: jest.fn().mockResolvedValue(null),
+      updateMany: jest.fn().mockResolvedValue({ count: 0 }),
+    },
     menuItem: {
       findFirst: jest.fn(
         ({ where }: { where: { id: string; venueId: string } }) =>
@@ -169,6 +175,15 @@ function setup() {
     },
     websiteTable: { findMany: jest.fn().mockResolvedValue([table]) },
     websiteReservation: {
+      findMany: jest.fn().mockResolvedValue([]),
+      findUniqueOrThrow: jest.fn().mockImplementation(() =>
+        Promise.resolve({
+          ...stored.at(-1),
+          holdState: 'HELD',
+          paymentWindowStartedAt: null,
+        }),
+      ),
+      updateMany: jest.fn().mockResolvedValue({ count: 0 }),
       create: jest.fn(
         ({ data }: { data: Stored & { date: Date; timeSlot: string } }) => {
           stored.push(data);
@@ -184,6 +199,9 @@ function setup() {
       update: jest.fn().mockResolvedValue({}),
     },
   };
+  Object.assign(db, {
+    $transaction: (work: (tx: typeof db) => Promise<unknown>) => work(db),
+  });
   const integrations = {
     requireEnabled: jest.fn().mockResolvedValue({ id: 'integration-a' }),
     credentials: jest.fn().mockResolvedValue({

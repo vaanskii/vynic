@@ -1,0 +1,119 @@
+{
+  "status": "PASS_COMPATIBLE_SOURCE_QUALIFICATION_WITH_RELEASE_GAPS",
+  "qualifiedAtUtc": "2026-10-14T19:24:28.631437+00:00",
+  "head": "3463ee406184fec7f53818416e11d0e5f5602c87",
+  "uncommitted": true,
+  "integrated": true,
+  "before": {
+    "publicQueries": 1764,
+    "packageVersionMatches": 41,
+    "uniqueAdvisoryIds": 107,
+    "criticalIds": 4,
+    "sbomQualified": 5,
+    "sbomIncomplete": 3,
+    "sbomFailed": 4
+  },
+  "after": {
+    "publicQueries": 1733,
+    "networkRequests": 18,
+    "packageVersionMatches": 5,
+    "uniqueAdvisoryIds": 11,
+    "criticalIds": 0,
+    "severityLabels": {
+      "UNSPECIFIED": 5,
+      "HIGH": 5,
+      "MODERATE": 1
+    },
+    "sbomQualified": 12,
+    "sbomIncomplete": 0,
+    "sbomFailed": 0,
+    "componentOccurrences": 2596,
+    "initialIdsNoLongerMatching": 96,
+    "newFinalIds": []
+  },
+  "tests": {
+    "backendAggregate": {
+      "numPassedTests": 906,
+      "numFailedTests": 0,
+      "numPendingTests": 895
+    },
+    "focusedPostgres": {
+      "passed": 81,
+      "failed": 0,
+      "skipped": 0,
+      "execution": "64 cases in four passed combined suites, corrected standalone CUSTOM 17 cases"
+    },
+    "distinctBackendPassed": 987,
+    "caseIdentity": "suite + title + repeated-title occurrence; four aggregate parameterized cases share titles and remain distinct",
+    "aggregateOptInCasesNotRun": 814,
+    "web": {
+      "platform": {
+        "numPassedTests": 256,
+        "numFailedTests": 0,
+        "numPendingTests": 0
+      },
+      "restaurant": {
+        "numPassedTests": 19,
+        "numFailedTests": 0,
+        "numPendingTests": 0
+      },
+      "client": {
+        "numPassedTests": 6,
+        "numFailedTests": 0,
+        "numPendingTests": 0
+      },
+      "template": {
+        "numPassedTests": 3,
+        "numFailedTests": 0,
+        "numPendingTests": 0
+      }
+    },
+    "webPassed": 284,
+    "websiteManifestPassed": 7,
+    "inventoryPythonPassed": 19,
+    "inventoryNodePassed": 4,
+    "beforeDependencyCustomComparison": {
+      "numPassedTests": 17,
+      "numFailedTests": 0,
+      "numPendingTests": 0
+    }
+  },
+  "checks": {
+    "sixCleanInstalls": "PASS_FINAL; backend and Vankisi requalified after final narrow fixes",
+    "backendBuild": "PASS",
+    "fourWebBuilds": "PASS",
+    "sharedClientTypecheck": "PASS",
+    "prismaGeneration": "PASS_ISOLATED_NO_DATABASE_CONNECTION",
+    "sourceAndIntegrationTargetConcurrency": "PASS_NO_CHANGED_TARGETS",
+    "environment": "UNCHANGED",
+    "gitDiffCheck": "PASS_FINAL",
+    "integratedInventoryMatchesQualifiedCandidate": "PASS_ALL_INPUT_HASHES_AND_PUBLIC_QUERY_BYTES",
+    "integratedToolRegressions": "PASS_19_PYTHON_4_NODE"
+  },
+  "setupCorrections": [
+    "Initial temporary PostgreSQL socket path exceeded the Unix path limit; the isolated fixture uses a short owned socket directory.",
+    "Initial candidate lacked source-only cross-repository fixtures; unchanged operations lib and table identity vectors were copied for aggregate checks.",
+    "Synthetic refresh-token signing configuration was missing; added only to the private runner. CUSTOM 17 cases then passed in candidate and original-dependency comparison. One earlier HTTP 403 did not recur in those runs; its individual cause was not established.",
+    "An overly broad private fflate override was narrowed to 0.6 before integration, preserving original 0.8.3."
+  ],
+  "boundaries": {
+    "printerFilesChanged": false,
+    "envChanged": false,
+    "liveDataTouched": false,
+    "liveServicesRestarted": false,
+    "runtimeNodeModulesChanged": false,
+    "deployed": false,
+    "committed": false,
+    "pushed": false,
+    "riskAccepted": false,
+    "ownedQualificationClusterStopped": true
+  },
+  "limitations": [
+    "Package/version matching is not exploit reachability or deployed exposure.",
+    "Node 24.16.0/npm 11.13.0 on macOS qualification; Node 22/Linux release image not built or attested.",
+    "814 remaining opt-in backend cases were not executed; skipped cases are not passes.",
+    "Native SDK/plugins, OS/image layers, provenance, effective Go graph/stdlib/call paths remain open.",
+    "Remaining major/minor-boundary upgrades and packages without recorded fixes are not silently suppressed."
+  ],
+  "privateLogs": "/private/var/folders/82/drcfb4994p16rl49gxx9tj000000gn/T/vynic-ops03-remediation-eazxgm7i"
+}

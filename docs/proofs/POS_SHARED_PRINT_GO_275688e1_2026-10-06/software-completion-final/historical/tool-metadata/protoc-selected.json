@@ -1,0 +1,11 @@
+{
+  "tag": "v36.2",
+  "published_at": "2026-09-17T17:33:01Z",
+  "release_url": "https://github.com/protocolbuffers/protobuf/releases/tag/v36.2",
+  "asset": {
+    "name": "protoc-36.2-osx-aarch_64.zip",
+    "size": 2625514,
+    "digest": "sha256:9cd98a532c5c5e0c4161314de0225de27e4c8a323917b6ea7b1b714d3ae23466",
+    "browser_download_url": "https://github.com/protocolbuffers/protobuf/releases/download/v36.2/protoc-36.2-osx-aarch_64.zip"
+  }
+}

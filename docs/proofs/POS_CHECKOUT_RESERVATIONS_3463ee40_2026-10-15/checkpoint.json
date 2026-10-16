@@ -1,0 +1,72 @@
+{
+  "status": "COMPLETE_SOURCE_QUALIFIED_WITH_EXPLICIT_RELEASE_GATES",
+  "recordedAtUtc": "2026-10-14T23:52:08.183428+00:00",
+  "workspace": "/Users/vaanskii/Developer/vynic",
+  "gitHead": "3463ee406184fec7f53818416e11d0e5f5602c87",
+  "scope": "Eight approved POS checkout/reservation/estimate features and final right collapsible action panel correction",
+  "focusedFlutter": {
+    "passed": 76,
+    "failed": 0,
+    "log": "focused-final-tests.log"
+  },
+  "flutterAggregate": {
+    "exitCode": 0,
+    "counts": {
+      "passed": 2251,
+      "failed": 0,
+      "skipped": 3
+    },
+    "selectedFileCount": 188,
+    "excludedFileCount": 41,
+    "failureMessages": [],
+    "excludedCase": "actual Dart→Go mutual TLS loses ACK, flushes before send, reopens and retains other-origin receipts",
+    "excludedCaseReason": "No Go executable or precompiled VYNIC_OPERATIONAL_PROOF_GO_FIXTURE available on this executor; prior unfiltered run failed only this prerequisite"
+  },
+  "backendAggregate": {
+    "backendFinalWithOwnedPostgres": {
+      "passed": 918,
+      "failed": 0,
+      "skipped": 895
+    },
+    "ownedCluster": "STOPPED"
+  },
+  "staticChecks": {
+    "dartFormat": "PASS",
+    "targetedDartAnalysis": "PASS_NO_ISSUES_38_FILES",
+    "backendTypecheck": "PASS",
+    "backendNestBuild": "PASS",
+    "prismaGenerate": "PASS_6.19.3",
+    "prismaValidate": "PASS",
+    "gitDiffCheck": "PASS"
+  },
+  "limitations": [
+    "One existing Dart-Go wire case excluded because Go/compiler fixture was unavailable; prior unfiltered run passed 2250, skipped 3 and failed only this prerequisite.",
+    "41 live/printer-related files excluded from Flutter aggregate; exact list retained.",
+    "895 backend cases remain skipped outside their opt-in fixture environments; all 12 new HTTP/PG cases were enabled in the final aggregate.",
+    "Windows/native hardware/cash acceptance and normal release/migration rollout remain separate; no live service restart, data change, install, push or deployment performed."
+  ],
+  "boundaries": {
+    "liveDataChanged": false,
+    "servicesRestarted": false,
+    "credentialsChanged": false,
+    "physicalPrinting": false,
+    "committed": false,
+    "pushed": false,
+    "deployed": false,
+    "ownedPostgresClusters": "STOPPED"
+  },
+  "parentThread": "01a13c70-2690-752b-b286-3deab83ab0de",
+  "implementationComplete": true,
+  "remainingSourceTasks": [],
+  "qualificationFile": "docs/proofs/POS_CHECKOUT_RESERVATIONS_3463ee40_2026-10-15/qualification.json",
+  "runbook": "docs/POS_CHECKOUT_RESERVATIONS.md",
+  "screenshots": [
+    "docs/proofs/POS_CHECKOUT_RESERVATIONS_3463ee40_2026-10-15/ui/home-collapsed-1024x768.png",
+    "docs/proofs/POS_CHECKOUT_RESERVATIONS_3463ee40_2026-10-15/ui/home-collapsed-1440x900.png",
+    "docs/proofs/POS_CHECKOUT_RESERVATIONS_3463ee40_2026-10-15/ui/home-empty-1024x768.png",
+    "docs/proofs/POS_CHECKOUT_RESERVATIONS_3463ee40_2026-10-15/ui/home-expanded-1024x768.png",
+    "docs/proofs/POS_CHECKOUT_RESERVATIONS_3463ee40_2026-10-15/ui/home-expanded-1440x900.png"
+  ],
+  "privateBaseline": "/var/folders/82/drcfb4994p16rl49gxx9tj000000gn/T/vynic-pos-checkout-91y77_0i/before",
+  "unavailableQualification": "Existing Go wire fixture only; no Go/runtime installation was performed"
+}

@@ -1,4 +1,5 @@
 import 'package:vynic/core/database/database_core.dart';
+import 'package:vynic/core/database/local_venue_binding.dart';
 import 'runtime_config_sync.dart';
 import 'dart:async';
 import 'dart:io';
@@ -132,12 +133,20 @@ class PosEnrollmentService {
 
     // The credential first: it is issued once, and it is the only part of this
     // that cannot simply be entered again.
-    final persisted = await EdgeDeviceCredentialStore.saveEnrollment(
-      rawCredential: result.credential!,
-      venueId: result.venueId ?? '',
-      venueName: result.venueName ?? '',
-      enrolledAt: result.enrolledAt,
-    );
+    final bool persisted;
+    try {
+      persisted = await EdgeDeviceCredentialStore.saveEnrollment(
+        rawCredential: result.credential!,
+        venueId: result.venueId!,
+        venueName: result.venueName ?? '',
+        enrolledAt: result.enrolledAt,
+      );
+    } on LocalVenueMismatch catch (error) {
+      return PosEnrollmentResult(
+        PosEnrollmentStatus.conflict,
+        message: error.message,
+      );
+    }
     if (!persisted) {
       return const PosEnrollmentResult(
         PosEnrollmentStatus.notPersisted,
@@ -204,7 +213,11 @@ class PosEnrollmentService {
 
   static bool _isLoopback(String url) {
     final host = Uri.tryParse(url)?.host.toLowerCase() ?? '';
-    return host == 'localhost' || host == '127.0.0.1' || host == '::1';
+    // `*.localhost` (api.vynic.localhost) names the machine asking, like localhost.
+    return host == 'localhost' ||
+        host.endsWith('.localhost') ||
+        host == '127.0.0.1' ||
+        host == '::1';
   }
 
   static PosEnrollmentStatus _map(EdgeEnrollmentOutcome outcome) {

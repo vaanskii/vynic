@@ -1,0 +1,12 @@
+{
+  "schema": 1,
+  "recordedAtUtc": "2026-10-06T17:35:03.395324+00:00",
+  "status": "PASS_COMPILE_STAGE_INTEGRITY_ONLY",
+  "stageReceiptSHA256": "deb1832d9d580f807e74ce1ecac57813c17c981d27151a9692aff154f02f3d01",
+  "sourceArchiveEntriesVerified": 1109,
+  "PEArchiveEntriesVerified": 10,
+  "sourceReceiptSHA256": "193e4800e5d0733a30bc6c8d4ac993590219363941e69a787bba5ac3681c8f68",
+  "WindowsRuntime": "NOT_RUN_APPROVAL_BLOCKED",
+  "VMCommandsIssued": 0,
+  "qualificationLimits": "Archive hash/PE/source verification only; no guest execution, new runtime, SCM, OS restart or physical acceptance."
+}

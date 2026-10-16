@@ -27,11 +27,57 @@ class MobileLoginResult {
   });
 }
 
-enum MobileAuthError { invalidPin, networkError, serverError, accessDenied }
+enum MobileAuthError {
+  invalidPin,
+  networkError,
+  serverError,
+  accessDenied,
+  rateLimited,
+  sessionStorageError,
+}
 
 /// Authenticates the manager against the backend (/auth/mobile-login).
 /// Falls back to cached token for offline access.
 class MobileAuthService {
+  /// Redeems one Admin-issued code to select a Venue. Does not authenticate Staff.
+  static Future<ManagerVenueSelection> linkVenue(
+    String value, {
+    http.Client? client,
+  }) async {
+    final origin = ApiConfig.baseUrl;
+    final String installationId;
+    try {
+      installationId = await ManagerAppPreferences.linkInstallationId(origin);
+    } catch (_) {
+      throw MobileAuthError.sessionStorageError;
+    }
+    late http.Response response;
+    try {
+      response = await (client?.post ?? http.post)(
+        Uri.parse('$origin/auth/manager-link'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'code': value.trim(),
+          'installationId': installationId,
+        }),
+      ).timeout(const Duration(seconds: 10));
+    } catch (_) {
+      throw MobileAuthError.networkError;
+    }
+    if (response.statusCode == 429) throw MobileAuthError.rateLimited;
+    if (response.statusCode >= 500) throw MobileAuthError.serverError;
+    if (response.statusCode != 200) throw MobileAuthError.accessDenied;
+    try {
+      return ManagerVenueSelection.fromMap(
+        jsonDecode(response.body) as Map,
+        origin: origin,
+      );
+    } catch (_) {
+      throw MobileAuthError.serverError;
+    }
+  }
+
+  /// Compatibility for old callers; new first-time UI uses Admin's one-use linking code.
   static Future<ManagerVenueSelection> resolveVenue(
     String value, {
     http.Client? client,
@@ -44,6 +90,8 @@ class MobileAuthService {
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'venueCode': code}),
       ).timeout(const Duration(seconds: 10));
+      if (response.statusCode == 429) throw MobileAuthError.rateLimited;
+      if (response.statusCode >= 500) throw MobileAuthError.serverError;
       if (response.statusCode != 200) throw MobileAuthError.accessDenied;
       final venue = ManagerVenueSelection.fromMap(
         jsonDecode(response.body) as Map,
@@ -67,9 +115,10 @@ class MobileAuthService {
     http.Client? client,
   }) async {
     final code = venueCode.trim().toLowerCase();
+    late http.Response response;
     try {
       final uri = Uri.parse('${ApiConfig.baseUrl}${ManagerLoginContract.path}');
-      final response = await (client?.post ?? http.post)(
+      response = await (client?.post ?? http.post)(
         uri,
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
@@ -77,9 +126,17 @@ class MobileAuthService {
           ManagerLoginContract.venueCodeField: code,
         }),
       ).timeout(const Duration(seconds: 10));
-
+    } catch (_) {
+      throw MobileAuthError.networkError;
+    }
+    try {
       if (response.statusCode == 200) {
-        final body = jsonDecode(response.body) as Map<String, dynamic>;
+        final Map<String, dynamic> body;
+        try {
+          body = jsonDecode(response.body) as Map<String, dynamic>;
+        } catch (_) {
+          throw MobileAuthError.serverError;
+        }
         if (body[ManagerLoginContract.venueCodeField] != code) {
           throw MobileAuthError.accessDenied;
         }
@@ -115,14 +172,18 @@ class MobileAuthService {
         return result;
       } else if (response.statusCode == 401) {
         throw MobileAuthError.invalidPin;
+      } else if (response.statusCode == 403) {
+        throw MobileAuthError.accessDenied;
+      } else if (response.statusCode == 429) {
+        throw MobileAuthError.rateLimited;
       } else {
         throw MobileAuthError.serverError;
       }
     } on MobileAuthError {
       rethrow;
     } catch (e) {
-      debugPrint('[MobileAuth] Login request failed');
-      throw MobileAuthError.networkError;
+      debugPrint('[MobileAuth] Could not establish local session');
+      throw MobileAuthError.sessionStorageError;
     }
   }
 
@@ -176,6 +237,10 @@ class MobileAuthService {
         return 'სერვერის შეცდომა. სცადეთ ახლავე.';
       case MobileAuthError.accessDenied:
         return 'წვდომა აკრძალულია.';
+      case MobileAuthError.rateLimited:
+        return 'შესვლის მცდელობები დროებით შეზღუდულია. სცადეთ მოგვიანებით.';
+      case MobileAuthError.sessionStorageError:
+        return 'შესვლის მონაცემების შენახვა ვერ მოხერხდა. სცადეთ ხელახლა.';
     }
   }
 }

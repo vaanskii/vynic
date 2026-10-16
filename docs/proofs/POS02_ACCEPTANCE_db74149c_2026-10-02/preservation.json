@@ -1,0 +1,35 @@
+{
+  "status": "PASS",
+  "headBranchStashIndexUnchanged": true,
+  "currentGit": {
+    "head": [
+      "275688e1e5c5dc0e26e62705ab0c7670cf16d99a"
+    ],
+    "branch": [
+      "codex/docker-deployment-foundation"
+    ],
+    "stash": [
+      "stash@{0} 9df454225caec647f67ad4f70ef6038dbbbe41d6 On main: reorg-wip-holdout"
+    ],
+    "index": []
+  },
+  "integrated44MatchSealedAdmin": true,
+  "new7MatchCandidate": true,
+  "base876SourceBytesUnchanged": true,
+  "oldAdminProofUnchanged": true,
+  "originalWipFiles": 267,
+  "originalUnchanged": 263,
+  "originalMissing": [],
+  "originalChanged": [
+    "apps/platform-web/src/pages/HomePage.tsx",
+    "docs/agent-state/VYNIC_CODE_MAP.md",
+    "docs/agent-state/VYNIC_PROJECT_STATE.md",
+    "apps/platform-web/src/test/site-motion.test.tsx"
+  ],
+  "ownedDocChanges": [
+    "docs/agent-state/VYNIC_PROJECT_STATE.md",
+    "docs/agent-state/VYNIC_CODE_MAP.md"
+  ],
+  "concurrentPlatformOwner": "Claude; no writes by this task",
+  "buildPermissionAdjustment": "temporary copy only: existing strip_xattrs.sh executable bit restored after ZIP extraction; source bytes unchanged"
+}

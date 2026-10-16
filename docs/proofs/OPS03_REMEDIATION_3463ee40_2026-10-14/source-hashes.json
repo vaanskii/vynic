@@ -1,0 +1,22 @@
+{
+  "apps/backend/package.json": "99a6859298553388341cdf9c2a5d50b337505e82437c9b6c798cd9d1e56367da",
+  "apps/backend/package-lock.json": "8de56455c5e72811744d712d38733473b65d0edd4638b165fd9b94dcba0e8cbf",
+  "apps/platform-web/package.json": "507097527c1d27ba9a799ae8d31b2572a21338a53e4fffe5efa1e5613dcc50ab",
+  "apps/platform-web/package-lock.json": "141681ebe084b0caa4376c2e03ab3cd502ee9876681f91be24d6f3b7acde2914",
+  "apps/vankisi-custom-web/package.json": "6a95183ecbb83472accb8e9fc3f621ea236bbf0055e2a9eb4351779aeffd9cf1",
+  "apps/vankisi-custom-web/package-lock.json": "1645b7f7814f7841c65510fb88d3dc3059c7b8f0bbece4a886f6502b785639a3",
+  "apps/restaurant-web/package.json": "73e64539c330ba748f2d51fd013066878f62bb606779776308ecc7b06c8efbf2",
+  "apps/restaurant-web/package-lock.json": "09ea1e077323b75fad4b416f72fc62d83d00bd05f8bc17a66546df8ef6f40c50",
+  "packages/website-client/package.json": "13915d6e095cb56898ff94c42ff4f570764e39fc2a648a34b50045e2a97569e6",
+  "packages/website-client/package-lock.json": "29e13fc283de65aad22453753c1892420079c72ceab39ca3c58ba9cc57ad482f",
+  "templates/custom-site/package.json": "97a4df184f3bebc565a5cdabb2fcd1747ad8dac1d03aaafb457fb12c8bde480a",
+  "templates/custom-site/package-lock.json": "95cc478c580e0895a007d70549b68e9eacd2b3ed157b8922972da991ba93e9e2",
+  "scripts/release_inventory.py": "247b6f1f8922d124f3984e396d4da426523654eb5686a30c6d4b6d3d3d1fd844",
+  "scripts/npm_lock_sbom.cjs": "83bb5ced818e372a2d6bc728939b5833cb8671dfbe359e5387be8f40bd527acc",
+  "scripts/npm_lock_sbom_test.cjs": "9575cb36ee915526513b3b28d443cb9936070515f0fcdce254ea3a248f05c06f",
+  "scripts/release_inventory_test.py": "8b578ab8f99d7b0c6a78ada8c0d0e701a7c6deb6c4024045caec673e3fa19b20",
+  "docs/OPS03_DEPENDENCY_REMEDIATION.md": "282ee255453dc3358873d87a9de1925bf8259f7b22e6787ac4883bb0c0800a6d",
+  "docs/OPS03_RELEASE_INVENTORY.md": "2a4db838fa3615abd71244fb8ee15f4e751ee0cac8c0d4d94da1384f83af49a9",
+  "docs/agent-state/VYNIC_PROJECT_STATE.md": "45a3b4db61d84454cf317b18275c1bcc06b20fa869c9857b832e8341bbe81c7f",
+  "docs/agent-state/VYNIC_CODE_MAP.md": "22681ae5d4e0dd5752ea67ad7f504e331be5fc0590b8c4a814efb6e141e31b85"
+}

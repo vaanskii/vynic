@@ -1,0 +1,12 @@
+{
+  "command": [
+    "git",
+    "apply",
+    "--reverse",
+    "--check",
+    "owned-runtime.patch"
+  ],
+  "cwd": "isolated candidate",
+  "exitCode": 0,
+  "output": ""
+}

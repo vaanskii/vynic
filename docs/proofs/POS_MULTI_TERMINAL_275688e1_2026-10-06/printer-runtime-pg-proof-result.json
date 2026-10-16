@@ -1,0 +1,289 @@
+{
+  "kind": "REAL_POSTGRESQL_SYNTHETIC_PRINTER_RUNTIME_PROOF",
+  "status": "PASS",
+  "sourceHashes": {
+    "apps/backend/src/customer/printer-runtime-config.ts": "de487e4da88ac68226ea694ba8bd1961a889afc48b92d39080f947ab672624c5",
+    "apps/backend/src/customer/printer-runtime-config.spec.ts": "89f31fd4aa14113656368f3afe3b40161d22eac9116f6d24d83c7fd3b2bf83d9",
+    "apps/backend/src/customer/printer-runtime-persistence.ts": "cf2002779fc564c3a4964d82768f53cb49262a486ac57682130d3b9cc8255b13",
+    "apps/backend/src/customer/printer-runtime-persistence.spec.ts": "f5b4fcbdab0ea70017771cc495eaa0b8da5054fcfbfa5b798df827b6b9cb7cf7",
+    "apps/backend/src/customer/customer.service.ts": "64a1a9700cb0a34f6fe7c2c24c5c12b8f68bdaa2abd87127af5217bc540c8012",
+    "apps/backend/src/customer/customer.controller.ts": "175206a5e53ef31a5efaaaca72a7721bb06ef20b666b54c5b06e9b81cf7adc1a",
+    "apps/backend/src/entitlements/commercial-state.ts": "2f5b407225c0a68b1b6a54077f95958bace6712546fd063c128347bfa74a423f",
+    "apps/backend/src/entitlements/effective-features.ts": "2347866bac1b7744f704c10becda68d0781ae46ac3cb322fd384bf57cec8028a",
+    "apps/backend/src/entitlements/subscription-policy.ts": "1ffbea264663876551d70c48f3d39a18ab945dd880cafe0dbca5036f94ed3f9d",
+    "apps/backend/src/platform/control-actor.ts": "b179cb52d6c69ee0c55eb2a045d7924b696c108c0c744b9c2c9b74608185983d",
+    "apps/backend/prisma/schema.prisma": "50e6df09eede76e0446e27d95885d1b8e448fb71177357a04199d1c85a1300b0",
+    "apps/backend/prisma/migrations/20261015120000_printer_runtime_preparation/migration.sql": "cd85a8168291815bcad59d821e136d45f4af348c003745e30fa6b6c44cb82d99"
+  },
+  "compiledHashes": {
+    "compiled/customer/printer-runtime-config.js": "2e445abbbb98dd2dd9850600c72b23e45a7f90b18bdd891d269910dcf787eca7",
+    "compiled/customer/printer-runtime-persistence.js": "2991654f41799ba3e9a41545bbb25592a1456fe5c5f1a0d1c3d86447f45b8839",
+    "compiled/entitlements/commercial-state.js": "10209fc9293919378c2e20a274a782b38bd38716ac280f7bdc3cca5467f01fe0",
+    "compiled/entitlements/effective-features.js": "e464b9d1de31270ffc2c041634dbccf2d8af9edb3cea708811c4773d506ad69f",
+    "compiled/entitlements/subscription-policy.js": "0fefc7a0d8de5fc00b5fda60f8db64573c3ec2285208cd7249a4d1ca658711f3",
+    "compiled/platform/control-actor.js": "d43aa81f5bc89faa359e0f97c814ba25155591ff078fbb9bfd40f8c7c9683230"
+  },
+  "compiler": {
+    "package": "typescript",
+    "version": "5.9.3",
+    "path": "/Users/vaanskii/Developer/vynic/apps/backend/node_modules/typescript/bin/tsc",
+    "noAcquisition": true
+  },
+  "syntheticIds": {
+    "organization": "82d2d049-072a-44aa-b46b-0d2eb852e337",
+    "venue": "da901f37-509a-451c-9adf-793b16fb62c7",
+    "otherOrganization": "c216bdf3-d085-4fb8-9123-0800fd3855b4",
+    "otherVenue": "a6a0c9d8-a733-43f6-b1d0-45cbf4c3f397",
+    "owner": "2eada8d2-f182-4ef0-9abf-336def68c9fa",
+    "otherOwner": "769f437d-9e6e-4824-98dd-105749d2a779",
+    "platform": "612a53e7-7621-4800-8216-9d9b3500ce7e",
+    "device": "2787f024-34cd-46ec-a7a9-784f23b69a67",
+    "legacyDevice": "55b0ab07-7f6a-4082-a9ad-e7772c9eee2d",
+    "plan": "612a3a93-9e86-4eb2-964a-e49db8665215"
+  },
+  "checks": [
+    {
+      "name": "fixture-identity-before-any-write",
+      "passed": true
+    },
+    {
+      "name": "synthetic-bound-owner-platform-device-and-active-subscription-fixtures",
+      "passed": true
+    },
+    {
+      "name": "real-device-venue-row-scope-refuses-cross-venue-device",
+      "passed": true
+    },
+    {
+      "name": "real-parallel-three-distinct-requests-one-config-and-audit-winner",
+      "passed": true,
+      "accepted": 1,
+      "conflicts": 2
+    },
+    {
+      "name": "exact-success-and-conflict-retries-after-later-revision",
+      "passed": true
+    },
+    {
+      "name": "changed-input-or-bound-actor-reuse-cannot-change-immutable-receipt",
+      "passed": true
+    },
+    {
+      "name": "separate-platform-identity-and-audit",
+      "passed": true
+    },
+    {
+      "name": "actual-v1-lock-and-guard-transition-then-overwrite-refusal",
+      "passed": true
+    },
+    {
+      "name": "real-atomic-rollback-after-config-and-clean-retry",
+      "passed": true
+    },
+    {
+      "name": "real-atomic-rollback-after-journal-and-clean-retry",
+      "passed": true
+    },
+    {
+      "name": "real-atomic-rollback-after-audit-and-clean-retry",
+      "passed": true
+    },
+    {
+      "name": "journal-update-trigger",
+      "passed": true,
+      "sqlState": "55000"
+    },
+    {
+      "name": "journal-delete-trigger",
+      "passed": true,
+      "sqlState": "55000"
+    },
+    {
+      "name": "journal-truncate-trigger",
+      "passed": true,
+      "sqlState": "55000"
+    },
+    {
+      "name": "journal-status-constraint",
+      "passed": true,
+      "sqlState": "23514"
+    },
+    {
+      "name": "journal-actor-type-constraint",
+      "passed": true,
+      "sqlState": "23514"
+    },
+    {
+      "name": "journal-sha256-constraint",
+      "passed": true,
+      "sqlState": "23514"
+    },
+    {
+      "name": "journal-uuid-constraint",
+      "passed": true,
+      "sqlState": "23514"
+    },
+    {
+      "name": "journal-expected-revision-constraint",
+      "passed": true,
+      "sqlState": "23514"
+    },
+    {
+      "name": "journal-success-identity-constraint",
+      "passed": true,
+      "sqlState": "23514"
+    },
+    {
+      "name": "journal-prepared-only-constraint",
+      "passed": true,
+      "sqlState": "23514"
+    },
+    {
+      "name": "journal-required-outcome-field-constraint",
+      "passed": true,
+      "sqlState": "23514"
+    },
+    {
+      "name": "journal-json-byte-limit-constraint",
+      "passed": true,
+      "sqlState": "23514"
+    },
+    {
+      "name": "journal-device-foreign-key",
+      "passed": true,
+      "sqlState": "23503"
+    },
+    {
+      "name": "journal-venue-foreign-key",
+      "passed": true,
+      "sqlState": "23503"
+    },
+    {
+      "name": "journal-device-request-unique-key",
+      "passed": true,
+      "sqlState": "23505"
+    },
+    {
+      "name": "journal-restricts-device-deletion-without-cascade",
+      "passed": true,
+      "sqlState": "23503"
+    },
+    {
+      "name": "real-venue-subscription-lock-blocks-then-commercial-downgrade-denies",
+      "passed": true,
+      "waitingPid": 122,
+      "blockingPid": 121,
+      "waitEventType": "Lock"
+    },
+    {
+      "name": "real-owner-membership-lock-blocks-then-revocation-denies",
+      "passed": true,
+      "waitingPid": 121,
+      "blockingPid": 122,
+      "waitEventType": "Lock"
+    },
+    {
+      "name": "bound-reader-header-compatibility-with-prepared-hold-and-v1-read-preservation",
+      "passed": true
+    },
+    {
+      "name": "no-device-credential-lifecycle-or-activation-mutation",
+      "passed": true
+    }
+  ],
+  "fixture": {
+    "kind": "vynic-printer-runtime-disposable-proof",
+    "task": "vynic-readiness-20261006-a2nbcprb",
+    "database": "vynic_readiness",
+    "postgresContainer": "vynic-readiness-20261006-pg",
+    "network": "none",
+    "syntheticRowsOnly": true,
+    "noApplicationStartup": true,
+    "publishedPorts": [],
+    "fixtureMountReadOnly": true,
+    "cachedImagesOnly": true
+  },
+  "runtime": {
+    "node": "v22.23.3",
+    "prisma": "6.19.3",
+    "nestCommon": "11.1.27"
+  },
+  "limitations": [
+    "Cached container dependencies; no fresh locked install",
+    "No HTTP authentication/token acceptance",
+    "No activation, fleet fencing, hardware printing or production rollout",
+    "No deployment or original-workspace changes"
+  ],
+  "database": {
+    "name": "vynic_readiness",
+    "username": "postgres",
+    "version": "PostgreSQL 17.11 (Debian 17.11-1.pgdg12+2) on aarch64-unknown-linux-gnu, compiled by gcc (Debian 12.2.0-14+deb12u1) 12.2.0, 64-bit",
+    "address": "127.0.0.1",
+    "port": 5432
+  },
+  "final": {
+    "revision": 6,
+    "phase": "PREPARED",
+    "counts": {
+      "journal": 8,
+      "customerAudit": 5,
+      "platformAudit": 1
+    },
+    "legacyCounts": {
+      "journal": 1,
+      "customerAudit": 2,
+      "platformAudit": 0
+    }
+  },
+  "imageProvenance": {
+    "images": [
+      {
+        "id": "sha256:c61353dc5d84d5257b1e0bb0a9cf2118aedb61355db019405fd51233d36f94e7",
+        "repoTags": [
+          "vynic/backend:local"
+        ],
+        "repoDigests": [
+          "vynic/backend@sha256:c61353dc5d84d5257b1e0bb0a9cf2118aedb61355db019405fd51233d36f94e7"
+        ],
+        "created": "2026-10-03T14:27:06.307823463Z",
+        "architecture": "arm64",
+        "os": "linux"
+      },
+      {
+        "id": "sha256:639ab7ceb90e13123085b741fb31ef493fba25463002f6da665352e7b534b652",
+        "repoTags": [
+          "postgres:17-bookworm"
+        ],
+        "repoDigests": [
+          "postgres@sha256:639ab7ceb90e13123085b741fb31ef493fba25463002f6da665352e7b534b652"
+        ],
+        "created": "2026-09-19T00:39:24.694408438Z",
+        "architecture": "arm64",
+        "os": "linux"
+      }
+    ],
+    "fixture": {
+      "name": "/vynic-readiness-20261006-pg",
+      "imageId": "sha256:639ab7ceb90e13123085b741fb31ef493fba25463002f6da665352e7b534b652",
+      "configuredImage": "postgres:17-bookworm",
+      "networkMode": "none",
+      "running": true,
+      "portBindings": {},
+      "tmpfs": {
+        "/var/lib/postgresql/data": "rw"
+      }
+    },
+    "inspectedAfterSuccessfulProof": true,
+    "inspectionTimeUtc": "2026-10-06T09:37:49.089104+00:00",
+    "proofRuntimeVerifiedInsideContainer": true,
+    "proofContainerAutoRemoved": true,
+    "proofExecutionImageReference": "vynic/backend:local",
+    "proofExecutionImagePullPolicy": "never",
+    "postgresOwnership": "root; no stop/remove performed"
+  },
+  "initialGuardAttempt": {
+    "status": "FAIL_BEFORE_ANY_WRITE",
+    "reason": "inet_server_addr text included /32; loopback guard corrected to host(inet_server_addr())",
+    "log": "printer-runtime-pg-proof-attempt1.log"
+  }
+}

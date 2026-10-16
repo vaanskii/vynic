@@ -1,3 +1,5 @@
+import { createHash } from 'node:crypto';
+import { bogPaymentFacts } from './bog-payment-facts';
 import {
   Controller,
   Post,
@@ -6,6 +8,7 @@ import {
   Get,
   Param,
   Req,
+  HttpCode,
   HttpException,
   HttpStatus,
   UnauthorizedException,
@@ -81,40 +84,28 @@ export class BogController {
     @Param('orderId') orderId: string,
   ) {
     try {
-      const paymentDetails = await this.bogService.getPaymentDetails(
+      const receipt: unknown = await this.bogService.getPaymentDetails(
         orderId,
         tenant.venueId,
       );
-      const externalOrderId = paymentDetails.external_order_id;
-      const status = paymentDetails.status || paymentDetails.order_status?.key;
-      if (!externalOrderId) throw new Error('External order ID not found');
-
-      const confirmedStatuses = [
-        'completed',
-        'partial_completed',
-        'auth_requested',
-      ];
-      const failedStatuses = ['rejected', 'refunded', 'refunded_partially'];
-      const statusKey = status?.toLowerCase() || 'unknown';
-      const isSuccess = confirmedStatuses.includes(statusKey);
-      const isFailed = failedStatuses.includes(statusKey);
-
-      await this.reservationService.updateReservationPaymentStatus(
-        externalOrderId,
-        status,
-        isSuccess
-          ? 'Payment confirmed via status check'
-          : isFailed
-            ? 'Payment failed (checked via status check)'
-            : `Status check: ${status}`,
-        orderId,
-      );
-
-      // This anonymous bank-return route proves payment status, not customer
-      // ownership. Booking/payment IDs must never unlock the private row.
+      const facts = bogPaymentFacts(receipt);
+      if (!facts.reservationId || facts.orderId !== orderId)
+        throw new HttpException(
+          'Payment reference mismatch',
+          HttpStatus.BAD_REQUEST,
+        );
+      const updated =
+        await this.reservationService.updateReservationPaymentStatus(
+          facts.reservationId,
+          facts.status,
+          '',
+          orderId,
+          { source: 'POLL', observedAt: new Date(), receipt },
+        );
+      // Anonymous return routes expose only current booking outcome, never the row.
       return {
         success: true,
-        status: isSuccess ? 'CONFIRMED' : isFailed ? 'FAILED' : 'PENDING',
+        status: updated.paymentReviewReason ? 'REVIEW' : updated.status,
       };
     } catch (error) {
       if (error instanceof HttpException) throw error;
@@ -145,6 +136,7 @@ export class BogController {
   }
 
   @Post('payment-callback')
+  @HttpCode(HttpStatus.OK)
   async handlePaymentCallback(
     @Req() req: Request & { rawBody?: Buffer },
     @Body()
@@ -192,40 +184,45 @@ export class BogController {
       return { status: 'error', message: 'Missing order_status' };
     }
 
-    const confirmedStatuses = [
-      'completed',
-      'partial_completed',
-      'auth_requested',
-    ];
-    const failedStatuses = ['rejected', 'refunded', 'refunded_partially'];
-    const statusKey = orderStatus.key.toLowerCase();
-    const isSuccess = confirmedStatuses.includes(statusKey);
-    const isFailed = failedStatuses.includes(statusKey);
-
-    await this.reservationService.updateReservationPaymentStatus(
-      externalOrderId,
-      orderStatus.key,
-      paymentDetail?.code_description ||
-        (isSuccess
-          ? 'Payment processed'
-          : isFailed
-            ? 'Payment Failed'
-            : `Unknown status: ${statusKey}`),
-      orderId || '',
-    );
-
+    if (!orderId) return { status: 'error', message: 'Missing order_id' };
+    let receipt: unknown = null;
+    try {
+      receipt = await this.bogService.getPaymentDetailsForReservation(
+        externalOrderId,
+        orderId,
+      );
+    } catch (error) {
+      // Reference/ownership failures never become a financial observation.
+      if (error instanceof HttpException && error.getStatus() < 500)
+        throw error;
+      // A signed notification survives provider read failure as durable review;
+      // its pinned reference is retried by the reconciliation worker.
+    }
+    const updated =
+      await this.reservationService.updateReservationPaymentStatus(
+        externalOrderId,
+        orderStatus.key,
+        paymentDetail?.code_description ?? '',
+        orderId,
+        {
+          source: 'CALLBACK',
+          observedAt: new Date(),
+          receipt,
+          signedCallback: {
+            fingerprint: createHash('sha256').update(rawBody).digest('hex'),
+            sentAt: body.zoned_request_time,
+            receipt: paymentData,
+          },
+        },
+      );
     return {
       status: 'success',
-      message: isSuccess
-        ? 'Payment confirmed and reservation created'
-        : isFailed
-          ? 'Payment failed'
-          : `Payment status ${statusKey} recorded`,
-      reservation_status: isSuccess
-        ? 'CONFIRMED'
-        : isFailed
-          ? 'FAILED'
-          : 'PENDING',
+      message: updated.paymentReviewReason
+        ? 'Payment requires restaurant review'
+        : 'Payment outcome recorded',
+      reservation_status: updated.paymentReviewReason
+        ? 'REVIEW'
+        : updated.status,
     };
   }
 }

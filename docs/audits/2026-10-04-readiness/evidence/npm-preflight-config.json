@@ -1,0 +1,10 @@
+{
+  "registryIsApprovedNpm": true,
+  "auditRegistryIsDefaultOrApproved": true,
+  "configuredCredentialKeys": [],
+  "sensitiveConfigFileKeys": [],
+  "sensitiveRuntimeOptionNames": [],
+  "proxyConfigured": false,
+  "customHeadersConfigured": false,
+  "npmVersion": "11.13.0"
+}

@@ -1,0 +1,111 @@
+{
+  "numPassedTests": 17,
+  "numFailedTests": 0,
+  "numPendingTests": 0,
+  "numTotalTests": 17,
+  "success": true,
+  "cases": [
+    {
+      "file": "apps/backend/src/website/custom/custom-website.integration.spec.ts",
+      "ordinal": 0,
+      "name": "CUSTOM website binding / disposable PostgreSQL provisions CUSTOM through the operator workflow only",
+      "status": "passed"
+    },
+    {
+      "file": "apps/backend/src/website/custom/custom-website.integration.spec.ts",
+      "ordinal": 1,
+      "name": "CUSTOM website binding / disposable PostgreSQL resolves each Host to only its own Venue",
+      "status": "passed"
+    },
+    {
+      "file": "apps/backend/src/website/custom/custom-website.integration.spec.ts",
+      "ordinal": 2,
+      "name": "CUSTOM website binding / disposable PostgreSQL ignores forged Venue identity in query, headers and body",
+      "status": "passed"
+    },
+    {
+      "file": "apps/backend/src/website/custom/custom-website.integration.spec.ts",
+      "ordinal": 3,
+      "name": "CUSTOM website binding / disposable PostgreSQL applies one set of capability rules to SAAS and CUSTOM hosts",
+      "status": "passed"
+    },
+    {
+      "file": "apps/backend/src/website/custom/custom-website.integration.spec.ts",
+      "ordinal": 4,
+      "name": "CUSTOM website binding / disposable PostgreSQL books and pays through each Venue\u2019s own integration and session",
+      "status": "passed"
+    },
+    {
+      "file": "apps/backend/src/website/custom/custom-website.integration.spec.ts",
+      "ordinal": 5,
+      "name": "CUSTOM website binding / disposable PostgreSQL limits a website administrator to the Venue it administers",
+      "status": "passed"
+    },
+    {
+      "file": "apps/backend/src/website/custom/custom-website.integration.spec.ts",
+      "ordinal": 6,
+      "name": "CUSTOM website binding / disposable PostgreSQL keeps mode, frontend and domains out of owner hands",
+      "status": "passed"
+    },
+    {
+      "file": "apps/backend/src/website/custom/custom-website.integration.spec.ts",
+      "ordinal": 7,
+      "name": "CUSTOM website binding / disposable PostgreSQL stops serving when the commercial Trial ends, without a fallback renderer",
+      "status": "passed"
+    },
+    {
+      "file": "apps/backend/src/website/custom/custom-website.integration.spec.ts",
+      "ordinal": 8,
+      "name": "CUSTOM website binding / disposable PostgreSQL gives a Website-only CUSTOM Venue the same canonical Cloud catalog as SAAS",
+      "status": "passed"
+    },
+    {
+      "file": "apps/backend/src/website/custom/custom-website.integration.spec.ts",
+      "ordinal": 9,
+      "name": "CUSTOM website binding / disposable PostgreSQL keeps POS authority for a CUSTOM Venue whose package includes POS",
+      "status": "passed"
+    },
+    {
+      "file": "apps/backend/src/website/custom/custom-website.integration.spec.ts",
+      "ordinal": 10,
+      "name": "CUSTOM website binding / disposable PostgreSQL reports and repairs a Website-only CUSTOM Venue left on POS authority",
+      "status": "passed"
+    },
+    {
+      "file": "apps/backend/src/website/custom/custom-website.integration.spec.ts",
+      "ordinal": 11,
+      "name": "CUSTOM website binding / disposable PostgreSQL checks runtime availability on demand, separately from setup status",
+      "status": "passed"
+    },
+    {
+      "file": "apps/backend/src/website/custom/custom-website.integration.spec.ts",
+      "ordinal": 12,
+      "name": "CUSTOM website binding / disposable PostgreSQL keeps domains port-free and local development out of production",
+      "status": "passed"
+    },
+    {
+      "file": "apps/backend/src/website/custom/custom-website.integration.spec.ts",
+      "ordinal": 13,
+      "name": "CUSTOM website binding / disposable PostgreSQL keeps hours, contact and gallery as Venue data both renderers read live",
+      "status": "passed"
+    },
+    {
+      "file": "apps/backend/src/website/custom/custom-website.integration.spec.ts",
+      "ordinal": 14,
+      "name": "CUSTOM website binding / disposable PostgreSQL offers website sign-in only where customer accounts are available",
+      "status": "passed"
+    },
+    {
+      "file": "apps/backend/src/website/custom/custom-website.integration.spec.ts",
+      "ordinal": 15,
+      "name": "CUSTOM website binding / disposable PostgreSQL WEB05 records only public build fingerprints with operator authorization, exact retry and immutable audit",
+      "status": "passed"
+    },
+    {
+      "file": "apps/backend/src/website/custom/custom-website.integration.spec.ts",
+      "ordinal": 16,
+      "name": "CUSTOM website binding / disposable PostgreSQL WEB05 HTTP observation distinguishes same-name Venues, recorded builds and tracking statuses without mutating them",
+      "status": "passed"
+    }
+  ]
+}

@@ -1,0 +1,77 @@
+[
+  {
+    "id": "43a5fda4d97c308eb1bda1744e27b204b2ad0f43c908f84aec783a9b1ad7e801",
+    "imageId": "sha256:ecd48efb88d6b95d9ee3acc03513ca22cc8d99701e8b2fb6bd5c8c56d09beb9d",
+    "startedAt": "2026-10-14T16:37:01.224288959Z",
+    "status": "running",
+    "name": "vynic-local-prod-backend-1",
+    "imageInspectExitCode": 0,
+    "image": {
+      "id": "sha256:ecd48efb88d6b95d9ee3acc03513ca22cc8d99701e8b2fb6bd5c8c56d09beb9d",
+      "repoDigests": [
+        "vynic/backend@sha256:ecd48efb88d6b95d9ee3acc03513ca22cc8d99701e8b2fb6bd5c8c56d09beb9d"
+      ],
+      "os": "linux",
+      "architecture": "arm64"
+    }
+  },
+  {
+    "id": "a3520d3c23918db2947f927c9e0598e0c7d3cc52ee41f2ef85676b64671119a7",
+    "imageId": "sha256:e48d1076d2bddaf1f5207e967ffd01e34f0e66e0d97edd9474ba232d7660258c",
+    "startedAt": "2026-10-14T16:14:35.365306795Z",
+    "status": "running",
+    "name": "vynic-local-prod-restaurant-web-1",
+    "imageInspectExitCode": 1,
+    "imageInspectError": "IMAGE_OBJECT_UNAVAILABLE"
+  },
+  {
+    "id": "e81a3d7eed578a80d866f1d4dc55c4e2e39628b6b762e834744a9001edc29612",
+    "imageId": "sha256:5f4c4354d49ac7a7186c6eacd76b239e4f7ed95f2c7f5036d8f03060ba41da92",
+    "startedAt": "2026-10-14T16:14:35.311134795Z",
+    "status": "running",
+    "name": "vynic-local-prod-platform-web-1",
+    "imageInspectExitCode": 1,
+    "imageInspectError": "IMAGE_OBJECT_UNAVAILABLE"
+  },
+  {
+    "id": "dd80e2f28dba3b94279715835f3331f13cf69a891b9261dea9826c49534b07a1",
+    "imageId": "sha256:ae901734ac58be3c2e10f7f62c836e69c2799e22220a120be7ffb9771ef0b11a",
+    "startedAt": "2026-10-14T16:14:35.254237795Z",
+    "status": "running",
+    "name": "vynic-local-prod-vankisi-custom-web-1",
+    "imageInspectExitCode": 1,
+    "imageInspectError": "IMAGE_OBJECT_UNAVAILABLE"
+  },
+  {
+    "id": "c5ebe66659021766f45e895ac6b0d0829942159445a39d905cbfcde594147f25",
+    "imageId": "sha256:31267173a15b4944e797a76ffd9c419707c8d8b32fe5b610f80cd0cfa05f372d",
+    "startedAt": "2026-10-08T11:57:58.489926041Z",
+    "status": "running",
+    "name": "vynic-local-prod-reverse-proxy-1",
+    "imageInspectExitCode": 0,
+    "image": {
+      "id": "sha256:31267173a15b4944e797a76ffd9c419707c8d8b32fe5b610f80cd0cfa05f372d",
+      "repoDigests": [
+        "traefik@sha256:31267173a15b4944e797a76ffd9c419707c8d8b32fe5b610f80cd0cfa05f372d"
+      ],
+      "os": "linux",
+      "architecture": "arm64"
+    }
+  },
+  {
+    "id": "bfc34620084b3d068cf20dd5a5871b63755f184b7fde4a321808219ed0784f18",
+    "imageId": "sha256:639ab7ceb90e13123085b741fb31ef493fba25463002f6da665352e7b534b652",
+    "startedAt": "2026-10-08T11:57:58.507105791Z",
+    "status": "running",
+    "name": "vynic-local-prod-postgres-1",
+    "imageInspectExitCode": 0,
+    "image": {
+      "id": "sha256:639ab7ceb90e13123085b741fb31ef493fba25463002f6da665352e7b534b652",
+      "repoDigests": [
+        "postgres@sha256:639ab7ceb90e13123085b741fb31ef493fba25463002f6da665352e7b534b652"
+      ],
+      "os": "linux",
+      "architecture": "arm64"
+    }
+  }
+]

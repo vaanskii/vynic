@@ -17,9 +17,15 @@ Host -> VenueDomain -> Venue -> WebsiteMode -> Website content
   `slug`, published `slug` and the `VenueWebsiteConfig.slug` column are mirrors
   the server keeps equal to it; a draft save or publication that carries any
   other value is refused (403). Content never chooses or moves an address.
-- Owners have no write path to `VenueDomain`. Operators register custom domains
-  only: `POST /platform/venues/:id/domains` refuses any hostname inside the SaaS
-  namespace, so a Venue never holds two SaaS addresses.
+- Owners have no write path to `VenueDomain` or hostname requests. Address changes
+  require contacting support. The compatibility request POST returns 403, and
+  `hostnameChangeAllowed` is always false, including ACTIVE plans.
+- Platform Admin can register Vynic subdomains and external domains for both
+  SAAS and CUSTOM. Additional registered names are aliases; `assignedSlug`
+  remains the one generated SAAS identity. Platform apex/api/admin/preview/www
+  origins cannot be assigned to restaurant websites. Every hostname is globally
+  unique, including disabled/retained bindings and assigned identities whose
+  domain row is temporarily absent.
 - The owner settings response carries `hostname` (the assigned SaaS address, or
   null outside SAAS) and `pendingHostnameRequest`; the dashboard displays these
   and never derives an address from the draft.
@@ -42,26 +48,44 @@ older SAAS row that has none.
 - Assigned once. Later restaurant display-name changes never rename it.
 - Audited as `website.hostname_assigned` with `source` PLATFORM or SYSTEM.
 
-## Trial
+## Platform Admin changes
 
-Trial owners see `თქვენი ვებსაიტის მისამართი` with the assigned address
-read-only and a note that it cannot change during the Trial. The server refuses
-their hostname requests (403); no request form is rendered.
+Owners on Trial, ACTIVE or other plans see their current address read-only and
+are directed to Vynic support. Saving/publishing content cannot rename it.
 
-## Paid change requests
+Platform Admin → Venue → Website → Domains:
 
-Only an ACTIVE Website owner of a SAAS Venue may request another address.
+- `POST /platform/venues/:id/domains {hostname}` registers a Vynic subdomain or
+  external domain, for SAAS or CUSTOM. WEBSITE access is required; no paid-only
+  restriction is applied to Admin changes.
+- `PATCH /platform/venues/:id/domains/:domainId
+  {hostname, expectedHostname, reason}` changes the displayed hostname. A stale
+  expected hostname returns 409. A retry while the target hostname
+  still belongs to the same domain adds no duplicate audit and returns its current
+  state. A later different rename is protected by the expected-hostname check. Domain ID, creation time, status and
+  retention deadline are preserved. Another Venue's domain ID returns 404.
+- The Venue/configuration/global-name lock order protects concurrent registration,
+  provisioning, rename and release. Domain and audit commit atomically. No domain
+  can silently move to another restaurant.
+- Renaming the assigned SAAS address requires a valid label under the configured
+  base domain. Assigned/draft/published mirrors and revisions move atomically;
+  unpublished edits remain unpublished, and stale editor submissions are refused.
+  External domains can be registered separately as aliases. CUSTOM and alias
+  renames accept external or Vynic hostnames.
+- A direct assigned-address change closes previous pending requests with the
+  Admin actor/time/reason. Historical requests remain readable and reviewable.
 
-- `POST /customer/venues/:id/website/hostname-requests {slug}` validates the
-  label (format + reserved names), refuses the Venue's current name and any
-  taken name, and stores `WebsiteHostnameRequest` with the requester, current
-  hostname, requested hostname and `PENDING` status. Nothing is bound.
-- One pending request per Venue: service check under the Venue/config/name
-  locks plus the partial unique index `WebsiteHostnameRequest_one_pending`.
-  A second submission is 409; the dashboard shows the pending status instead of
-  the form. After APPROVED or REJECTED a new request may follow.
-- `GET …/website/address/:slug` is an advisory availability check only.
-- Owners see their requests without the reviewing operator's identity.
+Registration/rename updates the Host → Venue binding. It does not change DNS,
+TLS or a CUSTOM frontend route. Deploy/check those separately; the old renamed
+hostname stops resolving and has no automatic redirect. Review payment return
+origins when renaming; existing encrypted integrations and payment history are
+not rewritten by this operation.
+
+## Previous owner requests
+
+New submissions are disabled. The retained GET endpoints expose historical
+requests, with operator identities omitted from customer reads. The review path
+below remains for requests saved before this policy change.
 
 ## Platform review
 

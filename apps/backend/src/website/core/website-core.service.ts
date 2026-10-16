@@ -124,8 +124,7 @@ export class WebsiteCoreService {
           ? `${row.assignedSlug}.${base}`
           : null,
       pendingHostnameRequest: pendingHostname,
-      hostnameChangeAllowed:
-        access.configuredMode === 'SAAS' && subscription?.status === 'ACTIVE',
+      hostnameChangeAllowed: false,
       commercialStatus: subscription?.status ?? 'NO_PLAN',
       mediaUploadAllowed: subscription?.status === 'ACTIVE',
       schemaVersion: WEBSITE_SCHEMA_VERSION,

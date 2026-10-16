@@ -2,6 +2,8 @@ import { Prisma } from '@prisma/client';
 import type { ManagerAuthContext } from '../auth/manager-auth-context';
 
 export const InventoryAuditAction = {
+  STOCK_LOCATION_CREATED: 'STOCK_LOCATION_CREATED',
+  STOCK_LOCATION_RENAMED: 'STOCK_LOCATION_RENAMED',
   STOCK_ITEM_CREATED: 'STOCK_ITEM_CREATED',
   STOCK_ITEM_UPDATED: 'STOCK_ITEM_UPDATED',
   STOCK_ITEM_DISABLED: 'STOCK_ITEM_DISABLED',
@@ -18,6 +20,7 @@ export const InventoryAuditAction = {
 } as const;
 
 export type InventoryAuditEntityType =
+  | 'STOCK_LOCATION'
   | 'STOCK_ITEM'
   | 'SUPPLIER'
   | 'RECEIVING'

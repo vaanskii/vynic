@@ -7,6 +7,7 @@ import { WebsiteRolesGuard } from './website-roles.guard';
 import { CryptoService } from '../common/crypto.service';
 import { CsrfService } from '../common/csrf.service';
 import { WebsiteTenancyModule } from '../tenancy/website-tenancy.module';
+import { EnrollmentRateLimiter } from '../../edge/enrollment-rate-limiter';
 
 @Module({
   imports: [JwtModule.register({}), WebsiteTenancyModule],
@@ -17,6 +18,7 @@ import { WebsiteTenancyModule } from '../tenancy/website-tenancy.module';
     WebsiteRolesGuard,
     CryptoService,
     CsrfService,
+    EnrollmentRateLimiter,
   ],
   exports: [
     WebsiteAuthService,

@@ -1,0 +1,9 @@
+/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/operational-proof-server-windows.test.exe: go1.26.8
+	path	vynic.local/edge/internal/server.test
+	mod	vynic.local/edge	(devel)	
+	build	-buildmode=exe
+	build	-compiler=gc
+	build	CGO_ENABLED=0
+	build	GOARCH=amd64
+	build	GOOS=windows
+	build	GOAMD64=v1

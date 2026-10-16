@@ -1,0 +1,74 @@
+[
+  {
+    "source": "apps/backend/src/inventory/inventory-locations.integration.spec.ts",
+    "ordinal": 0,
+    "name": "INV-01 F1 quantity locations (owned PostgreSQL and HTTP) new Venues get exactly one durable default, and SQL rejects a second default",
+    "status": "passed"
+  },
+  {
+    "source": "apps/backend/src/inventory/inventory-locations.integration.spec.ts",
+    "ordinal": 1,
+    "name": "INV-01 F1 quantity locations (owned PostgreSQL and HTTP) concurrent creation, renamed retry and UUID casing retain one identity and one atomic audit",
+    "status": "passed"
+  },
+  {
+    "source": "apps/backend/src/inventory/inventory-locations.integration.spec.ts",
+    "ordinal": 2,
+    "name": "INV-01 F1 quantity locations (owned PostgreSQL and HTTP) a new process safely retries a committed location and receiving after a lost response",
+    "status": "passed"
+  },
+  {
+    "source": "apps/backend/src/inventory/inventory-locations.integration.spec.ts",
+    "ordinal": 3,
+    "name": "INV-01 F1 quantity locations (owned PostgreSQL and HTTP) selected receipt location survives old-client edits, concurrent posting and a payment without changing Venue value or debt semantics",
+    "status": "passed"
+  },
+  {
+    "source": "apps/backend/src/inventory/inventory-locations.integration.spec.ts",
+    "ordinal": 4,
+    "name": "INV-01 F1 quantity locations (owned PostgreSQL and HTTP) receipt reversal uses its original location and value after a rename and later price changes, once under concurrency",
+    "status": "passed"
+  },
+  {
+    "source": "apps/backend/src/inventory/inventory-locations.integration.spec.ts",
+    "ordinal": 5,
+    "name": "INV-01 F1 quantity locations (owned PostgreSQL and HTTP) foreign locations are rejected by HTTP and composite SQL ownership, with no document or audit writes",
+    "status": "passed"
+  },
+  {
+    "source": "apps/backend/src/inventory/inventory-locations.integration.spec.ts",
+    "ordinal": 6,
+    "name": "INV-01 F1 quantity locations (owned PostgreSQL and HTTP) committed movement and posted receipt locations cannot be rewritten or reversed in another location",
+    "status": "passed"
+  },
+  {
+    "source": "apps/backend/src/inventory/inventory-locations.integration.spec.ts",
+    "ordinal": 7,
+    "name": "INV-01 F1 quantity locations (owned PostgreSQL and HTTP) old version-1 POS snapshots use the default, preserving negative location quantities and D015 Venue valuation through restore/retry",
+    "status": "passed"
+  },
+  {
+    "source": "apps/backend/src/inventory/inventory-locations.integration.spec.ts",
+    "ordinal": 8,
+    "name": "INV-01 F1 quantity locations (owned PostgreSQL and HTTP) a failing audit rolls back location creation, and retry can commit exactly once afterward",
+    "status": "passed"
+  },
+  {
+    "source": "apps/backend/src/inventory/inventory-locations.integration.spec.ts",
+    "ordinal": 9,
+    "name": "INV-01 F1 quantity locations (owned PostgreSQL and HTTP) balances conserve the Venue sum within one read snapshot during concurrent receipts and reversals",
+    "status": "passed"
+  },
+  {
+    "source": "apps/backend/src/inventory/inventory-locations.integration.spec.ts",
+    "ordinal": 10,
+    "name": "INV-01 F1 quantity locations (owned PostgreSQL and HTTP) the existing child-first deletion matrix handles location references, retains another Venue and fully rolls back",
+    "status": "passed"
+  },
+  {
+    "source": "apps/backend/src/inventory/inventory-locations.integration.spec.ts",
+    "ordinal": 11,
+    "name": "INV-01 F1 quantity locations (owned PostgreSQL and HTTP) location reads/writes retain Manager identity and Inventory entitlement denial, without permitting balance edits",
+    "status": "passed"
+  }
+]

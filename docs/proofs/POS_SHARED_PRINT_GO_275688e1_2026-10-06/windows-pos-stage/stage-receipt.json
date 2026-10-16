@@ -1,0 +1,9 @@
+{
+  "files": 898,
+  "sourceZipSHA256": "d89ff1817d7a715cc32f2641a1afb59724973d12a76d7dc9f8b6fffaadf765ea",
+  "sourceManifestSHA256": "ea31ff93e41fa2e3a0c3f2f4c8daf44827aaec425c57c83ab22267bc168b88fa",
+  "firebaseSdk": "C:\\Users\\vaanskii\\AppData\\Local\\VynicLocalReleaseBuild\\e7a0ffd0bb571781\\apps\\operations\\build\\windows\\x64\\extracted\\firebase_cpp_sdk_windows",
+  "firebaseVersion": "13.5.0",
+  "firebaseVersionHeaderSha256": "8485c4305c02638bca186a082a7c3b94040f995bc542664f3be002610847da24",
+  "scope": "fresh exact 898-file Flutter/contract candidate; cached offline build/test only; no product start/install/physical output"
+}

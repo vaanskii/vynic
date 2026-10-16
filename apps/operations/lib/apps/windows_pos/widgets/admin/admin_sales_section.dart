@@ -1,3 +1,5 @@
+import 'package:vynic/core/ui/pos_theme.dart';
+import 'package:vynic/core/ui/widgets/pos_dialog.dart';
 import 'package:vynic/core/database/repositories/inventory_repository.dart';
 import 'package:vynic/core/models/feature_keys.dart';
 import 'package:vynic/core/models/sale_visibility.dart';
@@ -303,7 +305,7 @@ class _AdminSalesSectionState extends State<AdminSalesSection> {
   Future<void> _showSaleItemsModal(Map<String, dynamic> sale) async {
     final items = _resolveSaleItems(sale);
 
-    await showDialog<void>(
+    await showPosModal<void>(
       context: context,
       builder: (dialogContext) {
         return Dialog.fullscreen(
@@ -439,29 +441,19 @@ class _AdminSalesSectionState extends State<AdminSalesSection> {
     required String value,
     required Color color,
   }) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: _cardColor,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: _borderColor),
-      ),
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, color: color, size: 36),
-          const SizedBox(height: 12),
-          Text(
-            label,
-            textAlign: TextAlign.center,
-            style: const TextStyle(color: _textMuted, fontSize: 14),
-          ),
+          Text(label, style: const TextStyle(color: _textMuted, fontSize: 14)),
           const SizedBox(height: 8),
           Text(
             value,
             style: TextStyle(
               color: color,
               fontSize: 24,
-              fontWeight: FontWeight.bold,
+              fontWeight: FontWeight.w800,
             ),
           ),
         ],
@@ -996,6 +988,11 @@ class _AdminSalesSectionState extends State<AdminSalesSection> {
                                               ),
                                             ),
                                             child: DropdownButton<DateTime>(
+                                              style: const TextStyle(
+                                                fontFamily: PosTheme.fontFamily,
+                                                color: _textPrimary,
+                                                fontSize: 13,
+                                              ),
                                               isExpanded: true,
                                               value: monthOptions.isNotEmpty
                                                   ? effectiveSelectedMonth
@@ -1109,6 +1106,7 @@ class _AdminSalesSectionState extends State<AdminSalesSection> {
                                             iconDisabledColor:
                                                 AdminDesign.muted,
                                             style: const TextStyle(
+                                              fontFamily: PosTheme.fontFamily,
                                               color: _textPrimary,
                                               fontWeight: FontWeight.w600,
                                             ),

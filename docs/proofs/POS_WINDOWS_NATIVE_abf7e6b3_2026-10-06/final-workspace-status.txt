@@ -1,0 +1,175 @@
+ M .env.docker.example
+ M .env.production.example
+ M apps/backend/prisma/schema.prisma
+ M apps/backend/src/customer/commercial-access.integration.spec.ts
+ M apps/backend/src/customer/customer.controller.ts
+ M apps/backend/src/customer/customer.service.ts
+ M apps/backend/src/dev-origins.spec.ts
+ M apps/backend/src/dev-origins.ts
+ M apps/backend/src/subscriptions/subscription.integration.spec.ts
+ M apps/backend/src/subscriptions/subscription.service.ts
+ M apps/backend/src/website/custom/custom-website.integration.spec.ts
+ M apps/backend/src/website/provisioning/website-provisioning.integration.spec.ts
+ M apps/backend/src/website/provisioning/website-provisioning.ts
+ M apps/operations/lib/apps/windows_pos/screens/admin_screen.dart
+ M apps/operations/lib/apps/windows_pos/screens/developer_screen.dart
+ M apps/operations/lib/apps/windows_pos/screens/home_screen.dart
+ M apps/operations/lib/apps/windows_pos/screens/menu_screen.dart
+ M apps/operations/lib/apps/windows_pos/screens/order_detail_screen.dart
+ M apps/operations/lib/apps/windows_pos/screens/pos_first_run.dart
+ M apps/operations/lib/apps/windows_pos/widgets/admin/admin_close_day_section.dart
+ M apps/operations/lib/apps/windows_pos/widgets/admin/admin_reservations_section.dart
+ M apps/operations/lib/apps/windows_pos/widgets/admin/printers/admin_printers_section.dart
+ M apps/operations/lib/apps/windows_pos/widgets/home/home_calculator_page.dart
+ M apps/operations/lib/apps/windows_pos/widgets/home/home_reservations_section.dart
+ M apps/operations/lib/apps/windows_pos/widgets/home/home_take_away_section.dart
+ M apps/operations/lib/apps/windows_pos/widgets/home/home_x_report_helper.dart
+ M apps/operations/lib/core/database/database_core.dart
+ M apps/operations/lib/core/database/repositories/backup_repository.dart
+ M apps/operations/lib/core/database/repositories/order_table_mutation_repository.dart
+ M apps/operations/lib/core/database/repositories/settings_repository.dart
+ M apps/operations/lib/core/services/edge/edge_device_credential_store.dart
+ M apps/operations/lib/core/services/edge/pos_enrollment_service.dart
+ M apps/operations/lib/core/services/edge/runtime_config_sync.dart
+ M apps/operations/lib/core/services/pos/pos_command_applier.dart
+ M apps/operations/lib/core/services/pos/update/update_readiness.dart
+ M apps/operations/lib/core/services/printing/escpos_kitchen_renderer.dart
+ M apps/operations/lib/core/services/printing/escpos_receipt_renderer.dart
+ M apps/operations/lib/core/services/printing/escpos_report_renderer.dart
+ M apps/operations/lib/core/services/printing/print_queue.dart
+ M apps/operations/lib/core/services/printing/printer_connection.dart
+ M apps/operations/lib/core/services/printing/printer_service.dart
+ M apps/operations/lib/core/services/printing/printer_transport.dart
+ M apps/operations/lib/core/services/sync/api_config.dart
+ M apps/operations/test/unit/pos_enrollment_test.dart
+ M apps/operations/test/widget/admin_navigation_test.dart
+ M apps/operations/windows/runner/CMakeLists.txt
+ M apps/operations/windows/runner/flutter_window.cpp
+ M apps/operations/windows/runner/flutter_window.h
+ M apps/platform-web/src/App.tsx
+ M apps/platform-web/src/components/layout/Navbar.tsx
+ M apps/platform-web/src/components/product/PosScreenReplica.tsx
+ M apps/platform-web/src/components/product/ProductLaunchMenu.tsx
+ M apps/platform-web/src/components/sections/FloorPlanSection.tsx
+ M apps/platform-web/src/components/sections/Hero.tsx
+ M apps/platform-web/src/components/sections/ProductTour.tsx
+ M apps/platform-web/src/components/ui/Button.tsx
+ M apps/platform-web/src/components/ui/Reveal.tsx
+ M apps/platform-web/src/components/ui/SectionHeading.tsx
+ M apps/platform-web/src/lib/motion.ts
+ M apps/platform-web/src/pages/HomePage.tsx
+ M apps/platform-web/src/platform/pages/venue/SubscriptionPanel.tsx
+ M apps/platform-web/src/styles/index.css
+ M apps/platform-web/src/subscriptions/operator-actions.ts
+ M apps/platform-web/src/subscriptions/types.ts
+ M apps/platform-web/src/test/commercial-control-ux.test.tsx
+ M apps/platform-web/src/test/subscription-lifecycle.test.tsx
+ M compose.local.yaml
+ M compose.yaml
+ M deploy/traefik/routes.yml
+ M docs/CANONICAL_MENU_SYNC.md
+ M docs/COMMERCIAL_SUBSCRIPTION_LIFECYCLE.md
+ M docs/DEPLOYMENT.md
+ M docs/DEPLOYMENT_PROOF.md
+ M docs/agent-state/VYNIC_CODE_MAP.md
+ M docs/agent-state/VYNIC_DECISIONS.md
+ M docs/agent-state/VYNIC_PROJECT_STATE.md
+ M scripts/docker.sh
+?? .claude/launch.json
+?? apps/backend/prisma/migrations/20261015120000_printer_runtime_preparation/
+?? apps/backend/src/customer/printer-runtime-config.spec.ts
+?? apps/backend/src/customer/printer-runtime-config.ts
+?? apps/backend/src/customer/printer-runtime-persistence.spec.ts
+?? apps/backend/src/customer/printer-runtime-persistence.ts
+?? apps/operations/lib/apps/windows_pos/widgets/admin/printers/additional_printers_section.dart
+?? apps/operations/lib/apps/windows_pos/widgets/shared/print_jobs.dart
+?? apps/operations/lib/core/database/repositories/print_job_repository.dart
+?? apps/operations/lib/core/services/edge/operational_proof/
+?? apps/operations/lib/core/services/pos/order_confirmation_print.dart
+?? apps/operations/lib/core/services/printing/cloud_printer_runtime.dart
+?? apps/operations/lib/core/services/printing/local_printer_catalog.dart
+?? apps/operations/lib/core/services/printing/optional_printer_beep.dart
+?? apps/operations/lib/core/services/printing/print_identity_admission.dart
+?? apps/operations/lib/core/services/printing/print_job.dart
+?? apps/operations/lib/core/services/printing/print_reconciliation.dart
+?? apps/operations/lib/core/services/printing/print_routing_plan.dart
+?? apps/operations/lib/core/services/printing/printer_capability_profile.dart
+?? apps/operations/lib/core/services/printing/printer_destination.dart
+?? apps/operations/lib/core/services/printing/windows_spooler_transport.dart
+?? apps/operations/test/live/native_ingress_live_test.dart
+?? apps/operations/test/live/pos02_one_shot_acceptance_test.dart
+?? apps/operations/test/live/pos02_process_recovery_test.dart
+?? apps/operations/test/support/pos02_acceptance_runner.dart
+?? apps/operations/test/support/pos02_developer_fixture.dart
+?? apps/operations/test/support/pos02_fixture.dart
+?? apps/operations/test/support/pos02_preview_harness.dart
+?? apps/operations/test/unit/cloud_printer_runtime_sync_test.dart
+?? apps/operations/test/unit/cloud_printer_runtime_test.dart
+?? apps/operations/test/unit/escpos_capability_renderer_test.dart
+?? apps/operations/test/unit/operational_manager_items_test.dart
+?? apps/operations/test/unit/operational_ordinary_planner_test.dart
+?? apps/operations/test/unit/operational_proof_client_test.dart
+?? apps/operations/test/unit/optional_printer_beep_test.dart
+?? apps/operations/test/unit/pos02_acceptance_runner_test.dart
+?? apps/operations/test/unit/pos02_backup_restore_test.dart
+?? apps/operations/test/unit/pos02_local_printers_test.dart
+?? apps/operations/test/unit/pos02_preview_safety_test.dart
+?? apps/operations/test/unit/pos02_print_delivery_test.dart
+?? apps/operations/test/unit/print_identity_credential_admission_test.dart
+?? apps/operations/test/unit/print_routing_plan_test.dart
+?? apps/operations/test/unit/printer_capability_profile_test.dart
+?? apps/operations/test/unit/printer_destination_test.dart
+?? apps/operations/test/unit/printer_route_catalog_test.dart
+?? apps/operations/test/unit/routed_print_delivery_test.dart
+?? apps/operations/test/unit/windows_spooler_transport_test.dart
+?? apps/operations/test/widget/pos02_admin_printers_test.dart
+?? apps/operations/test/widget/pos02_kitchen_entry_points_test.dart
+?? apps/operations/test/widget/pos02_print_jobs_test.dart
+?? apps/operations/test/widget/printer_route_configuration_test.dart
+?? apps/operations/test/widget/production_print_copy_test.dart
+?? apps/operations/tool/pos02_acceptance_ledger.dart
+?? apps/operations/tool/pos02_acceptance_ledger_probe.dart
+?? apps/operations/tool/pos02_acceptance_request.dart
+?? apps/operations/tool/pos02_preview.dart
+?? apps/operations/tool/prove_pos02_acceptance_ledger.py
+?? apps/operations/tool/prove_pos02_recovery.py
+?? apps/operations/windows/runner/windows_spooler.cpp
+?? apps/operations/windows/runner/windows_spooler.h
+?? apps/operations/windows/runner/windows_spooler_channel.cpp
+?? apps/operations/windows/runner/windows_spooler_channel.h
+?? apps/operations/windows/tests/CMakeLists.txt
+?? apps/operations/windows/tests/windows_spooler_channel_test.cpp
+?? apps/operations/windows/tests/windows_spooler_test.cpp
+?? apps/platform-web/src/components/home/
+?? apps/platform-web/src/components/motion/
+?? apps/platform-web/src/components/sections/PlatformStory.tsx
+?? apps/platform-web/src/pages/MarketingSite.tsx
+?? apps/platform-web/src/pages/SitePages.tsx
+?? apps/platform-web/src/test/site-motion.test.tsx
+?? compose.lan.yaml
+?? docs/POS02_ADMIN_REVISION.md
+?? docs/POS02_ONE_SHOT_ACCEPTANCE.md
+?? docs/POS02_PREVIEW.md
+?? docs/POS02_PRINT_DELIVERY.md
+?? docs/POS02_WINDOWS_INSTALLER_HANDOFF.md
+?? docs/POS_MULTI_TERMINAL_READINESS_PLAN.md
+?? docs/POS_MULTI_TERMINAL_WRITER_COVERAGE.md
+?? docs/audits/2026-09-29-f7bb982/
+?? docs/audits/2026-10-04-readiness/
+?? docs/proofs/POS02_ACCEPTANCE_db74149c_2026-10-02/
+?? docs/proofs/POS02_ADMIN_d194367f_2026-10-02/
+?? docs/proofs/POS02_CANDIDATE_275688e1_2026-10-02.json
+?? docs/proofs/POS02_CHECKPOINT_275688e1_2026-10-02/
+?? docs/proofs/POS02_INSTALLER_SERVER_2026-10-03.json
+?? docs/proofs/POS02_LOGS_275688e1_2026-10-02.zip
+?? docs/proofs/POS02_NATIVE_275688e1_2026-10-02.json
+?? docs/proofs/POS02_PREVIEW_275688e1_2026-10-02/
+?? docs/proofs/POS02_PRINT_JOBS_640_2026-10-02.png
+?? docs/proofs/POS02_WINDOWS_CANDIDATE_275688e1_2026-10-02.json
+?? docs/proofs/POS02_WINDOWS_CANDIDATE_275688e1_2026-10-02.zip
+?? docs/proofs/POS02_WINDOWS_RECOVERY_2026-10-04/
+?? docs/proofs/POS02_WINDOWS_SMOKE_275688e1_2026-10-02.json
+?? docs/proofs/POS_MANAGER_ITEMS_275688e1_2026-10-06/
+?? docs/proofs/POS_MULTI_TERMINAL_275688e1_2026-10-06/
+?? docs/proofs/POS_WINDOWS_NATIVE_abf7e6b3_2026-10-06/
+?? experiments/

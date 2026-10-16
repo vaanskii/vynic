@@ -1,0 +1,11 @@
+[
+  "apps/backend/prisma/schema.prisma",
+  "apps/backend/src/edge/edge-transport.module.ts",
+  "apps/backend/src/local-tools/deletion-matrix.ts",
+  "apps/backend/src/platform/platform.module.ts",
+  "docs/VYNIC_PRINT_ARCHITECTURE.md",
+  "docs/VYNIC_ROADMAP.md",
+  "docs/agent-state/VYNIC_CODE_MAP.md",
+  "docs/agent-state/VYNIC_DECISIONS.md",
+  "docs/agent-state/VYNIC_PROJECT_STATE.md"
+]

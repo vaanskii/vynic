@@ -1,0 +1,20 @@
+[
+  {
+    "label": "callback",
+    "url": "https://api.bog.ge/docs/payments/standard-process/callback.md",
+    "sha256": "4b4dfd6143cfe0a1014e95e1dfd7553fdabf798b6d9c01b9e3681d6e35aee335",
+    "bytes": 8137
+  },
+  {
+    "label": "receipt",
+    "url": "https://api.bog.ge/docs/payments/standard-process/get-payment-details.md",
+    "sha256": "9dca06fb2012740109c7d3bbb7395d72fb7d663c734c4ce404c6d7a55060ff96",
+    "bytes": 25578
+  },
+  {
+    "label": "create-order",
+    "url": "https://api.bog.ge/docs/payments/standard-process/create-order.md",
+    "sha256": "7930cb55de0e396aaa3fe5b257a3930733d467b139124a66e3f9ff88da36efaf",
+    "bytes": 31432
+  }
+]

@@ -3,7 +3,8 @@ jest.mock('uuid', () => ({ v4: () => require('node:crypto').randomUUID() }));
 jest.mock('axios');
 import axios from 'axios';
 import * as argon from 'argon2';
-import { randomUUID } from 'node:crypto';
+import { randomUUID, createHash } from 'node:crypto';
+import { websiteVenueIdentity } from '../core/website-identity';
 import * as nodeHttp from 'node:http';
 import type { AddressInfo } from 'node:net';
 import { Test } from '@nestjs/testing';
@@ -58,6 +59,7 @@ import { WebsiteTenantService } from '../tenancy/website-tenant.service';
 import { UserController } from '../user/user.controller';
 import { UserService } from '../user/user.service';
 import { CustomWebsiteService } from './custom-website.service';
+import { MenuCatalogService } from '../../menu-catalog/menu-catalog.service';
 
 /**
  * CUSTOM website registration, binding and isolation, over HTTP.
@@ -385,6 +387,7 @@ const url = process.env.CUSTOM_WEBSITE_TEST_DATABASE_URL;
             ),
           },
           CsrfService,
+          EnrollmentRateLimiter,
           { provide: WebsiteMenuService, useValue: menus },
           {
             provide: CustomWebsiteService,
@@ -430,7 +433,12 @@ const url = process.env.CUSTOM_WEBSITE_TEST_DATABASE_URL;
           },
           {
             provide: RestaurantFoundationService,
-            useValue: new RestaurantFoundationService(db, customers, access),
+            useValue: new RestaurantFoundationService(
+              db,
+              customers,
+              access,
+              new MenuCatalogService(db),
+            ),
           },
           {
             provide: CustomerAuth,
@@ -766,7 +774,13 @@ const url = process.env.CUSTOM_WEBSITE_TEST_DATABASE_URL;
 
       const cookie = await cookieFor(`customer-${tag}@test.invalid`);
       for (const k of ['a', 'b'] as const) {
-        const res = await order(host(k)).set('Cookie', cookie).expect(201);
+        // A already holds table1 for Nov 2 from the anonymous booking above.
+        // Distinct days preserve the approved whole-day occupancy contract.
+        const res = await order(host(k), {
+          selectedDate: k === 'a' ? '2026-11-03' : '2026-11-02',
+        })
+          .set('Cookie', cookie)
+          .expect(201);
         const booking = await db.websiteReservation.findUniqueOrThrow({
           where: { id: res.body.reservation_id },
           include: { paymentIntegration: true },
@@ -943,49 +957,61 @@ const url = process.env.CUSTOM_WEBSITE_TEST_DATABASE_URL;
       const subcategoryId = randomUUID();
       const itemId = randomUUID();
       await http()
-        .put(`/customer/venues/${c.id}/catalog/category`)
+        .post(`/customer/venues/${c.id}/catalog/mutations`)
         .set(ownerAuth(c.token))
         .send({
-          id: categoryId,
-          expectedRevision: (await read()).revision,
-          nameKa: 'ცხელი',
-          nameEn: 'Hot dishes',
+          mutationId: randomUUID(),
+          entityType: 'CATEGORY',
+          operation: 'UPSERT',
+          entityId: categoryId,
+          expectedRevision: 0,
+          patch: { nameKa: 'ცხელი', nameEn: 'Hot dishes' },
         })
         .expect(200);
       await http()
-        .put(`/customer/venues/${c.id}/catalog/subcategory`)
+        .post(`/customer/venues/${c.id}/catalog/mutations`)
         .set(ownerAuth(c.token))
         .send({
-          id: subcategoryId,
-          categoryId,
-          expectedRevision: (await read()).revision,
-          nameKa: 'მწვადი',
-          nameEn: 'Grill',
+          mutationId: randomUUID(),
+          entityType: 'SUBCATEGORY',
+          operation: 'UPSERT',
+          entityId: subcategoryId,
+          expectedRevision: 0,
+          patch: { categoryId, nameKa: 'მწვადი', nameEn: 'Grill' },
         })
         .expect(200);
       await http()
-        .put(`/customer/venues/${c.id}/catalog/item`)
+        .post(`/customer/venues/${c.id}/catalog/mutations`)
         .set(ownerAuth(c.token))
         .send({
-          id: itemId,
-          subcategoryId,
-          expectedRevision: (await read()).revision,
-          nameKa: 'ღორის მწვადი',
-          nameEn: 'Pork mtsvadi',
-          price: 24,
-          enabled: true,
+          mutationId: randomUUID(),
+          entityType: 'ITEM',
+          operation: 'UPSERT',
+          entityId: itemId,
+          expectedRevision: 0,
+          patch: {
+            subcategoryId,
+            nameKa: 'ღორის მწვადი',
+            nameEn: 'Pork mtsvadi',
+            price: 24,
+            enabled: true,
+          },
         })
         .expect(200);
       await http()
-        .put(`/customer/venues/${c.id}/catalog/variant`)
+        .post(`/customer/venues/${c.id}/catalog/mutations`)
         .set(ownerAuth(c.token))
         .send({
-          menuItemId: itemId,
-          expectedRevision: (await read()).revision,
-          nameKa: 'დიდი',
-          nameEn: 'Large',
-          price: 32,
-          size: 1,
+          mutationId: randomUUID(),
+          entityType: 'VARIANT',
+          operation: 'UPSERT',
+          entityId: randomUUID(),
+          expectedRevision: 0,
+          patch: {
+            menuItemId: itemId,
+            price: 32,
+            size: 1,
+          },
         })
         .expect(200);
 
@@ -1081,12 +1107,15 @@ const url = process.env.CUSTOM_WEBSITE_TEST_DATABASE_URL;
       ).body;
       expect(catalog).toMatchObject({ authority: 'POS', posIncluded: true });
       await http()
-        .put(`/customer/venues/${d.id}/catalog/category`)
+        .post(`/customer/venues/${d.id}/catalog/mutations`)
         .set(ownerAuth(d.token))
         .send({
-          expectedRevision: catalog.revision,
-          nameKa: 'ახალი',
-          nameEn: 'New',
+          mutationId: randomUUID(),
+          entityType: 'CATEGORY',
+          operation: 'UPSERT',
+          entityId: randomUUID(),
+          expectedRevision: 0,
+          patch: { nameKa: 'ახალი', nameEn: 'New' },
         })
         .expect(409);
       expect(await db.menuCategory.count({ where: { venueId: d.id } })).toBe(1);
@@ -1642,6 +1671,246 @@ const url = process.env.CUSTOM_WEBSITE_TEST_DATABASE_URL;
         .set('Host', `unknown-${tag}.vynic.localhost`)
         .send({})
         .expect(404);
+    });
+
+    it('WEB05 records only public build fingerprints with operator authorization, exact retry and immutable audit', async () => {
+      const venueA = venues.a as { id: string };
+      const path = `/platform/venues/${venueA.id}/custom-website`;
+      const buildId = 'a'.repeat(64);
+      await http()
+        .put(path)
+        .set(platform('support-token'))
+        .send({ expectedBuildId: buildId })
+        .expect(403);
+      await http()
+        .put(path)
+        .set(ownerAuth(owners.a))
+        .send({ expectedBuildId: buildId })
+        .expect(401);
+      await http()
+        .put(path)
+        .set(platform())
+        .send({ expectedBuildId: 'not-a-build' })
+        .expect(400);
+      const saved = (
+        await http()
+          .put(path)
+          .set(platform())
+          .send({ expectedBuildId: buildId })
+          .expect(200)
+      ).body as Record<string, unknown>;
+      expect(saved.expectedBuildId).toBe(buildId);
+      expect(saved.publicIdentity).toBe(websiteVenueIdentity(venueA.id));
+      const events = await db.platformAuditEvent.count({
+        where: {
+          targetId: venueA.id,
+          action: 'venue.custom_website_build_changed',
+        },
+      });
+      const retry = (
+        await http()
+          .put(path)
+          .set(platform())
+          .send({ expectedBuildId: buildId })
+          .expect(200)
+      ).body as Record<string, unknown>;
+      expect(retry.updatedAt).toBe(saved.updatedAt);
+      expect(
+        await db.platformAuditEvent.count({
+          where: {
+            targetId: venueA.id,
+            action: 'venue.custom_website_build_changed',
+          },
+        }),
+      ).toBe(events);
+      await http()
+        .put(path)
+        .set(platform())
+        .send({ siteKey: 'different-reviewed-web' })
+        .expect(200);
+      expect(
+        (
+          await db.customWebsiteBinding.findUniqueOrThrow({
+            where: { venueId: venueA.id },
+          })
+        ).expectedBuildId,
+      ).toBeNull();
+      await http()
+        .put(path)
+        .set(platform())
+        .send({ siteKey: 'custom-a-web', expectedBuildId: buildId })
+        .expect(200);
+    });
+
+    it('WEB05 HTTP observation distinguishes same-name Venues, recorded builds and tracking statuses without mutating them', async () => {
+      const venueA = venues.a as { id: string };
+      const venueB = venues.b as { id: string };
+      let fixtureError: unknown;
+      const html = '<html>WEB05 independently built synthetic page</html>';
+      const buildId = 'a'.repeat(64);
+      let wrongVenue = false;
+      let changeDuringRead: null | 'BUILD' | 'DOMAIN' = null;
+      let rootGate: Promise<void> | null = null;
+      let enteredRoot: (() => void) | null = null;
+      const server = nodeHttp.createServer((req, res) => {
+        void (async () => {
+          if (req.url === '/api/website/venue') {
+            const response = await http()
+              .get('/api/website/venue')
+              .set('Host', host(wrongVenue ? 'b' : 'a'));
+            res.statusCode = response.status;
+            res.setHeader('content-type', 'application/json');
+            res.end(JSON.stringify(response.body));
+          } else if (req.url === '/vynic-site-manifest.json') {
+            if (changeDuringRead === 'BUILD')
+              await db.customWebsiteBinding.update({
+                where: { venueId: venueA.id },
+                data: { expectedBuildId: 'b'.repeat(64) },
+              });
+            if (changeDuringRead === 'DOMAIN')
+              await db.venueDomain.updateMany({
+                where: { venueId: venueA.id, hostname: host('a') },
+                data: { status: 'DISABLED' },
+              });
+            res.setHeader('content-type', 'application/json');
+            res.end(
+              JSON.stringify({
+                schemaVersion: 1,
+                renderer: 'CUSTOM',
+                siteKey: 'custom-a-web',
+                buildId,
+                htmlDigest: createHash('sha256').update(html).digest('hex'),
+              }),
+            );
+          } else {
+            if (rootGate) {
+              enteredRoot?.();
+              await rootGate;
+            }
+            res.setHeader('content-type', 'text/html');
+            res.end(html);
+          }
+        })().catch((error: unknown) => {
+          fixtureError = error;
+          res.statusCode = 500;
+          res.end('Synthetic fixture failed');
+        });
+      });
+      await new Promise<void>((resolve) =>
+        server.listen(0, '127.0.0.1', resolve),
+      );
+      const port = (server.address() as AddressInfo).port;
+      const service = () =>
+        new CustomWebsiteService(
+          db,
+          new VenueEntitlementsService(db),
+          new ConfigService({
+            NODE_ENV: 'development',
+            CUSTOM_WEBSITE_LOCAL_FRONTENDS: `custom-a-web=${port}`,
+          }),
+        );
+      try {
+        await db.venue.updateMany({
+          where: { id: { in: [venueA.id, venueB.id] } },
+          data: { name: 'Identical public restaurant name' },
+        });
+        for (const status of ['ACTIVE', 'SETUP_PENDING', 'ERROR'] as const) {
+          await db.customWebsiteBinding.update({
+            where: { venueId: venueA.id },
+            data: { status, siteKey: 'custom-a-web', expectedBuildId: buildId },
+          });
+          const result = await service().checkRuntime(venueA.id);
+          expect(result.api.state).toBe('OK');
+          expect(result.build.state).toBe('VERIFIED');
+          expect(result.facts).toMatchObject({
+            commercial: true,
+            domainRegistration: true,
+            rendererDeployed: true,
+            bindingIdentityVerified: true,
+            publicationLive: status === 'ACTIVE',
+          });
+          expect(result.environment).toBe('LOCAL_DEVELOPMENT');
+          expect(
+            (
+              await db.customWebsiteBinding.findUniqueOrThrow({
+                where: { venueId: venueA.id },
+              })
+            ).status,
+          ).toBe(status);
+        }
+        await db.customWebsiteBinding.update({
+          where: { venueId: venueB.id },
+          data: { siteKey: 'custom-a-web', status: 'ACTIVE' },
+        });
+        await db.venueSubscription.update({
+          where: { venueId: venueB.id },
+          // The earlier expiry case reconciles B to SUSPENDED. Renew only this
+          // isolated fixture for the independent same-name identity assertion.
+          data: {
+            status: 'TRIAL',
+            trialEndsAt: new Date(Date.now() + 86400000),
+            trialEndedAt: null,
+            suspendedAt: null,
+            suspendedFrom: null,
+          },
+        });
+        wrongVenue = true;
+        const wrong = await service().checkRuntime(venueA.id);
+        expect(wrong.api.state).toBe('WRONG_SITE');
+        expect(wrong.facts.bindingIdentityVerified).toBe(false);
+        expect(wrong.facts.publicationLive).toBe(false);
+        wrongVenue = false;
+        for (const change of ['BUILD', 'DOMAIN'] as const) {
+          await db.customWebsiteBinding.update({
+            where: { venueId: venueA.id },
+            data: { status: 'ACTIVE', expectedBuildId: buildId },
+          });
+          await db.venueDomain.updateMany({
+            where: { venueId: venueA.id, hostname: host('a') },
+            data: { status: 'ACTIVE' },
+          });
+          changeDuringRead = change;
+          const stale = await service().checkRuntime(venueA.id);
+          expect(stale.observationCurrent).toBe(false);
+          expect(stale.facts.bindingIdentityVerified).toBe(false);
+          expect(stale.facts.publicationLive).toBe(false);
+        }
+        // Disabled domains are not contacted by another check.
+        changeDuringRead = null;
+        await expect(service().checkRuntime(venueA.id)).rejects.toThrow(
+          /active domain|NO_LOCAL_DOMAIN|Not configured/i,
+        );
+        await db.venueDomain.updateMany({
+          where: { venueId: venueA.id, hostname: host('a') },
+          data: { status: 'ACTIVE' },
+        });
+        let releaseRoot!: () => void;
+        rootGate = new Promise<void>((resolve) => {
+          releaseRoot = resolve;
+        });
+        const entered = new Promise<void>((resolve) => {
+          enteredRoot = resolve;
+        });
+        const oneService = service();
+        const first = oneService.checkRuntime(venueA.id);
+        await entered;
+        const now = Date.now();
+        const clock = jest.spyOn(Date, 'now').mockReturnValue(now + 6000);
+        try {
+          await expect(oneService.checkRuntime(venueA.id)).rejects.toThrow(
+            /check just ran/i,
+          );
+        } finally {
+          clock.mockRestore();
+          releaseRoot();
+        }
+        expect((await first).facts.bindingIdentityVerified).toBe(true);
+        expect(fixtureError).toBeUndefined();
+      } finally {
+        await new Promise<void>((resolve, reject) =>
+          server.close((error) => (error ? reject(error) : resolve())),
+        );
+      }
     });
   },
 );

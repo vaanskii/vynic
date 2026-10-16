@@ -92,6 +92,21 @@ class TakeawayTicket {
   /// no discount or adjustment arithmetic repeated here.
   double get total => order.totalAmount;
 
+  bool matchesSearch(String input) {
+    final query = input.trim().toLowerCase();
+    if (query.isEmpty) return true;
+    final amount = double.tryParse(query.replaceAll(',', '.'));
+    final digits = query.replaceAll(RegExp(r'[^0-9]'), '');
+    return customerName('').toLowerCase().contains(query) ||
+        orderNumber.toLowerCase().contains(query) ||
+        (amount != null && (total - amount).abs() < 0.005) ||
+        (RegExp(r'^[+()\d\s-]+$').hasMatch(query) &&
+            digits.isNotEmpty &&
+            (customerPhone ?? '')
+                .replaceAll(RegExp(r'[^0-9]'), '')
+                .contains(digits));
+  }
+
   String get status => order.status.trim().toLowerCase();
 
   OrderStatus get statusEnum => order.statusEnum;

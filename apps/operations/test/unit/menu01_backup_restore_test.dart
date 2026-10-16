@@ -313,12 +313,28 @@ void main() {
     () async {
       final file = await backup();
       await fresh(file);
-      await EdgeDeviceCredentialStore.saveEnrollment(
-        rawCredential:
-            'vynic-device-v1.30000000-0000-4000-8000-000000000001.${'b' * 40}',
-        venueId: 'venue-b',
-        venueName: 'B',
+      final foreignCredential =
+          'vynic-device-v1.30000000-0000-4000-8000-000000000001.${'b' * 40}';
+      await expectLater(
+        EdgeDeviceCredentialStore.saveEnrollment(
+          rawCredential: foreignCredential,
+          venueId: 'venue-b',
+          venueName: 'B',
+        ),
+        throwsStateError,
       );
+      expect(EdgeDeviceCredentialStore.hasCredential, false);
+      // Older clients could persist this invalid pairing. Keep proving the
+      // outbound guard as well as the new enrollment-time refusal.
+      await File('$destination/edge_device.json').writeAsString(
+        jsonEncode({
+          'installationId': 'synthetic-restore-installation',
+          'credential': foreignCredential,
+          'venueId': 'venue-b',
+        }),
+      );
+      EdgeDeviceCredentialStore.resetForTest();
+      await EdgeDeviceCredentialStore.load();
       expect(() => EdgeDeviceCredentialStore.credential, throwsStateError);
       await EdgeDeviceCredentialStore.saveEnrollment(
         rawCredential:

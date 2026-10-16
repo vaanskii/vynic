@@ -158,6 +158,9 @@ export interface ReservationSync {
   status?: string;
   isTakeAway?: boolean;
   linkedOrderId?: number | null;
+  advanceAmount?: number;
+  advanceCollectedOn?: string | null;
+  advanceReceiptId?: string | null;
 }
 
 export interface AuditEventLogSync {

@@ -8,6 +8,7 @@ import type { ControlActor } from './control-actor';
 import {
   BadRequestException,
   ConflictException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -18,9 +19,11 @@ import {
   PlatformRole,
 } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
+import { assertStaffPinAvailable } from '../staff/staff-pin-policy';
 import * as argon2 from 'argon2';
 import { PrismaService } from '../prisma.service';
 import { StaffPinVault } from '../auth/staff-pin-vault.service';
+import { ManagerActivationService } from '../auth/manager-activation.service';
 import {
   EDGE_COMMAND_CONTRACT_VERSION,
   EdgeCommandTypes,
@@ -236,6 +239,13 @@ export class PlatformCommercialService {
     return result;
   }
 
+  activation(actor: ControlActor, venueId: string) {
+    return new ManagerActivationService(this.db, this.vault).issue(
+      actor,
+      venueId,
+    );
+  }
+
   async managers(venueId: string) {
     const staff = await this.db.staff.findMany({
       where: { venueId, role: { in: ['MANAGER', 'ADMIN'] } },
@@ -247,7 +257,10 @@ export class PlatformCommercialService {
         const delivery = await this.db.edgeCommand.findFirst({
           where: {
             venueId,
-            idempotencyKey: { startsWith: 'platform-staff:' },
+            OR: [
+              { idempotencyKey: { startsWith: 'platform-staff:' } },
+              { idempotencyKey: { startsWith: 'manager-activation:' } },
+            ],
             payload: { path: ['staffId'], equals: member.id },
           },
           orderBy: { createdAt: 'desc' },
@@ -265,6 +278,10 @@ export class PlatformCommercialService {
     body: Record<string, unknown>,
     staffId?: string,
   ) {
+    if (actor.customerAccountId || !actor.platformUserId)
+      throw new ForbiddenException(
+        'Only Vynic Platform Admin can manage existing Manager access',
+      );
     const requestId = requireUuid(body.requestId, 'requestId');
     const pin = action === 'disable' ? undefined : requireText(body.pin, 'PIN');
     if (pin && !/^\d{4,6}$/.test(pin))
@@ -296,22 +313,6 @@ export class PlatformCommercialService {
           }))
         )
           throw new NotFoundException('Venue not found');
-        if (
-          actor.customerAccountId &&
-          !(await tx.customerAccount.findFirst({
-            where: {
-              id: actor.customerAccountId,
-              isActive: true,
-              memberships: {
-                some: {
-                  role: 'OWNER',
-                  organization: { venues: { some: { id: venueId } } },
-                },
-              },
-            },
-          }))
-        )
-          throw new NotFoundException('Venue not found');
         if (action !== 'disable')
           await requireCommercialFeature(tx, venueId, 'MANAGER_APP');
         const idempotencyKey = `platform-staff:${requestId}`;
@@ -339,6 +340,17 @@ export class PlatformCommercialService {
             delivery: { commandId: previous.id, status: previous.status },
           };
         }
+        if (
+          action === 'create' &&
+          !(await tx.staff.count({
+            where: { venueId, role: { in: ['MANAGER', 'ADMIN'] } },
+          })) &&
+          !(await tx.managerActivation.findUnique({ where: { venueId } }))
+            ?.consumedAt
+        )
+          throw new ConflictException(
+            'Complete first registration in the enrolled POS',
+          );
         const before =
           action === 'create'
             ? null
@@ -359,19 +371,7 @@ export class PlatformCommercialService {
         )
           throw new ConflictException('Username already exists');
         if (pin) {
-          const others = await tx.staff.findMany({
-            where: {
-              venueId,
-              isActive: true,
-              ...(staffId ? { id: { not: staffId } } : {}),
-            },
-            select: { pinHash: true },
-          });
-          for (const other of others)
-            if (await bcrypt.compare(pin, other.pinHash))
-              throw new ConflictException(
-                'PIN is already in use in this Venue',
-              );
+          await assertStaffPinAvailable(tx, venueId, pin, before?.username);
         }
         const pinHash = pin ? await bcrypt.hash(pin, 12) : undefined;
         const revision = Math.max(

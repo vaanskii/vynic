@@ -1,0 +1,6 @@
+npm error code ESBOMPROBLEMS
+npm error missing: @emnapi/core@^1.4.3, required by @tailwindcss/oxide-wasm32-wasi@4.1.11
+npm error missing: @emnapi/wasi-threads@^1.0.2, required by @tailwindcss/oxide-wasm32-wasi@4.1.11
+npm error missing: @napi-rs/wasm-runtime@^0.2.11, required by @tailwindcss/oxide-wasm32-wasi@4.1.11
+npm error missing: @tybys/wasm-util@^0.9.0, required by @tailwindcss/oxide-wasm32-wasi@4.1.11
+npm error A complete log of this run can be found in: /var/folders/82/drcfb4994p16rl49gxx9tj000000gn/T/release-inventory-r7lhy9q3/npm-cache/_logs/2026-10-14T18_03_56_010Z-debug-0.log

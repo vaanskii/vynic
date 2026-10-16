@@ -30,9 +30,7 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
   String _pin = '';
   ManagerVenueSelection? _selectedVenue;
   String? _selectionError;
-  final _venueCode = TextEditingController(
-    text: ManagerAppPreferences.loginVenueCode ?? '',
-  );
+  final _venueCode = TextEditingController();
   bool _isLoading = false;
 
   late final AnimationController _pulseController;
@@ -76,23 +74,30 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
       _selectionError = null;
     });
     try {
-      final venue = await MobileAuthService.resolveVenue(
+      final venue = await MobileAuthService.linkVenue(
         _venueCode.text,
         client: widget.client,
       );
       // A validated selection must not inherit an older origin/session cache.
       await MobileAuthService.logout();
       await ManagerAppPreferences.rememberVenue(venue);
+      _venueCode
+          .clear(); // The one-use secret is not retained in preferences or the form.
       if (mounted)
         setState(() {
           _selectedVenue = venue;
           _pin = '';
         });
-    } catch (_) {
+    } catch (error) {
       if (mounted)
         setState(
-          () => _selectionError =
-              'რესტორანი ვერ მოიძებნა ან წვდომა მიუწვდომელია. გადაამოწმეთ კოდი და კავშირი.',
+          () => _selectionError = error == MobileAuthError.networkError
+              ? 'კავშირი ვერ დამყარდა. სცადეთ იგივე კოდით ხელახლა.'
+              : error == MobileAuthError.rateLimited
+              ? 'მცდელობები დროებით შეზღუდულია. სცადეთ მოგვიანებით.'
+              : error == MobileAuthError.serverError
+              ? 'დაკავშირება ვერ დასრულდა. სცადეთ იგივე კოდით ხელახლა.'
+              : 'ერთჯერადი კოდი მიუწვდომელია ან ვადა ამოიწურა. ახალი კოდი Vynic-ის მხარდაჭერისგან მიიღეთ.',
         );
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -378,13 +383,15 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
                               enabled: !_isLoading,
                               autocorrect: false,
                               enableSuggestions: false,
+                              obscureText: true,
                               maxLength: 32,
                               textInputAction: TextInputAction.done,
                               onSubmitted: (_) => _selectVenue(),
                               decoration: const InputDecoration(
-                                labelText: 'რესტორნის კოდი',
-                                hintText: 'რეგისტრაციისას მიღებული კოდი',
-                                helperText: 'კოდი მოწყობილობაზე დამახსოვრდება.',
+                                labelText: 'რესტორანთან დაკავშირების კოდი',
+                                hintText: 'Vynic-ის მხარდაჭერის ერთჯერადი კოდი',
+                                helperText:
+                                    'ერთხელ დააკავშირეთ; შემდეგ შესვლისთვის მხოლოდ PIN დაგჭირდებათ.',
                                 helperMaxLines: 2,
                                 counterText: '',
                                 border: OutlineInputBorder(),

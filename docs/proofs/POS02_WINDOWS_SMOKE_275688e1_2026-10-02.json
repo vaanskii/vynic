@@ -1,0 +1,222 @@
+{
+  "milestone": "POS-02",
+  "status": "WINDOWS_SYNTHETIC_SMOKE_PASS_USER_SUPPLIED_MILESTONE_NOT_DONE_UNCOMMITTED",
+  "recordedAtUTC": "2026-10-02T20:16:23.122373+00:00",
+  "baseCommit": "275688e1e5c5dc0e26e62705ab0c7670cf16d99a",
+  "executionIdentity": "9595fa09-9c30-4e67-aea4-66d5de635c8c",
+  "evidenceProvenance": {
+    "kind": "USER_SUPPLIED_POWERSHELL_TRANSCRIPT_RELAYED_BY_PARENT",
+    "sourceMessage": "Sentinel_ee0cb525c1bc8191ab600de62e964422",
+    "messageAtUTC": "2026-10-02T20:08:53Z",
+    "parentThreadId": "01a0f83f-974b-732f-9f9b-a17314dd3002",
+    "agentRetrievedWindowsLog": false,
+    "agentIndependentlyReranWindows": false,
+    "rawFullTranscriptStoredLocally": false,
+    "localRecordIncludes": "reported verification/results plus exact finish excerpt; original full transcript remains in source conversation",
+    "duplicateTranscriptHandling": "One completed run; repeated transcript is not an additional execution"
+  },
+  "platform": {
+    "os": "Windows 11 ARM",
+    "environment": "Parallels VM",
+    "flutterNativeTestEngine": "x64, user-reported execution",
+    "flutterCommand": "C:\\Users\\vaanskii\\develop\\flutter\\bin\\flutter.bat"
+  },
+  "source": {
+    "archive": "docs/proofs/POS02_WINDOWS_CANDIDATE_275688e1_2026-10-02.zip",
+    "archiveSha256": "6142021ae4e2164487356a0a422e0a050feb2fb206fc5cd4c9f1175818afe733",
+    "sourceManifestSha256": "da60e6d3dad6e70961200fbea671539fe39a8691bd23e441102afe3ea34d4882",
+    "fileCount": 867,
+    "reportedWindowsVerification": {
+      "archive": "PASS",
+      "manifest": "PASS",
+      "all867SourceHashes": "PASS"
+    },
+    "localArchiveUnchangedVerified": true,
+    "profile": "sealed base HEAD plus 32 authored POS02 overlays; unrelated WIP excluded"
+  },
+  "dependencies": {
+    "operation": "pub get --offline --enforce-lockfile",
+    "reportedResult": "PASS",
+    "existingPackageCache": "usable for these tests",
+    "installsOrDownloadsInThisDocumentationTask": false
+  },
+  "test": {
+    "suites": [
+      "test/unit/pos02_print_delivery_test.dart",
+      "test/unit/pos02_backup_restore_test.dart",
+      "test/widget/pos02_print_jobs_test.dart"
+    ],
+    "suiteCount": 3,
+    "passingChecks": 50,
+    "reportedElapsedSeconds": 22,
+    "exitVariable": "POS02_WINDOWS_SMOKE_EXIT",
+    "exitCode": 0,
+    "exactFinishExcerpt": [
+      "00:22 +50: All tests passed!",
+      "POS02_WINDOWS_SMOKE_EXIT=0"
+    ],
+    "logPath": "C:\\Users\\vaanskii\\AppData\\Local\\VynicPos02Smoke\\9595fa09-9c30-4e67-aea4-66d5de635c8c\\pos02-smoke.log",
+    "logSha256": null,
+    "expectedIsolationMessages": "MENU01 fixture forbids actual HTTP",
+    "interpretation": "Existing fixture blocks real HTTP; these reported messages are expected isolation, not proof of production connectivity",
+    "physicalPrintPayloads": "NONE; synthetic transport"
+  },
+  "whatPassed": "Frozen 867-file POS02 candidate synthetic smoke on the reported Windows VM/test engine",
+  "notEstablished": [
+    "Windows production executable/build",
+    "Visual Studio desktop C++ toolchain",
+    "the additional 17 preview checks on Windows",
+    "Windows preview GUI launch",
+    "physical printer model/protocol/Georgian glyph/paper/cutter compatibility",
+    "Windows driver/USB/spooler qualification",
+    "paper-out, cable/power interruption or physical process-kill acceptance",
+    "operator reconciliation policy",
+    "exact final committed runtime acceptance"
+  ],
+  "boundedBasicOutputPreparation": {
+    "userSlipBudgetTotalAcrossBothPrinters": "2-3",
+    "preparedInitialSlipCount": 2,
+    "endpoints": [
+      "10.10.10.5:9100",
+      "10.10.10.6:9100"
+    ],
+    "connectivityChecks": "USER_REPORTED_PASS for both endpoints; TCP only",
+    "roles": "UNRESOLVED",
+    "models": "UNRESOLVED_FOR_FORMAL_QUALIFICATION",
+    "noPhysicalPayloadSentByAgent": true,
+    "noVmNetworkChangesByAgent": true,
+    "noPaperCablePowerInterruptionApproved": true,
+    "previewGuard": "one compiled endpoint; job-specific fresh 60-second approval; permission consumed before write; no automatic write retry after uncertainty",
+    "globalBudgetGuard": "procedure limits two manual submissions; existing preview has no global budget across approvals/relaunches",
+    "windowsGuiBuildPrerequisite": "UNVERIFIED_EXISTING_CPP_TOOLCHAIN; do not install without authorization",
+    "procedure": "Basic ASCII and cut are user-confirmed working. No further device actions; retain count/photo/model gaps and prepare separately authorized candidate acceptance.",
+    "initialPhysicalInstructions": {
+      "sourceMessage": "Sentinel_49ad2d18cbac819191b5ed8561ed326c",
+      "providedBy": "parent",
+      "oneTime": true,
+      "targets": [
+        "10.10.10.5:9100",
+        "10.10.10.6:9100"
+      ],
+      "payloadDescription": [
+        "VYNIC TEST - DO NOT PREPARE",
+        "Printer: <ip>",
+        "Basic network print test",
+        "feed"
+      ],
+      "transport": "PowerShell TcpClient; 5-second connect/write timeout",
+      "automaticRetries": false,
+      "cutterCommands": false,
+      "escposSettingsCommands": false,
+      "stopOnError": true,
+      "executionReported": true,
+      "paperOutputReported": true,
+      "actualSlipCount": null,
+      "photosReceivedByThisAgent": false,
+      "candidateRendererUsed": false,
+      "countsAsFormalHardwareAcceptance": false,
+      "userReportedResult": "its working",
+      "resultSourceMessage": "Sentinel_353bd2db0a6881918fcf77a0977c3e4d20:16:30",
+      "resultMessageAtUTC": "2026-10-02T20:16:30Z",
+      "individualPrinterCountsReported": false,
+      "resultScope": "User reports basic ASCII output working; no individual counts/photos or candidate proof."
+    },
+    "budgetAccounting": {
+      "userTotalMaximum": 3,
+      "reservedForIssuedOneTimeInstructions": 2,
+      "remainingAtMostUntilOutcomeReported": 1,
+      "additionalPrintsPermittedByThisTask": false,
+      "duplicateCommandPermitted": false,
+      "interruptionTestsPermitted": false,
+      "twoInitialTextJobs": "user reports working; likely executed, exact individual slip counts unreported",
+      "cutOnlyAdditionalTextJobs": 0,
+      "actualObservedPaperCount": null
+    },
+    "cutOnlyInstructions": {
+      "userAuthorizationSource": "Sentinel_353bd2db0a6881918fcf77a0977c3e4d20:16:30",
+      "userExplicitlyRequestedCut": true,
+      "providedBy": "parent",
+      "oneTime": true,
+      "targets": [
+        "10.10.10.5:9100",
+        "10.10.10.6:9100"
+      ],
+      "bytesHex": "1D 56 00",
+      "protocolForm": "Epson ESC/POS GS V 0; compatibility not established by issuing command",
+      "automaticRetries": false,
+      "additionalText": false,
+      "feed": false,
+      "timeouts": true,
+      "reportedCutResult": "USER_CONFIRMED_WORKING",
+      "agentPerformedAction": false,
+      "duplicateActionPermitted": false,
+      "authorizationScope": "cut-only, no additional text or interruption tests",
+      "resultSourceMessage": "Sentinel_0823440e66cc8191a104cea63ea4f0f4",
+      "resultMessageAtUTC": "2026-10-02T20:18:40Z",
+      "exactUserConfirmation": "everything what u send works i think its working good ?",
+      "observationScope": "Overall user confirmation of the two-target basic print/cut instructions; no separate per-model detail, photos, or exact count inferred."
+    }
+  },
+  "minimumNextSteps": [
+    "Record printer manufacturer/model/firmware, paper width, interface, intended role and supported Windows/driver configuration; exact counts/photos remain absent.",
+    "Choose owner reconciliation policy: administrators only, or authenticated printing staff, for paper confirmation and deliberate copies.",
+    "Verify the isolated candidate desktop launch/build path and actual kitchen/receipt output: Georgian glyphs, wrapping, totals/comments, job IDs, feed/cut and audited labeled copies, in a separately agreed bounded window.",
+    "Separately authorize and perform the required supported-model paper-out, cable/power interruption, process-kill and sequential-role recovery acceptance. No such actions are authorized by this basic window.",
+    "Only after milestone DONE criteria pass, make the conditionally authorized local commit and verify its exact runtime."
+  ],
+  "actionsInThisUpdate": {
+    "documentationOnly": true,
+    "testsRerun": false,
+    "vmTouched": false,
+    "printersContacted": false,
+    "runtimeChanged": false,
+    "commitCreated": false,
+    "pushDeployMerge": false
+  },
+  "updatedAtUTC": "2026-10-02T20:22:29.194790+00:00",
+  "connectivityEvidence": {
+    "kind": "USER_REPORTED_TEST_NETCONNECTION_RESULTS_RELAYED_BY_PARENT",
+    "sourceMessage": "Sentinel_0e80719ea31c819182ac5d4326fbe05e",
+    "sourceInterfaceAddress": "10.10.10.9",
+    "reportedMask": "255.255.255.0",
+    "reportedGateway": "10.10.10.1",
+    "results": [
+      {
+        "host": "10.10.10.5",
+        "port": 9100,
+        "TcpTestSucceeded": true
+      },
+      {
+        "host": "10.10.10.6",
+        "port": 9100,
+        "TcpTestSucceeded": true
+      }
+    ],
+    "printPayloadSentByReachabilityCheck": false,
+    "agentIndependentlyProbed": false,
+    "meaning": "User-reported TCP reachability only; no printer protocol or paper proof"
+  },
+  "ownerPolicyQuestion": "Who may confirm paper output and request deliberate reprints: administrators only, or authenticated printing staff?",
+  "hardwareObservationsSummary": {
+    "tcpPort9100BothTargets": "USER_REPORTED_PASS",
+    "basicAsciiPrinting": "USER_CONFIRMED_WORKING",
+    "cutOnly": "USER_CONFIRMED_WORKING",
+    "candidateGeorgianRenderer": "UNTESTED_PHYSICALLY",
+    "modelFirmwareRoles": "UNREPORTED",
+    "individualPaperCountsPhotos": "UNREPORTED",
+    "fullHardwareRecoveryAcceptance": "PENDING",
+    "furtherDeviceActions": "NONE_REQUESTED_OR_PERFORMED_BY_THIS_AGENT"
+  },
+  "documentationUpdateValidation": {
+    "sealedCheckpointIntegrity": "PASS; read-only verifier without whole-working-tree baseline option",
+    "sealedPos02TaskPathHashes": "PASS; exact pre-update authored runtime and original proof/docs hashes unchanged",
+    "previewPackageIntegrity": "PASS; 870 source files, 867 core source files unchanged, saved 67 passing checks and Mac app archive hashes",
+    "immutableWindowsCandidateArchive": "PASS; original SHA256 unchanged",
+    "gitDiffCheck": "PASS",
+    "headBranchStashIndex": "unchanged; index empty",
+    "historicalWholeWorkingTreeGuard": "Detected legitimate concurrent platform HomePage.tsx change against old WIP snapshot; not a POS02 source mismatch",
+    "concurrentPlatformFiles": "preserved, not edited or reverted",
+    "testsRerun": false,
+    "deviceActionsByThisAgent": false
+  }
+}

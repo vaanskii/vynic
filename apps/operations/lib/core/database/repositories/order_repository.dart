@@ -165,6 +165,19 @@ class OrderRepository {
             includeServiceFee ?? SettingsRepository.defaultIncludeServiceFee(),
         openedByUserId: createdBy,
       );
+      if (activatesReservationId != null) {
+        final booking = ReservationRepository.findReservationById(
+          activatesReservationId,
+        );
+        if (booking == null)
+          throw StateError('Activation reservation is missing');
+        await ReservationRepository.ensureAdvanceReceipt(booking);
+        order.advanceAmount = booking.advanceAmount;
+        order.advanceCollectedOn = booking.advanceCollectedOn;
+        order.advanceReceiptId = booking.advanceReceiptId;
+        order.customerName = booking.customerName;
+        order.customerPhone = booking.customerPhone;
+      }
       if (initialPackage != null) {
         order.packageId = initialPackage.packageId;
         order.packageName = initialPackage.name;

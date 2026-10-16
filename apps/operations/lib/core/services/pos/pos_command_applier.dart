@@ -3,6 +3,7 @@ import 'package:vynic/core/database/local_data_admission.dart';
 import 'package:vynic/core/database/repositories/order_transfer_journal_repository.dart';
 import 'package:vynic/core/services/pos/update/update_readiness.dart';
 import 'package:flutter/foundation.dart';
+import 'package:uuid/uuid.dart';
 import 'package:vynic/core/database/transactions/cancel_order_transaction.dart';
 import 'package:vynic/core/models/audit_source.dart';
 import 'package:vynic/core/models/order.dart';
@@ -498,9 +499,13 @@ class PosCommandApplier {
     if (order == null) {
       return const PosCommandOutcome.failed('create_failed');
     }
-    if (isNew) {
-      sendKitchenCheck(
+    final requiresInitialPrint = isNew || _isCreationReplay(p, order);
+    bool? printAccepted;
+    if (requiresInitialPrint) {
+      printAccepted = await sendKitchenCheck(
         items: items,
+        initialOrderUuid: order.orderUuid,
+        createdAt: order.createdAt,
         orderLabel: 'გატანა #${order.orderId}',
         waiterName: waiterName,
       );
@@ -520,7 +525,11 @@ class PosCommandApplier {
     );
     scheduleCloudSync();
     return PosCommandOutcome.success(
-      data: <String, dynamic>{'posOrderId': order.orderId},
+      code: printAccepted == false ? 'order_saved_print_not_queued' : 'ok',
+      data: <String, dynamic>{
+        'posOrderId': order.orderId,
+        if (printAccepted != null) 'printJobQueued': printAccepted,
+      },
     );
   }
 
@@ -569,9 +578,13 @@ class PosCommandApplier {
     if (order == null) {
       return const PosCommandOutcome.failed('create_failed');
     }
-    if (isNew) {
-      sendKitchenCheck(
+    final requiresInitialPrint = isNew || _isCreationReplay(p, order);
+    bool? printAccepted;
+    if (requiresInitialPrint) {
+      printAccepted = await sendKitchenCheck(
         items: items,
+        initialOrderUuid: order.orderUuid,
+        createdAt: order.createdAt,
         orderLabel: 'Walk-in #${order.orderId}',
         waiterName: waiterName,
         tableLabel: tableNumbers.join(', '),
@@ -593,7 +606,11 @@ class PosCommandApplier {
     );
     scheduleCloudSync();
     return PosCommandOutcome.success(
-      data: <String, dynamic>{'posOrderId': order.orderId},
+      code: printAccepted == false ? 'order_saved_print_not_queued' : 'ok',
+      data: <String, dynamic>{
+        'posOrderId': order.orderId,
+        if (printAccepted != null) 'printJobQueued': printAccepted,
+      },
     );
   }
 
@@ -688,25 +705,34 @@ class PosCommandApplier {
         ? order.manualAdjustmentAmount
         : null;
 
-    LocalDataAdmission.afterMutation(
-      () => PrinterService.printReceiptInBackground(
-        items: itemsWithWaiter,
-        total: order.totalAmount,
-        subtotal: order.getItemsSubtotal(),
-        serviceFee: order.getServiceFee(),
-        includeServiceFee: order.includeServiceFee,
-        tableNumber: isTakeAway ? null : order.tableNumbers.join(', '),
-        orderNumber: order.orderId.toString(),
-        language: 'ka',
-        packageSubtotal: packageSubtotal > 0 ? packageSubtotal : null,
-        additionalSubtotal: additionalSubtotal > 0 ? additionalSubtotal : null,
-        discountAmount: discountAmount,
-        manualAdjustment: manualAdjustment,
-        receiptType: isTakeAway ? 'take_away' : 'client',
-      ),
+    final jobId = p['_mutationRequestId'] as String? ?? const Uuid().v4();
+    final accepted = await PrinterService.printReceiptInBackground(
+      jobId: jobId,
+      items: itemsWithWaiter,
+      total: order.totalAmount,
+      subtotal: order.getItemsSubtotal(),
+      serviceFee: order.getServiceFee(),
+      includeServiceFee: order.includeServiceFee,
+      tableNumber: isTakeAway ? null : order.tableNumbers.join(', '),
+      orderNumber: order.orderId.toString(),
+      language: 'ka',
+      packageSubtotal: packageSubtotal > 0 ? packageSubtotal : null,
+      additionalSubtotal: additionalSubtotal > 0 ? additionalSubtotal : null,
+      discountAmount: discountAmount,
+      manualAdjustment: manualAdjustment,
+      receiptType: isTakeAway ? 'take_away' : 'client',
     );
 
-    return const PosCommandOutcome.success();
+    return accepted
+        ? PosCommandOutcome.success(
+            code: 'print_job_queued',
+            data: {'jobId': jobId, 'printed': false},
+          )
+        : const PosCommandOutcome.failed(
+            'print_job_not_queued',
+            detail:
+                'Print job could not be persisted; check POS printer configuration and print jobs.',
+          );
   }
 
   /// Print a reservation's kitchen check, reusing the exact formatting the POS
@@ -750,21 +776,28 @@ class PosCommandApplier {
     final reservationTables = ReservationTableAvailability.tableRefsOf(
       reservation,
     );
-    LocalDataAdmission.afterMutation(
-      () => PrinterService.printKitchenCheckInBackground(
-        items: kitchenItems,
-        tableNumber: reservationTables.isNotEmpty
-            ? reservationTables.map((ref) => ref.tableNumber).join(', ')
-            : null,
-        orderNumber: HomeReservationsHelper.buildKitchenOrderLabel(reservation),
-        waiterName: requestedBy.isNotEmpty ? requestedBy : defaultActor,
-        createdAt: HomeReservationsHelper.buildKitchenTime(reservation),
-      ),
+    final jobId = p['_mutationRequestId'] as String? ?? const Uuid().v4();
+    final accepted = await PrinterService.printKitchenCheckInBackground(
+      jobId: jobId,
+      items: kitchenItems,
+      tableNumber: reservationTables.isNotEmpty
+          ? reservationTables.map((ref) => ref.tableNumber).join(', ')
+          : null,
+      orderNumber: HomeReservationsHelper.buildKitchenOrderLabel(reservation),
+      waiterName: requestedBy.isNotEmpty ? requestedBy : defaultActor,
+      createdAt: HomeReservationsHelper.buildKitchenTime(reservation),
     );
 
-    return const PosCommandOutcome.success(
-      data: <String, dynamic>{'printed': true},
-    );
+    return accepted
+        ? PosCommandOutcome.success(
+            code: 'print_job_queued',
+            data: {'jobId': jobId, 'printed': false},
+          )
+        : const PosCommandOutcome.failed(
+            'print_job_not_queued',
+            detail:
+                'Print job could not be persisted; check POS printer configuration and print jobs.',
+          );
   }
 
   /// Print a counted-menu draft from the payload itself.
@@ -812,19 +845,28 @@ class PosCommandApplier {
         ? 'en'
         : 'ka';
 
-    LocalDataAdmission.afterMutation(
-      () => PrinterService.printReceiptInBackground(
-        items: lines,
-        total: receiptTotal,
-        subtotal: subtotal,
-        serviceFee: includeServiceFee ? serviceFeeAmount : null,
-        includeServiceFee: includeServiceFee,
-        language: language,
-        receiptType: 'menu_count',
-      ),
+    final jobId = p['_mutationRequestId'] as String? ?? const Uuid().v4();
+    final accepted = await PrinterService.printReceiptInBackground(
+      jobId: jobId,
+      items: lines,
+      total: receiptTotal,
+      subtotal: subtotal,
+      serviceFee: includeServiceFee ? serviceFeeAmount : null,
+      includeServiceFee: includeServiceFee,
+      language: language,
+      receiptType: 'menu_count',
     );
 
-    return const PosCommandOutcome.success();
+    return accepted
+        ? PosCommandOutcome.success(
+            code: 'print_job_queued',
+            data: {'jobId': jobId, 'printed': false},
+          )
+        : const PosCommandOutcome.failed(
+            'print_job_not_queued',
+            detail:
+                'Print job could not be persisted; check POS printer configuration and print jobs.',
+          );
   }
 
   // ── Reservations ───────────────────────────────────────────────────────────
@@ -1259,17 +1301,19 @@ class PosCommandApplier {
 
   // ── Shared helpers ─────────────────────────────────────────────────────────
 
-  /// Fire-and-forget kitchen check for a Cloud-originated walk-in or takeaway.
+  /// Durable initial kitchen admission for a Cloud-originated Order.
   ///
   /// Drinks-only orders and missing-printer setups are handled by
   /// [PrinterService] (no-op). Non-kitchen items are filtered downstream.
   @visibleForTesting
-  static void sendKitchenCheck({
+  static Future<bool> sendKitchenCheck({
     required List<OrderItem> items,
     required String orderLabel,
     required String waiterName,
     String? tableLabel,
-  }) {
+    String? initialOrderUuid,
+    DateTime? createdAt,
+  }) async {
     final lines = <String>[];
     for (final item in items) {
       var line = '${item.quantity}x ${item.itemName}';
@@ -1279,15 +1323,25 @@ class PosCommandApplier {
       }
       lines.add(line);
     }
-    if (lines.isEmpty) return;
-    LocalDataAdmission.afterMutation(
-      () => PrinterService.printKitchenCheckInBackground(
-        items: List<String>.of(lines),
-        tableNumber: tableLabel,
-        orderNumber: orderLabel,
-        waiterName: waiterName,
-        createdAt: DateTime.now(),
-      ),
+    if (lines.isEmpty) return true;
+    return PrinterService.printKitchenCheckInBackground(
+      initialOrderUuid: initialOrderUuid,
+      items: List<String>.of(lines),
+      tableNumber: tableLabel,
+      orderNumber: orderLabel,
+      waiterName: waiterName,
+      createdAt: createdAt ?? DateTime.now(),
+    );
+  }
+
+  static bool _isCreationReplay(Map<String, dynamic> p, Order order) {
+    final id = p['_mutationRequestId'] as String? ?? p['requestId'] as String?;
+    if (id == null) return false;
+    final intent = OrderTableMutationRepository.read(id);
+    if (intent == null || intent.outcome['orderUuid'] != order.orderUuid)
+      return false;
+    return (intent.body['effects'] as List).any(
+      (e) => e['store'] == 'orders' && e['before'] == null,
     );
   }
 

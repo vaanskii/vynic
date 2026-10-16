@@ -1,0 +1,28 @@
+{
+  "status": "PUBLISHED_AND_HTTPS_VERIFIED",
+  "candidateSourceManifest": "db74149c4680d05e16a3a1f53906b269bf76be3d1d71e78796119633d15ff51a",
+  "preparedSourceZipSha256": "0bf6dd5beeb9f4ff9533aea5babaae03f27790f56471099a1184cf6e27994db7",
+  "windowsArtifactSha256": "4534e35e68c19a59871c04476f03dc13205d7f705e83209253b2fd693a8f6fb0",
+  "manifest": {
+    "product": "vynic-pos",
+    "version": "1.0.14",
+    "release": 15,
+    "os": "windows",
+    "arch": "amd64",
+    "channel": "local-development",
+    "url": "https://10.10.10.3:8443/artifacts/pos-4534e35e68c19a59871c04476f03dc13205d7f705e83209253b2fd693a8f6fb0.zip",
+    "sha256": "4534e35e68c19a59871c04476f03dc13205d7f705e83209253b2fd693a8f6fb0",
+    "size": 19142342,
+    "expires": "2026-10-11T20:20:59.657262Z",
+    "updaterProtocol": 1,
+    "hiveSchema": 9,
+    "edgeSchema": 2,
+    "dataPolicy": "hive9-no-migration"
+  },
+  "edgeVersion": "1.0.1",
+  "bootstrapRelease": 3,
+  "productWindowsTests": 96,
+  "standaloneRunnerWindows": "39 pass / 1 fail; deferred Windows acceptance blocker",
+  "physicalJobs": 0,
+  "milestoneDone": false
+}

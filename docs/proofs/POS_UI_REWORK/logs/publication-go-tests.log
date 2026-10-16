@@ -1,0 +1,32 @@
+go: downloading github.com/boltdb/bolt v1.3.1
+go: downloading github.com/hashicorp/go-msgpack/v2 v2.1.5
+go: downloading github.com/hashicorp/go-metrics v0.7.0
+go: downloading go.etcd.io/bbolt v1.4.1
+go: downloading github.com/fatih/color v1.19.0
+go: downloading github.com/mattn/go-colorable v0.1.15
+go: downloading github.com/hashicorp/go-immutable-radix v1.3.1
+go: downloading github.com/hashicorp/golang-lru v1.0.2
+ok  	vynic.local/edge/cmd/edge	(cached)
+ok  	vynic.local/edge/cmd/printer-agent	(cached)
+?   	vynic.local/edge/cmd/printer-peer	[no test files]
+?   	vynic.local/edge/cmd/printer-provision	[no test files]
+ok  	vynic.local/edge/cmd/setup	(cached)
+ok  	vynic.local/edge/cmd/sign-bootstrap	(cached)
+ok  	vynic.local/edge/cmd/sign-pos-release	(cached)
+?   	vynic.local/edge/cmd/terminal-sim	[no test files]
+?   	vynic.local/edge/cmd/verify-local-release	[no test files]
+ok  	vynic.local/edge/internal/printcluster	77.470s
+ok  	vynic.local/edge/internal/printeligibility	(cached)
+ok  	vynic.local/edge/internal/printeragent	(cached)
+ok  	vynic.local/edge/internal/printerdaemon	(cached)
+ok  	vynic.local/edge/internal/printerprovisioning	(cached)
+ok  	vynic.local/edge/internal/printhost	(cached)
+?   	vynic.local/edge/internal/printpeer	[no test files]
+ok  	vynic.local/edge/internal/printqueue	(cached)
+ok  	vynic.local/edge/internal/printstation	(cached)
+ok  	vynic.local/edge/internal/printtransport	(cached)
+ok  	vynic.local/edge/internal/server	(cached)
+ok  	vynic.local/edge/internal/setup	(cached)
+ok  	vynic.local/edge/internal/store	(cached)
+?   	vynic.local/edge/internal/testutil	[no test files]
+ok  	vynic.local/edge/internal/updater	(cached)

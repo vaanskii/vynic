@@ -1,0 +1,34 @@
+
+> vynic-website@0.1.0 build
+> tsc -b && vite build
+
+[36mvite v8.2.2 [32mbuilding client environment for production...[36m[39m
+transforming...
+✓ 5197 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                                          0.60 kB │ gzip:   0.37 kB
+dist/assets/vynic-logo-BW7YKKnr.png                     10.00 kB
+dist/assets/pos-live-floor-DMz7DVzX.jpg                 57.83 kB
+dist/assets/pos-live-payment-CJafJTKe.jpg               58.45 kB
+dist/assets/pos-live-table-order-DsaAkbtC.jpg           58.82 kB
+dist/assets/pos-live-reservation-DpsUhIBd.jpg           58.91 kB
+dist/assets/pos-live-day-close-DZpRmzVT.jpg             96.89 kB
+dist/assets/pos-live-order-editor-DxGpMlaN.jpg          98.59 kB
+dist/assets/manager-android-dashboard-DL3vFfG8.png     371.95 kB
+dist/assets/screen-table-payment-CShtBiqv.png          422.55 kB
+dist/assets/screen-manager-closeday-DQjdG01u.png       469.38 kB
+dist/assets/screen-pos-floor-live-BddXjk3_.png         470.29 kB
+dist/assets/screen-restaurant-settings-DGOLplZo.png    535.04 kB
+dist/assets/screen-reservation-confirm-C1V-eiD9.png    546.80 kB
+dist/assets/screen-order-entry-DpVJZjWH.png            590.49 kB
+dist/assets/screen-floor-editor-DcMViggw.png           790.03 kB
+dist/assets/index-COH8SrNz.css                         169.37 kB │ gzip:  31.96 kB
+dist/assets/index-XKjiqEh0.js                        1,235.36 kB │ gzip: 347.45 kB
+
+[32m✓ built in 426ms[39m
+[33m[plugin builtin:vite-reporter] 
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rolldownOptions.output.codeSplitting to improve chunking: https://rolldown.rs/reference/OutputOptions.codeSplitting
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.[39m

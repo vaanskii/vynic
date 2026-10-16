@@ -32,13 +32,17 @@ class ReservationAdapter extends TypeAdapter<Reservation> {
       isTakeAway: fields[12] as bool,
       linkedOrderId: fields[13] as int?,
       tableRefs: (fields[14] as List?)?.cast<String>(),
+      advanceAmount: fields[15] == null ? 0.0 : fields[15] as double,
+      advanceCollectedOn: fields[16] as String?,
+      advanceReceiptId: fields[17] as String?,
+      advanceReceiptPending: fields[18] == null ? false : fields[18] as bool,
     );
   }
 
   @override
   void write(BinaryWriter writer, Reservation obj) {
     writer
-      ..writeByte(15)
+      ..writeByte(19)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -68,7 +72,15 @@ class ReservationAdapter extends TypeAdapter<Reservation> {
       ..writeByte(13)
       ..write(obj.linkedOrderId)
       ..writeByte(14)
-      ..write(obj.tableRefs);
+      ..write(obj.tableRefs)
+      ..writeByte(15)
+      ..write(obj.advanceAmount)
+      ..writeByte(16)
+      ..write(obj.advanceCollectedOn)
+      ..writeByte(17)
+      ..write(obj.advanceReceiptId)
+      ..writeByte(18)
+      ..write(obj.advanceReceiptPending);
   }
 
   @override

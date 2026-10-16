@@ -1,3 +1,4 @@
+import 'package:vynic/core/ui/widgets/pos_dialog.dart';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
@@ -22,7 +23,7 @@ class FloorEditorPreviewDialog extends StatelessWidget {
   final EditorFloor floor;
 
   static Future<void> show(BuildContext context, EditorFloor floor) {
-    return showDialog<void>(
+    return showPosModal<void>(
       context: context,
       builder: (context) => FloorEditorPreviewDialog(floor: floor),
     );

@@ -1,3 +1,6 @@
+import '../support/pos_visual_capture.dart';
+import 'package:vynic/core/ui/pos_theme.dart';
+import 'package:vynic/core/ui/pos_scaled_surface.dart';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -136,10 +139,16 @@ Widget _harness(Size size, {bool hasReservation = false}) {
   return MediaQuery(
     data: MediaQueryData(size: size),
     child: MaterialApp(
+      theme: PosTheme.light,
+      debugShowCheckedModeBanner: false,
+      builder: (_, child) => RepaintBoundary(
+        key: posVisualKey,
+        child: PosScaledSurface(scale: 1, child: child!),
+      ),
       home: Scaffold(
         body: SizedBox(
-          width: size.width,
-          height: size.height,
+          width: double.infinity,
+          height: double.infinity,
           child: Column(
             children: [
               OrderDetailHeaderSection(
@@ -231,6 +240,7 @@ Future<void> _pump(
 
 void main() {
   setUpAll(() async {
+    await loadPosVisualFonts();
     _tempDir = await Directory.systemTemp.createTemp('vynic_order_detail');
     Hive.init(_tempDir.path);
     _registerAdapters();
@@ -246,6 +256,15 @@ void main() {
     if (_tempDir.existsSync()) {
       _tempDir.deleteSync(recursive: true);
     }
+  });
+
+  testWidgets('production order visual at 1024 with Georgian text', (
+    tester,
+  ) async {
+    await _pump(tester, const Size(1024, 768));
+    await tester.pump(const Duration(milliseconds: 150));
+    await capturePosVisual(tester, 'order-1024x768');
+    expect(tester.takeException(), isNull);
   });
 
   for (final (name, size) in _resolutions) {

@@ -188,7 +188,11 @@ describe('SEC-02 payment status is not reservation ownership', () => {
       const controller = new BogController(
         {
           getPaymentDetails: () =>
-            Promise.resolve({ external_order_id: 'victim-guest', status }),
+            Promise.resolve({
+              order_id: 'provider-id',
+              external_order_id: 'victim-guest',
+              order_status: { key: status },
+            }),
         } as unknown as BogService,
         {
           updateReservationPaymentStatus: update,

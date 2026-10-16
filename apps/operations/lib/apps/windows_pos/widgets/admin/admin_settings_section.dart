@@ -1,3 +1,4 @@
+import 'package:vynic/apps/windows_pos/widgets/shared/pos_surface.dart';
 import 'package:vynic/core/database/repositories/settings_repository.dart';
 import 'package:vynic/core/widgets/pos_text.dart';
 import 'package:vynic/apps/windows_pos/widgets/admin/pos_input_settings_tile.dart';
@@ -100,14 +101,6 @@ class AdminSettingsSection extends StatelessWidget {
 
   bool get isMobile => !kIsWeb && (Platform.isAndroid || Platform.isIOS);
 
-  BoxDecoration _panelDecoration() {
-    return BoxDecoration(
-      color: _cardColor,
-      borderRadius: BorderRadius.circular(8),
-      border: Border.all(color: _borderColor),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return SizedBox.expand(
@@ -203,50 +196,16 @@ class AdminSettingsSection extends StatelessWidget {
   }
 
   Widget _buildModernHeader() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 15),
-      decoration: _panelDecoration(),
-      child: Row(
-        children: [
-          Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              color: _accent.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: const Icon(Icons.settings_outlined, color: _accentDark),
-          ),
-          const SizedBox(width: 14),
-          const Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                PosText(
-                  'რესტორნის პარამეტრები',
-                  style: TextStyle(
-                    color: _textPrimary,
-                    fontSize: 24,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-                SizedBox(height: 3),
-                PosText(
-                  'რესტორნის კონფიგურაცია, უსაფრთხოება და წვდომის უფლებები.',
-                  style: TextStyle(color: _textMuted, fontSize: 13),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 12),
-          _buildStatusBadge(
-            icon: Icons.keyboard_alt_outlined,
-            label: 'POS კლავიატურა',
-            color: _accentDark,
-            background: AdminTones.successFill,
-            border: AdminTones.successBorder,
-          ),
-        ],
+    return AdminSectionHeader(
+      icon: Icons.settings_outlined,
+      title: 'რესტორნის პარამეტრები',
+      subtitle: 'რესტორნის კონფიგურაცია, უსაფრთხოება და წვდომის უფლებები.',
+      badge: _buildStatusBadge(
+        icon: Icons.keyboard_alt_outlined,
+        label: 'POS კლავიატურა',
+        color: _accentDark,
+        background: AdminTones.successFill,
+        border: AdminTones.successBorder,
       ),
     );
   }
@@ -306,44 +265,26 @@ class AdminSettingsSection extends StatelessWidget {
     required String title,
     String? subtitle,
   }) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      decoration: _panelDecoration(),
-      child: Row(
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(0, 20, 0, 6),
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            width: 38,
-            height: 38,
-            decoration: BoxDecoration(
-              color: _accent.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Icon(icon, color: _accentDark, size: 21),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                PosText(
-                  title,
-                  style: const TextStyle(
-                    color: _textPrimary,
-                    fontSize: 19,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-                if (subtitle != null) ...[
-                  const SizedBox(height: 3),
-                  PosText(
-                    subtitle,
-                    style: const TextStyle(color: _textMuted, fontSize: 13),
-                  ),
-                ],
-              ],
+          Text(
+            title,
+            style: const TextStyle(
+              color: _textPrimary,
+              fontSize: 21,
+              fontWeight: FontWeight.w800,
             ),
           ),
+          if (subtitle != null) ...[
+            const SizedBox(height: 4),
+            Text(
+              subtitle,
+              style: const TextStyle(color: _textMuted, fontSize: 14),
+            ),
+          ],
         ],
       ),
     );
@@ -355,58 +296,18 @@ class AdminSettingsSection extends StatelessWidget {
     required String value,
     required String helper,
   }) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: _panelDecoration(),
-      child: Row(
-        children: [
-          Container(
-            width: 48,
-            height: 48,
-            decoration: BoxDecoration(
-              color: _accent.withValues(alpha: 0.12),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(icon, color: _accentDark, size: 24),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        PosMetricCard(label: label, value: value, framed: false),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Text(
+            helper,
+            style: const TextStyle(color: _textMuted, fontSize: 12),
           ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                PosText(
-                  label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: _textMuted,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                const SizedBox(height: 3),
-                Text(
-                  value,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: _textPrimary,
-                    fontSize: 19,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                PosText(
-                  helper,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(color: _textMuted, fontSize: 12),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 

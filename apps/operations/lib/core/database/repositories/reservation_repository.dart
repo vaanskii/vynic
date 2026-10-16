@@ -8,6 +8,7 @@ import 'package:vynic/core/models/order.dart';
 import 'package:vynic/core/models/reservation.dart';
 import 'package:vynic/core/models/reservation_classification.dart';
 import 'package:vynic/core/models/reservation_status.dart';
+import 'sales_repository.dart';
 import 'package:vynic/core/models/table_ref.dart';
 import 'package:vynic/core/utils/reservation_table_availability.dart';
 
@@ -53,6 +54,7 @@ class ReservationRepository {
     bool isTakeAway = false,
     int? linkedOrderId,
     String status = 'pending',
+    double advanceAmount = 0,
     String? id,
     AuditSource source = AuditSource.pos,
     bool requireDurability = false,
@@ -72,6 +74,7 @@ class ReservationRepository {
       isTakeAway: isTakeAway,
       linkedOrderId: linkedOrderId,
       status: status,
+      advanceAmount: advanceAmount,
       id: id,
       source: source,
       requireDurability: requireDurability,
@@ -92,6 +95,7 @@ class ReservationRepository {
     bool isTakeAway = false,
     int? linkedOrderId,
     String status = 'pending',
+    double advanceAmount = 0,
     String? id,
     AuditSource source = AuditSource.pos,
     bool requireDurability = false,
@@ -108,6 +112,38 @@ class ReservationRepository {
         ? id.trim()
         : _uuid.v4();
 
+    if (!advanceAmount.isFinite ||
+        advanceAmount < 0 ||
+        advanceAmount > 999999999.99) {
+      throw ArgumentError('Advance must be a finite non-negative amount');
+    }
+    final amount = double.parse(advanceAmount.toStringAsFixed(2));
+    if (status == 'hold' &&
+        BusinessDayRepository.dateKey(reservationDate).compareTo(
+              BusinessDayRepository.dateKey(
+                BusinessDayRepository.getCurrentDate(),
+              ),
+            ) <=
+            0) {
+      throw ArgumentError('Tentative holds require a future date');
+    }
+    final old = findReservationById(reservationId);
+    if (old != null) {
+      if (old.customerName != customerName ||
+          old.customerPhone != customerPhone ||
+          old.reservationDate != reservationDate ||
+          old.reservationTime != reservationTime ||
+          old.numberOfGuests != numberOfGuests ||
+          old.advanceAmount != amount ||
+          old.createdBy != createdBy) {
+        throw StateError(
+          'Reservation request ID reused with different details',
+        );
+      }
+      await ensureAdvanceReceipt(old);
+      return old.id;
+    }
+
     // Refs are canonical; the legacy int codes are kept in sync for backups
     // and the server wire format (unrepresentable tables are omitted there).
     final refs =
@@ -118,6 +154,9 @@ class ReservationRepository {
     final legacyCodes = tableRefs != null
         ? ReservationTableAvailability.legacyCodesOf(tableRefs)
         : tableNumbers;
+    if (!isTakeAway && !(notes?.startsWith('Order #') ?? false)) {
+      _assertHoldAvailability(refs, reservationDate, status);
+    }
 
     // All new reservations start as pending (will be confirmed manually when date arrives)
     final reservation = Reservation(
@@ -136,10 +175,22 @@ class ReservationRepository {
       preOrderItems: preOrderItems,
       isTakeAway: isTakeAway,
       linkedOrderId: linkedOrderId,
+      advanceAmount: amount,
+      advanceCollectedOn: amount > 0
+          ? BusinessDayRepository.dateKey(
+              BusinessDayRepository.getCurrentDate(),
+            )
+          : null,
+      advanceReceiptId: amount > 0
+          ? 'reservation:$reservationId:advance'
+          : null,
+      advanceReceiptPending: amount > 0,
     );
 
     await DatabaseCore.reservationBox!.add(reservation);
-    if (requireDurability) await DatabaseCore.reservationBox!.flush();
+    if (requireDurability || amount > 0)
+      await DatabaseCore.reservationBox!.flush();
+    await ensureAdvanceReceipt(reservation);
     SyncHub.notify(
       SyncEvent(
         type: SyncEventType.reservations,
@@ -532,6 +583,45 @@ class ReservationRepository {
       return;
     }
 
+    if (nextEnum == ReservationStatus.hold &&
+        (reservation.linkedOrderId != null ||
+            BusinessDayRepository.dateKey(
+                  reservation.reservationDate,
+                ).compareTo(
+                  BusinessDayRepository.dateKey(
+                    BusinessDayRepository.getCurrentDate(),
+                  ),
+                ) <=
+                0)) {
+      throw StateError(
+        'დროებითი დაკავებისთვის საჭიროა მომავალი თარიღი და დაუკავშირებელი ჯავშანი',
+      );
+    }
+    if (previousEnum == ReservationStatus.hold &&
+        nextEnum == ReservationStatus.confirmed) {
+      if (BusinessDayRepository.dateKey(reservation.reservationDate).compareTo(
+            BusinessDayRepository.dateKey(
+              BusinessDayRepository.getCurrentDate(),
+            ),
+          ) <
+          0) {
+        throw StateError('დადასტურებამდე განაახლეთ გასული ჯავშნის თარიღი');
+      }
+      _assertHoldAvailability(
+        ReservationTableAvailability.tableRefsOf(reservation),
+        reservation.reservationDate,
+        'hold',
+        excludeId: reservation.id,
+      );
+    }
+    if (previousEnum == ReservationStatus.hold &&
+        [
+          ReservationStatus.inProgress,
+          ReservationStatus.completed,
+          ReservationStatus.preparing,
+        ].contains(nextEnum)) {
+      throw StateError('დროებითი დაკავება ჯერ ჯავშნად უნდა დადასტურდეს');
+    }
     reservation.status = newStatus;
     await reservation.save();
     if (requireDurability) await DatabaseCore.reservationBox!.flush();
@@ -605,6 +695,23 @@ class ReservationRepository {
   }) async {
     final reservation = findReservationById(reservationId);
     if (reservation == null) return false;
+    if (reservationDate != null) {
+      if (reservation.statusEnum == ReservationStatus.hold &&
+          BusinessDayRepository.dateKey(reservationDate).compareTo(
+                BusinessDayRepository.dateKey(
+                  BusinessDayRepository.getCurrentDate(),
+                ),
+              ) <=
+              0) {
+        throw StateError('დროებითი დაკავებისთვის აირჩიეთ მომავალი თარიღი');
+      }
+      _assertHoldAvailability(
+        ReservationTableAvailability.tableRefsOf(reservation),
+        reservationDate,
+        reservation.status,
+        excludeId: reservation.id,
+      );
+    }
 
     final changed = <String>[];
     final previous = <String, dynamic>{};
@@ -820,6 +927,12 @@ class ReservationRepository {
         tableNumbers
             .map(ReservationTableAvailability.refFromLegacyCode)
             .toList();
+    _assertHoldAvailability(
+      refs,
+      reservation.reservationDate,
+      reservation.status,
+      excludeId: reservation.id,
+    );
     reservation.tableNumbers = tableRefs != null
         ? ReservationTableAvailability.legacyCodesOf(tableRefs)
         : List<int>.from(tableNumbers);
@@ -892,8 +1005,13 @@ class ReservationRepository {
     String? reason,
     bool propagateErrors = false,
   }) async {
+    final reservation = findReservationById(reservationId);
+    if ((reservation?.advanceAmount ?? 0) > 0) {
+      throw StateError(
+        'ავანსიანი ჯავშანი შეინარჩუნეთ; თანხის დაბრუნება ან გადატანა მენეჯერთან უნდა გადაწყდეს',
+      );
+    }
     try {
-      final reservation = findReservationById(reservationId);
       if (reservation == null) {
         if (propagateErrors) await DatabaseCore.reservationBox!.flush();
         return;
@@ -955,6 +1073,80 @@ class ReservationRepository {
       reservations: getTableBlockingReservationsForDate(reservationDate),
       excludeReservationId: excludeReservationId,
     );
+  }
+
+  /// Complete only an explicit, flushed receipt intent. Missing historical
+  /// receipts are a repair conflict, never an invented new cash collection.
+  static Future<void> ensureAdvanceReceipt(Reservation reservation) async {
+    if (reservation.advanceAmount <= 0) return;
+    final id = reservation.advanceReceiptId;
+    final date = reservation.advanceCollectedOn;
+    if (id == null || date == null)
+      throw StateError('Reservation advance identity is incomplete');
+    final existing = SalesRepository.findAdvanceReceipt(id);
+    if (existing == null) {
+      if (!reservation.advanceReceiptPending)
+        throw StateError('Reservation advance receipt is missing');
+      await SalesRepository.recordAdvanceReceipt(
+        orderId: null,
+        reservationId: reservation.id,
+        amount: reservation.advanceAmount,
+        collectedBy: reservation.createdBy,
+        receiptId: id,
+        businessDate: date,
+      );
+      await DatabaseCore.salesBox!.flush();
+    } else if (existing['reservationId'] != reservation.id ||
+        (existing['totalAmount'] as num?)?.toDouble() !=
+            reservation.advanceAmount ||
+        existing['date'] != date) {
+      throw StateError(
+        'Reservation advance receipt differs from its durable intent',
+      );
+    }
+    if (reservation.advanceReceiptPending) {
+      reservation.advanceReceiptPending = false;
+      await reservation.save();
+      await DatabaseCore.reservationBox!.flush();
+    }
+  }
+
+  static Future<void> recoverAdvanceReceipts() =>
+      UpdateReadiness.mutate('recoverReservationAdvances', () async {
+        for (final reservation
+            in DatabaseCore.reservationBox?.values ?? <Reservation>[]) {
+          if (reservation.advanceReceiptPending)
+            await ensureAdvanceReceipt(reservation);
+        }
+      });
+
+  /// Holds share the existing whole-calendar-day booking conflict rule.
+  static void _assertHoldAvailability(
+    Iterable<TableRef> refs,
+    DateTime date,
+    String status, {
+    String? excludeId,
+  }) {
+    if (!ReservationTableAvailability.isReservationBlocking(status)) return;
+    final sameDay = (DatabaseCore.reservationBox?.values ?? <Reservation>[])
+        .where(
+          (r) =>
+              r.id != excludeId &&
+              BusinessDayRepository.dateKey(r.reservationDate) ==
+                  BusinessDayRepository.dateKey(date) &&
+              ReservationTableAvailability.isRealTableBooking(r),
+        );
+    if (ReservationStatus.fromStorage(status) != ReservationStatus.hold &&
+        !sameDay.any((r) => r.statusEnum == ReservationStatus.hold))
+      return;
+    final unavailable =
+        ReservationTableAvailability.unavailableTableRefsFromReservations(
+          reservations: sameDay,
+        );
+    if (refs.any(unavailable.contains))
+      throw StateError(
+        'არჩეული მაგიდა ამ თარიღზე უკვე დაკავებულია ჯავშნით ან hold-ით',
+      );
   }
 }
 

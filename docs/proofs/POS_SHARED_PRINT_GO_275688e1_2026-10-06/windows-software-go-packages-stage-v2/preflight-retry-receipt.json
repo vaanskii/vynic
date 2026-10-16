@@ -1,0 +1,51 @@
+{
+  "schema": 1,
+  "recordedAtUtc": "2026-10-06T17:48:03.241529+00:00",
+  "status": "PASS_IDENTICAL_SINGLE_RETRY",
+  "tool": "tools.exec_command",
+  "arguments": [
+    "/usr/local/bin/prlctl",
+    "exec",
+    "9830bac8-34c6-46f7-9062-cd8f62f7a127",
+    "--current-user",
+    "powershell.exe",
+    "-NoProfile",
+    "-NonInteractive",
+    "-EncodedCommand",
+    "JABFAHIAcgBvAHIAQQBjAHQAaQBvAG4AUAByAGUAZgBlAHIAZQBuAGMAZQA9ACcAUwB0AG8AcAAnADsAIAAkAHMAaQBkAD0AWwBTAGUAYwB1AHIAaQB0AHkALgBQAHIAaQBuAGMAaQBwAGEAbAAuAFcAaQBuAGQAbwB3AHMASQBkAGUAbgB0AGkAdAB5AF0AOgA6AEcAZQB0AEMAdQByAHIAZQBuAHQAKAApAC4AVQBzAGUAcgAuAFYAYQBsAHUAZQA7ACAAaQBmACgAJABzAGkAZAAgAC0AZQBxACAAJwBTAC0AMQAtADUALQAxADgAJwApAHsAdABoAHIAbwB3ACAAJwBTAFkAUwBUAEUATQAgAGMAbwBuAHQAZQB4AHQAIAByAGUAZgB1AHMAZQBkACcAfQA7ACAAJABzAGQAawA9AEoAbwBpAG4ALQBQAGEAdABoACAAJABlAG4AdgA6AFUAUwBFAFIAUABSAE8ARgBJAEwARQAgACcAZABlAHYAZQBsAG8AcABcAGYAbAB1AHQAdABlAHIAJwA7ACAAWwBvAHIAZABlAHIAZQBkAF0AQAB7AHMAaQBkAD0AJABzAGkAZAA7AHUAcwBlAHIAPQBbAFMAZQBjAHUAcgBpAHQAeQAuAFAAcgBpAG4AYwBpAHAAYQBsAC4AVwBpAG4AZABvAHcAcwBJAGQAZQBuAHQAaQB0AHkAXQA6ADoARwBlAHQAQwB1AHIAcgBlAG4AdAAoACkALgBOAGEAbQBlADsAZwB1AGUAcwB0AEEAcgBjAGgAaQB0AGUAYwB0AHUAcgBlAD0AJABlAG4AdgA6AFAAUgBPAEMARQBTAFMATwBSAF8AQQBSAEMASABJAFQARQBDAFQAVQBSAEUAOwBmAGwAdQB0AHQAZQByAFMAZABrAD0AJABzAGQAawA7AG4AYQB0AGkAdgBlAEQAYQByAHQAPQBUAGUAcwB0AC0AUABhAHQAaAAgACgASgBvAGkAbgAtAFAAYQB0AGgAIAAkAHMAZABrACAAJwBiAGkAbgBcAGMAYQBjAGgAZQBcAGQAYQByAHQALQBzAGQAawBcAGIAaQBuAFwAZABhAHIAdAAuAGUAeABlACcAKQA7AGYAbAB1AHQAdABlAHIAQgBhAHQAYwBoAD0AVABlAHMAdAAtAFAAYQB0AGgAIAAoAEoAbwBpAG4ALQBQAGEAdABoACAAJABzAGQAawAgACcAYgBpAG4AXABmAGwAdQB0AHQAZQByAC4AYgBhAHQAJwApADsAcwBoAGEAcgBlAD0AVABlAHMAdAAtAFAAYQB0AGgAIAAnAFwAXABNAGEAYwBcAEgAbwBtAGUAXABEAGUAdgBlAGwAbwBwAGUAcgBcAHYAeQBuAGkAYwBcAGQAbwBjAHMAXABwAHIAbwBvAGYAcwBcAFAATwBTAF8AUwBIAEEAUgBFAEQAXwBQAFIASQBOAFQAXwBHAE8AXwAyADcANQA2ADgAOABlADEAXwAyADAAMgA2AC0AMQAwAC0AMAA2ACcAOwByAHUAbgBuAGkAbgBnAFAAcgBpAG4AdABKAG8AYgBzAD0AQAAoAEcAZQB0AC0AQwBpAG0ASQBuAHMAdABhAG4AYwBlACAAVwBpAG4AMwAyAF8AUAByAGkAbgB0AEoAbwBiACkALgBDAG8AdQBuAHQAfQAgAHwAIABDAG8AbgB2AGUAcgB0AFQAbwAtAEoAcwBvAG4A"
+  ],
+  "workingDirectory": "/Users/vaanskii/Developer/vynic",
+  "sandboxPermissions": "require_escalated",
+  "stdoutTargetUnchanged": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/windows-software-preflight-current-user.log",
+  "argvUnchanged": true,
+  "PowerShellPayloadUnchanged": true,
+  "retries": 1,
+  "alternateExecutor": false,
+  "exitCode": 0,
+  "previousDenial": {
+    "path": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/windows-software-preflight-denial.json",
+    "sha256": "7d8a2753973f8486f4f02b243ac5821ed791fac497638a8727e977d454f0102b"
+  },
+  "parentEvidence": [
+    "Assistant Sentinel_e0ca2298dc288191ad136f31236e20bb 2026-10-06 15:13 UTC requested VM software tests with no physical checks",
+    "User Sentinel_520905fcd50c819199d9cf74b33dbac7 2026-10-06 15:24 UTC replied ჩავრთე გააგრძელე"
+  ],
+  "parentCPUReleased": true,
+  "actual": {
+    "sid": "S-1-5-21-611125631-3759947118-1641436196-1000",
+    "user": "VANSKI\\vaanskii",
+    "guestArchitecture": "ARM64",
+    "flutterSdk": "C:\\Users\\vaanskii\\develop\\flutter",
+    "nativeDart": true,
+    "flutterBatch": true,
+    "share": true,
+    "runningPrintJobs": 0
+  },
+  "stdout": {
+    "path": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/windows-software-v2/preflight-current-user.log",
+    "sha256": "92515f42e824d7dceead06294ec046efd7c0e5a9ea43c44b72e404a15f85e2a5"
+  },
+  "productStarted": false,
+  "serviceOperations": false,
+  "physicalJobs": 0
+}

@@ -1,0 +1,179 @@
+{
+  "sealedAtUtc": "2026-10-06T09:56:42.674738+00:00",
+  "sourceRoot": "/tmp/vynic-readiness-20261006-a2nbcprb/source",
+  "purpose": "DETACHED_ORDINARY_CREATE_MOVE_CANCEL_ISOLATED_PROOF_ONLY",
+  "sourceFrozen": true,
+  "sources": [
+    {
+      "path": "apps/operations/lib/core/services/edge/operational_proof/planning_view.dart",
+      "before": null,
+      "after": "38973bfff6f373abfa575be72c0d1af962ef8c6040c6d5134f92c9052872fe17",
+      "change": "NEW_ISOLATED_PROOF_FILE"
+    },
+    {
+      "path": "apps/operations/lib/core/services/edge/operational_proof/intent_adapter.dart",
+      "before": null,
+      "after": "143e73f8606289f399431682f338ee898eb0f6f1afaf941a9310c4cf012f76e5",
+      "change": "NEW_ISOLATED_PROOF_FILE"
+    },
+    {
+      "path": "apps/operations/lib/core/services/edge/operational_proof/ordinary_planner.dart",
+      "before": null,
+      "after": "2b63ba76ff9864e1c92099e7e62a863a7426552d3d4b3d8019e81f5cadd1875f",
+      "change": "NEW_ISOLATED_PROOF_FILE"
+    },
+    {
+      "path": "apps/operations/test/unit/operational_ordinary_planner_test.dart",
+      "before": null,
+      "after": "bed0e69dc31b0ea4070c66c7de9f37a7ead2fc1bd716776f8b0d702f28fa172b",
+      "change": "NEW_ISOLATED_PROOF_FILE"
+    },
+    {
+      "path": "apps/operations/lib/core/database/repositories/order_table_mutation_repository.dart",
+      "before": "fd9f64eb578b9b5e6fc55f45cbfaebb4be2d94447bc87d2342b821f967072020",
+      "after": "9939c54d5b6b9fc927f35ddac94548925d90fab47dea7e0446700b72ecd87a17",
+      "change": "APPROVED_NULLABLE_FEE_PURITY_SEAM"
+    }
+  ],
+  "protectedClientBaseline": [
+    {
+      "path": "apps/operations/lib/core/services/edge/operational_proof/domain.dart",
+      "baseline": "e14f30e884ae492b172f5ca310395c6932f0f08902beff89e0527f5ccf131c1c",
+      "after": "e14f30e884ae492b172f5ca310395c6932f0f08902beff89e0527f5ccf131c1c",
+      "unchanged": true
+    },
+    {
+      "path": "apps/operations/lib/core/services/edge/operational_proof/client.dart",
+      "baseline": "8dd5b07ca905aec3240c0b077e06845ea92488dc89724b74da57eac6704c4338",
+      "after": "8dd5b07ca905aec3240c0b077e06845ea92488dc89724b74da57eac6704c4338",
+      "unchanged": true
+    },
+    {
+      "path": "apps/operations/lib/core/services/edge/operational_proof/frame_store.dart",
+      "baseline": "95d5893daa62522d96c6688e6b8195c1af4dd191a84b54788877e102a0b22c53",
+      "after": "95d5893daa62522d96c6688e6b8195c1af4dd191a84b54788877e102a0b22c53",
+      "unchanged": true
+    },
+    {
+      "path": "apps/operations/test/unit/operational_proof_client_test.dart",
+      "baseline": "ac90249cf5d7c0fd4120cdf3072454b6701b0faf24ed88cfbb71a9ed3ddd48fd",
+      "after": "ac90249cf5d7c0fd4120cdf3072454b6701b0faf24ed88cfbb71a9ed3ddd48fd",
+      "unchanged": true
+    }
+  ],
+  "validation": [
+    {
+      "command": "flutter test --no-pub test/unit/operational_ordinary_planner_test.dart test/unit/operational_proof_client_test.dart test/unit/pos05_order_table_mutation_test.dart test/unit/pos05_ownership_recovery_test.dart test/unit/pos05_independent_ownership_test.dart test/unit/cancel_order_transaction_test.dart",
+      "exitCode": 0,
+      "log": "operational-ordinary-planner-validation-test.log",
+      "passed": 92,
+      "breakdown": {
+        "planner": 20,
+        "client": 46,
+        "legacyAcrossFourSuites": 26
+      },
+      "workingDirectory": "/tmp/vynic-readiness-20261006-a2nbcprb/source/apps/operations",
+      "sha256": "60a8d0de8f4033983d10a1759ae0dd92d9eb1ffe3cd956f02d0152ce5edd2b10"
+    },
+    {
+      "command": "flutter analyze --no-pub lib/core/services/edge/operational_proof lib/core/database/repositories/order_table_mutation_repository.dart test/unit/operational_ordinary_planner_test.dart test/unit/operational_proof_client_test.dart",
+      "exitCode": 0,
+      "log": "operational-ordinary-planner-validation-analyze.log",
+      "outcome": "NO_ISSUES",
+      "workingDirectory": "/tmp/vynic-readiness-20261006-a2nbcprb/source/apps/operations",
+      "sha256": "fb9dc49e62962e94398574ee31c54195c2c8f79a1f3238dc022d5934b6ecdd4c"
+    },
+    {
+      "command": "dart format --output=none --set-exit-if-changed lib/core/services/edge/operational_proof lib/core/database/repositories/order_table_mutation_repository.dart test/unit/operational_ordinary_planner_test.dart test/unit/operational_proof_client_test.dart",
+      "exitCode": 0,
+      "log": "operational-ordinary-planner-validation-format.log",
+      "sourceChanged": false,
+      "workingDirectory": "/tmp/vynic-readiness-20261006-a2nbcprb/source/apps/operations",
+      "sha256": "2ebd7e33feef8299c752f0789f0fd52f17e43e8a5024f2a9264a195e1bef6bd5"
+    }
+  ],
+  "whitespaceChecks": [
+    {
+      "path": "apps/operations/lib/core/services/edge/operational_proof/planning_view.dart",
+      "command": [
+        "git",
+        "diff",
+        "--no-index",
+        "--check",
+        "/dev/null",
+        "/tmp/vynic-readiness-20261006-a2nbcprb/source/apps/operations/lib/core/services/edge/operational_proof/planning_view.dart"
+      ],
+      "exitCode": 1,
+      "whitespaceClean": true
+    },
+    {
+      "path": "apps/operations/lib/core/services/edge/operational_proof/intent_adapter.dart",
+      "command": [
+        "git",
+        "diff",
+        "--no-index",
+        "--check",
+        "/dev/null",
+        "/tmp/vynic-readiness-20261006-a2nbcprb/source/apps/operations/lib/core/services/edge/operational_proof/intent_adapter.dart"
+      ],
+      "exitCode": 1,
+      "whitespaceClean": true
+    },
+    {
+      "path": "apps/operations/lib/core/services/edge/operational_proof/ordinary_planner.dart",
+      "command": [
+        "git",
+        "diff",
+        "--no-index",
+        "--check",
+        "/dev/null",
+        "/tmp/vynic-readiness-20261006-a2nbcprb/source/apps/operations/lib/core/services/edge/operational_proof/ordinary_planner.dart"
+      ],
+      "exitCode": 1,
+      "whitespaceClean": true
+    },
+    {
+      "path": "apps/operations/test/unit/operational_ordinary_planner_test.dart",
+      "command": [
+        "git",
+        "diff",
+        "--no-index",
+        "--check",
+        "/dev/null",
+        "/tmp/vynic-readiness-20261006-a2nbcprb/source/apps/operations/test/unit/operational_ordinary_planner_test.dart"
+      ],
+      "exitCode": 1,
+      "whitespaceClean": true
+    },
+    {
+      "path": "apps/operations/lib/core/database/repositories/order_table_mutation_repository.dart",
+      "command": [
+        "git",
+        "diff",
+        "--no-index",
+        "--check",
+        "/tmp/vynic-readiness-20261006-a2nbcprb/operational-ordinary-planner-original.dart",
+        "/tmp/vynic-readiness-20261006-a2nbcprb/source/apps/operations/lib/core/database/repositories/order_table_mutation_repository.dart"
+      ],
+      "exitCode": 1,
+      "whitespaceClean": true
+    }
+  ],
+  "approvedFeeSeamPatch": {
+    "path": "operational-ordinary-planner-fee-seam.patch",
+    "sha256": "870798f58262b49d12b198d033d317b9b7c4cb4fb745c55b685cc32ca16dc9b2"
+  },
+  "design": {
+    "path": "operational-ordinary-planner-design.md",
+    "sha256": "0902c26454670eea07c5d0395c6fa49c143699e992eee2175a830c1780de11fc"
+  },
+  "independentReview": {
+    "path": "operational-ordinary-planner-review.json",
+    "sha256": "f77a8b351b39a57d4bd14929f45a491ce3e24fb05252eb4c87f41974a2a274b5",
+    "status": "NO_REMAINING_P1_P2_WITHIN_DETACHED_ISOLATED_SCOPE",
+    "matchesSourceAndEvidence": true,
+    "reviewerReranTests": false
+  },
+  "finalCorrection": "Adapter counts all genuine linked bookings before filtering already-cancelled rows; direct legacy-valid journal regression rejects ambiguous linkage before prepare.",
+  "qualification": "NOT_DONE: no production attachment, complete writer coverage, production canonical projection capture/identity bootstrap, Go/generated RPC qualification, actual three-terminal LAN proof, physical printing, or cutover/rollback approval."
+}

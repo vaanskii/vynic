@@ -1,0 +1,18 @@
+{
+  "files": [
+    {
+      "path": "apps/operations/windows/tests/CMakeLists.txt",
+      "beforeSha256": "a596af6b86f1f05bd4f3527a96ea036de810b0b0dd0f174eac81594b67409996",
+      "candidateSha256": "fd4021883de3b4e98712695b46aa6e04b16ff5ae58977902cf44b8b3912f42be"
+    },
+    {
+      "path": "apps/operations/windows/tests/windows_spooler_channel_test.cpp",
+      "beforeSha256": null,
+      "candidateSha256": "cfac9a776024cbd71b65b301714c24f64ed7b0db44f958b0af7586a94fe36a8f"
+    }
+  ],
+  "runtimeSourceChanged": false,
+  "nativeAssertions": 208,
+  "coreAssertions": 110,
+  "physicalDocuments": 0
+}

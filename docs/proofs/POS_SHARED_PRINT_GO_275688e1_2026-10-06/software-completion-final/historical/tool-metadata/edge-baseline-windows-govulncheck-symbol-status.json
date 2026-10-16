@@ -1,0 +1,1 @@
+{"exitCode": 0, "invocation": "GOOS=windows GOARCH=amd64 CGO_ENABLED=0 govulncheck -json -scan=symbol ./...", "source": "security-baseline/apps/edge", "hardwareExecution": false}

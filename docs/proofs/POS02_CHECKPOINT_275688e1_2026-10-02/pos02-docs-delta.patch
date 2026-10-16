@@ -1,0 +1,35 @@
+--- a/docs/agent-state/VYNIC_PROJECT_STATE.md
++++ b/docs/agent-state/VYNIC_PROJECT_STATE.md
+@@ -462,7 +462,18 @@
+   `docs/proofs/POS05_COMMITTED_ec430880_2026-10-02.json`; runbook:
+   `docs/POS05_ORDER_TABLE_OWNERSHIP.md`. Windows smoke remains
+   PENDING_NOT_RUN/HELD (`docs/POS05_WINDOWS_SMOKE.md`), using a clean frozen
+-  commit export. Physical release remains OPS-01. Await next milestone handoff.
++  commit export. Physical release remains OPS-01.
++- POS-02 is an uncommitted implemented candidate, NOT_DONE until supported-model
++  physical printer acceptance and the owner reconciliation policy are resolved.
++  Frozen bytes/destination/Venue and attempts/audit persist in additive Hive meta
++  print_job:v1 rows. A flushed sending marker precedes TCP; post-write failure or
++  interrupted sending stays uncertain without automatic retry. TCP sent does not
++  confirm paper. Home/Admin expose held jobs and labeled audited copies; initial
++  Order confirmation and remote creation replay preserve durable admission.
++  Format-2 restore holds source queued work and validates rows before replacement;
++  Hive remains v9. Production reconciliation defaults to unconfigured/read-only.
++  Evidence and required model/device decisions: docs/POS02_PRINT_DELIVERY.md.
++  No live printer/Windows VM operation or physical proof has been performed.
+ - Every Order audit report opens with a typed creation event carrying
+   `orderKind` (`WALK_IN`, `TAKEAWAY`, `PACKAGE`, `RESERVATION`), `tableRefs`,
+   `source`, `actorId`, `actorName`, `businessDate`: `CREATE_WALKIN` for POS
+--- a/docs/agent-state/VYNIC_CODE_MAP.md
++++ b/docs/agent-state/VYNIC_CODE_MAP.md
+@@ -278,6 +278,10 @@
+ 
+ - Printer orchestration: `apps/operations/lib/core/services/printing/printer_service.dart`
+ - Queue/transport: `apps/operations/lib/core/services/printing/print_queue.dart`, `apps/operations/lib/core/services/printing/printer_transport.dart`
++- Durable frozen job/state/audit: `apps/operations/lib/core/services/printing/print_job.dart`; Hive admission/recovery: `apps/operations/lib/core/database/repositories/print_job_repository.dart`
++- Local confirmation admission: `apps/operations/lib/core/services/pos/order_confirmation_print.dart`
++- Operator policy/actions: `apps/operations/lib/core/services/printing/print_reconciliation.dart`; Home/Admin journal and copy prompt: `apps/operations/lib/apps/windows_pos/widgets/shared/print_jobs.dart`
++- POS-02 tests/proof: `apps/operations/test/unit/pos02_*`, `apps/operations/test/widget/pos02_print_jobs_test.dart`, `apps/operations/test/live/pos02_process_recovery_test.dart`, `apps/operations/tool/prove_pos02_recovery.py`; runbook: `docs/POS02_PRINT_DELIVERY.md`
+ - Renderers: `apps/operations/lib/core/services/printing/`
+ - Admin configuration: `apps/operations/lib/apps/windows_pos/widgets/admin/printers/`
+ - Remote print handling: `apps/operations/lib/core/services/edge/pos_edge_command_handlers.dart`

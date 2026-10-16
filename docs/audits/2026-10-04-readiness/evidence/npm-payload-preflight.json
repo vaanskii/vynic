@@ -1,0 +1,10 @@
+{
+  "bodyShape": "Object mapping dependency package names to arrays of semantic versions only",
+  "packageNameCount": 342,
+  "packageVersionCount": 362,
+  "rootApplicationExcluded": true,
+  "bodyContainsCredentialsOrEnvOrBusinessData": false,
+  "bodySha256": "c0544c7391f86935bebcdca49e5aaf4b527c7918ae8d41d79f053f36496f550a",
+  "scope": "npm production dependency bulk-advisory body; ordinary HTTP/npm client metadata is separate",
+  "networkRequestsMade": false
+}

@@ -1,0 +1,704 @@
+{
+  "status": "PASS",
+  "finishedAtUtc": "2026-10-06T16:17:26.409407+00:00",
+  "sourceSnapshotReceipt": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/metadata/go-final-source-snapshot.json",
+  "sourceSnapshotSha256": "d694adbe1410f005d6285396f81a7126cdc7b9fb9f44b08a01f7f3c5e523330a",
+  "snapshotFiles": 163,
+  "sourceUnchangedAcrossValidation": true,
+  "checks": {
+    "edge-tests": {
+      "status": {
+        "exitCode": 0,
+        "command": [
+          "go",
+          "test",
+          "-mod=readonly",
+          "-count=1",
+          "-json",
+          "./..."
+        ],
+        "environmentOverrides": {
+          "GOPROXY": "off"
+        },
+        "workingDirectory": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/go-final-validation/apps/edge",
+        "output": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/metadata/go-final-edge-tests.jsonl",
+        "stderr": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/metadata/go-final-edge-tests.stderr",
+        "hardwareExecution": false,
+        "sourceReceipt": "go-final-source-snapshot.json"
+      },
+      "outputSha256": "f593e3f85a59e5f57882519730a09184e54c845ce26fa43fd7216301ba5ec1eb",
+      "outputBytes": 460983,
+      "stderr": "",
+      "testCases": {
+        "pass": 504,
+        "skip": 7
+      },
+      "packages": [
+        {
+          "package": "vynic.local/edge/cmd/terminal-sim",
+          "outcome": "skip"
+        },
+        {
+          "package": "vynic.local/edge/cmd/verify-local-release",
+          "outcome": "skip"
+        },
+        {
+          "package": "vynic.local/edge/internal/testutil",
+          "outcome": "skip"
+        },
+        {
+          "package": "vynic.local/edge/internal/printeligibility",
+          "outcome": "pass"
+        },
+        {
+          "package": "vynic.local/edge/internal/printtransport",
+          "outcome": "pass"
+        },
+        {
+          "package": "vynic.local/edge/cmd/sign-pos-release",
+          "outcome": "pass"
+        },
+        {
+          "package": "vynic.local/edge/cmd/sign-bootstrap",
+          "outcome": "pass"
+        },
+        {
+          "package": "vynic.local/edge/cmd/setup",
+          "outcome": "pass"
+        },
+        {
+          "package": "vynic.local/edge/cmd/edge",
+          "outcome": "pass"
+        },
+        {
+          "package": "vynic.local/edge/internal/printhost",
+          "outcome": "pass"
+        },
+        {
+          "package": "vynic.local/edge/internal/printqueue",
+          "outcome": "pass"
+        },
+        {
+          "package": "vynic.local/edge/internal/server",
+          "outcome": "pass"
+        },
+        {
+          "package": "vynic.local/edge/internal/store",
+          "outcome": "pass"
+        },
+        {
+          "package": "vynic.local/edge/internal/setup",
+          "outcome": "pass"
+        },
+        {
+          "package": "vynic.local/edge/internal/updater",
+          "outcome": "pass"
+        },
+        {
+          "package": "vynic.local/edge/internal/printcluster",
+          "outcome": "pass"
+        }
+      ]
+    },
+    "edge-race": {
+      "status": {
+        "exitCode": 0,
+        "command": [
+          "go",
+          "test",
+          "-mod=readonly",
+          "-race",
+          "-count=1",
+          "-json",
+          "./..."
+        ],
+        "environmentOverrides": {
+          "GOPROXY": "off"
+        },
+        "workingDirectory": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/go-final-validation/apps/edge",
+        "output": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/metadata/go-final-edge-race.jsonl",
+        "stderr": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/metadata/go-final-edge-race.stderr",
+        "hardwareExecution": false,
+        "sourceReceipt": "go-final-source-snapshot.json"
+      },
+      "outputSha256": "cd3e69fa93c1139a2a45ca20f9ac756278e2dca70a29c5845e93d65ae266ca12",
+      "outputBytes": 461621,
+      "stderr": "",
+      "testCases": {
+        "pass": 504,
+        "skip": 7
+      },
+      "packages": [
+        {
+          "package": "vynic.local/edge/cmd/terminal-sim",
+          "outcome": "skip"
+        },
+        {
+          "package": "vynic.local/edge/cmd/verify-local-release",
+          "outcome": "skip"
+        },
+        {
+          "package": "vynic.local/edge/internal/testutil",
+          "outcome": "skip"
+        },
+        {
+          "package": "vynic.local/edge/cmd/sign-pos-release",
+          "outcome": "pass"
+        },
+        {
+          "package": "vynic.local/edge/cmd/setup",
+          "outcome": "pass"
+        },
+        {
+          "package": "vynic.local/edge/cmd/sign-bootstrap",
+          "outcome": "pass"
+        },
+        {
+          "package": "vynic.local/edge/internal/printeligibility",
+          "outcome": "pass"
+        },
+        {
+          "package": "vynic.local/edge/internal/printtransport",
+          "outcome": "pass"
+        },
+        {
+          "package": "vynic.local/edge/cmd/edge",
+          "outcome": "pass"
+        },
+        {
+          "package": "vynic.local/edge/internal/printhost",
+          "outcome": "pass"
+        },
+        {
+          "package": "vynic.local/edge/internal/printqueue",
+          "outcome": "pass"
+        },
+        {
+          "package": "vynic.local/edge/internal/setup",
+          "outcome": "pass"
+        },
+        {
+          "package": "vynic.local/edge/internal/updater",
+          "outcome": "pass"
+        },
+        {
+          "package": "vynic.local/edge/internal/server",
+          "outcome": "pass"
+        },
+        {
+          "package": "vynic.local/edge/internal/store",
+          "outcome": "pass"
+        },
+        {
+          "package": "vynic.local/edge/internal/printcluster",
+          "outcome": "pass"
+        }
+      ]
+    },
+    "edge-vet": {
+      "status": {
+        "exitCode": 0,
+        "command": [
+          "go",
+          "vet",
+          "-mod=readonly",
+          "./..."
+        ],
+        "environmentOverrides": {
+          "GOPROXY": "off"
+        },
+        "workingDirectory": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/go-final-validation/apps/edge",
+        "output": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/metadata/go-final-edge-vet.log",
+        "stderr": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/metadata/go-final-edge-vet.stderr",
+        "hardwareExecution": false,
+        "sourceReceipt": "go-final-source-snapshot.json"
+      },
+      "outputSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "outputBytes": 0,
+      "stderr": ""
+    },
+    "windows-build": {
+      "status": {
+        "exitCode": 0,
+        "command": [
+          "go",
+          "build",
+          "-mod=readonly",
+          "./..."
+        ],
+        "environmentOverrides": {
+          "GOOS": "windows",
+          "GOARCH": "amd64",
+          "CGO_ENABLED": "0",
+          "GOPROXY": "off"
+        },
+        "workingDirectory": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/go-final-validation/apps/edge",
+        "output": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/metadata/go-final-windows-build.log",
+        "stderr": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/metadata/go-final-windows-build.stderr",
+        "hardwareExecution": false,
+        "sourceReceipt": "go-final-source-snapshot.json"
+      },
+      "outputSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "outputBytes": 0,
+      "stderr": ""
+    },
+    "contracts-test": {
+      "status": {
+        "exitCode": 0,
+        "command": [
+          "go",
+          "test",
+          "-mod=readonly",
+          "-count=1",
+          "-json",
+          "./..."
+        ],
+        "environmentOverrides": {
+          "GOPROXY": "off"
+        },
+        "workingDirectory": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/go-final-validation/packages/contracts/generated/go",
+        "output": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/metadata/go-final-contracts-test.jsonl",
+        "stderr": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/metadata/go-final-contracts-test.stderr",
+        "hardwareExecution": false,
+        "sourceReceipt": "go-final-source-snapshot.json"
+      },
+      "outputSha256": "6afa392111b3846586b45d77111c27a07601283b022d138c33c9836311ca32d6",
+      "outputBytes": 421,
+      "stderr": "",
+      "testCases": {},
+      "packages": [
+        {
+          "package": "vynic.local/contracts/go/vynic/edge/v1",
+          "outcome": "skip"
+        }
+      ]
+    },
+    "edge-govuln": {
+      "status": {
+        "exitCode": 0,
+        "command": [
+          "govulncheck",
+          "-json",
+          "-scan=symbol",
+          "./..."
+        ],
+        "environmentOverrides": {},
+        "workingDirectory": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/go-final-validation/apps/edge",
+        "output": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/metadata/go-final-edge-govuln.jsonl",
+        "stderr": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/metadata/go-final-edge-govuln.stderr",
+        "hardwareExecution": false,
+        "sourceReceipt": "go-final-source-snapshot.json"
+      },
+      "outputSha256": "e38bb19a94f70e1923e5246eab0c320556700a5f2341cb89d269b7957e7e0ba1",
+      "outputBytes": 517409,
+      "stderr": "",
+      "findingCount": 0,
+      "config": {
+        "protocol_version": "v1.0.0",
+        "scanner_name": "govulncheck",
+        "scanner_version": "v1.8.0",
+        "db": "https://vuln.go.dev",
+        "db_last_modified": "2026-10-01T20:24:15Z",
+        "go_version": "go1.26.8",
+        "scan_level": "symbol",
+        "scan_mode": "source"
+      },
+      "SBOM": {
+        "go_version": "go1.26.8",
+        "modules": [
+          {
+            "path": "vynic.local/edge"
+          },
+          {
+            "path": "../../packages/contracts/generated/go"
+          },
+          {
+            "path": "../../packages/contracts/generated/go"
+          },
+          {
+            "path": "github.com/boltdb/bolt",
+            "version": "v1.3.1"
+          },
+          {
+            "path": "github.com/dustin/go-humanize",
+            "version": "v1.0.1"
+          },
+          {
+            "path": "github.com/fatih/color",
+            "version": "v1.19.0"
+          },
+          {
+            "path": "github.com/gofrs/flock",
+            "version": "v0.12.1"
+          },
+          {
+            "path": "github.com/google/uuid",
+            "version": "v1.6.0"
+          },
+          {
+            "path": "github.com/hashicorp/go-hclog",
+            "version": "v1.6.3"
+          },
+          {
+            "path": "github.com/hashicorp/go-immutable-radix",
+            "version": "v1.3.1"
+          },
+          {
+            "path": "github.com/hashicorp/go-metrics",
+            "version": "v0.7.0"
+          },
+          {
+            "path": "github.com/hashicorp/go-msgpack/v2",
+            "version": "v2.1.5"
+          },
+          {
+            "path": "github.com/hashicorp/golang-lru",
+            "version": "v1.0.2"
+          },
+          {
+            "path": "github.com/hashicorp/raft",
+            "version": "v1.8.0"
+          },
+          {
+            "path": "github.com/hashicorp/raft-boltdb/v2",
+            "version": "v2.4.2"
+          },
+          {
+            "path": "github.com/mattn/go-colorable",
+            "version": "v0.1.15"
+          },
+          {
+            "path": "github.com/mattn/go-isatty",
+            "version": "v0.0.24"
+          },
+          {
+            "path": "github.com/ncruces/go-strftime",
+            "version": "v1.0.0"
+          },
+          {
+            "path": "github.com/remyoudompheng/bigfft",
+            "version": "v0.0.0-20230129092748-24d4a6f8daec"
+          },
+          {
+            "path": "go.etcd.io/bbolt",
+            "version": "v1.4.1"
+          },
+          {
+            "path": "golang.org/x/net",
+            "version": "v0.58.0"
+          },
+          {
+            "path": "golang.org/x/sys",
+            "version": "v0.48.0"
+          },
+          {
+            "path": "golang.org/x/text",
+            "version": "v0.41.0"
+          },
+          {
+            "path": "google.golang.org/genproto/googleapis/rpc",
+            "version": "v0.0.0-20260526163538-3dc84a4a5aaa"
+          },
+          {
+            "path": "google.golang.org/grpc",
+            "version": "v1.83.2"
+          },
+          {
+            "path": "google.golang.org/protobuf",
+            "version": "v1.36.12"
+          },
+          {
+            "path": "modernc.org/libc",
+            "version": "v1.75.7"
+          },
+          {
+            "path": "modernc.org/mathutil",
+            "version": "v1.7.1"
+          },
+          {
+            "path": "modernc.org/memory",
+            "version": "v1.12.1"
+          },
+          {
+            "path": "modernc.org/sqlite",
+            "version": "v1.59.0"
+          },
+          {
+            "path": "stdlib",
+            "version": "v1.26.8"
+          }
+        ],
+        "roots": [
+          "vynic.local/edge/internal/printtransport",
+          "vynic.local/edge/internal/printqueue",
+          "vynic.local/edge/internal/store",
+          "vynic.local/edge/internal/server",
+          "vynic.local/edge/internal/updater",
+          "vynic.local/edge/cmd/edge",
+          "vynic.local/edge/internal/setup",
+          "vynic.local/edge/cmd/setup",
+          "vynic.local/edge/cmd/sign-bootstrap",
+          "vynic.local/edge/cmd/sign-pos-release",
+          "vynic.local/edge/cmd/terminal-sim",
+          "vynic.local/edge/cmd/verify-local-release",
+          "vynic.local/edge/internal/printcluster",
+          "vynic.local/edge/internal/printeligibility",
+          "vynic.local/edge/internal/printhost",
+          "vynic.local/edge/internal/testutil"
+        ]
+      }
+    },
+    "windows-govuln": {
+      "status": {
+        "exitCode": 0,
+        "command": [
+          "govulncheck",
+          "-json",
+          "-scan=symbol",
+          "./..."
+        ],
+        "environmentOverrides": {
+          "GOOS": "windows",
+          "GOARCH": "amd64",
+          "CGO_ENABLED": "0"
+        },
+        "workingDirectory": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/go-final-validation/apps/edge",
+        "output": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/metadata/go-final-windows-govuln.jsonl",
+        "stderr": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/metadata/go-final-windows-govuln.stderr",
+        "hardwareExecution": false,
+        "sourceReceipt": "go-final-source-snapshot.json"
+      },
+      "outputSha256": "031ac464c9d81b0504b3b48c00ba848e9650373132f385ee56233ebbc63c6ad6",
+      "outputBytes": 517500,
+      "stderr": "",
+      "findingCount": 0,
+      "config": {
+        "protocol_version": "v1.0.0",
+        "scanner_name": "govulncheck",
+        "scanner_version": "v1.8.0",
+        "db": "https://vuln.go.dev",
+        "db_last_modified": "2026-10-01T20:24:15Z",
+        "go_version": "go1.26.8",
+        "scan_level": "symbol",
+        "scan_mode": "source"
+      },
+      "SBOM": {
+        "go_version": "go1.26.8",
+        "modules": [
+          {
+            "path": "vynic.local/edge"
+          },
+          {
+            "path": "../../packages/contracts/generated/go"
+          },
+          {
+            "path": "../../packages/contracts/generated/go"
+          },
+          {
+            "path": "github.com/boltdb/bolt",
+            "version": "v1.3.1"
+          },
+          {
+            "path": "github.com/dustin/go-humanize",
+            "version": "v1.0.1"
+          },
+          {
+            "path": "github.com/fatih/color",
+            "version": "v1.19.0"
+          },
+          {
+            "path": "github.com/gofrs/flock",
+            "version": "v0.12.1"
+          },
+          {
+            "path": "github.com/google/uuid",
+            "version": "v1.6.0"
+          },
+          {
+            "path": "github.com/hashicorp/go-hclog",
+            "version": "v1.6.3"
+          },
+          {
+            "path": "github.com/hashicorp/go-immutable-radix",
+            "version": "v1.3.1"
+          },
+          {
+            "path": "github.com/hashicorp/go-metrics",
+            "version": "v0.7.0"
+          },
+          {
+            "path": "github.com/hashicorp/go-msgpack/v2",
+            "version": "v2.1.5"
+          },
+          {
+            "path": "github.com/hashicorp/golang-lru",
+            "version": "v1.0.2"
+          },
+          {
+            "path": "github.com/hashicorp/raft",
+            "version": "v1.8.0"
+          },
+          {
+            "path": "github.com/hashicorp/raft-boltdb/v2",
+            "version": "v2.4.2"
+          },
+          {
+            "path": "github.com/mattn/go-colorable",
+            "version": "v0.1.15"
+          },
+          {
+            "path": "github.com/mattn/go-isatty",
+            "version": "v0.0.24"
+          },
+          {
+            "path": "github.com/ncruces/go-strftime",
+            "version": "v1.0.0"
+          },
+          {
+            "path": "github.com/remyoudompheng/bigfft",
+            "version": "v0.0.0-20230129092748-24d4a6f8daec"
+          },
+          {
+            "path": "go.etcd.io/bbolt",
+            "version": "v1.4.1"
+          },
+          {
+            "path": "golang.org/x/net",
+            "version": "v0.58.0"
+          },
+          {
+            "path": "golang.org/x/sys",
+            "version": "v0.48.0"
+          },
+          {
+            "path": "golang.org/x/text",
+            "version": "v0.41.0"
+          },
+          {
+            "path": "google.golang.org/genproto/googleapis/rpc",
+            "version": "v0.0.0-20260526163538-3dc84a4a5aaa"
+          },
+          {
+            "path": "google.golang.org/grpc",
+            "version": "v1.83.2"
+          },
+          {
+            "path": "google.golang.org/protobuf",
+            "version": "v1.36.12"
+          },
+          {
+            "path": "modernc.org/libc",
+            "version": "v1.75.7"
+          },
+          {
+            "path": "modernc.org/mathutil",
+            "version": "v1.7.1"
+          },
+          {
+            "path": "modernc.org/memory",
+            "version": "v1.12.1"
+          },
+          {
+            "path": "modernc.org/sqlite",
+            "version": "v1.59.0"
+          },
+          {
+            "path": "stdlib",
+            "version": "v1.26.8"
+          }
+        ],
+        "roots": [
+          "vynic.local/edge/internal/printtransport",
+          "vynic.local/edge/internal/printqueue",
+          "vynic.local/edge/internal/store",
+          "vynic.local/edge/internal/server",
+          "vynic.local/edge/internal/updater",
+          "vynic.local/edge/cmd/edge",
+          "vynic.local/edge/internal/setup",
+          "vynic.local/edge/cmd/setup",
+          "vynic.local/edge/cmd/sign-bootstrap",
+          "vynic.local/edge/cmd/sign-pos-release",
+          "vynic.local/edge/cmd/terminal-sim",
+          "vynic.local/edge/cmd/verify-local-release",
+          "vynic.local/edge/internal/printcluster",
+          "vynic.local/edge/internal/printeligibility",
+          "vynic.local/edge/internal/printhost",
+          "vynic.local/edge/internal/testutil",
+          "vynic.local/edge/tool/lab-edge-upgrade",
+          "vynic.local/edge/tool/lab-network"
+        ]
+      }
+    },
+    "contracts-govuln": {
+      "status": {
+        "exitCode": 0,
+        "command": [
+          "govulncheck",
+          "-json",
+          "-scan=module"
+        ],
+        "environmentOverrides": {},
+        "workingDirectory": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/go-final-validation/packages/contracts/generated/go/vynic/edge/v1",
+        "output": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/metadata/go-final-contracts-govuln.jsonl",
+        "stderr": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/metadata/go-final-contracts-govuln.stderr",
+        "hardwareExecution": false,
+        "sourceReceipt": "go-final-source-snapshot.json"
+      },
+      "outputSha256": "82b7235809b459e8e29816dffba2cbce47671043edd118a446e70b087d3c6c6b",
+      "outputBytes": 511601,
+      "stderr": "",
+      "findingCount": 0,
+      "config": {
+        "protocol_version": "v1.0.0",
+        "scanner_name": "govulncheck",
+        "scanner_version": "v1.8.0",
+        "db": "https://vuln.go.dev",
+        "db_last_modified": "2026-10-01T20:24:15Z",
+        "go_version": "go1.26.8",
+        "scan_level": "module",
+        "scan_mode": "source"
+      },
+      "SBOM": {
+        "go_version": "go1.26.8",
+        "modules": [
+          {
+            "path": "vynic.local/contracts/go"
+          },
+          {
+            "path": "golang.org/x/net",
+            "version": "v0.58.0"
+          },
+          {
+            "path": "golang.org/x/sys",
+            "version": "v0.47.0"
+          },
+          {
+            "path": "golang.org/x/text",
+            "version": "v0.41.0"
+          },
+          {
+            "path": "google.golang.org/genproto/googleapis/rpc",
+            "version": "v0.0.0-20260526163538-3dc84a4a5aaa"
+          },
+          {
+            "path": "google.golang.org/grpc",
+            "version": "v1.83.2"
+          },
+          {
+            "path": "google.golang.org/protobuf",
+            "version": "v1.36.11"
+          },
+          {
+            "path": "stdlib",
+            "version": "v1.26.8"
+          }
+        ],
+        "roots": [
+          "vynic.local/contracts/go/vynic/edge/v1"
+        ]
+      }
+    }
+  },
+  "scope": "Actual complete final isolated Go source including generated contracts, new printer/operational RPC and print queue; local synthetic fixtures only",
+  "limitations": "Static Windows target checks do not execute Windows/hardware. No live printer, driver configuration, live POS/database or deployment. No GoDB findings is limited to the current official database and loaded production source graphs."
+}

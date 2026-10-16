@@ -1,0 +1,36 @@
+{
+  "verdict": "PASS bounded detached v2 cluster envelope and v1 guard extraction",
+  "source_sha256": {
+    "apps/operations/lib/core/services/printing/shared_print_effect.dart": "685b7208368e1757a551249ffcadc46580cc496ce71ef8944c660db9dae791bb",
+    "apps/operations/lib/core/services/printing/cluster_print_effect.dart": "c029cce6ac995cfed2bd2af306170233da26a8e4a197d1091fd508450cd57134",
+    "apps/operations/tool/shared_print_fixture.dart": "3de345853565e7ab1071d02b387836ff0293c030a9e4da3de6336c65501e63ea",
+    "apps/operations/tool/cluster_print_fixture.dart": "8872f182a47b24e7aa59ede8ece76c555b3ab981245f3c967d41a8033622e087",
+    "apps/operations/test/unit/shared_print_effect_test.dart": "59c7532611497b0b681de9928aff8563bc0670d90884c323bd828522ef9680d7",
+    "apps/operations/test/unit/cluster_print_effect_test.dart": "3e2b51989af5677ddb15271a9b1886a37683c2b95ddc239b613e174e4403083e"
+  },
+  "closed_findings": [
+    "Explicit LOCAL TCP device owner and VENUE_SHARED TCP cluster owner align with Go; Windows retains Device owner",
+    "Shared TCP device ownership rejected and LOCAL cluster ownership rejected"
+  ],
+  "evidence": {
+    "recorded_test_log_sha256": "e60f8444732ae11222589f1f744a0c1901c9d34b0fa9675706bea3594ff34b8a",
+    "recorded_tests": "13 nonhidden successes, done.success true, no error events; two runner process events are JSON arrays",
+    "analysis_sha256": "c645e78498d52c7c01c5577ac7949c6f36a5b50d68dd183cadf7bd5892fd3b24",
+    "independent_regeneration": "Two v1 files unchanged byte-for-byte; six v2 config/job files exact root-golden matches",
+    "goldens": {
+      "local_tcp.config.json": "5fb77a085478e13e841b4a9e504973fad13b54cb13260f809f2265f561fa6104",
+      "local_tcp.job.json": "4b2a9926ba64c7a2e3123993fe1586a9adbdfd44323e4ef1a1a7c6775cb1382f",
+      "shared_tcp.config.json": "631484beb05a8d5e53b0049bda893813c2ce247c15de5c1d82ccc4620d0b89f1",
+      "shared_tcp.job.json": "dfc155cc16c5f6b18c6ff80bff90c1994ae27040fb69d7afa1deaf4124bb1120",
+      "shared_usb.config.json": "1c8e94daf8dbd24a2c13e7c8c8e1ebf660f3d6f3e5989bd43f7f33d8adcf2e2b",
+      "shared_usb.job.json": "31e2179da2e87ea1b13376dc7dcd41cbe23ff4dd1e6e377fa43c7ea3dca15f97"
+    }
+  },
+  "limits": [
+    "Pure freezing only; caller-supplied IDs/mapping/receipt hash are not authorization",
+    "Server must validate immutable committed config, origin, physical aliases and request identity",
+    "No RPC/Hive/consensus/production startup or physical dispatch attachment",
+    "Raft FSM interoperability execution not yet reviewed",
+    "Generic shared RAW dispatch still requires downstream fence"
+  ]
+}

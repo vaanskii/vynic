@@ -43,6 +43,8 @@ services:
     environment:
       DATABASE_URL: postgresql://vynic:${POSTGRES_PASSWORD}@postgres:5432/vynic_local_prod
       VYNIC_LOCAL_DOCKER: "true"
+      # Native POS/Manager origin; enrollment offers it back to the terminal.
+      DEVICE_API_BASE_URL: ${DEVICE_API_BASE_URL:-http://api.vynic.localhost}
   reverse-proxy:
     ports: ["127.0.0.1:80:8080"]
 volumes:

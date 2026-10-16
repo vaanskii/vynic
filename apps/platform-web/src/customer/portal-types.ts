@@ -14,7 +14,7 @@ export type Device = {
   isOperationalPrimary: boolean;
 };
 export type Enrollment = { id: string; status: string; codeSelector: string };
-export type IssuedEnrollment = { id: string; code: string; expiresAt: string };
+export type IssuedEnrollment = { initialManagerSetup?: boolean; id: string; code: string; expiresAt: string };
 export type Manager = {
   id: string;
   displayName?: string | null;
@@ -22,6 +22,7 @@ export type Manager = {
   isActive: boolean;
 };
 export type VenueStatus = {
+  initialManagerSetupEligible?: boolean;
   venue: {
     menuAuthority?: "POS" | "CLOUD";
     id: string;

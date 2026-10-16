@@ -1,0 +1,1392 @@
+{
+  "formatVersion": 1,
+  "recordedAtUTC": "2026-10-06T08:37:37.713Z",
+  "status": "TRIAGE_ONLY_NO_REMEDIATION_CLAIM",
+  "scope": "Frozen backend production npm graph only; no frontend, Dart, Go, OS or external provider scan.",
+  "authorization": {
+    "readOnlyTriage": true,
+    "writeThisReceiptOutsideRepository": true,
+    "packageAcquisition": false,
+    "installs": false,
+    "sourceOrLockEdits": false,
+    "freshAudit": false
+  },
+  "identities": {
+    "repository": "/Users/vaanskii/Developer/vynic",
+    "frozenCandidateRoot": "/tmp/vynic-readiness-20261006-a2nbcprb/source",
+    "approvedAudit": {
+      "path": "docs/audits/2026-10-04-readiness/evidence/npm-audit-approved.json",
+      "sha256": "8f0243adad086f8050fc8509ee779af9c0cb5b8531e073f69731056b69f06690",
+      "recordedAtUTC": "2026-10-04T21:10:45.850558+00:00",
+      "counts": {
+        "info": 0,
+        "low": 0,
+        "moderate": 2,
+        "high": 11,
+        "critical": 0,
+        "total": 13
+      },
+      "command": "npm audit --omit=dev --ignore-scripts --json --cache=/tmp/vynic-readiness-npm-cache --fetch-retries=0 --fetch-timeout=15000"
+    },
+    "approvedSummary": {
+      "path": "docs/audits/2026-10-04-readiness/evidence/npm-audit-summary.json",
+      "sha256": "ddb1e0c1a0786b013f5adcb09efa8ca4cf01e1f942182dcae3d5fba5f55cb20f"
+    },
+    "review": {
+      "path": "docs/audits/2026-10-04-readiness/CONFIGURATION_AND_DEPENDENCY_REVIEW.md",
+      "sha256": "b0a18174fa76731a02402a5ba628cd4c023f864bdf549e22cce7c88317231ff6"
+    },
+    "lock": {
+      "path": "apps/backend/package-lock.json",
+      "sha256": "a473f6f0332845314368960f34e5d55f125d5898e3ca7672ad82cdd98369ff1f",
+      "approvedSha256": "a473f6f0332845314368960f34e5d55f125d5898e3ca7672ad82cdd98369ff1f",
+      "frozenCandidateSha256": "a473f6f0332845314368960f34e5d55f125d5898e3ca7672ad82cdd98369ff1f",
+      "lockfileVersion": 3
+    },
+    "packageManifest": {
+      "path": "apps/backend/package.json",
+      "sha256": "e1e3544266ac6b0889c5fa95a06b2d067021e10093ee5f0cf041f0ce148354f6",
+      "frozenCandidateSha256": "e1e3544266ac6b0889c5fa95a06b2d067021e10093ee5f0cf041f0ce148354f6"
+    }
+  },
+  "limits": [
+    "13 affected package entries include meta findings; they are not 13 independent exploitable issues.",
+    "Static code-path/advisory-trigger assessment only; no exploit or new runtime test executed.",
+    "Candidates are outside approved snapshot advisory ranges; no fresh clean audit or latest-safety claim.",
+    "No package installation, lock generation, repository edit, secret/environment access or provider call occurred.",
+    "Candidate metadata bodies have verified cached SHA-512 checksums; fixed archives are not present in inspected caches."
+  ],
+  "sourceEvidence": {
+    "main": {
+      "path": "apps/backend/src/main.ts",
+      "line": 46,
+      "originalSha256": "74f92ea615d6d0d519d3e39df4d877718d1320d3894add03ce68afb14967a3a8",
+      "frozenCandidateSha256": "74f92ea615d6d0d519d3e39df4d877718d1320d3894add03ce68afb14967a3a8"
+    },
+    "upload": {
+      "path": "apps/backend/src/customer/customer-website.controller.ts",
+      "line": 63,
+      "originalSha256": "7b4d25ee0f6b7e4d95d92964281c73e4a0b5feddc12dd5ec318c0b1198ebe1db",
+      "frozenCandidateSha256": "7b4d25ee0f6b7e4d95d92964281c73e4a0b5feddc12dd5ec318c0b1198ebe1db"
+    },
+    "customerGuard": {
+      "path": "apps/backend/src/customer/customer-auth.ts",
+      "line": 131,
+      "originalSha256": "9fb14e68ac836e72e11158c17bc43d4feeffcd457339f6127114bdae56a7f160",
+      "frozenCandidateSha256": "9fb14e68ac836e72e11158c17bc43d4feeffcd457339f6127114bdae56a7f160"
+    },
+    "socket": {
+      "path": "apps/backend/src/realtime/monitoring.gateway.ts",
+      "line": 39,
+      "originalSha256": "569b24059cd7f31a2d0cf9f1236dafa61aef9f0008004b841e12bb69d3276a9a",
+      "frozenCandidateSha256": "569b24059cd7f31a2d0cf9f1236dafa61aef9f0008004b841e12bb69d3276a9a"
+    },
+    "payment": {
+      "path": "apps/backend/src/website/payment/payment.service.ts",
+      "line": 28,
+      "originalSha256": "49550a395732ad00f91a8096b3a39c54e2a19081681b50686785f6ce18684332",
+      "frozenCandidateSha256": "49550a395732ad00f91a8096b3a39c54e2a19081681b50686785f6ce18684332"
+    },
+    "push": {
+      "path": "apps/backend/src/realtime/notifications/hybrid-notification.service.ts",
+      "line": 218,
+      "originalSha256": "baae8ddd937e42cef9037df24639753afd22a3cf32541fac28fef7d4ad7089b7",
+      "frozenCandidateSha256": "baae8ddd937e42cef9037df24639753afd22a3cf32541fac28fef7d4ad7089b7"
+    },
+    "prismaConfig": {
+      "path": "apps/backend/prisma.config.ts",
+      "line": 2,
+      "originalSha256": "6484d77da99bdae0e9ad7b9e916e16af755e7446aaded2e4585896368b4bc814",
+      "frozenCandidateSha256": "6484d77da99bdae0e9ad7b9e916e16af755e7446aaded2e4585896368b4bc814"
+    },
+    "prismaRuntime": {
+      "path": "apps/backend/src/shared/prisma/prisma.service.ts",
+      "line": 3,
+      "originalSha256": "a0ef5b08f3d5091a3f653a82a74302885e9ad135356f8ef254d984d97454b79a",
+      "frozenCandidateSha256": "a0ef5b08f3d5091a3f653a82a74302885e9ad135356f8ef254d984d97454b79a"
+    },
+    "docker": {
+      "path": "apps/backend/Dockerfile",
+      "line": 19,
+      "originalSha256": "eb5036930c673c8d7284d2492da42218c80b3116381bef0dce596b5c501e88d4",
+      "frozenCandidateSha256": "eb5036930c673c8d7284d2492da42218c80b3116381bef0dce596b5c501e88d4"
+    },
+    "migrationJob": {
+      "path": "compose.yaml",
+      "line": 33,
+      "originalSha256": "ee71e021b7391db5c2d53447f09d665a4c90aa551af012498d12d3b773144824",
+      "frozenCandidateSha256": "c2f25a10e3654971b978ddf3a89d30b8f5081159f85423e132ea501bbd4c1738"
+    }
+  },
+  "cachedMetadataEvidence": {
+    "@fastify/busboy": {
+      "integrity": "sha512-R9EooGS3SHc9wwj6N69eO073zHDlbK9+BtNmMul8HR9oQDOfg7gwNMicMhFmosF2pr7v/tMt8FpSU+EXDRbGIw==",
+      "sha512Verified": true,
+      "recordedAtUTC": "2026-10-04T21:08:58.584Z",
+      "cacheIndex": 0
+    },
+    "@grpc/grpc-js": {
+      "integrity": "sha512-p9SuStMQ/qQ0XDhUSOR6zrzAg001wKFaO6i7f21y5iozRAt9fUUFYsD0gpYsYDMW/4cLjC4WaYN0RPm51V0ZDw==",
+      "sha512Verified": true,
+      "recordedAtUTC": "2026-10-04T21:08:58.863Z",
+      "cacheIndex": 0
+    },
+    "@nestjs/platform-express": {
+      "integrity": "sha512-BwxJStJBooEMsoJofDpiov5M29f32LbBeKmA2ti7QwSpiEiySq7LH0fqqLHchJ5HQssf5KMpvs7L5iRyx0VvCg==",
+      "sha512Verified": true,
+      "recordedAtUTC": "2026-10-04T21:09:01.963Z",
+      "cacheIndex": 0
+    },
+    "@prisma/config": {
+      "integrity": "sha512-eXosuDsGuWrurFkkuQqZkdgv1kLo7Ry/u5QC3NfHehkyZulregaAHrTswcSyKapBwUMwFGlbmklu7v1L2o2Irw==",
+      "sha512Verified": true,
+      "recordedAtUTC": "2026-10-04T21:09:00.174Z",
+      "cacheIndex": 0
+    },
+    "axios": {
+      "integrity": "sha512-zd2r0MWqqqo0WpDWv/sZGi0hIJ+iYmVlA6AZnh7rZNW4xfH/cXRFZgmzAfqnlHTy4uJdCInxXf88+dIORx/sxA==",
+      "sha512Verified": true,
+      "recordedAtUTC": "2026-10-04T21:08:58.767Z",
+      "cacheIndex": 0
+    },
+    "deepmerge-ts": {
+      "integrity": "sha512-Tr2Uy9I7OzTeOPQB4jjtzbRLd1CqQxq7u8bAdz3QuEFzNExxdn8jOGSgas+zeNnMH+xnjtRBo90uAqskEzWqwA==",
+      "sha512Verified": true,
+      "recordedAtUTC": "2026-10-04T21:08:58.789Z",
+      "cacheIndex": 0
+    },
+    "engine.io": {
+      "integrity": "sha512-by3S6YMWL0q+yN455d8FlUbt7YIIFkJpRIkdCdomsTtfc0eS40sdlDBsZcr83s3Ha+WW/9+x99jmuxvwU47nxg==",
+      "sha512Verified": true,
+      "recordedAtUTC": "2026-10-04T21:08:58.790Z",
+      "cacheIndex": 0
+    },
+    "fast-xml-parser": {
+      "integrity": "sha512-QoEyurCTW2/KYrP2K12xhTcXkxpg7kxMA3k6Bh11h4JUR2uUl/ExHXNczk7RalGlCtxQ4/sFHSYSm63WjA/Syw==",
+      "sha512Verified": true,
+      "recordedAtUTC": "2026-10-04T21:08:58.783Z",
+      "cacheIndex": 0
+    },
+    "multer": {
+      "integrity": "sha512-KKlN+LOf+yprTBaBs5RToH0JNwvoCDpVkNBaqiJUuiMSFHpgVeCTx4sU5iC1bP5aQMJYYNrQOr4ZuAb8lNmS/A==",
+      "sha512Verified": true,
+      "recordedAtUTC": "2026-10-04T21:08:58.786Z",
+      "cacheIndex": 0
+    },
+    "prisma": {
+      "integrity": "sha512-QKOv6cjnw11OV1hssE7ozHZajSAwCsJdxgTNtnGiTh+9MIAk0pKc+zgKcxYu4g8WmriPRMXOShpAyVlOOFvJKg==",
+      "sha512Verified": true,
+      "recordedAtUTC": "2026-10-04T21:09:03.542Z",
+      "cacheIndex": 0
+    },
+    "protobufjs": {
+      "integrity": "sha512-URDBx4VASB710lFj0nD8KhKQoZXP8DYReYDlnt+NSI/O3j5vWAGgnDO+6uH8FPenBDj+qI5tM50+cM6aO1F7Ag==",
+      "sha512Verified": true,
+      "recordedAtUTC": "2026-10-04T21:08:58.767Z",
+      "cacheIndex": 0
+    },
+    "qs": {
+      "integrity": "sha512-7qi0565RUUxSDEQmj+dBljDh/pMGnxwu/V6kMlKABdhMJxKfZdpoaB7gJY8PhLHc6Ae38VeL7GTfz64YxtF0yg==",
+      "sha512Verified": true,
+      "recordedAtUTC": "2026-10-04T21:08:58.544Z",
+      "cacheIndex": 0
+    },
+    "socket.io-parser": {
+      "integrity": "sha512-D3pB+U3M4HMBbcF4cuJ48/b7YONx9q+vF7qVEZBWxq0reNBSZyWvGxg0szSZ9qDNlM+NdQYEHra72N8pnKMj2A==",
+      "sha512Verified": true,
+      "recordedAtUTC": "2026-10-04T21:08:58.781Z",
+      "cacheIndex": 0
+    }
+  },
+  "packages": [
+    {
+      "name": "@fastify/busboy",
+      "severity": "high",
+      "direct": false,
+      "aggregateAffectedRange": "1.0.0 - 3.2.0",
+      "advisories": [
+        {
+          "id": "GHSA-xjh9-v7x6-24jw",
+          "range": ">=3.1.0 <3.2.1",
+          "severity": "high"
+        },
+        {
+          "id": "GHSA-x8mw-p69m-v3mx",
+          "range": ">=1.0.0 <3.2.1",
+          "severity": "high"
+        }
+      ],
+      "metaVia": [],
+      "installed": [
+        {
+          "node": "node_modules/@fastify/busboy",
+          "lockVersion": "3.2.0",
+          "installedVersion": "3.2.0",
+          "production": true,
+          "optional": false,
+          "parents": [
+            {
+              "node": "node_modules/firebase-admin",
+              "version": "13.10.0",
+              "kind": "dependencies",
+              "range": "^3.0.0",
+              "devOnly": false
+            }
+          ]
+        }
+      ],
+      "classification": "conditional_outbound_provider_response",
+      "priority": 3,
+      "paths": [
+        "firebase-admin@13.10.0 -> @fastify/busboy@3.2.0"
+      ],
+      "sourceRefs": [
+        "push"
+      ],
+      "trigger": "Firebase generic HTTP and HTTP/2 response handlers dynamically instantiate Dicer when provider Content-Type contains a multipart boundary. Application FCM sendEachForMulticast reaches the response handler; callers do not supply the response Content-Type/boundary.",
+      "libraryRefs": [
+        "apps/backend/node_modules/firebase-admin/lib/utils/api-request.js:401",
+        "apps/backend/node_modules/firebase-admin/lib/utils/api-request.js:545",
+        "apps/backend/node_modules/firebase-admin/lib/utils/api-request.js:637"
+      ],
+      "candidates": [
+        "3.2.1",
+        "3.2.2"
+      ],
+      "primary": "3.2.1",
+      "change": "Targeted in-range transitive update; do not confuse with Multer's unscoped busboy.",
+      "tests": [
+        "FCM response parsing with mocked provider streams, including malformed boundaries/headers; preserve JSON response/error handling."
+      ],
+      "fixedVersionInstalled": false,
+      "exploitabilityReproduced": false,
+      "status": "BLOCKED_PACKAGE_ACQUISITION_AUTHORIZATION_AND_ARCHIVES",
+      "candidateMetadataRef": "@fastify/busboy"
+    },
+    {
+      "name": "@grpc/grpc-js",
+      "severity": "high",
+      "direct": false,
+      "aggregateAffectedRange": "1.14.0 - 1.14.4",
+      "advisories": [
+        {
+          "id": "GHSA-m9gg-hp2v-232j",
+          "range": ">=1.14.0 <1.14.5",
+          "severity": "high"
+        },
+        {
+          "id": "GHSA-f596-whhp-79r4",
+          "range": ">=1.14.0 <1.14.5",
+          "severity": "low"
+        }
+      ],
+      "metaVia": [],
+      "installed": [
+        {
+          "node": "node_modules/@grpc/grpc-js",
+          "lockVersion": "1.14.4",
+          "installedVersion": "1.14.4",
+          "production": true,
+          "optional": true,
+          "parents": [
+            {
+              "node": "node_modules/google-gax",
+              "version": "4.6.1",
+              "kind": "dependencies",
+              "range": "^1.10.9",
+              "devOnly": false
+            }
+          ]
+        }
+      ],
+      "classification": "dormant_optional_firestore_branch",
+      "priority": 4,
+      "paths": [
+        "firebase-admin@13.10.0 -> @google-cloud/firestore@7.11.6 -> google-gax@4.6.1 -> @grpc/grpc-js@1.14.4"
+      ],
+      "sourceRefs": [
+        "push"
+      ],
+      "trigger": "Reported getAuthContext certificate authorization and handler error disclosure concern gRPC server behavior. No application Firestore import/call, gRPC server, or getAuthContext use found; only Firebase App/Messaging are used.",
+      "candidates": [
+        "1.14.5"
+      ],
+      "primary": "1.14.5",
+      "change": "Targeted in-range transitive update; preserve Firebase 13.x.",
+      "tests": [
+        "Firebase App/Messaging import and notification regression tests; do not add a Firestore or gRPC server merely to exercise dormant functionality."
+      ],
+      "fixedVersionInstalled": false,
+      "exploitabilityReproduced": false,
+      "status": "BLOCKED_PACKAGE_ACQUISITION_AUTHORIZATION_AND_ARCHIVES",
+      "candidateMetadataRef": "@grpc/grpc-js"
+    },
+    {
+      "name": "@nestjs/platform-express",
+      "severity": "high",
+      "direct": true,
+      "aggregateAffectedRange": "<=11.1.27 || 12.0.0-alpha.0 - 12.0.0-alpha.7",
+      "advisories": [],
+      "metaVia": [
+        "multer"
+      ],
+      "installed": [
+        {
+          "node": "node_modules/@nestjs/platform-express",
+          "lockVersion": "11.1.27",
+          "installedVersion": "11.1.27",
+          "production": true,
+          "optional": false,
+          "parents": [
+            {
+              "node": "root",
+              "version": "0.0.1",
+              "kind": "dependencies",
+              "range": "^11.0.1",
+              "devOnly": false
+            }
+          ]
+        }
+      ],
+      "classification": "multer_meta_finding",
+      "priority": 2,
+      "paths": [
+        "root -> @nestjs/platform-express@11.1.27 -> multer@2.1.1"
+      ],
+      "sourceRefs": [
+        "main",
+        "upload"
+      ],
+      "trigger": "Meta vulnerability through pinned Multer, not a separate exploit. Cached Nest 11.1.28 through 11.2.5 still pin affected Multer 2.2.0; earliest inspected corrected native Nest dependency is 11.2.6 -> Multer 2.4.0.",
+      "candidates": [
+        "11.2.6",
+        "11.2.7"
+      ],
+      "change": "Primary minimal plan reviews a scoped Multer 2.3.0 override under current Nest. Native adapter upgrade to 11.2.6 plus Multer 2.4.0 is an alternative requiring its own upstream/peer review and runtime tests.",
+      "tests": [
+        "customer/customer-website-logo.http.spec.ts",
+        "customer/customer-website-logo.spec.ts",
+        "website/core/website-logo.service.spec.ts",
+        "Backend build and Nest HTTP bootstrap regression."
+      ],
+      "fixedVersionInstalled": false,
+      "exploitabilityReproduced": false,
+      "status": "BLOCKED_COMPATIBILITY_REVIEW",
+      "candidateMetadataRef": "@nestjs/platform-express"
+    },
+    {
+      "name": "@prisma/config",
+      "severity": "high",
+      "direct": true,
+      "aggregateAffectedRange": "6.13.0-dev.1 - 8.1.0-dev.4",
+      "advisories": [],
+      "metaVia": [
+        "deepmerge-ts"
+      ],
+      "installed": [
+        {
+          "node": "node_modules/@prisma/config",
+          "lockVersion": "6.19.3",
+          "installedVersion": "6.19.3",
+          "production": true,
+          "optional": false,
+          "parents": [
+            {
+              "node": "root",
+              "version": "0.0.1",
+              "kind": "dependencies",
+              "range": "^6.19.3",
+              "devOnly": false
+            },
+            {
+              "node": "node_modules/prisma",
+              "version": "6.19.3",
+              "kind": "dependencies",
+              "range": "6.19.3",
+              "devOnly": false
+            }
+          ]
+        }
+      ],
+      "classification": "cli_configuration_meta_finding",
+      "priority": 5,
+      "paths": [
+        "root -> @prisma/config@6.19.3 -> deepmerge-ts@7.1.5",
+        "root -> prisma@6.19.3 -> @prisma/config@6.19.3 -> deepmerge-ts@7.1.5"
+      ],
+      "sourceRefs": [
+        "prismaConfig",
+        "prismaRuntime",
+        "docker",
+        "migrationJob"
+      ],
+      "trigger": "Prisma CLI loads trusted local config through c12/deepmerge; source runtime imports PrismaClient, not config. No untrusted/cyclic configuration input path found. CLI is retained in image for migration job.",
+      "candidates": [],
+      "change": "Unresolved compatibility exception. No verified corrected Prisma 6 release in cache; reject suggested 6.12.0 downgrade. Cached config 7.10.0 still pins deepmerge 7.1.5.",
+      "tests": [
+        "If a dependency-level fix is proposed: config load, validate/generate, schema diff, synthetic migration deploy and upgrade proof; preserve matched Prisma/client/engine versions."
+      ],
+      "fixedVersionInstalled": false,
+      "exploitabilityReproduced": false,
+      "status": "BLOCKED_COMPATIBILITY_REVIEW",
+      "candidateMetadataRef": "@prisma/config"
+    },
+    {
+      "name": "axios",
+      "severity": "high",
+      "direct": true,
+      "aggregateAffectedRange": "1.0.0 - 1.19.0",
+      "advisories": [
+        {
+          "id": "GHSA-vh66-26gq-q6x8",
+          "range": ">=1.7.0 <1.20.0",
+          "severity": "moderate"
+        },
+        {
+          "id": "GHSA-9fr6-4gfg-395g",
+          "range": ">=1.0.0 <1.20.0",
+          "severity": "moderate"
+        },
+        {
+          "id": "GHSA-c29m-xwm3-cm6r",
+          "range": ">=1.16.1 <1.20.0",
+          "severity": "high"
+        },
+        {
+          "id": "GHSA-mghh-pgcx-3jjj",
+          "range": ">=1.15.0 <1.20.0",
+          "severity": "high"
+        },
+        {
+          "id": "GHSA-x97p-jq2g-jp4f",
+          "range": ">=1.15.1 <1.20.0",
+          "severity": "high"
+        },
+        {
+          "id": "GHSA-3pq3-5fj3-cg6v",
+          "range": ">=1.13.0 <1.20.0",
+          "severity": "high"
+        },
+        {
+          "id": "GHSA-542g-h47m-68v8",
+          "range": ">=1.13.0 <1.20.0",
+          "severity": "high"
+        },
+        {
+          "id": "GHSA-j8rh-479h-cp32",
+          "range": ">=1.0.0 <1.20.0",
+          "severity": "moderate"
+        },
+        {
+          "id": "GHSA-4hqw-qxg8-jxx2",
+          "range": ">=1.12.0 <1.20.0",
+          "severity": "moderate"
+        },
+        {
+          "id": "GHSA-m8m8-qj5v-23w3",
+          "range": ">=1.15.2 <1.20.0",
+          "severity": "high"
+        },
+        {
+          "id": "GHSA-44g4-m2mj-wpvx",
+          "range": ">=1.15.0 <1.20.0",
+          "severity": "moderate"
+        },
+        {
+          "id": "GHSA-r4gj-5m52-g5wh",
+          "range": ">=1.17.0 <1.20.0",
+          "severity": "high"
+        }
+      ],
+      "metaVia": [],
+      "installed": [
+        {
+          "node": "node_modules/axios",
+          "lockVersion": "1.18.0",
+          "installedVersion": "1.18.0",
+          "production": true,
+          "optional": false,
+          "parents": [
+            {
+              "node": "root",
+              "version": "0.0.1",
+              "kind": "dependencies",
+              "range": "^1.11.0",
+              "devOnly": false
+            }
+          ]
+        }
+      ],
+      "classification": "conditional_outbound_bank_provider",
+      "priority": 3,
+      "paths": [
+        "root -> axios@1.18.0"
+      ],
+      "sourceRefs": [
+        "payment"
+      ],
+      "trigger": "BOG OAuth/order/receipt requests use server-owned HTTPS URLs, encoded receipt ID and default Node HTTP/1 adapter. Fetch and HTTP/2 prerequisites are absent; data: URL injection unavailable; independent prototype pollution not established. Redirect Location from provider is conditional untrusted input; redirects currently enabled.",
+      "candidates": [
+        "1.20.0"
+      ],
+      "primary": "1.20.0",
+      "change": "Targeted same-major update; consider explicit HTTP/1 adapter, disabled redirects and bounded responses as separate compatible hardening.",
+      "tests": [
+        "website/payment/booking-payment.spec.ts",
+        "payment-integrations/payment-integrations.integration.spec.ts",
+        "Local provider-double transport tests for redirects, response limits, timeouts and existing sanitized errors; zero real bank calls."
+      ],
+      "fixedVersionInstalled": false,
+      "exploitabilityReproduced": false,
+      "status": "BLOCKED_PACKAGE_ACQUISITION_AUTHORIZATION_AND_ARCHIVES",
+      "candidateMetadataRef": "axios"
+    },
+    {
+      "name": "deepmerge-ts",
+      "severity": "high",
+      "direct": false,
+      "aggregateAffectedRange": "<8.0.0",
+      "advisories": [
+        {
+          "id": "GHSA-ggr8-5vv4-36mx",
+          "range": "<8.0.0",
+          "severity": "high"
+        }
+      ],
+      "metaVia": [],
+      "installed": [
+        {
+          "node": "node_modules/deepmerge-ts",
+          "lockVersion": "7.1.5",
+          "installedVersion": "7.1.5",
+          "production": true,
+          "optional": false,
+          "parents": [
+            {
+              "node": "node_modules/@prisma/config",
+              "version": "6.19.3",
+              "kind": "dependencies",
+              "range": "7.1.5",
+              "devOnly": false
+            }
+          ]
+        }
+      ],
+      "classification": "cli_configuration_only",
+      "priority": 5,
+      "paths": [
+        "root -> @prisma/config@6.19.3 -> deepmerge-ts@7.1.5",
+        "root -> prisma@6.19.3 -> @prisma/config@6.19.3 -> deepmerge-ts@7.1.5"
+      ],
+      "sourceRefs": [
+        "prismaConfig",
+        "prismaRuntime",
+        "docker",
+        "migrationJob"
+      ],
+      "trigger": "Recursive object-graph merging occurs in Prisma CLI config loader. Repository config is a trusted acyclic object; no application runtime or HTTP input is fed to it.",
+      "candidates": [
+        "8.0.0",
+        "8.0.1",
+        "8.0.2"
+      ],
+      "change": "Candidate versions are outside advisory range but violate parent exact 7.1.5 pin; no archive or API/behavior compatibility verification. Do not force an override or migrate Prisma blindly.",
+      "tests": [
+        "Same controlled Prisma config/schema/migration compatibility proof as @prisma/config; otherwise explicit owner/expiry exception."
+      ],
+      "fixedVersionInstalled": false,
+      "exploitabilityReproduced": false,
+      "status": "BLOCKED_COMPATIBILITY_REVIEW",
+      "candidateMetadataRef": "deepmerge-ts"
+    },
+    {
+      "name": "engine.io",
+      "severity": "high",
+      "direct": false,
+      "aggregateAffectedRange": "6.6.0 - 6.6.9",
+      "advisories": [
+        {
+          "id": "GHSA-2gc4-cqfq-p2gv",
+          "range": ">=6.6.0 <6.6.10",
+          "severity": "high"
+        }
+      ],
+      "metaVia": [],
+      "installed": [
+        {
+          "node": "node_modules/engine.io",
+          "lockVersion": "6.6.9",
+          "installedVersion": "6.6.9",
+          "production": true,
+          "optional": false,
+          "parents": [
+            {
+              "node": "node_modules/socket.io",
+              "version": "4.8.3",
+              "kind": "dependencies",
+              "range": "~6.6.0",
+              "devOnly": false
+            }
+          ]
+        }
+      ],
+      "classification": "internet_transport_before_manager_authentication",
+      "priority": 1,
+      "paths": [
+        "socket.io@4.8.3 -> engine.io@6.6.9",
+        "@nestjs/platform-socket.io@11.1.27 -> socket.io@4.8.3 -> engine.io@6.6.9"
+      ],
+      "sourceRefs": [
+        "socket"
+      ],
+      "trigger": "Engine.IO transport requests and existing-session protocol selection precede Socket.IO Manager JWT namespace middleware; native requests without Origin are admitted. Protocol revision mismatch needs actual isolated transport regression proof.",
+      "candidates": [
+        "6.6.10",
+        "6.6.11"
+      ],
+      "primary": "6.6.10",
+      "change": "Targeted in-range update under Socket.IO 4.x. Existing defaults are allowEIO3:false and a 1 MB maxHttpBufferSize.",
+      "tests": [
+        "tenancy/manager-saas.integration.spec.ts",
+        "Isolated HTTP/WebSocket transport tests for invalid/mismatched EIO revisions before authentication, then valid connection/reconnect and tenant/token-expiry behavior."
+      ],
+      "fixedVersionInstalled": false,
+      "exploitabilityReproduced": false,
+      "status": "BLOCKED_PACKAGE_ACQUISITION_AUTHORIZATION_AND_ARCHIVES",
+      "candidateMetadataRef": "engine.io"
+    },
+    {
+      "name": "fast-xml-parser",
+      "severity": "high",
+      "direct": false,
+      "aggregateAffectedRange": "5.9.3 - 5.10.0",
+      "advisories": [
+        {
+          "id": "GHSA-8r6m-32jq-jx6q",
+          "range": ">=5.9.3 <5.10.1",
+          "severity": "high"
+        }
+      ],
+      "metaVia": [],
+      "installed": [
+        {
+          "node": "node_modules/fast-xml-parser",
+          "lockVersion": "5.9.3",
+          "installedVersion": "5.9.3",
+          "production": true,
+          "optional": true,
+          "parents": [
+            {
+              "node": "node_modules/@google-cloud/storage",
+              "version": "7.21.0",
+              "kind": "dependencies",
+              "range": "^5.3.4",
+              "devOnly": false
+            }
+          ]
+        }
+      ],
+      "classification": "dormant_optional_storage_branch",
+      "priority": 4,
+      "paths": [
+        "firebase-admin@13.10.0 -> @google-cloud/storage@7.21.0 -> fast-xml-parser@5.9.3"
+      ],
+      "sourceRefs": [
+        "push",
+        "upload"
+      ],
+      "trigger": "Storage transfer-manager parses provider XML; no application Storage import/call or XML ingestion found. Website image persistence uses local files and sharp.",
+      "libraryRefs": [
+        "apps/backend/node_modules/@google-cloud/storage/build/cjs/src/transfer-manager.js:177"
+      ],
+      "candidates": [
+        "5.10.1",
+        "5.11.2"
+      ],
+      "primary": "5.10.1",
+      "change": "Targeted in-range update; four additional dependency metadata resolutions are required for candidate 5.10.1.",
+      "tests": [
+        "Firebase App/Messaging import regressions; preserve local website-media tests."
+      ],
+      "fixedVersionInstalled": false,
+      "exploitabilityReproduced": false,
+      "status": "BLOCKED_PACKAGE_ACQUISITION_AUTHORIZATION_AND_ARCHIVES",
+      "candidateMetadataRef": "fast-xml-parser"
+    },
+    {
+      "name": "multer",
+      "severity": "high",
+      "direct": false,
+      "aggregateAffectedRange": "<=2.2.0",
+      "advisories": [
+        {
+          "id": "GHSA-72gw-mp4g-v24j",
+          "range": ">=1.0.0 <2.2.0",
+          "severity": "high"
+        },
+        {
+          "id": "GHSA-3p4h-7m6x-2hcm",
+          "range": ">=2.0.0-alpha.1 <2.2.0",
+          "severity": "moderate"
+        },
+        {
+          "id": "GHSA-wc9g-mqfw-jrwm",
+          "range": "<2.3.0",
+          "severity": "high"
+        },
+        {
+          "id": "GHSA-qvfw-j98x-7q72",
+          "range": "<2.3.0",
+          "severity": "low"
+        },
+        {
+          "id": "GHSA-535w-7cp7-47q4",
+          "range": "<2.3.0",
+          "severity": "high"
+        }
+      ],
+      "metaVia": [],
+      "installed": [
+        {
+          "node": "node_modules/multer",
+          "lockVersion": "2.1.1",
+          "installedVersion": "2.1.1",
+          "production": true,
+          "optional": false,
+          "parents": [
+            {
+              "node": "node_modules/@nestjs/platform-express",
+              "version": "11.1.27",
+              "kind": "dependencies",
+              "range": "2.1.1",
+              "devOnly": false
+            }
+          ]
+        }
+      ],
+      "classification": "authenticated_upload_parser_with_trigger_restrictions",
+      "priority": 2,
+      "paths": [
+        "@nestjs/platform-express@11.1.27 -> multer@2.1.1"
+      ],
+      "sourceRefs": [
+        "upload",
+        "customerGuard"
+      ],
+      "trigger": "CustomerGuard runs before FileInterceptor; Venue ownership and commercial eligibility run after multipart parsing. Both routes limit files:1, fields:0 and 5 MB. Busboy fieldsLimit precedes append-field for ordinary text fields, restricting nested/crafted/index field-name advisories. No async fileFilter is configured. Aborted stream cleanup remains relevant; exploitability has not been reproduced.",
+      "libraryRefs": [
+        "apps/backend/node_modules/multer/lib/make-middleware.js:157",
+        "apps/backend/node_modules/busboy/lib/types/multipart.js:369"
+      ],
+      "candidates": [
+        "2.3.0",
+        "2.4.0"
+      ],
+      "primary": "2.3.0",
+      "change": "Review narrowly scoped @nestjs/platform-express -> multer override because parent pins exact 2.1.1. Alternative native Nest adapter 11.2.6 pins 2.4.0.",
+      "tests": [
+        "customer/customer-website-logo.http.spec.ts",
+        "customer/customer-website-logo.spec.ts",
+        "website/core/website-logo.service.spec.ts",
+        "Actual multipart malformed/unexpected-field, oversize, abort, unauthorized ownership/commercial admission and subsequent healthy-upload cases."
+      ],
+      "fixedVersionInstalled": false,
+      "exploitabilityReproduced": false,
+      "status": "BLOCKED_PACKAGE_ACQUISITION_AUTHORIZATION_AND_ARCHIVES",
+      "candidateMetadataRef": "multer"
+    },
+    {
+      "name": "prisma",
+      "severity": "high",
+      "direct": true,
+      "aggregateAffectedRange": "6.13.0-dev.1 - 8.1.0-dev.4",
+      "advisories": [],
+      "metaVia": [
+        "@prisma/config"
+      ],
+      "installed": [
+        {
+          "node": "node_modules/prisma",
+          "lockVersion": "6.19.3",
+          "installedVersion": "6.19.3",
+          "production": true,
+          "optional": false,
+          "parents": [
+            {
+              "node": "root",
+              "version": "0.0.1",
+              "kind": "dependencies",
+              "range": "^6.19.3",
+              "devOnly": false
+            }
+          ]
+        }
+      ],
+      "classification": "cli_configuration_meta_finding",
+      "priority": 5,
+      "paths": [
+        "root -> prisma@6.19.3 -> @prisma/config@6.19.3 -> deepmerge-ts@7.1.5"
+      ],
+      "sourceRefs": [
+        "prismaRuntime",
+        "docker",
+        "migrationJob"
+      ],
+      "trigger": "Application starts node dist/src/main.js without npm prestart migration. Separate Compose job invokes Prisma CLI; app does not import CLI config. Installed production dependency is tooling with trusted configuration input.",
+      "candidates": [],
+      "change": "Preserve CLI needed by migration job; unresolved deepmerge compatibility. Removing only direct @prisma/config does not remove Prisma's transitive config. Do not move CLI to dev without a separate migration-image design.",
+      "tests": [
+        "Same controlled Prisma configuration/schema/migration compatibility proof as @prisma/config."
+      ],
+      "fixedVersionInstalled": false,
+      "exploitabilityReproduced": false,
+      "status": "BLOCKED_COMPATIBILITY_REVIEW",
+      "candidateMetadataRef": "prisma"
+    },
+    {
+      "name": "protobufjs",
+      "severity": "moderate",
+      "direct": false,
+      "aggregateAffectedRange": "7.5.0 - 7.6.4",
+      "advisories": [
+        {
+          "id": "GHSA-j3f2-48v5-ccww",
+          "range": ">=7.5.0 <=7.6.4",
+          "severity": "moderate"
+        }
+      ],
+      "metaVia": [],
+      "installed": [
+        {
+          "node": "node_modules/protobufjs",
+          "lockVersion": "7.6.4",
+          "installedVersion": "7.6.4",
+          "production": true,
+          "optional": true,
+          "parents": [
+            {
+              "node": "node_modules/@google-cloud/firestore",
+              "version": "7.11.6",
+              "kind": "dependencies",
+              "range": "^7.2.6",
+              "devOnly": false
+            },
+            {
+              "node": "node_modules/@grpc/grpc-js/node_modules/@grpc/proto-loader",
+              "version": "0.8.1",
+              "kind": "dependencies",
+              "range": "^7.5.5",
+              "devOnly": false
+            },
+            {
+              "node": "node_modules/@grpc/proto-loader",
+              "version": "0.7.15",
+              "kind": "dependencies",
+              "range": "^7.2.5",
+              "devOnly": false
+            },
+            {
+              "node": "node_modules/google-gax",
+              "version": "4.6.1",
+              "kind": "dependencies",
+              "range": "^7.3.2",
+              "devOnly": false
+            },
+            {
+              "node": "node_modules/proto3-json-serializer",
+              "version": "2.0.2",
+              "kind": "dependencies",
+              "range": "^7.2.5",
+              "devOnly": false
+            }
+          ]
+        }
+      ],
+      "classification": "dormant_optional_firestore_branch",
+      "priority": 4,
+      "paths": [
+        "firebase-admin@13.10.0 -> @google-cloud/firestore@7.11.6 -> protobufjs@7.6.4",
+        "Firestore -> google-gax@4.6.1 -> protobufjs@7.6.4",
+        "Firestore -> google-gax -> @grpc/proto-loader@0.7.15 -> protobufjs",
+        "Firestore -> google-gax -> grpc-js -> @grpc/proto-loader@0.8.1 -> protobufjs",
+        "Firestore -> proto3-json-serializer@2.0.2 -> protobufjs"
+      ],
+      "sourceRefs": [
+        "push"
+      ],
+      "trigger": "Infinite loop concerns parsing untrusted .proto options. No application Firestore import/call or untrusted .proto ingestion found; SDK bundled definitions are trusted.",
+      "candidates": [
+        "7.6.5",
+        "7.6.6"
+      ],
+      "primary": "7.6.5",
+      "change": "Targeted same-major update satisfying all inspected parents.",
+      "tests": [
+        "Firebase App/Messaging import and notification regressions."
+      ],
+      "fixedVersionInstalled": false,
+      "exploitabilityReproduced": false,
+      "status": "BLOCKED_PACKAGE_ACQUISITION_AUTHORIZATION_AND_ARCHIVES",
+      "candidateMetadataRef": "protobufjs"
+    },
+    {
+      "name": "qs",
+      "severity": "moderate",
+      "direct": false,
+      "aggregateAffectedRange": "2.2.5 - 6.15.3",
+      "advisories": [
+        {
+          "id": "GHSA-x5fp-wj9c-mxmx",
+          "range": ">=6.14.2 <=6.15.3",
+          "severity": "moderate"
+        },
+        {
+          "id": "GHSA-4mjr-xmp4-gh2g",
+          "range": ">=2.2.5 <6.16.0",
+          "severity": "moderate"
+        }
+      ],
+      "metaVia": [],
+      "installed": [
+        {
+          "node": "node_modules/qs",
+          "lockVersion": "6.15.2",
+          "installedVersion": "6.15.2",
+          "production": true,
+          "optional": false,
+          "parents": [
+            {
+              "node": "node_modules/body-parser",
+              "version": "2.3.0",
+              "kind": "dependencies",
+              "range": "^6.15.2",
+              "devOnly": false
+            },
+            {
+              "node": "node_modules/express",
+              "version": "5.2.1",
+              "kind": "dependencies",
+              "range": "^6.14.0",
+              "devOnly": false
+            },
+            {
+              "node": "node_modules/superagent",
+              "version": "10.3.0",
+              "kind": "dependencies",
+              "range": "^6.14.1",
+              "devOnly": true
+            }
+          ]
+        }
+      ],
+      "classification": "public_parse_reachable_reported_triggers_not_found",
+      "priority": 4,
+      "paths": [
+        "@nestjs/platform-express@11.1.27 -> express@5.2.1 -> qs@6.15.2",
+        "Nest Express -> express@5.2.1 -> body-parser@2.3.0 -> qs@6.15.2"
+      ],
+      "sourceRefs": [
+        "main"
+      ],
+      "trigger": "Global extended URL-encoded body parsing runs before guards. Reported comma array-limit bypass needs comma:true; current defaults are false. isBuffer gadget is called by qs.stringify, not qs.parse; no runtime qs.stringify consumer found. The only additional qs parent is dev-only superagent.",
+      "libraryRefs": [
+        "apps/backend/node_modules/body-parser/lib/types/urlencoded.js:99",
+        "apps/backend/node_modules/qs/lib/parse.js:16",
+        "apps/backend/node_modules/qs/lib/stringify.js:127"
+      ],
+      "candidates": [
+        "6.16.0"
+      ],
+      "primary": "6.16.0",
+      "change": "Targeted in-range transitive update. Do not reduce 50 MB POS snapshot budget without size/compatibility evidence; preserve BOG raw JSON body bytes.",
+      "tests": [
+        "URL-encoded nested/prototype-shaped/too-many-parameter rejection with a subsequent healthy request; raw JSON callback bytes and POS request-size compatibility."
+      ],
+      "fixedVersionInstalled": false,
+      "exploitabilityReproduced": false,
+      "status": "BLOCKED_PACKAGE_ACQUISITION_AUTHORIZATION_AND_ARCHIVES",
+      "candidateMetadataRef": "qs"
+    },
+    {
+      "name": "socket.io-parser",
+      "severity": "high",
+      "direct": false,
+      "aggregateAffectedRange": "4.0.0 - 4.2.6",
+      "advisories": [
+        {
+          "id": "GHSA-2m8v-j782-fhvr",
+          "range": ">=4.0.0 <4.2.7",
+          "severity": "high"
+        }
+      ],
+      "metaVia": [],
+      "installed": [
+        {
+          "node": "node_modules/socket.io-parser",
+          "lockVersion": "4.2.6",
+          "installedVersion": "4.2.6",
+          "production": true,
+          "optional": false,
+          "parents": [
+            {
+              "node": "node_modules/socket.io",
+              "version": "4.8.3",
+              "kind": "dependencies",
+              "range": "~4.2.4",
+              "devOnly": false
+            }
+          ]
+        }
+      ],
+      "classification": "internet_packet_decoding_before_manager_authentication",
+      "priority": 1,
+      "paths": [
+        "socket.io@4.8.3 -> socket.io-parser@4.2.6",
+        "@nestjs/platform-socket.io@11.1.27 -> socket.io@4.8.3 -> socket.io-parser@4.2.6"
+      ],
+      "sourceRefs": [
+        "socket"
+      ],
+      "trigger": "Socket.IO Client.decoder.add runs before JWT middleware. Installed decoder retains a BinaryReconstructor for zero-attachment packets; require isolated malformed/binary packet testing rather than claim runtime exploit proof.",
+      "libraryRefs": [
+        "apps/backend/node_modules/socket.io/dist/client.js:180",
+        "apps/backend/node_modules/socket.io-parser/build/cjs/index.js:142"
+      ],
+      "candidates": [
+        "4.2.7"
+      ],
+      "primary": "4.2.7",
+      "change": "Targeted in-range update under Socket.IO 4.x.",
+      "tests": [
+        "tenancy/manager-saas.integration.spec.ts",
+        "Isolated zero-attachment and unexpected binary packet regressions; valid ping/JSON events and reconnect; process remains healthy."
+      ],
+      "fixedVersionInstalled": false,
+      "exploitabilityReproduced": false,
+      "status": "BLOCKED_PACKAGE_ACQUISITION_AUTHORIZATION_AND_ARCHIVES",
+      "candidateMetadataRef": "socket.io-parser"
+    }
+  ],
+  "acquisition": {
+    "status": "BLOCKED_NO_AUTHORIZATION_AND_MISSING_ARCHIVES",
+    "inspectedCaches": [
+      "/tmp/vynic-readiness-npm-cache/_cacache",
+      "/Users/vaanskii/.npm/_cacache"
+    ],
+    "primaryPlan": "Nine reviewed same-line package candidates; Multer requires a scoped override review. Prisma chain deliberately unresolved.",
+    "knownMissingCandidateArchives": [
+      {
+        "name": "@fastify/busboy",
+        "version": "3.2.1",
+        "archiveURL": "https://registry.npmjs.org/@fastify/busboy/-/busboy-3.2.1.tgz",
+        "integrity": "sha512-tgK4O+57iz5ycYNGXE5ZWj1ES03lD2XnnBYWSbU/3wYZRMQzCUq7Ycds/RdyBZQeL5MU4fxBt6lzbIWf/Bickw==",
+        "archivePresentInInspectedCaches": false,
+        "cachedMetadataRef": "@fastify/busboy",
+        "newDependencies": []
+      },
+      {
+        "name": "@grpc/grpc-js",
+        "version": "1.14.5",
+        "archiveURL": "https://registry.npmjs.org/@grpc/grpc-js/-/grpc-js-1.14.5.tgz",
+        "integrity": "sha512-7VZM+SVdEcUUqSQeNI3zM8Qs/BhQKZndPo2h5VkYkAM8Iz0wJIa8mKV5ekQGqG8UUsnkQ0NMxIxwkIHYvj0qOw==",
+        "archivePresentInInspectedCaches": false,
+        "cachedMetadataRef": "@grpc/grpc-js",
+        "newDependencies": []
+      },
+      {
+        "name": "axios",
+        "version": "1.20.0",
+        "archiveURL": "https://registry.npmjs.org/axios/-/axios-1.20.0.tgz",
+        "integrity": "sha512-r8aOh8j9cGKpgQAqpzrUHnSIc6a59Y3Xf/cv8sy1DrHCkZHzQGEuoq1tARk6qSyDdtQGSDgpb9kFlruzPvrgwg==",
+        "archivePresentInInspectedCaches": false,
+        "cachedMetadataRef": "axios",
+        "newDependencies": []
+      },
+      {
+        "name": "engine.io",
+        "version": "6.6.10",
+        "archiveURL": "https://registry.npmjs.org/engine.io/-/engine.io-6.6.10.tgz",
+        "integrity": "sha512-9/lX2bdlizlCXMHRMOIm03VBQHQYC7VvydcxtTAUJRxNW1QzM/2PMFSmr6h/lCiMHcyCP6abK+t9Q+j4vekk8Q==",
+        "archivePresentInInspectedCaches": false,
+        "cachedMetadataRef": "engine.io",
+        "newDependencies": []
+      },
+      {
+        "name": "fast-xml-parser",
+        "version": "5.10.1",
+        "archiveURL": "https://registry.npmjs.org/fast-xml-parser/-/fast-xml-parser-5.10.1.tgz",
+        "integrity": "sha512-IEMIf7298kXuZSRFoGfMYrl7is8LpavODgbNz1cwIudv7KwVFnuU+UsMporfq6PD6aXSlawZlARiA3UywCTfMw==",
+        "archivePresentInInspectedCaches": false,
+        "cachedMetadataRef": "fast-xml-parser",
+        "newDependencies": [
+          {
+            "name": "is-unsafe",
+            "requiredRange": "^2.0.0",
+            "currentNode": "node_modules/is-unsafe",
+            "currentVersion": "1.0.1",
+            "cachedMetadataAvailable": false,
+            "versionSelectionStatus": "BLOCKED_MISSING_PACKUMENT",
+            "metadataURL": "https://registry.npmjs.org/is-unsafe",
+            "locallyKnownMinimum": null,
+            "archiveURL": null
+          },
+          {
+            "name": "xml-naming",
+            "requiredRange": "^0.3.0",
+            "currentNode": "node_modules/xml-naming",
+            "currentVersion": "0.1.0",
+            "cachedMetadataAvailable": false,
+            "versionSelectionStatus": "BLOCKED_MISSING_PACKUMENT",
+            "metadataURL": "https://registry.npmjs.org/xml-naming",
+            "locallyKnownMinimum": null,
+            "archiveURL": null
+          },
+          {
+            "name": "@nodable/entities",
+            "requiredRange": "^3.0.0",
+            "currentNode": "node_modules/@nodable/entities",
+            "currentVersion": "2.2.0",
+            "cachedMetadataAvailable": false,
+            "versionSelectionStatus": "BLOCKED_MISSING_PACKUMENT",
+            "metadataURL": "https://registry.npmjs.org/@nodable%2fentities",
+            "locallyKnownMinimum": null,
+            "archiveURL": null
+          },
+          {
+            "name": "path-expression-matcher",
+            "requiredRange": "^1.6.2",
+            "currentNode": "node_modules/path-expression-matcher",
+            "currentVersion": "1.6.0",
+            "cachedMetadataAvailable": false,
+            "versionSelectionStatus": "BLOCKED_MISSING_PACKUMENT",
+            "metadataURL": "https://registry.npmjs.org/path-expression-matcher",
+            "locallyKnownMinimum": null,
+            "archiveURL": null
+          }
+        ]
+      },
+      {
+        "name": "multer",
+        "version": "2.3.0",
+        "archiveURL": "https://registry.npmjs.org/multer/-/multer-2.3.0.tgz",
+        "integrity": "sha512-cjNbm3sttszgZeGfJR124D+jFEfkXCVAsoPBmFn9X7UxmDSFHWqE2CoEj0vrmSpuAFnqWR1Szcm9QTsiHr60Xw==",
+        "archivePresentInInspectedCaches": false,
+        "cachedMetadataRef": "multer",
+        "newDependencies": []
+      },
+      {
+        "name": "protobufjs",
+        "version": "7.6.5",
+        "archiveURL": "https://registry.npmjs.org/protobufjs/-/protobufjs-7.6.5.tgz",
+        "integrity": "sha512-/FPD0nUc9jH6rfFjji9IBqOz4pcSE3CsT1m7Ep6Mdb0LxSUMj8hgl6GomOvZzpNpAqqGaXA0P3VSrZLFzIhQrw==",
+        "archivePresentInInspectedCaches": false,
+        "cachedMetadataRef": "protobufjs",
+        "newDependencies": []
+      },
+      {
+        "name": "qs",
+        "version": "6.16.0",
+        "archiveURL": "https://registry.npmjs.org/qs/-/qs-6.16.0.tgz",
+        "integrity": "sha512-h6fhOIaRrID2CbEY2fqs+7t+UXZo+MLAnU5gRIq85uFtdiUPCdsApMlHhXogKVM4HM2DVbIjGNTTYH2OcmP1vA==",
+        "archivePresentInInspectedCaches": false,
+        "cachedMetadataRef": "qs",
+        "newDependencies": []
+      },
+      {
+        "name": "socket.io-parser",
+        "version": "4.2.7",
+        "archiveURL": "https://registry.npmjs.org/socket.io-parser/-/socket.io-parser-4.2.7.tgz",
+        "integrity": "sha512-IH/iSeO9T6gz1KkFleGDWkG9N3dl4jXVYUtMhIqH10Md0ttMer8nUNWiP1DKuNrybD2xBrixLJdCC9J6ECoYkg==",
+        "archivePresentInInspectedCaches": false,
+        "cachedMetadataRef": "socket.io-parser",
+        "newDependencies": []
+      }
+    ],
+    "missingDependencyMetadata": [
+      {
+        "name": "is-unsafe",
+        "requiredRange": "^2.0.0",
+        "currentNode": "node_modules/is-unsafe",
+        "currentVersion": "1.0.1",
+        "cachedMetadataAvailable": false,
+        "versionSelectionStatus": "BLOCKED_MISSING_PACKUMENT",
+        "metadataURL": "https://registry.npmjs.org/is-unsafe",
+        "locallyKnownMinimum": null,
+        "archiveURL": null
+      },
+      {
+        "name": "xml-naming",
+        "requiredRange": "^0.3.0",
+        "currentNode": "node_modules/xml-naming",
+        "currentVersion": "0.1.0",
+        "cachedMetadataAvailable": false,
+        "versionSelectionStatus": "BLOCKED_MISSING_PACKUMENT",
+        "metadataURL": "https://registry.npmjs.org/xml-naming",
+        "locallyKnownMinimum": null,
+        "archiveURL": null
+      },
+      {
+        "name": "@nodable/entities",
+        "requiredRange": "^3.0.0",
+        "currentNode": "node_modules/@nodable/entities",
+        "currentVersion": "2.2.0",
+        "cachedMetadataAvailable": false,
+        "versionSelectionStatus": "BLOCKED_MISSING_PACKUMENT",
+        "metadataURL": "https://registry.npmjs.org/@nodable%2fentities",
+        "locallyKnownMinimum": null,
+        "archiveURL": null
+      },
+      {
+        "name": "path-expression-matcher",
+        "requiredRange": "^1.6.2",
+        "currentNode": "node_modules/path-expression-matcher",
+        "currentVersion": "1.6.0",
+        "cachedMetadataAvailable": false,
+        "versionSelectionStatus": "BLOCKED_MISSING_PACKUMENT",
+        "metadataURL": "https://registry.npmjs.org/path-expression-matcher",
+        "locallyKnownMinimum": null,
+        "archiveURL": null
+      }
+    ],
+    "completeTransitiveArchiveScopeKnown": false,
+    "unknownArchiveScopeReason": "fast-xml-parser@5.10.1 needs four dependencies outside currently locked versions; cached packuments absent, so exact published versions/archive URLs/integrities require separately authorized metadata reads.",
+    "alternativeNativeNestUpgrade": [
+      {
+        "name": "@nestjs/platform-express",
+        "version": "11.2.6",
+        "archiveURL": "https://registry.npmjs.org/@nestjs/platform-express/-/platform-express-11.2.6.tgz",
+        "integrity": "sha512-jPypI/+aueizkYG2Bw2kg8GaNsWE7ekFBSQ/Rwet7wEdBA/+q2FA364UbDabqjlR7C3VSNHmP/JXh+8+jXyDOw==",
+        "archivePresentInInspectedCaches": false,
+        "cachedMetadataRef": "@nestjs/platform-express",
+        "newDependencies": [
+          {
+            "name": "multer",
+            "requiredRange": "2.4.0",
+            "currentNode": "node_modules/multer",
+            "currentVersion": "2.1.1",
+            "cachedMetadataAvailable": true,
+            "versionSelectionStatus": "REQUIRES_REVIEW",
+            "metadataURL": "https://registry.npmjs.org/multer",
+            "locallyKnownMinimum": "2.4.0",
+            "archiveURL": null
+          }
+        ]
+      },
+      {
+        "name": "multer",
+        "version": "2.4.0",
+        "archiveURL": "https://registry.npmjs.org/multer/-/multer-2.4.0.tgz",
+        "integrity": "sha512-7dqa0ZcFfzbefdTuIkzOSMvZWC0J7FLqBOjJUZvDCXShIURWKxAyTT1wHhnE5q19c7jOJf43IYYKjBmZVZmvhg==",
+        "archivePresentInInspectedCaches": false,
+        "cachedMetadataRef": "multer",
+        "newDependencies": []
+      }
+    ],
+    "requestedNextNetworkScopeIfParentSeeksAuthorization": {
+      "host": "registry.npmjs.org",
+      "methods": [
+        "GET"
+      ],
+      "knownArchiveURLs": [
+        "https://registry.npmjs.org/@fastify/busboy/-/busboy-3.2.1.tgz",
+        "https://registry.npmjs.org/@grpc/grpc-js/-/grpc-js-1.14.5.tgz",
+        "https://registry.npmjs.org/axios/-/axios-1.20.0.tgz",
+        "https://registry.npmjs.org/engine.io/-/engine.io-6.6.10.tgz",
+        "https://registry.npmjs.org/fast-xml-parser/-/fast-xml-parser-5.10.1.tgz",
+        "https://registry.npmjs.org/multer/-/multer-2.3.0.tgz",
+        "https://registry.npmjs.org/protobufjs/-/protobufjs-7.6.5.tgz",
+        "https://registry.npmjs.org/qs/-/qs-6.16.0.tgz",
+        "https://registry.npmjs.org/socket.io-parser/-/socket.io-parser-4.2.7.tgz"
+      ],
+      "additionalMetadataURLs": [
+        "https://registry.npmjs.org/is-unsafe",
+        "https://registry.npmjs.org/xml-naming",
+        "https://registry.npmjs.org/@nodable%2fentities",
+        "https://registry.npmjs.org/path-expression-matcher"
+      ],
+      "condition": "After bounded metadata reads, review any newly resolved exact tarball URLs/dependency closure before expanding archive scope. No install scripts, audit bulk request, credential/source upload, or npm audit fix."
+    },
+    "cleanInstallCaveat": {
+      "baselineRegistryLockedArchiveCount": 935,
+      "baselineArchiveCountPresentInInspectedCaches": 159,
+      "statement": "A full clean npm ci may need additional baseline locked archives beyond remediation deltas. This receipt does not authorize broad registry access; derive platform-specific closure from frozen lock and obtain bounded acquisition authorization first."
+    }
+  },
+  "sourceHardeningBeforeAcquisition": [
+    {
+      "priority": 1,
+      "name": "Socket transport protocol admission and malformed-packet regression",
+      "suggestedPaths": [
+        "apps/backend/src/realtime/monitoring.gateway.ts",
+        "apps/backend/src/realtime/transport-admission.ts",
+        "apps/backend/src/realtime/transport-admission.spec.ts",
+        "apps/backend/src/realtime/transport-admission.http.spec.ts"
+      ],
+      "change": "Review a gateway engine middleware requiring the already-supported EIO=4 on every request, including existing-session POSTs/upgrades; test mismatches before JWT. A narrowly scoped Decoder guard can reject zero-attachment binary EVENT/ACK packets before the installed decoder creates a reconstructor; preserve ordinary JSON/ping/attachment behavior.",
+      "tests": [
+        "Use installed engine.io/socket.io/ws on an isolated loopback fixture with mocked JWT/Staff resolver.",
+        "Exercise unauthenticated and valid sessions, EIO mismatch, zero-attachment packets, healthy requests after rejection, reconnect and tenant/token-expiry behavior.",
+        "Run known malformed transport cases in a subprocess with explicit timeout/resource limits; do not expose an application service or real database/provider."
+      ],
+      "limitations": "Application guards reduce specific trigger paths but do not fix installed packages or close OPS-03. Review custom parser compatibility before implementation.",
+      "status": "RECOMMENDED_NOT_IMPLEMENTED_NOT_RUN"
+    },
+    {
+      "priority": 2,
+      "name": "Owner upload authority before multipart buffering",
+      "suggestedPaths": [
+        "apps/backend/src/customer/customer-website.controller.ts",
+        "apps/backend/src/customer/customer-website-upload.guard.ts",
+        "apps/backend/src/customer/customer-website-logo.http.spec.ts",
+        "apps/backend/src/website/core/website-logo.service.ts"
+      ],
+      "change": "Review a method-specific guard after CustomerGuard that proves Venue ownership and current SAAS/ACTIVE Website upload eligibility before FileInterceptor. Reuse existing policy, retain transactional checks/quota enforcement inside storage, and preserve files:1/fields:0/5 MB raster processing.",
+      "tests": [
+        "Real multipart requests from unauthenticated, wrong-owner, CUSTOM, NO_PLAN/TRIAL and eligible ACTIVE actors.",
+        "Assert rejected authority never reaches multipart/storage work; retain valid image output, oversized file rejection and malformed/aborted stream cleanup.",
+        "Use temporary media root and mocked fixture database; no real Venue, database or printer mutation."
+      ],
+      "limitations": "Do not claim current field-name advisories exploitable under fields:0, and do not present admission checks as a dependency fix.",
+      "status": "RECOMMENDED_NOT_IMPLEMENTED_NOT_RUN"
+    },
+    {
+      "priority": 3,
+      "name": "Bound bank HTTP redirects and responses",
+      "suggestedPaths": [
+        "apps/backend/src/website/payment/payment.service.ts",
+        "apps/backend/src/website/payment/payment-http-policy.spec.ts"
+      ],
+      "change": "Review explicit Node HTTP adapter/HTTP1, maxRedirects:0 and reasonable bounded response sizes on all three BOG request paths. Preserve server-owned URLs, encoded payment identity, credentials, 15-second timeout and existing sanitized BadGateway errors.",
+      "tests": [
+        "Use local provider doubles to prove no second request after 3xx, bounded token/order/receipt responses, sanitized transport errors and valid success.",
+        "Run existing trusted-money and payment-integration regressions; zero real bank requests."
+      ],
+      "limitations": "Redirect refusal/response caps need provider-contract compatibility review; no real production-provider verification is implied. Axios update remains blocked.",
+      "status": "RECOMMENDED_NOT_IMPLEMENTED_NOT_RUN"
+    },
+    {
+      "priority": 4,
+      "name": "HTTP parser boundary regression without budget changes",
+      "suggestedPaths": [
+        "apps/backend/src/main.ts",
+        "apps/backend/src/shared/http-body-parsing.ts",
+        "apps/backend/src/shared/http-body-parsing.spec.ts"
+      ],
+      "change": "If needed to exercise production middleware, extract existing body-parser registration without behavior changes. Test nested/prototype-shaped forms, depth/parameter limits, raw BOG callback bytes and healthy continuation. Preserve 50 MB JSON/POS snapshot compatibility.",
+      "tests": [
+        "Express fixture with the exact installed parser options; no new packages, external server or database.",
+        "Demonstrate comma:false parse-only use while preserving JSON rawBody signature bytes."
+      ],
+      "limitations": "No reported qs trigger currently established; do not enable comma parsing or add a qs.stringify path for test convenience.",
+      "status": "RECOMMENDED_NOT_IMPLEMENTED_NOT_RUN"
+    }
+  ],
+  "validation": {
+    "gitDiffCheck": "PASS_FOR_EXISTING_WORKSPACE",
+    "sourceEdits": 0,
+    "packageInstalls": 0,
+    "externalNetworkCalls": 0,
+    "freshScans": 0,
+    "testsExecuted": []
+  }
+}

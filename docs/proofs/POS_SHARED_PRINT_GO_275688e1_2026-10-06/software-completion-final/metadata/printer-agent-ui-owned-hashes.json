@@ -1,0 +1,40 @@
+{
+  "createdAtUtc": "2026-10-06T17:00:56.712992+00:00",
+  "source": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/source",
+  "scope": "Readonly opt-in11-key profile and manual developer-scoped printer-agent health UI; distinct POS/Go installation IDs; no service startup/physical API",
+  "files": {
+    "apps/operations/lib/apps/windows_pos/widgets/admin/printers/admin_printers_section.dart": {
+      "sha256": "8258f28ac8ad46ea49c89cf59298c3b83bba2e85af47fdc8f10e51d9b801934a",
+      "bytes": 24006,
+      "before": {
+        "sha256": "4d9c61d780bf49660694ee306a0a51f0b4466dc330d52e137a189a374061366c",
+        "bytes": 23513
+      }
+    },
+    "apps/operations/lib/apps/windows_pos/widgets/admin/printers/printer_agent_status_card.dart": {
+      "sha256": "1bcaf3839f7ccd25ed1991298d6772dcfd834020043b649739c49adb650b0263",
+      "bytes": 17084,
+      "before": null
+    },
+    "apps/operations/lib/core/services/printing/printer_agent_runtime_profile.dart": {
+      "sha256": "ac21ec13d9e093cf916e9232441225a5236b4cac8b1c20d9364d9581179ecc4a",
+      "bytes": 17120,
+      "before": null
+    },
+    "apps/operations/test/support/printer_agent_status_fixture.dart": {
+      "sha256": "55cd87eda5bfe9ce2ccd442e32a161ce130f673d1e8ce4fb3ecea86942610c15",
+      "bytes": 3442,
+      "before": null
+    },
+    "apps/operations/test/unit/printer_agent_runtime_profile_test.dart": {
+      "sha256": "d4f7c08db3c086704f4fa480970fa3676693534ec29ad12b78a2849f8bc165d2",
+      "bytes": 16346,
+      "before": null
+    },
+    "apps/operations/test/widget/printer_agent_status_card_test.dart": {
+      "sha256": "540c5df33fbf5e4efc67fd5a807a0322b2eb461e134bb15ff328cdcbf9f6243f",
+      "bytes": 22938,
+      "before": null
+    }
+  }
+}

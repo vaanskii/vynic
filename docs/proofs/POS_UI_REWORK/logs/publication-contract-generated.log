@@ -1,0 +1,12 @@
+ok:    packages/contracts/generated/typescript/manager-login.ts
+ok:    apps/backend/src/shared/contracts/manager-login.ts
+ok:    packages/contracts/generated/dart/manager_login.dart
+ok:    apps/operations/lib/core/contracts/manager_login.dart
+ok:    packages/contracts/generated/dart/table_identity.dart
+ok:    apps/operations/lib/core/contracts/table_identity.dart
+ok:    packages/contracts/generated/typescript/table-identity.ts
+ok:    apps/backend/src/shared/contracts/table-identity.ts
+ok:    packages/contracts/generated/typescript/edge-command.ts
+ok:    apps/backend/src/shared/contracts/edge-command.ts
+ok:    packages/contracts/generated/dart/edge_command.dart
+ok:    apps/operations/lib/core/contracts/edge_command.dart

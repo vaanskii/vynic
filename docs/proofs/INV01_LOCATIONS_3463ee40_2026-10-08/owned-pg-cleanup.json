@@ -1,0 +1,8 @@
+{
+  "status": "STOPPED",
+  "ownedCluster": "/private/tmp/vynic-menu09-candidate-eclunepv",
+  "databases": 6,
+  "pgCtlStatusExit": 3,
+  "postmasterPidAbsent": true,
+  "realServicesChanged": false
+}

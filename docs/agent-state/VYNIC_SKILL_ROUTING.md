@@ -50,6 +50,7 @@ Notes:
 | --- | --- | --- |
 | `flutter-apply-architecture-best-practices` | Creating substantial new architecture or refactoring a major feature boundary. | Do not restructure existing Vynic architecture because the skill exists. |
 | `flutter-build-responsive-layout` | Building or changing UI across Windows/macOS/mobile/tablet; 1024×768 and small-window behaviour. | Use the Vynic breakpoints and primitives in `apps/operations/lib/core/ui/`. |
+| `flutter-ui-design` | A requested visual redesign, art direction, screen composition, or rendered visual critique. | Community skill reviewed and pinned in the source manifest. Extend the existing Vynic tokens; do not install its optional companion skills or replace working architecture. |
 | `flutter-fix-layout-issues` | RenderFlex overflow, unbounded constraints, keyboard insets or other layout errors. | — |
 | `flutter-add-widget-preview` | New or reusable UI widgets where a preview speeds iteration. | Optional; never required to finish a task. |
 | `flutter-add-widget-test` | Adding or changing important widgets or interactions. | Tests go in `apps/operations/test/widget/`. |
@@ -77,6 +78,7 @@ same authority rules.
   default; `web-design-guidelines` only when UX or accessibility review is
   relevant.
 - **Flutter UI:** existing project architecture first →
+  `flutter-ui-design` when a visual redesign is requested →
   `flutter-build-responsive-layout` for layout → `flutter-fix-layout-issues`
   when debugging → `flutter-add-widget-preview` where useful →
   `flutter-add-widget-test` / `flutter-add-integration-test` after meaningful
@@ -100,7 +102,8 @@ same authority rules.
 Pinned sources are listed in `.agents/skill-sources.txt`:
 `anthropics/skills` (frontend-design), `Leonxlnx/taste-skill`
 (design-taste-frontend, image-to-code), `vercel-labs/agent-skills`
-(web-design-guidelines), `flutter/skills` (Flutter and Dart skills).
+(web-design-guidelines), `flutter/skills` (Flutter and Dart skills),
+`thienqo/flutter-skills` (reviewed community `flutter-ui-design`).
 
 Vendored skills are byte-identical to upstream. Never hand-edit them; put
 Vynic-specific guidance in this file.

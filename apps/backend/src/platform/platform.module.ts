@@ -1,3 +1,7 @@
+import { PlatformWebsitePaymentReviewsController } from './platform-website-payment-reviews.controller';
+import { PlatformManagerVenueLinkController } from '../auth/manager-venue-link.controller';
+import { PlatformWebsiteDeliveriesController } from './platform-website-deliveries.controller';
+import { PrinterConfigurationController } from '../printer-provisioning/controller';
 import {
   PlatformLocalToolsCapabilityController,
   localDeletionControllers,
@@ -50,6 +54,10 @@ import { PlatformVenuesController } from './platform-venues.controller';
     PlatformAuditModule,
   ],
   controllers: [
+    PlatformManagerVenueLinkController,
+    PlatformWebsitePaymentReviewsController,
+    PlatformWebsiteDeliveriesController,
+    PrinterConfigurationController,
     PlatformLocalToolsCapabilityController,
     ...localDeletionControllers(),
     PlatformHostnameController,

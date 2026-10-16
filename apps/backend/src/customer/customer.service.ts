@@ -18,6 +18,12 @@ import type { ControlActor } from '../platform/control-actor';
 import { profileInput, saveProfile } from '../venue-profile/venue-profile';
 import { Prisma } from '@prisma/client';
 import { websiteState } from '../website/provisioning/website-provisioning';
+import { assertLegacyPrinterWriteAllowed } from './printer-runtime-config';
+import {
+  lockPrinterRuntimeDevice,
+  persistPreparedPrinterRuntimeConfig,
+  throwPrinterRuntimeHttpError,
+} from './printer-runtime-persistence';
 
 @Injectable()
 export class CustomerService {
@@ -185,6 +191,16 @@ export class CustomerService {
             trialEndsAt: null,
           },
       features,
+      initialManagerSetupEligible:
+        features.includes('POS') &&
+        features.includes('MANAGER_APP') &&
+        managers.length === 0 &&
+        !(
+          await this.db.managerActivation.findUnique({
+            where: { venueId: id },
+            select: { consumedAt: true },
+          })
+        )?.consumedAt,
       managers: features.includes('MANAGER_APP') ? managers : [],
       devices: (features.includes('POS') ? devices : []).map((device) => ({
         ...device,
@@ -281,28 +297,32 @@ export class CustomerService {
       return venue;
     });
   }
-  async manager(
+  async manager(actor: CustomerPrincipal, venueId: string) {
+    await this.venue(actor, venueId);
+    throw new ForbiddenException(
+      'Manager access is managed in the application or by Vynic Platform Admin',
+    );
+  }
+  async managerActivation(actor: CustomerPrincipal, venueId: string) {
+    await this.venue(actor, venueId);
+    return this.commercial.activation(actor, venueId);
+  }
+  async setupEligibility(actor: CustomerPrincipal, venueId: string) {
+    await this.venue(actor, venueId);
+    return this.enrollments.setupEligibility(actor, venueId);
+  }
+  async enrollment(
     actor: CustomerPrincipal,
     venueId: string,
-    action: 'create' | 'reset' | 'disable',
-    body: Record<string, unknown>,
-    staffId?: string,
+    initialManagerSetup = false,
   ) {
-    await this.venue(actor, venueId);
-    if (
-      action !== 'disable' &&
-      !(await this.entitlements.hasFeature(venueId, 'MANAGER_APP'))
-    )
-      throw new ForbiddenException('Manager is not included in this plan');
-    return this.commercial.managerAccess(actor, venueId, action, body, staffId);
-  }
-  async enrollment(actor: CustomerPrincipal, venueId: string) {
     await this.venue(actor, venueId);
     if (!(await this.entitlements.hasFeature(venueId, 'POS')))
       throw new ForbiddenException('POS is not included in this plan');
     return this.enrollments.create(actor, venueId, {
       displayName: 'Main POS',
       platform: 'WINDOWS',
+      initialManagerSetup,
     });
   }
   async cancel(actor: CustomerPrincipal, venueId: string, id: string) {
@@ -315,6 +335,15 @@ export class CustomerService {
     deviceId: string,
     body: Record<string, unknown>,
   ) {
+    if (!body || typeof body !== 'object' || Array.isArray(body))
+      throw new BadRequestException('Printer configuration is required');
+    if (body.version === 2)
+      return persistPreparedPrinterRuntimeConfig(
+        this.db,
+        actor,
+        { deviceId, venueId },
+        body,
+      );
     if (actor.customerAccountId)
       await this.venue({ customerAccountId: actor.customerAccountId }, venueId);
     await requireCommercialFeature(this.db, venueId, 'POS');
@@ -337,11 +366,16 @@ export class CustomerService {
       }),
     );
     return this.db.$transaction(async (tx) => {
-      await requireCommercialFeature(tx, venueId, 'POS');
-      const device = await tx.device.findFirst({
-        where: { id: deviceId, venueId },
-      });
-      if (!device) throw new NotFoundException('Device not found');
+      const device = await lockPrinterRuntimeDevice(
+        tx,
+        { deviceId, venueId },
+        actor,
+      );
+      try {
+        assertLegacyPrinterWriteAllowed(device.runtimeConfig);
+      } catch (error) {
+        throwPrinterRuntimeHttpError(error);
+      }
       const runtimeConfig = { version: 1, printers };
       await tx.device.update({
         where: { id: deviceId },

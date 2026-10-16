@@ -1,0 +1,18 @@
+{"Time":"2026-10-06T20:58:34.134895+04:00","Action":"start","Package":"vynic.local/edge/internal/printqueue"}
+{"Time":"2026-10-06T20:58:34.60988+04:00","Action":"run","Package":"vynic.local/edge/internal/printqueue","Test":"TestActualTCPWriteSIGKILLNoReplay"}
+{"Time":"2026-10-06T20:58:34.610256+04:00","Action":"output","Package":"vynic.local/edge/internal/printqueue","Test":"TestActualTCPWriteSIGKILLNoReplay","Output":"=== RUN   TestActualTCPWriteSIGKILLNoReplay\n"}
+{"Time":"2026-10-06T20:58:34.610288+04:00","Action":"run","Package":"vynic.local/edge/internal/printqueue","Test":"TestActualTCPWriteSIGKILLNoReplay/duringWrite"}
+{"Time":"2026-10-06T20:58:34.610298+04:00","Action":"output","Package":"vynic.local/edge/internal/printqueue","Test":"TestActualTCPWriteSIGKILLNoReplay/duringWrite","Output":"=== RUN   TestActualTCPWriteSIGKILLNoReplay/duringWrite\n"}
+{"Time":"2026-10-06T20:58:34.820913+04:00","Action":"output","Package":"vynic.local/edge/internal/printqueue","Test":"TestActualTCPWriteSIGKILLNoReplay/duringWrite","Output":"    crash_tcp_test.go:234: actual SIGKILL duringWrite; receiver bytes=8192/2097152; UNCERTAIN; recovery calls=0; receipt sequence=1; paper delivery unobserved\n"}
+{"Time":"2026-10-06T20:58:34.821887+04:00","Action":"output","Package":"vynic.local/edge/internal/printqueue","Test":"TestActualTCPWriteSIGKILLNoReplay/duringWrite","Output":"--- PASS: TestActualTCPWriteSIGKILLNoReplay/duringWrite (0.21s)\n"}
+{"Time":"2026-10-06T20:58:34.821897+04:00","Action":"pass","Package":"vynic.local/edge/internal/printqueue","Test":"TestActualTCPWriteSIGKILLNoReplay/duringWrite","Elapsed":0.21}
+{"Time":"2026-10-06T20:58:34.822219+04:00","Action":"run","Package":"vynic.local/edge/internal/printqueue","Test":"TestActualTCPWriteSIGKILLNoReplay/afterWriteBeforeDisposition"}
+{"Time":"2026-10-06T20:58:34.822225+04:00","Action":"output","Package":"vynic.local/edge/internal/printqueue","Test":"TestActualTCPWriteSIGKILLNoReplay/afterWriteBeforeDisposition","Output":"=== RUN   TestActualTCPWriteSIGKILLNoReplay/afterWriteBeforeDisposition\n"}
+{"Time":"2026-10-06T20:58:34.846735+04:00","Action":"output","Package":"vynic.local/edge/internal/printqueue","Test":"TestActualTCPWriteSIGKILLNoReplay/afterWriteBeforeDisposition","Output":"    crash_tcp_test.go:234: actual SIGKILL afterWriteBeforeDisposition; receiver bytes=16/16; UNCERTAIN; recovery calls=0; receipt sequence=1; paper delivery unobserved\n"}
+{"Time":"2026-10-06T20:58:34.847421+04:00","Action":"output","Package":"vynic.local/edge/internal/printqueue","Test":"TestActualTCPWriteSIGKILLNoReplay/afterWriteBeforeDisposition","Output":"--- PASS: TestActualTCPWriteSIGKILLNoReplay/afterWriteBeforeDisposition (0.03s)\n"}
+{"Time":"2026-10-06T20:58:34.847431+04:00","Action":"pass","Package":"vynic.local/edge/internal/printqueue","Test":"TestActualTCPWriteSIGKILLNoReplay/afterWriteBeforeDisposition","Elapsed":0.03}
+{"Time":"2026-10-06T20:58:34.847444+04:00","Action":"output","Package":"vynic.local/edge/internal/printqueue","Test":"TestActualTCPWriteSIGKILLNoReplay","Output":"--- PASS: TestActualTCPWriteSIGKILLNoReplay (0.24s)\n"}
+{"Time":"2026-10-06T20:58:34.84745+04:00","Action":"pass","Package":"vynic.local/edge/internal/printqueue","Test":"TestActualTCPWriteSIGKILLNoReplay","Elapsed":0.24}
+{"Time":"2026-10-06T20:58:34.847455+04:00","Action":"output","Package":"vynic.local/edge/internal/printqueue","Output":"PASS\n"}
+{"Time":"2026-10-06T20:58:34.849476+04:00","Action":"output","Package":"vynic.local/edge/internal/printqueue","Output":"ok  \tvynic.local/edge/internal/printqueue\t0.714s\n"}
+{"Time":"2026-10-06T20:58:34.84949+04:00","Action":"pass","Package":"vynic.local/edge/internal/printqueue","Elapsed":0.715}

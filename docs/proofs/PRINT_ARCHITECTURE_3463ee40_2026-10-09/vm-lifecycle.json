@@ -1,0 +1,12 @@
+{
+  "vm": "9830bac8-34c6-46f7-9062-cd8f62f7a127",
+  "initialState": "stopped",
+  "actions": [
+    "start for synthetic software tests",
+    "current-user tests",
+    "graceful shutdown after tests"
+  ],
+  "installedScmServices": 0,
+  "physicalPrinterTests": "NOT_RUN",
+  "finalState": "stopped"
+}

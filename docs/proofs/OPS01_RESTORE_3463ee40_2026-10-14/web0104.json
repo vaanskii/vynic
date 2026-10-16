@@ -1,0 +1,200 @@
+{
+  "numPassedTests": 32,
+  "numFailedTests": 0,
+  "numPendingTests": 0,
+  "success": true,
+  "cases": [
+    {
+      "file": "apps/backend/src/website/payment/web0104-holds-ledger.integration.spec.ts",
+      "ordinal": 0,
+      "name": "WEB-01/04 approved whole-day holds + money ledger / actual HTTP and PostgreSQL 20 parallel requests for the same physical table/day admit one hold and one bank order",
+      "status": "passed"
+    },
+    {
+      "file": "apps/backend/src/website/payment/web0104-holds-ledger.integration.spec.ts",
+      "ordinal": 1,
+      "name": "WEB-01/04 approved whole-day holds + money ledger / actual HTTP and PostgreSQL different days and different Venues in the same/different organizations hold independently",
+      "status": "passed"
+    },
+    {
+      "file": "apps/backend/src/website/payment/web0104-holds-ledger.integration.spec.ts",
+      "ordinal": 2,
+      "name": "WEB-01/04 approved whole-day holds + money ledger / actual HTTP and PostgreSQL aliases cannot double-allocate a physical POS table",
+      "status": "passed"
+    },
+    {
+      "file": "apps/backend/src/website/payment/web0104-holds-ledger.integration.spec.ts",
+      "ordinal": 3,
+      "name": "WEB-01/04 approved whole-day holds + money ledger / actual HTTP and PostgreSQL fully verified timely payment records immutable observation, confirms occupancy and queues exactly once",
+      "status": "passed"
+    },
+    {
+      "file": "apps/backend/src/website/payment/web0104-holds-ledger.integration.spec.ts",
+      "ordinal": 4,
+      "name": "WEB-01/04 approved whole-day holds + money ledger / actual HTTP and PostgreSQL unsigned callback and wrong provider references cannot alter money or occupancy",
+      "status": "passed"
+    },
+    {
+      "file": "apps/backend/src/website/payment/web0104-holds-ledger.integration.spec.ts",
+      "ordinal": 5,
+      "name": "WEB-01/04 approved whole-day holds + money ledger / actual HTTP and PostgreSQL currency_code=USD never confirms an underpaid/unverified booking",
+      "status": "passed"
+    },
+    {
+      "file": "apps/backend/src/website/payment/web0104-holds-ledger.integration.spec.ts",
+      "ordinal": 6,
+      "name": "WEB-01/04 approved whole-day holds + money ledger / actual HTTP and PostgreSQL request_amount=1.00 never confirms an underpaid/unverified booking",
+      "status": "passed"
+    },
+    {
+      "file": "apps/backend/src/website/payment/web0104-holds-ledger.integration.spec.ts",
+      "ordinal": 7,
+      "name": "WEB-01/04 approved whole-day holds + money ledger / actual HTTP and PostgreSQL transfer_amount=1.00 never confirms an underpaid/unverified booking",
+      "status": "passed"
+    },
+    {
+      "file": "apps/backend/src/website/payment/web0104-holds-ledger.integration.spec.ts",
+      "ordinal": 8,
+      "name": "WEB-01/04 approved whole-day holds + money ledger / actual HTTP and PostgreSQL transfer_amount=11.001 never confirms an underpaid/unverified booking",
+      "status": "passed"
+    },
+    {
+      "file": "apps/backend/src/website/payment/web0104-holds-ledger.integration.spec.ts",
+      "ordinal": 9,
+      "name": "WEB-01/04 approved whole-day holds + money ledger / actual HTTP and PostgreSQL auth_requested is not a full paid booking",
+      "status": "passed"
+    },
+    {
+      "file": "apps/backend/src/website/payment/web0104-holds-ledger.integration.spec.ts",
+      "ordinal": 10,
+      "name": "WEB-01/04 approved whole-day holds + money ledger / actual HTTP and PostgreSQL blocked is not a full paid booking",
+      "status": "passed"
+    },
+    {
+      "file": "apps/backend/src/website/payment/web0104-holds-ledger.integration.spec.ts",
+      "ordinal": 11,
+      "name": "WEB-01/04 approved whole-day holds + money ledger / actual HTTP and PostgreSQL partial_completed is not a full paid booking",
+      "status": "passed"
+    },
+    {
+      "file": "apps/backend/src/website/payment/web0104-holds-ledger.integration.spec.ts",
+      "ordinal": 12,
+      "name": "WEB-01/04 approved whole-day holds + money ledger / actual HTTP and PostgreSQL late callback carrying a signed completed snapshot sent before deadline confirms a still-free original hold",
+      "status": "passed"
+    },
+    {
+      "file": "apps/backend/src/website/payment/web0104-holds-ledger.integration.spec.ts",
+      "ordinal": 13,
+      "name": "WEB-01/04 approved whole-day holds + money ledger / actual HTTP and PostgreSQL timely proof after occupancy reassignment requires owner review, never steals another hold",
+      "status": "passed"
+    },
+    {
+      "file": "apps/backend/src/website/payment/web0104-holds-ledger.integration.spec.ts",
+      "ordinal": 14,
+      "name": "WEB-01/04 approved whole-day holds + money ledger / actual HTTP and PostgreSQL unproven timing after expiry is review, not an invented late payment or automatic restoration",
+      "status": "passed"
+    },
+    {
+      "file": "apps/backend/src/website/payment/web0104-holds-ledger.integration.spec.ts",
+      "ordinal": 15,
+      "name": "WEB-01/04 approved whole-day holds + money ledger / actual HTTP and PostgreSQL provider order creation after deadline proves genuinely late payment and never triggers refund/restore",
+      "status": "passed"
+    },
+    {
+      "file": "apps/backend/src/website/payment/web0104-holds-ledger.integration.spec.ts",
+      "ordinal": 16,
+      "name": "WEB-01/04 approved whole-day holds + money ledger / actual HTTP and PostgreSQL partial refund preserves confirmed whole-day booking and original gross; older complete/pending observations cannot undo it",
+      "status": "passed"
+    },
+    {
+      "file": "apps/backend/src/website/payment/web0104-holds-ledger.integration.spec.ts",
+      "ordinal": 17,
+      "name": "WEB-01/04 approved whole-day holds + money ledger / actual HTTP and PostgreSQL a refund request alone does not cancel, and a proven full refund releases occupancy without reopening on stale complete",
+      "status": "passed"
+    },
+    {
+      "file": "apps/backend/src/website/payment/web0104-holds-ledger.integration.spec.ts",
+      "ordinal": 18,
+      "name": "WEB-01/04 approved whole-day holds + money ledger / actual HTTP and PostgreSQL provider read outage retains signed notification and recovers via pinned reconciliation",
+      "status": "passed"
+    },
+    {
+      "file": "apps/backend/src/website/payment/web0104-holds-ledger.integration.spec.ts",
+      "ordinal": 19,
+      "name": "WEB-01/04 approved whole-day holds + money ledger / actual HTTP and PostgreSQL lost create reply keeps held identity and its signed provider callback recovers without a second order",
+      "status": "passed"
+    },
+    {
+      "file": "apps/backend/src/website/payment/web0104-holds-ledger.integration.spec.ts",
+      "ordinal": 20,
+      "name": "WEB-01/04 approved whole-day holds + money ledger / actual HTTP and PostgreSQL historical money is reviewed, never reconstructed or dispatched from an old Float amount",
+      "status": "passed"
+    },
+    {
+      "file": "apps/backend/src/website/payment/web0104-holds-ledger.integration.spec.ts",
+      "ordinal": 21,
+      "name": "WEB-01/04 approved whole-day holds + money ledger / actual HTTP and PostgreSQL owner review is tenant-bound/read-only and excludes guest/payment credentials; Platform can assist",
+      "status": "passed"
+    },
+    {
+      "file": "apps/backend/src/website/payment/web0104-holds-ledger.integration.spec.ts",
+      "ordinal": 22,
+      "name": "WEB-01/04 approved whole-day holds + money ledger / actual HTTP and PostgreSQL anonymous receipt return exposes only REVIEW, no private booking fields",
+      "status": "passed"
+    },
+    {
+      "file": "apps/backend/src/website/payment/web0104-holds-ledger.integration.spec.ts",
+      "ordinal": 23,
+      "name": "WEB-01/04 approved whole-day holds + money ledger / actual HTTP and PostgreSQL the bank TTL and frozen website window are both ten minutes",
+      "status": "passed"
+    },
+    {
+      "file": "apps/backend/src/website/payment/web0104-holds-ledger.integration.spec.ts",
+      "ordinal": 24,
+      "name": "WEB-01/04 approved whole-day holds + money ledger / actual HTTP and PostgreSQL signed timely proof survives receipt outage and a new reconciler after expiry",
+      "status": "passed"
+    },
+    {
+      "file": "apps/backend/src/website/payment/web0104-holds-ledger.integration.spec.ts",
+      "ordinal": 25,
+      "name": "WEB-01/04 approved whole-day holds + money ledger / actual HTTP and PostgreSQL a future provider create clock does not prove a genuinely late payment",
+      "status": "passed"
+    },
+    {
+      "file": "apps/backend/src/website/payment/web0104-holds-ledger.integration.spec.ts",
+      "ordinal": 26,
+      "name": "WEB-01/04 approved whole-day holds + money ledger / actual HTTP and PostgreSQL hold insertion failure rolls back the booking and makes no bank order",
+      "status": "passed"
+    },
+    {
+      "file": "apps/backend/src/website/payment/web0104-holds-ledger.integration.spec.ts",
+      "ordinal": 27,
+      "name": "WEB-01/04 approved whole-day holds + money ledger / actual HTTP and PostgreSQL observation failure rolls back money, hold confirmation and intent; retry commits once",
+      "status": "passed"
+    },
+    {
+      "file": "apps/backend/src/website/payment/web0104-holds-ledger.integration.spec.ts",
+      "ordinal": 28,
+      "name": "WEB-01/04 approved whole-day holds + money ledger / actual HTTP and PostgreSQL settlement and owner review survive disabled website/payment access and original merchant revision",
+      "status": "passed"
+    },
+    {
+      "file": "apps/backend/src/website/payment/web0104-holds-ledger.integration.spec.ts",
+      "ordinal": 29,
+      "name": "WEB-01/04 approved whole-day holds + money ledger / actual HTTP and PostgreSQL the frozen whole-day identity drives review and POS delivery independently of stored UTC timestamp",
+      "status": "passed"
+    },
+    {
+      "file": "apps/backend/src/website/payment/web0104-holds-ledger.integration.spec.ts",
+      "ordinal": 30,
+      "name": "WEB-01/04 approved whole-day holds + money ledger / actual HTTP and PostgreSQL a pending callback that pins identity before a conflicting create reply cannot release another bank-bound hold",
+      "status": "passed"
+    },
+    {
+      "file": "apps/backend/src/website/payment/web0104-holds-ledger.integration.spec.ts",
+      "ordinal": 31,
+      "name": "WEB-01/04 approved whole-day holds + money ledger / actual HTTP and PostgreSQL snapshot/hold identities and composite tenant bindings are enforced by PostgreSQL",
+      "status": "passed"
+    }
+  ]
+}

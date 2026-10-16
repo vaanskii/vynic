@@ -1,0 +1,104 @@
+[
+  {
+    "file": "apps/backend/src/website/reservation/reservation.service.ts",
+    "beforeErrors": 7,
+    "afterErrors": 7,
+    "added": []
+  },
+  {
+    "file": "apps/backend/src/website/reservation/website-pos-reservation-bridge.service.ts",
+    "beforeErrors": 6,
+    "afterErrors": 6,
+    "added": []
+  },
+  {
+    "file": "apps/backend/src/website/reservation/website-delivery-intent.ts",
+    "beforeErrors": 0,
+    "afterErrors": 0,
+    "added": []
+  },
+  {
+    "file": "apps/backend/src/website/menu/menu.service.ts",
+    "beforeErrors": 0,
+    "afterErrors": 0,
+    "added": []
+  },
+  {
+    "file": "apps/backend/src/pos/pos-reservation-mirror.service.ts",
+    "beforeErrors": "NO_INITIAL_SNAPSHOT",
+    "afterErrors": 0,
+    "currentMessages": []
+  },
+  {
+    "file": "apps/backend/src/website/payment/payment.controller.ts",
+    "beforeErrors": 9,
+    "afterErrors": 0,
+    "added": []
+  },
+  {
+    "file": "apps/backend/src/website/payment/payment.service.ts",
+    "beforeErrors": 5,
+    "afterErrors": 5,
+    "added": []
+  },
+  {
+    "file": "apps/backend/src/local-tools/deletion-matrix.ts",
+    "beforeErrors": 0,
+    "afterErrors": 0,
+    "added": []
+  },
+  {
+    "file": "apps/backend/src/customer/customer.module.ts",
+    "beforeErrors": 0,
+    "afterErrors": 0,
+    "added": []
+  },
+  {
+    "file": "apps/backend/src/platform/platform.module.ts",
+    "beforeErrors": 0,
+    "afterErrors": 0,
+    "added": []
+  },
+  {
+    "file": "apps/platform-web/src/customer/OperationsSections.tsx",
+    "beforeErrors": 0,
+    "afterErrors": 0,
+    "added": []
+  },
+  {
+    "file": "apps/platform-web/src/customer/OwnerDashboard.tsx",
+    "beforeErrors": 0,
+    "afterErrors": 0,
+    "added": []
+  },
+  {
+    "file": "apps/platform-web/src/platform/api.ts",
+    "beforeErrors": 1,
+    "afterErrors": 1,
+    "added": []
+  },
+  {
+    "file": "apps/platform-web/src/platform/pages/venue/VenueWebsiteTab.tsx",
+    "beforeErrors": 0,
+    "afterErrors": 0,
+    "added": []
+  },
+  {
+    "file": "apps/platform-web/src/platform/types.ts",
+    "beforeErrors": 0,
+    "afterErrors": 0,
+    "added": []
+  },
+  {
+    "file": "apps/vankisi-custom-web/src/pages/PaymentSuccess.tsx",
+    "beforeErrors": "NO_INITIAL_SNAPSHOT",
+    "afterErrors": 0,
+    "currentMessages": []
+  },
+  {
+    "file": "apps/vankisi-custom-web/src/pages/PaymentFail.tsx",
+    "beforeErrors": 0,
+    "afterErrors": 0,
+    "added": []
+  }
+]

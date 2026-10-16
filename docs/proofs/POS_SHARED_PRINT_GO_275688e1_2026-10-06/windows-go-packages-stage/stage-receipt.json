@@ -1,0 +1,63 @@
+{
+  "schema": 1,
+  "createdAtUtc": "2026-10-06T16:30:38.883902+00:00",
+  "scope": "Exact frozen V2 source and seven cached compiled test executables; no software-completion source",
+  "snapshotReceiptSHA256": "d694adbe1410f005d6285396f81a7126cdc7b9fb9f44b08a01f7f3c5e523330a",
+  "compilerReceiptSHA256": "57441bd7550ab4e0056ce34b36579ca56222ee5e58588bce9a7552963c79a404",
+  "sourceFiles": 163,
+  "artifacts": {
+    "binary-manifest.json": {
+      "bytes": 1835,
+      "sha256": "892ef428f0db71132d6ab42d55c73678e1f8977139fd4765c2b6ffd2acc6ebd7"
+    },
+    "go-final-source-snapshot.json": {
+      "bytes": 27289,
+      "sha256": "d694adbe1410f005d6285396f81a7126cdc7b9fb9f44b08a01f7f3c5e523330a"
+    },
+    "go-final-windows-package-tests.json": {
+      "bytes": 9931,
+      "sha256": "57441bd7550ab4e0056ce34b36579ca56222ee5e58588bce9a7552963c79a404"
+    },
+    "packages7.zip": {
+      "bytes": 71374136,
+      "sha256": "83dfe5f095d8fb2dc449e303a146af5a5ce62a0d01729cc514aaf526d67d99f1"
+    },
+    "run.ps.txt": {
+      "bytes": 8332,
+      "sha256": "432ad76e87cdc30f5a5d1970c144c9b135b6eb727cb0770e8fdd1fd3f9879fd5"
+    },
+    "source-manifest.json": {
+      "bytes": 26916,
+      "sha256": "d53020e8af7b46e3cb4dc86f3d25edc1eece27f463dde91b0f264908aa577d27"
+    },
+    "source163.zip": {
+      "bytes": 383910,
+      "sha256": "88c65e4717e896698ebeb612fb9b3963061baf5ba12e106001345ebf56611aae"
+    },
+    "vynic_print_helper.exe": {
+      "bytes": 316416,
+      "sha256": "b720e1eedc77ab574d769865e39f71506a5f3ebc9d93ab5166bc3f112203019d"
+    }
+  },
+  "guestBaseSuffix": "VynicReadinessGoPackages/frozen-v2-dc50e6bc33bb",
+  "VM": "9830bac8-34c6-46f7-9062-cd8f62f7a127",
+  "authorization": {
+    "userMessage": "Sentinel_520905fcd50c819199d9cf74b33dbac7",
+    "timeUtc": "2026-10-06T15:24:00Z",
+    "text": "ჩავრთე გააგრძელე",
+    "parentDelegation": "Native seven cached package qualification, isolated paths, no physical documents/installs/restarts"
+  },
+  "limits": {
+    "physicalDocuments": 0,
+    "validRAWCalls": 0,
+    "serviceRegistration": 0,
+    "productStart": 0,
+    "machineRestart": 0,
+    "persistentCredentialChanges": 0,
+    "VMSettingsChanges": 0
+  },
+  "sandboxReadAttempt": {
+    "initial": "prlctl wrapper /bin/ps denied: Operation not permitted; unattended initialization diagnostic",
+    "identicalAuthorizedRetry": "Succeeded once with require_escalated; VM already running; no settings/init actions performed"
+  }
+}

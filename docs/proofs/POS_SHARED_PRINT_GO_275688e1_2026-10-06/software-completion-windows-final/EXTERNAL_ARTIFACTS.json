@@ -1,0 +1,3478 @@
+{
+  "software-completion-final/ARTIFACTS.json": {
+    "sha256": "f42021a776158e9d12ccf3a5cec7333f655a45e56a3d6050adc8a147a13faf65",
+    "bytes": 81219
+  },
+  "software-completion-final/README.md": {
+    "sha256": "de18c46d639888852017a5bd4e47e7de20490d128c2770157a9828c8ecc1a0cf",
+    "bytes": 4035
+  },
+  "software-completion-final/artifacts/bundles/amd64/capability-profile.json": {
+    "sha256": "889ca206e624d88df360fddd23aa7400f81ffec00d222c1dc134b368926209f4",
+    "bytes": 175
+  },
+  "software-completion-final/artifacts/bundles/amd64/manifest.json": {
+    "sha256": "650360132e8f333c37f6ee6eb45a989fefd1ce5b9243d5066f0358b5bb6d4e8f",
+    "bytes": 1772
+  },
+  "software-completion-final/artifacts/bundles/amd64/vynic-print-helper.exe": {
+    "sha256": "b720e1eedc77ab574d769865e39f71506a5f3ebc9d93ab5166bc3f112203019d",
+    "bytes": 316416
+  },
+  "software-completion-final/artifacts/bundles/amd64/vynic-printer-agent.exe": {
+    "sha256": "a5ef474a67d62326436c48e073731b59062cc104545032574af671dc70b882cc",
+    "bytes": 24817152
+  },
+  "software-completion-final/artifacts/bundles/arm64/capability-profile.json": {
+    "sha256": "889ca206e624d88df360fddd23aa7400f81ffec00d222c1dc134b368926209f4",
+    "bytes": 175
+  },
+  "software-completion-final/artifacts/bundles/arm64/manifest.json": {
+    "sha256": "d872b1c844451a169554bb6af99ba9e2a354cf70a8058f073377e90483aac3b9",
+    "bytes": 1772
+  },
+  "software-completion-final/artifacts/bundles/arm64/vynic-print-helper.exe": {
+    "sha256": "99869fe8761ee48f1c66d30359dc837327dd3cc054ba60a1d80089916a6981f5",
+    "bytes": 291328
+  },
+  "software-completion-final/artifacts/bundles/arm64/vynic-printer-agent.exe": {
+    "sha256": "dbdd278544ba542a9161a9bb4fbe411b31a410789af0a0bb583d4a00a78bbf71",
+    "bytes": 23291392
+  },
+  "software-completion-final/continuation/compile-windows-final-fixtures.py": {
+    "sha256": "0dbc3e1b47c6900a41a815fceb82fd12a6fc8a5b1face756947dcbebfa85dba5",
+    "bytes": 3338
+  },
+  "software-completion-final/continuation/current.json": {
+    "sha256": "1c1fb20f3f1c965c89678306dbc9cded77d9f95350f0136aca13b17906c7eda9",
+    "bytes": 443
+  },
+  "software-completion-final/continuation/matrix-tcp-evidence-ready.json": {
+    "sha256": "bedd1486bc4ba73ebcf09ab44af501de490a40acefa274a6b4830f86d9ebdc1f",
+    "bytes": 3442
+  },
+  "software-completion-final/continuation/port-reviewed-files.py": {
+    "sha256": "11c1d64fe750b631359cf6db2daff4133ef749a54d3419edddeec99eb96f42ba",
+    "bytes": 5392
+  },
+  "software-completion-final/continuation/prepare-final-cohort.py": {
+    "sha256": "7bf0b736b836f2cee7e4dd346ef89e3eece70f654b128bc3c1016110c7bb2abf",
+    "bytes": 4283
+  },
+  "software-completion-final/continuation/prepare-windows-software-stage.py": {
+    "sha256": "7a7e0366210114b29cb077d1992b6916d824e770c03189650de32887e2814e84",
+    "bytes": 7924
+  },
+  "software-completion-final/continuation/printerprovisioning-owned-source-hashes.json": {
+    "sha256": "9080f12d87eab43ef601192efb11b89543ff5f3c2887b8b11ba808cfa62d06d5",
+    "bytes": 1710
+  },
+  "software-completion-final/continuation/printerprovisioning-source-handoff.json": {
+    "sha256": "2bf724a9cfb34be783cbf04340388e01ef9f973cb7187970b6b8fd9842ca9b18",
+    "bytes": 1154
+  },
+  "software-completion-final/continuation/provisioning-first-unit.jsonl": {
+    "sha256": "716640b9402ddc14c6a17c59eef8c86372ba940ad4896973d61d09ce756c64de",
+    "bytes": 52510
+  },
+  "software-completion-final/continuation/provisioning-seam-race.jsonl": {
+    "sha256": "2e40f6ed23581b63a6f1c176943736b778ca1cda0886d0c2d25b00e6df449e10",
+    "bytes": 145175
+  },
+  "software-completion-final/continuation/provisioning-seam-unit-sandbox-denied.jsonl": {
+    "sha256": "60643f16509d9f17b1e588d04d36f7910fdfbfb937c809834f7c16a8d6eb1479",
+    "bytes": 123016
+  },
+  "software-completion-final/continuation/provisioning-seam-unit.jsonl": {
+    "sha256": "95fd6afa401a63e59f655a240f3981f32de0ee6ba98138e023d8fb66b069082a",
+    "bytes": 145078
+  },
+  "software-completion-final/continuation/provisioning-second-unit.jsonl": {
+    "sha256": "1282c02a70252a9f98cc0a4559228bb6b97bd4c837c72532c27f319cd0a6d023",
+    "bytes": 109111
+  },
+  "software-completion-final/continuation/provisioning-vet.log": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "software-completion-final/continuation/run-flutter-check.py": {
+    "sha256": "41f0e8fb8168fbfa868a4835f1a2cff381930826def8b54258aabd098d8321de",
+    "bytes": 4735
+  },
+  "software-completion-final/continuation/run-go-check.py": {
+    "sha256": "b413f92be0d14cdd26eef4296be133218e976dcfea82b94b89ad17f267e76170",
+    "bytes": 3537
+  },
+  "software-completion-final/continuation/seal-deliverables.py": {
+    "sha256": "3d30e8333d0e576dd80d1ef0cdfe71b4baca87f7acad420bba7dc46c564c3bc1",
+    "bytes": 12967
+  },
+  "software-completion-final/continuation/windows-flutter-run.template.ps.txt": {
+    "sha256": "ed751681c9080066e96a952ece759e541c236a5efb214d317210ad7a589bcddb",
+    "bytes": 5760
+  },
+  "software-completion-final/copy-provenance.json": {
+    "sha256": "6976e99dbcaf5a6505272fbf1404f909c487464fd92132b3654b3047056ddd39",
+    "bytes": 198086
+  },
+  "software-completion-final/git-status-short.txt": {
+    "sha256": "f80b4f53c00631f2d0bea3b95d0f1fae141cd54f710bd5f795b63d9add5c8eb8",
+    "bytes": 13956
+  },
+  "software-completion-final/historical/printer-validation/acceptance-cluster-manifest.a43c5b81ef7b.json": {
+    "sha256": "a43c5b81ef7b143123f9a377c0abcfd058f0096bf8bae0f05eca709530c2cd8d",
+    "bytes": 4740
+  },
+  "software-completion-final/historical/printer-validation/acceptance-cluster-review.a711a1748b87.json": {
+    "sha256": "a711a1748b8705428d56e07b156c3d9fd49ba2106513c6d8414f26ec1770e535",
+    "bytes": 8817
+  },
+  "software-completion-final/historical/printer-validation/acceptance-go-race-failure.c553f557d3cf.jsonl": {
+    "sha256": "c553f557d3cf0211e745ff945ee898c219f2ef143cd891bd0aeb74d21be08729",
+    "bytes": 460675
+  },
+  "software-completion-final/historical/printer-validation/acceptance-historical-go-final-edge-race-status.f3ae976cc171.json": {
+    "sha256": "f3ae976cc1715396762e5c4d65593dd7100a1efb516544d268c211290b8dce1e",
+    "bytes": 601
+  },
+  "software-completion-final/historical/printer-validation/acceptance-historical-go-final-source-snapshot.becbed114597.json": {
+    "sha256": "becbed114597ac2e6d153fe0c5bbc75bd720a497f43678dd5cb7954e64b76f5f",
+    "bytes": 27289
+  },
+  "software-completion-final/historical/printer-validation/acceptance-matrix-candidate.v4.f7b0702ba453.json": {
+    "sha256": "f7b0702ba453b5dcc339a38a3a79ed1ea83ce86de2d25edf3e033f9f4f280a8f",
+    "bytes": 103829
+  },
+  "software-completion-final/historical/printer-validation/acceptance-matrix-candidate.v4.json": {
+    "sha256": "f75331856656930ce725e5af6597069edc3bb5534a18c9b2cf8359c6f1f94a66",
+    "bytes": 125591
+  },
+  "software-completion-final/historical/printer-validation/acceptance-matrix-candidate.v4.v4.43a6e885f9a3.json": {
+    "sha256": "43a6e885f9a37792ed645fffa7f2ae9a90b0caf7f9b17af7f1e7aa3da41e73f0",
+    "bytes": 104519
+  },
+  "software-completion-final/historical/printer-validation/acceptance-matrix-candidate.v6.json": {
+    "sha256": "cd19cef17e5094cec9da32012ae26844f2d8e24da249d77114d42dc265e344f9",
+    "bytes": 133233
+  },
+  "software-completion-final/historical/printer-validation/acceptance-matrix-candidate.v7.json": {
+    "sha256": "361631acbab36d3333a9a723734fef4bdfa25e533a977cee544b6a67fbcb178b",
+    "bytes": 125650
+  },
+  "software-completion-final/historical/printer-validation/acceptance-matrix-draft.json": {
+    "sha256": "4f1362f96eb4040bf36ac6d0639e0c73f0729c3f22ce0a3dbbf3c51c7bfda66a",
+    "bytes": 65403
+  },
+  "software-completion-final/historical/printer-validation/acceptance-matrix-draft.v3.json": {
+    "sha256": "4f1362f96eb4040bf36ac6d0639e0c73f0729c3f22ce0a3dbbf3c51c7bfda66a",
+    "bytes": 65403
+  },
+  "software-completion-final/historical/printer-validation/acceptance-matrix-final.debe7d59cc5e.json": {
+    "sha256": "debe7d59cc5e2e27bd2c186afa34a36a0235ff6031fd4151b928841ef8101d5d",
+    "bytes": 122281
+  },
+  "software-completion-final/historical/printer-validation/acceptance-matrix-final.json": {
+    "sha256": "19f3cc4431982ad2f1304a0ba485b3e3588234096d019c3dbf3c58c9448f5f70",
+    "bytes": 171587
+  },
+  "software-completion-final/historical/printer-validation/acceptance-matrix-final.v4.debe7d59cc5e.json": {
+    "sha256": "debe7d59cc5e2e27bd2c186afa34a36a0235ff6031fd4151b928841ef8101d5d",
+    "bytes": 122281
+  },
+  "software-completion-final/historical/printer-validation/acceptance-matrix-final.v5.fc55b5cabf7d.json": {
+    "sha256": "fc55b5cabf7d4f95c39e977287dbbbebc6fea9482909bd062cb137fc99cfd8d4",
+    "bytes": 127289
+  },
+  "software-completion-final/historical/printer-validation/acceptance-matrix-history-retention.json": {
+    "sha256": "8c59921802287d65df0c76f58eee6a13ab65233e552e3a27df4a7dcf07402418",
+    "bytes": 1479
+  },
+  "software-completion-final/historical/printer-validation/acceptance-matrix-v8-baseline.json": {
+    "sha256": "42e98fcead35c11171c9389dd31b7614b4788a7c8c096e4fe3a8841a876842d5",
+    "bytes": 146369
+  },
+  "software-completion-final/historical/printer-validation/acceptance-matrix-v9-software-completion.json": {
+    "sha256": "19f3cc4431982ad2f1304a0ba485b3e3588234096d019c3dbf3c58c9448f5f70",
+    "bytes": 171587
+  },
+  "software-completion-final/historical/printer-validation/build_acceptance_matrix.py": {
+    "sha256": "520ddcdb234730efb30a3009966b79c0ac735122f3cce0795fcf2722547d7545",
+    "bytes": 50571
+  },
+  "software-completion-final/historical/printer-validation/build_acceptance_matrix_v9.py": {
+    "sha256": "57894648f120b8e63a9ea7d4c56d85c888ca5117d827c359052450bce3bc74ff",
+    "bytes": 17044
+  },
+  "software-completion-final/historical/printer-validation/cluster-independent-boundaries-authorized.jsonl": {
+    "sha256": "927cf58d905a4337366ff5174ef969023c4501503db4ade1cc7e8cfb80892d41",
+    "bytes": 18027
+  },
+  "software-completion-final/historical/printer-validation/cluster-independent-boundaries-authorized.stderr": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "software-completion-final/historical/printer-validation/cluster-independent-boundaries.jsonl": {
+    "sha256": "be00ea0844290e1ea51485909aea9656786ee029fa04fb0bf104548e2cfa6046",
+    "bytes": 18003
+  },
+  "software-completion-final/historical/printer-validation/cluster-independent-boundaries.stderr": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "software-completion-final/historical/printer-validation/cluster-independent-contracts-authorized.jsonl": {
+    "sha256": "958c0265fa1d494cc8f8d4cd992d489e95e490045287b0d65326fda98c6c7ba0",
+    "bytes": 29661
+  },
+  "software-completion-final/historical/printer-validation/cluster-independent-contracts-authorized.stderr": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "software-completion-final/historical/printer-validation/cluster-independent-contracts.jsonl": {
+    "sha256": "9dd23b3eaf93c184fd0bfe8931a20a12197d4e02c9646afaa8a9f7be7f01a0fa",
+    "bytes": 32010
+  },
+  "software-completion-final/historical/printer-validation/cluster-independent-contracts.stderr": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "software-completion-final/historical/printer-validation/cluster-independent-frozen-boundaries.jsonl": {
+    "sha256": "3d416c469782716d398bb9e86656e324d618a4442e4af20a30d2e33057fe6fdc",
+    "bytes": 15590
+  },
+  "software-completion-final/historical/printer-validation/cluster-independent-frozen-boundaries.stderr": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "software-completion-final/historical/printer-validation/cluster-independent-frozen-process-race.jsonl": {
+    "sha256": "45c48f8e8cd5ab6118156eeba992654beb5dbf3d09b295b8d2e938cbb4369f86",
+    "bytes": 5461
+  },
+  "software-completion-final/historical/printer-validation/cluster-independent-frozen-process-race.stderr": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "software-completion-final/historical/printer-validation/cluster-independent-frozen-process.jsonl": {
+    "sha256": "3f95187252546a5bc574bb6399efb7f13e00c7af5b3783e20627b7a5bea08997",
+    "bytes": 5456
+  },
+  "software-completion-final/historical/printer-validation/cluster-independent-frozen-process.stderr": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "software-completion-final/historical/printer-validation/cluster-v2-independent-large-normal.jsonl": {
+    "sha256": "3c2ddf249aab46b31a1759cc3deb27485b01ada443ac945b7ac83ad1c27cd672",
+    "bytes": 4880
+  },
+  "software-completion-final/historical/printer-validation/cluster-v2-independent-large-normal.stderr": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "software-completion-final/historical/printer-validation/cluster-v2-independent-large-race.jsonl": {
+    "sha256": "1f9c5ca415ab97ebd2ede94c23fe10d21bbf8dc93010152440e9ced86755eadd",
+    "bytes": 5487
+  },
+  "software-completion-final/historical/printer-validation/cluster-v2-independent-large-race.stderr": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "software-completion-final/historical/printer-validation/dart-all-envelopes-tests.jsonl": {
+    "sha256": "c717a1fbb7cb927191591b9f06d97e5106154f03f7a7a6a2c5cece549417f2aa",
+    "bytes": 7987
+  },
+  "software-completion-final/historical/printer-validation/dart-all-envelopes-tests.stderr": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "software-completion-final/historical/printer-validation/dart-cluster-independent-review-v2.json": {
+    "sha256": "4592a9841c0e37db3ce12f7acc6204139030db8815f1eec61785a8f75e8a9963",
+    "bytes": 2947
+  },
+  "software-completion-final/historical/printer-validation/dart-cluster-independent-review.json": {
+    "sha256": "8473c6c6e38d657c0ec74abebf528ed625ad20e87f488806004ffa61c8c06f30",
+    "bytes": 2621
+  },
+  "software-completion-final/historical/printer-validation/dart-envelope-analysis.txt": {
+    "sha256": "c645e78498d52c7c01c5577ac7949c6f36a5b50d68dd183cadf7bd5892fd3b24",
+    "bytes": 200
+  },
+  "software-completion-final/historical/printer-validation/dart-envelope-independent-review.json": {
+    "sha256": "c42f7ff4b91fea83de4450ce74581cc00d0af2f4c9a7b7f585a87ca234900308",
+    "bytes": 2990
+  },
+  "software-completion-final/historical/printer-validation/dart-envelope-tests.jsonl": {
+    "sha256": "2cea119edcaaa1fcca996397b69cfefbebc0e349344b0e84685c9fb256169115",
+    "bytes": 4007
+  },
+  "software-completion-final/historical/printer-validation/dart-envelope-tests.stderr.txt": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "software-completion-final/historical/printer-validation/earlier-proof-seal-check.json": {
+    "sha256": "7ca670aa684bd7592ee61f72d6ac95c24d866653057669df0f67e55b900d1e32",
+    "bytes": 461
+  },
+  "software-completion-final/historical/printer-validation/eligibility-independent-review.json": {
+    "sha256": "90f394ca50abb40450b3b995e73701bf408cd274e2e65b5a0b8c32c26dfb4b48",
+    "bytes": 1270
+  },
+  "software-completion-final/historical/printer-validation/eligibility-tests.jsonl": {
+    "sha256": "877ddc307a264522e7f11c92c34df4d95ef16d103ebf8d6a3fca4747e6bb3c4d",
+    "bytes": 5116
+  },
+  "software-completion-final/historical/printer-validation/eligibility-tests.stderr.txt": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "software-completion-final/historical/printer-validation/flutter-final-analysis-selection.json": {
+    "sha256": "7e4bb802736ed8199b9e83388347b6938f63e7eb820a6262828b8751cba71d5c",
+    "bytes": 3276
+  },
+  "software-completion-final/historical/printer-validation/flutter-final-analysis.log": {
+    "sha256": "4d3bf77f0057b1bd4f6b02bf829e1f5a71fadecb662dcd41d9b7fac0d2e76af1",
+    "bytes": 1748
+  },
+  "software-completion-final/historical/printer-validation/flutter-final-analysis.stderr": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "software-completion-final/historical/printer-validation/flutter-final-source-snapshot.json": {
+    "sha256": "c2a83b9a97a37bd754b89c016df8f83929d234d4af688b5303f748d1366347d6",
+    "bytes": 172651
+  },
+  "software-completion-final/historical/printer-validation/flutter-final-test-selection.json": {
+    "sha256": "44f3f571aeb5193358a5ed144ea0bab38b2e8abacf0b3023d3c682d4158a1afd",
+    "bytes": 1763
+  },
+  "software-completion-final/historical/printer-validation/flutter-final-tests-status.json": {
+    "sha256": "dba9d65bf027f628d533a20cd2cfcde23cbb810bbe43e405df1a93d3fede7d9f",
+    "bytes": 2181
+  },
+  "software-completion-final/historical/printer-validation/flutter-final-tests.jsonl": {
+    "sha256": "9e06a4f306a5d438becb161e1ee3a3e44bc1ace34a432029515e128879d51f4f",
+    "bytes": 411076
+  },
+  "software-completion-final/historical/printer-validation/flutter-final-tests.stderr": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "software-completion-final/historical/printer-validation/flutter-final-validation-receipt.json": {
+    "sha256": "02e1179834f0a0c78caff4001fd19b40f29eaa8b8d98d506fb5ef6d7343dffdd",
+    "bytes": 822
+  },
+  "software-completion-final/historical/printer-validation/latest-go-source-pending.json": {
+    "sha256": "c98df33f16d403c4bf6e9fde0011afcd65bab0c670f7ef914e9cfc4b61ed8da8",
+    "bytes": 401
+  },
+  "software-completion-final/historical/printer-validation/operational-queue-independent.jsonl": {
+    "sha256": "a63894123c2bb7b90f76b156a66705f9f51b29231fcb0c2ca0c29ee341d73a3f",
+    "bytes": 20110
+  },
+  "software-completion-final/historical/printer-validation/operational-queue-independent.stderr": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "software-completion-final/historical/printer-validation/operational-wire-independent-review.json": {
+    "sha256": "29716dd3eb1637dd99e443ebcaff7412af2ae349a837501135f4535fdae30463",
+    "bytes": 9231
+  },
+  "software-completion-final/historical/printer-validation/port-preservation-preflight.json": {
+    "sha256": "87665fbf8bfdf706560ed6951aff22b2de0c0cabb79929ab19a100478e381131",
+    "bytes": 423
+  },
+  "software-completion-final/historical/printer-validation/printcluster-independent-review-v2.json": {
+    "sha256": "e066026d1aa694f8f507a71f1dbd4ddd0116defd6484cc5cb8eca5e099740911",
+    "bytes": 8775
+  },
+  "software-completion-final/historical/printer-validation/printcluster-independent-review.json": {
+    "sha256": "a711a1748b8705428d56e07b156c3d9fd49ba2106513c6d8414f26ec1770e535",
+    "bytes": 8817
+  },
+  "software-completion-final/historical/printer-validation/printhost-independent-review.json": {
+    "sha256": "f3738a4f11ae9813f13daf45f9faffdf1c0d292f413e1920aa7d93caba79f1e7",
+    "bytes": 2862
+  },
+  "software-completion-final/historical/printer-validation/queue-independent-review.json": {
+    "sha256": "458cfa099b9054cc96adcfafcb5d0dfe9b03ed179f705f66c219827d860cd2bc",
+    "bytes": 4107
+  },
+  "software-completion-final/historical/printer-validation/queue-independent-targeted.jsonl": {
+    "sha256": "9fe6ad7b6df198f56482128cff7efcf148e42fd42c7e078c43d94fad78a52282",
+    "bytes": 16433
+  },
+  "software-completion-final/historical/printer-validation/stage_windows_go_packages.py": {
+    "sha256": "1e64f7d7084d954c363820e9fa182026a25c82d6bf40274a70eeded534bda2e4",
+    "bytes": 13428
+  },
+  "software-completion-final/historical/printer-validation/transport-final-delta-review.json": {
+    "sha256": "048ccbaead5e563faebee58250e4db0e9eec45d46a9d12c7bbb8b6fb0524db2c",
+    "bytes": 798
+  },
+  "software-completion-final/historical/printer-validation/transport-independent-race.jsonl": {
+    "sha256": "64bebccec9bbafe23021eb1f06c0ac4c806acbb7330c4ae23128e77cda55ba17",
+    "bytes": 23639
+  },
+  "software-completion-final/historical/printer-validation/transport-independent-race.stderr": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "software-completion-final/historical/printer-validation/transport-independent-review.json": {
+    "sha256": "0cf5d47e067f040757a2a32281ae06e4c7e54e5fc9ee5171fc55046df4b578a9",
+    "bytes": 4890
+  },
+  "software-completion-final/historical/printer-validation/transport-msvc-fixture-delta-review.json": {
+    "sha256": "caef6faf170b626c28c6be6be3c3ddd9d622372cec188be185ccbdf836190a85",
+    "bytes": 656
+  },
+  "software-completion-final/historical/printer-validation/verify_windows_go_packages.py": {
+    "sha256": "1cf50755cb0f0c202140a7bada267ed8d8a801fcdc180d0a7609d69f6800c7d9",
+    "bytes": 8412
+  },
+  "software-completion-final/historical/printer-validation/windows-go-packages-independent-review.json": {
+    "sha256": "ff446de5bf7de683075696a048bbe56441d45bf636a3a32aa67f313fd7b1fdb9",
+    "bytes": 2060
+  },
+  "software-completion-final/historical/printer-validation/windows-go-packages-launch.json": {
+    "sha256": "ef6ad04b194b995bc798e505aa527a72acdc3b68619c8634f8b6f9a74da5f5a8",
+    "bytes": 994
+  },
+  "software-completion-final/historical/printer-validation/windows-go-packages-prlctl.log": {
+    "sha256": "5e721e1038d1d4275f1c3fb90fbab93dbf8fa3a8ca0164cd2c75e6c4982acdc3",
+    "bytes": 70788
+  },
+  "software-completion-final/historical/printer-validation/windows-pos-flutter-independent-review.json": {
+    "sha256": "75e050c1dd8099fbe5c1f6703b598a2ca37e1e91711f3d9099463dc56b471a18",
+    "bytes": 6990
+  },
+  "software-completion-final/historical/printer-validation/windows-transport-independent-review.json": {
+    "sha256": "d9c919900d1af608262cf200fe67d4168d832e3f39eebd168307ab83538d4209",
+    "bytes": 2744
+  },
+  "software-completion-final/historical/printer-validation/workspace-overlay-boundary.json": {
+    "sha256": "d1d85b93362253ded59075dddd14ea32ab745fd93dcb0df93f7f6905a89160dc",
+    "bytes": 2816
+  },
+  "software-completion-final/historical/printhost-verification/checkpoint.json": {
+    "sha256": "1bae740d20ac6edd03897b83a8f859029030b14ba8fc7c60148de224ea0af24a",
+    "bytes": 6815
+  },
+  "software-completion-final/historical/printhost-verification/owned-source.sha256": {
+    "sha256": "44ef5a532142ebd5e77bfd4c156cccb2e15f893b801500648ce3ddd603cbcf8d",
+    "bytes": 996
+  },
+  "software-completion-final/historical/printhost-verification/race.jsonl": {
+    "sha256": "8629655db4dd46dacae684e09b99b7a6be7a9fce6e09359b7c4636801b3ce281",
+    "bytes": 22914
+  },
+  "software-completion-final/historical/printhost-verification/unit.jsonl": {
+    "sha256": "debd8dda26664842c5bdf2efd3f4ec3f75a32438d71f5c999ae3df9741be9232",
+    "bytes": 22915
+  },
+  "software-completion-final/historical/printhost-verification/v2/checkpoint.json": {
+    "sha256": "01f4790194077feaeed3cf479e79001395211a0923e1765169de9f2997116362",
+    "bytes": 8394
+  },
+  "software-completion-final/historical/printhost-verification/v2/owned-source.sha256": {
+    "sha256": "24b268003a61ca59bf98e64da1cc833691c68ccbc344047245ad337917ece1d5",
+    "bytes": 996
+  },
+  "software-completion-final/historical/printhost-verification/v2/race.jsonl": {
+    "sha256": "d57c2445be135d6bc27d3126b20b9a682256f1a7901c4b423a06c2e394a314dd",
+    "bytes": 28573
+  },
+  "software-completion-final/historical/printhost-verification/v2/unit.jsonl": {
+    "sha256": "ed1967bb8186df285b74339873a39aa803f23d6556ea65f9d457f3c63fa1d246",
+    "bytes": 28571
+  },
+  "software-completion-final/historical/printhost-verification/v2/vet.log": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "software-completion-final/historical/printhost-verification/v2/windows-amd64.log": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "software-completion-final/historical/printhost-verification/v2/windows-arm64.log": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "software-completion-final/historical/printhost-verification/vet.log": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "software-completion-final/historical/printhost-verification/windows-amd64.log": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "software-completion-final/historical/printhost-verification/windows-arm64.log": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "software-completion-final/historical/printtransport-failed-v1/print-helper-protocol-tests.log": {
+    "sha256": "c238ab02f873d04667d26ed96d49beb21fb2dde581071df13002e4451a18ca4e",
+    "bytes": 70
+  },
+  "software-completion-final/historical/printtransport-failed-v1/printtransport-packet.json": {
+    "sha256": "af05d57a6c44d73744f1631e3e8566ebcb8b9373dc2b2eda407d24e4c039132c",
+    "bytes": 1158
+  },
+  "software-completion-final/historical/printtransport-failed-v1/printtransport-source-manifest.json": {
+    "sha256": "237deec3436b5cfa9983cc53ab4b52b4e9c2dcce0a9ca592efb8b26938160bda",
+    "bytes": 6871
+  },
+  "software-completion-final/historical/printtransport-failed-v1/protocol_test.cpp": {
+    "sha256": "84dcfd6446ad0534c9322ca508ee8dcee864ddae2a3a84f66cb50a32b9dae711",
+    "bytes": 10732
+  },
+  "software-completion-final/historical/root-evidence/operational-authenticated-wire-final-test.jsonl": {
+    "sha256": "319b5040433032ca0a8f84aca75ef44806a11f37bda5391903ed91a68be46274",
+    "bytes": 145879
+  },
+  "software-completion-final/historical/root-evidence/operational-authenticated-wire-final-test.stderr": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "software-completion-final/historical/root-evidence/operational-authenticated-wire-first-test.jsonl": {
+    "sha256": "6138056721cd510d4409af0bad37850d11f70b407084a0f74d638b60f15740f8",
+    "bytes": 126760
+  },
+  "software-completion-final/historical/root-evidence/operational-authenticated-wire-first-test.stderr": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "software-completion-final/historical/root-evidence/operational-authenticated-wire-fixed-test.jsonl": {
+    "sha256": "62ef6f583a0f742ea6ba7e35a5c184dd7d7afde7fca43f96eaf22f23b1a874e7",
+    "bytes": 128187
+  },
+  "software-completion-final/historical/root-evidence/operational-authenticated-wire-fixed-test.stderr": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "software-completion-final/historical/root-evidence/operational-authenticated-wire-server-test.jsonl": {
+    "sha256": "81af4997f9375a3391e8b8f27a7027984b11690cf91e3091b5bcb59907f4eb18",
+    "bytes": 32046
+  },
+  "software-completion-final/historical/root-evidence/operational-authenticated-wire-server-test.stderr": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "software-completion-final/historical/root-evidence/operational-origin-compile-fixed.log": {
+    "sha256": "377d95518c60fa664301d5ad3824609028216210871e3d3aa3e49bc551c4643d",
+    "bytes": 6070
+  },
+  "software-completion-final/historical/root-evidence/operational-origin-domain-analysis.log": {
+    "sha256": "c94c97c84a205144f0c557d00fa4563c9764a65b8886548c56cc7d3478a334bd",
+    "bytes": 55
+  },
+  "software-completion-final/historical/root-evidence/operational-origin-first-compile.jsonl": {
+    "sha256": "eedd741c0efe7e1156c8dd1549eb60d65f16f9ceb42de897c756f3238c7836e5",
+    "bytes": 90098
+  },
+  "software-completion-final/historical/root-evidence/operational-origin-first-compile.stderr": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "software-completion-final/historical/root-evidence/operational-origin-queue-store-fixed-test.jsonl": {
+    "sha256": "909f59e2f568cfb4de50a709746b36a8075cc08fd4c975d42f9c92dfe28b6c64",
+    "bytes": 108283
+  },
+  "software-completion-final/historical/root-evidence/operational-origin-queue-store-fixed-test.stderr": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "software-completion-final/historical/root-evidence/operational-origin-queue-store-test.jsonl": {
+    "sha256": "9c9e452e23346fd602ccb463946df1550326582f7758fce30cd332477d109571",
+    "bytes": 110524
+  },
+  "software-completion-final/historical/root-evidence/operational-origin-queue-store-test.stderr": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "software-completion-final/historical/root-evidence/operational-rpc-initial-compile.jsonl": {
+    "sha256": "5f9d129f19f12a91b76ed898035afc4825985b8e92fceb8a8ad251d36c76bfa5",
+    "bytes": 101592
+  },
+  "software-completion-final/historical/root-evidence/operational-rpc-initial-compile.stderr": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "software-completion-final/historical/root-evidence/operational-store-baseline-receipt.json": {
+    "sha256": "101371016e2fb914ad8651217b275b4f1f4a5e98af9f43e2a24d24afc06e6637",
+    "bytes": 4218
+  },
+  "software-completion-final/historical/root-evidence/operational-store-baseline-test.jsonl": {
+    "sha256": "8f4e3ee2918c9140eea274b203b36574a569e4ff04b2a5db9ba4333d4019aad5",
+    "bytes": 88689
+  },
+  "software-completion-final/historical/root-evidence/operational-store-baseline-test.stderr": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "software-completion-final/historical/root-evidence/operational-store-initial-test.jsonl": {
+    "sha256": "cf6a8164f2b2f7add72791b1fa316ac15f1ef46bb84472a028207ab7e7c37c5b",
+    "bytes": 91620
+  },
+  "software-completion-final/historical/root-evidence/operational-store-initial-test.stderr": {
+    "sha256": "6146800a730d3934803b390b357e25ce00e7b480c1d3884ddedc8135377d8e3e",
+    "bytes": 301
+  },
+  "software-completion-final/historical/root-evidence/operational-store-schema5-fixed-test.jsonl": {
+    "sha256": "030c02bbc1583fb55e506963fe088367c273211711cb1636fac9e88771c104da",
+    "bytes": 88948
+  },
+  "software-completion-final/historical/root-evidence/operational-store-schema5-fixed-test.stderr": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "software-completion-final/historical/root-evidence/operational-store-schema5-test.jsonl": {
+    "sha256": "146c59217cb781a57d11c269b28268c84036290c1a1b4f7352ca0da9682bb740",
+    "bytes": 89229
+  },
+  "software-completion-final/historical/root-evidence/operational-store-schema5-test.stderr": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "software-completion-final/historical/root-evidence/operational-wire-before-hashes.json": {
+    "sha256": "6cb963fd0e865bfbb4f0b16c1ffb635fe05fc7801498cbd87eb3e0da876cf0e3",
+    "bytes": 3782
+  },
+  "software-completion-final/historical/root-evidence/operational-wire-dart-analysis.log": {
+    "sha256": "278f835cba575cee0e3dfe5020ada0d31e7f00846104fa294ae61b356729e761",
+    "bytes": 110
+  },
+  "software-completion-final/historical/root-evidence/operational-wire-dart-final-analysis.log": {
+    "sha256": "76f06f731472296e5cb9a3f98a871081cc6127316716db05771b813e47e1149b",
+    "bytes": 449
+  },
+  "software-completion-final/historical/root-evidence/operational-wire-dart-final-fixed-analysis.log": {
+    "sha256": "278f835cba575cee0e3dfe5020ada0d31e7f00846104fa294ae61b356729e761",
+    "bytes": 110
+  },
+  "software-completion-final/historical/root-evidence/operational-wire-dart-final-fixed-format.log": {
+    "sha256": "3f48ca976b74ae5cd933c7ba982c43f885d1008df606ac0136d9a6f1cc4f9c68",
+    "bytes": 47
+  },
+  "software-completion-final/historical/root-evidence/operational-wire-dart-final-fixed-test.log": {
+    "sha256": "aabdbaa14c0c4fa9248067963ac479a5edcf5abd13bb94976a7fe00df9c85aee",
+    "bytes": 14678
+  },
+  "software-completion-final/historical/root-evidence/operational-wire-dart-final-format.log": {
+    "sha256": "3f48ca976b74ae5cd933c7ba982c43f885d1008df606ac0136d9a6f1cc4f9c68",
+    "bytes": 47
+  },
+  "software-completion-final/historical/root-evidence/operational-wire-dart-final-test.log": {
+    "sha256": "3146dfe3f76fd8cb7286f94f09c3aa102ae3620d3652cca04af309265a5469ab",
+    "bytes": 12599
+  },
+  "software-completion-final/historical/root-evidence/operational-wire-dart-first-analysis.log": {
+    "sha256": "ffd56f456494c1e14b697d59f546174853970bc4ee66ddecdb64bec72564666e",
+    "bytes": 329
+  },
+  "software-completion-final/historical/root-evidence/operational-wire-dart-first-test.log": {
+    "sha256": "fa4685772f56d1c9d0ea7ae33d196921f3c0b5e2a5b97cf503d11d0634cfcef5",
+    "bytes": 19069
+  },
+  "software-completion-final/historical/root-evidence/operational-wire-dart-pin-test.log": {
+    "sha256": "abe54c2fcc36c0e40a062bc716b933948f46270b1ddb615ddfd157e2fda68ed6",
+    "bytes": 14473
+  },
+  "software-completion-final/historical/root-evidence/operational-wire-diff-check.json": {
+    "sha256": "133a785e92526ccc189b057d1da48e02e77c21dce1d6f80a25ea6f71070ded63",
+    "bytes": 4085
+  },
+  "software-completion-final/historical/root-evidence/operational-wire-first-generate.log": {
+    "sha256": "c253e6880eef9a5581b987e3cf124153e1999f30fed5b0eeff0c376544f86324",
+    "bytes": 129
+  },
+  "software-completion-final/historical/root-evidence/operational-wire-generate.log": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "software-completion-final/historical/root-evidence/operational-wire-generation-check.log": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "software-completion-final/historical/root-evidence/operational-wire-generation-receipt.json": {
+    "sha256": "133ba0009f37de3ee1ba685d9daf1fade42335af2d2ffa5799376f0fe9de7f24",
+    "bytes": 5639
+  },
+  "software-completion-final/historical/root-evidence/operational-wire-generator-versions.json": {
+    "sha256": "759c7c0f97fcaa0c7c8afe8ed9c0b444179b52075e57ca31fc8c6a5134b2ee18",
+    "bytes": 845
+  },
+  "software-completion-final/historical/root-evidence/operational-wire-origin-generate.log": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "software-completion-final/historical/root-evidence/operational-wire-owned-files.txt": {
+    "sha256": "8b8861751b6fcd8ec62e9c4dca491f1a2f0304390272e4f71760aa47c997482a",
+    "bytes": 1666
+  },
+  "software-completion-final/historical/root-evidence/operational-wire-owned-hashes.json": {
+    "sha256": "c8e9bc4cd6dc9de7f7261769024c937e347e99bc46fabe99fde45e7108d739b8",
+    "bytes": 3567
+  },
+  "software-completion-final/historical/root-evidence/operational-wire-process-compile.log": {
+    "sha256": "074248672d1dd12707516ea3aa3df4bcea6ff735daa4843b6b19a424d62c758c",
+    "bytes": 45
+  },
+  "software-completion-final/historical/root-evidence/operational-wire-source-manifest.json": {
+    "sha256": "a32a175fdf3454dc4f1c040822577eb35e379dd2b4ac57dc1441a4cb7dce9f03",
+    "bytes": 9002
+  },
+  "software-completion-final/historical/root-evidence/operational-wire-status-origin-generate.log": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "software-completion-final/historical/root-evidence/operational-wire-validation-receipt.json": {
+    "sha256": "4aec27eb10087b33596008674e5449e8f67e11e3654f05ff8a1ad4e4b6b0b5dd",
+    "bytes": 5896
+  },
+  "software-completion-final/historical/root-evidence/operational-wire-windows-fixture-build-info.txt": {
+    "sha256": "17f6cc2d5f3cbfd839ddabbfe4331479466ee1a2159dd3adc87e1e14b9d8db03",
+    "bytes": 300
+  },
+  "software-completion-final/historical/root-evidence/operational-wire-windows-fixture-build-pending.json": {
+    "sha256": "faff4f06f03a439c0fc83a259d2b64ff33712b3c0773dc4d21cb6547efe46341",
+    "bytes": 1654
+  },
+  "software-completion-final/historical/root-evidence/operational-wire-windows-fixture-build-receipt.json": {
+    "sha256": "25ab0948951df94b16e6dcabcfedad2fa4b10ae6f52dbbc80e3660524bc67a1c",
+    "bytes": 4823
+  },
+  "software-completion-final/historical/root-evidence/operational-wire-windows-fixture-build.log": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "software-completion-final/historical/root-evidence/print-helper-protocol-tests.log": {
+    "sha256": "c238ab02f873d04667d26ed96d49beb21fb2dde581071df13002e4451a18ca4e",
+    "bytes": 70
+  },
+  "software-completion-final/historical/root-evidence/print-helper-protocol-tests.v2.log": {
+    "sha256": "c238ab02f873d04667d26ed96d49beb21fb2dde581071df13002e4451a18ca4e",
+    "bytes": 70
+  },
+  "software-completion-final/historical/root-evidence/print-helper-sdk-sha256.json": {
+    "sha256": "774b989ac815f9029a02e01c309b20153d6a850d8d03d34e09cbf687ed6b673a",
+    "bytes": 4492
+  },
+  "software-completion-final/historical/root-evidence/printcluster-owned-source-hashes-v1.json": {
+    "sha256": "a43c5b81ef7b143123f9a377c0abcfd058f0096bf8bae0f05eca709530c2cd8d",
+    "bytes": 4740
+  },
+  "software-completion-final/historical/root-evidence/printcluster-owned-source-hashes.json": {
+    "sha256": "7f0cb9e7bbb49a65983efeb0fa45b0a2dc4e9929ff737fa8943a9f2b2a74170e",
+    "bytes": 5214
+  },
+  "software-completion-final/historical/root-evidence/printcluster-validation-receipt.json": {
+    "sha256": "c9badca136487fbd391cc2270f12ede85f748c05b7413c093b03370e7a41ff94",
+    "bytes": 60346
+  },
+  "software-completion-final/historical/root-evidence/printer-reviewed-port-candidate-sha256.json": {
+    "sha256": "2dede1ec9da52b471819182a7b5868c6101530d0442a2456b96b2f28514d4f9b",
+    "bytes": 13455
+  },
+  "software-completion-final/historical/root-evidence/printer-reviewed-port-files.json": {
+    "sha256": "6a66f9fcbf04c141a48dea484bad1cda59478780c27b27068043f378f7f80522",
+    "bytes": 6111
+  },
+  "software-completion-final/historical/root-evidence/printqueue-tests-go-race.jsonl": {
+    "sha256": "99a7a555532303ddea3ff9c8b3ef3afefe84b1923b98b04dd79233fdb017e98d",
+    "bytes": 64004
+  },
+  "software-completion-final/historical/root-evidence/printqueue-tests-go.jsonl": {
+    "sha256": "d62baef7ad1be0002502f384efcd1eb3d8470b89621c60d6ea45d8429c9667f1",
+    "bytes": 61440
+  },
+  "software-completion-final/historical/root-evidence/printqueue-vet.log": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "software-completion-final/historical/root-evidence/printqueue-windows-crosscompile.log": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "software-completion-final/historical/root-evidence/printtransport-packet.json": {
+    "sha256": "af05d57a6c44d73744f1631e3e8566ebcb8b9373dc2b2eda407d24e4c039132c",
+    "bytes": 1158
+  },
+  "software-completion-final/historical/root-evidence/printtransport-packet.v2.json": {
+    "sha256": "1809e72286d069abc9edf69209d47a23e99f8c81be390d498344c466adb8e833",
+    "bytes": 1386
+  },
+  "software-completion-final/historical/root-evidence/printtransport-source-manifest.json": {
+    "sha256": "237deec3436b5cfa9983cc53ab4b52b4e9c2dcce0a9ca592efb8b26938160bda",
+    "bytes": 6871
+  },
+  "software-completion-final/historical/root-evidence/printtransport-source-manifest.v2.json": {
+    "sha256": "638458ddc270fa3638c52f2a7bc491e6327bebbf2a46caba9fb451f64bae680f",
+    "bytes": 7137
+  },
+  "software-completion-final/historical/root-evidence/printtransport-tests.log": {
+    "sha256": "8dc52225abd4518e9469122bf27f744389630c26556b4be9f9bf29e113271b9c",
+    "bytes": 3424
+  },
+  "software-completion-final/historical/root-evidence/printtransport-windows-qualification.v2.json": {
+    "sha256": "559f55d6e56d943bc1f92e954040732d0453f29563aab1f72c1ac27f8a473ae8",
+    "bytes": 6615
+  },
+  "software-completion-final/historical/root-evidence/shared-printqueue-baseline.json": {
+    "sha256": "d2fdd08258d291f8b08d5949907ee581c44573af3964fa739c1f2b96c12796fa",
+    "bytes": 806
+  },
+  "software-completion-final/historical/root-evidence/shared-printqueue-owned-sha256.json": {
+    "sha256": "31760c3b9df3913c241d8f8e9aaffc3b032f7d34c661b1374dfa0c5a63781795",
+    "bytes": 2832
+  },
+  "software-completion-final/historical/root-evidence/shared-printqueue-validation-receipt.json": {
+    "sha256": "5b704c751f3c7a0c11f294aba6a028f57a63fc4e66f842b6582afdbc579f756b",
+    "bytes": 5303
+  },
+  "software-completion-final/historical/root-evidence/windows-flutter-analysis-command.stderr": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "software-completion-final/historical/root-evidence/windows-flutter-analysis-command.stdout": {
+    "sha256": "2c8febb39b7dd45ed38fafa9fcccfde80f912dfed343685b8cc7c8c0a3abb793",
+    "bytes": 31
+  },
+  "software-completion-final/historical/root-evidence/windows-flutter-analysis-encoded.txt": {
+    "sha256": "1b96bcd0b791f548975a9273d8270813d66e1466d131c5800be944ff630b12aa",
+    "bytes": 592
+  },
+  "software-completion-final/historical/root-evidence/windows-flutter-command.stderr": {
+    "sha256": "bab92b09edf2b7e0df380247116aceb09a00d15c603fb7475779a2c240df0660",
+    "bytes": 832
+  },
+  "software-completion-final/historical/root-evidence/windows-flutter-command.stdout": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "software-completion-final/historical/root-evidence/windows-flutter-encoded.txt": {
+    "sha256": "cc6e99f32219cbb08016689689dada3e09b9a53221e18101cb473ba280293618",
+    "bytes": 440
+  },
+  "software-completion-final/historical/root-evidence/windows-helper-encoded-v2.txt": {
+    "sha256": "005e956f185620896a5fcbd71286473fa4563bd42067eaffb20a253242bbd98a",
+    "bytes": 424
+  },
+  "software-completion-final/historical/root-evidence/windows-helper-encoded.txt": {
+    "sha256": "3c0b4b753430e017c90dd3823c00e39184ed6b8db9f8898e3db29b0e9d176efe",
+    "bytes": 416
+  },
+  "software-completion-final/historical/root-evidence/windows-helper-v2-command.stderr": {
+    "sha256": "55d9d8d810f971073dbdcb34d7b3a17467111ba0c0d707e9da57ca752e8ad232",
+    "bytes": 69
+  },
+  "software-completion-final/historical/root-evidence/windows-helper-v2-command.stdout": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "software-completion-final/historical/root-evidence/windows-helper-v2-retry.stderr": {
+    "sha256": "5941567571d319343c1857386a297aba995d626616407941e4c4bc5d26300ded",
+    "bytes": 12477
+  },
+  "software-completion-final/historical/root-evidence/windows-helper-v2-retry.stdout": {
+    "sha256": "8301ca501d243e6b0f8f6eb49e55b2ecdb01a9f0f36d4b61dab4c3481d96426f",
+    "bytes": 13687
+  },
+  "software-completion-final/historical/root-evidence/windows-pos-build-command.stderr": {
+    "sha256": "a20689c710331d29db33a02e5b32211e37d6b4df58a8fca30480c312e1230392",
+    "bytes": 303237
+  },
+  "software-completion-final/historical/root-evidence/windows-pos-build-command.stdout": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "software-completion-final/historical/root-evidence/windows-pos-build-encoded.txt": {
+    "sha256": "e3cd8b829f60af9a37e9cf15ba2d83efa050cfa930fc233403d027437f8ad309",
+    "bytes": 432
+  },
+  "software-completion-final/historical/root-evidence/windows-pos-prepared-build-encoded.txt": {
+    "sha256": "91377f413464e94481ce88b5c4fcf2be6ed269d64489f465fb8842713ec26763",
+    "bytes": 456
+  },
+  "software-completion-final/historical/root-evidence/windows-pos-prepared-build.stderr": {
+    "sha256": "29101524fa7db0da2b3086385b5bab20a6dcaf4f54f9e3264ce29210a28ee3ed",
+    "bytes": 304944
+  },
+  "software-completion-final/historical/root-evidence/windows-pos-prepared-build.stdout": {
+    "sha256": "a0978a3bdff5db417816f70fd15f937ffe1adcd0bf665b672a4dcdb4e7b22a25",
+    "bytes": 66
+  },
+  "software-completion-final/historical/root-evidence/windows-spooler-core-tests.log": {
+    "sha256": "b1c0017bfa312bdf32f5c8681fceb251846ec1ded688e1cad0ab554125374aaf",
+    "bytes": 54
+  },
+  "software-completion-final/historical/tool-metadata/archive-verification.json": {
+    "sha256": "50fe9b62de5c88c8973c8fa0a321f0cb4c45674eb5a3d9138f9b9a6b810a50d4",
+    "bytes": 906
+  },
+  "software-completion-final/historical/tool-metadata/candidate-grpc1.83.1.mod": {
+    "sha256": "2d6d07c2263a081850d89edd14de66f03198383d5318a8996074214c64786d95",
+    "bytes": 2099
+  },
+  "software-completion-final/historical/tool-metadata/candidate-grpc1.83.2.mod": {
+    "sha256": "60f5c004181e7c03fe84131876418d157be7eb4ebea3c598fc5e37b816436780",
+    "bytes": 2099
+  },
+  "software-completion-final/historical/tool-metadata/candidate-x-net0.56.0.mod": {
+    "sha256": "1072915233a6617a603a36996892ca8aafcc7d8b8dc0f43e7146d83c7ea49c43",
+    "bytes": 157
+  },
+  "software-completion-final/historical/tool-metadata/candidate-x-text0.39.0.mod": {
+    "sha256": "40e9425e17dcc56faf496619fde6908631d57b2cce0f766c4dca6bea8fc93838",
+    "bytes": 190
+  },
+  "software-completion-final/historical/tool-metadata/contracts-baseline-govulncheck-module-status.json": {
+    "sha256": "8dcc415b9faaaff876dad1f9ae87f9e927a0ec8f9b321fbc9cfc4cfb0de89fcf",
+    "bytes": 140
+  },
+  "software-completion-final/historical/tool-metadata/contracts-baseline-govulncheck-module.jsonl": {
+    "sha256": "614da742a32d733656d3d7ff76daa2c415870e6bb1b29ca72e693a0d2ef2c42b",
+    "bytes": 514230
+  },
+  "software-completion-final/historical/tool-metadata/contracts-baseline-govulncheck-module.stderr": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "software-completion-final/historical/tool-metadata/contracts-candidate-govulncheck-module-status.json": {
+    "sha256": "d379a0287766e7e87c284b2e75563b7dcefcef3e70c529f3667115259ef6823b",
+    "bytes": 139
+  },
+  "software-completion-final/historical/tool-metadata/contracts-candidate-govulncheck-module.jsonl": {
+    "sha256": "d1a8047c629e63a94fabb8b5a35274aa45ede02eb15a430b5a0a8793d1f0eb65",
+    "bytes": 511601
+  },
+  "software-completion-final/historical/tool-metadata/contracts-candidate-govulncheck-module.stderr": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "software-completion-final/historical/tool-metadata/contracts-candidate-tests-status.json": {
+    "sha256": "87446c56da46079a96531806f8810e08f2888c6d8121b72532a8520a8d1d31d1",
+    "bytes": 149
+  },
+  "software-completion-final/historical/tool-metadata/contracts-candidate-tests.jsonl": {
+    "sha256": "f5ff1ebff0800f7b20a4001ed787c67e1335b94a48135787d9877cdae82f94f2",
+    "bytes": 422
+  },
+  "software-completion-final/historical/tool-metadata/contracts-candidate-tests.stderr": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "software-completion-final/historical/tool-metadata/contracts-candidate-tidy.log": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "software-completion-final/historical/tool-metadata/contracts-candidate-update.log": {
+    "sha256": "3ed3d712569b4d0e448a00a0e62afa92bfcaae115f330f104f06cbbc007fb3e9",
+    "bytes": 823
+  },
+  "software-completion-final/historical/tool-metadata/contracts-candidate-verify.txt": {
+    "sha256": "b4537ed75f533f993f371954de47e42a793b8e5b0587577de7e27fb3e50696bd",
+    "bytes": 21
+  },
+  "software-completion-final/historical/tool-metadata/edge-baseline-acquired.go.sum": {
+    "sha256": "cdcdfd932167af2fc906ed31a53d7aae6d8c7b93440f02aed90b6155e4309e94",
+    "bytes": 11660
+  },
+  "software-completion-final/historical/tool-metadata/edge-baseline-govulncheck-module-status.json": {
+    "sha256": "930acc778bf4556f1d54de33c18cf894a9c20385425cc2159878ef7999f6cb9d",
+    "bytes": 234
+  },
+  "software-completion-final/historical/tool-metadata/edge-baseline-govulncheck-module.jsonl": {
+    "sha256": "637dfcb14b6b277a6ff1ab714a8786e2f36db3504801382701948ba3bf19e615",
+    "bytes": 515085
+  },
+  "software-completion-final/historical/tool-metadata/edge-baseline-govulncheck-module.stderr": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "software-completion-final/historical/tool-metadata/edge-baseline-govulncheck-symbol-findings.json": {
+    "sha256": "4791dbd600a612611b3a6bb9ca0e388bebcbdc224f33b99afa61606387b42c14",
+    "bytes": 119098
+  },
+  "software-completion-final/historical/tool-metadata/edge-baseline-govulncheck-symbol-status.json": {
+    "sha256": "0afe81497882095297a886ddbd6c03d76fbde10b37bebcc0addffe2f07514df9",
+    "bytes": 111
+  },
+  "software-completion-final/historical/tool-metadata/edge-baseline-govulncheck-symbol.jsonl": {
+    "sha256": "d758551a7ce97e952d3d55eb097750db5676dd2e5e47e8dc4833729cc429e1cb",
+    "bytes": 623201
+  },
+  "software-completion-final/historical/tool-metadata/edge-baseline-govulncheck-symbol.stderr": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "software-completion-final/historical/tool-metadata/edge-baseline-modules-download.jsonl": {
+    "sha256": "cddcd8ee808b2c0b8628078e3f8ccce5dbee2638a13cf8cff0dde76106d6f730",
+    "bytes": 46949
+  },
+  "software-completion-final/historical/tool-metadata/edge-baseline-modules-verify.txt": {
+    "sha256": "b4537ed75f533f993f371954de47e42a793b8e5b0587577de7e27fb3e50696bd",
+    "bytes": 21
+  },
+  "software-completion-final/historical/tool-metadata/edge-baseline-windows-govulncheck-symbol-findings.json": {
+    "sha256": "d3354bbbf3c2b84f6f153da753c31421c8670915e4de28909fd3fc923ca45bb9",
+    "bytes": 119098
+  },
+  "software-completion-final/historical/tool-metadata/edge-baseline-windows-govulncheck-symbol-status.json": {
+    "sha256": "37bcfcf53a96aea4a86459c453d631b904e806b56811a2d2a96688471921aed6",
+    "bytes": 179
+  },
+  "software-completion-final/historical/tool-metadata/edge-baseline-windows-govulncheck-symbol.jsonl": {
+    "sha256": "0e8422e49e72d2cd55b5c411cace6655cdee701873f2868efae5d2cf1c5ae379",
+    "bytes": 623292
+  },
+  "software-completion-final/historical/tool-metadata/edge-baseline-windows-govulncheck-symbol.stderr": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "software-completion-final/historical/tool-metadata/edge-candidate-govulncheck-symbol-status.json": {
+    "sha256": "7cc1936f4f05d2826d963a0376d271c46a6c81fa48d742699dfde4f53a880980",
+    "bytes": 109
+  },
+  "software-completion-final/historical/tool-metadata/edge-candidate-govulncheck-symbol.jsonl": {
+    "sha256": "8da0bd0670b527ec4ee80553cd510020fdf94c517bb9390c9c90eca12eb86453",
+    "bytes": 513075
+  },
+  "software-completion-final/historical/tool-metadata/edge-candidate-govulncheck-symbol.stderr": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "software-completion-final/historical/tool-metadata/edge-candidate-race-tests-status.json": {
+    "sha256": "4058e007374c7bb743d99cdf711c2b475cb2ac3e8e7ab06c8dad9ac7e1aa607f",
+    "bytes": 244
+  },
+  "software-completion-final/historical/tool-metadata/edge-candidate-race-tests.jsonl": {
+    "sha256": "001bc37f896f1029b7bc11136b4d629134f3d680452f00447c10b39893fe91d6",
+    "bytes": 216165
+  },
+  "software-completion-final/historical/tool-metadata/edge-candidate-race-tests.stderr": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "software-completion-final/historical/tool-metadata/edge-candidate-tests-sandbox-restricted-status.json": {
+    "sha256": "b77dec3cbfcc9b53eec79b719c6770ed020a69aed343a66eccd9d0c1fff07164",
+    "bytes": 127
+  },
+  "software-completion-final/historical/tool-metadata/edge-candidate-tests-sandbox-restricted.jsonl": {
+    "sha256": "63d4134bf7fb764957d644b69584116e8f8cfe6f9713249b2311abf557b48a90",
+    "bytes": 127151
+  },
+  "software-completion-final/historical/tool-metadata/edge-candidate-tests-sandbox-restricted.stderr": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "software-completion-final/historical/tool-metadata/edge-candidate-tests-status.json": {
+    "sha256": "0aa3dcf5d3fee0bf9b853d601d93d86faf4e4f2aaac442c88bf7bde8ac308eb1",
+    "bytes": 281
+  },
+  "software-completion-final/historical/tool-metadata/edge-candidate-tests.jsonl": {
+    "sha256": "2f56790975e62beb16efed961f851f5c3a16c390bdf14d3eba442fe831fd5197",
+    "bytes": 216117
+  },
+  "software-completion-final/historical/tool-metadata/edge-candidate-tests.stderr": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "software-completion-final/historical/tool-metadata/edge-candidate-tidy.log": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "software-completion-final/historical/tool-metadata/edge-candidate-update.log": {
+    "sha256": "82bf40ddfe474f47ef4f7ce328c107294d54eed2aa1d9bde39dd179401bfc180",
+    "bytes": 282
+  },
+  "software-completion-final/historical/tool-metadata/edge-candidate-verify.txt": {
+    "sha256": "b4537ed75f533f993f371954de47e42a793b8e5b0587577de7e27fb3e50696bd",
+    "bytes": 21
+  },
+  "software-completion-final/historical/tool-metadata/edge-candidate-vet-status.json": {
+    "sha256": "0db35d04570663dabff56799868007fa82fa2d09c586f07a03e077ccf3b46813",
+    "bytes": 111
+  },
+  "software-completion-final/historical/tool-metadata/edge-candidate-vet.log": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "software-completion-final/historical/tool-metadata/edge-candidate-windows-build-status.json": {
+    "sha256": "3471244dde580b23721388f934731b2f560c6952ca0583148811050a9d86cda0",
+    "bytes": 181
+  },
+  "software-completion-final/historical/tool-metadata/edge-candidate-windows-build.log": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "software-completion-final/historical/tool-metadata/edge-candidate-windows-govulncheck-symbol-status.json": {
+    "sha256": "4f1ae5365618d0ef8978304828a594cb91078cdb7e17c9520ade5666c1748309",
+    "bytes": 177
+  },
+  "software-completion-final/historical/tool-metadata/edge-candidate-windows-govulncheck-symbol.jsonl": {
+    "sha256": "5f398367abf7d3c5f33e6ed2c8979d5e64277c11b1593e28d9e4460fc7d74c68",
+    "bytes": 513166
+  },
+  "software-completion-final/historical/tool-metadata/edge-candidate-windows-govulncheck-symbol.stderr": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "software-completion-final/historical/tool-metadata/edge-official-updates.jsonl": {
+    "sha256": "5bec3c3aa57e9060fb366c46f49ed225765f0ea6f574be359798505d52b3521e",
+    "bytes": 31217
+  },
+  "software-completion-final/historical/tool-metadata/etcd-raft-latest.json": {
+    "sha256": "3678482f4cc6686ad9edcf8e6a74277c68c2239fa97bee934dbce35d09200012",
+    "bytes": 188
+  },
+  "software-completion-final/historical/tool-metadata/generator-smoke.log": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "software-completion-final/historical/tool-metadata/go-baseline-findings.json": {
+    "sha256": "6926524b11091b9f7f866c986bc859a647aa71549795275396c6e920bd44c021",
+    "bytes": 86175
+  },
+  "software-completion-final/historical/tool-metadata/go-candidate-selected-download.jsonl": {
+    "sha256": "af9bf74d35670a6b50525dddd2dd81f5d0574c7afc156016595accb01d4d4532",
+    "bytes": 4366
+  },
+  "software-completion-final/historical/tool-metadata/go-candidates-modules-download.jsonl": {
+    "sha256": "b268ab1c61628c0987cd4478fae0cc01b23c10e201182465830d73e3f3f9b167",
+    "bytes": 3284
+  },
+  "software-completion-final/historical/tool-metadata/go-downloads.json": {
+    "sha256": "1ed915f72633d0a72eaa2f462740153db4fe347cb56f7d1e25ec44868568f13e",
+    "bytes": 2211180
+  },
+  "software-completion-final/historical/tool-metadata/go-env.json": {
+    "sha256": "dd58d82f9f43d42d6d24f4ced20fd7773f4c54c90add7510361197f1ad303c4b",
+    "bytes": 553
+  },
+  "software-completion-final/historical/tool-metadata/go-final-contracts-govuln-status.json": {
+    "sha256": "b2fa0903b23cd96ae8a7eeb6b5c7c25702d897a9033d727947ace62077d8e012",
+    "bytes": 581
+  },
+  "software-completion-final/historical/tool-metadata/go-final-contracts-govuln.jsonl": {
+    "sha256": "82b7235809b459e8e29816dffba2cbce47671043edd118a446e70b087d3c6c6b",
+    "bytes": 511601
+  },
+  "software-completion-final/historical/tool-metadata/go-final-contracts-govuln.stderr": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "software-completion-final/historical/tool-metadata/go-final-contracts-test-status.json": {
+    "sha256": "d187da3566378f533022ccfda7ce66cc3a8ffca43bceb3825f2e749b9dbc58a2",
+    "bytes": 620
+  },
+  "software-completion-final/historical/tool-metadata/go-final-contracts-test.jsonl": {
+    "sha256": "6afa392111b3846586b45d77111c27a07601283b022d138c33c9836311ca32d6",
+    "bytes": 421
+  },
+  "software-completion-final/historical/tool-metadata/go-final-contracts-test.stderr": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "software-completion-final/historical/tool-metadata/go-final-edge-govuln-status.json": {
+    "sha256": "745f61c91df48e94f991f144dcf05cc81755ab245846bf1e6107214fe7a06a56",
+    "bytes": 548
+  },
+  "software-completion-final/historical/tool-metadata/go-final-edge-govuln.jsonl": {
+    "sha256": "e38bb19a94f70e1923e5246eab0c320556700a5f2341cb89d269b7957e7e0ba1",
+    "bytes": 517409
+  },
+  "software-completion-final/historical/tool-metadata/go-final-edge-govuln.stderr": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "software-completion-final/historical/tool-metadata/go-final-edge-race-status.json": {
+    "sha256": "a7fbcc03157cf0c4239b0570869ee5f4438dc213b37704b60b3810eeb8453017",
+    "bytes": 601
+  },
+  "software-completion-final/historical/tool-metadata/go-final-edge-race.jsonl": {
+    "sha256": "cd3e69fa93c1139a2a45ca20f9ac756278e2dca70a29c5845e93d65ae266ca12",
+    "bytes": 461621
+  },
+  "software-completion-final/historical/tool-metadata/go-final-edge-race.stderr": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "software-completion-final/historical/tool-metadata/go-final-edge-tests-status.json": {
+    "sha256": "5af252c7a4e35f827e4dd969247c67869bd8ba171bcf86109532c2808fb0680f",
+    "bytes": 590
+  },
+  "software-completion-final/historical/tool-metadata/go-final-edge-tests.jsonl": {
+    "sha256": "f593e3f85a59e5f57882519730a09184e54c845ce26fa43fd7216301ba5ec1eb",
+    "bytes": 460983
+  },
+  "software-completion-final/historical/tool-metadata/go-final-edge-tests.stderr": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "software-completion-final/historical/tool-metadata/go-final-edge-vet-status.json": {
+    "sha256": "dc432653224525036720438d1960d9beffdde68b1680fec1f2a429cdccee37db",
+    "bytes": 554
+  },
+  "software-completion-final/historical/tool-metadata/go-final-edge-vet.log": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "software-completion-final/historical/tool-metadata/go-final-edge-vet.stderr": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "software-completion-final/historical/tool-metadata/go-final-integrated-validation.json": {
+    "sha256": "8cac6872734d4d9b9daca0e9360181fb4c6c8ed7651f70c04ee949c6dae0714a",
+    "bytes": 22092
+  },
+  "software-completion-final/historical/tool-metadata/go-final-source-snapshot.json": {
+    "sha256": "d694adbe1410f005d6285396f81a7126cdc7b9fb9f44b08a01f7f3c5e523330a",
+    "bytes": 27289
+  },
+  "software-completion-final/historical/tool-metadata/go-final-windows-build-status.json": {
+    "sha256": "89706caf8e2338dd62327ba899bfe87194f18ce8194f1fb9502b308e6ea8a9af",
+    "bytes": 636
+  },
+  "software-completion-final/historical/tool-metadata/go-final-windows-build.log": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "software-completion-final/historical/tool-metadata/go-final-windows-build.stderr": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "software-completion-final/historical/tool-metadata/go-final-windows-govuln-status.json": {
+    "sha256": "0d5341597d7ab5673ff789821bf8c884cfd5a99f173f64c1b81b9bdae9a18fbb",
+    "bytes": 626
+  },
+  "software-completion-final/historical/tool-metadata/go-final-windows-govuln.jsonl": {
+    "sha256": "031ac464c9d81b0504b3b48c00ba848e9650373132f385ee56233ebbc63c6ad6",
+    "bytes": 517500
+  },
+  "software-completion-final/historical/tool-metadata/go-final-windows-govuln.stderr": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "software-completion-final/historical/tool-metadata/go-final-windows-package-tests.json": {
+    "sha256": "57441bd7550ab4e0056ce34b36579ca56222ee5e58588bce9a7552963c79a404",
+    "bytes": 9931
+  },
+  "software-completion-final/historical/tool-metadata/go-manifests-before/apps/edge/go.mod": {
+    "sha256": "ebe6a02e46ff7d9e3596f1d636c6adc627cd0a1b454acccb51104f4247149ce0",
+    "bytes": 871
+  },
+  "software-completion-final/historical/tool-metadata/go-manifests-before/apps/edge/go.sum": {
+    "sha256": "1e1ea952193292233968c2d4eefca73b1e3f5d2f6aeabae01ab5b10da7c6cdb6",
+    "bytes": 7953
+  },
+  "software-completion-final/historical/tool-metadata/go-manifests-before/packages/contracts/generated/go/go.mod": {
+    "sha256": "ac118a4193a52805d0527458033c05fbd59c363a01ff6bd392cacf387fa7f506",
+    "bytes": 343
+  },
+  "software-completion-final/historical/tool-metadata/go-manifests-before/packages/contracts/generated/go/go.sum": {
+    "sha256": "7781e70033bff344f07778f5571238347209d0b1d249b515547527ed757dd359",
+    "bytes": 3297
+  },
+  "software-completion-final/historical/tool-metadata/go-manifests-before.json": {
+    "sha256": "bf9ea7c26aaa8174a7831d64fa0ed4cb9f5f178893dd97e99d7c4cf17adab261",
+    "bytes": 561
+  },
+  "software-completion-final/historical/tool-metadata/go-manifests-candidate.json": {
+    "sha256": "913b4b21b5fdb5d99fc6c6086e5af8d7fc239564e7355e25207655459f7a2e38",
+    "bytes": 561
+  },
+  "software-completion-final/historical/tool-metadata/go-plugin-build-provenance.txt": {
+    "sha256": "56d7d827a5d0d99289f277e754f910ff0f4b5b1cf3e9ad4ebbd965d5ae5e7fa0",
+    "bytes": 2081
+  },
+  "software-completion-final/historical/tool-metadata/go-selected.json": {
+    "sha256": "9b0986d0c34652f3e55995c395ef92631fdcb4a2a107e6868f5417f3644d5e18",
+    "bytes": 378
+  },
+  "software-completion-final/historical/tool-metadata/go-tools-modules-download.jsonl": {
+    "sha256": "13bac9e8951f0bb8c633df10fbc818a9e9ebb478012e57e72456b00c10d302f1",
+    "bytes": 2697
+  },
+  "software-completion-final/historical/tool-metadata/go-v1-retained-contracts-govuln-status.json": {
+    "sha256": "b2fa0903b23cd96ae8a7eeb6b5c7c25702d897a9033d727947ace62077d8e012",
+    "bytes": 581
+  },
+  "software-completion-final/historical/tool-metadata/go-v1-retained-contracts-govuln.jsonl": {
+    "sha256": "4849b37af07f83d2ba3de0032042a3e6766e7baaa389de19a73b19eb1b513093",
+    "bytes": 511601
+  },
+  "software-completion-final/historical/tool-metadata/go-v1-retained-contracts-govuln.stderr": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "software-completion-final/historical/tool-metadata/go-v1-retained-contracts-test-status.json": {
+    "sha256": "d187da3566378f533022ccfda7ce66cc3a8ffca43bceb3825f2e749b9dbc58a2",
+    "bytes": 620
+  },
+  "software-completion-final/historical/tool-metadata/go-v1-retained-contracts-test.jsonl": {
+    "sha256": "5cdf857ed6a1b121abe8ae85d0959e701982e7de8480e1c20272525d20dcb6f3",
+    "bytes": 422
+  },
+  "software-completion-final/historical/tool-metadata/go-v1-retained-contracts-test.stderr": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "software-completion-final/historical/tool-metadata/go-v1-retained-edge-govuln-status.json": {
+    "sha256": "745f61c91df48e94f991f144dcf05cc81755ab245846bf1e6107214fe7a06a56",
+    "bytes": 548
+  },
+  "software-completion-final/historical/tool-metadata/go-v1-retained-edge-govuln.jsonl": {
+    "sha256": "44caed1726d1fe4f00a5c05577f590f7089ca16a623650c7cc330c64fed1d20b",
+    "bytes": 517409
+  },
+  "software-completion-final/historical/tool-metadata/go-v1-retained-edge-govuln.stderr": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "software-completion-final/historical/tool-metadata/go-v1-retained-edge-race-status.json": {
+    "sha256": "f3ae976cc1715396762e5c4d65593dd7100a1efb516544d268c211290b8dce1e",
+    "bytes": 601
+  },
+  "software-completion-final/historical/tool-metadata/go-v1-retained-edge-race.jsonl": {
+    "sha256": "c553f557d3cf0211e745ff945ee898c219f2ef143cd891bd0aeb74d21be08729",
+    "bytes": 460675
+  },
+  "software-completion-final/historical/tool-metadata/go-v1-retained-edge-race.stderr": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "software-completion-final/historical/tool-metadata/go-v1-retained-edge-tests-status.json": {
+    "sha256": "5af252c7a4e35f827e4dd969247c67869bd8ba171bcf86109532c2808fb0680f",
+    "bytes": 590
+  },
+  "software-completion-final/historical/tool-metadata/go-v1-retained-edge-tests.jsonl": {
+    "sha256": "ef531aa1603e56e14841578dbd75c179d7c66e5d5fda05dbf80c829a574a61f4",
+    "bytes": 460384
+  },
+  "software-completion-final/historical/tool-metadata/go-v1-retained-edge-tests.stderr": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "software-completion-final/historical/tool-metadata/go-v1-retained-edge-vet-status.json": {
+    "sha256": "dc432653224525036720438d1960d9beffdde68b1680fec1f2a429cdccee37db",
+    "bytes": 554
+  },
+  "software-completion-final/historical/tool-metadata/go-v1-retained-edge-vet.log": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "software-completion-final/historical/tool-metadata/go-v1-retained-edge-vet.stderr": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "software-completion-final/historical/tool-metadata/go-v1-retained-source-snapshot.json": {
+    "sha256": "becbed114597ac2e6d153fe0c5bbc75bd720a497f43678dd5cb7954e64b76f5f",
+    "bytes": 27289
+  },
+  "software-completion-final/historical/tool-metadata/go-v1-retained-windows-build-status.json": {
+    "sha256": "89706caf8e2338dd62327ba899bfe87194f18ce8194f1fb9502b308e6ea8a9af",
+    "bytes": 636
+  },
+  "software-completion-final/historical/tool-metadata/go-v1-retained-windows-build.log": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "software-completion-final/historical/tool-metadata/go-v1-retained-windows-build.stderr": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "software-completion-final/historical/tool-metadata/go-v1-retained-windows-govuln-status.json": {
+    "sha256": "0d5341597d7ab5673ff789821bf8c884cfd5a99f173f64c1b81b9bdae9a18fbb",
+    "bytes": 626
+  },
+  "software-completion-final/historical/tool-metadata/go-v1-retained-windows-govuln.jsonl": {
+    "sha256": "f0c584ce6fb19f4bcfa5a30439e25b98c2c354c4d154e6a7fd2a7a6d674387ac",
+    "bytes": 517500
+  },
+  "software-completion-final/historical/tool-metadata/go-v1-retained-windows-govuln.stderr": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "software-completion-final/historical/tool-metadata/govulncheck-help.txt": {
+    "sha256": "ab357823fcbf626253c8185c69318cd191ce70cdd9f57ee96ec97616bf414ae6",
+    "bytes": 1080
+  },
+  "software-completion-final/historical/tool-metadata/govulncheck-install.log": {
+    "sha256": "cbd69eb082c7ac566c1e6b11c3537ac96523413ef704e13e6eb4c2c6923bd806",
+    "bytes": 241
+  },
+  "software-completion-final/historical/tool-metadata/govulncheck-module-latest.json": {
+    "sha256": "1c5132bd17f74870fad0e227a81ef157c8b689ca83a3bbab518bf8f8ece98c37",
+    "bytes": 189
+  },
+  "software-completion-final/historical/tool-metadata/govulncheck-v1.8.0.mod": {
+    "sha256": "db905ebdb09329cf41098ae5553f4869428615173ac6f767d82176093887d3a2",
+    "bytes": 510
+  },
+  "software-completion-final/historical/tool-metadata/govulncheck-version.txt": {
+    "sha256": "ffe476689d548777fa5b6602d7d0cb8cf7cea8e873bc5b1a78a25be3b82236f4",
+    "bytes": 108
+  },
+  "software-completion-final/historical/tool-metadata/hashicorp-raft-latest.json": {
+    "sha256": "6289f8ed242bff85f61a6324fe6157c9f447c5ee22752225fa8337f6403a21f4",
+    "bytes": 190
+  },
+  "software-completion-final/historical/tool-metadata/hashicorp-raft-release-latest.json": {
+    "sha256": "5f288c42a7a70764b76fbed05a14225c8772d46a60f8e4ffd72e14f78841327b",
+    "bytes": 2374
+  },
+  "software-completion-final/historical/tool-metadata/hashicorp-raft-reviewed-download.jsonl": {
+    "sha256": "67138b37fc96b30a2aa8fa17352f26efbc6157a4507b47eb4ca711ab662d3373",
+    "bytes": 853
+  },
+  "software-completion-final/historical/tool-metadata/original-printer-task-final-diffCheck.txt": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "software-completion-final/historical/tool-metadata/original-printer-task-final-integrity.json": {
+    "sha256": "7fe0ac341f08041a5f8955ededa4a2a1e828dc004a9ead6b694cb1cec25b4770",
+    "bytes": 2824
+  },
+  "software-completion-final/historical/tool-metadata/original-printer-task-final-status.txt": {
+    "sha256": "67bfecd36cebac60d5ce311b4f876663ab30ec16fa1a970b0f4656f4a6c7b32f",
+    "bytes": 10109
+  },
+  "software-completion-final/historical/tool-metadata/printcluster-final-module-graph.jsonl": {
+    "sha256": "23107869a521930f2b1fdd66c0d4d1e33501b8ab9d3c88fba1a20c9b05421925",
+    "bytes": 37939
+  },
+  "software-completion-final/historical/tool-metadata/printcluster-final-module-graph.stderr": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "software-completion-final/historical/tool-metadata/printcluster-final-module-verify.txt": {
+    "sha256": "b4537ed75f533f993f371954de47e42a793b8e5b0587577de7e27fb3e50696bd",
+    "bytes": 21
+  },
+  "software-completion-final/historical/tool-metadata/printcluster-leader-diagnostic-overlay.go": {
+    "sha256": "7eed259b316b703e02c9734417b2107923a1d04aee798d9ceefe9286a4a2cc8f",
+    "bytes": 31968
+  },
+  "software-completion-final/historical/tool-metadata/printcluster-leader-diagnostic-overlay.json": {
+    "sha256": "9cd2d2967ac831602b807b7322c2ce5215ab6bfc815146af097e981abeb18c8d",
+    "bytes": 265
+  },
+  "software-completion-final/historical/tool-metadata/printcluster-library-acquisition.log": {
+    "sha256": "ed284bea94ef13ebdd57cca1ff52fdc931f9c8cd0687ec817898620142efac2a",
+    "bytes": 1242
+  },
+  "software-completion-final/historical/tool-metadata/printcluster-module-graph.txt": {
+    "sha256": "f1ada8b36ebdf9c252f29b9d41a287120aa769a241517eec2c365490a48312b3",
+    "bytes": 17229
+  },
+  "software-completion-final/historical/tool-metadata/printcluster-post-acquisition-compile.log": {
+    "sha256": "abfacb9ae4e48c134f6e40dc7d1d49965e048be00352cfb0cc9afab9777e6407",
+    "bytes": 128
+  },
+  "software-completion-final/historical/tool-metadata/printcluster-race-large-diagnostic.jsonl": {
+    "sha256": "c73192b3d5d71ab9551cb4f28c7a8514fb5f4210b04fe11c45e6e7053c3b71dd",
+    "bytes": 19741
+  },
+  "software-completion-final/historical/tool-metadata/printcluster-race-large-diagnostic.stderr": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "software-completion-final/historical/tool-metadata/printcluster-runtime-selected-download.jsonl": {
+    "sha256": "752111386d3762bb4c9048762202291eec8c4393754288136d1705c1fc2aa85c",
+    "bytes": 3440
+  },
+  "software-completion-final/historical/tool-metadata/printcluster-runtime-verify.txt": {
+    "sha256": "b4537ed75f533f993f371954de47e42a793b8e5b0587577de7e27fb3e50696bd",
+    "bytes": 21
+  },
+  "software-completion-final/historical/tool-metadata/printcluster-tests-first.jsonl": {
+    "sha256": "fc3f3e2e2e3bf046b06d86af7995f0baf347819d1b337af1f186e8be48c200fe",
+    "bytes": 64105
+  },
+  "software-completion-final/historical/tool-metadata/printcluster-tests-process-candidate.jsonl": {
+    "sha256": "6fb267a64c8f3c713dcb5ed7c1180d08a63d32a41f434d0adbd745f6afd39a9a",
+    "bytes": 69081
+  },
+  "software-completion-final/historical/tool-metadata/printcluster-tests-reviewed.jsonl": {
+    "sha256": "503f62975a8b7249aaaf47f2bc5c261da489b5a776643b2c733ea8b3e0bab28f",
+    "bytes": 76069
+  },
+  "software-completion-final/historical/tool-metadata/printcluster-v2-affected-race-status.json": {
+    "sha256": "99b0f6817cb3025dfc2f31ab1369d6d86d4ecaae8dc57fddac2db25202583dcd",
+    "bytes": 596
+  },
+  "software-completion-final/historical/tool-metadata/printcluster-v2-affected-race.jsonl": {
+    "sha256": "47f8a9b65453eea6353c8c24634dfd7c428e782f0ec5ef6411780a3cd4948cf1",
+    "bytes": 5488
+  },
+  "software-completion-final/historical/tool-metadata/printcluster-v2-affected-race.stderr": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "software-completion-final/historical/tool-metadata/protobuf-release.json": {
+    "sha256": "1e2be447168f1dc3762babfd907b38895689ab674dced57cca7a470caff13795",
+    "bytes": 32024
+  },
+  "software-completion-final/historical/tool-metadata/protoc-gen-go-grpc-install.log": {
+    "sha256": "de4612775abb204b93f4d3c900ee50a797e862da14432894c9d914f8bd9b41e5",
+    "bytes": 69
+  },
+  "software-completion-final/historical/tool-metadata/protoc-gen-go-install.log": {
+    "sha256": "9e53542da70d59db6e09a1a21473a20eacaa841db72c0a8824bcfda04a64f77a",
+    "bytes": 52
+  },
+  "software-completion-final/historical/tool-metadata/protoc-plugin-dart-install.log": {
+    "sha256": "18b79cb95abab8c1a608b46c3eb500dada781471d30bebb65589b3cfa79a87d6",
+    "bytes": 655
+  },
+  "software-completion-final/historical/tool-metadata/protoc-plugin-dart.json": {
+    "sha256": "6c1b30727e38d8b5d668f1d92cfd1d7247ae9d4fe80d3531afe8eee46069555d",
+    "bytes": 739
+  },
+  "software-completion-final/historical/tool-metadata/protoc-selected.json": {
+    "sha256": "f4cd02a9d896570979875f801db5ded222ad2e26b0b112b57d6d8705d5ca9a5c",
+    "bytes": 445
+  },
+  "software-completion-final/historical/tool-metadata/raft-boltdb-latest.json": {
+    "sha256": "76da6688fa0d217522dc8ae4c4e81b2009dc4c8ac7129db321467e365cdd193a",
+    "bytes": 197
+  },
+  "software-completion-final/historical/tool-metadata/raft-boltdb-reviewed-download.jsonl": {
+    "sha256": "6d27ce0dc852afc09ad0e21df86bf2e513ada14634f3f6a262893732c1dae068",
+    "bytes": 910
+  },
+  "software-completion-final/historical/tool-metadata/security-baseline-source.json": {
+    "sha256": "14680163b552c759c76c9bdff32033bdabed56b129710a6b918c2a428fc9d6dc",
+    "bytes": 20504
+  },
+  "software-completion-final/historical/tool-metadata/security-candidate-source.json": {
+    "sha256": "eb7398678867e6067a7bcdae8130502ac2e50873638c38b24be25e72ba8673b8",
+    "bytes": 865
+  },
+  "software-completion-final/historical/tool-metadata/sqlite-reviewed-latest-download.jsonl": {
+    "sha256": "de8ed851cd13f27ff72b2910bcabffef258d48d9a05c6225b24458f7299497f0",
+    "bytes": 822
+  },
+  "software-completion-final/metadata/original-worktree-diff-check.log": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "software-completion-final/metadata/original-worktree-final-status.log": {
+    "sha256": "67bfecd36cebac60d5ce311b4f876663ab30ec16fa1a970b0f4656f4a6c7b32f",
+    "bytes": 10109
+  },
+  "software-completion-final/metadata/printer-agent-baseline-guard.json": {
+    "sha256": "3223f478bbafdf1ac02fb1425c2cb7e09e51df00655ee8b2a840315eb4894bae",
+    "bytes": 535
+  },
+  "software-completion-final/metadata/printer-agent-before-hashes.json": {
+    "sha256": "3dfbf9963eb24e29341a32e15dfe82154e0b2ed736e1001d7b71b3364e47cef8",
+    "bytes": 7109
+  },
+  "software-completion-final/metadata/printer-agent-candidate-compile.log": {
+    "sha256": "81d5405eeb8276deb5219ea6df1342d280a9273b541c1cd781576507cc18dac2",
+    "bytes": 69
+  },
+  "software-completion-final/metadata/printer-agent-dart-first-test.log": {
+    "sha256": "083414be79c54e8b7fee3f3210e5ae6fb52be6d169a09f225759d5c03f115873",
+    "bytes": 2065
+  },
+  "software-completion-final/metadata/printer-agent-dart-p256-test.log": {
+    "sha256": "4dd8e1d8864f7d6132e721dc0b817310e176d1f45b81837844b1aec7a2d59801",
+    "bytes": 1506
+  },
+  "software-completion-final/metadata/printer-agent-darwin-buildinfo.log": {
+    "sha256": "23e0e2e46df04ebbe3808810576451afd46bbd9ecc618e62f5358797f5649736",
+    "bytes": 392
+  },
+  "software-completion-final/metadata/printer-agent-distinct-installation-dart-test.log": {
+    "sha256": "69f1ccfa0611fd082263d0e924391ee502deb610c4c4737588ffda82624f5596",
+    "bytes": 1506
+  },
+  "software-completion-final/metadata/printer-agent-distinct-installation-fixture-build.log": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "software-completion-final/metadata/printer-agent-distinct-installation-race.jsonl": {
+    "sha256": "2117aa0f6f6a872d4eef873aebd41895d46b292719307c1f05387d1e8f4db7d1",
+    "bytes": 36200
+  },
+  "software-completion-final/metadata/printer-agent-distinct-installation-race.stderr": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "software-completion-final/metadata/printer-agent-final-fixture-build.log": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "software-completion-final/metadata/printer-agent-final-format.log": {
+    "sha256": "de230ee3a258be1211e3b168c04dbd546303a71d1a2ad203a76e547836a3589e",
+    "bytes": 47
+  },
+  "software-completion-final/metadata/printer-agent-final-generation-check.log": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "software-completion-final/metadata/printer-agent-final-race.jsonl": {
+    "sha256": "8347a170c952cbd45cb97c8e5437d9ce19ce5d389a7b52cce9291df1e5b296ff",
+    "bytes": 36196
+  },
+  "software-completion-final/metadata/printer-agent-final-race.stderr": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "software-completion-final/metadata/printer-agent-final-three-analysis-qualified.log": {
+    "sha256": "7f46eb662da98729177ce2d81f2af379311bd7c0b2133cd7a2e8119e92d184be",
+    "bytes": 96
+  },
+  "software-completion-final/metadata/printer-agent-final-three-analysis.log": {
+    "sha256": "e51ac771296c508122a33c8b777f4d6eada5c63bbe631658c26777633ec7c11f",
+    "bytes": 2317
+  },
+  "software-completion-final/metadata/printer-agent-final-vet.log": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "software-completion-final/metadata/printer-agent-first-analysis.log": {
+    "sha256": "3d1b6d7412114bb41d91e231055111b9c219d797305adec617e547171a5b4bfa",
+    "bytes": 84
+  },
+  "software-completion-final/metadata/printer-agent-first-compile.log": {
+    "sha256": "ae1d6f714e41d541ea06c671c528b0bfc4d33f61f31efcbb9ec7225655473876",
+    "bytes": 60
+  },
+  "software-completion-final/metadata/printer-agent-first-test.jsonl": {
+    "sha256": "93a0777e5be1bfbd6d7492ad444b012b6c4f046cbe327a6c7872f27cd99771ea",
+    "bytes": 23038
+  },
+  "software-completion-final/metadata/printer-agent-first-test.stderr": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "software-completion-final/metadata/printer-agent-first-vet-wrong-workdir.log": {
+    "sha256": "f718031b71a6eb82bab59b71d6f3fe40fc7744ce7bfb810d8499a7ac0b9e304c",
+    "bytes": 94
+  },
+  "software-completion-final/metadata/printer-agent-fixed-test.jsonl": {
+    "sha256": "4aef4714973f233aaffe3382cc03c035f32e41508973474bb6ee8584e2d4ec02",
+    "bytes": 34428
+  },
+  "software-completion-final/metadata/printer-agent-fixed-test.stderr": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "software-completion-final/metadata/printer-agent-fixture-build.log": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "software-completion-final/metadata/printer-agent-fixture-p256-build.log": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "software-completion-final/metadata/printer-agent-generation-check.log": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "software-completion-final/metadata/printer-agent-generation-receipt.json": {
+    "sha256": "05393b30548c988482972c6be063394f55d1fbd5ee594fa2e00dc62797c2d261",
+    "bytes": 1618
+  },
+  "software-completion-final/metadata/printer-agent-generation.log": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "software-completion-final/metadata/printer-agent-owned-source-manifest.json": {
+    "sha256": "ed7394dbb31b1a61addf1c6fe76421e4c6868ecfc0e538990a6584f1a1b19b3e",
+    "bytes": 3688
+  },
+  "software-completion-final/metadata/printer-agent-test-compile.log": {
+    "sha256": "8e528b53d4b5ce9006f3ca2b37c85ef95630e913eb63783ee2e4a796c440f0d2",
+    "bytes": 69
+  },
+  "software-completion-final/metadata/printer-agent-three-analysis.log": {
+    "sha256": "e81d00acd33fee3eed8801003a6ac4ba0602dbdb9a7af9da8e074bd41e902864",
+    "bytes": 611
+  },
+  "software-completion-final/metadata/printer-agent-three-fixed-analysis.log": {
+    "sha256": "fc997a21889603975e62fa498717556d2369de3defee433cd3d740a24bb93c38",
+    "bytes": 116
+  },
+  "software-completion-final/metadata/printer-agent-tls-diagnostic-dart.log": {
+    "sha256": "e14f84e91e3cff7d1509503610572a4160f96e1f9826883523564816aebb7707",
+    "bytes": 178
+  },
+  "software-completion-final/metadata/printer-agent-tls-diagnostic-go.log": {
+    "sha256": "f3dba05c103115cfa01ff57af9d1a43e22a352e1aff78ea15c36f3d23e881388",
+    "bytes": 81
+  },
+  "software-completion-final/metadata/printer-agent-ui-before-hashes.json": {
+    "sha256": "8bb4da74fbc3058ddd69d6c8e22dce1b9911b10f54fca97bc17dcecffe54323f",
+    "bytes": 910
+  },
+  "software-completion-final/metadata/printer-agent-ui-owned-hashes.json": {
+    "sha256": "b7bc1d8fb500858976d2e8bc9c62af8031ce19ac1d7b83cc3c3b5e955fb54754",
+    "bytes": 1746
+  },
+  "software-completion-final/metadata/printer-agent-ui-validation-inputs.json": {
+    "sha256": "3fe50bd0a8f8a9b8b7f72f6790b560c496cdc76c9c7e12c8a130a4867cb7a67d",
+    "bytes": 1603
+  },
+  "software-completion-final/metadata/printer-agent-ui-validation-receipt.json": {
+    "sha256": "13fbc892b65fefc482c3f309b3698b9bba9012bf64cb54e7a2f4e657af2cd967",
+    "bytes": 13369
+  },
+  "software-completion-final/metadata/printer-agent-validation-receipt.json": {
+    "sha256": "895e48d1308d394d27b80b3fa9069ac5172f669d6d2b19ac1773d1c07b8bfca7",
+    "bytes": 7672
+  },
+  "software-completion-final/metadata/printer-agent-vet.log": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "software-completion-final/metadata/printer-agent-whitespace-check.json": {
+    "sha256": "2d03e948610f54a2ad7675966470dc9297db4fda676ee235a33eccce41431c6b",
+    "bytes": 2202
+  },
+  "software-completion-final/metadata/printer-agent-windows-buildinfo.log": {
+    "sha256": "9f09300af750bd176d770f606872d0e42a11f693e91449d3438e5ab74c4caec4",
+    "bytes": 322
+  },
+  "software-completion-final/metadata/printer-agent-windows-fixture-build.log": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "software-completion-final/metadata/printer-daemon-owned-source-manifest.json": {
+    "sha256": "551a32eb428ca46726640a2c2f89701762a2460214a7eb1b682df9e4eea6f18e",
+    "bytes": 4328
+  },
+  "software-completion-final/metadata/seal-printer-agent.py": {
+    "sha256": "72d899a7338f8ee4133aeab93c12c4d50a1a6932d14546a2bf6b18729f55d892",
+    "bytes": 10800
+  },
+  "software-completion-final/reviewed-implementation-report.md": {
+    "sha256": "0a70e7aa396839d7778636060c213c63cfd28ae61d1272d0df2a2ebc4a9f7a38",
+    "bytes": 18969
+  },
+  "software-completion-final/verification/acceptance-matrix-v9-stage-independent-review.json": {
+    "sha256": "6180c6f9e53ae490209a757a670261ce333e2f39d32d8bb3276876b940c3e045",
+    "bytes": 2458
+  },
+  "software-completion-final/verification/actual-tcp-crash-independent-review.json": {
+    "sha256": "0280a5387bc8c47d1d126de97a5e3298a92f423f7d1ed9d2380d3921fe04eaf2",
+    "bytes": 1800
+  },
+  "software-completion-final/verification/actual-tcp-crash-qualification.json": {
+    "sha256": "e502df1d058e3b39f548e37f024f13915c500c24b44882126fef0948ba5d6148",
+    "bytes": 2512
+  },
+  "software-completion-final/verification/actual-tcp-crash-v1-race.jsonl": {
+    "sha256": "f73e56b69e4f5236ad45d14436a3093852c8c553485de25954ea07e46ff07fde",
+    "bytes": 3736
+  },
+  "software-completion-final/verification/actual-tcp-crash-v1-race.stderr": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "software-completion-final/verification/actual-tcp-crash-v1.jsonl": {
+    "sha256": "5181ba36ccb4262e0073d7901d91f74a465cf29411bd1be0bf36e4e6f97bebeb",
+    "bytes": 3721
+  },
+  "software-completion-final/verification/actual-tcp-crash-v1.stderr": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "software-completion-final/verification/architecture-review-index-pending-daemon.json": {
+    "sha256": "fff6d539211416c0e76d8fbdf0a306bb10f3a5a37eacadf652cc19391e1edead",
+    "bytes": 1901
+  },
+  "software-completion-final/verification/arm64-current-user-qualification-exec.log": {
+    "sha256": "5532041effd0e76818335ea6facf281ee2aa0188c6ee9c7ea897cdd3b6fd42ed",
+    "bytes": 12320
+  },
+  "software-completion-final/verification/arm64-current-user-stage-manifest.json": {
+    "sha256": "2ef041924068d01faab92c20902d0acc91f43852a5a29b573687e467e5d9d3f1",
+    "bytes": 987
+  },
+  "software-completion-final/verification/arm64-current-user-stage-receipt.json": {
+    "sha256": "98d5329e07a3e044612c1390eafb283b812aaabc477d0e02b88ffe15ab533a42",
+    "bytes": 544
+  },
+  "software-completion-final/verification/arm64-module-graph.txt": {
+    "sha256": "0183e7ef4147b0aad2a893b218b4e57acc3102a7d9dcfbc07037451a198bc095",
+    "bytes": 4838
+  },
+  "software-completion-final/verification/arm64-qualification-exec.log": {
+    "sha256": "da9bd210da219c06a70e057f29530414a9dc73245424094bdba602f8236b3431",
+    "bytes": 12371
+  },
+  "software-completion-final/verification/arm64-source-manifest.json": {
+    "sha256": "f968938283c4bec391894a59d0f7f8c1632564317f2a38feee0cd23643c46430",
+    "bytes": 6879
+  },
+  "software-completion-final/verification/arm64-source.zip": {
+    "sha256": "236db386b539ff6e9efffe3477a7a738f8bacdea448b61d8b5fe3ca018951b70",
+    "bytes": 64180
+  },
+  "software-completion-final/verification/arm64-stage-manifest.json": {
+    "sha256": "527d487cd3ac960773395e15b7531f599ada3fa618e235c09b608df43489123f",
+    "bytes": 908
+  },
+  "software-completion-final/verification/arm64-stage-receipt.json": {
+    "sha256": "b99c50b9f9678414db19403da4f5c78dd1ebdd352a87f3560e3697143c0a57a6",
+    "bytes": 1381
+  },
+  "software-completion-final/verification/arm64-system-execution-principal.json": {
+    "sha256": "71399b28c9aaf3a92f90f867fbfb99e9272025bf34f5cac37905588ebf49350f",
+    "bytes": 201
+  },
+  "software-completion-final/verification/compile_windows_software_packages.py": {
+    "sha256": "2dd6a10c461a904a7860fb7eea26b93e554581e0de483ee948941f4260ec8c9d",
+    "bytes": 4040
+  },
+  "software-completion-final/verification/final-cohort-source.json": {
+    "sha256": "193e4800e5d0733a30bc6c8d4ac993590219363941e69a787bba5ac3681c8f68",
+    "bytes": 208675
+  },
+  "software-completion-final/verification/final-contracts-govuln-status.json": {
+    "sha256": "1df3744c174a8a4c151dbda6e886a3d1e9d3ce549b4bcadb984e4866af000cdd",
+    "bytes": 768
+  },
+  "software-completion-final/verification/final-contracts-govuln.jsonl": {
+    "sha256": "1ff8f25ff814ee430c4cc40fbcb11e7c3d39359159ca2e7dc69adb41179492d7",
+    "bytes": 511601
+  },
+  "software-completion-final/verification/final-contracts-govuln.stderr": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "software-completion-final/verification/final-contracts-test-status.json": {
+    "sha256": "47c05eb5b7667deb5a095acc04b19c59100e76fd5740ba9b76b653e2d6d68a7d",
+    "bytes": 807
+  },
+  "software-completion-final/verification/final-contracts-test.jsonl": {
+    "sha256": "65e77bb033bae33ed4a2689ac3fa71beab64e908ab96683ccd88756238988edc",
+    "bytes": 423
+  },
+  "software-completion-final/verification/final-contracts-test.stderr": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "software-completion-final/verification/final-edge-govuln-status.json": {
+    "sha256": "050ebdaa9a165edb2ad646639d53750d086ea9dfd0f74a5ed44038c53dd92017",
+    "bytes": 735
+  },
+  "software-completion-final/verification/final-edge-govuln.jsonl": {
+    "sha256": "5df75a0dba3753934fff2a66ce7c5738cf3cb3e8906d57990dd5d76d389bdb35",
+    "bytes": 517605
+  },
+  "software-completion-final/verification/final-edge-govuln.stderr": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "software-completion-final/verification/final-edge-race-status.json": {
+    "sha256": "2a6a2f7e48b5f8485a8328cc5cf07bf56e04141f65231451731a9602f53da948",
+    "bytes": 1165
+  },
+  "software-completion-final/verification/final-edge-race.jsonl": {
+    "sha256": "67bc8df9c5349b0777f08945bdd7ce960fbd61ae8c04f036a34328b6b98d8960",
+    "bytes": 715442
+  },
+  "software-completion-final/verification/final-edge-race.stderr": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "software-completion-final/verification/final-edge-tests-status.json": {
+    "sha256": "0ae4664efaff7958d0c571518ebaa5846ba723a88ff7e6aa0f44b3df2505d617",
+    "bytes": 1149
+  },
+  "software-completion-final/verification/final-edge-tests.jsonl": {
+    "sha256": "20d0917d9bc6bfd1e535b30ac419e5f52ebf84ba4c6464931bebae418c03e455",
+    "bytes": 713959
+  },
+  "software-completion-final/verification/final-edge-tests.stderr": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "software-completion-final/verification/final-edge-vet-status.json": {
+    "sha256": "1b1069f9699cd67c8eceb559cc2142f94d89cb1f6f172a9989a06b6ec7ec0039",
+    "bytes": 743
+  },
+  "software-completion-final/verification/final-edge-vet.jsonl": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "software-completion-final/verification/final-edge-vet.stderr": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "software-completion-final/verification/final-flutter-analysis-receipt.json": {
+    "sha256": "919864a34363eadb9b289103537548c81d3660cad71189b51d869a0da2f7cd50",
+    "bytes": 4733
+  },
+  "software-completion-final/verification/final-flutter-analysis-selection.json": {
+    "sha256": "c194b204f6a956d79081acdaec508e2a217104c8a0dafd974b79637ad300490b",
+    "bytes": 3823
+  },
+  "software-completion-final/verification/final-flutter-analysis.jsonl": {
+    "sha256": "69ae5aee995845e1ec9bc7fbf61724527c8b6c6932aa2ed01930a09e80bc5aa8",
+    "bytes": 2045
+  },
+  "software-completion-final/verification/final-flutter-analysis.stderr": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "software-completion-final/verification/final-flutter-test-selection.json": {
+    "sha256": "7bd71e5071e5da65b5d0d6316bf5548d4a55cfcb48aaf68464fa851b076540b0",
+    "bytes": 1917
+  },
+  "software-completion-final/verification/final-flutter-tests-v2-raw-status.json": {
+    "sha256": "2ce437ace61b5be10d0efeaaefa08e4faa17367c05746a476e016c5591443f74",
+    "bytes": 3368
+  },
+  "software-completion-final/verification/final-flutter-tests-v2-receipt.json": {
+    "sha256": "2f3445692d8cacc6097dcc5d7bbb8a72e81c48f2fb279b7bc42d436d2b68a1a8",
+    "bytes": 3504
+  },
+  "software-completion-final/verification/final-flutter-tests-v2.jsonl": {
+    "sha256": "a08d5e49756b296d71ac9197fedb29aba961a7cf5a542439f22afd9c59bd4cf4",
+    "bytes": 522334
+  },
+  "software-completion-final/verification/final-flutter-tests-v2.stderr": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "software-completion-final/verification/final-flutter-tests-v3-normalized-receipt.json": {
+    "sha256": "0686b57f966a32688e564fd2986d2c432a0ef1548514e49b12df1c2291f51629",
+    "bytes": 3973
+  },
+  "software-completion-final/verification/final-flutter-tests-wrapper-failure.json": {
+    "sha256": "b4331177e29888223a48041b9ac71028ff93ef4e87700a789c6c250069b5171f",
+    "bytes": 725
+  },
+  "software-completion-final/verification/final-flutter-tests.jsonl": {
+    "sha256": "9c6d00b745e4e1b21329325550b031343f880438478bad75816892176839e38c",
+    "bytes": 522733
+  },
+  "software-completion-final/verification/final-flutter-tests.stderr": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "software-completion-final/verification/final-integrated-independent-review.json": {
+    "sha256": "0e741392af4be68bebfca793e696c882d67650176258aa259ba6cd91ec4f63d1",
+    "bytes": 6127
+  },
+  "software-completion-final/verification/final-integrated-qualification.json": {
+    "sha256": "ae81ebc6baaa8030c27efa92ca03cb92ad7046cb123c2d66a9dca5fbef91dcfd",
+    "bytes": 14854
+  },
+  "software-completion-final/verification/final-integrated-wrapper-failure-v1.json": {
+    "sha256": "d18aa92b053f35d918d2b7782c15676dbd21f22c59293b626c2b7a9fab56480a",
+    "bytes": 268
+  },
+  "software-completion-final/verification/final-mac-executable-builds.json": {
+    "sha256": "1e40f3e3d8b447b38f037f7089902cee3b66a2a6a3ffb3dce8693156b4806701",
+    "bytes": 2524
+  },
+  "software-completion-final/verification/final-operational-proof-server.test.build.log": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "software-completion-final/verification/final-printer-agent-race.build.log": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "software-completion-final/verification/final-printer-agent-server.test.build.log": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "software-completion-final/verification/final-printer-agent.build.log": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "software-completion-final/verification/final-windows-amd64-build-status.json": {
+    "sha256": "8edc4edad70814a7062b5805c22f1a2fad7f1cc8f9e75b971387913233a18c81",
+    "bytes": 837
+  },
+  "software-completion-final/verification/final-windows-amd64-build.jsonl": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "software-completion-final/verification/final-windows-amd64-build.stderr": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "software-completion-final/verification/final-windows-arm64-build-status.json": {
+    "sha256": "e24180822c028c0dcf9e69d90610ebe01294c2ce991b0c571d3b13d057717af0",
+    "bytes": 837
+  },
+  "software-completion-final/verification/final-windows-arm64-build.jsonl": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "software-completion-final/verification/final-windows-arm64-build.stderr": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "software-completion-final/verification/final-windows-govuln-status.json": {
+    "sha256": "d215e9b09c83de948aa170086ae62af5f2d81e52255a0ff77e62f4f24ecb2b19",
+    "bytes": 813
+  },
+  "software-completion-final/verification/final-windows-govuln.jsonl": {
+    "sha256": "a113dadc482a4b7f9955da546ed6620f04124d21c6f85a05efefc0ab0789e741",
+    "bytes": 517696
+  },
+  "software-completion-final/verification/final-windows-govuln.stderr": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "software-completion-final/verification/native-arm64-current-user-qualification.json": {
+    "sha256": "dee1454471950c71a35c48167d1f4c85c595b869814d6b726d35ccb016f1f9ba",
+    "bytes": 6840
+  },
+  "software-completion-final/verification/native-arm64-independent-review.json": {
+    "sha256": "3529aa893d6a583e421d6c68bacfa91e14156444d2c6d90d4190fc4063d3ee7a",
+    "bytes": 1655
+  },
+  "software-completion-final/verification/native-arm64-system-context-qualification.json": {
+    "sha256": "0c166e03fa36a46e1240b1abe9a6d03639a3d17d905b53a456856ad8b6e61437",
+    "bytes": 5314
+  },
+  "software-completion-final/verification/native-helper-bundle-inputs.json": {
+    "sha256": "724b1c5bcc7ac0ced22f57fa34d631a697ebb9ebd1019488650808a33b28a2d8",
+    "bytes": 1818
+  },
+  "software-completion-final/verification/native-helper-reuse.json": {
+    "sha256": "a458e3a9085ed7aec1f3ecda3e2fb51999842acba0773f5b393524e3525e9ee4",
+    "bytes": 7073
+  },
+  "software-completion-final/verification/original-preservation-before-final.json": {
+    "sha256": "967d37d019ef55adec82c78cf30ab82012ac20a598b70923a4a92b05cb1fb8cc",
+    "bytes": 310
+  },
+  "software-completion-final/verification/printer-agent-rpc-independent-review.json": {
+    "sha256": "3ee756f1a9ad8b694cdb46c1269c93b551e5f3ef2aa09a75e6f310782cb1b114",
+    "bytes": 3452
+  },
+  "software-completion-final/verification/printer-agent-ui-analyze-candidate-ci.log": {
+    "sha256": "8ac2a479af6347bb2aad17242f105dacc64c3fbdecf3dfab5821b4224c4fd000",
+    "bytes": 575
+  },
+  "software-completion-final/verification/printer-agent-ui-analyze-candidate-suppressed.log": {
+    "sha256": "fae90ccc5d28f4e5f28b3fc8d8251b1883964de78ccf21b166c1046f547e5d4a",
+    "bytes": 2785
+  },
+  "software-completion-final/verification/printer-agent-ui-analyze-candidate-v2.log": {
+    "sha256": "edf16dc771427692123f23411ec540559191f118c3f3f0f2fa74a0ebc7a90f72",
+    "bytes": 96
+  },
+  "software-completion-final/verification/printer-agent-ui-analyze-candidate-v3.log": {
+    "sha256": "9a6507863c9f8e8d42c603b25f12f27c689cefd425ebb44a58210069ea8a3b1f",
+    "bytes": 96
+  },
+  "software-completion-final/verification/printer-agent-ui-analyze-candidate.log": {
+    "sha256": "88de260a52b806f7bf68f8c19c35721d39a8c3eb554c4205d82c7e335da978af",
+    "bytes": 1492
+  },
+  "software-completion-final/verification/printer-agent-ui-analyze-distinct-installation.log": {
+    "sha256": "edf16dc771427692123f23411ec540559191f118c3f3f0f2fa74a0ebc7a90f72",
+    "bytes": 96
+  },
+  "software-completion-final/verification/printer-agent-ui-analyze-final.log": {
+    "sha256": "62a38c54c4399ff24a04b006c1f9af08e01c1a937af0a17ab1294126f665848a",
+    "bytes": 96
+  },
+  "software-completion-final/verification/printer-agent-ui-independent-review.json": {
+    "sha256": "b967d2751b4fbb7c14386cbd07caabcb75912a56837dbdfb9cbc8bc8f1573e36",
+    "bytes": 3350
+  },
+  "software-completion-final/verification/printer-agent-ui-tests-actual-candidate.jsonl": {
+    "sha256": "4be1bbccac1cff75c1f0ceaf0ca182b575943093f96f462d4b7c72edcbafbf53",
+    "bytes": 86880
+  },
+  "software-completion-final/verification/printer-agent-ui-tests-actual-candidate.stderr": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "software-completion-final/verification/printer-agent-ui-tests-authorized.jsonl": {
+    "sha256": "e77a22e13554a4f29b548e04c4ffcea5434dab5d2ffc26bb7a09c342b7f08e87",
+    "bytes": 75824
+  },
+  "software-completion-final/verification/printer-agent-ui-tests-authorized.stderr": {
+    "sha256": "a3aad1b237654e7d9ac8ab74ed966458d99f6cb78dbd95f07e011d88f418a706",
+    "bytes": 103
+  },
+  "software-completion-final/verification/printer-agent-ui-tests-candidate.jsonl": {
+    "sha256": "8574bb54ad70d5abcf225f6e8b71d0ca1d7eb3c1d0f0b442e83001440e03ca7f",
+    "bytes": 4149
+  },
+  "software-completion-final/verification/printer-agent-ui-tests-candidate.stderr": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "software-completion-final/verification/printer-agent-ui-tests-final.jsonl": {
+    "sha256": "a463a8d885b67fe72fed1a34cfc804334d1d145c41ac5080e573a627546b9d8d",
+    "bytes": 132177
+  },
+  "software-completion-final/verification/printer-agent-ui-tests-final.stderr": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "software-completion-final/verification/printer-daemon-independent/agent-build-amd64.stderr": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "software-completion-final/verification/printer-daemon-independent/agent-build-amd64.stdout": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "software-completion-final/verification/printer-daemon-independent/agent-build-arm64.stderr": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "software-completion-final/verification/printer-daemon-independent/agent-build-arm64.stdout": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "software-completion-final/verification/printer-daemon-independent/build-inputs-verification.json": {
+    "sha256": "709fad3cbbd765b8ffd20851e44cbf066fcdf271421019ce408b7244843ab863",
+    "bytes": 535
+  },
+  "software-completion-final/verification/printer-daemon-independent/bundle-build-amd64-1.stderr": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "software-completion-final/verification/printer-daemon-independent/bundle-build-amd64-1.stdout": {
+    "sha256": "f2815e237549fb2ae404003d6149d9e18c8419178bf64c54748562d36cbd421a",
+    "bytes": 1485
+  },
+  "software-completion-final/verification/printer-daemon-independent/bundle-build-amd64-2.stderr": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "software-completion-final/verification/printer-daemon-independent/bundle-build-amd64-2.stdout": {
+    "sha256": "f2815e237549fb2ae404003d6149d9e18c8419178bf64c54748562d36cbd421a",
+    "bytes": 1485
+  },
+  "software-completion-final/verification/printer-daemon-independent/bundle-build-arm64-1.stderr": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "software-completion-final/verification/printer-daemon-independent/bundle-build-arm64-1.stdout": {
+    "sha256": "b4ae9e114aa4f2dadf497473711fa35b894fcb560032635a9d5f30dac62d3497",
+    "bytes": 1485
+  },
+  "software-completion-final/verification/printer-daemon-independent/bundle-build-arm64-2.stderr": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "software-completion-final/verification/printer-daemon-independent/bundle-build-arm64-2.stdout": {
+    "sha256": "b4ae9e114aa4f2dadf497473711fa35b894fcb560032635a9d5f30dac62d3497",
+    "bytes": 1485
+  },
+  "software-completion-final/verification/printer-daemon-independent/bundle-reproduction-amd64-1/capability-profile.json": {
+    "sha256": "889ca206e624d88df360fddd23aa7400f81ffec00d222c1dc134b368926209f4",
+    "bytes": 175
+  },
+  "software-completion-final/verification/printer-daemon-independent/bundle-reproduction-amd64-1/manifest.json": {
+    "sha256": "650360132e8f333c37f6ee6eb45a989fefd1ce5b9243d5066f0358b5bb6d4e8f",
+    "bytes": 1772
+  },
+  "software-completion-final/verification/printer-daemon-independent/bundle-reproduction-amd64-1/vynic-print-helper.exe": {
+    "sha256": "b720e1eedc77ab574d769865e39f71506a5f3ebc9d93ab5166bc3f112203019d",
+    "bytes": 316416
+  },
+  "software-completion-final/verification/printer-daemon-independent/bundle-reproduction-amd64-2/capability-profile.json": {
+    "sha256": "889ca206e624d88df360fddd23aa7400f81ffec00d222c1dc134b368926209f4",
+    "bytes": 175
+  },
+  "software-completion-final/verification/printer-daemon-independent/bundle-reproduction-amd64-2/manifest.json": {
+    "sha256": "650360132e8f333c37f6ee6eb45a989fefd1ce5b9243d5066f0358b5bb6d4e8f",
+    "bytes": 1772
+  },
+  "software-completion-final/verification/printer-daemon-independent/bundle-reproduction-amd64-2/vynic-print-helper.exe": {
+    "sha256": "b720e1eedc77ab574d769865e39f71506a5f3ebc9d93ab5166bc3f112203019d",
+    "bytes": 316416
+  },
+  "software-completion-final/verification/printer-daemon-independent/bundle-reproduction-arm64-1/capability-profile.json": {
+    "sha256": "889ca206e624d88df360fddd23aa7400f81ffec00d222c1dc134b368926209f4",
+    "bytes": 175
+  },
+  "software-completion-final/verification/printer-daemon-independent/bundle-reproduction-arm64-1/manifest.json": {
+    "sha256": "d872b1c844451a169554bb6af99ba9e2a354cf70a8058f073377e90483aac3b9",
+    "bytes": 1772
+  },
+  "software-completion-final/verification/printer-daemon-independent/bundle-reproduction-arm64-1/vynic-print-helper.exe": {
+    "sha256": "99869fe8761ee48f1c66d30359dc837327dd3cc054ba60a1d80089916a6981f5",
+    "bytes": 291328
+  },
+  "software-completion-final/verification/printer-daemon-independent/bundle-reproduction-arm64-2/capability-profile.json": {
+    "sha256": "889ca206e624d88df360fddd23aa7400f81ffec00d222c1dc134b368926209f4",
+    "bytes": 175
+  },
+  "software-completion-final/verification/printer-daemon-independent/bundle-reproduction-arm64-2/manifest.json": {
+    "sha256": "d872b1c844451a169554bb6af99ba9e2a354cf70a8058f073377e90483aac3b9",
+    "bytes": 1772
+  },
+  "software-completion-final/verification/printer-daemon-independent/bundle-reproduction-arm64-2/vynic-print-helper.exe": {
+    "sha256": "99869fe8761ee48f1c66d30359dc837327dd3cc054ba60a1d80089916a6981f5",
+    "bytes": 291328
+  },
+  "software-completion-final/verification/printer-daemon-independent/bundle-reproduction.json": {
+    "sha256": "c7b8e7a2e0e6845a5340baec0728666ee064a3e16da69ab052192985eb3ca26b",
+    "bytes": 1089
+  },
+  "software-completion-final/verification/printer-daemon-independent/packaging-qualification.json": {
+    "sha256": "04b1ec1a2dc2bcdf158ec51c208507930bb06d0eb4d9f98b47919de9f3432f3e",
+    "bytes": 8168
+  },
+  "software-completion-final/verification/printer-daemon-independent/race-authorized.jsonl": {
+    "sha256": "cd4f145ebebc32fe13e06c492c43ec405d23ae524686704e97cd506ec934af9a",
+    "bytes": 103740
+  },
+  "software-completion-final/verification/printer-daemon-independent/race-authorized.stderr": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "software-completion-final/verification/printer-daemon-independent/race.jsonl": {
+    "sha256": "276b454fd908511b5229d26b9161d12533a8cad54097454677db7fcdfbf59e91",
+    "bytes": 99536
+  },
+  "software-completion-final/verification/printer-daemon-independent/race.stderr": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "software-completion-final/verification/printer-daemon-independent/source-inputs-after.json": {
+    "sha256": "b21cfe3de18ad0205c3712a280102492c6329c9f97297bf796ae7f2a24708dee",
+    "bytes": 28501
+  },
+  "software-completion-final/verification/printer-daemon-independent/source-inputs-before.json": {
+    "sha256": "b21cfe3de18ad0205c3712a280102492c6329c9f97297bf796ae7f2a24708dee",
+    "bytes": 28501
+  },
+  "software-completion-final/verification/printer-daemon-independent-review.json": {
+    "sha256": "c1f1afd089659144d60f753637110d8f968cfe52163a2767750bfc0941f634a6",
+    "bytes": 6653
+  },
+  "software-completion-final/verification/printer-daemon-v1/agent-build-inputs.json": {
+    "sha256": "8265133677ed972e72c0e666e28002577b1b747ae7caa770acae787dfdface40",
+    "bytes": 923669
+  },
+  "software-completion-final/verification/printer-daemon-v1/bundle-build.log": {
+    "sha256": "0043dad05edecf51b21ac0a1b30468741bd12e7a77d918280bad20f6b3463529",
+    "bytes": 5544
+  },
+  "software-completion-final/verification/printer-daemon-v1/bundle-inputs.json": {
+    "sha256": "fecbb44b4c1a5ed7c2ace8f2ba56dd2253eb819364cfc3dd0dcb41f0d5580d82",
+    "bytes": 1649
+  },
+  "software-completion-final/verification/printer-daemon-v1/checkpoint.json": {
+    "sha256": "ee91b017c63c04150955b8139bb8902e3bf1bee63776bafcea4465b1309885a2",
+    "bytes": 10186
+  },
+  "software-completion-final/verification/printer-daemon-v1/module-graph.txt": {
+    "sha256": "0183e7ef4147b0aad2a893b218b4e57acc3102a7d9dcfbc07037451a198bc095",
+    "bytes": 4838
+  },
+  "software-completion-final/verification/printer-daemon-v1/race.jsonl": {
+    "sha256": "e62cdf0f03ddd3417fd585980bdb6f501928dcfc861bb51b96ea2c23b3234e12",
+    "bytes": 103719
+  },
+  "software-completion-final/verification/printer-daemon-v1/source-check.log": {
+    "sha256": "615d6146d5abb7cdc0c41df519ed5f2109d07fceb709f0f9461d01bd7c5c6944",
+    "bytes": 117
+  },
+  "software-completion-final/verification/printer-daemon-v1/unit.jsonl": {
+    "sha256": "5577b0f76bf3f17c23ef77b9cd3958f20097cf6f09a70ca679af7d63958fc94e",
+    "bytes": 103713
+  },
+  "software-completion-final/verification/printer-daemon-v1/vet.log": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "software-completion-final/verification/printer-daemon-v1/windows-build.log": {
+    "sha256": "c49e2612f9a32ee827cc25fd2c91ea15b9f183fdead1fd2569141e6d85b0dfb2",
+    "bytes": 1914
+  },
+  "software-completion-final/verification/printer-port-receipt.json": {
+    "sha256": "5c3a39e8f39d063c8a2abebd844b72c84c5c6915612d9d752c295a53c4811a29",
+    "bytes": 40502
+  },
+  "software-completion-final/verification/printerprovisioning-independent-review.json": {
+    "sha256": "efee605a225833838925b4b9901bb02209fc336565f212f8774af80a99073aff",
+    "bytes": 2245
+  },
+  "software-completion-final/verification/printerprovisioning-qualification.json": {
+    "sha256": "c08bb37d8ca192cd7982d571d6c360142c5dd143e6242d2006b453a4e6c55e51",
+    "bytes": 49132
+  },
+  "software-completion-final/verification/printtransport-windows-arm64.test.exe": {
+    "sha256": "5f83c5f8326a67a5e0ccb7eb7c6f7d1cb41fc163620a027ceba6457f7db30fab",
+    "bytes": 5548544
+  },
+  "software-completion-final/verification/provisioning-independent-tests.jsonl": {
+    "sha256": "47575dca22e60ec345e3f24a387efddf747a95ab1bc63fc95ac58059e055e0ec",
+    "bytes": 108886
+  },
+  "software-completion-final/verification/qualify_native_arm64.ps.txt": {
+    "sha256": "1a85d34fc2817441c075a0aa0bf063fe33eb64f01b9cfc6180b3d73fb5d03b36",
+    "bytes": 9705
+  },
+  "software-completion-final/verification/qualify_native_arm64_current_user.ps.txt": {
+    "sha256": "6368b903d399b7d4106d785610b703a730d5abf9243b25445c847acd1f25a419",
+    "bytes": 10223
+  },
+  "software-completion-final/verification/reviewed-printer-port-manifest.json": {
+    "sha256": "3e4347b0dd0688c2fe101101a7cf1acb24eeaa737a151db9b2ab370e8c707251",
+    "bytes": 19740
+  },
+  "software-completion-final/verification/stage_windows_software_packages.py": {
+    "sha256": "ffb8cfa736bccc2933d090f65398d7aa74ca940806b2c5a52dff61a1ec8d6325",
+    "bytes": 5946
+  },
+  "software-completion-final/verification/windows-final-fixtures-compile.json": {
+    "sha256": "6226f5df23c23eb58c27ed3580686b51c27f92775ee5fe1e34a88922b094b083",
+    "bytes": 3101
+  },
+  "software-completion-final/verification/windows-software-go-build/amd64/printer-agent-command.stderr.log": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "software-completion-final/verification/windows-software-go-build/amd64/printer-agent-command.stdout.log": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "software-completion-final/verification/windows-software-go-build/amd64/printer-agent.stderr.log": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "software-completion-final/verification/windows-software-go-build/amd64/printer-agent.stdout.log": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "software-completion-final/verification/windows-software-go-build/amd64/printeragent.stderr.log": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "software-completion-final/verification/windows-software-go-build/amd64/printeragent.stdout.log": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "software-completion-final/verification/windows-software-go-build/amd64/printerdaemon.stderr.log": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "software-completion-final/verification/windows-software-go-build/amd64/printerdaemon.stdout.log": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "software-completion-final/verification/windows-software-go-build/amd64/printerprovisioning.stderr.log": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "software-completion-final/verification/windows-software-go-build/amd64/printerprovisioning.stdout.log": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "software-completion-final/verification/windows-software-go-build/arm64/printer-agent-command.stderr.log": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "software-completion-final/verification/windows-software-go-build/arm64/printer-agent-command.stdout.log": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "software-completion-final/verification/windows-software-go-build/arm64/printer-agent.stderr.log": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "software-completion-final/verification/windows-software-go-build/arm64/printer-agent.stdout.log": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "software-completion-final/verification/windows-software-go-build/arm64/printeragent.stderr.log": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "software-completion-final/verification/windows-software-go-build/arm64/printeragent.stdout.log": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "software-completion-final/verification/windows-software-go-build/arm64/printerdaemon.stderr.log": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "software-completion-final/verification/windows-software-go-build/arm64/printerdaemon.stdout.log": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "software-completion-final/verification/windows-software-go-build/arm64/printerprovisioning.stderr.log": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "software-completion-final/verification/windows-software-go-build/arm64/printerprovisioning.stdout.log": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "software-completion-final/verification/windows-software-go-build/compiler-receipt.json": {
+    "sha256": "8bfc2090a539154f579e7d5199e4e4aa1f720d9c330fdc90f7ce67461e0fa1e6",
+    "bytes": 23755
+  },
+  "software-completion-final/verification/windows-software-go-stage/amd64-packages-cli.zip": {
+    "sha256": "e967fd7210300c16c98e45d1392a2d823f1e3a55347a54cc3c8fdda74b261000",
+    "bytes": 67394446
+  },
+  "software-completion-final/verification/windows-software-go-stage/arm64-packages-cli.zip": {
+    "sha256": "e9be28386f0c7676be01c106dc3fa646a278c2ba1db7cf69e6d2e9d6e61a1cf4",
+    "bytes": 62485269
+  },
+  "software-completion-final/verification/windows-software-go-stage/binary-manifest.json": {
+    "sha256": "1d26e2cce3a135c1569db72d0c11416f72d65140812f0d7181f4d8ea2fd54aae",
+    "bytes": 2654
+  },
+  "software-completion-final/verification/windows-software-go-stage/compiler-receipt.json": {
+    "sha256": "8bfc2090a539154f579e7d5199e4e4aa1f720d9c330fdc90f7ce67461e0fa1e6",
+    "bytes": 23755
+  },
+  "software-completion-final/verification/windows-software-go-stage/final-cohort-source.json": {
+    "sha256": "193e4800e5d0733a30bc6c8d4ac993590219363941e69a787bba5ac3681c8f68",
+    "bytes": 208675
+  },
+  "software-completion-final/verification/windows-software-go-stage/runtime-instructions.json": {
+    "sha256": "d430aa3d14a796d323b6810b2d270fe09c270b879bdfadbd558261b4dc3a1bfb",
+    "bytes": 1859
+  },
+  "software-completion-final/verification/windows-software-go-stage/source-manifest.json": {
+    "sha256": "6af4b4d81805fca382880c78c482f9f958aee14c94e740d64d6b4f7ef9578661",
+    "bytes": 202028
+  },
+  "software-completion-final/verification/windows-software-go-stage/source1109.zip": {
+    "sha256": "3e5ef93b8b908d7037db66b8f69a9a5d719aaecd78dba71a0c4432019500a9b5",
+    "bytes": 5765987
+  },
+  "software-completion-final/verification/windows-software-go-stage/stage-receipt.json": {
+    "sha256": "deb1832d9d580f807e74ce1ecac57813c17c981d27151a9692aff154f02f3d01",
+    "bytes": 2192
+  },
+  "software-completion-final/verification/windows-software-go-stage-verification.json": {
+    "sha256": "adca99dc03a166e78957fdad532e7d33a44b9be7db5beb55f007e270c2403e7b",
+    "bytes": 597
+  },
+  "software-completion-final/verification/windows-software-preflight-denial.json": {
+    "sha256": "7d8a2753973f8486f4f02b243ac5821ed791fac497638a8727e977d454f0102b",
+    "bytes": 3743
+  },
+  "software-completion-final/verification/windows-software-runner-preparation.json": {
+    "sha256": "259957ccaf8a4efecf0d5887df1d9f7a87d82be20b629ba1a5dcfe80b151a838",
+    "bytes": 1105
+  },
+  "software-completion-final/verification/windows-software-source-preparation-receipt.json": {
+    "sha256": "921b1d75cca877617f09ed0e05215da0117e2cb3767224c4eef111f78925bd6c",
+    "bytes": 5884
+  },
+  "software-completion-final/verification/windows-software-stage-preparation.json": {
+    "sha256": "1ea2a2af4199b11161bec6b9d5246349ce9e5b4f7b86160b5fa42fd9345f948b",
+    "bytes": 705
+  },
+  "software-completion-final/verification/windows-software-stage-readonly-verification.json": {
+    "sha256": "233383a7981c4554087e4793c938cbf53c31659a5e7588269a6df3f44a15f162",
+    "bytes": 2644
+  },
+  "software-completion-final/verification/windows-uri-review-probe.go": {
+    "sha256": "f04886593748b24e2ec15e6d4941a7fed657e6fe13064abb9df337f38b1bbb4a",
+    "bytes": 229
+  },
+  "software-completion-final/workspace-diff-check.txt": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "software-completion-final/workspace-final-preservation.json": {
+    "sha256": "9c6f7b81ac5cc8e97053455d5d06eb435b75c1596dec8738b94dae4288a33414",
+    "bytes": 5196
+  },
+  "software-completion-final-port-review.json": {
+    "sha256": "656a8ce73f1d102250c5d365bf1c839e1573c57c233a313293266b73da5ad332",
+    "bytes": 4834
+  },
+  "software-windows-analysis-original-runner-v2/analysis.ps.txt": {
+    "sha256": "4ace4ef297cdc72a81658c8a7c325bbd6d95ef414e9a3a0f37b40fc9cce5f762",
+    "bytes": 4223
+  },
+  "software-windows-flutter-analysis-result-v2/analysis.log": {
+    "sha256": "45ea90c6c4d114d7eecfd9e580705b7b0b4e98d3c49c7270835c659537d3ee9a",
+    "bytes": 4096
+  },
+  "software-windows-flutter-analysis-result-v2/windows-software-analysis.json": {
+    "sha256": "4952fef2ca6bda3017b772d5febb7a20b80e8f373fd1940ba165b46342d903ab",
+    "bytes": 694
+  },
+  "software-windows-flutter-result-v2/flutter-tests.jsonl": {
+    "sha256": "f587dbb00d04372b2c66c079121b62996a093d612144438b007f6bcb86d57145",
+    "bytes": 1110366
+  },
+  "software-windows-flutter-result-v2/offline-pub-get.log": {
+    "sha256": "30229f9d0b6e8f121372205ec994858e2208d3f237440ee516b1058e6ad20a97",
+    "bytes": 3380
+  },
+  "software-windows-flutter-result-v2/windows-software-flutter.json": {
+    "sha256": "65d84b9df4490dabe419ba3177fb1938d406f47a30b3d72e50a7b5419c183926",
+    "bytes": 1883
+  },
+  "software-windows-flutter-result-v3/analysis.log": {
+    "sha256": "45ea90c6c4d114d7eecfd9e580705b7b0b4e98d3c49c7270835c659537d3ee9a",
+    "bytes": 4096
+  },
+  "software-windows-flutter-result-v3/flutter-tests.jsonl": {
+    "sha256": "e3169377d751af410325a114dcc5d824d1eadc5762e8594ad1c3f6284bd0bdd3",
+    "bytes": 1059032
+  },
+  "software-windows-flutter-result-v3/offline-pub-get.log": {
+    "sha256": "30229f9d0b6e8f121372205ec994858e2208d3f237440ee516b1058e6ad20a97",
+    "bytes": 3380
+  },
+  "software-windows-flutter-result-v3/windows-software-flutter.json": {
+    "sha256": "756e1295ec39fc92ea78d05c236261cc57aa7c86d8f61850d90f5c450a32ae29",
+    "bytes": 1844
+  },
+  "software-windows-flutter-stage/analysis-selection.json": {
+    "sha256": "c194b204f6a956d79081acdaec508e2a217104c8a0dafd974b79637ad300490b",
+    "bytes": 3823
+  },
+  "software-windows-flutter-stage/operational-proof-server-windows.test.exe": {
+    "sha256": "2c9370e4c4cfdb55094f63a26a2bf5b45bff43868a1a2c14a0f47c2654c70abb",
+    "bytes": 26370560
+  },
+  "software-windows-flutter-stage/printer-agent-server-windows.test.exe": {
+    "sha256": "f335745e38be573f5ec031478eab4b524a8069c811324ac2a5d39876b676e894",
+    "bytes": 25833472
+  },
+  "software-windows-flutter-stage/run.ps.txt": {
+    "sha256": "ed751681c9080066e96a952ece759e541c236a5efb214d317210ad7a589bcddb",
+    "bytes": 5760
+  },
+  "software-windows-flutter-stage/runner-artifacts.json": {
+    "sha256": "c147cb891424b2f1760f198e27ea3bc977891cd2c4a324e3a3b26de5e01b07f6",
+    "bytes": 1422
+  },
+  "software-windows-flutter-stage/source-manifest.json": {
+    "sha256": "f53338cbe0a30d867ab0b370d861671ace9e31b2de0d88696960ec6c3f6c65d6",
+    "bytes": 193014
+  },
+  "software-windows-flutter-stage/source.zip": {
+    "sha256": "dedd8e046927fe20954e392aaf7b92e76e06145f54b7e7c2f5f5f9920052b066",
+    "bytes": 5780809
+  },
+  "software-windows-flutter-stage/stage-receipt.json": {
+    "sha256": "700aba05ce08b93223c6579391455377b7eec1b2fb7fd706bf5c1213e5443260",
+    "bytes": 1372
+  },
+  "software-windows-flutter-stage/test-selection.json": {
+    "sha256": "7bd71e5071e5da65b5d0d6316bf5548d4a55cfcb48aaf68464fa851b076540b0",
+    "bytes": 1917
+  },
+  "software-windows-flutter-stage-v2/analysis-selection.json": {
+    "sha256": "c194b204f6a956d79081acdaec508e2a217104c8a0dafd974b79637ad300490b",
+    "bytes": 3823
+  },
+  "software-windows-flutter-stage-v2/operational-proof-server-windows.test.exe": {
+    "sha256": "2c9370e4c4cfdb55094f63a26a2bf5b45bff43868a1a2c14a0f47c2654c70abb",
+    "bytes": 26370560
+  },
+  "software-windows-flutter-stage-v2/printer-agent-server-windows.test.exe": {
+    "sha256": "f335745e38be573f5ec031478eab4b524a8069c811324ac2a5d39876b676e894",
+    "bytes": 25833472
+  },
+  "software-windows-flutter-stage-v2/run.ps.txt": {
+    "sha256": "0a843d221227e30063236f844182a13b17ba7ac55c2a41d3ba70c1b80ad3b683",
+    "bytes": 5766
+  },
+  "software-windows-flutter-stage-v2/runner-artifacts.json": {
+    "sha256": "a13ef6185fa4ebdcb5866aa7444fc349b678bf132f40cfab6de47e44f8a2621b",
+    "bytes": 1824
+  },
+  "software-windows-flutter-stage-v2/source-manifest.json": {
+    "sha256": "f53338cbe0a30d867ab0b370d861671ace9e31b2de0d88696960ec6c3f6c65d6",
+    "bytes": 193014
+  },
+  "software-windows-flutter-stage-v2/source.zip": {
+    "sha256": "dedd8e046927fe20954e392aaf7b92e76e06145f54b7e7c2f5f5f9920052b066",
+    "bytes": 5780809
+  },
+  "software-windows-flutter-stage-v2/stage-receipt.json": {
+    "sha256": "55cf849d17e7658ce06878a51a6f01c0c2652016e5d026b4b8dc6c52e11bcbbf",
+    "bytes": 1474
+  },
+  "software-windows-flutter-stage-v2/test-selection.json": {
+    "sha256": "7bd71e5071e5da65b5d0d6316bf5548d4a55cfcb48aaf68464fa851b076540b0",
+    "bytes": 1917
+  },
+  "software-windows-flutter-stage-v3/analysis-selection.json": {
+    "sha256": "c194b204f6a956d79081acdaec508e2a217104c8a0dafd974b79637ad300490b",
+    "bytes": 3823
+  },
+  "software-windows-flutter-stage-v3/operational-proof-server-windows.test.exe": {
+    "sha256": "2c9370e4c4cfdb55094f63a26a2bf5b45bff43868a1a2c14a0f47c2654c70abb",
+    "bytes": 26370560
+  },
+  "software-windows-flutter-stage-v3/printer-agent-server-windows.test.exe": {
+    "sha256": "f335745e38be573f5ec031478eab4b524a8069c811324ac2a5d39876b676e894",
+    "bytes": 25833472
+  },
+  "software-windows-flutter-stage-v3/run.ps.txt": {
+    "sha256": "cf2584f5c5a279c5f963f96d84b4cf197e1baf36696e4f61cbc9790919da79ed",
+    "bytes": 5878
+  },
+  "software-windows-flutter-stage-v3/runner-artifacts.json": {
+    "sha256": "bbcc14b8ed7670098d5b3a74a730297b4dbc5869fbc101833dc321aaaf634ab9",
+    "bytes": 1610
+  },
+  "software-windows-flutter-stage-v3/source-manifest.json": {
+    "sha256": "941aa8e6dd33023d63fd3b5e31eff5eedddfb06f2fc01159b761ee30e817de43",
+    "bytes": 193014
+  },
+  "software-windows-flutter-stage-v3/source.zip": {
+    "sha256": "e0f5752abcd96e0fe6ddf93ad19a6f00d146134ff68096da27cc0a1ee96d20f2",
+    "bytes": 5780933
+  },
+  "software-windows-flutter-stage-v3/stage-receipt.json": {
+    "sha256": "9d983056af3e023a7b1c5045d8fe80893ad1d4c52cf2a2ac902d4a5e3f34f748",
+    "bytes": 1406
+  },
+  "software-windows-flutter-stage-v3/test-selection.json": {
+    "sha256": "7bd71e5071e5da65b5d0d6316bf5548d4a55cfcb48aaf68464fa851b076540b0",
+    "bytes": 1917
+  },
+  "software-windows-pos-result-v3/built-artifact-sha256.json": {
+    "sha256": "49d2d74e6d1addb13f16388eb2791722007b95bd1ce06130e24f46abfecb6529",
+    "bytes": 2611
+  },
+  "software-windows-pos-result-v3/firebase-sdk-sha256-after.json": {
+    "sha256": "8e68de1c1568c80a71e090073382b5d93b5d51a3fbfaf4e55fc406fad7b8c0a3",
+    "bytes": 22631
+  },
+  "software-windows-pos-result-v3/firebase-sdk-sha256-before.json": {
+    "sha256": "8e68de1c1568c80a71e090073382b5d93b5d51a3fbfaf4e55fc406fad7b8c0a3",
+    "bytes": 22631
+  },
+  "software-windows-pos-result-v3/native-pos-build.zip": {
+    "sha256": "f5eb22bfe2ca70f9b9e0434336da548eeb0613ed7d10d1ae43ebe252f1b9b785",
+    "bytes": 19265604
+  },
+  "software-windows-pos-result-v3/offline-pub-get.log": {
+    "sha256": "30229f9d0b6e8f121372205ec994858e2208d3f237440ee516b1058e6ad20a97",
+    "bytes": 3380
+  },
+  "software-windows-pos-result-v3/windows-pos-build.json": {
+    "sha256": "7cfa157934ce1e629e683a149d5cc56aef45462d7ff8aae3548502b6fbe92e64",
+    "bytes": 1220
+  },
+  "software-windows-pos-result-v3/windows-pos-build.log": {
+    "sha256": "684935a292ad50c2207db60d9a2ae775ed76090262170f73ee5538fe5a3f9ac0",
+    "bytes": 262
+  },
+  "software-windows-pos-stage/analysis-selection.json": {
+    "sha256": "c194b204f6a956d79081acdaec508e2a217104c8a0dafd974b79637ad300490b",
+    "bytes": 3823
+  },
+  "software-windows-pos-stage/build.ps.txt": {
+    "sha256": "0844ce54fafc2af5a2f7903012ec17122d2c073f3ef55c4842f23bdce7d4262e",
+    "bytes": 7015
+  },
+  "software-windows-pos-stage/operational-proof-server-windows.test.exe": {
+    "sha256": "2c9370e4c4cfdb55094f63a26a2bf5b45bff43868a1a2c14a0f47c2654c70abb",
+    "bytes": 26370560
+  },
+  "software-windows-pos-stage/printer-agent-server-windows.test.exe": {
+    "sha256": "f335745e38be573f5ec031478eab4b524a8069c811324ac2a5d39876b676e894",
+    "bytes": 25833472
+  },
+  "software-windows-pos-stage/product-preparation.json": {
+    "sha256": "0b2191c5d26212836f6967bf2b50bbea23a60da94593f87e99e387d43c3533b4",
+    "bytes": 2829
+  },
+  "software-windows-pos-stage/runner-artifacts.json": {
+    "sha256": "6bb133df1a2fdf2eac50ab6ac745ec92379c6ee2faccd12848b5d3b47a5c6bea",
+    "bytes": 1569
+  },
+  "software-windows-pos-stage/source-manifest.json": {
+    "sha256": "a3b3d2ae6b226685ee737bd0228b5c779b0246974a8c115ec3351731f1409205",
+    "bytes": 193018
+  },
+  "software-windows-pos-stage/source.zip": {
+    "sha256": "03187911b7c50a52276ad5c2dd4fc54e8201e54c5610456fc6138977a68a8796",
+    "bytes": 5776180
+  },
+  "software-windows-pos-stage/stage-receipt.json": {
+    "sha256": "e9ecad72adc981e61426379d952491401207344eaf5b0931854644d5760eadf9",
+    "bytes": 1368
+  },
+  "software-windows-pos-stage/test-selection.json": {
+    "sha256": "7bd71e5071e5da65b5d0d6316bf5548d4a55cfcb48aaf68464fa851b076540b0",
+    "bytes": 1917
+  },
+  "software-windows-pos-stage-v2/analysis-selection.json": {
+    "sha256": "c194b204f6a956d79081acdaec508e2a217104c8a0dafd974b79637ad300490b",
+    "bytes": 3823
+  },
+  "software-windows-pos-stage-v2/build.ps.txt": {
+    "sha256": "a67d43dbd97fd7ea1df24c4b6eb7142b6f570a2e67f71b12b8832b3167561a32",
+    "bytes": 7024
+  },
+  "software-windows-pos-stage-v2/operational-proof-server-windows.test.exe": {
+    "sha256": "2c9370e4c4cfdb55094f63a26a2bf5b45bff43868a1a2c14a0f47c2654c70abb",
+    "bytes": 26370560
+  },
+  "software-windows-pos-stage-v2/printer-agent-server-windows.test.exe": {
+    "sha256": "f335745e38be573f5ec031478eab4b524a8069c811324ac2a5d39876b676e894",
+    "bytes": 25833472
+  },
+  "software-windows-pos-stage-v2/product-preparation.json": {
+    "sha256": "0b2191c5d26212836f6967bf2b50bbea23a60da94593f87e99e387d43c3533b4",
+    "bytes": 2829
+  },
+  "software-windows-pos-stage-v2/runner-artifacts.json": {
+    "sha256": "ab06f453c4c13b2f0b9ff0c9dc429ba56d54d9f39270ac9129c1a017e2cc34c1",
+    "bytes": 1967
+  },
+  "software-windows-pos-stage-v2/source-manifest.json": {
+    "sha256": "a3b3d2ae6b226685ee737bd0228b5c779b0246974a8c115ec3351731f1409205",
+    "bytes": 193018
+  },
+  "software-windows-pos-stage-v2/source.zip": {
+    "sha256": "03187911b7c50a52276ad5c2dd4fc54e8201e54c5610456fc6138977a68a8796",
+    "bytes": 5776180
+  },
+  "software-windows-pos-stage-v2/stage-receipt.json": {
+    "sha256": "16d7aa5241b6c2ae785584e04330df3a42ef86591f0e462c60f3409730746a32",
+    "bytes": 1470
+  },
+  "software-windows-pos-stage-v2/test-selection.json": {
+    "sha256": "7bd71e5071e5da65b5d0d6316bf5548d4a55cfcb48aaf68464fa851b076540b0",
+    "bytes": 1917
+  },
+  "software-windows-pos-stage-v3/analysis-selection.json": {
+    "sha256": "c194b204f6a956d79081acdaec508e2a217104c8a0dafd974b79637ad300490b",
+    "bytes": 3823
+  },
+  "software-windows-pos-stage-v3/build.ps.txt": {
+    "sha256": "b1261cebc6b55c17cee2c16f8d4bcd70af05c2d632188b1d0e0e0cc75df72120",
+    "bytes": 7133
+  },
+  "software-windows-pos-stage-v3/operational-proof-server-windows.test.exe": {
+    "sha256": "2c9370e4c4cfdb55094f63a26a2bf5b45bff43868a1a2c14a0f47c2654c70abb",
+    "bytes": 26370560
+  },
+  "software-windows-pos-stage-v3/printer-agent-server-windows.test.exe": {
+    "sha256": "f335745e38be573f5ec031478eab4b524a8069c811324ac2a5d39876b676e894",
+    "bytes": 25833472
+  },
+  "software-windows-pos-stage-v3/product-preparation.json": {
+    "sha256": "618794b28299e53b9a2c6910f9cfb262ec9fd1244f2901e03f1879c9b0754c9b",
+    "bytes": 2829
+  },
+  "software-windows-pos-stage-v3/runner-artifacts.json": {
+    "sha256": "102ac6a252f7d556ddd132eb9e24d384804a135e63c8d42289b2675a90292a4b",
+    "bytes": 1757
+  },
+  "software-windows-pos-stage-v3/source-manifest.json": {
+    "sha256": "5c109431d067276a007a9b50d26076117e6624c937051316db62c6bd30d592f3",
+    "bytes": 193018
+  },
+  "software-windows-pos-stage-v3/source.zip": {
+    "sha256": "c34f868986cb6015d43639a2cb20276660801ea8e16282eb5ce37060e5f96463",
+    "bytes": 5776304
+  },
+  "software-windows-pos-stage-v3/stage-receipt.json": {
+    "sha256": "781e3b50d6f5850af9bfc63e530dbc28937d80a5996bf2ff37b08e1fc0935f09",
+    "bytes": 1402
+  },
+  "software-windows-pos-stage-v3/test-selection.json": {
+    "sha256": "7bd71e5071e5da65b5d0d6316bf5548d4a55cfcb48aaf68464fa851b076540b0",
+    "bytes": 1917
+  },
+  "windows-attempt.json": {
+    "sha256": "0d1990abc147d88623cd8bf195d52598e037eb5b1b429f3f00eb7bee399730e5",
+    "bytes": 1613
+  },
+  "windows-flutter-analysis-result/analysis.log": {
+    "sha256": "741a6d82ba5e1aa814379b054183d9cc30528772569f5d69ea615be259048d42",
+    "bytes": 3502
+  },
+  "windows-flutter-analysis-result/windows-flutter-analysis.json": {
+    "sha256": "758bd182962516a786b5564ec8578988126d7b2fe37ca4788c525b170a5fa014",
+    "bytes": 672
+  },
+  "windows-flutter-analysis-stage/run.ps.txt": {
+    "sha256": "bf1f302645039cefad35e6317625fe122998d406ad1ea8fdc4cf9d9cfbe7aa58",
+    "bytes": 2757
+  },
+  "windows-flutter-result/analysis.log": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "windows-flutter-result/flutter-tests.jsonl": {
+    "sha256": "b8ae471c667d6583f91c0520e3070d8a288960c22f9ba848776ddc2ba31ef6ab",
+    "bytes": 820044
+  },
+  "windows-flutter-result/windows-flutter-tests.json": {
+    "sha256": "f838601332a81a330344f9e56aa341a3aa6a86875142dedff209058d48eaad90",
+    "bytes": 735
+  },
+  "windows-flutter-tests/flutter-final-analysis-selection.json": {
+    "sha256": "7e4bb802736ed8199b9e83388347b6938f63e7eb820a6262828b8751cba71d5c",
+    "bytes": 3276
+  },
+  "windows-flutter-tests/flutter-final-test-selection.json": {
+    "sha256": "44f3f571aeb5193358a5ed144ea0bab38b2e8abacf0b3023d3c682d4158a1afd",
+    "bytes": 1763
+  },
+  "windows-flutter-tests/operational-proof-server-windows.test.exe": {
+    "sha256": "f61d5b985d10356701bc4eb9974dd5762c9d31cdb7a6c6a65012bdda8fc4e231",
+    "bytes": 26283520
+  },
+  "windows-flutter-tests/operational-wire-windows-fixture-build-receipt.json": {
+    "sha256": "25ab0948951df94b16e6dcabcfedad2fa4b10ae6f52dbbc80e3660524bc67a1c",
+    "bytes": 4823
+  },
+  "windows-flutter-tests/run.ps.txt": {
+    "sha256": "d6a29f5cd768050dabd6a5d259e1846f98e2b77ff60b4d130941a4eaeff4edbd",
+    "bytes": 3522
+  },
+  "windows-go-packages-result/acceptance-matrix-v8-baseline.json": {
+    "sha256": "42e98fcead35c11171c9389dd31b7614b4788a7c8c096e4fe3a8841a876842d5",
+    "bytes": 146369
+  },
+  "windows-go-packages-result/counter-evidence-classes.json": {
+    "sha256": "0fb35fd343ba77e3f3e6cf7a42a0c0627b9e18853ce62487a26ef1b71f3bd3b0",
+    "bytes": 1242
+  },
+  "windows-go-packages-result/host-launch.json": {
+    "sha256": "ef6ad04b194b995bc798e505aa527a72acdc3b68619c8634f8b6f9a74da5f5a8",
+    "bytes": 994
+  },
+  "windows-go-packages-result/host-prlctl.log": {
+    "sha256": "5e721e1038d1d4275f1c3fb90fbab93dbf8fa3a8ca0164cd2c75e6c4982acdc3",
+    "bytes": 70788
+  },
+  "windows-go-packages-result/host-reference-locations.json": {
+    "sha256": "1acc8e7e6b755746b4c3ab06c9f7368fb337991ce285729c4ef39638bdf1e1b9",
+    "bytes": 2037
+  },
+  "windows-go-packages-result/printcluster.stderr.log": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "windows-go-packages-result/printcluster.stdout.log": {
+    "sha256": "dec6c98e8d18e9be636528ff9c056e36669d264efbf5a01b35c91e982ce13209",
+    "bytes": 14162
+  },
+  "windows-go-packages-result/printeligibility.stderr.log": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "windows-go-packages-result/printeligibility.stdout.log": {
+    "sha256": "22ca3cca6f6c90da26fbb4555f3e791855cdcc982ca34de14c3d879957ffdb57",
+    "bytes": 721
+  },
+  "windows-go-packages-result/printhost.stderr.log": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "windows-go-packages-result/printhost.stdout.log": {
+    "sha256": "19e813adea0ee613d6704e6d047b1ed12f7da2428f21af174e602f17f0c45be7",
+    "bytes": 4567
+  },
+  "windows-go-packages-result/printqueue.stderr.log": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "windows-go-packages-result/printqueue.stdout.log": {
+    "sha256": "b90650ae4f8cf40e53666709c1db449eb0bddac4e9ce3bf5a6425b5a79647756",
+    "bytes": 8437
+  },
+  "windows-go-packages-result/printtransport.stderr.log": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "windows-go-packages-result/printtransport.stdout.log": {
+    "sha256": "34c58c9e3ea1c91947aa86c6d86d5fa357b895125284c4243e1d1e9d4631dd35",
+    "bytes": 5061
+  },
+  "windows-go-packages-result/server.stderr.log": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "windows-go-packages-result/server.stdout.log": {
+    "sha256": "2dc0f96273081aebe1fa380ca59ab1f5f4a36852e81dab0aa9ad9a1e243c02a8",
+    "bytes": 6752
+  },
+  "windows-go-packages-result/stage_windows_go_packages.py": {
+    "sha256": "1e64f7d7084d954c363820e9fa182026a25c82d6bf40274a70eeded534bda2e4",
+    "bytes": 13428
+  },
+  "windows-go-packages-result/store.stderr.log": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "windows-go-packages-result/store.stdout.log": {
+    "sha256": "a1c8215ce8338a6d8bd437426d074f468bc42bc12add26a2581e3895ca779a55",
+    "bytes": 19188
+  },
+  "windows-go-packages-result/verified-windows-go-packages.json": {
+    "sha256": "3f770fdeea21482d1069a2fb40fc520b44f3bdffc29817cee67a0020f0768454",
+    "bytes": 189639
+  },
+  "windows-go-packages-result/verify_windows_go_packages.py": {
+    "sha256": "1cf50755cb0f0c202140a7bada267ed8d8a801fcdc180d0a7609d69f6800c7d9",
+    "bytes": 8412
+  },
+  "windows-go-packages-result/windows-go-packages-manifest.json": {
+    "sha256": "c28881de8c509f4dae6609e301218a0273fe2465884133806f045ad8334ea1eb",
+    "bytes": 5838
+  },
+  "windows-go-packages-result/windows-go-packages.json": {
+    "sha256": "a0278f15814e55d1f86926d5c4bea7ef629aea4ed005f8095efecf5edc72d922",
+    "bytes": 9418
+  },
+  "windows-go-packages-stage/binary-manifest.json": {
+    "sha256": "892ef428f0db71132d6ab42d55c73678e1f8977139fd4765c2b6ffd2acc6ebd7",
+    "bytes": 1835
+  },
+  "windows-go-packages-stage/go-final-source-snapshot.json": {
+    "sha256": "d694adbe1410f005d6285396f81a7126cdc7b9fb9f44b08a01f7f3c5e523330a",
+    "bytes": 27289
+  },
+  "windows-go-packages-stage/go-final-windows-package-tests.json": {
+    "sha256": "57441bd7550ab4e0056ce34b36579ca56222ee5e58588bce9a7552963c79a404",
+    "bytes": 9931
+  },
+  "windows-go-packages-stage/packages7.zip": {
+    "sha256": "83dfe5f095d8fb2dc449e303a146af5a5ce62a0d01729cc514aaf526d67d99f1",
+    "bytes": 71374136
+  },
+  "windows-go-packages-stage/run.ps.txt": {
+    "sha256": "432ad76e87cdc30f5a5d1970c144c9b135b6eb727cb0770e8fdd1fd3f9879fd5",
+    "bytes": 8332
+  },
+  "windows-go-packages-stage/source-manifest.json": {
+    "sha256": "d53020e8af7b46e3cb4dc86f3d25edc1eece27f463dde91b0f264908aa577d27",
+    "bytes": 26916
+  },
+  "windows-go-packages-stage/source163.zip": {
+    "sha256": "88c65e4717e896698ebeb612fb9b3963061baf5ba12e106001345ebf56611aae",
+    "bytes": 383910
+  },
+  "windows-go-packages-stage/stage-receipt.json": {
+    "sha256": "6df33960c0f019889995f69bcd327e5288e73c662cf59e98db81c91a55680f3f",
+    "bytes": 2476
+  },
+  "windows-go-packages-stage/vynic_print_helper.exe": {
+    "sha256": "b720e1eedc77ab574d769865e39f71506a5f3ebc9d93ab5166bc3f112203019d",
+    "bytes": 316416
+  },
+  "windows-native-arm64-result/built-artifact-hashes.json": {
+    "sha256": "267f781b55607751fb5f40fdc7f46345b062c43046c499a0853acf9f9f65c0b1",
+    "bytes": 1155
+  },
+  "windows-native-arm64-result/cached-inputs-after.json": {
+    "sha256": "914518ae50fa064d858c4daad381b9e62d1da13207d6adc7686ebd5f99a04fe0",
+    "bytes": 495190
+  },
+  "windows-native-arm64-result/cached-inputs-before.json": {
+    "sha256": "914518ae50fa064d858c4daad381b9e62d1da13207d6adc7686ebd5f99a04fe0",
+    "bytes": 495190
+  },
+  "windows-native-arm64-result/core-build.log": {
+    "sha256": "e8d8ee2dbbfb1f904f603d0438b0193006a104e9533b87760e5ff8175b27a5af",
+    "bytes": 1434
+  },
+  "windows-native-arm64-result/core-configure.log": {
+    "sha256": "4b13662fb1e1a67669df929e806661d4bed201ae9582eee0a6e3e0a743598245",
+    "bytes": 1322
+  },
+  "windows-native-arm64-result/core-fake-tests.log": {
+    "sha256": "817c196d50851658f26377fec90de24de22aeb7318c740a8b0e9084a0b0fea3c",
+    "bytes": 2966
+  },
+  "windows-native-arm64-result/go-transport-tests.log": {
+    "sha256": "90b79271510abcb285a7e641edcdd7b62326f2b961214137a2055e0c31a8acc9",
+    "bytes": 10282
+  },
+  "windows-native-arm64-result/helper-build.log": {
+    "sha256": "e17c301dad1617940e31e36451d831f63f37910fc27f143a4aeaf85faaa786e8",
+    "bytes": 3264
+  },
+  "windows-native-arm64-result/helper-configure.log": {
+    "sha256": "111f89295b0756d3c05a3b0a6762b3d9594b729abd36eb86fec5831eb70b01f6",
+    "bytes": 1326
+  },
+  "windows-native-arm64-result/helper-fake-tests.log": {
+    "sha256": "8d4a68b44a01bade14147c15ff86dbb5cbf902dba3f41d8bbcd5f48f345131a8",
+    "bytes": 3038
+  },
+  "windows-native-arm64-result/receipt.json": {
+    "sha256": "8ba96a718b5635b2b08d386856d43852934afbdae40870453e2923e4b8783fe3",
+    "bytes": 662
+  },
+  "windows-native-arm64-result/run-result.json": {
+    "sha256": "858b8981b4f80321c4a2c32456847756f3430ee706bc1379aea6a088ad3f3b51",
+    "bytes": 565
+  },
+  "windows-native-arm64-result/vynic_print_helper.exe": {
+    "sha256": "267f3ba86edae2bb0098fd55f1bf1c342d2761a699cf535afb4f4970709a8d94",
+    "bytes": 291328
+  },
+  "windows-native-arm64-result-v2-current-user/built-artifact-hashes.json": {
+    "sha256": "305691c572819a279370583758db23d415141e250f22201976aeeb9339c61484",
+    "bytes": 1155
+  },
+  "windows-native-arm64-result-v2-current-user/cached-inputs-after.json": {
+    "sha256": "914518ae50fa064d858c4daad381b9e62d1da13207d6adc7686ebd5f99a04fe0",
+    "bytes": 495190
+  },
+  "windows-native-arm64-result-v2-current-user/cached-inputs-before.json": {
+    "sha256": "914518ae50fa064d858c4daad381b9e62d1da13207d6adc7686ebd5f99a04fe0",
+    "bytes": 495190
+  },
+  "windows-native-arm64-result-v2-current-user/core-build.log": {
+    "sha256": "dd11199fa362d32059fbbb9c022c7bf38192665b20ce311477edd964509f8708",
+    "bytes": 1374
+  },
+  "windows-native-arm64-result-v2-current-user/core-configure.log": {
+    "sha256": "64f99801a9cd495360e757936d7cfd3c5e06922828ec2fa575a29752d266e137",
+    "bytes": 1302
+  },
+  "windows-native-arm64-result-v2-current-user/core-fake-tests.log": {
+    "sha256": "46add67653076fdb1afc5f7b752620bce27e71c89f7be96f37f6ae06f90044b3",
+    "bytes": 2846
+  },
+  "windows-native-arm64-result-v2-current-user/go-transport-tests.log": {
+    "sha256": "677e8fcadbf1087b87f772fa2d9b2bba6665dafc4d3c9e2dbd1fac2163e6b9a6",
+    "bytes": 10282
+  },
+  "windows-native-arm64-result-v2-current-user/helper-build.log": {
+    "sha256": "d89f00bca652de45842937696d9eec7488b119d8b79f26ec2c76a4d9c3c4f3f3",
+    "bytes": 3124
+  },
+  "windows-native-arm64-result-v2-current-user/helper-configure.log": {
+    "sha256": "463ac0e1f59b493cba75d315ab1f75a37c9e807adaeae5499905b94b82f0663a",
+    "bytes": 1306
+  },
+  "windows-native-arm64-result-v2-current-user/helper-fake-tests.log": {
+    "sha256": "bbc5ccbf4cdf32f904fa582d8f12cc91da37f298548512fd3bba14a7ca261501",
+    "bytes": 2918
+  },
+  "windows-native-arm64-result-v2-current-user/receipt.json": {
+    "sha256": "f633a222c4f7369ee4fdc34537cf0503c5eb8ad0ac4217d5aba7baf12d405a06",
+    "bytes": 838
+  },
+  "windows-native-arm64-result-v2-current-user/run-result.json": {
+    "sha256": "aa84fff7f4fa7b45f9c179f6732cb308319e0b4cb364e0d494bf6ef543d6612b",
+    "bytes": 754
+  },
+  "windows-native-arm64-result-v2-current-user/vynic_print_helper.exe": {
+    "sha256": "99869fe8761ee48f1c66d30359dc837327dd3cc054ba60a1d80089916a6981f5",
+    "bytes": 291328
+  },
+  "windows-native-arm64-stage/module-graph.txt": {
+    "sha256": "0183e7ef4147b0aad2a893b218b4e57acc3102a7d9dcfbc07037451a198bc095",
+    "bytes": 4838
+  },
+  "windows-native-arm64-stage/printtransport-windows-arm64.test.exe": {
+    "sha256": "5f83c5f8326a67a5e0ccb7eb7c6f7d1cb41fc163620a027ceba6457f7db30fab",
+    "bytes": 5548544
+  },
+  "windows-native-arm64-stage/qualify_native_arm64.ps.txt": {
+    "sha256": "1a85d34fc2817441c075a0aa0bf063fe33eb64f01b9cfc6180b3d73fb5d03b36",
+    "bytes": 9705
+  },
+  "windows-native-arm64-stage/source-manifest.json": {
+    "sha256": "f968938283c4bec391894a59d0f7f8c1632564317f2a38feee0cd23643c46430",
+    "bytes": 6879
+  },
+  "windows-native-arm64-stage/source.zip": {
+    "sha256": "236db386b539ff6e9efffe3477a7a738f8bacdea448b61d8b5fe3ca018951b70",
+    "bytes": 64180
+  },
+  "windows-native-arm64-stage/stage-manifest.json": {
+    "sha256": "527d487cd3ac960773395e15b7531f599ada3fa618e235c09b608df43489123f",
+    "bytes": 908
+  },
+  "windows-native-arm64-stage-v2-current-user/module-graph.txt": {
+    "sha256": "0183e7ef4147b0aad2a893b218b4e57acc3102a7d9dcfbc07037451a198bc095",
+    "bytes": 4838
+  },
+  "windows-native-arm64-stage-v2-current-user/printtransport-windows-arm64.test.exe": {
+    "sha256": "5f83c5f8326a67a5e0ccb7eb7c6f7d1cb41fc163620a027ceba6457f7db30fab",
+    "bytes": 5548544
+  },
+  "windows-native-arm64-stage-v2-current-user/qualify_native_arm64.ps.txt": {
+    "sha256": "6368b903d399b7d4106d785610b703a730d5abf9243b25445c847acd1f25a419",
+    "bytes": 10223
+  },
+  "windows-native-arm64-stage-v2-current-user/source-manifest.json": {
+    "sha256": "f968938283c4bec391894a59d0f7f8c1632564317f2a38feee0cd23643c46430",
+    "bytes": 6879
+  },
+  "windows-native-arm64-stage-v2-current-user/source.zip": {
+    "sha256": "236db386b539ff6e9efffe3477a7a738f8bacdea448b61d8b5fe3ca018951b70",
+    "bytes": 64180
+  },
+  "windows-native-arm64-stage-v2-current-user/stage-manifest.json": {
+    "sha256": "2ef041924068d01faab92c20902d0acc91f43852a5a29b573687e467e5d9d3f1",
+    "bytes": 987
+  },
+  "windows-pos-prepared-result/built-artifact-sha256.json": {
+    "sha256": "829e6f5adc2bd0384950d555e380bf7ae3fa002b5be84374411a2f08aa675d04",
+    "bytes": 2611
+  },
+  "windows-pos-prepared-result/firebase-sdk-sha256-after.json": {
+    "sha256": "8e68de1c1568c80a71e090073382b5d93b5d51a3fbfaf4e55fc406fad7b8c0a3",
+    "bytes": 22631
+  },
+  "windows-pos-prepared-result/firebase-sdk-sha256-before.json": {
+    "sha256": "8e68de1c1568c80a71e090073382b5d93b5d51a3fbfaf4e55fc406fad7b8c0a3",
+    "bytes": 22631
+  },
+  "windows-pos-prepared-result/native-pos-build.zip": {
+    "sha256": "17a16203fad6a4e2dfc4860dffc53e339acf921c955e216289e9cbf4429da30c",
+    "bytes": 19247087
+  },
+  "windows-pos-prepared-result/offline-pub-get.log": {
+    "sha256": "30229f9d0b6e8f121372205ec994858e2208d3f237440ee516b1058e6ad20a97",
+    "bytes": 3380
+  },
+  "windows-pos-prepared-result/windows-pos-build.json": {
+    "sha256": "0eb26c809168c57fd23dfa9772825240e6dc287b0dad14702c1c6e0ef3889681",
+    "bytes": 995
+  },
+  "windows-pos-prepared-result/windows-pos-build.log": {
+    "sha256": "03f61ce107e22146e8a0b4a2d3885096aa62e181f3766fa21ebc81e1b63ce57c",
+    "bytes": 266
+  },
+  "windows-pos-prepared-stage/build.ps.txt": {
+    "sha256": "86ca981f502aceb9f9873136ff801faa253b6e0434840a8646fe76b3e21ad939",
+    "bytes": 6495
+  },
+  "windows-pos-prepared-stage/product-preparation.json": {
+    "sha256": "85fcdc6164835517584a9705cc9957a073a1c742e3be2f80cd65fa6bbb6f92a0",
+    "bytes": 2672
+  },
+  "windows-pos-prepared-stage/source-manifest.json": {
+    "sha256": "5ecd47010ddba432a6a223c7768fde0098498c87cba40caf5358d3afb1d358f8",
+    "bytes": 159355
+  },
+  "windows-pos-prepared-stage/source.zip": {
+    "sha256": "9658d3ace23b36c9991298813a3ac23191e36d8c0c5b9006c58747f8fbd271a9",
+    "bytes": 5263098
+  },
+  "windows-pos-prepared-stage/stage-receipt.json": {
+    "sha256": "73020355e1c417247d840afea51096fccdd18f87c25a125197dbcb74e03b6fa5",
+    "bytes": 656
+  },
+  "windows-pos-result/firebase-sdk-sha256-after.json": {
+    "sha256": "8e68de1c1568c80a71e090073382b5d93b5d51a3fbfaf4e55fc406fad7b8c0a3",
+    "bytes": 22631
+  },
+  "windows-pos-result/firebase-sdk-sha256-before.json": {
+    "sha256": "8e68de1c1568c80a71e090073382b5d93b5d51a3fbfaf4e55fc406fad7b8c0a3",
+    "bytes": 22631
+  },
+  "windows-pos-result/offline-pub-get.log": {
+    "sha256": "30229f9d0b6e8f121372205ec994858e2208d3f237440ee516b1058e6ad20a97",
+    "bytes": 3380
+  },
+  "windows-pos-result/windows-pos-build.json": {
+    "sha256": "0315b4a0958483f79ab890ef4f2e87806def43b8b90e841372a66b28f42145f8",
+    "bytes": 1173
+  },
+  "windows-pos-result/windows-pos-build.log": {
+    "sha256": "3b5a40a9fa0d0987aabb3edd021dd732e9cb283942537a50bd589cc17ee266b7",
+    "bytes": 274
+  },
+  "windows-pos-stage/analysis-selection.json": {
+    "sha256": "7e4bb802736ed8199b9e83388347b6938f63e7eb820a6262828b8751cba71d5c",
+    "bytes": 3276
+  },
+  "windows-pos-stage/build.ps.txt": {
+    "sha256": "b702399e00651b959a602346cd695df4bca574adf266fa5a02dd30822883903e",
+    "bytes": 6469
+  },
+  "windows-pos-stage/source-manifest.json": {
+    "sha256": "ea31ff93e41fa2e3a0c3f2f4c8daf44827aaec425c57c83ab22267bc168b88fa",
+    "bytes": 159351
+  },
+  "windows-pos-stage/source.zip": {
+    "sha256": "d89ff1817d7a715cc32f2641a1afb59724973d12a76d7dc9f8b6fffaadf765ea",
+    "bytes": 5267727
+  },
+  "windows-pos-stage/stage-receipt.json": {
+    "sha256": "03e4b00cf52504dbbe6932d11309ba44f4c6f2c25b409077f582d28df944f398",
+    "bytes": 644
+  },
+  "windows-pos-stage/test-selection.json": {
+    "sha256": "44f3f571aeb5193358a5ed144ea0bab38b2e8abacf0b3023d3c682d4158a1afd",
+    "bytes": 1763
+  },
+  "windows-result/built-artifact-hashes.json": {
+    "sha256": "077579ccb54a478c190c911b77662d093ce88098b70c987f94a8850aa158fd25",
+    "bytes": 414
+  },
+  "windows-result/helper-build.log": {
+    "sha256": "fe4ed10f655c8c1375bc38fe19c7fe17cb3b6b80af0d1d2f9fd22c91a01e2c28",
+    "bytes": 8112
+  },
+  "windows-result/helper-configure.log": {
+    "sha256": "74300c9b067a24b4ffd258e0b54fd14e01dad59cf11dad9a91eb42165f68f030",
+    "bytes": 1262
+  },
+  "windows-result/run-result.json": {
+    "sha256": "80983b628b1909fc69e6b55552dc69503b2052855cfe8a0281458f30bb2ca0df",
+    "bytes": 564
+  },
+  "windows-result/vynic_print_helper.exe": {
+    "sha256": "2f6842c4a716c637ef7784922e61af6948ed167d74739cfa7fe244ae6fa21276",
+    "bytes": 316416
+  },
+  "windows-result-v2/built-artifact-hashes.json": {
+    "sha256": "f4fe6d6435da16c06c61b1bfe06380d748f0a248606d05f6f98a42e8db0179ec",
+    "bytes": 1412
+  },
+  "windows-result-v2/channel-build.log": {
+    "sha256": "2db37c7e45319cc20a0142ac09fa2fe980066eddf7e1d03ce39e3f45dd890b6f",
+    "bytes": 3058
+  },
+  "windows-result-v2/channel-configure.log": {
+    "sha256": "f567e5561198a477e182151a9558cb65058054b03fb038877d472a4fbd175e14",
+    "bytes": 1270
+  },
+  "windows-result-v2/channel-tests.log": {
+    "sha256": "be34fb2ad6bd217a376f70cd8ce74431f88d768cfc38f0a0e5d8b4c626eb2f0c",
+    "bytes": 3798
+  },
+  "windows-result-v2/go-transport-tests.log": {
+    "sha256": "0ca3f907c594baf5b18d13af43b0cebca0375ad1bc16ddc5d02387716d3ab4e0",
+    "bytes": 10282
+  },
+  "windows-result-v2/helper-build.log": {
+    "sha256": "7562043ccd943d5abfc3958ccc09d5c0709634a7480d59ae66f374767566164c",
+    "bytes": 2886
+  },
+  "windows-result-v2/helper-configure.log": {
+    "sha256": "45085bee94529c5b09b060b68a33d011f94a5c0892942e4077e49c9958b404ca",
+    "bytes": 1268
+  },
+  "windows-result-v2/helper-fake-tests.log": {
+    "sha256": "2ed08798a108a990bd61d1ecc39b0d43368ad936ef18f71c81427bb85da844ec",
+    "bytes": 2714
+  },
+  "windows-result-v2/receipt.json": {
+    "sha256": "b43d105938213f0de63025f5c94908d8cd6f2fba3d6b955ac04a4e18f2b726de",
+    "bytes": 526
+  },
+  "windows-result-v2/run-result.json": {
+    "sha256": "ed8041ad08c963a585b305ffaac0ed281d4bb5d6ea6fc24d7ae341790ee931f9",
+    "bytes": 536
+  },
+  "windows-result-v2/vynic_print_helper.exe": {
+    "sha256": "b720e1eedc77ab574d769865e39f71506a5f3ebc9d93ab5166bc3f112203019d",
+    "bytes": 316416
+  },
+  "windows-software-go-packages-result-v2/amd64-printer-agent-command.stderr.log": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "windows-software-go-packages-result-v2/amd64-printer-agent-command.stdout.log": {
+    "sha256": "9df2e56041ed720bcf65cb118c03c59e9d4308e6cf7b468271cab762a5dfb0e0",
+    "bytes": 1829
+  },
+  "windows-software-go-packages-result-v2/amd64-printeragent.stderr.log": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "windows-software-go-packages-result-v2/amd64-printeragent.stdout.log": {
+    "sha256": "22d623b85629b212b42e77d3e24e4c3a0a81a4e4cacb3a793e6e166bfe47d09d",
+    "bytes": 6099
+  },
+  "windows-software-go-packages-result-v2/amd64-printerdaemon.stderr.log": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "windows-software-go-packages-result-v2/amd64-printerdaemon.stdout.log": {
+    "sha256": "a61c497461fb402aa92142b520a1016c6811f488e893e07155782a8292ff365f",
+    "bytes": 16020
+  },
+  "windows-software-go-packages-result-v2/amd64-printerprovisioning.stderr.log": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "windows-software-go-packages-result-v2/amd64-printerprovisioning.stdout.log": {
+    "sha256": "82f467e9e80649e2c148c7402b0c14ee40361d4360055ba584410d0b6da45127",
+    "bytes": 18107
+  },
+  "windows-software-go-packages-result-v2/arm64-printer-agent-command.stderr.log": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "windows-software-go-packages-result-v2/arm64-printer-agent-command.stdout.log": {
+    "sha256": "8a532adfae0cfe2b158d33e658b117a665969753d8233460d9669b38ad2f990c",
+    "bytes": 1829
+  },
+  "windows-software-go-packages-result-v2/arm64-printeragent.stderr.log": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "windows-software-go-packages-result-v2/arm64-printeragent.stdout.log": {
+    "sha256": "f1ad5e89b405cb6916f42dc476a04dc0c5e428c8d686dc9c4b8ecf30f3d15052",
+    "bytes": 6099
+  },
+  "windows-software-go-packages-result-v2/arm64-printerdaemon.stderr.log": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "windows-software-go-packages-result-v2/arm64-printerdaemon.stdout.log": {
+    "sha256": "49cd26559a0e0b6a4aae9313a6c57d7fc123c4b5fe259cb045cc2049954e8efc",
+    "bytes": 16020
+  },
+  "windows-software-go-packages-result-v2/arm64-printerprovisioning.stderr.log": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "windows-software-go-packages-result-v2/arm64-printerprovisioning.stdout.log": {
+    "sha256": "88e4bb10c67f18642f4621fabc499d3e25f39a52cda9b2074c80d6eb195e65c6",
+    "bytes": 18107
+  },
+  "windows-software-go-packages-result-v2/artifact-sha256.json": {
+    "sha256": "96c9404f3f5af428e23d7a49e9e9dd81221a619a90a13b66b87b68a29d2aea3a",
+    "bytes": 2803
+  },
+  "windows-software-go-packages-result-v2/verified-windows-software-go-packages.json": {
+    "sha256": "60a07b83aa83d4e60cda75c6035715b8d1eb7dae4ef6225dfe1c242b182f06ae",
+    "bytes": 139134
+  },
+  "windows-software-go-packages-result-v2/windows-software-go-packages.json": {
+    "sha256": "f08745536b0304271af665d544e7ac42a6cfeb3044655cf10ff4f6dc9a5be957",
+    "bytes": 15623
+  },
+  "windows-software-go-packages-stage-v2/agent-build-inputs.json": {
+    "sha256": "8265133677ed972e72c0e666e28002577b1b747ae7caa770acae787dfdface40",
+    "bytes": 923669
+  },
+  "windows-software-go-packages-stage-v2/amd64-packaged-bundle.zip": {
+    "sha256": "2ab73664bc483b7dde22ac995e6f7c25725d10cdd3fef44118636f03008340dc",
+    "bytes": 13379523
+  },
+  "windows-software-go-packages-stage-v2/amd64-packages-cli.zip": {
+    "sha256": "e967fd7210300c16c98e45d1392a2d823f1e3a55347a54cc3c8fdda74b261000",
+    "bytes": 67394446
+  },
+  "windows-software-go-packages-stage-v2/arm64-packaged-bundle.zip": {
+    "sha256": "eeab03452dd87bd378397d70f94799d37b0d3f22dcca97f362b0016fcf495f00",
+    "bytes": 12382935
+  },
+  "windows-software-go-packages-stage-v2/arm64-packages-cli.zip": {
+    "sha256": "e9be28386f0c7676be01c106dc3fa646a278c2ba1db7cf69e6d2e9d6e61a1cf4",
+    "bytes": 62485269
+  },
+  "windows-software-go-packages-stage-v2/binary-manifest.json": {
+    "sha256": "1d26e2cce3a135c1569db72d0c11416f72d65140812f0d7181f4d8ea2fd54aae",
+    "bytes": 2654
+  },
+  "windows-software-go-packages-stage-v2/compiler-receipt.json": {
+    "sha256": "8bfc2090a539154f579e7d5199e4e4aa1f720d9c330fdc90f7ce67461e0fa1e6",
+    "bytes": 23755
+  },
+  "windows-software-go-packages-stage-v2/compiler-stage-receipt.json": {
+    "sha256": "deb1832d9d580f807e74ce1ecac57813c17c981d27151a9692aff154f02f3d01",
+    "bytes": 2192
+  },
+  "windows-software-go-packages-stage-v2/final-cohort-source.json": {
+    "sha256": "faaaec2f1ece4f8259353666000eb4c0d3aee6143e73ae7fdf90772a937b581b",
+    "bytes": 208681
+  },
+  "windows-software-go-packages-stage-v2/packaged-bundle-manifest.json": {
+    "sha256": "5d2eae46eda33862d7b071e0f739a6b0584745991f9295346c68b3066e4f33c2",
+    "bytes": 2481
+  },
+  "windows-software-go-packages-stage-v2/preflight-retry-receipt.json": {
+    "sha256": "351bae1ab6f72632abe0d09849db453362bcc5c83f66e35ed6507b53f540f10e",
+    "bytes": 3663
+  },
+  "windows-software-go-packages-stage-v2/printer-daemon-owned-source-manifest.json": {
+    "sha256": "551a32eb428ca46726640a2c2f89701762a2460214a7eb1b682df9e4eea6f18e",
+    "bytes": 4328
+  },
+  "windows-software-go-packages-stage-v2/run.ps1": {
+    "sha256": "ba879f52f65dcd335dfadd3af360b4175b819c91a9bae10e30100f5133260bcc",
+    "bytes": 10683
+  },
+  "windows-software-go-packages-stage-v2/source-ancestry.json": {
+    "sha256": "a889860825b8c854170bdf37920db88c60f1dcc335f1739dfd66966300429c9a",
+    "bytes": 872
+  },
+  "windows-software-go-packages-stage-v2/source-manifest.json": {
+    "sha256": "00781c667fe9b8f4e4d4ff33b124e6b32002ccc7861329b476a7e6619bfad7ab",
+    "bytes": 202028
+  },
+  "windows-software-go-packages-stage-v2/source1109.zip": {
+    "sha256": "e0f5752abcd96e0fe6ddf93ad19a6f00d146134ff68096da27cc0a1ee96d20f2",
+    "bytes": 5780933
+  },
+  "windows-software-go-packages-stage-v2/stage-receipt.json": {
+    "sha256": "6004c62c195e96b4ba9f54e065b9c1e887924054c0168ca7e2c49b854ba2b4f4",
+    "bytes": 4447
+  },
+  "windows-stage/print-helper-sdk-sha256.json": {
+    "sha256": "774b989ac815f9029a02e01c309b20153d6a850d8d03d34e09cbf687ed6b673a",
+    "bytes": 4492
+  },
+  "windows-stage/printtransport-packet.json": {
+    "sha256": "af05d57a6c44d73744f1631e3e8566ebcb8b9373dc2b2eda407d24e4c039132c",
+    "bytes": 1158
+  },
+  "windows-stage/printtransport-source-manifest.json": {
+    "sha256": "237deec3436b5cfa9983cc53ab4b52b4e9c2dcce0a9ca592efb8b26938160bda",
+    "bytes": 6871
+  },
+  "windows-stage/printtransport-windows.test.exe": {
+    "sha256": "5ea12d153ce2ed408d0661595bd3c3afa41d7c969d81c1b87bdd956897f7d125",
+    "bytes": 5940224
+  },
+  "windows-stage/run.ps.txt": {
+    "sha256": "a4ece1cd7913a84e51a1fe657d325662a1b81e7e7afbd56bbf21a255fbdae7fd",
+    "bytes": 3813
+  },
+  "windows-stage/source.zip": {
+    "sha256": "de3a827b1ec45556a027af1359dec780e917a63ec3977f42bcfe979d80889b6e",
+    "bytes": 64031
+  },
+  "windows-stage/stage-receipt.json": {
+    "sha256": "af253cbb14b91904a835a76c42a8093b5c70e80e8dd7f659554809678d903d0b",
+    "bytes": 1028
+  },
+  "windows-stage-v2/print-helper-sdk-sha256.json": {
+    "sha256": "774b989ac815f9029a02e01c309b20153d6a850d8d03d34e09cbf687ed6b673a",
+    "bytes": 4492
+  },
+  "windows-stage-v2/printtransport-packet.json": {
+    "sha256": "1809e72286d069abc9edf69209d47a23e99f8c81be390d498344c466adb8e833",
+    "bytes": 1386
+  },
+  "windows-stage-v2/printtransport-source-manifest.json": {
+    "sha256": "638458ddc270fa3638c52f2a7bc491e6327bebbf2a46caba9fb451f64bae680f",
+    "bytes": 7137
+  },
+  "windows-stage-v2/printtransport-windows.test.exe": {
+    "sha256": "5ea12d153ce2ed408d0661595bd3c3afa41d7c969d81c1b87bdd956897f7d125",
+    "bytes": 5940224
+  },
+  "windows-stage-v2/run.ps.txt": {
+    "sha256": "1889266deb2071283cc09976e3df55eb8ed2fa675c9b3ae0d07a3b51387951af",
+    "bytes": 3863
+  },
+  "windows-stage-v2/source.zip": {
+    "sha256": "1f318eab633481898c1c88f43dfbcda432ffdf7c3ec56ded69c4359195b8377f",
+    "bytes": 64181
+  },
+  "windows-stage-v2/stage-receipt.json": {
+    "sha256": "a4528ee3615d48f60fb49859fbb090291567efef78a9c42fa4be8fbb663583e7",
+    "bytes": 1028
+  }
+}

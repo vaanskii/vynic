@@ -1,0 +1,146 @@
+{
+  "task": "UX-01 active Homepage false-success fix",
+  "status": "DONE at source/UI boundary",
+  "qualifiedAtUtc": "2026-10-13T14:13:31.423212+00:00",
+  "head": "3463ee406184fec7f53818416e11d0e5f5602c87",
+  "workingTree": "pre-existing changes preserved; no commit/push",
+  "sourceCount": 683,
+  "sourceManifest": "qualified-sources.json",
+  "sourceHashesVerifiedAtProof": true,
+  "checks": [
+    {
+      "name": "ux01-persistence",
+      "exitCode": 0,
+      "passed": 7,
+      "failed": 0,
+      "skipped": 0
+    },
+    {
+      "name": "commercial-regression",
+      "exitCode": 0,
+      "passed": 16,
+      "failed": 0,
+      "skipped": 0
+    },
+    {
+      "name": "backend-aggregate",
+      "exitCode": 0,
+      "passed": 851,
+      "failed": 0,
+      "skipped": 808
+    },
+    {
+      "name": "backend-typecheck",
+      "exitCode": 0
+    },
+    {
+      "name": "backend-build",
+      "exitCode": 0
+    },
+    {
+      "name": "backend-new-lint",
+      "exitCode": 0
+    },
+    {
+      "name": "frontend-aggregate",
+      "exitCode": 0,
+      "passed": 186,
+      "failed": 0,
+      "skipped": 0
+    },
+    {
+      "name": "frontend-build",
+      "exitCode": 0
+    },
+    {
+      "name": "frontend-changed-lint",
+      "exitCode": 0
+    },
+    {
+      "name": "contracts",
+      "exitCode": 0
+    }
+  ],
+  "distinctBackendPassed": 874,
+  "frontendPassed": 186,
+  "newFrontendCases": 10,
+  "newPersistenceCases": 7,
+  "commercialRegressionCases": 16,
+  "aggregateOptInSkipped": 808,
+  "optInCasesRunSeparately": 23,
+  "remainingOptInNotRun": 785,
+  "scope": {
+    "existingRequestClientServiceFixtureUnchanged": [
+      "apps/platform-web/src/customer/AccessRequest.tsx",
+      "apps/backend/src/customer/onboarding-requests.ts",
+      "apps/backend/test/onboarding-app.fixture.ts"
+    ],
+    "footerByteIdentical": true,
+    "onlyNewBackendTypeChanged": "unknown -> Record<string, unknown> in test-only submit argument; erased at runtime",
+    "baselineBrowserFalseSuccess": true,
+    "baselineAPISubmissions": 0,
+    "browserSyntheticAcceptedRecords": 1
+  },
+  "browserQA": {
+    "breakpoints": [
+      {
+        "viewport": 375,
+        "pageWidth": 375,
+        "ctaHeight": 44,
+        "ctaHref": "/request-access",
+        "navigationVerified": true
+      },
+      {
+        "viewport": 768,
+        "pageWidth": 768,
+        "ctaHref": "/request-access"
+      },
+      {
+        "viewport": 1440,
+        "pageWidth": 1440,
+        "ctaHref": "/request-access"
+      }
+    ],
+    "keyboardNavigationVerified": true,
+    "syntheticErrorNoSuccess": true,
+    "syntheticRetrySuccess": true,
+    "externalSubmissions": 0
+  },
+  "cleanup": {
+    "ownedPostgresStopped": true,
+    "postmasterPidAbsent": true,
+    "ownedPreviewProcessesStopped": true,
+    "browserTabClosed": true,
+    "browserViewportReset": true,
+    "liveServicesTouched": false
+  },
+  "typeOnlyFollowup": {
+    "testFile": "apps/backend/src/customer/ux01-access-request.integration.spec.ts",
+    "emittedJsByteIdentical": true,
+    "emittedJsSha256": "119cc447ddc2990a62e71235eac68bd432f858d8bcae5f4b9cf4b854c4fc1b61"
+  },
+  "lint": "all changed implementation/new tests clean",
+  "diffCheck": "PASS",
+  "limitations": [
+    "No deployment or production application/notification",
+    "Browser API is an owned loopback fixture; PostgreSQL HTTP persistence is qualified separately",
+    "Existing request page remains Georgian after English Homepage entry",
+    "785 opt-in backend cases not executed in this UX qualification",
+    "Source-only type correction emits byte-identical tested JavaScript; final tsc/lint pass"
+  ],
+  "next": "WEB-01/04 five rules approved; INV01 F2 remains pending",
+  "artifactsSha256": {
+    "checks.json": "c3318eae7b3ad9ce2019e64f185223fb42905c57145f4949d2d638a85b7e63c0",
+    "qualified-sources.json": "05b98d7186986a800867512421e0fe6464024f069eeb58627bb16728e2c821d1",
+    "scope-proof.json": "3f277ff82fed0b8efc82247014dda8f68ebe0657636de32355c5cbf3093350fd",
+    "type-erasure-proof.json": "c99a9a01376401e2635b4620a462990f2930fb86ebab14c257151c79e3450221",
+    "browser-checks.json": "b1d2c73f93babf1f5b234c866343d3a4363b9a29d2486a382ef16e1a29ae7d2c",
+    "cleanup.json": "c1c1fa468971f9f8dae57e773522d253bca1a6096c65f638a8301799a75c1ab5",
+    "baseline-false-success.jpg": "3a1db1184de033048772dc493e8544813f2514f1c26b4c5efb69460de5794727",
+    "home-contact-1440.jpg": "27192d7e81a4612e7d176cd400220d066e5b89352c838c063eb10743809c77f9",
+    "home-contact-375-card.jpg": "2e350c823b319ebe1dc494807a6e2a14243e4a53e423302d100a8d27c8abd8c9",
+    "home-contact-768-en.jpg": "f9f7d943df271d5a13b960d4bd69be8ea82fdd4bb73f06c214d55ea260fc4e4c",
+    "application-error.jpg": "15fb72b0358b61190a926b3dcdd8ba2d955a7071496fccbea82c31872fb44ac1",
+    "application-success.jpg": "963fdec6426b8e14693d8bafd7956eb9f111bc67308c50456e49e3116e1b5b9e"
+  }
+}

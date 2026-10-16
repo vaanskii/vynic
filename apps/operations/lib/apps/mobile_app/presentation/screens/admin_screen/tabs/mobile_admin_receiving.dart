@@ -1887,6 +1887,15 @@ class _StockItemDetailDialogState extends State<StockItemDetailDialog> {
           ),
         if (detail.inventoryValue != null)
           Text('მარაგის ღირებულება: ${detail.inventoryValue} ₾'),
+        Text(
+          'მიმდინარე მარაგის მოძრავი საშუალო. ჩამოწერების ღირებულება სერვერზე მიღებისას იყინება; დახურვის მომენტის ისტორიული თვითღირებულება არ არის.',
+          style: TextStyle(color: AdminTheme.textMuted, fontSize: 12),
+        ),
+        if (detail.includesReconstructedHistory)
+          Text(
+            'შეიცავს ისტორიიდან აღდგენილ შეფასებებს.',
+            style: TextStyle(color: AdminTheme.warn),
+          ),
         for (final row in detail.purchaseHistory)
           ListTile(
             contentPadding: EdgeInsets.zero,
@@ -1985,7 +1994,7 @@ class _StockItemDetailDialogState extends State<StockItemDetailDialog> {
         ],
         const Divider(height: 24),
         Text(
-          'ბოლო მოძრაობები',
+          'ბოლო 20 მოძრაობის ამონარიდი',
           style: TextStyle(
             color: AdminTheme.textMuted,
             fontSize: 12,
@@ -1993,6 +2002,18 @@ class _StockItemDetailDialogState extends State<StockItemDetailDialog> {
           ),
         ),
         const SizedBox(height: 8),
+        TextButton.icon(
+          icon: const Icon(Icons.history),
+          label: const Text('სრული მოძრაობების ისტორია'),
+          onPressed: () => Navigator.of(context).push(
+            MaterialPageRoute<void>(
+              builder: (_) => StockMovementHistoryScreen(
+                stockItemId: item.id,
+                name: item.name,
+              ),
+            ),
+          ),
+        ),
         if (detail.recentMovements.isEmpty)
           Text(
             'მოძრაობები ჯერ არ არის',
@@ -2034,6 +2055,7 @@ class _StockItemDetailDialogState extends State<StockItemDetailDialog> {
                             fontSize: 11,
                           ),
                         ),
+                        InventoryMovementValue(movement: movement),
                       ],
                     ),
                   ),

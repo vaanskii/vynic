@@ -1,0 +1,12 @@
+﻿[
+    {
+        "path":  "helper\\CMakeFiles\\3.31.6-msvc6\\CompilerIdCXX\\CompilerIdCXX.exe",
+        "bytes":  15360,
+        "sha256":  "e10c18e7eed36099d0c34bf3166d358c6ece28de2a3d1998a332f0e83357dc7c"
+    },
+    {
+        "path":  "helper\\Release\\vynic_print_helper.exe",
+        "bytes":  316416,
+        "sha256":  "2f6842c4a716c637ef7784922e61af6948ed167d74739cfa7fe244ae6fa21276"
+    }
+]

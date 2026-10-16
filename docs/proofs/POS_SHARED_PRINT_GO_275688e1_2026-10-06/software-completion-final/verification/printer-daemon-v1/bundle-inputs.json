@@ -1,0 +1,26 @@
+[
+  {
+    "architecture": "amd64",
+    "descriptor": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/artifacts/bundle-descriptor-amd64.json",
+    "agentSha256": "a5ef474a67d62326436c48e073731b59062cc104545032574af671dc70b882cc",
+    "helperPath": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/artifacts/helpers/amd64/vynic_print_helper.exe",
+    "helperSha256": "b720e1eedc77ab574d769865e39f71506a5f3ebc9d93ab5166bc3f112203019d",
+    "helperBytes": 316416,
+    "sourceHelper": "/Users/vaanskii/Developer/vynic/docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/windows-result-v2/vynic_print_helper.exe",
+    "status": "BUNDLE_DESCRIPTOR_ONLY_NOT_RUNNABLE_CONFIG",
+    "physicalEligible": false,
+    "selectedServicePrincipalQualification": "PENDING"
+  },
+  {
+    "architecture": "arm64",
+    "descriptor": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/artifacts/bundle-descriptor-arm64.json",
+    "agentSha256": "dbdd278544ba542a9161a9bb4fbe411b31a410789af0a0bb583d4a00a78bbf71",
+    "helperPath": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/artifacts/helpers/arm64/vynic_print_helper.exe",
+    "helperSha256": "99869fe8761ee48f1c66d30359dc837327dd3cc054ba60a1d80089916a6981f5",
+    "helperBytes": 291328,
+    "sourceHelper": "/Users/vaanskii/Developer/vynic/docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/windows-native-arm64-result-v2-current-user/vynic_print_helper.exe",
+    "status": "BUNDLE_DESCRIPTOR_ONLY_NOT_RUNNABLE_CONFIG",
+    "physicalEligible": false,
+    "selectedServicePrincipalQualification": "PENDING"
+  }
+]

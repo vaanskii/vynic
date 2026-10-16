@@ -1,0 +1,101 @@
+{
+  "status": "PASS_CURRENT_SOURCE_AND_ISOLATED_TESTS_NOT_DEPLOYED",
+  "qualifiedAtUtc": "2026-10-14T22:18:36.585684+00:00",
+  "head": "3463ee406184fec7f53818416e11d0e5f5602c87",
+  "uncommitted": true,
+  "scope": {
+    "platformAdminRegistersAndRenamesSaasAndCustomVynicSubdomainsAndExternalDomains": true,
+    "ownerChangesAndRequests": "DENIED_SUPPORT_REQUIRED",
+    "crossVenueAndConcurrentChangeProtection": true,
+    "domainAndAuditAtomicity": true,
+    "dnsTlsAndCustomFrontendRoute": "SEPARATE_DEPLOYMENT_WORK"
+  },
+  "tests": {
+    "backendFocused": {
+      "passed": 30,
+      "failed": 0,
+      "skipped": 0
+    },
+    "webFocused": {
+      "passed": 16,
+      "failed": 0,
+      "skipped": 0
+    },
+    "domainHttpPostgres": {
+      "check": "real HTTP/PostgreSQL admin domains",
+      "passed": 20,
+      "failed": 0,
+      "skipped": 0
+    },
+    "backendAggregate": {
+      "check": "backend-aggregate-final",
+      "passed": 906,
+      "failed": 0,
+      "skipped": 895,
+      "suitesPassed": 74
+    },
+    "webAggregate": {
+      "check": "web-aggregate",
+      "exitCode": 0,
+      "passed": 256,
+      "failed": 0,
+      "skipped": 0,
+      "suitesPassed": 78
+    },
+    "overlap": {
+      "backendFocusedIncludedInAggregate": true,
+      "webFocusedIncludedInAggregate": true,
+      "domainHttpPostgresAdditionalPassed": 20,
+      "distinctBackendPassed": 926
+    }
+  },
+  "checks": {
+    "backendBuild": "PASS",
+    "webTypecheckAndBuild": "PASS",
+    "gitDiffCheck": "PASS",
+    "domainImplementationUnchangedDuringVerification": true
+  },
+  "initialAggregateAttempt": {
+    "passed": 850,
+    "failed": 56,
+    "skipped": 895,
+    "causes": [
+      "MENU09 acceptance requires an explicitly configured owned disposable database (17 cases).",
+      "Sandbox disallowed localhost HTTP listeners for auth/upload/runtime test fixtures (39 cases)."
+    ],
+    "resolution": "Rerun with localhost permission and a newly created disposable MENU09 database; all 906 cases pass."
+  },
+  "sourceSha256": {
+    "apps/backend/src/platform/platform-domain-hostname.ts": "3c65ea4ea427e5f5f0f3ea1d5a262bbc16e0315d8aeb62c411f626445b734a68",
+    "apps/backend/src/platform/platform-venue-config.service.ts": "857a0f369f12d876d95fa3883a697a4099965a71c7b97187450da0cc04435f95",
+    "apps/backend/src/platform/platform-venues.controller.ts": "ded3711eccd73f1656768ad77ab09adc4506979eafd291555776260fe381593d",
+    "apps/backend/src/customer/customer-website.controller.ts": "8532ddaaf8b0e0ea6dd54aee6ac2cfa2e399174c15e70ecaf1da81261f69519b",
+    "apps/backend/src/website/core/hostname-requests.ts": "1adb707095ffdc9e4080344ec7c85522520e55159679a4aad70378e40b59b6d6",
+    "apps/backend/src/website/core/website-core.service.ts": "727f7d78012f042dfdaeb84cf14b737e2575ed6cdfeebd03bcaad768a5a709e1",
+    "apps/platform-web/src/customer/HostnameRequest.tsx": "f5b3caf60afe7f752e80985d0eebd7ecfa498d715df120bfe87323e3000299fb",
+    "apps/platform-web/src/platform/pages/venue/VenueWebsiteTab.tsx": "3a9776a00a8ee35b97f4e55fdc689c0a9dc72abb49cd35bf72650ea1cdb5eb52",
+    "docs/WEBSITE_SAAS_HOSTNAMES.md": "0a8594b225e333341e0ba2e0ad4691f12c2cfdc2f27d79afc1a9bc081ec2080b"
+  },
+  "boundaries": {
+    "implementationEditedThisVerification": false,
+    "existingChangesPreserved": true,
+    "liveDataChanged": false,
+    "liveServicesRestarted": false,
+    "environmentFilesEdited": false,
+    "credentialsChanged": false,
+    "schemaOrMigrationsEdited": false,
+    "deployed": false,
+    "committed": false,
+    "pushed": false
+  },
+  "cleanup": {
+    "domainCluster": "STOPPED",
+    "aggregateCluster": "STOPPED"
+  },
+  "limitations": [
+    "895 opt-in backend cases remain skipped; the domain suite is run separately with 20 passes.",
+    "UI tests use jsdom; no real-browser visual QA was run.",
+    "Current checkout dependencies were used; this is not installed Docker image or production rollout qualification."
+  ],
+  "privateLogs": "/var/folders/82/drcfb4994p16rl49gxx9tj000000gn/T/vynic-domains-verify-n93ps5qe"
+}

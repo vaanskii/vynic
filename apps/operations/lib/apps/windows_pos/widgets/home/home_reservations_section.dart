@@ -1,8 +1,7 @@
+import 'package:vynic/core/ui/widgets/pos_dialog.dart';
 import 'package:vynic/core/widgets/pos_text.dart';
 import 'dart:async';
-import 'dart:io';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import 'package:vynic/apps/windows_pos/widgets/shared/pos_surface.dart';
@@ -40,6 +39,7 @@ class HomeReservationsSection extends StatefulWidget {
     this.onManagePreOrder,
     this.onSendKitchenCheck,
     this.onAssignTable,
+    this.onConfirmHold,
   });
 
   final User user;
@@ -55,6 +55,7 @@ class HomeReservationsSection extends StatefulWidget {
   final ReservationAction? onManagePreOrder;
   final ReservationAction? onSendKitchenCheck;
   final ReservationAction? onAssignTable;
+  final ReservationAction? onConfirmHold;
 
   @override
   State<HomeReservationsSection> createState() =>
@@ -111,134 +112,70 @@ class _HomeReservationsSectionState extends State<HomeReservationsSection> {
       );
     }
 
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final platformMobile =
-            !kIsWeb && (Platform.isAndroid || Platform.isIOS);
-        // Only a genuine phone/tablet gets the single-pane layout. Desktop
-        // windows are never laid out below PosScaledSurface.designSize, so
-        // the three-column layout always has the room it needs and never has
-        // to fold anything away.
-        final isCompact = platformMobile;
-
-        if (isCompact) {
-          // Two panes, one at a time, each filling the height. Stacking them
-          // in a scroll pushed the detail below the fold, so tapping a
-          // booking appeared to do nothing.
-          return Padding(
-            padding: const EdgeInsets.fromLTRB(12, 14, 12, 14),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                _buildHeader(compact: true),
-                const SizedBox(height: 12),
-                _buildMetricGrid(
-                  total: ordered.length,
-                  todayCount: todayCount,
-                  guestCount: guestCount,
-                  preOrderValue: preOrderValue,
-                  compact: true,
-                ),
-                const SizedBox(height: 12),
-                if (ordered.isEmpty)
-                  Expanded(child: _buildEmptyState())
-                else ...[
-                  PosPaneSwitch(
-                    labels: const ['სია', 'დეტალები'],
-                    selectedIndex: _narrowPane,
-                    onSelected: (index) => setState(() => _narrowPane = index),
-                  ),
-                  const SizedBox(height: 12),
-                  Expanded(
-                    child: _narrowPane == 0
-                        ? _buildQueuePanel(
-                            reservations: ordered,
-                            selected: selected,
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 16, 12, 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _buildHeader(compact: false),
+          const SizedBox(height: 8),
+          _buildMetricGrid(
+            total: ordered.length,
+            todayCount: todayCount,
+            guestCount: guestCount,
+            preOrderValue: preOrderValue,
+            compact: false,
+          ),
+          const SizedBox(height: 12),
+          Expanded(
+            child: ordered.isEmpty
+                ? _buildEmptyState()
+                : PosWorkspace(
+                    paneLabels: const ['სია', 'დეტალები'],
+                    selectedPane: _narrowPane,
+                    onPaneSelected: (value) =>
+                        setState(() => _narrowPane = value),
+                    master: _buildQueuePanel(
+                      reservations: ordered,
+                      selected: selected,
+                      compact: false,
+                    ),
+                    detail: LayoutBuilder(
+                      builder: (context, constraints) {
+                        final compact = constraints.maxWidth < 680;
+                        if (compact)
+                          return _buildDetailPanel(
+                            reservation: selected,
                             compact: true,
-                          )
-                        : Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              Expanded(
-                                child: _buildDetailPanel(
-                                  reservation: selected,
-                                  compact: true,
-                                  footerActions: false,
+                          );
+                        return Row(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            Expanded(
+                              child: _buildDetailPanel(
+                                reservation: selected,
+                                compact: true,
+                                footerActions: false,
+                              ),
+                            ),
+                            if (selected != null) ...[
+                              const VerticalDivider(width: 1, color: _outline),
+                              SizedBox(
+                                width: 250,
+                                child: Padding(
+                                  padding: const EdgeInsets.all(14),
+                                  child: _buildActionRail(selected),
                                 ),
                               ),
-                              if (selected != null) ...[
-                                const SizedBox(height: 12),
-                                _buildActionRail(selected),
-                              ],
                             ],
-                          ),
-                  ),
-                ],
-              ],
-            ),
-          );
-        }
-
-        return Padding(
-          padding: const EdgeInsets.fromLTRB(18, 18, 18, 18),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildHeader(compact: false),
-              const SizedBox(height: 16),
-              _buildMetricGrid(
-                total: ordered.length,
-                todayCount: todayCount,
-                guestCount: guestCount,
-                preOrderValue: preOrderValue,
-                compact: false,
-              ),
-              const SizedBox(height: 16),
-              Expanded(
-                child: ordered.isEmpty
-                    ? _buildEmptyState()
-                    : Row(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          SizedBox(
-                            // The rail takes a column of its own, so the
-                            // queue gives up its wider setting to pay for it.
-                            width: constraints.maxWidth < 1400 ? 330 : 380,
-                            child: _buildQueuePanel(
-                              reservations: ordered,
-                              selected: selected,
-                              compact: false,
-                            ),
-                          ),
-                          const SizedBox(width: 14),
-                          Expanded(
-                            child: _buildDetailPanel(
-                              reservation: selected,
-                              compact: false,
-                              footerActions: false,
-                            ),
-                          ),
-                          // What you can do with the selected booking gets its
-                          // own rail, the way it does on an order. As a footer
-                          // Wrap the same eight buttons reflowed into two or
-                          // three ragged rows and their order changed with the
-                          // window width, so nothing sat where you last left
-                          // it. Below 1180 there is no room for a third
-                          // column, so the footer comes back.
-                          if (selected != null) ...[
-                            const SizedBox(width: 14),
-                            SizedBox(
-                              width: 250,
-                              child: _buildActionRail(selected),
-                            ),
                           ],
-                        ],
-                      ),
-              ),
-            ],
+                        );
+                      },
+                    ),
+                  ),
           ),
-        );
-      },
+        ],
+      ),
     );
   }
 
@@ -247,7 +184,7 @@ class _HomeReservationsSectionState extends State<HomeReservationsSection> {
   Widget _buildHeader({required bool compact}) {
     return const PosPageHeading(
       title: 'რეზერვაციები',
-      subtitle: 'დაჯავშნული სუფრების მართვა და წინასწარი შეკვეთები.',
+      subtitle: 'ჯავშნები და წინასწარი შეკვეთები',
     );
   }
 
@@ -337,7 +274,11 @@ class _HomeReservationsSectionState extends State<HomeReservationsSection> {
   }
 
   Widget _buildMetricCard(_ResMetric metric, {required bool compact}) {
-    return PosMetricCard(label: metric.label, value: metric.value);
+    return PosMetricCard(
+      label: metric.label,
+      value: metric.value,
+      framed: false,
+    );
   }
 
   Widget _buildQueuePanel({
@@ -346,11 +287,7 @@ class _HomeReservationsSectionState extends State<HomeReservationsSection> {
     required bool compact,
   }) {
     return Container(
-      decoration: BoxDecoration(
-        color: _surface,
-        borderRadius: BorderRadius.circular(VynicFloorTokens.panelRadius),
-        border: Border.all(color: _outline),
-      ),
+      color: _surface,
       child: Column(
         children: [
           Padding(
@@ -378,9 +315,10 @@ class _HomeReservationsSectionState extends State<HomeReservationsSection> {
           // height-bounded pane it overflowed.
           Expanded(
             child: ListView.separated(
-              padding: const EdgeInsets.all(12),
+              padding: EdgeInsets.zero,
               itemCount: reservations.length,
-              separatorBuilder: (context, index) => const SizedBox(height: 8),
+              separatorBuilder: (context, index) =>
+                  const Divider(height: 1, color: _outline),
               itemBuilder: (context, index) {
                 final r = reservations[index];
                 return _buildQueueCard(
@@ -406,7 +344,6 @@ class _HomeReservationsSectionState extends State<HomeReservationsSection> {
     final name = _customerName(reservation);
 
     return InkWell(
-      borderRadius: BorderRadius.circular(8),
       onTap: () => setState(() {
         _selectedReservationId = reservation.id;
         // On a narrow window, picking one is a request to see it.
@@ -415,61 +352,50 @@ class _HomeReservationsSectionState extends State<HomeReservationsSection> {
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 160),
         width: double.infinity,
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
         decoration: BoxDecoration(
-          color: selected ? _accent.withValues(alpha: 0.08) : _surface,
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(
-            color: selected ? _accent : _outline,
-            width: selected ? 1.5 : 1,
+          color: selected ? VynicFloorTokens.accentSoft : _surface,
+
+          border: Border(
+            left: BorderSide(
+              color: selected ? _accent : Colors.transparent,
+              width: 3,
+            ),
           ),
         ),
         child: Column(
           children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            SizedBox(
+              width: double.infinity,
+              child: Text(
+                name,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: widget.textPrimary,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 12,
+              runSpacing: 8,
+              crossAxisAlignment: WrapCrossAlignment.center,
               children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        name,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          color: widget.textPrimary,
-                          fontSize: 14,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      PosText(
-                        '${reservation.numberOfGuests} სტუმარი',
-                        style: TextStyle(
-                          color: widget.textPrimary.withValues(alpha: 0.78),
-                          fontSize: 13,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ],
+                _buildStatusChip(statusLabel, statusColor),
+                PosText(
+                  '₾${total.toStringAsFixed(2)}',
+                  style: TextStyle(
+                    color: widget.textPrimary,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
                   ),
                 ),
-                const SizedBox(width: 12),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    PosText(
-                      '₾${total.toStringAsFixed(2)}',
-                      style: TextStyle(
-                        color: widget.textPrimary,
-                        fontSize: 14,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                    const SizedBox(height: 7),
-                    _buildStatusChip(statusLabel, statusColor),
-                  ],
+                PosText(
+                  '${reservation.numberOfGuests} სტუმარი',
+                  style: TextStyle(color: widget.mutedText, fontSize: 13),
                 ),
               ],
             ),
@@ -528,11 +454,7 @@ class _HomeReservationsSectionState extends State<HomeReservationsSection> {
     );
 
     return Container(
-      decoration: BoxDecoration(
-        color: _surface,
-        borderRadius: BorderRadius.circular(VynicFloorTokens.panelRadius),
-        border: Border.all(color: _outline),
-      ),
+      color: _surface,
       child: Column(
         children: [
           Padding(
@@ -645,6 +567,16 @@ class _HomeReservationsSectionState extends State<HomeReservationsSection> {
                       ],
                     ),
                   const SizedBox(height: 16),
+                  if (reservation.advanceAmount > 0) ...[
+                    _buildInfoBlock(
+                      icon: Icons.payments_outlined,
+                      title:
+                          'მიღებული ავანსი: ${reservation.advanceAmount.toStringAsFixed(2)} ₾',
+                      subtitle:
+                          '${reservation.advanceCollectedOn ?? ''} • ანგარიშში ერთხელ ჩაითვლება',
+                    ),
+                    const SizedBox(height: 16),
+                  ],
                   _buildItemsTable(items),
                   const SizedBox(height: 14),
                   if (compact) ...[
@@ -689,6 +621,13 @@ class _HomeReservationsSectionState extends State<HomeReservationsSection> {
     final serviceOn = _isServiceOn(reservation);
 
     final booking = <Widget>[
+      if (reservation.status == 'hold' && widget.onConfirmHold != null)
+        PosActionButton(
+          label: 'ჯავშნის დადასტურება',
+          icon: Icons.event_available_outlined,
+          expand: true,
+          onTap: () => widget.onConfirmHold!(reservation),
+        ),
       if (widget.onEditReservation != null)
         PosActionButton(
           label: 'რეზერვაციის შეცვლა',
@@ -696,7 +635,9 @@ class _HomeReservationsSectionState extends State<HomeReservationsSection> {
           expand: true,
           onTap: () => widget.onEditReservation!(reservation),
         ),
-      if (widget.canAssignTable && widget.onAssignTable != null)
+      if (reservation.status != 'hold' &&
+          widget.canAssignTable &&
+          widget.onAssignTable != null)
         PosActionButton(
           label: 'სუფრაზე გადაყვანა',
           icon: Icons.table_restaurant_outlined,
@@ -749,7 +690,7 @@ class _HomeReservationsSectionState extends State<HomeReservationsSection> {
     ];
 
     final kitchen = <Widget>[
-      if (widget.onSendKitchenCheck != null)
+      if (reservation.status != 'hold' && widget.onSendKitchenCheck != null)
         PosActionButton(
           label: 'სამზარეულოში გაგზავნა',
           icon: Icons.outbox_outlined,
@@ -807,13 +748,23 @@ class _HomeReservationsSectionState extends State<HomeReservationsSection> {
           label: 'მენიუს ნახვა',
           onTap: () => widget.onViewPreOrder!(reservation),
         ),
-      if (widget.canAssignTable && widget.onAssignTable != null)
+      if (reservation.status == 'hold' && widget.onConfirmHold != null)
+        _actionButton(
+          icon: Icons.event_available_outlined,
+          label: 'ჯავშნის დადასტურება',
+          onTap: () => widget.onConfirmHold!(reservation),
+        ),
+      if (reservation.status != 'hold' &&
+          widget.canAssignTable &&
+          widget.onAssignTable != null)
         _actionButton(
           icon: Icons.table_restaurant_outlined,
           label: 'სუფრაზე გადაყვანა',
           onTap: () => widget.onAssignTable!(reservation),
         ),
-      if (hasPreOrder && widget.onSendKitchenCheck != null)
+      if (reservation.status != 'hold' &&
+          hasPreOrder &&
+          widget.onSendKitchenCheck != null)
         _actionButton(
           icon: Icons.outbox_outlined,
           label: 'სამზარეულოში გაგზავნა',
@@ -1017,7 +968,7 @@ class _HomeReservationsSectionState extends State<HomeReservationsSection> {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: const Color(0xFFF2F5F9),
+        color: VynicFloorTokens.metricFill,
         borderRadius: BorderRadius.circular(VynicFloorTokens.panelRadius),
         border: Border.all(color: _outline),
       ),
@@ -1211,10 +1162,11 @@ class _HomeReservationsSectionState extends State<HomeReservationsSection> {
       100.0,
     );
 
-    final result = await showDialog<ServiceFeeAdjustResult>(
+    final result = await showPosModal<ServiceFeeAdjustResult>(
       context: context,
       barrierDismissible: false,
       builder: (dialogContext) => ServiceFeeAdjustDialog(
+        usePosLayout: true,
         initialIncludeServiceFee: _isServiceOn(reservation),
         initialPercentage: initialPercent,
         defaultPercentage: defaultPercent,
@@ -1276,7 +1228,7 @@ class _HomeReservationsSectionState extends State<HomeReservationsSection> {
         ? null
         : tableRefs.map((ref) => ref.tableNumber).join(', ');
 
-    PrinterService.printReceiptInBackground(
+    await PrinterService.printReceiptInBackground(
       items: lines,
       total: total,
       subtotal: subtotal,
@@ -1291,14 +1243,18 @@ class _HomeReservationsSectionState extends State<HomeReservationsSection> {
           unawaited(
             showSuccessToast(
               context,
-              isEnglish ? 'Receipt printed' : 'ჩეკი დაიბეჭდა',
+              isEnglish
+                  ? 'Sent to printer — check paper'
+                  : 'გაიგზავნა პრინტერზე — შეამოწმეთ ქაღალდი',
             ),
           );
         } else {
           unawaited(
             showErrorToast(
               context,
-              isEnglish ? 'Printer unavailable' : 'პრინტერი მიუწვდომელია',
+              isEnglish
+                  ? 'Printing unconfirmed — review print jobs'
+                  : 'ბეჭდვა ვერ დადასტურდა — შეამოწმეთ ბეჭდვის სია',
             ),
           );
         }
@@ -1348,6 +1304,8 @@ class _HomeReservationsSectionState extends State<HomeReservationsSection> {
 
   String _statusLabel(String status) {
     switch (status.toLowerCase()) {
+      case 'hold':
+        return 'დროებითი დაკავება';
       case 'confirmed':
         return 'დადასტურებული';
       case 'completed':

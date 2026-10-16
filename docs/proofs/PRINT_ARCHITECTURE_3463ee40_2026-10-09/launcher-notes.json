@@ -1,0 +1,25 @@
+{
+  "attempts": [
+    {
+      "action": "initial macOS loopback tests",
+      "result": "sandbox denied bind; tests rerun with approved loopback access",
+      "log": "initial-sandbox-test.jsonl"
+    },
+    {
+      "action": "initial VM list",
+      "result": "sandbox denied ps/Parallels bootstrap; approved VM list succeeded"
+    },
+    {
+      "action": "initial PowerShell path probe",
+      "result": "argument quoting failed; short encoded read-only probe succeeded"
+    },
+    {
+      "action": "large encoded Windows test script",
+      "exitCode": 255,
+      "result": "PrlJob_GetRetCode: Invalid argument. Same script executed successfully with -File."
+    }
+  ],
+  "automaticApprovalRejections": [],
+  "physicalPrinterCalls": 0,
+  "serviceRegistrationCalls": 0
+}

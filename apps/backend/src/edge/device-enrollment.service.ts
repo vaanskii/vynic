@@ -1,5 +1,11 @@
 import { requireCommercialFeature } from '../entitlements/commercial-state';
 import {
+  createEnrolledManagerGrant,
+  bindEnrolledManagerGrant,
+  requireManagerSetupIssuer,
+  requireNoManagerHistory,
+} from '../auth/manager-setup-policy';
+import {
   assertMenuCompatibility,
   menuClientReport,
 } from '../menu-catalog/menu-client-policy';
@@ -12,6 +18,7 @@ import type { ControlActor } from '../platform/control-actor';
 import {
   BadRequestException,
   ConflictException,
+  ForbiddenException,
   Injectable,
   Logger,
   NotFoundException,
@@ -77,6 +84,7 @@ export interface CreateEnrollmentInput {
   displayName: string;
   platform: string;
   ttlMinutes?: number;
+  initialManagerSetup?: boolean;
 }
 
 export interface CreatedEnrollment {
@@ -86,6 +94,7 @@ export interface CreatedEnrollment {
   platform: string;
   expiresAt: Date;
   status: EnrollmentStatus;
+  initialManagerSetup: boolean;
   /**
    * Shown exactly once. Only the Argon2id verifier of its secret half is
    * stored, so this cannot be read back — cancel it and create another.
@@ -101,6 +110,7 @@ export interface RedeemEnrollmentInput {
   /** For rate limiting only. Never persisted. */
   clientIp?: string;
   menuClient?: unknown;
+  managerSetupVersion?: unknown;
 }
 
 export interface RedeemedEnrollment {
@@ -175,6 +185,11 @@ export class DeviceEnrollmentService {
     input: CreateEnrollmentInput,
   ): Promise<CreatedEnrollment> {
     await requireCommercialFeature(this.prisma, venueId, 'POS');
+    if (
+      input.initialManagerSetup !== undefined &&
+      typeof input.initialManagerSetup !== 'boolean'
+    )
+      throw new BadRequestException('initialManagerSetup must be boolean');
     const ttl = Math.min(
       Math.max(input.ttlMinutes ?? ENROLLMENT_TTL_MINUTES, 5),
       24 * 60,
@@ -192,13 +207,14 @@ export class DeviceEnrollmentService {
         const row = await this.prisma.$transaction(async (tx) => {
           await lockOperationalVenue(tx, venueId);
           await requireCommercialFeature(tx, venueId, 'POS');
-          return tx.deviceEnrollment.create({
+          const written = await tx.deviceEnrollment.create({
             data: {
               venueId,
               codeSelector: code.selector,
               codeHash,
               displayName: input.displayName,
               platform: input.platform,
+              initialManagerSetup: input.initialManagerSetup ?? false,
               expiresAt,
               createdByPlatformUserId: actor.platformUserId,
               createdByCustomerAccountId: actor.customerAccountId,
@@ -211,8 +227,12 @@ export class DeviceEnrollmentService {
               expiresAt: true,
               redeemedAt: true,
               cancelledAt: true,
+              initialManagerSetup: true,
             },
           });
+          if (written.initialManagerSetup)
+            await createEnrolledManagerGrant(tx, actor, written);
+          return written;
         });
 
         await this.audit.record(
@@ -227,6 +247,7 @@ export class DeviceEnrollmentService {
             // The selector alone cannot enroll anything. The secret half is
             // never written here, or anywhere but the verifier.
             codeSelector: code.selector,
+            ...(row.initialManagerSetup ? { initialManagerSetup: true } : {}),
           },
         );
 
@@ -237,6 +258,7 @@ export class DeviceEnrollmentService {
           platform: row.platform,
           expiresAt: row.expiresAt,
           status: enrollmentStatus(row),
+          initialManagerSetup: row.initialManagerSetup,
           code: formatEnrollmentCode(code.normalized),
         };
       } catch (error) {
@@ -246,6 +268,28 @@ export class DeviceEnrollmentService {
     throw new ConflictException(
       'Could not allocate an enrollment code. Try again.',
     );
+  }
+
+  async setupEligibility(actor: ControlActor, venueId: string) {
+    if (
+      !(await this.prisma.venue.findUnique({
+        where: { id: venueId },
+        select: { id: true },
+      }))
+    )
+      throw new NotFoundException('Venue not found');
+    try {
+      await requireManagerSetupIssuer(this.prisma, venueId, actor);
+      await requireNoManagerHistory(this.prisma, venueId);
+      return { eligible: true, reason: null };
+    } catch (error) {
+      if (
+        error instanceof ForbiddenException ||
+        error instanceof ConflictException
+      )
+        return { eligible: false, reason: error.message };
+      throw error;
+    }
   }
 
   /** Every invitation for a Venue, newest first, with its derived status. */
@@ -340,6 +384,7 @@ export class DeviceEnrollmentService {
         id: true,
         venueId: true,
         codeHash: true,
+        initialManagerSetup: true,
         displayName: true,
         platform: true,
         expiresAt: true,
@@ -377,6 +422,12 @@ export class DeviceEnrollmentService {
       await this.recordFailure(enrollment, 'secret_mismatch');
       throw new UnauthorizedException(INVALID_CODE_MESSAGE);
     }
+
+    if (enrollment.initialManagerSetup && input.managerSetupVersion !== 1)
+      throw new HttpException(
+        'Update the POS to use this initial setup code',
+        426,
+      );
 
     // Past this line the caller holds the real code, so a specific reason is
     // information it is entitled to and an operator badly needs.
@@ -471,7 +522,7 @@ export class DeviceEnrollmentService {
         retainedDevice.platform,
         menuClientReport(input.menuClient),
       );
-      return tx.device.update({
+      const written = await tx.device.update({
         where: { id: deviceId },
         data: {
           credentialHash,
@@ -480,6 +531,8 @@ export class DeviceEnrollmentService {
         },
         select: DEVICE_SELECT,
       });
+      await bindEnrolledManagerGrant(tx, enrollment, written.id, now);
+      return written;
     });
 
     await this.audit.record(
@@ -583,6 +636,7 @@ export class DeviceEnrollmentService {
       if (!existing) {
         await selectFirstOperationalDevice(tx, enrollment.venueId, written.id);
       }
+      await bindEnrolledManagerGrant(tx, enrollment, written.id, now);
       return written;
     });
 
@@ -704,6 +758,7 @@ const ENROLLMENT_FIELDS = {
   id: true,
   venueId: true,
   codeSelector: true,
+  initialManagerSetup: true,
   displayName: true,
   platform: true,
   expiresAt: true,
@@ -725,6 +780,7 @@ const DEVICE_SELECT = {
 } as const;
 
 interface LoadedEnrollment {
+  initialManagerSetup?: boolean;
   id: string;
   venueId: string;
   displayName: string;

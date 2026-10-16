@@ -1,3 +1,5 @@
+import { PrinterEnrollmentController } from '../printer-provisioning/controller';
+import { PrinterProvisioningService } from '../printer-provisioning/service';
 import { EntitlementsModule } from '../entitlements/entitlements.module';
 import { Module } from '@nestjs/common';
 import { AuthModule } from '../auth/auth.module';
@@ -29,13 +31,23 @@ import { InventoryModule } from '../inventory/inventory.module';
     PlatformAuditModule,
     InventoryModule,
   ],
-  controllers: [EdgeTransportController, DeviceEnrollmentController],
+  controllers: [
+    EdgeTransportController,
+    DeviceEnrollmentController,
+    PrinterEnrollmentController,
+  ],
   providers: [
+    PrinterProvisioningService,
     EdgeCommandService,
     EdgeDeviceGuard,
     DeviceEnrollmentService,
     EnrollmentRateLimiter,
   ],
-  exports: [EdgeCommandService, DeviceEnrollmentService, InventoryModule],
+  exports: [
+    PrinterProvisioningService,
+    EdgeCommandService,
+    DeviceEnrollmentService,
+    InventoryModule,
+  ],
 })
 export class EdgeTransportModule {}

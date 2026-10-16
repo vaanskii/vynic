@@ -28,6 +28,120 @@ void main() {
   });
 
   test(
+    'one-use linking retries with a durable origin-scoped installation identity and stores no code or PIN',
+    () async {
+      const code = '7K2Q-M4XB-9TFR-ABCD-EFGH';
+      final identities = <String>[];
+      var ready = false;
+      final client = MockClient((request) async {
+        expect(request.url.path, '/auth/manager-link');
+        final body = jsonDecode(request.body) as Map;
+        expect(body['code'], code);
+        expect(body.containsKey('venueId'), false);
+        expect(body.containsKey('pin'), false);
+        identities.add(body['installationId'] as String);
+        return ready
+            ? http.Response(
+                jsonEncode({'id': 'b', 'code': 'venue-b', 'name': 'B'}),
+                200,
+              )
+            : http.Response('{}', 503);
+      });
+      await expectLater(
+        MobileAuthService.linkVenue(code, client: client),
+        throwsA(MobileAuthError.serverError),
+      );
+      await Hive.box('manager_preferences').close();
+      await ManagerAppPreferences.init();
+      ready = true;
+      final selection = await MobileAuthService.linkVenue(code, client: client);
+      await ManagerAppPreferences.rememberVenue(selection);
+      expect(identities[0] == identities[1], true);
+      expect(
+        ManagerAppPreferences.selectedVenue(ApiConfig.baseUrl)?.code,
+        'venue-b',
+      );
+      expect(
+        Hive.box('manager_preferences').toMap().toString().contains(code),
+        false,
+      );
+      expect(AuthTokenService.token, isNull);
+    },
+  );
+  test(
+    'concurrent linking and preferences reopen retain one UUID per origin',
+    () async {
+      final ids = await Future.wait([
+        ManagerAppPreferences.linkInstallationId(ApiConfig.baseUrl),
+        ManagerAppPreferences.linkInstallationId(ApiConfig.baseUrl),
+      ]);
+      expect(ids[0] == ids[1], true);
+      final foreign = await ManagerAppPreferences.linkInstallationId(
+        'https://another.invalid',
+      );
+      expect(foreign == ids[0], false);
+      await Hive.box('manager_preferences').close();
+      await ManagerAppPreferences.init();
+      expect(
+        await ManagerAppPreferences.linkInstallationId(ApiConfig.baseUrl) ==
+            ids[0],
+        true,
+      );
+    },
+  );
+  test(
+    'malformed linking success and denied linking do not establish selection or session',
+    () async {
+      for (final response in [
+        http.Response('invalid', 200),
+        http.Response('{}', 401),
+        http.Response('{}', 429),
+      ]) {
+        await expectLater(
+          MobileAuthService.linkVenue(
+            'synthetic-code',
+            client: MockClient((_) async => response),
+          ),
+          throwsA(isA<MobileAuthError>()),
+        );
+        expect(ManagerAppPreferences.selectedVenue(ApiConfig.baseUrl), isNull);
+        expect(AuthTokenService.token, isNull);
+      }
+    },
+  );
+
+  for (final entry in {
+    403: MobileAuthError.accessDenied,
+    429: MobileAuthError.rateLimited,
+    500: MobileAuthError.serverError,
+  }.entries) {
+    test(
+      'HTTP ${entry.key} keeps its category and cannot look like offline network access',
+      () async {
+        await expectLater(
+          MobileAuthService.login(
+            '481259',
+            venueCode: 'synthetic',
+            client: MockClient((_) async => http.Response('{}', entry.key)),
+          ),
+          throwsA(entry.value),
+        );
+        expect(AuthTokenService.token, isNull);
+      },
+    );
+  }
+  test('invalid response is a server error, not offline access', () async {
+    await expectLater(
+      MobileAuthService.login(
+        '481259',
+        venueCode: 'synthetic',
+        client: MockClient((_) async => http.Response('invalid-json', 200)),
+      ),
+      throwsA(MobileAuthError.serverError),
+    );
+  });
+
+  test(
     'selection is origin-bound and ignores extra credential fields',
     () async {
       final selection = await MobileAuthService.resolveVenue(

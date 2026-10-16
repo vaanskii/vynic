@@ -369,7 +369,7 @@ class HomeXReportHelper {
       report.writeln();
       report.writeln();
 
-      await PrinterService.printTextReport(
+      final sent = await PrinterService.printTextReport(
         report.toString(),
         reportType: 'X REPORT',
       );
@@ -377,7 +377,17 @@ class HomeXReportHelper {
       if (!context.mounted) {
         return;
       }
-      unawaited(showSuccessToast(context, 'X ანგარიში წარმატებით დაიბეჭდა'));
+      if (sent)
+        unawaited(
+          showSuccessToast(context, 'X ანგარიში გაიგზავნა — შეამოწმეთ ქაღალდი'),
+        );
+      else
+        unawaited(
+          showErrorToast(
+            context,
+            'X ანგარიშის ბეჭდვა ვერ დადასტურდა — შეამოწმეთ ბეჭდვის სია',
+          ),
+        );
     } catch (error) {
       if (!context.mounted) {
         return;

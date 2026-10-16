@@ -64,6 +64,9 @@ class StaffRole {
     return r == manager || r == supervisor;
   }
 
+  static bool canDeleteMenuCountDrafts(String clientRole) =>
+      normalizeClient(clientRole) == manager;
+
   /// Windows POS მართვის ცენტრი.
   static bool canAccessManagementCenter(String clientRole) {
     final r = normalizeClient(clientRole);

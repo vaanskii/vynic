@@ -1,0 +1,17 @@
+[
+  {
+    "path": "/private/tmp/vynic-pos02b-artifacts-i72or1y5/peer.test.exe",
+    "sha256": "dd5d32f85fba306e9d293a00837810092909ad7a9752d347bb3949c850428c5f",
+    "bytes": 27249664
+  },
+  {
+    "path": "/private/tmp/vynic-pos02b-artifacts-i72or1y5/pos02b-printer-peer-arm64.exe",
+    "sha256": "b434a44367ed4229c7e90ffeacef817039a3ef8dac90f0745134a0cc73a4275f",
+    "bytes": 25694208
+  },
+  {
+    "path": "/private/tmp/vynic-pos02b-artifacts-i72or1y5/pos02b-printer-peer-amd64.exe",
+    "sha256": "0828686c0cd5661923c2130aacdbaf90fbb892c3c1ef374255b4077d57fd3a13",
+    "bytes": 27422720
+  }
+]

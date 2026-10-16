@@ -165,7 +165,11 @@ function defaultReply({ url, method }: MockRequest): MockReply {
   if (path === `/platform/venues/${ids.venue}/hostname-requests`) return { body: [] };
   if (path === `/platform/venues/${ids.venue}/domains`) return { body: [] };
   if (path === `/platform/venues/${ids.venue}/website-capabilities`) return { body: websiteCapabilities };
+  if (path === `/platform/venues/${ids.venue}/website-deliveries`)
+    return { body: { items: [], total: 0, offset: 0, limit: 25, primarySelected: true } };
+  if (path === `/platform/venues/${ids.venue}/website-payment-reviews`) return { body: {items: [], total: 0, offset: 0, limit:25, financialDecisionOwner: "RESTAURANT_OWNER"} };
   if (path === `/platform/venues/${ids.venue}/devices`) return { body: [device] };
+  if (path === `/platform/venues/${ids.venue}/manager-links`) return { body: [] };
   if (path === `/platform/venues/${ids.venue}/enrollments`) return { body: [] };
   if (path.startsWith(`/platform/venues/${ids.venue}/test-command/`)) return { body: { commandId: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa", type: "NOOP", status: "PENDING", attemptCount: 0, maxAttempts: 10, claimedAt: null, acknowledgedAt: null, resultCode: null, resultDetail: null, createdAt: "2026-08-31T10:00:00.000Z", updatedAt: "2026-08-31T10:00:00.000Z", claimedBy: null, device: null } };
   if (path === "/platform/audit") return { body: audit };

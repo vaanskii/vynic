@@ -1,0 +1,12 @@
+{"url":"/api/website/venue?fixtureMode=before","cacheControl":"max-age=0","ifNoneMatch":"\"d4e5332d91309391c46e4c977f67662c36fe7c699431c9ab276ef7cc3c9beec3\"","syntheticCurrent":"before"}
+{"url":"/api/website/venue?fixtureMode=before","cacheControl":"max-age=0","ifNoneMatch":"\"f4bad153951bd2baf7ed04f36427cc5f48fe14d12cf7a0f17f1b9dc7e74cba2d\"","syntheticCurrent":"before"}
+{"url":"/api/website/venue?fixtureMode=before","cacheControl":"max-age=0","ifNoneMatch":"\"f4bad153951bd2baf7ed04f36427cc5f48fe14d12cf7a0f17f1b9dc7e74cba2d\"","syntheticCurrent":"before"}
+{"url":"/api/website/venue?fixtureMode=before","cacheControl":"max-age=0","ifNoneMatch":"\"f4bad153951bd2baf7ed04f36427cc5f48fe14d12cf7a0f17f1b9dc7e74cba2d\"","syntheticCurrent":"before"}
+{"url":"/api/website/venue?fixtureMode=before","cacheControl":"max-age=0","ifNoneMatch":"\"f4bad153951bd2baf7ed04f36427cc5f48fe14d12cf7a0f17f1b9dc7e74cba2d\"","syntheticCurrent":"after"}
+{"preflight":true,"requestedHeaders":"content-type"}
+{"url":"/api/website/venue?fixtureMode=after","cacheControl":"max-age=0","ifNoneMatch":null,"syntheticCurrent":"after"}
+{"url":"/api/website/venue?fixtureMode=error","cacheControl":"max-age=0","ifNoneMatch":null,"syntheticCurrent":"after"}
+{"url":"/api/website/venue?fixtureMode=error","cacheControl":"max-age=0","ifNoneMatch":null,"syntheticCurrent":"after"}
+{"url":"/api/website/venue?fixtureMode=off","cacheControl":"max-age=0","ifNoneMatch":null,"syntheticCurrent":"after"}
+{"url":"/api/website/venue?fixtureMode=wrong","cacheControl":"max-age=0","ifNoneMatch":null,"syntheticCurrent":"after"}
+{"url":"/api/website/venue?fixtureMode=after","cacheControl":"max-age=0","ifNoneMatch":null,"syntheticCurrent":"after"}

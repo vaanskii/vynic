@@ -39,6 +39,7 @@ docker compose --env-file .env.docker -f compose.yaml -f compose.local.yaml up -
 | <http://tabla.vynic.localhost> | Sample SAAS Venue |
 | <http://vankisi.vynic.localhost> | Sample CUSTOM Venue, `vankisi-web` |
 | <http://preview.vynic.localhost> | Generic renderer for signed owner previews; no default Venue |
+| <http://api.vynic.localhost> | **Native POS/Manager API only** (never a website); see [Native POS / Manager ingress](#native-pos--manager-ingress) |
 
 An unregistered restaurant hostname can load the generic static shell, but its
 API returns 404 and the renderer shows unavailable. It never falls back to Vankisi.
@@ -72,6 +73,7 @@ flowchart TD
   Proxy --> SaaS[restaurant-web: one shared Nginx]
   Proxy --> Custom[vankisi-custom-web: explicit Nginx]
   Proxy -->|Host preserved, API and media| Backend[NestJS:3000]
+  Native[POS / Manager apps] -->|api.base host, native paths only| Proxy
   Backend --> DB[(PostgreSQL: isolated database network)]
   Backend --> Media[(website-media volume)]
   DB -->|healthy| Migrate[one prisma migrate deploy job]
@@ -101,6 +103,9 @@ and [Compose startup conditions](https://docs.docker.com/compose/how-tos/startup
 
 | Priority | Match | Destination |
 | --- | --- | --- |
+| 500 | `api.<base>` + `/edge/`, `/mobile/`, `/auth/`, `/sync/`, `/socket.io/`, `/healthz` | backend (native POS/Manager API) |
+| 500 | opt-in LAN listener `:8088`, same native paths, no Host rule | backend (`start-lan` only) |
+| 450 | any other path on `api.<base>` (and on the LAN listener) | backend, path rewritten to an unrouted path, so Nest answers JSON 404 |
 | 400 | applicable hosts, `/api` or `/api/*`, `/media/website-logos/*` | backend, path unchanged |
 | 400 | admin host, `/platform` or `/platform/*` | backend |
 | 400 | public base host, `/customer` or `/customer/*` | backend |
@@ -164,7 +169,7 @@ secrecy. `G` below means an independently generated `openssl rand -hex 32` value
 | `SAAS_WEBSITE_BASE_DOMAIN` | SaaS assignment/publication; required to publish | `vynic.localhost` / `vynic.ge`; changing this does not remap existing VenueDomains | No |
 | `SAAS_WEBSITE_PREVIEW_ORIGIN` | Customer signed preview; optional | `http://preview.vynic.localhost` / `https://preview.vynic.ge` | No; unset disables preview link |
 | `WEBSITE_MEDIA_DIR` | media service; required in production startup | `/var/lib/vynic/media`, mounted persistent volume | No |
-| `DEVICE_API_BASE_URL` | enrollment response; optional | Unset locally; production public native-client origin only after native routes are provisioned | No |
+| `DEVICE_API_BASE_URL` | enrollment response; optional | `http://api.vynic.localhost` (local override default; empty in `start-lan`) / `https://api.vynic.ge` | No; HTTPS required in production |
 | `POS_SYNC_API_KEY` | legacy POS guard; optional, not injected here | Unset disables legacy auth in production; enrolled Device credentials still work | Yes; G if legacy fleet compatibility is intentionally enabled |
 | `MANAGER_LEGACY_LOGIN_UNTIL` | ManagerAuth compatibility; optional | Unset; explicit ISO deadline only during approved legacy rollout | No |
 | `WEBSITE_DEV_HOST` | dev tenant fallback; optional | Unset and ignored in production; e.g. `vankisi.localhost` in direct dev | No |
@@ -194,6 +199,9 @@ Compose/image-only inputs (these are not invented Nest settings):
 | `CUSTOM_HOST` | Compose → Traefik file provider; required | `vankisi.vynic.localhost` / `vankisi.vynic.ge` | No; operator deployment mapping |
 | `BASE_DOMAIN` | Traefik template; injected from SAAS_WEBSITE_BASE_DOMAIN | Same suffix as backend | No |
 | `PROXY_TLS` | Traefik template; default false, production override true | HTTP locally / HTTPS router in production | No |
+| `NATIVE_LAN` | Traefik template; fixed `false`, `compose.lan.yaml` sets `true` | Never set by hand; enables the LAN routers | No |
+| `NATIVE_LAN_BIND` | `compose.lan.yaml` port binding; required for LAN mode | One private LAN IPv4 of this Mac, set by `start-lan` (never `0.0.0.0`) | No; do not commit |
+| `NATIVE_LAN_PORT` | `compose.lan.yaml` host port; optional | `8088` | No |
 | `IMAGE_PREFIX` | Compose image names; optional | `vynic` / private registry namespace | No; registry credentials use Docker login/CI secrets separately |
 | `IMAGE_TAG` | Compose image names; optional | `local` / immutable release tag (prefer digest pinning in release manifests) | No |
 | `APP` | shared frontend Dockerfile build argument; fixed per service | Three existing app directory names | No |
@@ -243,6 +251,125 @@ HTTPS origins and Secure cookies (the supplied local HTTP guard intentionally
 rejects an HTTPS origin with its HTTP mode). This is evaluated, not shipped as a
 second supported mode; there is no automatic trust-store mutation or certificate
 warning bypass. Production is HTTPS-only.
+
+## Native POS / Manager ingress
+
+POS and Manager are native Flutter apps, not browsers. Their backend calls use
+a **dedicated native API origin**, separate from every website host:
+
+| Where the app runs | API origin (what you type / build in) |
+| --- | --- |
+| Same Mac as Docker | `http://api.vynic.localhost` |
+| Windows/Parallels VM or another device on the LAN | `http://<MAC_LAN_IP>:8088` (opt-in, below) |
+| Production | `https://api.vynic.ge` |
+
+`api.<base domain>` is a fixed Traefik router (priority 500) ahead of the SaaS
+wildcard, so it can never render a restaurant or Platform page. `api` is already a
+reserved SaaS hostname label. Website `/api`, `/platform` and `/customer` routing
+and Host tenancy are unchanged. `.localhost` resolves to the *calling* machine,
+so **never type `api.vynic.localhost` inside Windows/Parallels**.
+
+### Route inventory (audited from the Flutter clients and Nest controllers)
+
+| Path | App | Guard / principal |
+| --- | --- | --- |
+| `POST /edge/enroll` | POS enrollment | one-time code -> Device -> Venue |
+| `POST /edge/commands/claim`, `/ack` | POS Cloud-work transport | Device credential |
+| `GET /edge/runtime-config`, `PUT /edge/venue-profile` | POS | Device credential |
+| `GET /edge/inventory/catalog`, `POST /edge/inventory/consumption` | POS | Device credential |
+| `GET /edge/menu/catalog`, `/changes`, `POST /edge/menu/mutations`; `POST /edge/restaurant-foundation/bootstrap` | POS Menu / foundation | Device credential |
+| `GET /sync/ping`, `POST /sync/manager-data`, `/sync/audit-reports`, `/sync/audit-logs` | POS snapshots and audit | Device credential (`X-POS-Sync-Key`) |
+| `POST /auth/manager-venue`, `/auth/mobile-login` | Manager Restaurant Code / PIN login | Staff PIN -> Venue |
+| `/mobile/**` including `/mobile/finance/**` | Manager API | Staff JWT -> Venue |
+| `/socket.io/` (WebSocket transport only, JWT in `auth.token`) | Manager realtime | Staff JWT -> Venue room |
+| `GET /healthz` | operations | none; DB liveness only |
+
+There is no `/snapshot` route: the POS snapshot is `POST /sync/manager-data`.
+Every other path on the native origin returns the backend's JSON 404, never HTML.
+Nothing about Venue comes from the request: no Host, header, query or body value
+selects a tenant on these routes (D003, D031).
+
+### Same Mac (default)
+
+`./scripts/docker.sh start` already serves it; `DEVICE_API_BASE_URL` defaults to
+`http://api.vynic.localhost` in `compose.local.yaml`.
+
+```sh
+curl --resolve api.vynic.localhost:80:127.0.0.1 http://api.vynic.localhost/healthz   # {"status":"ok"}
+```
+
+Type into **POS -> Development API URL** or **Manager -> API settings** (debug
+builds only): `http://api.vynic.localhost`. An explicit scheme without a port uses
+that scheme's port (80). A *bare* address such as `10.10.10.3` still means the
+direct backend `:3000` used by non-Docker development.
+
+### Windows / Parallels / LAN (opt-in)
+
+LAN mode is off unless you ask for it. It publishes one extra listener, routing only
+the native paths above, on **one** private IPv4 address of this Mac (never `0.0.0.0`):
+
+```sh
+./scripts/docker.sh start-lan                # auto-detects this Mac's LAN IP
+./scripts/docker.sh start-lan 10.10.10.3     # or choose it explicitly
+./scripts/docker.sh stop-lan                 # back to loopback-only
+```
+
+The command prints `Native LAN API: http://<MAC_LAN_IP>:8088`. On Windows/another
+device check it, then type the same URL into POS/Manager:
+
+```powershell
+curl.exe http://<MAC_LAN_IP>:8088/healthz     # {"status":"ok"}
+```
+
+In LAN mode the backend declares no `DEVICE_API_BASE_URL`, so a terminal keeps the
+address it enrolled through. The POS also refuses to adopt any `*.localhost` answer
+on a non-local terminal. Parallels **Shared** networking gives the Mac a
+`10.211.55.x` address (usually `10.211.55.2`): run `start-lan 10.211.55.2` and use
+that. **Bridged** networking uses the Mac's ordinary LAN IP. macOS may ask whether
+Docker may accept incoming connections: allow it only on a network you trust.
+
+### Realtime (Manager)
+
+Manager uses Socket.IO over **WebSocket only** at `/socket.io/` on the same
+origin; POS uses polling REST (no socket). Traefik forwards the Upgrade natively
+(`wss://` in production); Socket.IO pings every 25 s (20 s timeout), well inside
+proxy idle limits, so no extra timeouts are configured. Native sockets send no
+`Origin`, which the gateway allows; browser CORS and the socket origin allow-list
+are unchanged and were not widened. Sockets join only the authenticated Staff's
+Venue room.
+
+### Security and LAN exposure
+
+- The backend `:3000`, PostgreSQL and the Traefik dashboard/ping are never published;
+  Prisma Studio stays `127.0.0.1:5555`. The LAN listener has no dashboard and no
+  Platform/Customer/website routes.
+- The listener binds the selected LAN address only (`127.0.0.1:8088` is closed) and
+  is opt-in; `start` (or `stop-lan`) removes it. It is plain HTTP: Device
+  credentials, PINs and JWTs cross the LAN unencrypted, exactly like the existing
+  direct-`:3000` lab flow. Use only on a trusted, private network; production is
+  HTTPS-only and `compose.lan.yaml` must never be combined with it.
+- Anyone who can reach that address can attempt the same authenticated calls, and
+  every one still needs a Device credential, enrollment code or Staff PIN, with the
+  existing enrollment rate limit. Forwarded headers are trusted only from the
+  Traefik address; a forged `X-Forwarded-Host`, `X-Venue-Id` or `?venueId` changes
+  nothing.
+- Docker Desktop for Mac also holds a `*:80` socket for the loopback-published
+  website port; from the LAN it accepts the TCP handshake and resets without
+  serving content (verified with curl). Use the macOS firewall or your router to
+  block inbound port 80 if that matters on your network.
+
+### Proof and tests
+
+```sh
+# Real Flutter clients through the ingress (needs one-time enrollment codes, see the test header):
+cd apps/operations && NATIVE_INGRESS_FIXTURE=/path/fixture.json \
+  NATIVE_INGRESS_API=http://api.vynic.localhost NATIVE_INGRESS_HOLD_SECONDS=70 \
+  flutter test --dart-define=VYNIC_API_URL=http://api.vynic.localhost \
+  test/live/native_ingress_live_test.dart
+flutter test test/unit/pos_enrollment_test.dart   # URL normalization and address adoption
+```
+
+Results are recorded in `docs/DEPLOYMENT_PROOF.md`.
 
 ## Operations and debugging
 
@@ -352,9 +479,11 @@ Checklist before any actual production deployment:
 - Vynic-generated secrets in the provider's secret manager; retain encryption keys
   during rotations, do not blindly regenerate and strand existing encrypted data.
 - Configure real BOG/FCM/Edge only when used; public HTTPS callback verification.
-- Native POS/Manager/Edge and Socket.IO route exposure at the chosen
-  `DEVICE_API_BASE_URL` remains an explicit provider/deployment routing step.
-  This website ingress does not publish every backend controller by default.
+- Native POS/Manager/Edge and Socket.IO traffic uses `https://api.vynic.ge`
+  (`api.<base>`): DNS for that name (or the wildcard), the certificate covering it,
+  and `DEVICE_API_BASE_URL=https://api.vynic.ge`. Only the native route families
+  reach the backend there; website, Platform and Customer APIs stay on their hosts.
+  Never enable `compose.lan.yaml` in production.
 - Register release download URLs through Platform onboarding settings after signing
   and publishing artifacts. No fabricated release URL is supplied by Compose.
 - Resolve existing dependency audit advisories before releasing; do not upgrade

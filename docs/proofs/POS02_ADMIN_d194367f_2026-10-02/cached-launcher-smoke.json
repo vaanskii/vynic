@@ -1,0 +1,18 @@
+{
+  "status": "PASS_MACOS_ONLY",
+  "platform": "macOS arm64",
+  "cachedDartAndToolSnapshot": true,
+  "flutterBatchBootstrapBypassed": true,
+  "versionCheckDisabled": true,
+  "artifactStorageOverride": "unsupported file URI; process scoped",
+  "dependencyPreparation": "pub get --offline --enforce-lockfile; exit0",
+  "sourceFilesUnchangedAfterDependencyPreparationAndTests": 876,
+  "passingSyntheticCatalogChecks": 16,
+  "WindowsPowerShellScriptsExecuted": false,
+  "WindowsVmOrPrinterActions": false,
+  "logs": [
+    "admin-cached-tool-pubget.log",
+    "admin-cached-tool-tests.jsonl",
+    "admin-cached-tool-tests.stderr"
+  ]
+}

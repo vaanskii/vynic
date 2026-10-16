@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:vynic/core/ui/vynic_touch_targets.dart';
 import 'package:vynic/core/ui/vynic_floor_tokens.dart';
 
 /// The POS's shared surface vocabulary.
@@ -60,7 +61,7 @@ class PosPageHeading extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
                 style: const TextStyle(
                   color: VynicFloorTokens.text,
-                  fontSize: 22,
+                  fontSize: 30,
                   fontWeight: FontWeight.w800,
                   height: 1.15,
                 ),
@@ -73,7 +74,7 @@ class PosPageHeading extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
                     color: VynicFloorTokens.textMuted,
-                    fontSize: 13,
+                    fontSize: 16,
                     height: 1.35,
                   ),
                 ),
@@ -85,6 +86,68 @@ class PosPageHeading extends StatelessWidget {
       ],
     );
   }
+}
+
+/// One connected workspace for a record browser and its selected detail.
+/// Selection remains owned by the caller; compact layouts expose both panes.
+class PosWorkspace extends StatelessWidget {
+  const PosWorkspace({
+    super.key,
+    required this.master,
+    required this.detail,
+    required this.paneLabels,
+    required this.selectedPane,
+    required this.onPaneSelected,
+    this.masterWidth = 300,
+    this.compactWidth = 760,
+  });
+  final Widget master;
+  final Widget detail;
+  final List<String> paneLabels;
+  final int selectedPane;
+  final ValueChanged<int> onPaneSelected;
+  final double masterWidth;
+  final double compactWidth;
+  @override
+  Widget build(BuildContext context) => LayoutBuilder(
+    builder: (context, constraints) {
+      final compact = constraints.maxWidth < compactWidth;
+      final workspace = Container(
+        clipBehavior: Clip.antiAlias,
+        decoration: BoxDecoration(
+          color: VynicFloorTokens.panel,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: VynicFloorTokens.panelBorder),
+        ),
+        child: compact
+            ? (selectedPane == 0 ? master : detail)
+            : Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  SizedBox(width: masterWidth, child: master),
+                  const VerticalDivider(
+                    width: 1,
+                    thickness: 1,
+                    color: VynicFloorTokens.panelBorder,
+                  ),
+                  Expanded(child: detail),
+                ],
+              ),
+      );
+      if (!compact) return workspace;
+      return Column(
+        children: [
+          PosPaneSwitch(
+            labels: paneLabels,
+            selectedIndex: selectedPane,
+            onSelected: onPaneSelected,
+          ),
+          const SizedBox(height: 12),
+          Expanded(child: workspace),
+        ],
+      );
+    },
+  );
 }
 
 /// White card, hairline border, no shadow. The only container on these screens.
@@ -126,10 +189,12 @@ class PosMetricCard extends StatelessWidget {
     required this.label,
     required this.value,
     this.tone,
+    this.framed = true,
   });
 
   final String label;
   final String value;
+  final bool framed;
 
   /// Colours the figure when it carries a warning (delayed orders, money
   /// owed). Left null the figure is plain — most of them are.
@@ -139,11 +204,15 @@ class PosMetricCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
-      decoration: BoxDecoration(
-        color: VynicFloorTokens.panel,
-        borderRadius: BorderRadius.circular(VynicFloorTokens.metricRadius),
-        border: Border.all(color: VynicFloorTokens.panelBorder),
-      ),
+      decoration: framed
+          ? BoxDecoration(
+              color: VynicFloorTokens.panel,
+              borderRadius: BorderRadius.circular(
+                VynicFloorTokens.metricRadius,
+              ),
+              border: Border.all(color: VynicFloorTokens.panelBorder),
+            )
+          : null,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
@@ -290,6 +359,9 @@ class PosActionButton extends StatelessWidget {
         borderRadius: BorderRadius.circular(10),
         child: Container(
           width: expand ? double.infinity : null,
+          constraints: const BoxConstraints(
+            minHeight: VynicTouchTargets.posDesktop,
+          ),
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(10),
@@ -326,7 +398,7 @@ class PosPrimaryButton extends StatelessWidget {
     required this.onTap,
     this.icon,
     this.onLongPress,
-    this.height = 52,
+    this.height = VynicTouchTargets.posDesktop,
   });
 
   final String label;
@@ -647,7 +719,7 @@ class _PaneTab extends StatelessWidget {
           VynicFloorTokens.switchButtonRadius,
         ),
         child: Container(
-          height: 36,
+          height: VynicTouchTargets.posDesktop,
           alignment: Alignment.center,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(

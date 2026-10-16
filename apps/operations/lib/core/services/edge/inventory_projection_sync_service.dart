@@ -69,8 +69,10 @@ class InventoryProjectionClient {
 class InventoryProjectionSyncService {
   InventoryProjectionSyncService({
     InventoryProjectionClient? client,
+    SaleConsumptionSyncService? effects,
     this.refreshInterval = const Duration(minutes: 1),
-  }) : _client = client ?? InventoryProjectionClient();
+  }) : _client = client ?? InventoryProjectionClient(),
+       _effects = effects ?? SaleConsumptionSyncService();
 
   static InventoryProjectionSyncService? _instance;
   static InventoryProjectionSyncService instance() =>
@@ -82,7 +84,7 @@ class InventoryProjectionSyncService {
   }
 
   final InventoryProjectionClient _client;
-  final SaleConsumptionSyncService _effects = SaleConsumptionSyncService();
+  final SaleConsumptionSyncService _effects;
   final Duration refreshInterval;
   Timer? _timer;
   bool _running = false;

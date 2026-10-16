@@ -1,3 +1,4 @@
+import 'package:vynic/core/ui/pos_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:vynic/apps/windows_pos/widgets/admin/admin_surface.dart';
 import 'package:intl/intl.dart';
@@ -285,6 +286,7 @@ class _AdminSalesReportSectionState extends State<AdminSalesReportSection> {
                   ),
                 ),
                 style: const TextStyle(
+                  fontFamily: PosTheme.fontFamily,
                   color: _text,
                   fontWeight: FontWeight.w600,
                   fontSize: 13,
@@ -392,20 +394,22 @@ class _AdminSalesReportSectionState extends State<AdminSalesReportSection> {
       ),
     ];
 
-    final isMobile = MediaQuery.of(context).size.width < 600;
-    return Wrap(
-      spacing: 10,
-      runSpacing: 10,
-      children: cards
-          .map(
-            (c) => SizedBox(
-              width: isMobile
-                  ? (MediaQuery.of(context).size.width - 42) / 2
-                  : 220,
-              child: c,
-            ),
-          )
-          .toList(),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final columns = constraints.maxWidth >= 1200
+            ? 6
+            : constraints.maxWidth >= 660
+            ? 3
+            : 2;
+        final width = (constraints.maxWidth - (columns - 1) * 12) / columns;
+        return Wrap(
+          spacing: 12,
+          runSpacing: 12,
+          children: [
+            for (final card in cards) SizedBox(width: width, child: card),
+          ],
+        );
+      },
     );
   }
 
@@ -422,13 +426,6 @@ class _AdminSalesReportSectionState extends State<AdminSalesReportSection> {
         color: _card,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: _border),
-        boxShadow: [
-          BoxShadow(
-            color: color.withValues(alpha: 0.12),
-            blurRadius: 14,
-            offset: const Offset(0, 6),
-          ),
-        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

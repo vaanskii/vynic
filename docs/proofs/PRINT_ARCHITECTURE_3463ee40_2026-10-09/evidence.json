@@ -1,0 +1,529 @@
+{
+  "version": 1,
+  "date": "2026-10-09",
+  "timezone": "Asia/Tbilisi",
+  "branch": "codex/docker-deployment-foundation",
+  "head": "3463ee406184fec7f53818416e11d0e5f5602c87",
+  "status": "NOT_DONE",
+  "productionAdmission": "HELD",
+  "physicalActivation": "HELD",
+  "unsafeSameRawTakeoverEnabled": false,
+  "sourceManifest": "final-source-manifest.json",
+  "sourceFiles": 173,
+  "sourceDrift": [],
+  "normal": {
+    "logs": [
+      "all-printer-regressions.jsonl",
+      "final-affected-tests.jsonl",
+      "final-local-tests.jsonl"
+    ],
+    "records": {
+      "pass": 519,
+      "skip": 5
+    },
+    "topLevel": {
+      "pass": 154,
+      "skip": 5
+    },
+    "skips": [
+      {
+        "package": "vynic.local/edge/internal/printqueue",
+        "test": "TestQueueTCPKillChild"
+      },
+      {
+        "package": "vynic.local/edge/internal/printeragent",
+        "test": "TestPrinterAgentProcess"
+      },
+      {
+        "package": "vynic.local/edge/internal/printcluster",
+        "test": "TestRaftProcessFixture"
+      },
+      {
+        "package": "vynic.local/edge/internal/printcluster",
+        "test": "TestStationSoftwarePerformance"
+      },
+      {
+        "package": "vynic.local/edge/internal/printcluster",
+        "test": "TestStationSpoolProcessChild"
+      }
+    ],
+    "packages": {
+      "vynic.local/edge/internal/printeligibility": "pass",
+      "vynic.local/edge/internal/printtransport": "pass",
+      "vynic.local/edge/internal/printstation": "pass",
+      "vynic.local/edge/internal/printerprovisioning": "pass",
+      "vynic.local/edge/internal/printeragent": "pass",
+      "vynic.local/edge/internal/printhost": "pass",
+      "vynic.local/edge/cmd/printer-agent": "pass",
+      "vynic.local/edge/internal/printqueue": "pass",
+      "vynic.local/edge/internal/printerdaemon": "pass",
+      "vynic.local/edge/internal/printcluster": "pass"
+    }
+  },
+  "race": {
+    "logs": [
+      "final-race-tests.jsonl",
+      "final-local-race.jsonl"
+    ],
+    "records": {
+      "pass": 42,
+      "skip": 2
+    },
+    "topLevel": {
+      "pass": 23,
+      "skip": 2
+    },
+    "skips": [
+      {
+        "package": "vynic.local/edge/internal/printcluster",
+        "test": "TestStationSoftwarePerformance"
+      },
+      {
+        "package": "vynic.local/edge/internal/printcluster",
+        "test": "TestStationSpoolProcessChild"
+      }
+    ],
+    "packages": {
+      "vynic.local/edge/internal/printstation": "pass",
+      "vynic.local/edge/internal/printcluster": "pass"
+    }
+  },
+  "windows": {
+    "physicalTests": "NOT_RUN",
+    "architecture": "Arm64",
+    "identity": "VANSKI\\vaanskii",
+    "scmTests": "NOT_RUN",
+    "results": [
+      {
+        "exitCode": 0,
+        "regex": "^Test",
+        "durationSeconds": 0.054758999999999995,
+        "package": "printstation"
+      },
+      {
+        "exitCode": 0,
+        "regex": "^Test(Station|LocalStation)",
+        "durationSeconds": 20.2535487,
+        "package": "printcluster"
+      }
+    ],
+    "work": "C:\\Users\\vaanskii\\AppData\\Local\\Temp\\vynic-print-station-84cf6949c5254889ae1877f640da147a",
+    "sid": "S-1-5-21-611125631-3759947118-1641436196-1000",
+    "records": {
+      "printcluster.stdout.log": {
+        "PASS": 17,
+        "SKIP": 2
+      },
+      "printstation.stdout.log": {
+        "PASS": 25
+      }
+    }
+  },
+  "performance": [
+    {
+      "allNodesReopenAndElectionMs": 1370.793,
+      "allocatedBytes": 2124328,
+      "controllerBeginCommitMs": {
+        "max": 16.073,
+        "min": 14.728,
+        "p50": 16.073
+      },
+      "heapAllocDeltaBytes": -8440,
+      "jobs": 2,
+      "majorityResultCommitMs": {
+        "max": 17.138,
+        "min": 16.657,
+        "p50": 17.138
+      },
+      "payloadBytes": 4096,
+      "physicalThroughput": "NOT_MEASURED",
+      "replicaDiskGrowthBytes": 361792,
+      "sources": 1,
+      "stations": 2,
+      "submissionIncludingMajorityFinalizeMs": {
+        "max": 39.874,
+        "min": 33.863,
+        "p50": 39.874
+      },
+      "voters": 1
+    },
+    {
+      "allNodesReopenAndElectionMs": 1937.327,
+      "allocatedBytes": 143559376,
+      "controllerBeginCommitMs": {
+        "max": 29.262,
+        "min": 27.82,
+        "p50": 29.262
+      },
+      "heapAllocDeltaBytes": 4853792,
+      "jobs": 2,
+      "majorityResultCommitMs": {
+        "max": 26.951,
+        "min": 24.512,
+        "p50": 26.951
+      },
+      "payloadBytes": 524288,
+      "physicalThroughput": "NOT_MEASURED",
+      "replicaDiskGrowthBytes": 12363656,
+      "sources": 1,
+      "stations": 2,
+      "submissionIncludingMajorityFinalizeMs": {
+        "max": 138.219,
+        "min": 130.133,
+        "p50": 138.219
+      },
+      "voters": 1
+    },
+    {
+      "allNodesReopenAndElectionMs": 1610.318,
+      "allocatedBytes": 34038184,
+      "controllerBeginCommitMs": {
+        "max": 48.765,
+        "min": 31.86,
+        "p50": 42.793
+      },
+      "heapAllocDeltaBytes": -1454088,
+      "jobs": 6,
+      "majorityResultCommitMs": {
+        "max": 48.334,
+        "min": 29.816,
+        "p50": 39.943
+      },
+      "payloadBytes": 4096,
+      "physicalThroughput": "NOT_MEASURED",
+      "replicaDiskGrowthBytes": 4970048,
+      "sources": 3,
+      "stations": 2,
+      "submissionIncludingMajorityFinalizeMs": {
+        "max": 219.716,
+        "min": 186.749,
+        "p50": 197.06
+      },
+      "voters": 3
+    },
+    {
+      "allNodesReopenAndElectionMs": 1376.644,
+      "allocatedBytes": 2901165536,
+      "controllerBeginCommitMs": {
+        "max": 81.411,
+        "min": 60.588,
+        "p50": 64.894
+      },
+      "heapAllocDeltaBytes": 37271880,
+      "jobs": 6,
+      "majorityResultCommitMs": {
+        "max": 73.632,
+        "min": 60.337,
+        "p50": 68.72
+      },
+      "payloadBytes": 524288,
+      "physicalThroughput": "NOT_MEASURED",
+      "replicaDiskGrowthBytes": 74373552,
+      "sources": 3,
+      "stations": 2,
+      "submissionIncludingMajorityFinalizeMs": {
+        "max": 669.142,
+        "min": 416.142,
+        "p50": 595.861
+      },
+      "voters": 3
+    },
+    {
+      "allNodesReopenAndElectionMs": 1479.2,
+      "allocatedBytes": 257172008,
+      "controllerBeginCommitMs": {
+        "max": 45.244,
+        "min": 30.039,
+        "p50": 35.183
+      },
+      "heapAllocDeltaBytes": -9837456,
+      "jobs": 20,
+      "majorityResultCommitMs": {
+        "max": 52.777,
+        "min": 32.636,
+        "p50": 39.412
+      },
+      "payloadBytes": 4096,
+      "physicalThroughput": "NOT_MEASURED",
+      "replicaDiskGrowthBytes": 16194504,
+      "sources": 10,
+      "stations": 2,
+      "submissionIncludingMajorityFinalizeMs": {
+        "max": 456.593,
+        "min": 377.286,
+        "p50": 428.511
+      },
+      "voters": 3
+    },
+    {
+      "allNodesReopenAndElectionMs": 1641.088,
+      "allocatedBytes": 29785184320,
+      "controllerBeginCommitMs": {
+        "max": 409.482,
+        "min": 136.938,
+        "p50": 233.46
+      },
+      "heapAllocDeltaBytes": 157117080,
+      "jobs": 20,
+      "majorityResultCommitMs": {
+        "max": 266.86,
+        "min": 189.593,
+        "p50": 228.174
+      },
+      "payloadBytes": 524288,
+      "physicalThroughput": "NOT_MEASURED",
+      "replicaDiskGrowthBytes": 248439616,
+      "sources": 10,
+      "stations": 2,
+      "submissionIncludingMajorityFinalizeMs": {
+        "max": 4118.038,
+        "min": 1727.074,
+        "p50": 2754.787
+      },
+      "voters": 3
+    }
+  ],
+  "performanceSource": "source-before-local-alias-fix.json",
+  "performanceLimit": "One Mac, all replicas in-process; software overhead, not printer or deployed LAN throughput. Final change only fixes LOCAL directory alias exclusion.",
+  "softwareMatrix": [
+    {
+      "case": "1 POS + local",
+      "status": "PASS_COMPONENT",
+      "evidence": "TestLocalStationSpoolReopensWithoutRaft"
+    },
+    {
+      "case": "1 POS + shared station",
+      "status": "PASS_COMPONENT",
+      "evidence": "TestStationReplicatedTopologyMatrix/1"
+    },
+    {
+      "case": "2 POS shared kitchen",
+      "status": "PASS_COMPONENT_NO_HA_CLAIM",
+      "evidence": "TestStationReplicatedTopologyMatrix/2"
+    },
+    {
+      "case": "3 POS shared kitchen",
+      "status": "PASS_COMPONENT",
+      "evidence": "TestStationReplicatedTopologyMatrix/3"
+    },
+    {
+      "case": "4 POS / 3 voters + client",
+      "status": "PASS_COMPONENT",
+      "evidence": "TestStationReplicatedTopologyMatrix/4"
+    },
+    {
+      "case": "10 POS / 3 voters + clients",
+      "status": "PASS_COMPONENT",
+      "evidence": "TestStationReplicatedTopologyMatrix/10"
+    },
+    {
+      "case": "all LOCAL only",
+      "status": "PASS_DOMAIN_AND_LOCAL_COMPONENT",
+      "evidence": "TestTopologyMatrix; TestLocalScopeAndAllLocal"
+    },
+    {
+      "case": "mixed shared production and local receipts",
+      "status": "PASS_DOMAIN",
+      "evidence": "TestMixedSharedProductionAndIndependentLocalReceipts"
+    },
+    {
+      "case": "Kitchen + Bar independent",
+      "status": "PASS_SYNTHETIC_DISPATCH",
+      "evidence": "TestStationBlockedKitchenControllerDoesNotBlockBar"
+    },
+    {
+      "case": "primary unavailable before send -> backup",
+      "status": "PASS_DOMAIN_AND_SYNTHETIC_DISPATCH",
+      "evidence": "TestUnavailableControllerSkipRequiresNoDispatchReservation; TestStationControllersDispatchFallbackInFIFOOrder"
+    },
+    {
+      "case": "Bar continues while Kitchen unavailable",
+      "status": "PASS_SYNTHETIC_DISPATCH",
+      "evidence": "TestStationBlockedKitchenControllerDoesNotBlockBar"
+    },
+    {
+      "case": "lost submit ACK",
+      "status": "PASS_COMPONENT",
+      "evidence": "TestStationReplicatedTopologyMatrix; TestStationReplicaLossLeaderLossRejoinAndMinority"
+    },
+    {
+      "case": "duplicate ID/retry",
+      "status": "PASS_COMPONENT",
+      "evidence": "TestRestartAndLostACKRetainImmutableIdentity"
+    },
+    {
+      "case": "Go process restart",
+      "status": "PASS_PROCESS",
+      "evidence": "TestStationSpoolProcessKillAndIndependentRestart"
+    },
+    {
+      "case": "Flutter closes while queue nonempty",
+      "status": "NOT_RUN_END_TO_END_UNINTEGRATED",
+      "evidence": "Go component is independent; normal Flutter admission is not attached"
+    },
+    {
+      "case": "controller restart",
+      "status": "PASS_LOCAL_COMPONENT_ONLY",
+      "evidence": "TestStationSpoolProcessKillAndIndependentRestart; no installed service tested"
+    },
+    {
+      "case": "queue restored",
+      "status": "PASS_COMPONENT",
+      "evidence": "TestLocalStationSpoolReopensWithoutRaft"
+    },
+    {
+      "case": "one replica dies",
+      "status": "PASS_COMPONENT",
+      "evidence": "TestStationReplicaLossLeaderLossRejoinAndMinority"
+    },
+    {
+      "case": "leader dies",
+      "status": "PASS_COMPONENT_AND_RETAINED_PROCESS_TEST",
+      "evidence": "TestStationReplicaLossLeaderLossRejoinAndMinority; TestThreeProcessSIGKILLLeaderAndFourPOSRelayRecovery"
+    },
+    {
+      "case": "replica rejoins",
+      "status": "PASS_COMPONENT",
+      "evidence": "TestStationReplicaLossLeaderLossRejoinAndMinority"
+    },
+    {
+      "case": "minority cannot commit",
+      "status": "PASS_COMPONENT",
+      "evidence": "TestStationReplicaLossLeaderLossRejoinAndMinority"
+    },
+    {
+      "case": "UNCERTAIN primary",
+      "status": "PASS_DOMAIN",
+      "evidence": "TestUncertainNeverFallsBackOrRetries"
+    },
+    {
+      "case": "manual reprint",
+      "status": "PASS_DOMAIN_ONLY",
+      "evidence": "TestManualReprintAuditAndOriginalUnchanged; production Staff/reconciliation bridge pending"
+    },
+    {
+      "case": "backup blocked after UNCERTAIN",
+      "status": "PASS_SYNTHETIC_DISPATCH",
+      "evidence": "TestStationBlockedKitchenControllerDoesNotBlockBar"
+    },
+    {
+      "case": "FIFO backup ordering",
+      "status": "PASS_SYNTHETIC_DISPATCH",
+      "evidence": "TestStationControllersDispatchFallbackInFIFOOrder"
+    },
+    {
+      "case": "different stations independent",
+      "status": "PASS_SYNTHETIC_DISPATCH",
+      "evidence": "TestStationBlockedKitchenControllerDoesNotBlockBar"
+    },
+    {
+      "case": "wrong Venue rejected",
+      "status": "PASS_COMPONENT",
+      "evidence": "TestStationMalformedOversizedAndWrongVenue"
+    },
+    {
+      "case": "unauthenticated client rejected",
+      "status": "PASS_RETAINED_LOCAL_RPC_ONLY",
+      "evidence": "TestFreshMutualTLSClientScopePinRevocationAndProtocol; no production shared LAN API exists"
+    },
+    {
+      "case": "oversized/malformed rejected",
+      "status": "PASS_COMPONENT",
+      "evidence": "TestStationMalformedOversizedAndWrongVenue"
+    },
+    {
+      "case": "config change with queued jobs",
+      "status": "PASS_DOMAIN",
+      "evidence": "TestConfigurationAndAuthorityFailClosed"
+    },
+    {
+      "case": "service version mismatch",
+      "status": "PASS_RETAINED_LOCAL_RPC",
+      "evidence": "TestFreshMutualTLSClientScopePinRevocationAndProtocol"
+    },
+    {
+      "case": "LOCAL root alias duplicate owner",
+      "status": "PASS_COMPONENT",
+      "evidence": "TestLocalStationRootAliasCannotDuplicateOwner"
+    }
+  ],
+  "physicalMatrix": [
+    {
+      "case": "controller machine power loss",
+      "status": "NOT_RUN"
+    },
+    {
+      "case": "Ethernet cable pull",
+      "status": "NOT_RUN"
+    },
+    {
+      "case": "printer power loss",
+      "status": "NOT_RUN"
+    },
+    {
+      "case": "paper out",
+      "status": "NOT_RUN"
+    },
+    {
+      "case": "printer cable removal",
+      "status": "NOT_RUN"
+    },
+    {
+      "case": "switch/network partition",
+      "status": "NOT_RUN"
+    },
+    {
+      "case": "service kill during physical write",
+      "status": "NOT_RUN"
+    },
+    {
+      "case": "failure before physical socket write",
+      "status": "NOT_RUN"
+    },
+    {
+      "case": "failure during physical write",
+      "status": "NOT_RUN"
+    },
+    {
+      "case": "failure after bytes accepted by physical printer",
+      "status": "NOT_RUN"
+    },
+    {
+      "case": "cutter",
+      "status": "NOT_RUN"
+    },
+    {
+      "case": "optional beep",
+      "status": "NOT_RUN"
+    },
+    {
+      "case": "Windows reboot",
+      "status": "NOT_RUN"
+    },
+    {
+      "case": "installed service restart",
+      "status": "NOT_RUN"
+    },
+    {
+      "case": "primary physical printer failure",
+      "status": "NOT_RUN"
+    },
+    {
+      "case": "physical backup printer fallback",
+      "status": "NOT_RUN"
+    }
+  ],
+  "softwareGaps": [
+    "production normalized storage and retention",
+    "signed station/scope publication and configuration UI",
+    "production issuer/protected authorization bridge",
+    "authenticated LAN and normal Flutter/local RPC station admission",
+    "retained controller receipts/drain and Staff reconciliation",
+    "Hive writer cutover/import/rollback adapter",
+    "automatic SCM startup/recovery and service-principal qualification"
+  ],
+  "vet": "PASS",
+  "diffCheck": "PASS",
+  "commits": [],
+  "pushes": []
+}

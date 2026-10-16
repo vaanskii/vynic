@@ -1,0 +1,101 @@
+{
+  "verdict": "PASS bounded isolated nonphysical queue source review; no remaining identified P1/P2 in reviewed scope",
+  "manifest_sha256": "31760c3b9df3913c241d8f8e9aaffc3b032f7d34c661b1374dfa0c5a63781795",
+  "files": [
+    {
+      "before": null,
+      "bytes": 4999,
+      "path": "apps/edge/internal/printqueue/atomic_test.go",
+      "sha256": "c08336fea3436945cce4d3cdba7dd42eec0888527acc9465a1cd200ce64d3c31"
+    },
+    {
+      "before": null,
+      "bytes": 7733,
+      "path": "apps/edge/internal/printqueue/crash_unix_test.go",
+      "sha256": "2f8e544f1d3d3e988a291fc8aa5f30f43f724089b0c693d4adbc0e22e004aacf"
+    },
+    {
+      "before": null,
+      "bytes": 20479,
+      "path": "apps/edge/internal/printqueue/queue_test.go",
+      "sha256": "94e518d9e9d45e1ab33c94c85138dab0acd5ea4266c01f7e169be5e27bc51f6b"
+    },
+    {
+      "before": null,
+      "bytes": 9441,
+      "path": "apps/edge/internal/printqueue/relay_test.go",
+      "sha256": "461fecdc579447f719d5a96432bb392464db52bdbc7a78abafc62b9855a01eae"
+    },
+    {
+      "before": null,
+      "bytes": 8324,
+      "path": "apps/edge/internal/printqueue/review_test.go",
+      "sha256": "2fe38f3b959c29a35b1eef20d906c1839d7da17310c5e187d010a4d075e3e32e"
+    },
+    {
+      "before": null,
+      "bytes": 9151,
+      "path": "apps/edge/internal/printqueue/state.go",
+      "sha256": "e8fe7a2133b28750c666177d4da42fbb805cf28b0a9206604553db3ac48d2c99"
+    },
+    {
+      "before": null,
+      "bytes": 14505,
+      "path": "apps/edge/internal/printqueue/store.go",
+      "sha256": "7cb4255b3a6e7ccab29f918b7050db79231773ab970592221abfaf2bc4f98280"
+    },
+    {
+      "before": null,
+      "bytes": 1415,
+      "path": "apps/edge/internal/printqueue/testdata/dart_tcp.json",
+      "sha256": "51eb907f6b32ad2088d0914c559ba8ad7b1bdd2c54c62fa2820b00ec53916889"
+    },
+    {
+      "before": null,
+      "bytes": 1454,
+      "path": "apps/edge/internal/printqueue/testdata/dart_windowsSpooler.json",
+      "sha256": "f40373faa1cad1355db125d910b9dd2413fa010a5000554594e02dbc617213f7"
+    },
+    {
+      "before": null,
+      "bytes": 15102,
+      "path": "apps/edge/internal/printqueue/types.go",
+      "sha256": "11b947eafa08ed481e5d9f4cb71fbf45063c6c15c03f94e6db56f9b7ec41ea25"
+    },
+    {
+      "before": null,
+      "bytes": 8040,
+      "path": "apps/edge/internal/printqueue/worker.go",
+      "sha256": "afa6beeddac7bce886e3c5d5576ca9416f281e7d707dd18c50c7cf2cab30006f"
+    },
+    {
+      "before": null,
+      "bytes": 7646,
+      "path": "apps/edge/internal/store/migrations/005_shared_print_queue.sql",
+      "sha256": "35834d0ffe04dda47f4abade9ac393296652c3bba85f822be1a2759722ed69fc"
+    }
+  ],
+  "closed_findings": [
+    "JSON keys exact case",
+    "NotSent durable completion retained claim recovered",
+    "Contradictory JobID>0/NotSent normalized uncertain",
+    "Guard acquired before durable claim; contention preserves queued head",
+    "Primary language/profile strictly implemented; optional malformed beep skipped",
+    "Single database connection enforced for PRAGMA durability probe"
+  ],
+  "evidence": {
+    "owner_final_race_log_sha256": "99a7a555532303ddea3ff9c8b3ef3afefe84b1923b98b04dd79233fdb017e98d",
+    "owner_final_log_independently_parsed": "22 top-level tests passed, package passed, no failure events",
+    "independent_targeted_test_log_sha256": "9fe6ad7b6df198f56482128cff7efcf148e42fd42c7e078c43d94fad78a52282",
+    "independent_targeted_tests": 5
+  },
+  "limits": [
+    "Physical sender refused; no real paper/spooler or production activation proof",
+    "Loopback relay HTTP is explicit synthetic test-only protocol, not production forwarding/authentication",
+    "LOCAL or qualified gateway primitive, not replicated VENUE_SHARED consensus",
+    "No lease takeover; shared RAW downstream fencing unresolved",
+    "Process owner lock protects same canonical path, not arbitrary hardlink/cloned database roots",
+    "Windows helper orphan/semaphore behavior requires separate actual Windows qualification",
+    "Schema6 migration and old-reader rollback compatibility need controlled deployment gate"
+  ]
+}

@@ -1,0 +1,20 @@
+{
+  "exitCode": 0,
+  "command": [
+    "go",
+    "build",
+    "-mod=readonly",
+    "./..."
+  ],
+  "environmentOverrides": {
+    "GOOS": "windows",
+    "GOARCH": "amd64",
+    "CGO_ENABLED": "0",
+    "GOPROXY": "off"
+  },
+  "workingDirectory": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/go-final-validation/apps/edge",
+  "output": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/metadata/go-final-windows-build.log",
+  "stderr": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/metadata/go-final-windows-build.stderr",
+  "hardwareExecution": false,
+  "sourceReceipt": "go-final-source-snapshot.json"
+}

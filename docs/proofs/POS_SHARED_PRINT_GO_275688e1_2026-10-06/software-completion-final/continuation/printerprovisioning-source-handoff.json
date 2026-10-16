@@ -1,0 +1,14 @@
+{
+  "schema": 1,
+  "status": "complete-source-validation-only",
+  "manifest": "printerprovisioning-owned-source-hashes.json",
+  "manifestSHA256": "9080f12d87eab43ef601192efb11b89543ff5f3c2887b8b11ba808cfa62d06d5",
+  "qualification": "verification/printerprovisioning-qualification.json",
+  "qualificationSHA256": "c08bb37d8ca192cd7982d571d6c360142c5dd143e6242d2006b453a4e6c55e51",
+  "independentReview": "verification/printerprovisioning-independent-review.json",
+  "independentReviewSHA256": "efee605a225833838925b4b9901bb02209fc336565f212f8774af80a99073aff",
+  "oldSourceProofAndRuntimeUnchanged": true,
+  "freshNativeWindowsStatus": "not-run-pending-current-scope-approval",
+  "approvalBlock": "Parent reported automatic approval review rejected the read-only VM current-user preflight because retained15:24 assistant quote was insufficient for this continuation. No alternate VM commands issued. Prior historical native packets are retained unchanged.",
+  "futureWindowsNextStep": "After parent clearance and final daemon/contracts/11-key profiles snapshot, stage matched arm64 execution and amd64 compile/bundle; no SCM/install/physical actions."
+}

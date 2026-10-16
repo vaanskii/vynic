@@ -2,9 +2,47 @@
 {{ $base := env "BASE_DOMAIN" }}
 {{ $custom := env "CUSTOM_HOST" }}
 {{ $tls := eq (env "PROXY_TLS") "true" }}
+{{ $lan := eq (env "NATIVE_LAN") "true" }}
+{{ $nativeHost := printf "api.%s" $base }}
+{{ $nativePaths := "(PathPrefix(`/edge/`) || PathPrefix(`/mobile/`) || PathPrefix(`/auth/`) || PathPrefix(`/sync/`) || PathPrefix(`/socket.io/`) || Path(`/healthz`))" }}
 {{ $hosts := printf "(Host(`%s`) || HostRegexp(`^[a-z0-9-]+\\.%s$`) || Host(`%s`))" $base (replace "." "\\." $base) $custom }}
 http:
   routers:
+    # Native POS/Manager origin (api.<base>). Highest priority so the SaaS wildcard
+    # can never render a website here. Only the native route families reach Nest;
+    # every other path (including /api, /platform, /customer) is rewritten to a
+    # fixed unmatched path so the backend, not a frontend, answers 404.
+    native-api:
+      rule: 'Host(`{{ $nativeHost }}`) && {{ $nativePaths }}'
+      priority: 500
+      entryPoints: [{{ if $tls }}websecure{{ else }}web{{ end }}]
+{{ if $tls }}
+      tls: {}
+{{ end }}
+      service: backend
+    native-fallback:
+      rule: 'Host(`{{ $nativeHost }}`)'
+      priority: 450
+      entryPoints: [{{ if $tls }}websecure{{ else }}web{{ end }}]
+{{ if $tls }}
+      tls: {}
+{{ end }}
+      middlewares: [native-not-native]
+      service: backend
+{{ if $lan }}
+    # Opt-in LAN listener (compose.lan.yaml). No Host rule: LAN clients use an IP.
+    native-lan-api:
+      rule: '{{ $nativePaths }}'
+      priority: 500
+      entryPoints: [native]
+      service: backend
+    native-lan-fallback:
+      rule: 'PathPrefix(`/`)'
+      priority: 450
+      entryPoints: [native]
+      middlewares: [native-not-native]
+      service: backend
+{{ end }}
     api:
       rule: '{{ $hosts }} && (Path(`/api`) || PathPrefix(`/api/`) || PathPrefix(`/media/website-logos/`))'
       priority: 400
@@ -53,6 +91,10 @@ http:
       tls: {}
 {{ end }}
       service: saas
+  middlewares:
+    native-not-native:
+      replacePath:
+        path: /__vynic_not_a_native_route__
   services:
     backend:
       loadBalancer:

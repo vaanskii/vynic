@@ -1,0 +1,8 @@
+00:00 +0: loading /Users/vaanskii/Developer/vynic/apps/operations/test/widget/pos_home_correction_test.dart
+00:00 +0: (setUpAll)
+00:00 +0: connected workflows retain actual Home navigation at 1024
+00:01 +1: restrained full-width table view 1024x768
+00:01 +2: restrained full-width table view 1440x900
+00:01 +3: empty stored floor is explicit, never fabricated tables or a narrow blank grid
+00:01 +4: (tearDownAll)
+00:01 +4: All tests passed!

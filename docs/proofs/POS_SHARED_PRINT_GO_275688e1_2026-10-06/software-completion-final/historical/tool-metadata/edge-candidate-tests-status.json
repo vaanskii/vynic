@@ -1,0 +1,1 @@
+{"exitCode": 0, "command": "GOPROXY=off go test -mod=readonly -count=1 -json ./...", "source": "security-candidate/apps/edge", "networkScope": "synthetic httptest/TLS listeners on ephemeral loopback only; package acquisition disabled", "earlierSandboxRestrictedRunRetained": true}

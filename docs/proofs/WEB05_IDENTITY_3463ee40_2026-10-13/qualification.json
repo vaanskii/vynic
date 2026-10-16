@@ -1,0 +1,120 @@
+{
+  "status": "PASS_WEB05_SOURCE_AND_LOCAL_CANDIDATE_QUALIFICATION",
+  "qualifiedAtUtc": "2026-10-14T10:39:51.052060+00:00",
+  "head": "3463ee406184fec7f53818416e11d0e5f5602c87",
+  "uncommitted": true,
+  "scope": "Stable public Venue identity + reviewed public artifact manifest/HTML + operator five facts; preserve existing public status behavior",
+  "checks": [
+    {
+      "name": "backend-aggregate",
+      "numPassedTests": 864,
+      "numFailedTests": 0,
+      "numPendingTests": 850,
+      "numTotalTests": 1714,
+      "success": true
+    },
+    {
+      "name": "custom-pg-http",
+      "numPassedTests": 17,
+      "numFailedTests": 0,
+      "numPendingTests": 0,
+      "numTotalTests": 17,
+      "success": true
+    },
+    {
+      "name": "web07-pg-regression",
+      "numPassedTests": 8,
+      "numFailedTests": 0,
+      "numPendingTests": 0,
+      "numTotalTests": 8,
+      "success": true
+    },
+    {
+      "name": "frontend-aggregate",
+      "numPassedTests": 246,
+      "numFailedTests": 0,
+      "numPendingTests": 0,
+      "numTotalTests": 246,
+      "success": true
+    }
+  ],
+  "backendCaseRecordsExecuted": 889,
+  "optInCasesNotExecutedThisPhase": 825,
+  "runtimeCheckerCases": 21,
+  "newOperatorUiCases": 13,
+  "sdkCases": 6,
+  "manifestNodeCases": 7,
+  "typesAndBuilds": {
+    "backend": "PASS",
+    "platform": "PASS",
+    "vankisi": "PASS",
+    "saas": "PASS",
+    "sdkTypes": "PASS",
+    "prismaValidation": "PASS"
+  },
+  "lint": {
+    "newImplementationAndUiTests": "PASS_ZERO_NEW_DIAGNOSTICS",
+    "apiTsInheritedErrors": 1,
+    "integrationInheritedErrors": 167,
+    "integrationInheritedWarnings": 9,
+    "integrationSameDiagnostics": true,
+    "apiTypeOnlyEmittedRuntimeJsIdentical": true
+  },
+  "migration": "75 fresh + populated 74->75; legacy values/statuses and historical checksums preserved",
+  "docker": "3 LOCAL candidates built, nginx syntax PASS, final runtime user 101; complete emitted file fingerprint matches Vankisi/SAAS; correct/wrong artifact HTTP classifications PASS",
+  "browser": {
+    "realComponentSyntheticApiSeam": true,
+    "widths": [
+      375,
+      768,
+      1440
+    ],
+    "horizontalOverflow": false,
+    "visibleFocus": true,
+    "wrongBuildRejected": true,
+    "failedNewCheckClearsPriorSuccess": true,
+    "retryAndSaveInvalidation": true,
+    "consoleErrors": 0,
+    "tab": "CLOSED",
+    "viewport": "RESET"
+  },
+  "gitDiffCheck": "PASS",
+  "cleanup": {
+    "ownedServices": {
+      "ownedPostgres": {
+        "port": 57888,
+        "listening": false
+      },
+      "ownedPreview": {
+        "port": 59846,
+        "listening": false
+      }
+    },
+    "temporaryContainers": "REMOVED",
+    "localCandidateImages": "RETAINED_FOR_REVIEW"
+  },
+  "boundaries": {
+    "deployed": false,
+    "pushed": false,
+    "committed": false,
+    "liveDataOrCredentialsChanged": false,
+    "liveServicesRestarted": false,
+    "publicPendingErrorServingChanged": false,
+    "productionAccepted": false,
+    "globalActivePublicGate": "UNCHANGED_REQUIRES_SEPARATE_APPROVAL"
+  },
+  "sourceHashes": "source-hashes.json",
+  "privateWork": "/tmp/vynic-web05-identity-zr_eb9j3",
+  "limitations": [
+    "On-demand metadata/HTML consistency is not signed remote attestation and does not hash every remote asset. Offline extraction checks the complete candidate public tree.",
+    "Local builds, Docker syntax, loopback artifact probe and synthetic browser QA do not establish production origin/DNS/TLS/provider/fleet/restore acceptance.",
+    "850 opt-in aggregate skips; focused CUSTOM and WEB07 cover 25 of them, leaving 825 not executed in this phase.",
+    "No global public status gate introduced; SETUP_PENDING/ERROR behavior remains as before.",
+    "Existing source migration presence and local candidate images are not deployment evidence."
+  ],
+  "nextIndependentSafeStep": "CustomWebsiteService.facts uses unordered BOG findFirst for the operator payment badge; use existing current-revision metadata selector in a separate read-only display fix.",
+  "parallelBoundaries": {
+    "POS02C": "Independent ongoing; not duplicated",
+    "INV01F2": "UNAPPROVED_UNTOUCHED"
+  }
+}

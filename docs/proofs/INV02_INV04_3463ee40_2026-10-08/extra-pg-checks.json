@@ -1,0 +1,17 @@
+[
+  {
+    "label": "backend-foundation-pg",
+    "exitCode": 0,
+    "command": [
+      "npm",
+      "test",
+      "--",
+      "--runInBand",
+      "--runTestsByPath",
+      "src/edge-foundation/edge-foundation.integration.spec.ts",
+      "--json",
+      "--outputFile",
+      "/tmp/vynic-inv02-inv04-qm0ykgjt/backend-foundation-pg-jest.json"
+    ]
+  }
+]

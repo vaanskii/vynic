@@ -1,0 +1,1 @@
+{"exitCode": 1, "command": "GOPROXY=off go test -mod=readonly -count=1 -json ./...", "source": "security-candidate/apps/edge"}

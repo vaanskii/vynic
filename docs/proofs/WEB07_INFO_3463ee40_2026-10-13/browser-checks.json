@@ -1,0 +1,89 @@
+{
+  "375": {
+    "clientWidth": 375,
+    "phones": [
+      {
+        "href": "tel:+995555123456",
+        "text": "+995 555 12 34 56"
+      },
+      {
+        "href": "tel:+995555123456",
+        "text": "+995 555 12 34 56"
+      }
+    ],
+    "scrollWidth": 375
+  },
+  "768": {
+    "clientWidth": 768,
+    "iframes": 0,
+    "phones": [
+      {
+        "href": "tel:+995555123456",
+        "text": "+995 555 12 34 56"
+      },
+      {
+        "href": "tel:+995555123456",
+        "text": "+995 555 12 34 56"
+      }
+    ],
+    "photos": [
+      {
+        "loaded": true,
+        "src": "/media/website-logos/b3aa76c0-de2b-4e70-b529-4c479cfd7f94.webp"
+      }
+    ],
+    "scrollWidth": 768,
+    "weekdays": [
+      "ორშაბათი",
+      "სამშაბათი",
+      "ოთხშაბათი",
+      "ხუთშაბათი",
+      "პარასკევი",
+      "შაბათი",
+      "კვირა"
+    ]
+  },
+  "1440": {
+    "clientWidth": 1440,
+    "iframes": 0,
+    "photos": [
+      {
+        "loaded": true,
+        "src": "/media/website-logos/b3aa76c0-de2b-4e70-b529-4c479cfd7f94.webp"
+      }
+    ],
+    "scrollWidth": 1440,
+    "weekdays": [
+      "Monday",
+      "Tuesday",
+      "Wednesday",
+      "Thursday",
+      "Friday",
+      "Saturday",
+      "Sunday"
+    ]
+  },
+  "off": {
+    "hours": 0,
+    "ownerPhotos": 0,
+    "telephoneLinks": 2
+  },
+  "error": {
+    "alerts": [
+      "რესტორნის მიმდინარე ინფორმაცია ვერ ჩაიტვირთა.ხელახლა ცდა"
+    ],
+    "focused": "ხელახლა ცდა",
+    "outline": "solid",
+    "outlineWidth": "2px",
+    "ownerPhotos": 0,
+    "telephoneLinks": 0
+  },
+  "wrong": {
+    "alerts": [
+      "რესტორნის მიმდინარე ინფორმაცია ვერ ჩაიტვირთა.ხელახლა ცდა"
+    ],
+    "hours": 0,
+    "ownerPhotos": 0,
+    "telephoneLinks": 0
+  }
+}

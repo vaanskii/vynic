@@ -1,3 +1,4 @@
+import 'package:vynic/core/ui/widgets/pos_dialog.dart';
 import 'package:vynic/core/ui/vynic_floor_tokens.dart';
 import 'package:vynic/core/widgets/pos_text.dart';
 import 'dart:ui';
@@ -11,7 +12,7 @@ Future<bool>? _activeConfirmation;
 /// Shared by Settings and the Windows close request (including Alt+F4).
 Future<bool> confirmPosQuit(BuildContext context, {PosQuit? quit}) {
   return _activeConfirmation ??=
-      showDialog<bool>(
+      showPosModal<bool>(
             context: context,
             barrierDismissible: false,
             builder: (_) => _QuitDialog(quit: quit ?? PosQuit.instance),

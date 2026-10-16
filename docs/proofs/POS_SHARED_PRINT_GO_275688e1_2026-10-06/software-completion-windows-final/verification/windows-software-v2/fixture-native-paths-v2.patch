@@ -1,0 +1,159 @@
+--- a/apps/operations/test/unit/printer_agent_runtime_profile_test.dart
++++ b/apps/operations/test/unit/printer_agent_runtime_profile_test.dart
+@@ -10,6 +10,9 @@
+ import '../support/pos02_developer_fixture.dart';
+ import '../support/pos02_fixture.dart';
+ import '../support/printer_agent_status_fixture.dart';
++
++String _fixturePath(Directory directory, String child) =>
++    File.fromUri(directory.uri.resolve(child)).path;
+ 
+ class _Connection implements PrinterAgentRuntimeConnection {
+   _Connection(this.result);
+@@ -49,10 +52,10 @@
+     const der = [1, 2, 3, 4, 5];
+     final pem =
+         '-----BEGIN CERTIFICATE-----\n${base64.encode(der)}\n-----END CERTIFICATE-----\n';
+-    await File('${root.path}/server.pem').writeAsString(pem);
+-    await File('${root.path}/client.pem').writeAsString(pem);
++    await File(_fixturePath(root, 'server.pem')).writeAsString(pem);
++    await File(_fixturePath(root, 'client.pem')).writeAsString(pem);
+     await File(
+-      '${root.path}/client-key.pem',
++      _fixturePath(root, 'client-key.pem'),
+     ).writeAsString('SYNTHETIC_UNIT_KEY_NO_CERTIFICATE_AUTHORITY');
+     json = {
+       'version': 1,
+@@ -61,13 +64,13 @@
+       'clientId': agentClient,
+       'currentDeviceInstallationId': agentDeviceInstallation,
+       'pins': agentPins().toJson(),
+-      'serverCertificatePath': '${root.path}/server.pem',
++      'serverCertificatePath': _fixturePath(root, 'server.pem'),
+       'serverCertificateSha256': sha256.convert(der).toString(),
+-      'clientCertificatePath': '${root.path}/client.pem',
+-      'clientPrivateKeyPath': '${root.path}/client-key.pem',
++      'clientCertificatePath': _fixturePath(root, 'client.pem'),
++      'clientPrivateKeyPath': _fixturePath(root, 'client-key.pem'),
+       'clientCertificateSha256': sha256.convert(der).toString(),
+     };
+-    profile = File('${root.path}/profile.json');
++    profile = File(_fixturePath(root, 'profile.json'));
+     await profile.writeAsString(jsonEncode(json));
+   });
+   tearDown(() async {
+@@ -146,7 +149,10 @@
+         ).toJson();
+         if (field == 'installation')
+           json['currentDeviceInstallationId'] = agentOther;
+-        json['clientPrivateKeyPath'] = '${root.path}/not-present-key.pem';
++        json['clientPrivateKeyPath'] = _fixturePath(
++          root,
++          'not-present-key.pem',
++        );
+         await profile.writeAsString(jsonEncode(json));
+         await expectLater(
+           source().health(),
+@@ -183,7 +189,7 @@
+     () async {
+       DeveloperAccess.lock();
+       await expectLater(
+-        source(name: '${root.path}/missing.json').health(),
++        source(name: _fixturePath(root, 'missing.json')).health(),
+         throwsA(runtimeFailure(PrinterAgentRuntimeFailure.scopeDenied)),
+       );
+       expect(connects, 0);
+@@ -286,16 +292,20 @@
+       'vynic_agent_profile_outside_',
+     );
+     addTearDown(() => outside.delete(recursive: true));
+-    await File('${outside.path}/key.pem').writeAsString('OUTSIDE_SYNTHETIC');
+-    await Link('${root.path}/linked-key.pem').create('${outside.path}/key.pem');
+-    json['clientPrivateKeyPath'] = '${root.path}/linked-key.pem';
++    await File(
++      _fixturePath(outside, 'key.pem'),
++    ).writeAsString('OUTSIDE_SYNTHETIC');
++    await Link(
++      _fixturePath(root, 'linked-key.pem'),
++    ).create(_fixturePath(outside, 'key.pem'));
++    json['clientPrivateKeyPath'] = _fixturePath(root, 'linked-key.pem');
+     await profile.writeAsString(jsonEncode(json));
+     await expectLater(
+       source().health(),
+       throwsA(isA<PrinterAgentRuntimeException>()),
+     );
+-    await Link('${root.path}/escape').create(outside.path);
+-    json['clientPrivateKeyPath'] = '${root.path}/escape/key.pem';
++    await Link(_fixturePath(root, 'escape')).create(outside.path);
++    json['clientPrivateKeyPath'] = _fixturePath(root, 'escape/key.pem');
+     await profile.writeAsString(jsonEncode(json));
+     await expectLater(source().health(), throwsA(invalidProfile()));
+     expect(connects, 0);
+@@ -350,7 +360,7 @@
+     () async {
+       connection = _Connection(() async {
+         await File(
+-          '${root.path}/client-key.pem',
++          _fixturePath(root, 'client-key.pem'),
+         ).writeAsString('CHANGED_SYNTHETIC_KEY');
+         return agentHealth();
+       });
+--- a/apps/operations/test/widget/printer_agent_status_card_test.dart
++++ b/apps/operations/test/widget/printer_agent_status_card_test.dart
+@@ -15,6 +15,9 @@
+ import '../support/printer_agent_status_fixture.dart';
+ 
+ /// Observes calls without replacing the profile loader or TLS client.
++String _fixturePath(Directory directory, String child) =>
++    File.fromUri(directory.uri.resolve(child)).path;
++
+ class _ActualHealthObservation implements PrinterAgentRuntimeHealthSource {
+   _ActualHealthObservation(this.runtime);
+   final PrinterAgentRuntimeProfile runtime;
+@@ -491,7 +494,7 @@
+         if (!started || stopped) return;
+         stopped = true;
+         await File(
+-          '${agentRoot.path}/stop',
++          _fixturePath(agentRoot, 'stop'),
+         ).writeAsString('synthetic UI proof');
+         final exit = await child.exitCode.timeout(
+           const Duration(seconds: 10),
+@@ -506,7 +509,7 @@
+ 
+       try {
+         await tester.runAsync(() async {
+-          agentRoot = await Directory('${root.path}/agent').create();
++          agentRoot = await Directory(_fixturePath(root, 'agent')).create();
+           child = await Process.start(
+             goFixture!,
+             ['-test.run=^TestPrinterAgentProcess\$', '-test.v'],
+@@ -516,7 +519,7 @@
+           output = child.stdout.transform(utf8.decoder).join();
+           errors = child.stderr.transform(utf8.decoder).join();
+           final deadline = DateTime.now().add(const Duration(seconds: 15));
+-          while (!await File('${agentRoot.path}/ready').exists()) {
++          while (!await File(_fixturePath(agentRoot, 'ready')).exists()) {
+             if (DateTime.now().isAfter(deadline)) {
+               child.kill();
+               throw StateError('Owned synthetic health fixture was not ready');
+@@ -525,7 +528,9 @@
+           }
+           final raw =
+               jsonDecode(
+-                    await File('${agentRoot.path}/profile.json').readAsString(),
++                    await File(
++                      _fixturePath(agentRoot, 'profile.json'),
++                    ).readAsString(),
+                   )
+                   as Map<String, dynamic>;
+           final pins = PrinterAgentPins.fromJson(
+@@ -546,7 +551,7 @@
+           );
+           observed = _ActualHealthObservation(
+             PrinterAgentRuntimeProfile(
+-              profilePath: '${agentRoot.path}/profile.json',
++              profilePath: _fixturePath(agentRoot, 'profile.json'),
+               bindingReader: () => binding,
+             ),
+           );

@@ -1,0 +1,7 @@
+{
+  "accountName": "NT AUTHORITY\\SYSTEM",
+  "sid": "S-1-5-18",
+  "isSystem": true,
+  "processArchitecture": "ARM64",
+  "localAppData": "C:\\WINDOWS\\system32\\config\\systemprofile\\AppData\\Local"
+}

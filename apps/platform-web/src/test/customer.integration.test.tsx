@@ -59,23 +59,49 @@ describe("Customer onboarding", () => {
     let attempts = 0;
     api.call.mockImplementation(async (path: string) => {
       if (path === "access-requests/plans") throw new Error("Unavailable");
-      if (++attempts === 1) throw new Error("გაგზავნა ვერ მოხერხდა. სცადეთ ხელახლა.");
+      if (++attempts === 1)
+        throw new Error("გაგზავნა ვერ მოხერხდა. სცადეთ ხელახლა.");
       return { received: true };
     });
-    render(<MemoryRouter><AccessRequest /></MemoryRouter>);
-    expect(await screen.findByRole("status")).toHaveTextContent("პაკეტების სია ვერ ჩაიტვირთა");
+    render(
+      <MemoryRouter>
+        <AccessRequest />
+      </MemoryRouter>,
+    );
+    expect(await screen.findByRole("status")).toHaveTextContent(
+      "პაკეტების სია ვერ ჩაიტვირთა",
+    );
     await user.type(screen.getByLabelText("თქვენი სახელი"), "Nino");
-    await user.type(screen.getByLabelText("რესტორნის / ბიზნესის სახელი"), "Test restaurant");
+    await user.type(
+      screen.getByLabelText("რესტორნის / ბიზნესის სახელი"),
+      "Test restaurant",
+    );
     await user.type(screen.getByLabelText("ელფოსტა"), "owner@test.invalid");
     await user.type(screen.getByLabelText("ტელეფონი"), "555123456");
-    await user.click(screen.getByText("დამატებითი ინფორმაცია", { selector: "summary" }));
-    await user.type(screen.getByLabelText("დამატებითი ინფორმაცია"), "Website only");
-    await user.click(screen.getByRole("button", { name: "განაცხადის გაგზავნა" }));
-    expect(await screen.findByRole("alert")).toHaveTextContent("სცადეთ ხელახლა");
+    await user.click(
+      screen.getByText("დამატებითი ინფორმაცია", { selector: "summary" }),
+    );
+    await user.type(
+      screen.getByLabelText("დამატებითი ინფორმაცია"),
+      "Website only",
+    );
+    await user.click(
+      screen.getByRole("button", { name: "განაცხადის გაგზავნა" }),
+    );
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "სცადეთ ხელახლა",
+    );
     expect(screen.getByLabelText("თქვენი სახელი")).toHaveValue("Nino");
-    await user.click(screen.getByRole("button", { name: "განაცხადის გაგზავნა" }));
-    expect(await screen.findByRole("heading", { name: "განაცხადი მიღებულია" })).toHaveFocus();
-    expect(api.call).toHaveBeenLastCalledWith("access-requests", expect.objectContaining({ requestedPlanId: "", note: "Website only" }));
+    await user.click(
+      screen.getByRole("button", { name: "განაცხადის გაგზავნა" }),
+    );
+    expect(
+      await screen.findByRole("heading", { name: "განაცხადი მიღებულია" }),
+    ).toHaveFocus();
+    expect(api.call).toHaveBeenLastCalledWith(
+      "access-requests",
+      expect.objectContaining({ requestedPlanId: "", note: "Website only" }),
+    );
   });
   it.each([
     "website",
@@ -88,6 +114,8 @@ describe("Customer onboarding", () => {
   ])("NO_PLAN hides paid forms on direct %s routes", async (section) => {
     api.session.mockReturnValue(true);
     api.call.mockImplementation(async (path: string) => {
+      if (path === "venues/a/website-payment-reviews?offset=0")
+        return { items: [], total: 0, offset: 0, limit: 25 };
       if (path !== "portal")
         throw new Error("Unexpected paid request: " + path);
       return {
@@ -115,10 +143,20 @@ describe("Customer onboarding", () => {
       </MemoryRouter>,
     );
     expect(
-      await screen.findByText("ამ პროდუქტის დასამატებლად განაახლეთ პაკეტი."),
+      await screen.findByText(
+        section === "payments"
+          ? "ონლაინ გადახდები თქვენს პაკეტში არ შედის"
+          : "ამ პროდუქტის დასამატებლად განაახლეთ პაკეტი.",
+      ),
     ).toBeVisible();
     expect(screen.queryByRole("textbox")).toBeNull();
-    expect(api.call.mock.calls.every((c) => c[0] === "portal")).toBe(true);
+    expect(
+      api.call.mock.calls.every(
+        (c) =>
+          c[0] === "portal" ||
+          c[0] === "venues/a/website-payment-reviews?offset=0",
+      ),
+    ).toBe(true);
   });
   it("saves enabled flags and per-printer ports and reports delivery honestly", async () => {
     const save = vi.fn().mockResolvedValue({});

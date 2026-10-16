@@ -1,0 +1,187 @@
+{
+  "schema": 1,
+  "createdAtUtc": "2026-10-06T18:17:53.498021+00:00",
+  "status": "PASS_REVIEWED_FROZEN_V2_WINDOWS_SOFTWARE_COMPLETION",
+  "references": {
+    "source": {
+      "path": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/final-cohort-v2-source.json",
+      "sha256": "faaaec2f1ece4f8259353666000eb4c0d3aee6143e73ae7fdf90772a937b581b",
+      "bytes": 208681
+    },
+    "uiOwned6": {
+      "path": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/metadata/printer-agent-ui-owned-hashes-v2.json",
+      "sha256": "26f0c6b7b363ffdbabc80e69209b5a18e67575342abe250301b214f7889f2c5c",
+      "bytes": 3961
+    },
+    "fixtureDelta": {
+      "path": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/windows-software-v2/fixture-native-paths-v2-final-source-receipt.json",
+      "sha256": "3d4e1153371a2c6daf08e193c7fd46050ead59dfc265b4be3ac1eb26e325ab40",
+      "bytes": 1645
+    },
+    "fixtureReview": {
+      "path": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/windows-software-v2/fixture-native-paths-v2-independent-review.json",
+      "sha256": "91b62022b8c73aa1641706ba0dfef155aafbdc90b7df20510b6e26767161fbb5",
+      "bytes": 2961
+    },
+    "preflightRetry": {
+      "path": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/windows-software-v2/preflight-retry-receipt.json",
+      "sha256": "351bae1ab6f72632abe0d09849db453362bcc5c83f66e35ed6507b53f540f10e",
+      "bytes": 3663
+    },
+    "flutterAndAnalysis": {
+      "path": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/windows-software-v2/flutter-v3-final-receipt.json",
+      "sha256": "f25fdd77b405b7b445e39ce1dd0cf15f153630542c140ab396a2b87721f21d60",
+      "bytes": 15513
+    },
+    "goPackagesAndShippedCLI": {
+      "path": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/windows-software-v2/go-packages-final-receipt.json",
+      "sha256": "60a07b83aa83d4e60cda75c6035715b8d1eb7dae4ef6225dfe1c242b182f06ae",
+      "bytes": 139134
+    },
+    "preparedPOSBuild": {
+      "path": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/windows-software-v2/pos-v3-final-receipt.json",
+      "sha256": "894cb1b768987050de6f708f4fdce5a399bf433094bca15ead33059b1622af29",
+      "bytes": 11194
+    },
+    "macFlutter": {
+      "path": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/software-v2-mac-retry/final-flutter-tests-v2-receipt.json",
+      "sha256": "14cd6235904bdafc04527f0b8b1e50bda70d237725b57684a23f6040e82efe8f",
+      "bytes": 3508
+    },
+    "macAnalysis": {
+      "path": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/software-v2-mac/final-flutter-analysis-receipt.json",
+      "sha256": "8bec0acca689418fffebc2dd6b9fe5d25f513f16161ff221f5d57baf4a2b915d",
+      "bytes": 4736
+    },
+    "currentWindowsStages": {
+      "path": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/windows-software-v2/windows-v3-runners-source-receipt.json",
+      "sha256": "44be0ebe199286b2f40bbcee5749b6fc8c6b92523bf03868ea6e89108f400054",
+      "bytes": 1927
+    }
+  },
+  "source": {
+    "files": 1109,
+    "sha256": "faaaec2f1ece4f8259353666000eb4c0d3aee6143e73ae7fdf90772a937b581b",
+    "finalFrozenHostFilesVerified": true,
+    "changesFromOriginalSoftwareCohort": [
+      "apps/operations/test/unit/printer_agent_runtime_profile_test.dart",
+      "apps/operations/test/widget/printer_agent_status_card_test.dart"
+    ],
+    "other1107FilesUnchanged": true,
+    "productionValidatorUIAndDependenciesUnchanged": true
+  },
+  "currentUser": {
+    "SID": "S-1-5-21-611125631-3759947118-1641436196-1000",
+    "user": "VANSKI\\vaanskii",
+    "guestArchitecture": "ARM64",
+    "SYSTEMRefused": true
+  },
+  "WindowsFlutter": {
+    "suites": 39,
+    "visiblePassed": 623,
+    "hiddenPassed": 51,
+    "skipped": 0,
+    "errorEvents": 0,
+    "doneSuccess": true,
+    "actualManualUIToRuntimePinnedMTLSToOfflinePassed": true,
+    "actualSymlinkAndDirectoryEscapeNegativePassed": true
+  },
+  "WindowsAnalysis": {
+    "selectedFiles": 68,
+    "exitCode": 0,
+    "noIssues": true
+  },
+  "WindowsGoPackages": {
+    "architectures": [
+      "ARM64-native",
+      "AMD64-emulated"
+    ],
+    "packageExecutions": 8,
+    "passRecords": 514,
+    "topLevelPass": 104,
+    "subtestPass": 410,
+    "fixtureEntrySkips": 2,
+    "capabilitySkips": 0,
+    "failRecords": 0,
+    "actualShippedForegroundCLIAndRestartQualified": true,
+    "SCMQualified": false,
+    "restartMeaning": "Owned synthetic foreground process stop/restart; Windows OS reboot and SCM lifecycle were not performed"
+  },
+  "WindowsPreparedPOS": {
+    "entry": "lib/main_pos.dart",
+    "officialMetadataDeltas": 8,
+    "preparedSourceFiles": 1109,
+    "artifacts": 23,
+    "target": "AMD64",
+    "portableZIP": {
+      "path": "/Users/vaanskii/Developer/vynic/docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/software-windows-pos-result-v3/native-pos-build.zip",
+      "sha256": "f5eb22bfe2ca70f9b9e0434336da548eeb0613ed7d10d1ae43ebe252f1b9b785",
+      "bytes": 19265604
+    },
+    "exe": {
+      "name": "vynic_pos.exe",
+      "sha256": "7314018d0b083a95b2abcc9af7c42aa7aac03014a560afc1816013791c0f7d04",
+      "bytes": 848896,
+      "machine": "AMD64",
+      "UTF16ResourceBrandingVynicPOSPresent": true
+    },
+    "sourceBeforeAfterVerified": true,
+    "cachedFirebaseSDKFiles": 182,
+    "SDKBeforeAfterAndHistoricalEqual": true,
+    "configuredForLocalDevelopmentLabOnly": true,
+    "explicitPrinterAgentProfileEnabled": false,
+    "signedOrProductionReleaseQualified": false
+  },
+  "retainedHistory": {
+    "originalApprovalDenial": {
+      "path": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/windows-software-preflight-denial.json",
+      "sha256": "7d8a2753973f8486f4f02b243ac5821ed791fac497638a8727e977d454f0102b",
+      "bytes": 3743
+    },
+    "initial12FixtureFailures": {
+      "path": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/windows-software-v2/flutter-first-failed-receipt.json",
+      "sha256": "e75f84fcb038e216d89342720b430ceb445b5367a0bd5b625e3a34c523ee35d1",
+      "bytes": 22184
+    },
+    "longAnalysisNotStartedAttempt1": {
+      "path": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/windows-software-v2/analysis-original-guest-session-attempt1.json",
+      "sha256": "4fb4c2d87bde92101c4c5201c6920a8ce1950bcab6d72e415a38cfd19219c7ba",
+      "bytes": 910
+    },
+    "longAnalysisNotStartedAttempt2": {
+      "path": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/windows-software-v2/analysis-original-guest-session-attempt2.json",
+      "sha256": "2188517a752413a6c5945222469e9d9ee1dbee44322baff732b73970070bae37",
+      "bytes": 1057
+    },
+    "sameOriginalAnalysisScriptShortLaunchSuccess": {
+      "path": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/windows-software-v2/analysis-original-short-success-receipt.json",
+      "sha256": "cd503c0ee1437cc20591f1f33c4da27f1c814bbf95e2ae13bfada7b803d31d8a",
+      "bytes": 1640
+    }
+  },
+  "historyInterpretation": {
+    "approvalDeniedPreflight": "Single identical authorized retry succeeded; no alternate executor",
+    "firstWindowsTests": "All12 canonical-path failures fixed through reviewed fixture-only native path joins; complete final39 rerun passed",
+    "longAnalysisLaunches": "Both exit255 never started; same reviewed script passed through short pinned launcher. Buffering/length issue supported, undocumented threshold not asserted"
+  },
+  "printJobInventoriesZero": true,
+  "driverOrOSSettingsChanged": false,
+  "WindowsReboot": false,
+  "physicalDocuments": 0,
+  "gitDiffCheckExitCode": 0,
+  "remaining": [
+    "Production signed Device/Venue/POS-origin/Go-host authority and persistent revocation bridge",
+    "Explicit installer/SCM service-account and permission qualification",
+    "Venue-shared real runtime composition, downstream physical fencing and actual printer/power/reboot acceptance",
+    "Explicit POS writer cutover; default profile remains opt-in and physical/admission gates remain HELD"
+  ],
+  "allPredecessorSourcesPacketsAndEvidencePreserved": true,
+  "POSProductLaunched": false,
+  "SCMServiceRegisteredInstalledOrStarted": false,
+  "syntheticForegroundAgentCLILaunchedAndStopped": true,
+  "clarifiedScopeFromPriorAggregate": {
+    "path": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/windows-software-v2/windows-software-completion-final-receipt.json",
+    "sha256": "a2b8afb5c17699e25d6ec1019e4471022dddb4b2a892e25f38dfdf3d822207af",
+    "change": "Disambiguate POS product startup/Windows SCM service startup from explicitly tested synthetic foreground CLI processes; underlying results and all source/artifact hashes unchanged"
+  }
+}

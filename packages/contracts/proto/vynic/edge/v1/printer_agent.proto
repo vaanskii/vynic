@@ -1,0 +1,106 @@
+syntax = "proto3";
+package vynic.edge.v1;
+option go_package = "vynic.local/contracts/go/vynic/edge/v1;edgev1";
+
+// Independent printer process infrastructure. This version holds all job
+// admission and physical dispatch; configuration is not production authority.
+service PrinterAgent {
+  rpc Health(PrinterAgentHealthRequest) returns (PrinterAgentHealthResponse);
+  rpc SubmitLocal(PrinterAgentSubmitLocalRequest) returns (PrinterAgentSubmissionResult);
+  rpc GetLocalResult(PrinterAgentGetLocalResultRequest) returns (PrinterAgentSubmissionResult);
+}
+message PrinterAgentAuth {
+  string host_id = 1;
+  string client_id = 2;
+  uint32 protocol_major = 3;
+  uint32 protocol_minor = 4;
+  uint32 reader_version = 5;
+  repeated string required_capabilities = 6;
+}
+message PrinterAgentPins {
+  string scope = 1;
+  string ownership_policy = 2;
+  string cluster_id = 3;
+  string membership_sha256 = 4;
+  string role = 5;
+  string venue_id = 6;
+  string installation_id = 7;
+  string device_id = 8;
+  string host_id = 9;
+  string gateway_host_id = 10;
+  uint64 authority_epoch = 11;
+  uint32 protocol_version = 12;
+  uint32 helper_protocol_version = 13;
+  uint32 database_schema_version = 14;
+  uint32 minimum_reader_version = 15;
+  uint64 route_revision = 16;
+  uint64 config_revision = 17;
+  uint64 registry_revision = 18;
+  uint64 binding_revision = 19;
+  uint64 capability_revision = 20;
+  string capability_profile_sha256 = 21;
+  string host_binary_sha256 = 22;
+  string helper_binary_sha256 = 23;
+}
+message PrinterAgentHealthRequest { PrinterAgentAuth auth = 1; }
+enum PrinterAgentLifecycle {
+  PRINTER_AGENT_LIFECYCLE_UNSPECIFIED = 0;
+  PRINTER_AGENT_NEW = 1;
+  PRINTER_AGENT_STARTING = 2;
+  PRINTER_AGENT_RUNNING = 3;
+  PRINTER_AGENT_DRAINING = 4;
+  PRINTER_AGENT_STOPPED = 5;
+  PRINTER_AGENT_HELD = 6;
+}
+enum PrinterAgentPhysicalState {
+  PRINTER_AGENT_PHYSICAL_UNSPECIFIED = 0;
+  PRINTER_AGENT_PHYSICAL_HELD = 1;
+}
+enum PrinterAgentAdmissionState {
+  PRINTER_AGENT_ADMISSION_UNSPECIFIED = 0;
+  PRINTER_AGENT_ADMISSION_HELD_PROVISIONING = 1;
+}
+enum PrinterAgentHoldReason {
+  PRINTER_AGENT_HOLD_UNSPECIFIED = 0;
+  PRINTER_AGENT_PROVISIONING_UNQUALIFIED = 1;
+  PRINTER_AGENT_PHYSICAL_ACTIVATION_PENDING = 2;
+  PRINTER_AGENT_SHARED_FENCE_UNQUALIFIED = 3;
+  PRINTER_AGENT_HOST_UNAVAILABLE = 4;
+  PRINTER_AGENT_RETAINED_QUEUE_HOLD = 5;
+}
+message PrinterAgentPrinterHold {
+  string physical_printer_id = 1;
+  string reason = 2;
+}
+message PrinterAgentHealthResponse {
+  uint32 protocol_version = 1;
+  PrinterAgentPins pins = 2;
+  string client_id = 3;
+  PrinterAgentLifecycle state = 4;
+  bool software_ready = 5;
+  PrinterAgentPhysicalState physical_state = 6;
+  PrinterAgentAdmissionState admission_state = 7;
+  repeated PrinterAgentHoldReason hold_reasons = 8;
+  repeated PrinterAgentPrinterHold printer_holds = 9;
+  uint64 active_admissions = 10;
+}
+message PrinterAgentSubmitLocalRequest {
+  PrinterAgentAuth auth = 1;
+  string request_id = 2;
+  string job_id = 3;
+  bytes frozen_envelope = 4;
+  string envelope_sha256 = 5;
+}
+message PrinterAgentGetLocalResultRequest {
+  PrinterAgentAuth auth = 1;
+  string request_id = 2;
+  string job_id = 3;
+  string envelope_sha256 = 4;
+}
+// No successful result is produced in this version. Both local methods return
+// FAILED_PRECONDITION HELD_PROVISIONING after authenticated strict validation.
+message PrinterAgentSubmissionResult {
+  string request_id = 1;
+  string job_id = 2;
+  string envelope_sha256 = 3;
+}

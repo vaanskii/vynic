@@ -1,0 +1,82 @@
+{
+  "capturedAtUtc": "2026-10-06T14:16:08.094671+00:00",
+  "phase": "PREVIOUSLY_UNCOMPILED_PRIVATE_STORE_BASELINE",
+  "command": [
+    "go",
+    "test",
+    "-mod=readonly",
+    "-json",
+    "./internal/store"
+  ],
+  "workingDirectory": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/source/apps/edge",
+  "goVersion": "go1.26.8 darwin/arm64",
+  "goToolEnvironment": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/tool-env.sh",
+  "exitCode": 0,
+  "passingTestAndSubtestRecords": 93,
+  "passingTopLevelTests": 24,
+  "skippedTopLevelWorkers": [
+    "TestOperationalCrashWorker",
+    "TestCrashWorker"
+  ],
+  "sources": [
+    {
+      "path": "apps/edge/internal/store/operational_authority.go",
+      "beforeSha256": "f9dde16433838546ffec537184e67d64797377d4e0854e25497f41b5e70e6370",
+      "afterSha256": "f9dde16433838546ffec537184e67d64797377d4e0854e25497f41b5e70e6370"
+    },
+    {
+      "path": "apps/edge/internal/store/operational.go",
+      "beforeSha256": "7ad40c1a4644d7c40a9708dd810e063e33bad420a856f687cc291b8069c5ebcd",
+      "afterSha256": "0a230ce2e969761c4ec5a5c8b88475ecfa2c6cd38678fa8a3f3fc14345a25d8a"
+    },
+    {
+      "path": "apps/edge/internal/store/operational_test.go",
+      "beforeSha256": "450cd8c16d7d7c475e66d3317a095e49c39110bb8248a0105131d5a3e62ae686",
+      "afterSha256": "450cd8c16d7d7c475e66d3317a095e49c39110bb8248a0105131d5a3e62ae686"
+    },
+    {
+      "path": "apps/edge/internal/store/migrations/003_operational_coordination.sql",
+      "beforeSha256": "47e6dcf89410b3c3eb28d9e54f50541556e722ee6d515d63242204322e3537ac",
+      "afterSha256": "47e6dcf89410b3c3eb28d9e54f50541556e722ee6d515d63242204322e3537ac"
+    },
+    {
+      "path": "apps/edge/internal/store/migrations/004_operational_entity_kinds.sql",
+      "beforeSha256": "c9878fdbae27a3455f979c68569a1c669a8d1d98a835de2c05f896b1c8319aad",
+      "afterSha256": "c9878fdbae27a3455f979c68569a1c669a8d1d98a835de2c05f896b1c8319aad"
+    },
+    {
+      "path": "apps/edge/internal/store/store.go",
+      "beforeSha256": "1986e88ef3625fab25855c7d6f6ebc90a5f793a16a2632c0afc8d04728c81e11",
+      "afterSha256": "1986e88ef3625fab25855c7d6f6ebc90a5f793a16a2632c0afc8d04728c81e11"
+    },
+    {
+      "path": "apps/edge/internal/store/coordination_test.go",
+      "beforeSha256": "f3e1193c55e474f4e30d6ea19403dcecfa93c48dca9432f73ea6bd1e0dd0a053",
+      "afterSha256": "f3e1193c55e474f4e30d6ea19403dcecfa93c48dca9432f73ea6bd1e0dd0a053"
+    },
+    {
+      "path": "packages/contracts/proto/vynic/edge/v1/operational_proof.proto",
+      "beforeSha256": "a4ce64509caf85ef262cf0fe07d909d55b9bacd23c9e9612e95c32686324e454",
+      "afterSha256": "a4ce64509caf85ef262cf0fe07d909d55b9bacd23c9e9612e95c32686324e454"
+    }
+  ],
+  "modules": {
+    "apps/edge/go.mod": "ebe6a02e46ff7d9e3596f1d636c6adc627cd0a1b454acccb51104f4247149ce0",
+    "apps/edge/go.sum": "cdcdfd932167af2fc906ed31a53d7aae6d8c7b93440f02aed90b6155e4309e94",
+    "packages/contracts/generated/go/go.mod": "ac118a4193a52805d0527458033c05fbd59c363a01ff6bd392cacf387fa7f506",
+    "packages/contracts/generated/go/go.sum": "7781e70033bff344f07778f5571238347209d0b1d249b515547527ed757dd359"
+  },
+  "logs": {
+    "operational-store-initial-test.jsonl": "cf6a8164f2b2f7add72791b1fa316ac15f1ef46bb84472a028207ab7e7c37c5b",
+    "operational-store-initial-test.stderr": "6146800a730d3934803b390b357e25ce00e7b480c1d3884ddedc8135377d8e3e",
+    "operational-store-baseline-test.jsonl": "8f4e3ee2918c9140eea274b203b36574a569e4ff04b2a5db9ba4333d4019aad5",
+    "operational-store-baseline-test.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "actualFix": "Normalize SQL-scanned zero-length tombstone documents to empty non-nil byte slices in operational entity/snapshot read paths; complete committed postimages, snapshots and conflicts now agree.",
+  "firstRun": "Compiled successfully; seven expanded-kind tombstone subtests and their parent failed due to nil-vs-empty snapshot bytes. Failed run retained unchanged.",
+  "limitations": [
+    "No proof wire adapter/generated bindings present at this baseline",
+    "No production admission or print queue attachment",
+    "Final race/full source validation pending later schema5/RPC candidate"
+  ]
+}

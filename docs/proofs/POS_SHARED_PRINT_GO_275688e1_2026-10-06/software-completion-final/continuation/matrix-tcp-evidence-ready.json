@@ -1,0 +1,81 @@
+{
+  "schema": 1,
+  "status": "verified-software-only",
+  "qualification": {
+    "path": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/actual-tcp-crash-qualification.json",
+    "sha256": "e502df1d058e3b39f548e37f024f13915c500c24b44882126fef0948ba5d6148"
+  },
+  "independentReview": {
+    "path": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/actual-tcp-crash-independent-review.json",
+    "sha256": "0280a5387bc8c47d1d126de97a5e3298a92f423f7d1ed9d2380d3921fe04eaf2"
+  },
+  "testSource": {
+    "path": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/source/apps/edge/internal/printqueue/crash_tcp_test.go",
+    "sha256": "3a986e72c2f38d0b6eb17e4cd9c434bd46f8665255df50ad923c1899f6e75c4a"
+  },
+  "logs": {
+    "actual-tcp-crash-v1.jsonl": {
+      "path": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/actual-tcp-crash-v1.jsonl",
+      "sha256": "5181ba36ccb4262e0073d7901d91f74a465cf29411bd1be0bf36e4e6f97bebeb",
+      "passed": [
+        {
+          "test": "TestActualTCPWriteSIGKILLNoReplay/duringWrite",
+          "elapsedSeconds": 0.21,
+          "logLine": 8
+        },
+        {
+          "test": "TestActualTCPWriteSIGKILLNoReplay/afterWriteBeforeDisposition",
+          "elapsedSeconds": 0.03,
+          "logLine": 13
+        },
+        {
+          "test": "TestActualTCPWriteSIGKILLNoReplay",
+          "elapsedSeconds": 0.24,
+          "logLine": 15
+        }
+      ]
+    },
+    "actual-tcp-crash-v1-race.jsonl": {
+      "path": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/actual-tcp-crash-v1-race.jsonl",
+      "sha256": "f73e56b69e4f5236ad45d14436a3093852c8c553485de25954ea07e46ff07fde",
+      "passed": [
+        {
+          "test": "TestActualTCPWriteSIGKILLNoReplay/duringWrite",
+          "elapsedSeconds": 2.06,
+          "logLine": 8
+        },
+        {
+          "test": "TestActualTCPWriteSIGKILLNoReplay/afterWriteBeforeDisposition",
+          "elapsedSeconds": 0.15,
+          "logLine": 13
+        },
+        {
+          "test": "TestActualTCPWriteSIGKILLNoReplay",
+          "elapsedSeconds": 2.21,
+          "logLine": 15
+        }
+      ]
+    }
+  },
+  "cases": {
+    "8": {
+      "softwareObservedStatus": "passed",
+      "physicalAcceptance": "not-run",
+      "observed": "Write entered with no observed return marker at SIGKILL; receiver drained exact8192-byte prefix of2MiB after death. Recovery remained UNCERTAIN with zero replay, one attempt and exact receipt.",
+      "limits": [
+        "Marker observes entry/no recorded return; wrapper-return/marker gap prevents instruction-exact kernel syscall claim.",
+        "Literal loopback synthetic receiver and macOS processes; no physical printer, real computer power loss or Windows termination."
+      ]
+    },
+    "9": {
+      "softwareObservedStatus": "passed",
+      "physicalAcceptance": "not-run",
+      "observed": "Receiver retained all16/16 immutable bytes before process SIGKILL after Write and before disposition settlement. Reopen kept UNCERTAIN, zero replay, one attempt and exact receipt.",
+      "limits": [
+        "Complete TCP bytes/SUBMITTED never establishes paper DELIVERED.",
+        "Loopback/macOS synthetic-only boundary; no physical or Windows OS acceptance."
+      ]
+    }
+  },
+  "purpose": "Prepared verified evidence for next matrix; immutable v8 baseline stays unchanged."
+}

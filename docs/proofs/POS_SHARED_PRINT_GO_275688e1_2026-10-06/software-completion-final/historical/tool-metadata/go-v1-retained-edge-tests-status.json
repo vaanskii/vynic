@@ -1,0 +1,19 @@
+{
+  "exitCode": 0,
+  "command": [
+    "go",
+    "test",
+    "-mod=readonly",
+    "-count=1",
+    "-json",
+    "./..."
+  ],
+  "environmentOverrides": {
+    "GOPROXY": "off"
+  },
+  "workingDirectory": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/go-final-validation/apps/edge",
+  "output": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/metadata/go-final-edge-tests.jsonl",
+  "stderr": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/metadata/go-final-edge-tests.stderr",
+  "hardwareExecution": false,
+  "sourceReceipt": "go-final-source-snapshot.json"
+}

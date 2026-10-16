@@ -94,11 +94,22 @@ class FakeStaffDb {
       if (row) Object.assign(row, data);
       return Promise.resolve(row ?? null);
     },
-    findMany: ({ where }: { where: { venueId: string } }) =>
+    findMany: ({
+      where,
+    }: {
+      where: {
+        venueId: string;
+        isActive?: boolean;
+        username?: { not: string };
+      };
+    }) =>
       Promise.resolve(
-        this.rows
-          .filter((row) => row.venueId === where.venueId)
-          .map((row) => ({ username: row.username })),
+        this.rows.filter(
+          (row) =>
+            row.venueId === where.venueId &&
+            (where.isActive === undefined || row.isActive === where.isActive) &&
+            row.username !== where.username?.not,
+        ),
       ),
     deleteMany: ({
       where,
@@ -293,6 +304,21 @@ describe('StaffSyncService — an older POS that sends every PIN', () => {
     expect(result.pinsHashed).toBe(2);
     expect(result.needsPin).toEqual([]);
     expect(h.db.rows.map((r) => r.username)).toEqual(['mary', 'nino']);
+  });
+
+  it('does not perform quadratic bcrypt comparisons for a new staff snapshot', async () => {
+    const h = makeService();
+    const compare = bcrypt.compare as unknown as jest.Mock;
+    compare.mockClear();
+    const snapshot: StaffSync[] = Array.from({ length: 14 }, (_, i) => ({
+      username: `member-${i}`,
+      role: 'WAITER',
+      pin: String(1000 + i),
+    }));
+    const result = await h.sync(snapshot);
+    expect(result.pinsHashed).toBe(14);
+    expect(h.db.rows).toHaveLength(14);
+    expect(compare).not.toHaveBeenCalled();
   });
 });
 

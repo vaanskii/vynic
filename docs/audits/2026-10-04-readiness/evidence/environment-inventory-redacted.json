@@ -1,0 +1,478 @@
+{
+  "scope": "Files only, not process/container runtime attestation; values withheld",
+  "files": [
+    {
+      "file": ".env",
+      "exists": false
+    },
+    {
+      "file": ".env.docker",
+      "exists": true,
+      "variables": [
+        {
+          "name": "POSTGRES_PASSWORD",
+          "state": "set",
+          "category": "secret",
+          "productionLengthRule": "not-evaluated",
+          "looksLikePlaceholder": false
+        },
+        {
+          "name": "JWT_SECRET",
+          "state": "set",
+          "category": "secret",
+          "productionLengthRule": "passes-length-only",
+          "looksLikePlaceholder": false
+        },
+        {
+          "name": "JWT_REFRESH_SECRET",
+          "state": "set",
+          "category": "secret",
+          "productionLengthRule": "passes-length-only",
+          "looksLikePlaceholder": false
+        },
+        {
+          "name": "COOKIE_ENCRYPTION_KEY",
+          "state": "set",
+          "category": "secret",
+          "productionLengthRule": "passes-length-only",
+          "looksLikePlaceholder": false
+        },
+        {
+          "name": "PLATFORM_JWT_SECRET",
+          "state": "set",
+          "category": "secret",
+          "productionLengthRule": "passes-length-only",
+          "looksLikePlaceholder": false
+        },
+        {
+          "name": "PAYMENT_INTEGRATION_MASTER_KEY",
+          "state": "set",
+          "category": "secret",
+          "productionLengthRule": "not-evaluated",
+          "looksLikePlaceholder": false
+        },
+        {
+          "name": "FRONTEND_URL",
+          "state": "set",
+          "category": "connection/origin",
+          "scheme": "http",
+          "hostClass": "local",
+          "credentialsIncluded": false
+        },
+        {
+          "name": "API_URL",
+          "state": "set",
+          "category": "connection/origin",
+          "scheme": "http",
+          "hostClass": "local",
+          "credentialsIncluded": false
+        },
+        {
+          "name": "ALLOWED_ORIGINS",
+          "state": "set",
+          "category": "connection/origin",
+          "scheme": "http",
+          "hostClass": "configured-other",
+          "credentialsIncluded": false
+        },
+        {
+          "name": "SAAS_WEBSITE_BASE_DOMAIN",
+          "state": "set",
+          "category": "connection/origin"
+        },
+        {
+          "name": "SAAS_WEBSITE_PREVIEW_ORIGIN",
+          "state": "set",
+          "category": "connection/origin",
+          "scheme": "http",
+          "hostClass": "local",
+          "credentialsIncluded": false
+        },
+        {
+          "name": "CUSTOM_HOST",
+          "state": "set",
+          "category": "connection/origin"
+        },
+        {
+          "name": "PROXY_TLS",
+          "state": "set",
+          "category": "non-secret configuration or feature/provider setting"
+        },
+        {
+          "name": "IMAGE_PREFIX",
+          "state": "set",
+          "category": "non-secret configuration or feature/provider setting"
+        },
+        {
+          "name": "IMAGE_TAG",
+          "state": "set",
+          "category": "non-secret configuration or feature/provider setting"
+        }
+      ]
+    },
+    {
+      "file": ".env.production",
+      "exists": false
+    },
+    {
+      "file": "apps/backend/.env",
+      "exists": true,
+      "variables": [
+        {
+          "name": "DATABASE_URL",
+          "state": "set",
+          "category": "connection/origin",
+          "scheme": "postgresql",
+          "hostClass": "local",
+          "credentialsIncluded": true
+        },
+        {
+          "name": "JWT_SECRET",
+          "state": "set",
+          "category": "secret",
+          "productionLengthRule": "passes-length-only",
+          "looksLikePlaceholder": false
+        },
+        {
+          "name": "JWT_REFRESH_SECRET",
+          "state": "set",
+          "category": "secret",
+          "productionLengthRule": "passes-length-only",
+          "looksLikePlaceholder": false
+        },
+        {
+          "name": "COOKIE_ENCRYPTION_KEY",
+          "state": "set",
+          "category": "secret",
+          "productionLengthRule": "passes-length-only",
+          "looksLikePlaceholder": false
+        },
+        {
+          "name": "BOG_CLIENT_ID",
+          "state": "set",
+          "category": "non-secret configuration or feature/provider setting"
+        },
+        {
+          "name": "BOG_CLIENT_SECRET",
+          "state": "set",
+          "category": "secret",
+          "productionLengthRule": "not-evaluated",
+          "looksLikePlaceholder": false
+        },
+        {
+          "name": "BOG_AUTH_URL",
+          "state": "set",
+          "category": "connection/origin",
+          "scheme": "https",
+          "hostClass": "configured-other",
+          "credentialsIncluded": false
+        },
+        {
+          "name": "BOG_API_BASE",
+          "state": "set",
+          "category": "non-secret configuration or feature/provider setting"
+        },
+        {
+          "name": "API_URL",
+          "state": "set",
+          "category": "connection/origin",
+          "scheme": "https",
+          "hostClass": "configured-other",
+          "credentialsIncluded": false
+        },
+        {
+          "name": "FRONTEND_URL",
+          "state": "set",
+          "category": "connection/origin",
+          "scheme": "http",
+          "hostClass": "local",
+          "credentialsIncluded": false
+        },
+        {
+          "name": "TBC_CLIENT_ID",
+          "state": "set",
+          "category": "non-secret configuration or feature/provider setting"
+        },
+        {
+          "name": "TBC_CLIENT_SECRET",
+          "state": "set",
+          "category": "secret",
+          "productionLengthRule": "not-evaluated",
+          "looksLikePlaceholder": false
+        },
+        {
+          "name": "SUPER_ADMIN_EMAIL",
+          "state": "set",
+          "category": "non-secret configuration or feature/provider setting"
+        },
+        {
+          "name": "SUPER_ADMIN_PHONE",
+          "state": "set",
+          "category": "non-secret configuration or feature/provider setting"
+        },
+        {
+          "name": "SUPER_ADMIN_PASSWORD",
+          "state": "set",
+          "category": "secret",
+          "productionLengthRule": "not-evaluated",
+          "looksLikePlaceholder": false
+        },
+        {
+          "name": "FRONTEND_URL",
+          "state": "set",
+          "category": "connection/origin",
+          "scheme": "http",
+          "hostClass": "local",
+          "credentialsIncluded": false
+        },
+        {
+          "name": "ALLOWED_ORIGINS",
+          "state": "set",
+          "category": "connection/origin",
+          "scheme": "http",
+          "hostClass": "local",
+          "credentialsIncluded": false
+        },
+        {
+          "name": "GOOGLE_APPLICATION_CREDENTIALS",
+          "state": "set",
+          "category": "secret",
+          "productionLengthRule": "not-evaluated",
+          "looksLikePlaceholder": false
+        },
+        {
+          "name": "POS_SYNC_API_KEY",
+          "state": "set",
+          "category": "secret",
+          "productionLengthRule": "not-evaluated",
+          "looksLikePlaceholder": false
+        },
+        {
+          "name": "PLATFORM_JWT_SECRET",
+          "state": "set",
+          "category": "secret",
+          "productionLengthRule": "passes-length-only",
+          "looksLikePlaceholder": false
+        },
+        {
+          "name": "SAAS_WEBSITE_BASE_DOMAIN",
+          "state": "set",
+          "category": "connection/origin"
+        },
+        {
+          "name": "SAAS_WEBSITE_PREVIEW_ORIGIN",
+          "state": "set",
+          "category": "connection/origin",
+          "scheme": "http",
+          "hostClass": "local",
+          "credentialsIncluded": false
+        },
+        {
+          "name": "CUSTOM_WEBSITE_DEV_PORT",
+          "state": "set",
+          "category": "non-secret configuration or feature/provider setting"
+        }
+      ]
+    },
+    {
+      "file": "apps/platform-web/.env",
+      "exists": true,
+      "variables": [
+        {
+          "name": "VITE_API_BASE_URL",
+          "state": "set",
+          "category": "connection/origin",
+          "scheme": "http",
+          "hostClass": "local",
+          "credentialsIncluded": false
+        }
+      ]
+    },
+    {
+      "file": "apps/restaurant-web/.env",
+      "exists": true,
+      "variables": [
+        {
+          "name": "VYNIC_WEBSITE_API",
+          "state": "set",
+          "category": "non-secret configuration or feature/provider setting"
+        }
+      ]
+    },
+    {
+      "file": "apps/vankisi-custom-web/.env",
+      "exists": true,
+      "variables": []
+    },
+    {
+      "file": "apps/operations/.env.windows",
+      "exists": true,
+      "variables": [
+        {
+          "name": "PRINT_HOST",
+          "state": "set",
+          "category": "connection/origin"
+        },
+        {
+          "name": "POS_SYNC_API_KEY",
+          "state": "set",
+          "category": "secret",
+          "productionLengthRule": "not-evaluated",
+          "looksLikePlaceholder": false
+        },
+        {
+          "name": "BACKEND_URL_ANDROID",
+          "state": "set",
+          "category": "non-secret configuration or feature/provider setting"
+        },
+        {
+          "name": "BACKEND_URL_IOS",
+          "state": "set",
+          "category": "non-secret configuration or feature/provider setting"
+        },
+        {
+          "name": "BACKEND_URL_MACOS",
+          "state": "set",
+          "category": "non-secret configuration or feature/provider setting"
+        },
+        {
+          "name": "BACKEND_URL_WINDOWS",
+          "state": "set",
+          "category": "non-secret configuration or feature/provider setting"
+        },
+        {
+          "name": "BACKEND_URL_WEB",
+          "state": "set",
+          "category": "non-secret configuration or feature/provider setting"
+        },
+        {
+          "name": "BACKEND_URL_FALLBACK",
+          "state": "set",
+          "category": "non-secret configuration or feature/provider setting"
+        },
+        {
+          "name": "PRINTER_TYPE",
+          "state": "set",
+          "category": "non-secret configuration or feature/provider setting"
+        },
+        {
+          "name": "PRINTER_KITCHEN_IP",
+          "state": "set",
+          "category": "non-secret configuration or feature/provider setting"
+        },
+        {
+          "name": "PRINTER_RECEIPT_IP",
+          "state": "set",
+          "category": "non-secret configuration or feature/provider setting"
+        },
+        {
+          "name": "PRINTER_PORT",
+          "state": "set",
+          "category": "non-secret configuration or feature/provider setting"
+        },
+        {
+          "name": "POS_INGEST_PORT",
+          "state": "set",
+          "category": "non-secret configuration or feature/provider setting"
+        },
+        {
+          "name": "POS_CALLBACK_HOST",
+          "state": "set",
+          "category": "connection/origin"
+        }
+      ]
+    },
+    {
+      "file": "apps/operations/.env",
+      "exists": true,
+      "variables": [
+        {
+          "name": "APP_ROLE",
+          "state": "set",
+          "category": "non-secret configuration or feature/provider setting"
+        },
+        {
+          "name": "PRINT_HOST",
+          "state": "set",
+          "category": "connection/origin"
+        },
+        {
+          "name": "POS_SYNC_API_KEY",
+          "state": "set",
+          "category": "secret",
+          "productionLengthRule": "not-evaluated",
+          "looksLikePlaceholder": false
+        },
+        {
+          "name": "BACKEND_URL_ANDROID",
+          "state": "set",
+          "category": "non-secret configuration or feature/provider setting"
+        },
+        {
+          "name": "BACKEND_URL_IOS",
+          "state": "set",
+          "category": "non-secret configuration or feature/provider setting"
+        },
+        {
+          "name": "BACKEND_URL_MACOS",
+          "state": "set",
+          "category": "non-secret configuration or feature/provider setting"
+        },
+        {
+          "name": "BACKEND_URL_WINDOWS",
+          "state": "set",
+          "category": "non-secret configuration or feature/provider setting"
+        },
+        {
+          "name": "BACKEND_URL_WEB",
+          "state": "set",
+          "category": "non-secret configuration or feature/provider setting"
+        },
+        {
+          "name": "BACKEND_URL_FALLBACK",
+          "state": "set",
+          "category": "non-secret configuration or feature/provider setting"
+        },
+        {
+          "name": "PRINTER_TYPE",
+          "state": "set",
+          "category": "non-secret configuration or feature/provider setting"
+        },
+        {
+          "name": "PRINTER_KITCHEN_IP",
+          "state": "set",
+          "category": "non-secret configuration or feature/provider setting"
+        },
+        {
+          "name": "PRINTER_RECEIPT_IP",
+          "state": "set",
+          "category": "non-secret configuration or feature/provider setting"
+        },
+        {
+          "name": "PRINTER_PORT",
+          "state": "set",
+          "category": "non-secret configuration or feature/provider setting"
+        },
+        {
+          "name": "POS_INGEST_PORT",
+          "state": "set",
+          "category": "non-secret configuration or feature/provider setting"
+        },
+        {
+          "name": "POS_CALLBACK_HOST",
+          "state": "set",
+          "category": "connection/origin"
+        }
+      ]
+    }
+  ],
+  "fileHashesBefore": {
+    ".env.docker": "719a8c3df256f2689b4ec576ba9c0666b8619e9999a50c2c8e980f711d2ae04f",
+    "apps/backend/.env": "a11219d3257be00001cfaf198d7b0785c821d8a85acb3255f1812c9d54ec420e",
+    "apps/platform-web/.env": "2eb9f7a181fffd24dcff03ad257c0fb46158ef898e8c945c31fe2b6ca2771b1a",
+    "apps/restaurant-web/.env": "6f2fa2cf138405dd224dbee40debaa63d9886cef6fce854ef42cd6d32c15c772",
+    "apps/vankisi-custom-web/.env": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "apps/operations/.env.windows": "9c894bd69df198a152e5fbc5f895cee22b3995d33c1480909084b6e86061d817",
+    "apps/operations/.env": "c929d9f8c8c810627748d097b1098180d43e55230234629b59c393a4e3e1a0cd"
+  }
+}

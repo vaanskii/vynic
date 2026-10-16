@@ -1,0 +1,9 @@
+{
+  "apps/backend/src/website/custom/custom-website.service.ts": "60fe1136a4553b0ef5c0e319935afd5adef70a1b69fe003ba151998a14d9d7a6",
+  "apps/backend/src/payment-integrations/web06-readiness.integration.spec.ts": "edc7dbace306b246f470b3eebe7daafd5895c4c9545329599f1728cb9763d0da",
+  "docs/WEB06_CURRENT_PAYMENT_READINESS.md": "2b7d06fc3e2c1258654d3e0073f848f4be18c2e47b42465af010358917f643d8",
+  "docs/agent-state/VYNIC_PROJECT_STATE.md": "3b8d9b741530321d214a5f982b4035ddee694872179bed1314d8d532a9c88bae",
+  "docs/agent-state/VYNIC_CODE_MAP.md": "38d86989d676bd71b1041096f786e6234aad08bb2cca7e030261af1e43834e0d",
+  "docs/audits/2026-09-29-f7bb982/MASTER_BACKLOG.md": "9dc7bd62c9529a926cf18dc88f48af9f5b0777dc4f65da82620173d1554f5169",
+  "apps/backend/src/payment-integrations/payment-integration-status.ts": "bb7ccf66c2cfbdb34e85a67e16843ea2cff9970ce319f284cb8c41186a58fb48"
+}

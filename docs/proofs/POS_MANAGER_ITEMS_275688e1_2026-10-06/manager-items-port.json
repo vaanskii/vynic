@@ -1,0 +1,22 @@
+{
+  "files": [
+    {
+      "path": "apps/operations/lib/core/services/edge/operational_proof/manager_items_planner.dart",
+      "beforeSha256": null,
+      "candidateSha256": "86635d11eed2929e8a7fd454a2d0485fe99c7ef52cfe86c66037700c41e635fd"
+    },
+    {
+      "path": "apps/operations/lib/core/services/edge/operational_proof/manager_items_adapter.dart",
+      "beforeSha256": null,
+      "candidateSha256": "34f1a77a254d32832003094d156022a1f30764bb9b2f019322d48fea716a2ad2"
+    },
+    {
+      "path": "apps/operations/test/unit/operational_manager_items_test.dart",
+      "beforeSha256": null,
+      "candidateSha256": "3b4fee3bc637b053afecc07c37bfc5a29a87991b548a00effab15ffcc1f44a5d"
+    }
+  ],
+  "macSelectedTestsPassed": 143,
+  "windowsNewTestsPassed": 19,
+  "productionAttached": false
+}

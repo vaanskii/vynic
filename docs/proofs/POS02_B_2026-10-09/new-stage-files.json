@@ -1,0 +1,34 @@
+[
+  {
+    "path": "apps/edge/cmd/printer-peer/main.go",
+    "sha256": "eb794ee5a310e4fe6dbfa32c7b733a8533702a39142891e0f3b9ce7c9754f7f7"
+  },
+  {
+    "path": "apps/edge/internal/printcluster/production.go",
+    "sha256": "409928338da291b3a3875a181f031298492709db06fec635d083550d0e51730d"
+  },
+  {
+    "path": "apps/edge/internal/printerprovisioning/production_fixture.go",
+    "sha256": "078cb92a972fc014ef56fe28814d91fcee8e7205a99c1645b4a4882132d4c478"
+  },
+  {
+    "path": "apps/edge/internal/printerprovisioning/production_runtime.go",
+    "sha256": "7e4848631465ca0efda58b53ca90ffd4536a1ff07bd02a009e675b732ede2385"
+  },
+  {
+    "path": "apps/edge/internal/printpeer/process_test.go",
+    "sha256": "81249fac23285d698e69a84b881c60bb577995845ab4df7b79d6db74f0e50bcb"
+  },
+  {
+    "path": "apps/edge/internal/printpeer/runtime.go",
+    "sha256": "6ab682d2dd9a9eb944e4e1da9dba45c52d3dd39325e69b7e8c4e4f8cf8e1787a"
+  },
+  {
+    "path": "apps/edge/internal/printpeer/wire.go",
+    "sha256": "e007b26d12f6b8b05bffa3e64a6aa80ccd7ebb76f8ddd228aee0fa191bdd2fed"
+  },
+  {
+    "path": "docs/POS02_B_PEER_TRANSPORT.md",
+    "sha256": "da6b860c886a7b6f74e42488bfa1b3e8d8d8f1cdb5c6bbc1651f47ba4a558b1e"
+  }
+]

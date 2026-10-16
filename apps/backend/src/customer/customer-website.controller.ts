@@ -55,10 +55,11 @@ export class CustomerWebsiteController {
   async requestHostname(
     @CustomerActor() actor: CustomerPrincipal,
     @Param('venueId') id: string,
-    @Body() body: Record<string, unknown>,
   ) {
     await this.owners.venue(actor, id);
-    return this.hostnames.create(id, actor.customerAccountId, body.slug);
+    throw new ForbiddenException(
+      'Contact Vynic support to change your website address',
+    );
   }
   @Post('logo')
   @UseInterceptors(

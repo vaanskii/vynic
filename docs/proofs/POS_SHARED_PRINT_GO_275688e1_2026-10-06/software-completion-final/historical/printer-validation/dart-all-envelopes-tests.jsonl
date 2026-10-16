@@ -1,0 +1,43 @@
+{"protocolVersion":"0.1.1","runnerVersion":null,"pid":49786,"type":"start","time":0}
+{"suite":{"id":0,"platform":"vm","path":"/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/source/apps/operations/test/unit/shared_print_effect_test.dart"},"type":"suite","time":0}
+{"test":{"id":1,"name":"loading /private/tmp/vynic-readiness-resume-20261006-uv9ayewl/source/apps/operations/test/unit/shared_print_effect_test.dart","suiteID":0,"groupIDs":[],"metadata":{"skip":false,"skipReason":null},"line":null,"column":null,"url":null},"type":"testStart","time":0}
+{"suite":{"id":2,"platform":"vm","path":"/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/source/apps/operations/test/unit/cluster_print_effect_test.dart"},"type":"suite","time":2}
+{"test":{"id":3,"name":"loading /private/tmp/vynic-readiness-resume-20261006-uv9ayewl/source/apps/operations/test/unit/cluster_print_effect_test.dart","suiteID":2,"groupIDs":[],"metadata":{"skip":false,"skipReason":null},"line":null,"column":null,"url":null},"type":"testStart","time":2}
+{"count":2,"time":2,"type":"allSuites"}
+
+[{"event":"test.startedProcess","params":{"vmServiceUri":null}}]
+
+[{"event":"test.startedProcess","params":{"vmServiceUri":null}}]
+{"testID":1,"result":"success","skipped":false,"hidden":true,"type":"testDone","time":940}
+{"group":{"id":4,"suiteID":0,"parentID":null,"name":"","metadata":{"skip":false,"skipReason":null},"testCount":7,"line":null,"column":null,"url":null},"type":"group","time":941}
+{"test":{"id":5,"name":"freezes exact original header, raster and cut without mutable references","suiteID":0,"groupIDs":[4],"metadata":{"skip":false,"skipReason":null},"line":28,"column":3,"url":"file:///private/tmp/vynic-readiness-resume-20261006-uv9ayewl/source/apps/operations/test/unit/shared_print_effect_test.dart"},"type":"testStart","time":941}
+{"testID":5,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":964}
+{"test":{"id":6,"name":"Windows identity includes exact frozen owner, queue, driver and port","suiteID":0,"groupIDs":[4],"metadata":{"skip":false,"skipReason":null},"line":51,"column":3,"url":"file:///private/tmp/vynic-readiness-resume-20261006-uv9ayewl/source/apps/operations/test/unit/shared_print_effect_test.dart"},"type":"testStart","time":965}
+{"testID":6,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":967}
+{"test":{"id":7,"name":"refuses a changed Venue or retargeted registry before producing effects","suiteID":0,"groupIDs":[4],"metadata":{"skip":false,"skipReason":null},"line":76,"column":3,"url":"file:///private/tmp/vynic-readiness-resume-20261006-uv9ayewl/source/apps/operations/test/unit/shared_print_effect_test.dart"},"type":"testStart","time":967}
+{"testID":7,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":969}
+{"test":{"id":8,"name":"refuses submitted, uncertain, copied and repeat attempts","suiteID":0,"groupIDs":[4],"metadata":{"skip":false,"skipReason":null},"line":92,"column":3,"url":"file:///private/tmp/vynic-readiness-resume-20261006-uv9ayewl/source/apps/operations/test/unit/shared_print_effect_test.dart"},"type":"testStart","time":969}
+{"testID":8,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":972}
+{"test":{"id":9,"name":"requires explicit canonical attempt and matching enrolled USB Device","suiteID":0,"groupIDs":[4],"metadata":{"skip":false,"skipReason":null},"line":154,"column":3,"url":"file:///private/tmp/vynic-readiness-resume-20261006-uv9ayewl/source/apps/operations/test/unit/shared_print_effect_test.dart"},"type":"testStart","time":972}
+{"testID":9,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":973}
+{"test":{"id":10,"name":"holds conditional and previously requeued tickets for explicit migration","suiteID":0,"groupIDs":[4],"metadata":{"skip":false,"skipReason":null},"line":171,"column":3,"url":"file:///private/tmp/vynic-readiness-resume-20261006-uv9ayewl/source/apps/operations/test/unit/shared_print_effect_test.dart"},"type":"testStart","time":974}
+{"testID":10,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":976}
+{"test":{"id":11,"name":"holds stale or different local alias mappings even at the same endpoint","suiteID":0,"groupIDs":[4],"metadata":{"skip":false,"skipReason":null},"line":210,"column":3,"url":"file:///private/tmp/vynic-readiness-resume-20261006-uv9ayewl/source/apps/operations/test/unit/shared_print_effect_test.dart"},"type":"testStart","time":976}
+{"testID":11,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":978}
+{"testID":3,"result":"success","skipped":false,"hidden":true,"type":"testDone","time":1001}
+{"group":{"id":12,"suiteID":2,"parentID":null,"name":"","metadata":{"skip":false,"skipReason":null},"testCount":7,"line":null,"column":null,"url":null},"type":"group","time":1001}
+{"test":{"id":13,"name":"cluster job pins exact config and bytes without electing a writer","suiteID":2,"groupIDs":[12],"metadata":{"skip":false,"skipReason":null},"line":27,"column":3,"url":"file:///private/tmp/vynic-readiness-resume-20261006-uv9ayewl/source/apps/operations/test/unit/cluster_print_effect_test.dart"},"type":"testStart","time":1001}
+{"testID":13,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":1022}
+{"test":{"id":14,"name":"scope is independent of TCP versus Windows transport","suiteID":2,"groupIDs":[12],"metadata":{"skip":false,"skipReason":null},"line":47,"column":3,"url":"file:///private/tmp/vynic-readiness-resume-20261006-uv9ayewl/source/apps/operations/test/unit/cluster_print_effect_test.dart"},"type":"testStart","time":1022}
+{"testID":14,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":1027}
+{"test":{"id":15,"name":"a changed retained receipt or unsupported scope is refused","suiteID":2,"groupIDs":[12],"metadata":{"skip":false,"skipReason":null},"line":63,"column":3,"url":"file:///private/tmp/vynic-readiness-resume-20261006-uv9ayewl/source/apps/operations/test/unit/cluster_print_effect_test.dart"},"type":"testStart","time":1027}
+{"testID":15,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":1029}
+{"test":{"id":16,"name":"retarget, stale alias/revision, profile and role changes cannot freeze","suiteID":2,"groupIDs":[12],"metadata":{"skip":false,"skipReason":null},"line":85,"column":3,"url":"file:///private/tmp/vynic-readiness-resume-20261006-uv9ayewl/source/apps/operations/test/unit/cluster_print_effect_test.dart"},"type":"testStart","time":1029}
+{"testID":16,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":1033}
+{"test":{"id":17,"name":"TCP ownership cannot transfer between local Device and shared cluster","suiteID":2,"groupIDs":[12],"metadata":{"skip":false,"skipReason":null},"line":113,"column":3,"url":"file:///private/tmp/vynic-readiness-resume-20261006-uv9ayewl/source/apps/operations/test/unit/cluster_print_effect_test.dart"},"type":"testStart","time":1033}
+{"testID":17,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":1034}
+{"test":{"id":18,"name":"unknown optional sound preserves primary and exact retained config","suiteID":2,"groupIDs":[12],"metadata":{"skip":false,"skipReason":null},"line":136,"column":3,"url":"file:///private/tmp/vynic-readiness-resume-20261006-uv9ayewl/source/apps/operations/test/unit/cluster_print_effect_test.dart"},"type":"testStart","time":1034}
+{"testID":18,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":1036}
+{"test":{"id":19,"name":"configuration receipt retains detached immutable bytes","suiteID":2,"groupIDs":[12],"metadata":{"skip":false,"skipReason":null},"line":163,"column":3,"url":"file:///private/tmp/vynic-readiness-resume-20261006-uv9ayewl/source/apps/operations/test/unit/cluster_print_effect_test.dart"},"type":"testStart","time":1036}
+{"testID":19,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":1038}
+{"success":true,"type":"done","time":1042}

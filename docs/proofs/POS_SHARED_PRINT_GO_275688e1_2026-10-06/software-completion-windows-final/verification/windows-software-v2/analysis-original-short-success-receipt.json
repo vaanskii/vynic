@@ -1,0 +1,46 @@
+{
+  "schema": 1,
+  "createdAtUtc": "2026-10-06T18:02:04.141004+00:00",
+  "status": "PASS_UNCHANGED_FIRST_COHORT_ANALYSIS",
+  "runnerResult": {
+    "schema": 1,
+    "status": "PASS",
+    "failure": null,
+    "SID": "S-1-5-21-611125631-3759947118-1641436196-1000",
+    "currentUser": "VANSKI\\vaanskii",
+    "startedUtc": "2026-10-06T18:01:22.2589516Z",
+    "finishedUtc": "2026-10-06T18:01:36.2228330Z",
+    "sourceReceiptSHA256": "193e4800e5d0733a30bc6c8d4ac993590219363941e69a787bba5ac3681c8f68",
+    "sourceFiles": 1109,
+    "analysisFiles": 68,
+    "analysisExitCode": 0,
+    "sourceBefore": true,
+    "sourceAfter": true,
+    "fixturesVerified": true,
+    "printJobsBefore": 0,
+    "printJobsAfter": 0,
+    "physicalJobs": 0,
+    "productStarted": false,
+    "serviceOperations": false
+  },
+  "files": {
+    "analysis.log": {
+      "sha256": "45ea90c6c4d114d7eecfd9e580705b7b0b4e98d3c49c7270835c659537d3ee9a",
+      "bytes": 4096
+    },
+    "windows-software-analysis.json": {
+      "sha256": "4952fef2ca6bda3017b772d5febb7a20b80e8f373fd1940ba165b46342d903ab",
+      "bytes": 694
+    }
+  },
+  "executionExitCode": 0,
+  "shortLaunchSucceeded": true,
+  "longLaunchFailuresRetained": [
+    "analysis-original-guest-session-attempt1.json",
+    "analysis-original-guest-session-attempt2.json"
+  ],
+  "diagnosticConclusion": "Same reviewed script executed successfully via1768-character pinned short launcher after two11264-character encoded-body session failures. This supports a launcher-size/buffering limitation; no definitive undocumented maximum asserted.",
+  "sourceChanged": false,
+  "VMSettingsChanged": false,
+  "physicalJobs": 0
+}

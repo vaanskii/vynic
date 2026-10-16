@@ -1,0 +1,227 @@
+{
+  "status": "PASS_SOURCE_AND_ISOLATED_TESTS_NOT_DEPLOYED",
+  "scope": "POS startup Venue conflict and identity reload; printer work deferred",
+  "head": "3463ee406184fec7f53818416e11d0e5f5602c87",
+  "cause": {
+    "historicalInvariant": "Reported stack can only arise when persisted Menu Venue differs from loaded enrollment Venue; prior saveEnrollment did not validate retained Menu before writing new Venue metadata",
+    "historicalDataLimitation": "The original conflicting Menu ID was not captured. Later read-only snapshot already has matching Device/canonical/baseline IDs; no claim about who changed that data",
+    "additionalReproducedDefect": "Three red tests proved stale credential retention on cleared/malformed/different-directory reload; malformed JSON error could include file contents",
+    "initializationOrder": "DatabaseCore already loaded identity before Menu recovery. Its later redundant startup_pos reload was removed; early binding validation WIP preserved"
+  },
+  "changes": [
+    "Clear cached identity fields before reloading disk",
+    "Redact identity parse/confirmation errors",
+    "Use the once-validated startup identity after recovery",
+    "Retain Menu guard with shared typed actionable LocalVenueMismatch",
+    "Preserve and qualify pre-existing local binding/enrollment/startup WIP",
+    "Eight new temporary-data regression cases preserve unpaid Orders, Table ownership and unresolved Menu mutations"
+  ],
+  "checks": {
+    "focused": {
+      "passed": 53,
+      "failed": 0,
+      "skipped": 0,
+      "done": true,
+      "failedFiles": {},
+      "evidence": "/private/var/folders/82/drcfb4994p16rl49gxx9tj000000gn/T/vynic-pos-startup-z88mdtt_/focused.jsonl"
+    },
+    "fullFlutter": {
+      "passed": 2608,
+      "failed": 44,
+      "skipped": 17,
+      "done": true,
+      "failedFiles": {
+        "cloud_printer_runtime_sync_test.dart": 20,
+        "printer_route_catalog_test.dart": 8,
+        "pos02_print_delivery_test.dart": 14,
+        "printer_route_configuration_test.dart": 2
+      },
+      "evidence": "/private/var/folders/82/drcfb4994p16rl49gxx9tj000000gn/T/vynic-pos-startup-z88mdtt_/aggregate-initial.jsonl"
+    },
+    "beforeTaskPrivateBaseline": {
+      "passed": 55,
+      "failed": 44,
+      "skipped": 0,
+      "done": true,
+      "failedFiles": {
+        "cloud_printer_runtime_sync_test.dart": 20,
+        "printer_route_catalog_test.dart": 8,
+        "pos02_print_delivery_test.dart": 14,
+        "printer_route_configuration_test.dart": 2
+      },
+      "evidence": "/private/var/folders/82/drcfb4994p16rl49gxx9tj000000gn/T/vynic-pos-startup-z88mdtt_/baseline-printer.jsonl"
+    },
+    "nonPrinterSerial": {
+      "passed": 2135,
+      "failed": 0,
+      "skipped": 15,
+      "done": true,
+      "failedFiles": {},
+      "evidence": "/private/var/folders/82/drcfb4994p16rl49gxx9tj000000gn/T/vynic-pos-startup-z88mdtt_/non-printer.jsonl"
+    },
+    "managerLoginIsolatedRetry": {
+      "passed": 4,
+      "failed": 0,
+      "skipped": 0,
+      "done": true,
+      "failedFiles": {},
+      "evidence": "/private/var/folders/82/drcfb4994p16rl49gxx9tj000000gn/T/vynic-pos-startup-z88mdtt_/manager-login-isolated.jsonl"
+    },
+    "credentialBeforeFix": {
+      "passed": 8,
+      "failed": 3,
+      "skipped": 0,
+      "done": true,
+      "failedFiles": {
+        "edge_device_credential_store_test.dart": 3
+      },
+      "evidence": "/private/var/folders/82/drcfb4994p16rl49gxx9tj000000gn/T/vynic-pos-startup-z88mdtt_/credential-red.jsonl"
+    },
+    "nonPrinterInitial": {
+      "passed": 2134,
+      "failed": 1,
+      "skipped": 15,
+      "done": true,
+      "failedFiles": {
+        "manager_login_screen_test.dart": 1
+      },
+      "evidence": "/private/var/folders/82/drcfb4994p16rl49gxx9tj000000gn/T/vynic-pos-startup-z88mdtt_/non-printer-initial.jsonl"
+    }
+  },
+  "otherChecks": {
+    "dartAnalysis": "PASS 10 related files, 0 issues",
+    "dartFormatting": "PASS 5 changed files, 0 changes",
+    "macOSDebugBuild": {
+      "exitCode": 0,
+      "isolatedWorkspace": "/private/var/folders/82/drcfb4994p16rl49gxx9tj000000gn/T/vynic-pos-startup-z88mdtt_/macos-pos-build/apps/operations",
+      "platform": "macOS",
+      "debugOnly": true,
+      "launched": false,
+      "liveDataUsed": false,
+      "operationsEnvChanged": false
+    },
+    "menu02NativeRecovery": {
+      "status": "PASS",
+      "writerPid": 29817,
+      "readerPid": 30002,
+      "mutationId": "6b8326ce-31b2-4efe-baae-961ab6c597b0",
+      "pendingEntries": 1,
+      "localPrice": 12.0,
+      "otherCloudPrice": 24.0,
+      "journalStatus": "pending",
+      "cloudReachableDuringRecovery": false,
+      "walCleared": true,
+      "projectionMarkerCleared": true,
+      "duplicateCaptureCount": 0,
+      "signal": "SIGKILL",
+      "checkpoint": "clear:after",
+      "projectionEmptyAtKill": true,
+      "writerExit": 79,
+      "readerExit": 0,
+      "platform": "macOS-27.0.1-arm64-arm-64bit",
+      "command": [
+        "/opt/homebrew/share/flutter/bin/flutter",
+        "test",
+        "--no-pub",
+        "--reporter",
+        "expanded",
+        "test/live/menu02_process_restart_test.dart"
+      ],
+      "writerLogSha256": "8da0c189607c785b339a55f71aac50e7f3683eb708da60b5ad7b092593dbed7a",
+      "readerLogSha256": "0b030a6f90ae6d6606b3cd40275a21676aa17c8a4daa4b3920a4016b090d2001",
+      "temporaryDirectoryRemoved": true
+    },
+    "gitDiffCheck": "PASS"
+  },
+  "limits": [
+    "Complete Flutter aggregate is not PASS: 44 failures in four printer/POS-02 fixture files, reproduced unchanged in the private before-task production-source baseline",
+    "One Manager login widget failed in the first concurrent non-printer selection; isolated 4/4 and final serial 2135/0 passed; exact timing cause not claimed",
+    "Full aggregate 17 opt-in cases and selected non-printer 15 cases remain skipped",
+    "Actual running-app hot restart and Windows/hardware acceptance not run",
+    "No automatic repair of an already mismatched real installation; original-Venue reconnect or approved data handoff is still required"
+  ],
+  "preservation": {
+    "envByteIdentical": {
+      "apps/operations/.env": true,
+      "apps/operations/.env.example": true
+    },
+    "priorGuardWipByteIdentical": [
+      "apps/operations/lib/core/database/database_core.dart",
+      "apps/operations/lib/core/database/local_venue_binding.dart",
+      "apps/operations/lib/core/services/edge/pos_enrollment_service.dart",
+      "apps/operations/lib/core/services/edge/edge_enrollment_client.dart",
+      "apps/operations/test/unit/local_venue_binding_test.dart"
+    ],
+    "liveHiveOrCredentialChanges": false,
+    "credentialCopiedOrPrinted": false,
+    "printerSourceOrTestFilesChanged": false,
+    "otherSessionIntervention": false,
+    "deploymentPushCommitOrLiveRestart": false,
+    "deniedOPS01RestoreRetried": false
+  },
+  "readOnlyMetadata": {
+    "dataDirectory": "/Users/vaanskii/Library/Containers/ge.vynic.pos/Data/Documents/Vpos_Data_vaanskiis_macbook_pro_local",
+    "files": [
+      {
+        "name": "menucanonical.hive",
+        "bytes": 2260,
+        "mtime": 1791996149.052806
+      },
+      {
+        "name": "menumutationjournal.hive",
+        "bytes": 0,
+        "mtime": 1791996108.637478
+      },
+      {
+        "name": "orders.hive",
+        "bytes": 0,
+        "mtime": 1791996108.6274638
+      },
+      {
+        "name": "tables.hive",
+        "bytes": 0,
+        "mtime": 1791996108.6265526
+      },
+      {
+        "name": "settings.hive",
+        "bytes": 1547,
+        "mtime": 1791996112.0621078
+      },
+      {
+        "name": "menu.hive",
+        "bytes": 0,
+        "mtime": 1791996108.6289616
+      },
+      {
+        "name": "meta.hive",
+        "bytes": 820,
+        "mtime": 1791996108.6589396
+      },
+      {
+        "name": "edge_device.json",
+        "bytes": 333,
+        "mtime": 1791994510.7297423
+      }
+    ],
+    "deviceMetadata": {
+      "venueId": "52e23658-5a21-4c07-96e9-585c78410c12",
+      "installationId": "9d519316-f88f-4453-a09b-fcd167303758",
+      "enrolledAt": "2026-10-14T16:15:10.671Z",
+      "deviceId": "4642f804-391d-44f0-881e-b8fbc3f46836"
+    },
+    "stableDuringRead": true,
+    "copiedIdentityFile": false
+  },
+  "ownedFiles": [
+    "apps/operations/lib/core/services/edge/edge_device_credential_store.dart",
+    "apps/operations/lib/core/services/menu/menu_local_store.dart",
+    "apps/operations/lib/startup_pos.dart",
+    "apps/operations/test/unit/edge_device_credential_store_test.dart",
+    "apps/operations/test/unit/pos_startup_venue_test.dart",
+    "docs/POS_LOCAL_VENUE_STARTUP.md",
+    "docs/agent-state/VYNIC_PROJECT_STATE.md",
+    "docs/agent-state/VYNIC_CODE_MAP.md"
+  ],
+  "privateEvidenceRoot": "/private/var/folders/82/drcfb4994p16rl49gxx9tj000000gn/T/vynic-pos-startup-z88mdtt_",
+  "next": "OPS-03 dependency/advisory inventory and build composition/provenance, no dependency upgrades or deployment"
+}

@@ -1,0 +1,16 @@
+{
+  "verdict": "PASS final narrow source delta; actual Windows qualification pending",
+  "source_manifest_sha256": "237deec3436b5cfa9983cc53ab4b52b4e9c2dcce0a9ca592efb8b26938160bda",
+  "owned_source_hashes_verified": 27,
+  "nonowned_drift": [],
+  "review": [
+    "Unexported JOB_LIST setter default always installs mandatory attribute before CreateProcess",
+    "Unsupported attribute test injects ERROR_NOT_SUPPORTED and observes no process returned; no uncontained fallback",
+    "Self-fixture restores accidentally acquired semaphore before refusing"
+  ],
+  "previous_review": "printer-validation/transport-independent-review.json",
+  "limits": [
+    "Windows tests not yet executed in reviewed evidence",
+    "No physical printing, service deployment or shared RAW fencing qualification"
+  ]
+}

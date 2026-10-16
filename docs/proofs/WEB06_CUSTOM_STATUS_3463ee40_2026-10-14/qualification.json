@@ -1,0 +1,81 @@
+{
+  "status": "COMPLETED_SOURCE_ISOLATED_QUALIFICATION",
+  "task": "WEB-06 CUSTOM operator current BOG status",
+  "head": "3463ee406184fec7f53818416e11d0e5f5602c87",
+  "branch": "codex/docker-deployment-foundation",
+  "workingTree": "Existing changes preserved; task-only delta retained in task-diff.patch. No commit.",
+  "fix": "CustomWebsiteService.facts imports and uses the existing latestBogIntegrationStatus Venue/BOG greatest-revision metadata selector.",
+  "beforeFix": {
+    "passed": 8,
+    "failed": 2,
+    "cause": "Unordered read displayed DISABLED for greatest enabled revision after rotation"
+  },
+  "finalTests": {
+    "focused": {
+      "numPassedTests": 10,
+      "numFailedTests": 0,
+      "numPendingTests": 0
+    },
+    "aggregate": {
+      "numPassedTests": 874,
+      "numFailedTests": 0,
+      "numPendingTests": 843
+    },
+    "custom": {
+      "numPassedTests": 17,
+      "numFailedTests": 0,
+      "numPendingTests": 0
+    },
+    "w1": {
+      "numPassedTests": 8,
+      "numFailedTests": 0,
+      "numPendingTests": 0
+    }
+  },
+  "distinctPassingCases": 899,
+  "optInCasesNotExecuted": 818,
+  "duplicateAccounting": "Focused 10 also pass in aggregate; counted once. File + assertion ordinal identities in test-accounting.json.",
+  "staticChecks": {
+    "backendTypesFinal": "PASS (tsc --noEmit)",
+    "backendBuild": "PASS (npm run build; final production source)",
+    "changedBoundaryLint": {
+      "errors": 0,
+      "warnings": 0
+    },
+    "prettier": "PASS",
+    "gitDiffCheck": "PASS"
+  },
+  "isolatedDatabase": {
+    "freshMigrations": 75,
+    "ownedDisposableDatabases": 9,
+    "loopbackOnly": true,
+    "cleanup": "Owned cluster stopped and port closed; cleanup.json"
+  },
+  "unchangedBoundaries": [
+    "Payment creation, provider transport, callbacks, settlement and historical pinned credential verification",
+    "Customer domain permissions: Platform Admin/support controls domain changes",
+    "Stored credential ciphertext and real user data",
+    "POS-02.C work and unapproved INV-01.F2 product decisions"
+  ],
+  "limitations": [
+    "818 opt-in backend case records were not executed.",
+    "An intermediate reused-disposable-database run returned one unexplained 403 after synthetic entitlement removal; final fresh focused and aggregate runs pass. Details in validation-notes.json.",
+    "No frontend code change; frontend/browser suites were not rerun for this backend-only follow-up.",
+    "No live bank calls, services restarted, live settings/data edits, deploy or push. Production provider/fleet/origin acceptance remains open."
+  ],
+  "nextSafeIndependentStep": "OPS-01 final-schema isolated backup -> fresh restore qualification with synthetic data; no live database/deployment or parallel POS-02.C scope.",
+  "evidence": [
+    "before.json",
+    "focused.json",
+    "aggregate.json",
+    "custom.json",
+    "w1.json",
+    "test-accounting.json",
+    "lint.json",
+    "source-hashes.json",
+    "task-diff.patch",
+    "validation-notes.json",
+    "cleanup.json"
+  ],
+  "updatedAt": "2026-10-14T10:57:54.438539+00:00"
+}

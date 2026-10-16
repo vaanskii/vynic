@@ -1,3 +1,4 @@
+import type { Prisma } from '@prisma/client';
 import {
   BadRequestException,
   Injectable,
@@ -129,8 +130,12 @@ export class MenuService {
     return this.toWebsiteCategory(category);
   }
 
-  async getMenuItemById(tenant: TenantContext, itemId: string) {
-    const item = await this.prisma.menuItem.findFirst({
+  async getMenuItemById(
+    tenant: TenantContext,
+    itemId: string,
+    db: Prisma.TransactionClient = this.prisma,
+  ) {
+    const item = await db.menuItem.findFirst({
       where: { id: itemId, venueId: tenant.venueId, ...activeMenuItem },
       include: {
         variants: { where: { retiredAt: null } },
@@ -156,8 +161,9 @@ export class MenuService {
   async getPosItemIdByCloudId(
     tenant: TenantContext,
     itemId: string,
+    db: Prisma.TransactionClient = this.prisma,
   ): Promise<string | null> {
-    const item = await this.prisma.menuItem.findFirst({
+    const item = await db.menuItem.findFirst({
       where: { id: itemId, venueId: tenant.venueId, ...activeMenuItem },
       select: { posMenuItemId: true },
     });

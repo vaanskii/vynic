@@ -1,3 +1,5 @@
+import { ManagerActivationController } from '../auth/manager-activation.controller';
+import { ManagerActivationService } from '../auth/manager-activation.service';
 import {
   supportedMenuClient,
   supportedMenuClientHeader,
@@ -105,6 +107,7 @@ const url = process.env.TENANT_INTEGRATION_DATABASE_URL;
         [DeviceCredentialService, credentials],
         [VenueEntitlementsService, entitlements],
         [AuthService, new AuthService(db, jwt)],
+        [ManagerActivationService, new ManagerActivationService(db, vault)],
         [LoginThrottleService, new LoginThrottleService()],
         [ManagerTenantService, new ManagerTenantService(db)],
       ];
@@ -119,6 +122,7 @@ const url = process.env.TENANT_INTEGRATION_DATABASE_URL;
           DeviceRuntimeConfigController,
           DeviceEnrollmentController,
           AuthController,
+          ManagerActivationController,
         ],
         providers: [
           ...providers.map(([provide, useValue]) => ({ provide, useValue })),
@@ -265,20 +269,13 @@ const url = process.env.TENANT_INTEGRATION_DATABASE_URL;
             note: 'Disposable operator-approved trial',
           },
         );
-        const manager = (
+        const activation = (
           await http()
-            .post(`/customer/venues/${venue.id}/managers`)
+            .post(`/customer/venues/${venue.id}/manager-activation`)
             .set(bearer(token))
-            .send({
-              requestId: randomUUID(),
-              displayName: 'First Manager',
-              username: 'manager',
-              role: 'MANAGER',
-              pin: '481259',
-            })
+            .send({})
             .expect(201)
         ).body;
-        expect(manager.staff.venueId).toBe(venue.id);
         const code = (
           await http()
             .post(`/customer/venues/${venue.id}/enrollments`)
@@ -309,6 +306,49 @@ const url = process.env.TENANT_INTEGRATION_DATABASE_URL;
             menuClient: supportedMenuClient,
           })
           .expect(409);
+        const activationInput = {
+          code: activation.code,
+          name: 'manager',
+          pin: '481259',
+          requestId: randomUUID(),
+        };
+        // An owner, Manager bearer, shared key or invitation alone is not a POS identity.
+        await http()
+          .post('/auth/manager-activation')
+          .send(activationInput)
+          .expect(404);
+        await http()
+          .post('/edge/manager-activation')
+          .send(activationInput)
+          .expect(401);
+        await http()
+          .post('/edge/manager-activation')
+          .set(bearer(token))
+          .send(activationInput)
+          .expect(401);
+        await http()
+          .post('/edge/manager-activation')
+          .set('X-POS-Sync-Key', 'legacy-shared-key')
+          .send(activationInput)
+          .expect(401);
+        await http()
+          .post('/edge/manager-activation')
+          .set('X-POS-Sync-Key', enrolled.credential)
+          .send({
+            code: activation.code,
+            requestId: randomUUID(),
+            name: 'manager',
+            pin: '481259',
+          })
+          .expect(200);
+        const manager = {
+          staff: await db.staff.findUniqueOrThrow({
+            where: {
+              venueId_username: { venueId: venue.id, username: 'manager' },
+            },
+          }),
+        };
+        expect(manager.staff.venueId).toBe(venue.id);
         const login = (
           await http()
             .post('/auth/mobile-login')

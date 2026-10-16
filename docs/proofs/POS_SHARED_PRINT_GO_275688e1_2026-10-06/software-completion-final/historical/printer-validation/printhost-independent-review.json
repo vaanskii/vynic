@@ -1,0 +1,65 @@
+{
+  "verdict": "PASS bounded printhost source review; all identified P2s closed",
+  "checkpoint_sha256": "01f4790194077feaeed3cf479e79001395211a0923e1765169de9f2997116362",
+  "manifest_sha256": "24b268003a61ca59bf98e64da1cc833691c68ccbc344047245ad337917ece1d5",
+  "files": [
+    {
+      "path": "apps/edge/internal/printhost/INSTALLATION_PLAN.md",
+      "sha256": "e8c13f715dd280f762ba0c2eee954b0e3200b87c0dcedc40ce94bbc7f3aacd46",
+      "bytes": 5200
+    },
+    {
+      "path": "apps/edge/internal/printhost/host.go",
+      "sha256": "55eafb67ed59aef51fbfb5181b22be010a265833bbd523140b8b855b3662bfe4",
+      "bytes": 9921
+    },
+    {
+      "path": "apps/edge/internal/printhost/host_test.go",
+      "sha256": "03c2253726ef07528a1f93ff561c04cd834afeb95573e0dc5c414e3aabbf13fb",
+      "bytes": 16326
+    },
+    {
+      "path": "apps/edge/internal/printhost/pins.go",
+      "sha256": "9e94a889f56e947cebc3f4b8f663d04fc9dbd5c4b7b1af957246b8a6808b3a8d",
+      "bytes": 8022
+    },
+    {
+      "path": "apps/edge/internal/printhost/proof_composition.go",
+      "sha256": "1a05166b0731b4670b2ce5329893561df386b9955eabcbf825f6d0b92c4b1d35",
+      "bytes": 2503
+    },
+    {
+      "path": "apps/edge/internal/printhost/queue_lifecycle_test.go",
+      "sha256": "a2bae11d7234158ef94f239fad4ac8f92c3ed9a1d93f75b577939f5aac7b3fc9",
+      "bytes": 16798
+    },
+    {
+      "path": "apps/edge/internal/printhost/service.go",
+      "sha256": "1a242519ede401c8954dbfe3941e483834e2b7e3416c9b263bd5de61ceea1937",
+      "bytes": 3199
+    },
+    {
+      "path": "apps/edge/internal/printhost/service_test.go",
+      "sha256": "2c0bb78ea73507e3c6fa3a3f38df5de4d2d166ae3e5b3facd82a73cab0a4e51e",
+      "bytes": 9577
+    },
+    {
+      "path": "apps/edge/internal/printhost/service_windows.go",
+      "sha256": "2701581e0d34f98b96449c12a9eb1ad5c9936b6cad050cb7a1aa56ade4d76fee",
+      "bytes": 2348
+    }
+  ],
+  "closed_findings": [
+    "Nil and typed-nil owner refused before resource open",
+    "Caller context canceled/deadline probe returns without host shutdown",
+    "Host-initiated runtime pin/storage failure observed by service; StopPending retains original drain and Stopped preserves error reason"
+  ],
+  "evidence": "Independent source/test review; verified nine source hashes and all checkpoint log hashes; independently parsed19 top-level unit and race successes each, no failed events; Windows builds crosscompiled only",
+  "limits": [
+    "No SCM registration or production entrypoint/listener/auth wiring",
+    "Source voluntary lifecycle is not forced OS shutdown or physical printer fence",
+    "Real Windows lifecycle remains NOT_RUN_BLOCKED: suspended guest, no resume performed",
+    "Proof composition refuses real physical sender; VENUE_SHARED physical dispatch stays denied",
+    "No printer/driver/account qualification or production readiness claim"
+  ]
+}

@@ -1,0 +1,8 @@
+{
+  "ownedPostgresStopped": true,
+  "postmasterPidAbsent": true,
+  "ownedPreviewProcessesStopped": true,
+  "browserTabClosed": true,
+  "browserViewportReset": true,
+  "liveServicesTouched": false
+}

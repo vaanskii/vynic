@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:vynic/core/ui/widgets/pos_dialog.dart';
 import 'package:vynic/core/widgets/pos_keyboard/pos_keyboard_sheet.dart';
 import 'package:vynic/core/widgets/pos_on_screen_text_field.dart';
 
@@ -21,6 +22,7 @@ class ServiceFeeAdjustDialog extends StatefulWidget {
     required this.defaultPercentage,
     this.showQuickValues = true,
     this.showSteppers = false,
+    this.usePosLayout = false,
   });
 
   final bool initialIncludeServiceFee;
@@ -28,6 +30,7 @@ class ServiceFeeAdjustDialog extends StatefulWidget {
   final double defaultPercentage;
   final bool showQuickValues;
   final bool showSteppers;
+  final bool usePosLayout;
 
   @override
   State<ServiceFeeAdjustDialog> createState() => _ServiceFeeAdjustDialogState();
@@ -182,6 +185,115 @@ class _ServiceFeeAdjustDialogState extends State<ServiceFeeAdjustDialog> {
 
   @override
   Widget build(BuildContext context) {
+    if (widget.usePosLayout) {
+      return PopScope(
+        canPop: false,
+        onPopInvokedWithResult: (didPop, _) {
+          if (!didPop) _handleCancel();
+        },
+        child: PosFormDialog(
+          title: 'სერვისის პროცენტი',
+          onClose: _handleCancel,
+          actions: [
+            TextButton(onPressed: _handleCancel, child: const Text('გაუქმება')),
+            ElevatedButton(
+              onPressed: _canConfirm
+                  ? () => Navigator.pop(
+                      context,
+                      ServiceFeeAdjustResult(
+                        includeServiceFee: _includeServiceFee,
+                        percentage: _normalizedPercentage,
+                      ),
+                    )
+                  : null,
+              child: const Text('დადასტურება'),
+            ),
+          ],
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              SwitchListTile(
+                contentPadding: EdgeInsets.zero,
+                title: const Text('სერვისის გადასახადი'),
+                value: _includeServiceFee,
+                onChanged: (value) =>
+                    setState(() => _includeServiceFee = value),
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: _percentageController,
+                      enabled: _includeServiceFee,
+                      readOnly: shouldUsePosOnScreenKeyboard(context),
+                      onTap: shouldUsePosOnScreenKeyboard(context)
+                          ? _openPercentageKeyboard
+                          : null,
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
+                      inputFormatters: [
+                        FilteringTextInputFormatter.allow(
+                          RegExp(r'^\d*\.?\d*'),
+                        ),
+                      ],
+                      onChanged: (_) => setState(() {}),
+                      decoration: const InputDecoration(
+                        labelText: 'პროცენტი (%)',
+                        suffixText: '%',
+                      ),
+                    ),
+                  ),
+                  if (widget.showSteppers) ...[
+                    IconButton(
+                      onPressed: _includeServiceFee && _normalizedPercentage > 0
+                          ? () => _step(-1)
+                          : null,
+                      tooltip: '−1%',
+                      icon: const Icon(Icons.remove_circle_outline),
+                    ),
+                    IconButton(
+                      onPressed:
+                          _includeServiceFee && _normalizedPercentage < 100
+                          ? () => _step(1)
+                          : null,
+                      tooltip: '+1%',
+                      icon: const Icon(Icons.add_circle_outline),
+                    ),
+                  ],
+                ],
+              ),
+              if (widget.showQuickValues) ...[
+                const SizedBox(height: 16),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    for (final value in _quickValues)
+                      ChoiceChip(
+                        label: Text('${value.toStringAsFixed(0)}%'),
+                        selected: (_normalizedPercentage - value).abs() <= .009,
+                        onSelected: _includeServiceFee
+                            ? (_) => _applyQuickValue(value)
+                            : null,
+                      ),
+                  ],
+                ),
+                TextButton(
+                  onPressed: _includeServiceFee
+                      ? () => _applyQuickValue(widget.defaultPercentage)
+                      : null,
+                  child: Text(
+                    'გამოიყენე დეფოლტი (${_formatPercentage(widget.defaultPercentage)}%)',
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+      );
+    }
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, _) async {

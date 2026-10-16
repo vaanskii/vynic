@@ -1,0 +1,60 @@
+{
+  "suites": {
+    "C:/Users/vaanskii/AppData/Local/VynicPos02Smoke/recovery-db74149c-20261004/apps/operations/test/unit/pos02_print_delivery_test.dart": {
+      "pass": 36,
+      "fail": 0,
+      "skip": 0
+    },
+    "C:/Users/vaanskii/AppData/Local/VynicPos02Smoke/recovery-db74149c-20261004/apps/operations/test/unit/pos02_backup_restore_test.dart": {
+      "pass": 7,
+      "fail": 0,
+      "skip": 0
+    },
+    "C:/Users/vaanskii/AppData/Local/VynicPos02Smoke/recovery-db74149c-20261004/apps/operations/test/unit/pos02_local_printers_test.dart": {
+      "pass": 16,
+      "fail": 0,
+      "skip": 0
+    },
+    "C:/Users/vaanskii/AppData/Local/VynicPos02Smoke/recovery-db74149c-20261004/apps/operations/test/widget/pos02_print_jobs_test.dart": {
+      "pass": 9,
+      "fail": 0,
+      "skip": 0
+    },
+    "C:/Users/vaanskii/AppData/Local/VynicPos02Smoke/recovery-db74149c-20261004/apps/operations/test/unit/pos02_preview_safety_test.dart": {
+      "pass": 17,
+      "fail": 0,
+      "skip": 0
+    },
+    "C:/Users/vaanskii/AppData/Local/VynicPos02Smoke/recovery-db74149c-20261004/apps/operations/test/widget/pos02_admin_printers_test.dart": {
+      "pass": 9,
+      "fail": 0,
+      "skip": 0
+    },
+    "C:/Users/vaanskii/AppData/Local/VynicPos02Smoke/recovery-db74149c-20261004/apps/operations/test/live/pos02_one_shot_acceptance_test.dart": {
+      "pass": 0,
+      "fail": 0,
+      "skip": 1
+    },
+    "C:/Users/vaanskii/AppData/Local/VynicPos02Smoke/recovery-db74149c-20261004/apps/operations/test/unit/pos02_acceptance_runner_test.dart": {
+      "pass": 39,
+      "fail": 1,
+      "skip": 0
+    },
+    "C:/Users/vaanskii/AppData/Local/VynicPos02Smoke/recovery-db74149c-20261004/apps/operations/test/widget/pos02_kitchen_entry_points_test.dart": {
+      "pass": 2,
+      "fail": 0,
+      "skip": 0
+    }
+  },
+  "errors": [
+    {
+      "name": "missing, arbitrary, linked, occupied or mismatched output refuses before storage",
+      "error": "Bad state: Result directory must be fresh; never overwrite any evidence or data",
+      "stack": "tool\\pos02_acceptance_request.dart 103:7            AcceptanceRequest.requireOwnedOutput\ntest\\unit\\pos02_acceptance_runner_test.dart 755:30  main.<fn>\n"
+    }
+  ],
+  "physicalJobs": 0,
+  "sourceHashesBeforeAfter": "883PASS",
+  "milestoneDone": false,
+  "runnerWindowsBlocker": "mixed slash path comparison; fails closed; runner not shipped with product"
+}

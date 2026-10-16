@@ -25,6 +25,9 @@ export interface ReservationResponseItem {
   notes?: string;
   status: string;
   createdBy?: string;
+  advanceAmount?: number;
+  advanceCollectedOn?: string | null;
+  advanceReceiptId?: string | null;
 }
 
 /**
@@ -88,6 +91,7 @@ export class MobileReservationsService {
         notes: r.notes ? String(r.notes) : undefined,
         status: String(r.status ?? 'pending'),
         createdBy: r.createdBy ? String(r.createdBy) : undefined,
+        ...(Number(r.advanceAmount ?? 0) > 0 ? { advanceAmount: Number(r.advanceAmount), advanceCollectedOn: r.advanceCollectedOn, advanceReceiptId: r.advanceReceiptId } : {}),
       }))
       .filter((r) => r.id.length > 0);
 

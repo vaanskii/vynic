@@ -1,0 +1,130 @@
+00:00 +0: loading /Users/vaanskii/Developer/vynic/apps/operations/test/widget/order_move_items_dialog_test.dart
+00:00 +0: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/order_move_items_dialog_test.dart: (setUpAll)
+00:00 +0: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/order_move_items_dialog_test.dart: lays out without overflow at 1200x720
+00:00 +1: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/order_move_items_dialog_test.dart: lays out without overflow at 1200x720
+00:00 +2: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/admin_close_day_layout_test.dart: layout renders without overflow at 1280.0x800.0
+00:00 +3: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/order_move_items_dialog_test.dart: still fits at 1200x720 with lines picked and a target
+00:00 +4: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/order_move_items_dialog_test.dart: still fits at 1200x720 with lines picked and a target
+00:00 +5: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/admin_close_day_layout_test.dart: layout renders without overflow at 1920.0x1080.0
+00:00 +6: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/order_move_items_dialog_test.dart: lays out without overflow at 1280x720
+00:00 +7: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/admin_close_day_layout_test.dart: layout renders without overflow at 820.0x1180.0
+00:00 +8: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/order_move_items_dialog_test.dart: still fits at 1280x720 with lines picked and a target
+00:00 +9: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/order_move_items_dialog_test.dart: still fits at 1280x720 with lines picked and a target
+00:00 +10: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/admin_close_day_layout_test.dart: day summary shows the payment split beside the total
+00:00 +11: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/order_move_items_dialog_test.dart: lays out without overflow at 1366x768
+00:00 +12: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/order_move_items_dialog_test.dart: lays out without overflow at 1366x768
+00:00 +13: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/admin_close_day_layout_test.dart: readiness blocks on the open table and the reserved one
+00:00 +14: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/order_move_items_dialog_test.dart: still fits at 1366x768 with lines picked and a target
+00:00 +15: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/order_move_items_dialog_test.dart: still fits at 1366x768 with lines picked and a target
+00:00 +16: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/admin_close_day_layout_test.dart: (tearDownAll)
+00:00 +16: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/order_move_items_dialog_test.dart: lays out without overflow at 1440x900
+00:00 +17: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/order_move_items_dialog_test.dart: still fits at 1440x900 with lines picked and a target
+00:00 +18: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/order_move_items_dialog_test.dart: lays out without overflow at 1920x1080
+00:00 +19: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/order_move_items_dialog_test.dart: still fits at 1920x1080 with lines picked and a target
+00:01 +20: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/order_move_items_dialog_test.dart: a table and a take-away are both offered as targets
+00:01 +21: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/order_move_items_dialog_test.dart: a free table and a new take-away are offered too
+00:01 +22: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/order_move_items_dialog_test.dart: the header says where the items are going
+00:01 +23: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/order_move_items_dialog_test.dart: choosing a free table hands back a target, not an order
+00:01 +24: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/order_move_items_dialog_test.dart: a new take-away can be chosen as the destination
+00:01 +25: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/order_move_items_dialog_test.dart: nothing can be confirmed until both halves are chosen
+00:01 +26: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/floor_editor_layout_test.dart: renders without overflow at 1024x768
+00:01 +27: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/floor_editor_layout_test.dart: renders without overflow at 1024x768
+00:01 +28: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/floor_editor_layout_test.dart: renders without overflow at 1024x768
+00:01 +29: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/floor_editor_layout_test.dart: renders without overflow at 1024x768
+00:01 +30: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/floor_editor_layout_test.dart: renders without overflow at 1024x768
+00:01 +31: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/floor_editor_layout_test.dart: renders without overflow at 1024x768
+00:01 +32: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/floor_editor_layout_test.dart: renders without overflow at 1024x768
+00:01 +33: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/floor_editor_layout_test.dart: canvas stays the largest region at 1024x768
+00:01 +34: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/floor_editor_layout_test.dart: renders without overflow at 1280x720
+00:01 +35: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/floor_editor_layout_test.dart: canvas stays the largest region at 1280x720
+00:01 +36: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/floor_editor_layout_test.dart: renders without overflow at 1366x768
+00:02 +37: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/floor_editor_layout_test.dart: canvas stays the largest region at 1366x768
+00:02 +38: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/floor_editor_layout_test.dart: renders without overflow at 1440x900
+00:02 +39: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/floor_editor_layout_test.dart: canvas stays the largest region at 1440x900
+00:02 +40: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/floor_editor_layout_test.dart: renders without overflow at 1920x1080
+00:02 +41: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/floor_editor_layout_test.dart: canvas stays the largest region at 1920x1080
+00:02 +42: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/floor_editor_layout_test.dart: the tool palette collapses to icons on a narrow window
+00:02 +43: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/floor_editor_layout_test.dart: the zoom controls are present and discoverable
+00:02 +44: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/floor_editor_layout_test.dart: opens fitted to the window rather than at 100%
+00:02 +45: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/floor_editor_layout_test.dart: the zoom buttons change what is painted
+00:02 +46: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/floor_editor_layout_test.dart: zooming keeps the plan centred in the viewport
+00:02 +47: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/floor_editor_layout_test.dart: clicking a table selects it, and the painter is told
+00:02 +48: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/pos_first_run_test.dart: enrolled POS waits for its Manager instead of an empty PIN login
+00:03 +49: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/venue_setup_test.dart: input choice persists and interrupted setup stays retryable at 375.0
+00:03 +50: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/venue_setup_test.dart: input choice persists and interrupted setup stays retryable at 375.0
+00:03 +51: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/venue_setup_test.dart: input choice persists and interrupted setup stays retryable at 375.0
+00:03 +52: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/venue_setup_test.dart: input choice persists and interrupted setup stays retryable at 375.0
+00:03 +53: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/venue_setup_test.dart: input choice persists and interrupted setup stays retryable at 375.0
+00:03 +54: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/venue_setup_test.dart: input choice persists and interrupted setup stays retryable at 375.0
+Venue setup save failed: Bad state: Synthetic storage failure
+#0      _SettingsBox.put (file:///Users/vaanskii/Developer/vynic/apps/operations/test/widget/venue_setup_test.dart:22:7)
+#1      SettingsRepository.setPosOnScreenInputEnabled.<anonymous closure> (package:vynic/core/database/repositories/settings_repository.dart:91:19)
+#2      UpdateReadiness.track.<anonymous closure> (package:vynic/core/services/pos/update/update_readiness.dart:62:36)
+#3      _rootRun (dart:async/zone_root.dart:35:13)
+#4      _CustomZone.run (dart:async/zone.dart:726:19)
+#5      _runZoned (dart:async/zone_api.dart:166:6)
+#6      runZoned (dart:async/zone_api.dart:92:10)
+#7      LocalDataAdmission.track (package:vynic/core/database/local_data_admission.dart:108:20)
+#8      UpdateReadiness.track (package:vynic/core/services/pos/update/update_readiness.dart:61:26)
+#9      SettingsRepository.setPosOnScreenInputEnabled (package:vynic/core/database/repositories/settings_repository.dart:88:23)
+#10     PosInputSettings.save (package:vynic/core/services/pos/pos_input_settings.dart:23:30)
+#11     _VenueSetupScreenState._finish (package:vynic/apps/windows_pos/screens/venue_setup_screen.dart:59:30)
+<asynchronous suspension>
+
+00:03 +55: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/venue_setup_test.dart: input choice persists and interrupted setup stays retryable at 375.0
+00:03 +56: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/venue_setup_test.dart: input choice persists and interrupted setup stays retryable at 1024.0
+Venue setup save failed: Bad state: Synthetic storage failure
+#0      _SettingsBox.put (file:///Users/vaanskii/Developer/vynic/apps/operations/test/widget/venue_setup_test.dart:22:7)
+#1      SettingsRepository.setPosOnScreenInputEnabled.<anonymous closure> (package:vynic/core/database/repositories/settings_repository.dart:91:19)
+#2      UpdateReadiness.track.<anonymous closure> (package:vynic/core/services/pos/update/update_readiness.dart:62:36)
+#3      _rootRun (dart:async/zone_root.dart:35:13)
+#4      _CustomZone.run (dart:async/zone.dart:726:19)
+#5      _runZoned (dart:async/zone_api.dart:166:6)
+#6      runZoned (dart:async/zone_api.dart:92:10)
+#7      LocalDataAdmission.track (package:vynic/core/database/local_data_admission.dart:108:20)
+#8      UpdateReadiness.track (package:vynic/core/services/pos/update/update_readiness.dart:61:26)
+#9      SettingsRepository.setPosOnScreenInputEnabled (package:vynic/core/database/repositories/settings_repository.dart:88:23)
+#10     PosInputSettings.save (package:vynic/core/services/pos/pos_input_settings.dart:23:30)
+#11     _VenueSetupScreenState._finish (package:vynic/apps/windows_pos/screens/venue_setup_screen.dart:59:30)
+<asynchronous suspension>
+
+00:03 +57: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/venue_setup_test.dart: first run completes with only a name and no logo
+00:04 +58: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/pos02_print_jobs_test.dart: (setUpAll)
+00:04 +58: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/pos02_print_jobs_test.dart: kitchen reprint offers Run/Cancel only and cancel writes nothing
+[AuditEventService] Found 1 unsynced events. Starting batch sync.
+[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP
+[AuditEventService] Batch sync failed. Will retry later.
+00:04 +59: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/pos02_print_jobs_test.dart: kitchen Run double submit creates one labeled audited copy
+[AuditEventService] Found 1 unsynced events. Starting batch sync.
+[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP
+[AuditEventService] Batch sync failed. Will retry later.
+00:04 +60: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/pos02_print_jobs_test.dart: unconfigured policy exposes uncertainty but disables paper/reprint actions
+[AuditEventService] Found 1 unsynced events. Starting batch sync.
+[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP
+[AuditEventService] Batch sync failed. Will retry later.
+00:04 +61: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/pos02_print_jobs_test.dart: blank reason and cancel do not admit a copy; a double submit admits exactly one
+[AuditEventService] Found 1 unsynced events. Starting batch sync.
+[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP
+[AuditEventService] Batch sync failed. Will retry later.
+00:05 +62: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/pos02_print_jobs_test.dart: a waiter with printingStaff policy can reach a sent ticket from Home notice
+[AuditEventService] Found 1 unsynced events. Starting batch sync.
+[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP
+[AuditEventService] Batch sync failed. Will retry later.
+00:05 +63: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/pos02_print_jobs_test.dart: existing Sale/manual copy prompt records a reason and refuses unconfigured policy
+[AuditEventService] Found 1 unsynced events. Starting batch sync.
+[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP
+[AuditEventService] Batch sync failed. Will retry later.
+00:05 +64: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/pos02_print_jobs_test.dart: print list and copy dialog fit Size(1024.0, 768.0) with long labels and history
+[AuditEventService] Found 1 unsynced events. Starting batch sync.
+[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP
+[AuditEventService] Batch sync failed. Will retry later.
+00:05 +65: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/pos02_print_jobs_test.dart: print list and copy dialog fit Size(640.0, 720.0) with long labels and history
+[AuditEventService] Found 1 unsynced events. Starting batch sync.
+[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP
+[AuditEventService] Batch sync failed. Will retry later.
+00:05 +66: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/pos02_print_jobs_test.dart: print list and copy dialog fit Size(1280.0, 720.0) with long labels and history
+[AuditEventService] Found 1 unsynced events. Starting batch sync.
+[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP
+[AuditEventService] Batch sync failed. Will retry later.
+00:05 +67: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/pos02_print_jobs_test.dart: (tearDownAll)
+00:05 +67: All tests passed!

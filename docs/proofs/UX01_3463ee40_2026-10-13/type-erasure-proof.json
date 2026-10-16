@@ -1,0 +1,5 @@
+{
+  "testFile": "apps/backend/src/customer/ux01-access-request.integration.spec.ts",
+  "emittedJsByteIdentical": true,
+  "emittedJsSha256": "119cc447ddc2990a62e71235eac68bd432f858d8bcae5f4b9cf4b854c4fc1b61"
+}

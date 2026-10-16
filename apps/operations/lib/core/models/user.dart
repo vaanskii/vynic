@@ -35,6 +35,8 @@ class User extends HiveObject with UpdateTrackedHiveObject {
   /// მენიუს დათვლა — სრული მართვა (მართვა, სახელი, წაშლა, რეზერვაცია).
   bool get canManageMenuCountDrafts => StaffRole.canManageMenuCountDrafts(role);
 
+  bool get canDeleteMenuCountDrafts => StaffRole.canDeleteMenuCountDrafts(role);
+
   /// მართვის ცენტრი.
   bool get canAccessManagementCenter =>
       StaffRole.canAccessManagementCenter(role);

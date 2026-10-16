@@ -1,0 +1,1123 @@
+[
+  {
+    "file": "apps/operations/lib/apps/windows_pos/screens/menu_screen.dart",
+    "calls": [
+      {
+        "line": 332,
+        "type": "showDialog"
+      },
+      {
+        "line": 335,
+        "type": "Dialog"
+      },
+      {
+        "line": 1062,
+        "type": "showDialog"
+      },
+      {
+        "line": 1064,
+        "type": "Dialog"
+      },
+      {
+        "line": 2033,
+        "type": "showDialog"
+      },
+      {
+        "line": 2045,
+        "type": "showDialog"
+      },
+      {
+        "line": 2068,
+        "type": "showDialog"
+      },
+      {
+        "line": 2506,
+        "type": "showDialog"
+      },
+      {
+        "line": 2519,
+        "type": "showDialog"
+      },
+      {
+        "line": 2521,
+        "type": "AlertDialog"
+      },
+      {
+        "line": 2614,
+        "type": "AlertDialog"
+      },
+      {
+        "line": 2801,
+        "type": "AlertDialog"
+      },
+      {
+        "line": 2910,
+        "type": "Dialog"
+      }
+    ]
+  },
+  {
+    "file": "apps/operations/lib/apps/windows_pos/screens/admin_screen.dart",
+    "calls": [
+      {
+        "line": 479,
+        "type": "showDialog"
+      },
+      {
+        "line": 484,
+        "type": "AlertDialog"
+      },
+      {
+        "line": 2388,
+        "type": "showDialog"
+      },
+      {
+        "line": 2390,
+        "type": "AlertDialog"
+      },
+      {
+        "line": 2440,
+        "type": "showDialog"
+      },
+      {
+        "line": 2444,
+        "type": "Dialog"
+      },
+      {
+        "line": 2621,
+        "type": "showDialog"
+      },
+      {
+        "line": 2701,
+        "type": "showDialog"
+      },
+      {
+        "line": 2705,
+        "type": "Dialog"
+      },
+      {
+        "line": 3135,
+        "type": "showDialog"
+      },
+      {
+        "line": 3139,
+        "type": "Dialog"
+      },
+      {
+        "line": 3695,
+        "type": "showDialog"
+      },
+      {
+        "line": 3701,
+        "type": "AlertDialog"
+      },
+      {
+        "line": 3787,
+        "type": "showDialog"
+      },
+      {
+        "line": 3789,
+        "type": "AlertDialog"
+      }
+    ]
+  },
+  {
+    "file": "apps/operations/lib/apps/windows_pos/screens/login_screen.dart",
+    "calls": [
+      {
+        "line": 150,
+        "type": "showDialog"
+      },
+      {
+        "line": 152,
+        "type": "AlertDialog"
+      },
+      {
+        "line": 288,
+        "type": "showDialog"
+      },
+      {
+        "line": 290,
+        "type": "Dialog"
+      }
+    ]
+  },
+  {
+    "file": "apps/operations/lib/apps/windows_pos/screens/home_screen.dart",
+    "calls": [
+      {
+        "line": 1161,
+        "type": "showGeneralDialog"
+      }
+    ]
+  },
+  {
+    "file": "apps/operations/lib/apps/windows_pos/screens/order_detail_screen.dart",
+    "calls": [
+      {
+        "line": 268,
+        "type": "showGeneralDialog"
+      },
+      {
+        "line": 915,
+        "type": "showDialog"
+      },
+      {
+        "line": 1006,
+        "type": "showDialog"
+      },
+      {
+        "line": 1010,
+        "type": "Dialog"
+      },
+      {
+        "line": 1258,
+        "type": "showDialog"
+      },
+      {
+        "line": 1262,
+        "type": "Dialog"
+      },
+      {
+        "line": 1510,
+        "type": "showDialog"
+      },
+      {
+        "line": 1881,
+        "type": "showDialog"
+      },
+      {
+        "line": 1886,
+        "type": "Dialog"
+      },
+      {
+        "line": 2137,
+        "type": "showDialog"
+      },
+      {
+        "line": 2139,
+        "type": "AlertDialog"
+      },
+      {
+        "line": 2163,
+        "type": "showDialog"
+      },
+      {
+        "line": 2227,
+        "type": "AlertDialog"
+      },
+      {
+        "line": 2341,
+        "type": "showDialog"
+      },
+      {
+        "line": 2368,
+        "type": "showDialog"
+      },
+      {
+        "line": 2370,
+        "type": "Dialog"
+      },
+      {
+        "line": 2677,
+        "type": "showDialog"
+      },
+      {
+        "line": 2681,
+        "type": "Dialog"
+      }
+    ]
+  },
+  {
+    "file": "apps/operations/lib/apps/windows_pos/widgets/reservation_creation_sheet.dart",
+    "calls": [
+      {
+        "line": 152,
+        "type": "showDialog"
+      },
+      {
+        "line": 276,
+        "type": "showDialog"
+      },
+      {
+        "line": 279,
+        "type": "AlertDialog"
+      }
+    ]
+  },
+  {
+    "file": "apps/operations/lib/apps/windows_pos/widgets/receipt_preview_dialog.dart",
+    "calls": [
+      {
+        "line": 20,
+        "type": "showDialog"
+      },
+      {
+        "line": 95,
+        "type": "Dialog"
+      }
+    ]
+  },
+  {
+    "file": "apps/operations/lib/apps/windows_pos/widgets/pos_quit_action.dart",
+    "calls": [
+      {
+        "line": 14,
+        "type": "showDialog"
+      },
+      {
+        "line": 58,
+        "type": "Dialog"
+      }
+    ]
+  },
+  {
+    "file": "apps/operations/lib/apps/windows_pos/widgets/admin_verification_dialog.dart",
+    "calls": [
+      {
+        "line": 61,
+        "type": "Dialog"
+      }
+    ]
+  },
+  {
+    "file": "apps/operations/lib/apps/windows_pos/widgets/receipt_language_picker_dialog.dart",
+    "calls": [
+      {
+        "line": 10,
+        "type": "showDialog"
+      },
+      {
+        "line": 19,
+        "type": "Dialog"
+      }
+    ]
+  },
+  {
+    "file": "apps/operations/lib/apps/windows_pos/widgets/time_entry_pad.dart",
+    "calls": [
+      {
+        "line": 93,
+        "type": "AlertDialog"
+      }
+    ]
+  },
+  {
+    "file": "apps/operations/lib/apps/windows_pos/widgets/comment_input_dialog.dart",
+    "calls": [
+      {
+        "line": 50,
+        "type": "Dialog"
+      }
+    ]
+  },
+  {
+    "file": "apps/operations/lib/apps/windows_pos/widgets/estimate_customer_dialog.dart",
+    "calls": [
+      {
+        "line": 21,
+        "type": "showDialog"
+      }
+    ]
+  },
+  {
+    "file": "apps/operations/lib/apps/windows_pos/widgets/reservations_management_section.dart",
+    "calls": [
+      {
+        "line": 1020,
+        "type": "showDialog"
+      },
+      {
+        "line": 1023,
+        "type": "AlertDialog"
+      },
+      {
+        "line": 1073,
+        "type": "showDialog"
+      },
+      {
+        "line": 1076,
+        "type": "AlertDialog"
+      }
+    ]
+  },
+  {
+    "file": "apps/operations/lib/apps/windows_pos/widgets/order/order_detail_content_section.dart",
+    "calls": [
+      {
+        "line": 318,
+        "type": "showDialog"
+      },
+      {
+        "line": 322,
+        "type": "Dialog"
+      },
+      {
+        "line": 637,
+        "type": "showDialog"
+      },
+      {
+        "line": 640,
+        "type": "AlertDialog"
+      },
+      {
+        "line": 717,
+        "type": "showDialog"
+      },
+      {
+        "line": 720,
+        "type": "AlertDialog"
+      },
+      {
+        "line": 883,
+        "type": "Dialog"
+      },
+      {
+        "line": 1267,
+        "type": "showDialog"
+      },
+      {
+        "line": 1279,
+        "type": "showDialog"
+      },
+      {
+        "line": 1282,
+        "type": "AlertDialog"
+      },
+      {
+        "line": 1313,
+        "type": "showDialog"
+      },
+      {
+        "line": 1325,
+        "type": "AlertDialog"
+      },
+      {
+        "line": 1478,
+        "type": "AlertDialog"
+      }
+    ]
+  },
+  {
+    "file": "apps/operations/lib/apps/windows_pos/widgets/order/order_move_items_dialog.dart",
+    "calls": [
+      {
+        "line": 168,
+        "type": "Dialog"
+      }
+    ]
+  },
+  {
+    "file": "apps/operations/lib/apps/windows_pos/widgets/home/home_reservations_section.dart",
+    "calls": [
+      {
+        "line": 1245,
+        "type": "showDialog"
+      }
+    ]
+  },
+  {
+    "file": "apps/operations/lib/apps/windows_pos/widgets/home/home_take_away_section.dart",
+    "calls": [
+      {
+        "line": 227,
+        "type": "showGeneralDialog"
+      },
+      {
+        "line": 337,
+        "type": "showDialog"
+      },
+      {
+        "line": 339,
+        "type": "AlertDialog"
+      }
+    ]
+  },
+  {
+    "file": "apps/operations/lib/apps/windows_pos/widgets/home/home_reservation_table_assignment_dialog.dart",
+    "calls": [
+      {
+        "line": 65,
+        "type": "showDialog"
+      },
+      {
+        "line": 67,
+        "type": "AlertDialog"
+      },
+      {
+        "line": 95,
+        "type": "showDialog"
+      },
+      {
+        "line": 99,
+        "type": "AlertDialog"
+      }
+    ]
+  },
+  {
+    "file": "apps/operations/lib/apps/windows_pos/widgets/home/home_reservation_menu_preview.dart",
+    "calls": [
+      {
+        "line": 26,
+        "type": "showModalBottomSheet"
+      }
+    ]
+  },
+  {
+    "file": "apps/operations/lib/apps/windows_pos/widgets/home/home_calculator_page.dart",
+    "calls": [
+      {
+        "line": 231,
+        "type": "showDialog"
+      },
+      {
+        "line": 302,
+        "type": "showDialog"
+      },
+      {
+        "line": 471,
+        "type": "showGeneralDialog"
+      },
+      {
+        "line": 621,
+        "type": "showDialog"
+      },
+      {
+        "line": 623,
+        "type": "AlertDialog"
+      },
+      {
+        "line": 680,
+        "type": "showDialog"
+      },
+      {
+        "line": 682,
+        "type": "AlertDialog"
+      },
+      {
+        "line": 754,
+        "type": "showDialog"
+      },
+      {
+        "line": 880,
+        "type": "Dialog"
+      }
+    ]
+  },
+  {
+    "file": "apps/operations/lib/apps/windows_pos/widgets/update/pos_update_ui.dart",
+    "calls": [
+      {
+        "line": 24,
+        "type": "showDialog"
+      },
+      {
+        "line": 27,
+        "type": "Dialog"
+      }
+    ]
+  },
+  {
+    "file": "apps/operations/lib/apps/windows_pos/widgets/admin/admin_menu_section.dart",
+    "calls": [
+      {
+        "line": 901,
+        "type": "showDialog"
+      },
+      {
+        "line": 905,
+        "type": "Dialog"
+      },
+      {
+        "line": 1726,
+        "type": "AlertDialog"
+      },
+      {
+        "line": 1842,
+        "type": "showDialog"
+      },
+      {
+        "line": 1959,
+        "type": "showDialog"
+      },
+      {
+        "line": 2054,
+        "type": "showDialog"
+      },
+      {
+        "line": 2056,
+        "type": "AlertDialog"
+      },
+      {
+        "line": 2100,
+        "type": "showDialog"
+      },
+      {
+        "line": 2188,
+        "type": "showDialog"
+      },
+      {
+        "line": 2269,
+        "type": "showDialog"
+      },
+      {
+        "line": 2271,
+        "type": "AlertDialog"
+      },
+      {
+        "line": 2323,
+        "type": "showDialog"
+      },
+      {
+        "line": 2500,
+        "type": "showDialog"
+      },
+      {
+        "line": 2682,
+        "type": "showDialog"
+      },
+      {
+        "line": 2850,
+        "type": "showDialog"
+      },
+      {
+        "line": 2852,
+        "type": "AlertDialog"
+      },
+      {
+        "line": 2911,
+        "type": "showDialog"
+      },
+      {
+        "line": 3077,
+        "type": "showDialog"
+      },
+      {
+        "line": 3079,
+        "type": "AlertDialog"
+      },
+      {
+        "line": 3126,
+        "type": "showDialog"
+      }
+    ]
+  },
+  {
+    "file": "apps/operations/lib/apps/windows_pos/widgets/admin/admin_audit_log_section.dart",
+    "calls": [
+      {
+        "line": 771,
+        "type": "showDialog"
+      },
+      {
+        "line": 781,
+        "type": "Dialog"
+      }
+    ]
+  },
+  {
+    "file": "apps/operations/lib/apps/windows_pos/widgets/admin/admin_developer_section.dart",
+    "calls": [
+      {
+        "line": 343,
+        "type": "showDialog"
+      },
+      {
+        "line": 345,
+        "type": "AlertDialog"
+      },
+      {
+        "line": 520,
+        "type": "showDialog"
+      },
+      {
+        "line": 525,
+        "type": "AlertDialog"
+      }
+    ]
+  },
+  {
+    "file": "apps/operations/lib/apps/windows_pos/widgets/admin/admin_packages_section.dart",
+    "calls": [
+      {
+        "line": 518,
+        "type": "showDialog"
+      },
+      {
+        "line": 521,
+        "type": "AlertDialog"
+      },
+      {
+        "line": 651,
+        "type": "showDialog"
+      },
+      {
+        "line": 657,
+        "type": "AlertDialog"
+      },
+      {
+        "line": 854,
+        "type": "showDialog"
+      },
+      {
+        "line": 856,
+        "type": "AlertDialog"
+      },
+      {
+        "line": 952,
+        "type": "showDialog"
+      },
+      {
+        "line": 988,
+        "type": "showDialog"
+      },
+      {
+        "line": 991,
+        "type": "AlertDialog"
+      },
+      {
+        "line": 1025,
+        "type": "AlertDialog"
+      },
+      {
+        "line": 1331,
+        "type": "showDialog"
+      },
+      {
+        "line": 1520,
+        "type": "showDialog"
+      },
+      {
+        "line": 1523,
+        "type": "AlertDialog"
+      },
+      {
+        "line": 1555,
+        "type": "AlertDialog"
+      },
+      {
+        "line": 1958,
+        "type": "showDialog"
+      },
+      {
+        "line": 1970,
+        "type": "showDialog"
+      },
+      {
+        "line": 1973,
+        "type": "AlertDialog"
+      },
+      {
+        "line": 2006,
+        "type": "showDialog"
+      },
+      {
+        "line": 2018,
+        "type": "AlertDialog"
+      },
+      {
+        "line": 2169,
+        "type": "AlertDialog"
+      }
+    ]
+  },
+  {
+    "file": "apps/operations/lib/apps/windows_pos/widgets/admin/admin_sales_section.dart",
+    "calls": [
+      {
+        "line": 306,
+        "type": "showDialog"
+      }
+    ]
+  },
+  {
+    "file": "apps/operations/lib/apps/windows_pos/widgets/admin/admin_staff_section.dart",
+    "calls": [
+      {
+        "line": 111,
+        "type": "showDialog"
+      },
+      {
+        "line": 755,
+        "type": "showDialog"
+      },
+      {
+        "line": 780,
+        "type": "showDialog"
+      },
+      {
+        "line": 805,
+        "type": "showDialog"
+      },
+      {
+        "line": 837,
+        "type": "showDialog"
+      },
+      {
+        "line": 839,
+        "type": "AlertDialog"
+      },
+      {
+        "line": 909,
+        "type": "showDialog"
+      },
+      {
+        "line": 913,
+        "type": "Dialog"
+      },
+      {
+        "line": 1089,
+        "type": "Dialog"
+      },
+      {
+        "line": 1416,
+        "type": "Dialog"
+      },
+      {
+        "line": 1507,
+        "type": "Dialog"
+      },
+      {
+        "line": 1993,
+        "type": "Dialog"
+      }
+    ]
+  },
+  {
+    "file": "apps/operations/lib/apps/windows_pos/widgets/admin/admin_inventory_section.dart",
+    "calls": [
+      {
+        "line": 147,
+        "type": "showDialog"
+      },
+      {
+        "line": 149,
+        "type": "AlertDialog"
+      }
+    ]
+  },
+  {
+    "file": "apps/operations/lib/apps/windows_pos/widgets/admin/developer_unlock_dialog.dart",
+    "calls": [
+      {
+        "line": 19,
+        "type": "showDialog"
+      },
+      {
+        "line": 155,
+        "type": "Dialog"
+      }
+    ]
+  },
+  {
+    "file": "apps/operations/lib/apps/windows_pos/widgets/admin/admin_reservations_section.dart",
+    "calls": [
+      {
+        "line": 1117,
+        "type": "showDialog"
+      },
+      {
+        "line": 1119,
+        "type": "AlertDialog"
+      },
+      {
+        "line": 1156,
+        "type": "showDialog"
+      },
+      {
+        "line": 1158,
+        "type": "AlertDialog"
+      },
+      {
+        "line": 1208,
+        "type": "showDialog"
+      }
+    ]
+  },
+  {
+    "file": "apps/operations/lib/apps/windows_pos/widgets/admin/admin_error_log_section.dart",
+    "calls": [
+      {
+        "line": 185,
+        "type": "showDialog"
+      },
+      {
+        "line": 187,
+        "type": "AlertDialog"
+      }
+    ]
+  },
+  {
+    "file": "apps/operations/lib/apps/windows_pos/widgets/admin/admin_close_day_section.dart",
+    "calls": [
+      {
+        "line": 1047,
+        "type": "showDialog"
+      },
+      {
+        "line": 1049,
+        "type": "AlertDialog"
+      },
+      {
+        "line": 1221,
+        "type": "showDialog"
+      },
+      {
+        "line": 1226,
+        "type": "AlertDialog"
+      },
+      {
+        "line": 1622,
+        "type": "showDialog"
+      },
+      {
+        "line": 1803,
+        "type": "Dialog"
+      },
+      {
+        "line": 1954,
+        "type": "Dialog"
+      },
+      {
+        "line": 2090,
+        "type": "Dialog"
+      },
+      {
+        "line": 2283,
+        "type": "showDialog"
+      },
+      {
+        "line": 2287,
+        "type": "Dialog"
+      },
+      {
+        "line": 2395,
+        "type": "showDialog"
+      },
+      {
+        "line": 2399,
+        "type": "AlertDialog"
+      }
+    ]
+  },
+  {
+    "file": "apps/operations/lib/apps/windows_pos/widgets/admin/menu_sync_banner.dart",
+    "calls": [
+      {
+        "line": 217,
+        "type": "showDialog"
+      },
+      {
+        "line": 219,
+        "type": "AlertDialog"
+      }
+    ]
+  },
+  {
+    "file": "apps/operations/lib/apps/windows_pos/widgets/admin/backup_password_dialog.dart",
+    "calls": [
+      {
+        "line": 8,
+        "type": "showDialog"
+      },
+      {
+        "line": 41,
+        "type": "AlertDialog"
+      }
+    ]
+  },
+  {
+    "file": "apps/operations/lib/apps/windows_pos/widgets/admin/printers/additional_printers_section.dart",
+    "calls": [
+      {
+        "line": 56,
+        "type": "showDialog"
+      },
+      {
+        "line": 71,
+        "type": "showDialog"
+      }
+    ]
+  },
+  {
+    "file": "apps/operations/lib/apps/windows_pos/widgets/admin/table_layouts/admin_table_layouts_section.dart",
+    "calls": [
+      {
+        "line": 209,
+        "type": "showDialog"
+      },
+      {
+        "line": 211,
+        "type": "AlertDialog"
+      },
+      {
+        "line": 253,
+        "type": "showDialog"
+      },
+      {
+        "line": 255,
+        "type": "AlertDialog"
+      },
+      {
+        "line": 302,
+        "type": "showDialog"
+      },
+      {
+        "line": 304,
+        "type": "AlertDialog"
+      }
+    ]
+  },
+  {
+    "file": "apps/operations/lib/apps/windows_pos/widgets/admin/table_layouts/floor_editor/floor_editor_screen.dart",
+    "calls": [
+      {
+        "line": 116,
+        "type": "showDialog"
+      },
+      {
+        "line": 118,
+        "type": "AlertDialog"
+      }
+    ]
+  },
+  {
+    "file": "apps/operations/lib/apps/windows_pos/widgets/admin/table_layouts/floor_editor/floor_editor_preview.dart",
+    "calls": [
+      {
+        "line": 25,
+        "type": "showDialog"
+      },
+      {
+        "line": 35,
+        "type": "Dialog"
+      }
+    ]
+  },
+  {
+    "file": "apps/operations/lib/apps/windows_pos/widgets/shared/print_jobs.dart",
+    "calls": [
+      {
+        "line": 87,
+        "type": "showDialog"
+      },
+      {
+        "line": 107,
+        "type": "Dialog"
+      },
+      {
+        "line": 337,
+        "type": "showDialog"
+      },
+      {
+        "line": 350,
+        "type": "showDialog"
+      },
+      {
+        "line": 363,
+        "type": "showDialog"
+      }
+    ]
+  },
+  {
+    "file": "apps/operations/lib/core/widgets/service_fee_adjust_dialog.dart",
+    "calls": [
+      {
+        "line": 79,
+        "type": "showDialog"
+      },
+      {
+        "line": 82,
+        "type": "AlertDialog"
+      },
+      {
+        "line": 191,
+        "type": "Dialog"
+      }
+    ]
+  },
+  {
+    "file": "apps/operations/lib/core/widgets/pos_keyboard/pos_keyboard_sheet.dart",
+    "calls": [
+      {
+        "line": 37,
+        "type": "showDialog"
+      },
+      {
+        "line": 39,
+        "type": "AlertDialog"
+      },
+      {
+        "line": 64,
+        "type": "showModalBottomSheet"
+      },
+      {
+        "line": 141,
+        "type": "showModalBottomSheet"
+      }
+    ]
+  },
+  {
+    "file": "apps/operations/lib/core/ui/widgets/vynic_side_sheet.dart",
+    "calls": [
+      {
+        "line": 39,
+        "type": "showGeneralDialog"
+      }
+    ]
+  },
+  {
+    "file": "apps/operations/lib/core/ui/widgets/vynic_responsive_dialog.dart",
+    "calls": [
+      {
+        "line": 39,
+        "type": "Dialog"
+      }
+    ]
+  },
+  {
+    "file": "apps/operations/lib/core/services/pos/table_payment_service.dart",
+    "calls": [
+      {
+        "line": 84,
+        "type": "showDialog"
+      },
+      {
+        "line": 86,
+        "type": "AlertDialog"
+      },
+      {
+        "line": 237,
+        "type": "showDialog"
+      },
+      {
+        "line": 241,
+        "type": "Dialog"
+      },
+      {
+        "line": 351,
+        "type": "showDialog"
+      },
+      {
+        "line": 355,
+        "type": "Dialog"
+      },
+      {
+        "line": 517,
+        "type": "showDialog"
+      },
+      {
+        "line": 521,
+        "type": "Dialog"
+      },
+      {
+        "line": 657,
+        "type": "showDialog"
+      },
+      {
+        "line": 703,
+        "type": "Dialog"
+      }
+    ]
+  }
+]

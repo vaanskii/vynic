@@ -1,0 +1,5 @@
+00:00 +0: loading /Users/vaanskii/Developer/vynic/apps/operations/test/widget/count_design_candidate_test.dart
+00:00 +0: Count populated review candidate renders at actual 1024x768
+00:00 +1: Count long review candidate renders at actual 1024x768
+00:00 +2: Count empty review candidate renders at actual 1024x768
+00:00 +3: All tests passed!

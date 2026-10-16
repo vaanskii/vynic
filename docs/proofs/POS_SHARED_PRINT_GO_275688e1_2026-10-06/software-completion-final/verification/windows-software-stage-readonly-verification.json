@@ -1,0 +1,71 @@
+{
+  "schema": 1,
+  "createdAtUtc": "2026-10-06T17:38:43.882889+00:00",
+  "status": "SOURCE_STAGES_VERIFIED_WINDOWS_EXECUTION_HELD",
+  "sourceReceiptSHA256": "193e4800e5d0733a30bc6c8d4ac993590219363941e69a787bba5ac3681c8f68",
+  "frozenSourceFilesVerified": 1109,
+  "stages": {
+    "software-windows-flutter-stage": {
+      "assetsVerified": 8,
+      "runnerArtifactSHA256": "c147cb891424b2f1760f198e27ea3bc977891cd2c4a324e3a3b26de5e01b07f6",
+      "zipManifestFilesVerified": 1109,
+      "testSelectors": 39,
+      "analysisSelectors": 68,
+      "fixtures": {
+        "operational-proof-server-windows.test.exe": {
+          "sha256": "2c9370e4c4cfdb55094f63a26a2bf5b45bff43868a1a2c14a0f47c2654c70abb",
+          "machine": "AMD64",
+          "compiledOnly": true
+        },
+        "printer-agent-server-windows.test.exe": {
+          "sha256": "f335745e38be573f5ec031478eab4b524a8069c811324ac2a5d39876b676e894",
+          "machine": "AMD64",
+          "compiledOnly": true
+        }
+      },
+      "scriptSourceReviewed": true,
+      "PowerShellParserExecuted": false,
+      "WindowsExecuted": false
+    },
+    "software-windows-pos-stage": {
+      "assetsVerified": 9,
+      "runnerArtifactSHA256": "6bb133df1a2fdf2eac50ab6ac745ec92379c6ee2faccd12848b5d3b47a5c6bea",
+      "zipManifestFilesVerified": 1109,
+      "testSelectors": 39,
+      "analysisSelectors": 68,
+      "fixtures": {
+        "operational-proof-server-windows.test.exe": {
+          "sha256": "2c9370e4c4cfdb55094f63a26a2bf5b45bff43868a1a2c14a0f47c2654c70abb",
+          "machine": "AMD64",
+          "compiledOnly": true
+        },
+        "printer-agent-server-windows.test.exe": {
+          "sha256": "f335745e38be573f5ec031478eab4b524a8069c811324ac2a5d39876b676e894",
+          "machine": "AMD64",
+          "compiledOnly": true
+        }
+      },
+      "scriptSourceReviewed": true,
+      "PowerShellParserExecuted": false,
+      "WindowsExecuted": false
+    }
+  },
+  "officialPreparedProductDeltas": [
+    "apps/operations/data/menu.json",
+    "apps/operations/lib/main.dart",
+    "apps/operations/macos/Runner/Configs/AppInfo.xcconfig",
+    "apps/operations/product-identity.json",
+    "apps/operations/pubspec.yaml",
+    "apps/operations/windows/CMakeLists.txt",
+    "apps/operations/windows/runner/Runner.rc",
+    "apps/operations/windows/runner/main.cpp"
+  ],
+  "VMCalls": 0,
+  "WindowsTestsRun": false,
+  "WindowsBuildRun": false,
+  "remaining": [
+    "Current scoped user clearance before one identical denied preflight retry",
+    "Parent CPU release before heavy guest validation",
+    "Actual Windows test, analysis and prepared release-build execution"
+  ]
+}

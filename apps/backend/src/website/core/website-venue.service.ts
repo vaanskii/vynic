@@ -5,6 +5,7 @@ import { WebsiteCapabilitiesService } from '../tenancy/website-capabilities.serv
 import { publicCapabilities } from '../tenancy/website-capabilities';
 import { VenuePublicProfileService } from './venue-public-profile.service';
 import { WebsiteMenuService } from './website-menu.service';
+import { websiteVenueIdentity } from './website-identity';
 
 /** Version of the shared `/api/website/venue` contract. */
 export const SHARED_WEBSITE_SCHEMA_VERSION = 1;
@@ -52,6 +53,7 @@ export class WebsiteVenueService {
     ]);
     return {
       schemaVersion: SHARED_WEBSITE_SCHEMA_VERSION,
+      identity: { venue: websiteVenueIdentity(venueId) },
       mode: access.effectiveMode,
       site:
         access.effectiveMode === 'CUSTOM'

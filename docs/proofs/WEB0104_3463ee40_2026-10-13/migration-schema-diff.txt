@@ -1,0 +1,3 @@
+[*] Changed the `DevicePrinterRuntimeRequest` table
+  [*] Renamed the foreign key "DevicePrinterRuntimeRequest_device_fkey" to "DevicePrinterRuntimeRequest_deviceId_fkey"
+  [*] Renamed the foreign key "DevicePrinterRuntimeRequest_venue_fkey" to "DevicePrinterRuntimeRequest_venueId_fkey"

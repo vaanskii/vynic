@@ -116,6 +116,37 @@ an ordinary stop/restart mechanism.
 - BOG payment settlement, real provider callbacks, FCM delivery, signed release
   hosting and live POS/Manager/Edge deployment are outside this local website proof.
 
+## Native POS / Manager ingress — 2026-09-29
+
+Scope: the same isolated `vynic-local-prod` stack, plus two throwaway proof Venues
+(POS_MANAGER plan, one Manager and one one-time POS enrollment code each) created
+through the Platform API and deleted afterwards with the local-only deletion tool.
+The temporary PlatformUser used to create them is DISABLED. No live database was
+touched. Images were not rebuilt; only the proxy and backend containers were recreated.
+
+| Requirement | Evidence |
+| --- | --- |
+| Backend health via native origin | `http://api.vynic.localhost/healthz` -> `{"status":"ok"}` (router `native-api`) |
+| `/edge/...` no longer HTML | 200/401/404 JSON from Nest; unknown `/edge/no-such-route` -> Nest JSON 404 |
+| Non-native path on native origin | `/`, `/foo`, `/api/*`, `/platform/*`, `/customer/*` -> JSON 404 via `native-fallback`; never a frontend |
+| POS enrollment | Flutter `EdgeEnrollmentClient` enrolled two Devices through `api.vynic.localhost`; offered `apiBaseUrl` = `http://api.vynic.localhost` |
+| Device -> Venue | `/edge/runtime-config` returned each Device's own Venue; `?venueId=`, `X-Venue-Id`, forged `X-Forwarded-Host` had no effect; Device claim ok; other Venue's Device got no work |
+| Manager | `MobileAuthService.resolveVenue`, `/auth/mobile-login`, `/mobile/entitlements` resolved each Venue from Staff; spoofed tenant inputs ignored; Alpha's PIN rejected at Beta |
+| Realtime | real `MonitoringSocketService` connected over WebSocket through Traefik; event from Venue A reached A's other socket, not B's; still connected and delivering after a 70 s idle hold |
+| Website routers unchanged | `vynic`/`admin` -> `platform`, `tabla` -> `saas`, `vankisi` -> `custom`, `/api` -> `api`, `/platform` -> `platform-api`, `/customer` -> `customer-api` (access-log RouterName); same statuses as before. The sample Venues are absent from this DB, so tabla/vankisi `/api/website/venue` returned their pre-existing 404; `prove-docker-http.py` was not run |
+| CORS | unchanged: allowed origin echoed, `https://evil.invalid` refused with no ACAO |
+| LAN mode | `start-lan` bound `10.10.10.3:8088` only; healthz, edge, sync, manager login, socket.io and the same live client test passed against it; dashboard, ping, website hosts, `/platform`, `/api` -> JSON 404; `127.0.0.1:8088`, `:3000`, `:5432`(Docker), `:8082`, `:8080`, `:5555` closed; `stop-lan` restored loopback-only and the default `DEVICE_API_BASE_URL` |
+| Production shape | throwaway Traefik with `PROXY_TLS=true`, `BASE_DOMAIN=vynic.ge`: native paths -> `native-api`, others -> `native-fallback` on `https://api.vynic.ge`; no template errors |
+| Prisma Studio | `docker port`: `127.0.0.1:5555` only; unreachable via the LAN IP |
+
+Not proven: a non-Mac client (the Parallels Windows VM was stopped and was not
+started); run `curl.exe http://<MAC_LAN_IP>:8088/healthz` there. The Mac reached
+the listener through its LAN address, not loopback. Docker Desktop's `*:80` socket
+accepts LAN TCP handshakes and resets them (pre-existing; no content served).
+Tests: `pos_enrollment_test.dart` (URL normalization, `*.localhost` adoption),
+`pos_first_run_test.dart`, manager login/auth tests, and
+`test/live/native_ingress_live_test.dart` (both origins).
+
 ## Changed file inventory
 
 New files:
@@ -123,7 +154,7 @@ New files:
 - Images: `.dockerignore`, `apps/backend/Dockerfile`,
   `deploy/frontend.Dockerfile`, `deploy/nginx/default.conf`.
 - Routing: `compose.yaml`, `compose.local.yaml`, `compose.production.yaml`,
-  `deploy/traefik/routes.yml`.
+  `compose.lan.yaml` (opt-in native LAN listener), `deploy/traefik/routes.yml`.
 - Environment/bootstrap: `.env.docker.example`, `.env.production.example`,
   `scripts/docker-init.py`, `scripts/docker.sh`,
   `apps/backend/scripts/seed-docker-local.ts`.

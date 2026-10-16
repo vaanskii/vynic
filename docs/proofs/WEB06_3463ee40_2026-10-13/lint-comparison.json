@@ -1,0 +1,18 @@
+[
+  {
+    "path": "apps/backend/src/payment-integrations/payment-integrations.service.ts",
+    "beforeErrors": 0,
+    "beforeWarnings": 0,
+    "afterErrors": 0,
+    "afterWarnings": 0,
+    "addedDiagnostics": []
+  },
+  {
+    "path": "apps/backend/src/website/tenancy/website-capabilities.service.ts",
+    "beforeErrors": 0,
+    "beforeWarnings": 0,
+    "afterErrors": 0,
+    "afterWarnings": 0,
+    "addedDiagnostics": []
+  }
+]

@@ -1,0 +1,181 @@
+{
+  "schema": 1,
+  "recordedAtUtc": "2026-10-06T17:52:45.664596+00:00",
+  "status": "FAILED_WINDOWS_FIXTURE_PORTABILITY_CANDIDATE",
+  "rawResultDirectory": "/Users/vaanskii/Developer/vynic/docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/software-windows-flutter-result-v2",
+  "rawFiles": {
+    "windows-software-flutter.json": {
+      "sha256": "65d84b9df4490dabe419ba3177fb1938d406f47a30b3d72e50a7b5419c183926",
+      "bytes": 1883
+    },
+    "flutter-tests.jsonl": {
+      "sha256": "f587dbb00d04372b2c66c079121b62996a093d612144438b007f6bcb86d57145",
+      "bytes": 1110366
+    },
+    "offline-pub-get.log": {
+      "sha256": "30229f9d0b6e8f121372205ec994858e2208d3f237440ee516b1058e6ad20a97",
+      "bytes": 3380
+    }
+  },
+  "runnerResult": {
+    "schema": 1,
+    "status": "FAILED",
+    "failure": "Selected Flutter tests failed: 1",
+    "startedUtc": "2026-10-06T17:49:47.9367063Z",
+    "finishedUtc": "2026-10-06T17:51:57.5169105Z",
+    "SID": "S-1-5-21-611125631-3759947118-1641436196-1000",
+    "currentUser": "VANSKI\\vaanskii",
+    "job": "C:\\Users\\vaanskii\\AppData\\Local\\VynicReadinessNative\\software-2bd986d1ac2a-flutter-v2",
+    "sourceReceiptSHA256": "193e4800e5d0733a30bc6c8d4ac993590219363941e69a787bba5ac3681c8f68",
+    "sourceFiles": 1109,
+    "sourceBefore": true,
+    "sourceAfter": false,
+    "testSuites": 39,
+    "analysisFiles": 68,
+    "testExitCode": 1,
+    "analysisExitCode": null,
+    "fixtures": {
+      "operational-proof-server-windows.test.exe": {
+        "sha256": "2c9370e4c4cfdb55094f63a26a2bf5b45bff43868a1a2c14a0f47c2654c70abb",
+        "bytes": 26370560
+      },
+      "printer-agent-server-windows.test.exe": {
+        "sha256": "f335745e38be573f5ec031478eab4b524a8069c811324ac2a5d39876b676e894",
+        "bytes": 25833472
+      }
+    },
+    "guestArchitecture": "ARM64",
+    "fixtureArchitecture": "amd64",
+    "printJobsBefore": 0,
+    "printJobsAfter": 0,
+    "physicalJobs": 0,
+    "productStarted": false,
+    "installed": false,
+    "published": false,
+    "serviceOperations": false,
+    "driverOperations": false,
+    "VMSettingsChanged": false,
+    "persistentCredentialsChanged": false
+  },
+  "suiteCount": 39,
+  "results": {
+    "success": 662,
+    "error": 3,
+    "failure": 9
+  },
+  "visibleResults": {
+    "success": 611,
+    "error": 3,
+    "failure": 9
+  },
+  "skipped": 0,
+  "errorEvents": [
+    {
+      "testID": 496,
+      "name": "strict profile passes explicit pins and closes the read-only connection",
+      "url": "file:///C:/Users/vaanskii/AppData/Local/VynicReadinessNative/software-2bd986d1ac2a-flutter-v2/source/apps/operations/test/unit/printer_agent_runtime_profile_test.dart",
+      "error": "PrinterAgentRuntimeException(invalidProfile)",
+      "stackTrace": "package:vynic/core/services/printing/printer_agent_runtime_profile.dart 371:7  PrinterAgentRuntimeProfile._requireAbsolute\npackage:vynic/core/services/printing/printer_agent_runtime_profile.dart 233:7  PrinterAgentRuntimeProfile.health\ntest\\unit\\printer_agent_runtime_profile_test.dart 127:37                       main.<fn>\n",
+      "isFailure": false
+    },
+    {
+      "testID": 497,
+      "name": "foreign device is held before credential files or connection",
+      "url": "file:///C:/Users/vaanskii/AppData/Local/VynicReadinessNative/software-2bd986d1ac2a-flutter-v2/source/apps/operations/test/unit/printer_agent_runtime_profile_test.dart",
+      "error": "Expected: throws <Instance of 'PrinterAgentRuntimeException'> with `reason`: PrinterAgentRuntimeFailure:<PrinterAgentRuntimeFailure.bindingMismatch>\n  Actual: <Instance of 'Future<PrinterAgentHealth>'>\n   Which: threw PrinterAgentRuntimeException:<PrinterAgentRuntimeException(invalidProfile)>\n          stack package:vynic/core/services/printing/printer_agent_runtime_profile.dart 371:7  PrinterAgentRuntimeProfile._requireAbsolute\n                package:vynic/core/services/printing/printer_agent_runtime_profile.dart 233:7  PrinterAgentRuntimeProfile.health\n                test\\unit\\printer_agent_runtime_profile_test.dart 152:20                       main.<fn>\n                ===== asynchronous gap ===========================\n                package:matcher                                                                expectLater\n                package:flutter_test/src/widget_tester.dart 507:8                              expectLater\n                test\\unit\\printer_agent_runtime_profile_test.dart 151:15                       main.<fn>\n                ===== asynchronous gap ===========================\n                dart:async                                                                     _CustomZone.registerUnaryCallback\n                test\\unit\\printer_agent_runtime_profile_test.dart 150:9                        main.<fn>\n                \n          which has `reason` with value PrinterAgentRuntimeFailure:<PrinterAgentRuntimeFailure.invalidProfile>\n",
+      "stackTrace": "package:matcher                                           expectLater\npackage:flutter_test/src/widget_tester.dart 507:8         expectLater\ntest\\unit\\printer_agent_runtime_profile_test.dart 151:15  main.<fn>\n===== asynchronous gap ===========================\ndart:async                                                _CustomZone.registerUnaryCallback\ntest\\unit\\printer_agent_runtime_profile_test.dart 150:9   main.<fn>\n",
+      "isFailure": true
+    },
+    {
+      "testID": 500,
+      "name": "foreign venue is held before credential files or connection",
+      "url": "file:///C:/Users/vaanskii/AppData/Local/VynicReadinessNative/software-2bd986d1ac2a-flutter-v2/source/apps/operations/test/unit/printer_agent_runtime_profile_test.dart",
+      "error": "Expected: throws <Instance of 'PrinterAgentRuntimeException'> with `reason`: PrinterAgentRuntimeFailure:<PrinterAgentRuntimeFailure.bindingMismatch>\n  Actual: <Instance of 'Future<PrinterAgentHealth>'>\n   Which: threw PrinterAgentRuntimeException:<PrinterAgentRuntimeException(invalidProfile)>\n          stack package:vynic/core/services/printing/printer_agent_runtime_profile.dart 371:7  PrinterAgentRuntimeProfile._requireAbsolute\n                package:vynic/core/services/printing/printer_agent_runtime_profile.dart 233:7  PrinterAgentRuntimeProfile.health\n                test\\unit\\printer_agent_runtime_profile_test.dart 152:20                       main.<fn>\n                ===== asynchronous gap ===========================\n                package:matcher                                                                expectLater\n                package:flutter_test/src/widget_tester.dart 507:8                              expectLater\n                test\\unit\\printer_agent_runtime_profile_test.dart 151:15                       main.<fn>\n                ===== asynchronous gap ===========================\n                dart:async                                                                     _CustomZone.registerUnaryCallback\n                test\\unit\\printer_agent_runtime_profile_test.dart 150:9                        main.<fn>\n                \n          which has `reason` with value PrinterAgentRuntimeFailure:<PrinterAgentRuntimeFailure.invalidProfile>\n",
+      "stackTrace": "package:matcher                                           expectLater\npackage:flutter_test/src/widget_tester.dart 507:8         expectLater\ntest\\unit\\printer_agent_runtime_profile_test.dart 151:15  main.<fn>\n===== asynchronous gap ===========================\ndart:async                                                _CustomZone.registerUnaryCallback\ntest\\unit\\printer_agent_runtime_profile_test.dart 150:9   main.<fn>\n",
+      "isFailure": true
+    },
+    {
+      "testID": 506,
+      "name": "foreign installation is held before credential files or connection",
+      "url": "file:///C:/Users/vaanskii/AppData/Local/VynicReadinessNative/software-2bd986d1ac2a-flutter-v2/source/apps/operations/test/unit/printer_agent_runtime_profile_test.dart",
+      "error": "Expected: throws <Instance of 'PrinterAgentRuntimeException'> with `reason`: PrinterAgentRuntimeFailure:<PrinterAgentRuntimeFailure.bindingMismatch>\n  Actual: <Instance of 'Future<PrinterAgentHealth>'>\n   Which: threw PrinterAgentRuntimeException:<PrinterAgentRuntimeException(invalidProfile)>\n          stack package:vynic/core/services/printing/printer_agent_runtime_profile.dart 371:7  PrinterAgentRuntimeProfile._requireAbsolute\n                package:vynic/core/services/printing/printer_agent_runtime_profile.dart 233:7  PrinterAgentRuntimeProfile.health\n                test\\unit\\printer_agent_runtime_profile_test.dart 152:20                       main.<fn>\n                ===== asynchronous gap ===========================\n                package:matcher                                                                expectLater\n                package:flutter_test/src/widget_tester.dart 507:8                              expectLater\n                test\\unit\\printer_agent_runtime_profile_test.dart 151:15                       main.<fn>\n                ===== asynchronous gap ===========================\n                dart:async                                                                     _CustomZone.registerUnaryCallback\n                test\\unit\\printer_agent_runtime_profile_test.dart 150:9                        main.<fn>\n                \n          which has `reason` with value PrinterAgentRuntimeFailure:<PrinterAgentRuntimeFailure.invalidProfile>\n",
+      "stackTrace": "package:matcher                                           expectLater\npackage:flutter_test/src/widget_tester.dart 507:8         expectLater\ntest\\unit\\printer_agent_runtime_profile_test.dart 151:15  main.<fn>\n===== asynchronous gap ===========================\ndart:async                                                _CustomZone.registerUnaryCallback\ntest\\unit\\printer_agent_runtime_profile_test.dart 150:9   main.<fn>\n",
+      "isFailure": true
+    },
+    {
+      "testID": 562,
+      "name": "identity and scope are rechecked after actual async seam",
+      "url": "file:///C:/Users/vaanskii/AppData/Local/VynicReadinessNative/software-2bd986d1ac2a-flutter-v2/source/apps/operations/test/unit/printer_agent_runtime_profile_test.dart",
+      "error": "Expected: throws <Instance of 'PrinterAgentRuntimeException'> with `reason`: PrinterAgentRuntimeFailure:<PrinterAgentRuntimeFailure.bindingMismatch>\n  Actual: <Instance of 'Future<PrinterAgentHealth>'>\n   Which: threw PrinterAgentRuntimeException:<PrinterAgentRuntimeException(invalidProfile)>\n          stack package:vynic/core/services/printing/printer_agent_runtime_profile.dart 371:7  PrinterAgentRuntimeProfile._requireAbsolute\n                package:vynic/core/services/printing/printer_agent_runtime_profile.dart 233:7  PrinterAgentRuntimeProfile.health\n                test\\unit\\printer_agent_runtime_profile_test.dart 316:16                       main.<fn>\n                ===== asynchronous gap ===========================\n                package:matcher                                                                expectLater\n                package:flutter_test/src/widget_tester.dart 507:8                              expectLater\n                test\\unit\\printer_agent_runtime_profile_test.dart 315:11                       main.<fn>\n                \n          which has `reason` with value PrinterAgentRuntimeFailure:<PrinterAgentRuntimeFailure.invalidProfile>\n",
+      "stackTrace": "package:matcher                                           expectLater\npackage:flutter_test/src/widget_tester.dart 507:8         expectLater\ntest\\unit\\printer_agent_runtime_profile_test.dart 315:11  main.<fn>\n",
+      "isFailure": true
+    },
+    {
+      "testID": 564,
+      "name": "profile revision changed during health invalidates old response",
+      "url": "file:///C:/Users/vaanskii/AppData/Local/VynicReadinessNative/software-2bd986d1ac2a-flutter-v2/source/apps/operations/test/unit/printer_agent_runtime_profile_test.dart",
+      "error": "Expected: throws <Instance of 'PrinterAgentRuntimeException'> with `reason`: PrinterAgentRuntimeFailure:<PrinterAgentRuntimeFailure.profileChanged>\n  Actual: <Instance of 'Future<PrinterAgentHealth>'>\n   Which: threw PrinterAgentRuntimeException:<PrinterAgentRuntimeException(invalidProfile)>\n          stack package:vynic/core/services/printing/printer_agent_runtime_profile.dart 371:7  PrinterAgentRuntimeProfile._requireAbsolute\n                package:vynic/core/services/printing/printer_agent_runtime_profile.dart 233:7  PrinterAgentRuntimeProfile.health\n                test\\unit\\printer_agent_runtime_profile_test.dart 341:18                       main.<fn>\n                ===== asynchronous gap ===========================\n                package:matcher                                                                expectLater\n                package:flutter_test/src/widget_tester.dart 507:8                              expectLater\n                test\\unit\\printer_agent_runtime_profile_test.dart 340:13                       main.<fn>\n                \n          which has `reason` with value PrinterAgentRuntimeFailure:<PrinterAgentRuntimeFailure.invalidProfile>\n",
+      "stackTrace": "package:matcher                                           expectLater\npackage:flutter_test/src/widget_tester.dart 507:8         expectLater\ntest\\unit\\printer_agent_runtime_profile_test.dart 340:13  main.<fn>\n",
+      "isFailure": true
+    },
+    {
+      "testID": 566,
+      "name": "credential file changed during health invalidates old response",
+      "url": "file:///C:/Users/vaanskii/AppData/Local/VynicReadinessNative/software-2bd986d1ac2a-flutter-v2/source/apps/operations/test/unit/printer_agent_runtime_profile_test.dart",
+      "error": "Expected: throws <Instance of 'PrinterAgentRuntimeException'> with `reason`: PrinterAgentRuntimeFailure:<PrinterAgentRuntimeFailure.profileChanged>\n  Actual: <Instance of 'Future<PrinterAgentHealth>'>\n   Which: threw PrinterAgentRuntimeException:<PrinterAgentRuntimeException(invalidProfile)>\n          stack package:vynic/core/services/printing/printer_agent_runtime_profile.dart 371:7  PrinterAgentRuntimeProfile._requireAbsolute\n                package:vynic/core/services/printing/printer_agent_runtime_profile.dart 233:7  PrinterAgentRuntimeProfile.health\n                test\\unit\\printer_agent_runtime_profile_test.dart 358:18                       main.<fn>\n                ===== asynchronous gap ===========================\n                package:matcher                                                                expectLater\n                package:flutter_test/src/widget_tester.dart 507:8                              expectLater\n                test\\unit\\printer_agent_runtime_profile_test.dart 357:13                       main.<fn>\n                \n          which has `reason` with value PrinterAgentRuntimeFailure:<PrinterAgentRuntimeFailure.invalidProfile>\n",
+      "stackTrace": "package:matcher                                           expectLater\npackage:flutter_test/src/widget_tester.dart 507:8         expectLater\ntest\\unit\\printer_agent_runtime_profile_test.dart 357:13  main.<fn>\n",
+      "isFailure": true
+    },
+    {
+      "testID": 568,
+      "name": "changed returned configuration pin and typed auth failure both close",
+      "url": "file:///C:/Users/vaanskii/AppData/Local/VynicReadinessNative/software-2bd986d1ac2a-flutter-v2/source/apps/operations/test/unit/printer_agent_runtime_profile_test.dart",
+      "error": "Expected: throws <Instance of 'PrinterAgentException'> with `reason`: PrinterAgentFailure:<PrinterAgentFailure.profileMismatch>\n  Actual: <Instance of 'Future<PrinterAgentHealth>'>\n   Which: threw PrinterAgentRuntimeException:<PrinterAgentRuntimeException(invalidProfile)>\n          stack package:vynic/core/services/printing/printer_agent_runtime_profile.dart 371:7  PrinterAgentRuntimeProfile._requireAbsolute\n                package:vynic/core/services/printing/printer_agent_runtime_profile.dart 233:7  PrinterAgentRuntimeProfile.health\n                test\\unit\\printer_agent_runtime_profile_test.dart 372:18                       main.<fn>\n                ===== asynchronous gap ===========================\n                package:matcher                                                                expectLater\n                package:flutter_test/src/widget_tester.dart 507:8                              expectLater\n                test\\unit\\printer_agent_runtime_profile_test.dart 371:13                       main.<fn>\n                \n          which is not an instance of 'PrinterAgentException'\n",
+      "stackTrace": "package:matcher                                           expectLater\npackage:flutter_test/src/widget_tester.dart 507:8         expectLater\ntest\\unit\\printer_agent_runtime_profile_test.dart 371:13  main.<fn>\n",
+      "isFailure": true
+    },
+    {
+      "testID": 571,
+      "name": "distinct POS and Go installation IDs are explicit, never inferred",
+      "url": "file:///C:/Users/vaanskii/AppData/Local/VynicReadinessNative/software-2bd986d1ac2a-flutter-v2/source/apps/operations/test/unit/printer_agent_runtime_profile_test.dart",
+      "error": "PrinterAgentRuntimeException(invalidProfile)",
+      "stackTrace": "package:vynic/core/services/printing/printer_agent_runtime_profile.dart 371:7  PrinterAgentRuntimeProfile._requireAbsolute\npackage:vynic/core/services/printing/printer_agent_runtime_profile.dart 233:7  PrinterAgentRuntimeProfile.health\ntest\\unit\\printer_agent_runtime_profile_test.dart 405:37                       main.<fn>\n",
+      "isFailure": false
+    },
+    {
+      "testID": 579,
+      "name": "POS installation changes during health while Go identity stays fixed",
+      "url": "file:///C:/Users/vaanskii/AppData/Local/VynicReadinessNative/software-2bd986d1ac2a-flutter-v2/source/apps/operations/test/unit/printer_agent_runtime_profile_test.dart",
+      "error": "Expected: throws <Instance of 'PrinterAgentRuntimeException'> with `reason`: PrinterAgentRuntimeFailure:<PrinterAgentRuntimeFailure.bindingMismatch>\n  Actual: <Instance of 'Future<PrinterAgentHealth>'>\n   Which: threw PrinterAgentRuntimeException:<PrinterAgentRuntimeException(invalidProfile)>\n          stack package:vynic/core/services/printing/printer_agent_runtime_profile.dart 371:7  PrinterAgentRuntimeProfile._requireAbsolute\n                package:vynic/core/services/printing/printer_agent_runtime_profile.dart 233:7  PrinterAgentRuntimeProfile.health\n                test\\unit\\printer_agent_runtime_profile_test.dart 474:18                       main.<fn>\n                ===== asynchronous gap ===========================\n                package:matcher                                                                expectLater\n                package:flutter_test/src/widget_tester.dart 507:8                              expectLater\n                test\\unit\\printer_agent_runtime_profile_test.dart 473:13                       main.<fn>\n                \n          which has `reason` with value PrinterAgentRuntimeFailure:<PrinterAgentRuntimeFailure.invalidProfile>\n",
+      "stackTrace": "package:matcher                                           expectLater\npackage:flutter_test/src/widget_tester.dart 507:8         expectLater\ntest\\unit\\printer_agent_runtime_profile_test.dart 473:13  main.<fn>\n",
+      "isFailure": true
+    },
+    {
+      "testID": 581,
+      "name": "restore starts during health and suppresses the previous response",
+      "url": "file:///C:/Users/vaanskii/AppData/Local/VynicReadinessNative/software-2bd986d1ac2a-flutter-v2/source/apps/operations/test/unit/printer_agent_runtime_profile_test.dart",
+      "error": "Expected: throws <Instance of 'PrinterAgentRuntimeException'> with `reason`: PrinterAgentRuntimeFailure:<PrinterAgentRuntimeFailure.restorationHeld>\n  Actual: <Instance of 'Future<PrinterAgentHealth>'>\n   Which: threw PrinterAgentRuntimeException:<PrinterAgentRuntimeException(invalidProfile)>\n          stack package:vynic/core/services/printing/printer_agent_runtime_profile.dart 371:7  PrinterAgentRuntimeProfile._requireAbsolute\n                package:vynic/core/services/printing/printer_agent_runtime_profile.dart 233:7  PrinterAgentRuntimeProfile.health\n                test\\unit\\printer_agent_runtime_profile_test.dart 496:18                       main.<fn>\n                ===== asynchronous gap ===========================\n                package:matcher                                                                expectLater\n                package:flutter_test/src/widget_tester.dart 507:8                              expectLater\n                test\\unit\\printer_agent_runtime_profile_test.dart 495:13                       main.<fn>\n                \n          which has `reason` with value PrinterAgentRuntimeFailure:<PrinterAgentRuntimeFailure.invalidProfile>\n",
+      "stackTrace": "package:matcher                                           expectLater\npackage:flutter_test/src/widget_tester.dart 507:8         expectLater\ntest\\unit\\printer_agent_runtime_profile_test.dart 495:13  main.<fn>\n",
+      "isFailure": true
+    },
+    {
+      "testID": 748,
+      "name": "manual card uses real profile and mTLS health then shows actual offline failure",
+      "url": "package:flutter_test/src/widget_tester.dart",
+      "error": "Test failed. See exception logs above.\nThe test description was: manual card uses real profile and mTLS health then shows actual offline failure",
+      "stackTrace": "",
+      "isFailure": false
+    }
+  ],
+  "machineDone": [
+    {
+      "success": false,
+      "type": "done",
+      "time": 114740
+    }
+  ],
+  "fixturePortabilityDiagnosis": "Canonical path preflight rejects mixed separator paths generated by new test fixtures; production loader unchanged. All failure events retained for review, analysis not yet run because runner gated it on test success.",
+  "productionSourceEdits": false,
+  "sourceAfterAssertionExecuted": false,
+  "analysisRun": false
+}

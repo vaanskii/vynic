@@ -1,0 +1,505 @@
+{"protocolVersion":"0.1.1","runnerVersion":null,"pid":74939,"type":"start","time":0}
+{"suite":{"id":0,"platform":"vm","path":"/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/source/apps/operations/test/unit/printer_agent_runtime_profile_test.dart"},"type":"suite","time":0}
+{"test":{"id":1,"name":"loading /private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/source/apps/operations/test/unit/printer_agent_runtime_profile_test.dart","suiteID":0,"groupIDs":[],"metadata":{"skip":false,"skipReason":null},"line":null,"column":null,"url":null},"type":"testStart","time":0}
+{"suite":{"id":2,"platform":"vm","path":"/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/source/apps/operations/test/widget/printer_agent_status_card_test.dart"},"type":"suite","time":2}
+{"test":{"id":3,"name":"loading /private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/source/apps/operations/test/widget/printer_agent_status_card_test.dart","suiteID":2,"groupIDs":[],"metadata":{"skip":false,"skipReason":null},"line":null,"column":null,"url":null},"type":"testStart","time":2}
+{"count":2,"time":2,"type":"allSuites"}
+
+[{"event":"test.startedProcess","params":{"vmServiceUri":null}}]
+
+[{"event":"test.startedProcess","params":{"vmServiceUri":null}}]
+{"testID":1,"result":"success","skipped":false,"hidden":true,"type":"testDone","time":1327}
+{"group":{"id":4,"suiteID":0,"parentID":null,"name":"","metadata":{"skip":false,"skipReason":null},"testCount":27,"line":null,"column":null,"url":null},"type":"group","time":1328}
+{"test":{"id":5,"name":"empty explicit flag is neutral and performs no IO or connection","suiteID":0,"groupIDs":[4],"metadata":{"skip":false,"skipReason":null},"line":108,"column":3,"url":"file:///private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/source/apps/operations/test/unit/printer_agent_runtime_profile_test.dart"},"type":"testStart","time":1328}
+{"testID":3,"result":"success","skipped":false,"hidden":true,"type":"testDone","time":1374}
+{"group":{"id":6,"suiteID":2,"parentID":null,"name":"","metadata":{"skip":false,"skipReason":null},"testCount":33,"line":null,"column":null,"url":null},"type":"group","time":1374}
+{"test":{"id":7,"name":"default factory stays neutral and never probes or prints","suiteID":2,"groupIDs":[6],"metadata":{"skip":false,"skipReason":null},"line":174,"column":5,"url":"package:flutter_test/src/widget_tester.dart","root_line":64,"root_column":3,"root_url":"file:///private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/source/apps/operations/test/widget/printer_agent_status_card_test.dart"},"type":"testStart","time":1374}
+{"testID":5,"messageType":"print","message":"[AuditEventService] Found 1 unsynced events. Starting batch sync.","type":"print","time":1426}
+{"testID":5,"messageType":"print","message":"[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP","type":"print","time":1428}
+{"testID":5,"messageType":"print","message":"[AuditEventService] Batch sync failed. Will retry later.","type":"print","time":1428}
+{"testID":7,"messageType":"print","message":"[AuditEventService] Found 1 unsynced events. Starting batch sync.","type":"print","time":1463}
+{"testID":7,"messageType":"print","message":"[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP","type":"print","time":1465}
+{"testID":7,"messageType":"print","message":"[AuditEventService] Batch sync failed. Will retry later.","type":"print","time":1465}
+{"testID":5,"messageType":"print","message":"[AuditEventService] Found 2 unsynced events. Starting batch sync.","type":"print","time":1469}
+{"testID":5,"messageType":"print","message":"[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP","type":"print","time":1470}
+{"testID":5,"messageType":"print","message":"[AuditEventService] Batch sync failed. Will retry later.","type":"print","time":1470}
+{"testID":5,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":1485}
+{"test":{"id":8,"name":"strict profile passes explicit pins and closes the read-only connection","suiteID":0,"groupIDs":[4],"metadata":{"skip":false,"skipReason":null},"line":121,"column":3,"url":"file:///private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/source/apps/operations/test/unit/printer_agent_runtime_profile_test.dart"},"type":"testStart","time":1486}
+{"testID":7,"messageType":"print","message":"[AuditEventService] Found 2 unsynced events. Starting batch sync.","type":"print","time":1507}
+{"testID":8,"messageType":"print","message":"[AuditEventService] Found 1 unsynced events. Starting batch sync.","type":"print","time":1523}
+{"testID":8,"messageType":"print","message":"[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP","type":"print","time":1523}
+{"testID":8,"messageType":"print","message":"[AuditEventService] Batch sync failed. Will retry later.","type":"print","time":1523}
+{"testID":8,"messageType":"print","message":"[AuditEventService] Found 2 unsynced events. Starting batch sync.","type":"print","time":1536}
+{"testID":8,"messageType":"print","message":"[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP","type":"print","time":1537}
+{"testID":8,"messageType":"print","message":"[AuditEventService] Batch sync failed. Will retry later.","type":"print","time":1537}
+{"testID":8,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":1552}
+{"test":{"id":9,"name":"foreign device is held before credential files or connection","suiteID":0,"groupIDs":[4],"metadata":{"skip":false,"skipReason":null},"line":136,"column":5,"url":"file:///private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/source/apps/operations/test/unit/printer_agent_runtime_profile_test.dart"},"type":"testStart","time":1552}
+{"testID":9,"messageType":"print","message":"[AuditEventService] Found 1 unsynced events. Starting batch sync.","type":"print","time":1590}
+{"testID":9,"messageType":"print","message":"[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP","type":"print","time":1590}
+{"testID":9,"messageType":"print","message":"[AuditEventService] Batch sync failed. Will retry later.","type":"print","time":1590}
+{"testID":9,"messageType":"print","message":"[AuditEventService] Found 2 unsynced events. Starting batch sync.","type":"print","time":1604}
+{"testID":9,"messageType":"print","message":"[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP","type":"print","time":1604}
+{"testID":9,"messageType":"print","message":"[AuditEventService] Batch sync failed. Will retry later.","type":"print","time":1604}
+{"testID":7,"messageType":"print","message":"[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP","type":"print","time":1607}
+{"testID":7,"messageType":"print","message":"[AuditEventService] Batch sync failed. Will retry later.","type":"print","time":1607}
+{"testID":9,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":1613}
+{"test":{"id":10,"name":"foreign venue is held before credential files or connection","suiteID":0,"groupIDs":[4],"metadata":{"skip":false,"skipReason":null},"line":136,"column":5,"url":"file:///private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/source/apps/operations/test/unit/printer_agent_runtime_profile_test.dart"},"type":"testStart","time":1613}
+{"testID":10,"messageType":"print","message":"[AuditEventService] Found 1 unsynced events. Starting batch sync.","type":"print","time":1644}
+{"testID":10,"messageType":"print","message":"[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP","type":"print","time":1645}
+{"testID":10,"messageType":"print","message":"[AuditEventService] Batch sync failed. Will retry later.","type":"print","time":1645}
+{"testID":10,"messageType":"print","message":"[AuditEventService] Found 2 unsynced events. Starting batch sync.","type":"print","time":1656}
+{"testID":10,"messageType":"print","message":"[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP","type":"print","time":1656}
+{"testID":10,"messageType":"print","message":"[AuditEventService] Batch sync failed. Will retry later.","type":"print","time":1656}
+{"testID":10,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":1661}
+{"test":{"id":11,"name":"foreign installation is held before credential files or connection","suiteID":0,"groupIDs":[4],"metadata":{"skip":false,"skipReason":null},"line":136,"column":5,"url":"file:///private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/source/apps/operations/test/unit/printer_agent_runtime_profile_test.dart"},"type":"testStart","time":1661}
+{"testID":11,"messageType":"print","message":"[AuditEventService] Found 1 unsynced events. Starting batch sync.","type":"print","time":1692}
+{"testID":11,"messageType":"print","message":"[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP","type":"print","time":1693}
+{"testID":11,"messageType":"print","message":"[AuditEventService] Batch sync failed. Will retry later.","type":"print","time":1693}
+{"testID":11,"messageType":"print","message":"[AuditEventService] Found 2 unsynced events. Starting batch sync.","type":"print","time":1702}
+{"testID":11,"messageType":"print","message":"[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP","type":"print","time":1702}
+{"testID":11,"messageType":"print","message":"[AuditEventService] Batch sync failed. Will retry later.","type":"print","time":1702}
+{"testID":11,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":1708}
+{"test":{"id":12,"name":"missing active device never invents a binding","suiteID":0,"groupIDs":[4],"metadata":{"skip":false,"skipReason":null},"line":158,"column":5,"url":"file:///private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/source/apps/operations/test/unit/printer_agent_runtime_profile_test.dart"},"type":"testStart","time":1708}
+{"testID":12,"messageType":"print","message":"[AuditEventService] Found 1 unsynced events. Starting batch sync.","type":"print","time":1747}
+{"testID":12,"messageType":"print","message":"[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP","type":"print","time":1747}
+{"testID":12,"messageType":"print","message":"[AuditEventService] Batch sync failed. Will retry later.","type":"print","time":1747}
+{"testID":12,"messageType":"print","message":"[AuditEventService] Found 2 unsynced events. Starting batch sync.","type":"print","time":1757}
+{"testID":12,"messageType":"print","message":"[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP","type":"print","time":1758}
+{"testID":12,"messageType":"print","message":"[AuditEventService] Batch sync failed. Will retry later.","type":"print","time":1758}
+{"testID":12,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":1762}
+{"test":{"id":13,"name":"missing active venue never invents a binding","suiteID":0,"groupIDs":[4],"metadata":{"skip":false,"skipReason":null},"line":158,"column":5,"url":"file:///private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/source/apps/operations/test/unit/printer_agent_runtime_profile_test.dart"},"type":"testStart","time":1762}
+{"testID":7,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":1779}
+{"test":{"id":14,"name":"configured card requires manual refresh and keeps physical held","suiteID":2,"groupIDs":[6],"metadata":{"skip":false,"skipReason":null},"line":174,"column":5,"url":"package:flutter_test/src/widget_tester.dart","root_line":82,"root_column":3,"root_url":"file:///private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/source/apps/operations/test/widget/printer_agent_status_card_test.dart"},"type":"testStart","time":1779}
+{"testID":13,"messageType":"print","message":"[AuditEventService] Found 1 unsynced events. Starting batch sync.","type":"print","time":1795}
+{"testID":13,"messageType":"print","message":"[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP","type":"print","time":1795}
+{"testID":13,"messageType":"print","message":"[AuditEventService] Batch sync failed. Will retry later.","type":"print","time":1795}
+{"testID":13,"messageType":"print","message":"[AuditEventService] Found 2 unsynced events. Starting batch sync.","type":"print","time":1805}
+{"testID":13,"messageType":"print","message":"[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP","type":"print","time":1806}
+{"testID":13,"messageType":"print","message":"[AuditEventService] Batch sync failed. Will retry later.","type":"print","time":1806}
+{"testID":13,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":1810}
+{"test":{"id":15,"name":"missing active installation never invents a binding","suiteID":0,"groupIDs":[4],"metadata":{"skip":false,"skipReason":null},"line":158,"column":5,"url":"file:///private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/source/apps/operations/test/unit/printer_agent_runtime_profile_test.dart"},"type":"testStart","time":1810}
+{"testID":14,"messageType":"print","message":"[AuditEventService] Found 1 unsynced events. Starting batch sync.","type":"print","time":1819}
+{"testID":14,"messageType":"print","message":"[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP","type":"print","time":1819}
+{"testID":14,"messageType":"print","message":"[AuditEventService] Batch sync failed. Will retry later.","type":"print","time":1819}
+{"testID":14,"messageType":"print","message":"[AuditEventService] Found 2 unsynced events. Starting batch sync.","type":"print","time":1837}
+{"testID":14,"messageType":"print","message":"[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP","type":"print","time":1839}
+{"testID":14,"messageType":"print","message":"[AuditEventService] Batch sync failed. Will retry later.","type":"print","time":1839}
+{"testID":15,"messageType":"print","message":"[AuditEventService] Found 1 unsynced events. Starting batch sync.","type":"print","time":1840}
+{"testID":15,"messageType":"print","message":"[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP","type":"print","time":1840}
+{"testID":15,"messageType":"print","message":"[AuditEventService] Batch sync failed. Will retry later.","type":"print","time":1840}
+{"testID":15,"messageType":"print","message":"[AuditEventService] Found 2 unsynced events. Starting batch sync.","type":"print","time":1851}
+{"testID":15,"messageType":"print","message":"[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP","type":"print","time":1851}
+{"testID":15,"messageType":"print","message":"[AuditEventService] Batch sync failed. Will retry later.","type":"print","time":1851}
+{"testID":15,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":1855}
+{"test":{"id":16,"name":"revoked developer scope refuses even a missing profile before IO","suiteID":0,"groupIDs":[4],"metadata":{"skip":false,"skipReason":null},"line":176,"column":3,"url":"file:///private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/source/apps/operations/test/unit/printer_agent_runtime_profile_test.dart"},"type":"testStart","time":1855}
+{"testID":16,"messageType":"print","message":"[AuditEventService] Found 1 unsynced events. Starting batch sync.","type":"print","time":1882}
+{"testID":16,"messageType":"print","message":"[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP","type":"print","time":1882}
+{"testID":16,"messageType":"print","message":"[AuditEventService] Batch sync failed. Will retry later.","type":"print","time":1882}
+{"testID":16,"messageType":"print","message":"[AuditEventService] Found 2 unsynced events. Starting batch sync.","type":"print","time":1891}
+{"testID":16,"messageType":"print","message":"[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP","type":"print","time":1891}
+{"testID":16,"messageType":"print","message":"[AuditEventService] Batch sync failed. Will retry later.","type":"print","time":1891}
+{"testID":16,"messageType":"print","message":"[DeveloperAccess] locked (manual)","type":"print","time":1892}
+{"testID":16,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":1895}
+{"test":{"id":17,"name":"noncanonical/nonloopback address localhost:43123 refuses","suiteID":0,"groupIDs":[4],"metadata":{"skip":false,"skipReason":null},"line":196,"column":5,"url":"file:///private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/source/apps/operations/test/unit/printer_agent_runtime_profile_test.dart"},"type":"testStart","time":1895}
+{"testID":17,"messageType":"print","message":"[AuditEventService] Found 1 unsynced events. Starting batch sync.","type":"print","time":1920}
+{"testID":17,"messageType":"print","message":"[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP","type":"print","time":1920}
+{"testID":17,"messageType":"print","message":"[AuditEventService] Batch sync failed. Will retry later.","type":"print","time":1920}
+{"testID":17,"messageType":"print","message":"[AuditEventService] Found 2 unsynced events. Starting batch sync.","type":"print","time":1930}
+{"testID":17,"messageType":"print","message":"[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP","type":"print","time":1930}
+{"testID":17,"messageType":"print","message":"[AuditEventService] Batch sync failed. Will retry later.","type":"print","time":1930}
+{"testID":17,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":1934}
+{"test":{"id":18,"name":"noncanonical/nonloopback address 0.0.0.0:43123 refuses","suiteID":0,"groupIDs":[4],"metadata":{"skip":false,"skipReason":null},"line":196,"column":5,"url":"file:///private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/source/apps/operations/test/unit/printer_agent_runtime_profile_test.dart"},"type":"testStart","time":1935}
+{"testID":14,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":1953}
+{"test":{"id":19,"name":"shared queue uncertainty is visible without raw hold text or resend","suiteID":2,"groupIDs":[6],"metadata":{"skip":false,"skipReason":null},"line":174,"column":5,"url":"package:flutter_test/src/widget_tester.dart","root_line":106,"root_column":3,"root_url":"file:///private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/source/apps/operations/test/widget/printer_agent_status_card_test.dart"},"type":"testStart","time":1953}
+{"testID":18,"messageType":"print","message":"[AuditEventService] Found 1 unsynced events. Starting batch sync.","type":"print","time":1967}
+{"testID":18,"messageType":"print","message":"[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP","type":"print","time":1968}
+{"testID":18,"messageType":"print","message":"[AuditEventService] Batch sync failed. Will retry later.","type":"print","time":1968}
+{"testID":18,"messageType":"print","message":"[AuditEventService] Found 2 unsynced events. Starting batch sync.","type":"print","time":1977}
+{"testID":18,"messageType":"print","message":"[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP","type":"print","time":1977}
+{"testID":18,"messageType":"print","message":"[AuditEventService] Batch sync failed. Will retry later.","type":"print","time":1977}
+{"testID":18,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":1982}
+{"test":{"id":20,"name":"noncanonical/nonloopback address 192.0.2.1:43123 refuses","suiteID":0,"groupIDs":[4],"metadata":{"skip":false,"skipReason":null},"line":196,"column":5,"url":"file:///private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/source/apps/operations/test/unit/printer_agent_runtime_profile_test.dart"},"type":"testStart","time":1982}
+{"testID":19,"messageType":"print","message":"[AuditEventService] Found 1 unsynced events. Starting batch sync.","type":"print","time":1987}
+{"testID":19,"messageType":"print","message":"[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP","type":"print","time":1987}
+{"testID":19,"messageType":"print","message":"[AuditEventService] Batch sync failed. Will retry later.","type":"print","time":1987}
+{"testID":19,"messageType":"print","message":"[AuditEventService] Found 2 unsynced events. Starting batch sync.","type":"print","time":1999}
+{"testID":19,"messageType":"print","message":"[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP","type":"print","time":2002}
+{"testID":19,"messageType":"print","message":"[AuditEventService] Batch sync failed. Will retry later.","type":"print","time":2002}
+{"testID":20,"messageType":"print","message":"[AuditEventService] Found 1 unsynced events. Starting batch sync.","type":"print","time":2008}
+{"testID":20,"messageType":"print","message":"[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP","type":"print","time":2008}
+{"testID":20,"messageType":"print","message":"[AuditEventService] Batch sync failed. Will retry later.","type":"print","time":2008}
+{"testID":20,"messageType":"print","message":"[AuditEventService] Found 2 unsynced events. Starting batch sync.","type":"print","time":2018}
+{"testID":20,"messageType":"print","message":"[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP","type":"print","time":2018}
+{"testID":20,"messageType":"print","message":"[AuditEventService] Batch sync failed. Will retry later.","type":"print","time":2018}
+{"testID":20,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":2022}
+{"test":{"id":21,"name":"noncanonical/nonloopback address 127.0.0.1:0 refuses","suiteID":0,"groupIDs":[4],"metadata":{"skip":false,"skipReason":null},"line":196,"column":5,"url":"file:///private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/source/apps/operations/test/unit/printer_agent_runtime_profile_test.dart"},"type":"testStart","time":2022}
+{"testID":19,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":2032}
+{"test":{"id":22,"name":"lifecycle newHost remains physically held","suiteID":2,"groupIDs":[6],"metadata":{"skip":false,"skipReason":null},"line":174,"column":5,"url":"package:flutter_test/src/widget_tester.dart","root_line":130,"root_column":5,"root_url":"file:///private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/source/apps/operations/test/widget/printer_agent_status_card_test.dart"},"type":"testStart","time":2033}
+{"testID":21,"messageType":"print","message":"[AuditEventService] Found 1 unsynced events. Starting batch sync.","type":"print","time":2059}
+{"testID":21,"messageType":"print","message":"[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP","type":"print","time":2059}
+{"testID":21,"messageType":"print","message":"[AuditEventService] Batch sync failed. Will retry later.","type":"print","time":2059}
+{"testID":22,"messageType":"print","message":"[AuditEventService] Found 1 unsynced events. Starting batch sync.","type":"print","time":2068}
+{"testID":22,"messageType":"print","message":"[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP","type":"print","time":2069}
+{"testID":22,"messageType":"print","message":"[AuditEventService] Batch sync failed. Will retry later.","type":"print","time":2069}
+{"testID":21,"messageType":"print","message":"[AuditEventService] Found 2 unsynced events. Starting batch sync.","type":"print","time":2069}
+{"testID":21,"messageType":"print","message":"[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP","type":"print","time":2069}
+{"testID":21,"messageType":"print","message":"[AuditEventService] Batch sync failed. Will retry later.","type":"print","time":2069}
+{"testID":21,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":2074}
+{"test":{"id":23,"name":"noncanonical/nonloopback address 127.0.0.1:65536 refuses","suiteID":0,"groupIDs":[4],"metadata":{"skip":false,"skipReason":null},"line":196,"column":5,"url":"file:///private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/source/apps/operations/test/unit/printer_agent_runtime_profile_test.dart"},"type":"testStart","time":2074}
+{"testID":22,"messageType":"print","message":"[AuditEventService] Found 2 unsynced events. Starting batch sync.","type":"print","time":2080}
+{"testID":22,"messageType":"print","message":"[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP","type":"print","time":2082}
+{"testID":22,"messageType":"print","message":"[AuditEventService] Batch sync failed. Will retry later.","type":"print","time":2082}
+{"testID":23,"messageType":"print","message":"[AuditEventService] Found 1 unsynced events. Starting batch sync.","type":"print","time":2099}
+{"testID":23,"messageType":"print","message":"[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP","type":"print","time":2099}
+{"testID":23,"messageType":"print","message":"[AuditEventService] Batch sync failed. Will retry later.","type":"print","time":2099}
+{"testID":23,"messageType":"print","message":"[AuditEventService] Found 2 unsynced events. Starting batch sync.","type":"print","time":2109}
+{"testID":23,"messageType":"print","message":"[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP","type":"print","time":2109}
+{"testID":23,"messageType":"print","message":"[AuditEventService] Batch sync failed. Will retry later.","type":"print","time":2109}
+{"testID":22,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":2109}
+{"test":{"id":24,"name":"lifecycle starting remains physically held","suiteID":2,"groupIDs":[6],"metadata":{"skip":false,"skipReason":null},"line":174,"column":5,"url":"package:flutter_test/src/widget_tester.dart","root_line":130,"root_column":5,"root_url":"file:///private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/source/apps/operations/test/widget/printer_agent_status_card_test.dart"},"type":"testStart","time":2109}
+{"testID":23,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":2114}
+{"test":{"id":25,"name":"noncanonical/nonloopback address 127.0.0.1:043123 refuses","suiteID":0,"groupIDs":[4],"metadata":{"skip":false,"skipReason":null},"line":196,"column":5,"url":"file:///private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/source/apps/operations/test/unit/printer_agent_runtime_profile_test.dart"},"type":"testStart","time":2114}
+{"testID":25,"messageType":"print","message":"[AuditEventService] Found 1 unsynced events. Starting batch sync.","type":"print","time":2140}
+{"testID":25,"messageType":"print","message":"[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP","type":"print","time":2140}
+{"testID":25,"messageType":"print","message":"[AuditEventService] Batch sync failed. Will retry later.","type":"print","time":2140}
+{"testID":24,"messageType":"print","message":"[AuditEventService] Found 1 unsynced events. Starting batch sync.","type":"print","time":2141}
+{"testID":24,"messageType":"print","message":"[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP","type":"print","time":2142}
+{"testID":24,"messageType":"print","message":"[AuditEventService] Batch sync failed. Will retry later.","type":"print","time":2142}
+{"testID":25,"messageType":"print","message":"[AuditEventService] Found 2 unsynced events. Starting batch sync.","type":"print","time":2149}
+{"testID":25,"messageType":"print","message":"[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP","type":"print","time":2149}
+{"testID":25,"messageType":"print","message":"[AuditEventService] Batch sync failed. Will retry later.","type":"print","time":2149}
+{"testID":24,"messageType":"print","message":"[AuditEventService] Found 2 unsynced events. Starting batch sync.","type":"print","time":2152}
+{"testID":25,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":2153}
+{"test":{"id":26,"name":"unknown or activated provision state refuses rather than enabling","suiteID":0,"groupIDs":[4],"metadata":{"skip":false,"skipReason":null},"line":204,"column":3,"url":"file:///private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/source/apps/operations/test/unit/printer_agent_runtime_profile_test.dart"},"type":"testStart","time":2153}
+{"testID":24,"messageType":"print","message":"[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP","type":"print","time":2154}
+{"testID":24,"messageType":"print","message":"[AuditEventService] Batch sync failed. Will retry later.","type":"print","time":2154}
+{"testID":26,"messageType":"print","message":"[AuditEventService] Found 1 unsynced events. Starting batch sync.","type":"print","time":2180}
+{"testID":26,"messageType":"print","message":"[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP","type":"print","time":2180}
+{"testID":26,"messageType":"print","message":"[AuditEventService] Batch sync failed. Will retry later.","type":"print","time":2180}
+{"testID":24,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":2181}
+{"test":{"id":27,"name":"lifecycle running remains physically held","suiteID":2,"groupIDs":[6],"metadata":{"skip":false,"skipReason":null},"line":174,"column":5,"url":"package:flutter_test/src/widget_tester.dart","root_line":130,"root_column":5,"root_url":"file:///private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/source/apps/operations/test/widget/printer_agent_status_card_test.dart"},"type":"testStart","time":2182}
+{"testID":26,"messageType":"print","message":"[AuditEventService] Found 2 unsynced events. Starting batch sync.","type":"print","time":2188}
+{"testID":26,"messageType":"print","message":"[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP","type":"print","time":2189}
+{"testID":26,"messageType":"print","message":"[AuditEventService] Batch sync failed. Will retry later.","type":"print","time":2189}
+{"testID":26,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":2194}
+{"test":{"id":28,"name":"extra CA fallback and authority fields refuse","suiteID":0,"groupIDs":[4],"metadata":{"skip":false,"skipReason":null},"line":214,"column":3,"url":"file:///private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/source/apps/operations/test/unit/printer_agent_runtime_profile_test.dart"},"type":"testStart","time":2194}
+{"testID":28,"messageType":"print","message":"[AuditEventService] Found 1 unsynced events. Starting batch sync.","type":"print","time":2218}
+{"testID":28,"messageType":"print","message":"[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP","type":"print","time":2218}
+{"testID":28,"messageType":"print","message":"[AuditEventService] Batch sync failed. Will retry later.","type":"print","time":2218}
+{"testID":27,"messageType":"print","message":"[AuditEventService] Found 1 unsynced events. Starting batch sync.","type":"print","time":2219}
+{"testID":27,"messageType":"print","message":"[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP","type":"print","time":2219}
+{"testID":27,"messageType":"print","message":"[AuditEventService] Batch sync failed. Will retry later.","type":"print","time":2219}
+{"testID":28,"messageType":"print","message":"[AuditEventService] Found 2 unsynced events. Starting batch sync.","type":"print","time":2227}
+{"testID":28,"messageType":"print","message":"[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP","type":"print","time":2227}
+{"testID":28,"messageType":"print","message":"[AuditEventService] Batch sync failed. Will retry later.","type":"print","time":2227}
+{"testID":27,"messageType":"print","message":"[AuditEventService] Found 2 unsynced events. Starting batch sync.","type":"print","time":2229}
+{"testID":27,"messageType":"print","message":"[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP","type":"print","time":2232}
+{"testID":27,"messageType":"print","message":"[AuditEventService] Batch sync failed. Will retry later.","type":"print","time":2232}
+{"testID":28,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":2232}
+{"test":{"id":29,"name":"duplicate keys including escaped spellings refuse","suiteID":0,"groupIDs":[4],"metadata":{"skip":false,"skipReason":null},"line":223,"column":3,"url":"file:///private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/source/apps/operations/test/unit/printer_agent_runtime_profile_test.dart"},"type":"testStart","time":2232}
+{"testID":27,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":2260}
+{"test":{"id":30,"name":"lifecycle draining remains physically held","suiteID":2,"groupIDs":[6],"metadata":{"skip":false,"skipReason":null},"line":174,"column":5,"url":"package:flutter_test/src/widget_tester.dart","root_line":130,"root_column":5,"root_url":"file:///private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/source/apps/operations/test/widget/printer_agent_status_card_test.dart"},"type":"testStart","time":2260}
+{"testID":29,"messageType":"print","message":"[AuditEventService] Found 1 unsynced events. Starting batch sync.","type":"print","time":2261}
+{"testID":29,"messageType":"print","message":"[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP","type":"print","time":2262}
+{"testID":29,"messageType":"print","message":"[AuditEventService] Batch sync failed. Will retry later.","type":"print","time":2262}
+{"testID":29,"messageType":"print","message":"[AuditEventService] Found 2 unsynced events. Starting batch sync.","type":"print","time":2271}
+{"testID":29,"messageType":"print","message":"[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP","type":"print","time":2271}
+{"testID":29,"messageType":"print","message":"[AuditEventService] Batch sync failed. Will retry later.","type":"print","time":2271}
+{"testID":29,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":2280}
+{"test":{"id":31,"name":"invalid UTF8 and oversize/deep JSON are bounded and refused","suiteID":0,"groupIDs":[4],"metadata":{"skip":false,"skipReason":null},"line":236,"column":3,"url":"file:///private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/source/apps/operations/test/unit/printer_agent_runtime_profile_test.dart"},"type":"testStart","time":2280}
+{"testID":30,"messageType":"print","message":"[AuditEventService] Found 1 unsynced events. Starting batch sync.","type":"print","time":2294}
+{"testID":30,"messageType":"print","message":"[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP","type":"print","time":2294}
+{"testID":30,"messageType":"print","message":"[AuditEventService] Batch sync failed. Will retry later.","type":"print","time":2294}
+{"testID":31,"messageType":"print","message":"[AuditEventService] Found 1 unsynced events. Starting batch sync.","type":"print","time":2304}
+{"testID":31,"messageType":"print","message":"[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP","type":"print","time":2304}
+{"testID":31,"messageType":"print","message":"[AuditEventService] Batch sync failed. Will retry later.","type":"print","time":2304}
+{"testID":30,"messageType":"print","message":"[AuditEventService] Found 2 unsynced events. Starting batch sync.","type":"print","time":2305}
+{"testID":30,"messageType":"print","message":"[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP","type":"print","time":2307}
+{"testID":30,"messageType":"print","message":"[AuditEventService] Batch sync failed. Will retry later.","type":"print","time":2307}
+{"testID":31,"messageType":"print","message":"[AuditEventService] Found 2 unsynced events. Starting batch sync.","type":"print","time":2313}
+{"testID":31,"messageType":"print","message":"[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP","type":"print","time":2313}
+{"testID":31,"messageType":"print","message":"[AuditEventService] Batch sync failed. Will retry later.","type":"print","time":2313}
+{"testID":31,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":2319}
+{"test":{"id":32,"name":"float version, arrays and unknown nested pin keys refuse","suiteID":0,"groupIDs":[4],"metadata":{"skip":false,"skipReason":null},"line":246,"column":3,"url":"file:///private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/source/apps/operations/test/unit/printer_agent_runtime_profile_test.dart"},"type":"testStart","time":2319}
+{"testID":30,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":2332}
+{"test":{"id":33,"name":"lifecycle stopped remains physically held","suiteID":2,"groupIDs":[6],"metadata":{"skip":false,"skipReason":null},"line":174,"column":5,"url":"package:flutter_test/src/widget_tester.dart","root_line":130,"root_column":5,"root_url":"file:///private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/source/apps/operations/test/widget/printer_agent_status_card_test.dart"},"type":"testStart","time":2332}
+{"testID":32,"messageType":"print","message":"[AuditEventService] Found 1 unsynced events. Starting batch sync.","type":"print","time":2346}
+{"testID":32,"messageType":"print","message":"[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP","type":"print","time":2347}
+{"testID":32,"messageType":"print","message":"[AuditEventService] Batch sync failed. Will retry later.","type":"print","time":2347}
+{"testID":32,"messageType":"print","message":"[AuditEventService] Found 2 unsynced events. Starting batch sync.","type":"print","time":2358}
+{"testID":32,"messageType":"print","message":"[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP","type":"print","time":2358}
+{"testID":32,"messageType":"print","message":"[AuditEventService] Batch sync failed. Will retry later.","type":"print","time":2358}
+{"testID":32,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":2364}
+{"test":{"id":34,"name":"relative profile/credential paths are held without fallback","suiteID":0,"groupIDs":[4],"metadata":{"skip":false,"skipReason":null},"line":261,"column":3,"url":"file:///private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/source/apps/operations/test/unit/printer_agent_runtime_profile_test.dart"},"type":"testStart","time":2364}
+{"testID":33,"messageType":"print","message":"[AuditEventService] Found 1 unsynced events. Starting batch sync.","type":"print","time":2366}
+{"testID":33,"messageType":"print","message":"[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP","type":"print","time":2367}
+{"testID":33,"messageType":"print","message":"[AuditEventService] Batch sync failed. Will retry later.","type":"print","time":2367}
+{"testID":33,"messageType":"print","message":"[AuditEventService] Found 2 unsynced events. Starting batch sync.","type":"print","time":2377}
+{"testID":33,"messageType":"print","message":"[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP","type":"print","time":2380}
+{"testID":33,"messageType":"print","message":"[AuditEventService] Batch sync failed. Will retry later.","type":"print","time":2380}
+{"testID":34,"messageType":"print","message":"[AuditEventService] Found 1 unsynced events. Starting batch sync.","type":"print","time":2389}
+{"testID":34,"messageType":"print","message":"[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP","type":"print","time":2390}
+{"testID":34,"messageType":"print","message":"[AuditEventService] Batch sync failed. Will retry later.","type":"print","time":2390}
+{"testID":34,"messageType":"print","message":"[AuditEventService] Found 2 unsynced events. Starting batch sync.","type":"print","time":2399}
+{"testID":34,"messageType":"print","message":"[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP","type":"print","time":2399}
+{"testID":34,"messageType":"print","message":"[AuditEventService] Batch sync failed. Will retry later.","type":"print","time":2399}
+{"testID":33,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":2404}
+{"testID":34,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":2404}
+{"test":{"id":35,"name":"lifecycle held remains physically held","suiteID":2,"groupIDs":[6],"metadata":{"skip":false,"skipReason":null},"line":174,"column":5,"url":"package:flutter_test/src/widget_tester.dart","root_line":130,"root_column":5,"root_url":"file:///private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/source/apps/operations/test/widget/printer_agent_status_card_test.dart"},"type":"testStart","time":2404}
+{"test":{"id":36,"name":"explicit certificate hashes must match exact leaf DER","suiteID":0,"groupIDs":[4],"metadata":{"skip":false,"skipReason":null},"line":272,"column":3,"url":"file:///private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/source/apps/operations/test/unit/printer_agent_runtime_profile_test.dart"},"type":"testStart","time":2404}
+{"testID":36,"messageType":"print","message":"[AuditEventService] Found 1 unsynced events. Starting batch sync.","type":"print","time":2430}
+{"testID":36,"messageType":"print","message":"[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP","type":"print","time":2430}
+{"testID":36,"messageType":"print","message":"[AuditEventService] Batch sync failed. Will retry later.","type":"print","time":2430}
+{"testID":35,"messageType":"print","message":"[AuditEventService] Found 1 unsynced events. Starting batch sync.","type":"print","time":2432}
+{"testID":35,"messageType":"print","message":"[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP","type":"print","time":2433}
+{"testID":35,"messageType":"print","message":"[AuditEventService] Batch sync failed. Will retry later.","type":"print","time":2433}
+{"testID":36,"messageType":"print","message":"[AuditEventService] Found 2 unsynced events. Starting batch sync.","type":"print","time":2439}
+{"testID":36,"messageType":"print","message":"[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP","type":"print","time":2439}
+{"testID":36,"messageType":"print","message":"[AuditEventService] Batch sync failed. Will retry later.","type":"print","time":2439}
+{"testID":35,"messageType":"print","message":"[AuditEventService] Found 2 unsynced events. Starting batch sync.","type":"print","time":2442}
+{"testID":36,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":2444}
+{"test":{"id":37,"name":"symlinked key or directory escape is refused","suiteID":0,"groupIDs":[4],"metadata":{"skip":false,"skipReason":null},"line":279,"column":3,"url":"file:///private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/source/apps/operations/test/unit/printer_agent_runtime_profile_test.dart"},"type":"testStart","time":2444}
+{"testID":35,"messageType":"print","message":"[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP","type":"print","time":2444}
+{"testID":35,"messageType":"print","message":"[AuditEventService] Batch sync failed. Will retry later.","type":"print","time":2444}
+{"testID":35,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":2468}
+{"test":{"id":38,"name":"typed invalidProfile stays visible until manual retry","suiteID":2,"groupIDs":[6],"metadata":{"skip":false,"skipReason":null},"line":174,"column":5,"url":"package:flutter_test/src/widget_tester.dart","root_line":148,"root_column":5,"root_url":"file:///private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/source/apps/operations/test/widget/printer_agent_status_card_test.dart"},"type":"testStart","time":2468}
+{"testID":37,"messageType":"print","message":"[AuditEventService] Found 1 unsynced events. Starting batch sync.","type":"print","time":2468}
+{"testID":37,"messageType":"print","message":"[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP","type":"print","time":2469}
+{"testID":37,"messageType":"print","message":"[AuditEventService] Batch sync failed. Will retry later.","type":"print","time":2469}
+{"testID":37,"messageType":"print","message":"[AuditEventService] Found 2 unsynced events. Starting batch sync.","type":"print","time":2477}
+{"testID":37,"messageType":"print","message":"[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP","type":"print","time":2477}
+{"testID":37,"messageType":"print","message":"[AuditEventService] Batch sync failed. Will retry later.","type":"print","time":2477}
+{"testID":37,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":2485}
+{"test":{"id":39,"name":"identity and scope are rechecked after actual async seam","suiteID":0,"groupIDs":[4],"metadata":{"skip":false,"skipReason":null},"line":299,"column":3,"url":"file:///private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/source/apps/operations/test/unit/printer_agent_runtime_profile_test.dart"},"type":"testStart","time":2485}
+{"testID":38,"messageType":"print","message":"[AuditEventService] Found 1 unsynced events. Starting batch sync.","type":"print","time":2497}
+{"testID":38,"messageType":"print","message":"[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP","type":"print","time":2497}
+{"testID":38,"messageType":"print","message":"[AuditEventService] Batch sync failed. Will retry later.","type":"print","time":2497}
+{"testID":38,"messageType":"print","message":"[AuditEventService] Found 2 unsynced events. Starting batch sync.","type":"print","time":2507}
+{"testID":38,"messageType":"print","message":"[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP","type":"print","time":2510}
+{"testID":38,"messageType":"print","message":"[AuditEventService] Batch sync failed. Will retry later.","type":"print","time":2510}
+{"testID":39,"messageType":"print","message":"[AuditEventService] Found 1 unsynced events. Starting batch sync.","type":"print","time":2510}
+{"testID":39,"messageType":"print","message":"[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP","type":"print","time":2510}
+{"testID":39,"messageType":"print","message":"[AuditEventService] Batch sync failed. Will retry later.","type":"print","time":2510}
+{"testID":39,"messageType":"print","message":"[AuditEventService] Found 2 unsynced events. Starting batch sync.","type":"print","time":2518}
+{"testID":39,"messageType":"print","message":"[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP","type":"print","time":2519}
+{"testID":39,"messageType":"print","message":"[AuditEventService] Batch sync failed. Will retry later.","type":"print","time":2519}
+{"testID":39,"messageType":"print","message":"[DeveloperAccess] locked (manual)","type":"print","time":2522}
+{"testID":39,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":2525}
+{"test":{"id":40,"name":"profile revision changed during health invalidates old response","suiteID":0,"groupIDs":[4],"metadata":{"skip":false,"skipReason":null},"line":327,"column":3,"url":"file:///private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/source/apps/operations/test/unit/printer_agent_runtime_profile_test.dart"},"type":"testStart","time":2525}
+{"testID":38,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":2538}
+{"test":{"id":41,"name":"typed authentication stays visible until manual retry","suiteID":2,"groupIDs":[6],"metadata":{"skip":false,"skipReason":null},"line":174,"column":5,"url":"package:flutter_test/src/widget_tester.dart","root_line":148,"root_column":5,"root_url":"file:///private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/source/apps/operations/test/widget/printer_agent_status_card_test.dart"},"type":"testStart","time":2539}
+{"testID":40,"messageType":"print","message":"[AuditEventService] Found 1 unsynced events. Starting batch sync.","type":"print","time":2551}
+{"testID":40,"messageType":"print","message":"[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP","type":"print","time":2551}
+{"testID":40,"messageType":"print","message":"[AuditEventService] Batch sync failed. Will retry later.","type":"print","time":2551}
+{"testID":40,"messageType":"print","message":"[AuditEventService] Found 2 unsynced events. Starting batch sync.","type":"print","time":2560}
+{"testID":40,"messageType":"print","message":"[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP","type":"print","time":2560}
+{"testID":40,"messageType":"print","message":"[AuditEventService] Batch sync failed. Will retry later.","type":"print","time":2560}
+{"testID":40,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":2567}
+{"test":{"id":42,"name":"credential file changed during health invalidates old response","suiteID":0,"groupIDs":[4],"metadata":{"skip":false,"skipReason":null},"line":343,"column":3,"url":"file:///private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/source/apps/operations/test/unit/printer_agent_runtime_profile_test.dart"},"type":"testStart","time":2567}
+{"testID":41,"messageType":"print","message":"[AuditEventService] Found 1 unsynced events. Starting batch sync.","type":"print","time":2568}
+{"testID":41,"messageType":"print","message":"[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP","type":"print","time":2568}
+{"testID":41,"messageType":"print","message":"[AuditEventService] Batch sync failed. Will retry later.","type":"print","time":2568}
+{"testID":41,"messageType":"print","message":"[AuditEventService] Found 2 unsynced events. Starting batch sync.","type":"print","time":2577}
+{"testID":41,"messageType":"print","message":"[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP","type":"print","time":2580}
+{"testID":41,"messageType":"print","message":"[AuditEventService] Batch sync failed. Will retry later.","type":"print","time":2580}
+{"testID":42,"messageType":"print","message":"[AuditEventService] Found 1 unsynced events. Starting batch sync.","type":"print","time":2591}
+{"testID":42,"messageType":"print","message":"[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP","type":"print","time":2591}
+{"testID":42,"messageType":"print","message":"[AuditEventService] Batch sync failed. Will retry later.","type":"print","time":2591}
+{"testID":42,"messageType":"print","message":"[AuditEventService] Found 2 unsynced events. Starting batch sync.","type":"print","time":2600}
+{"testID":42,"messageType":"print","message":"[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP","type":"print","time":2600}
+{"testID":42,"messageType":"print","message":"[AuditEventService] Batch sync failed. Will retry later.","type":"print","time":2600}
+{"testID":41,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":2606}
+{"test":{"id":43,"name":"typed unavailable stays visible until manual retry","suiteID":2,"groupIDs":[6],"metadata":{"skip":false,"skipReason":null},"line":174,"column":5,"url":"package:flutter_test/src/widget_tester.dart","root_line":148,"root_column":5,"root_url":"file:///private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/source/apps/operations/test/widget/printer_agent_status_card_test.dart"},"type":"testStart","time":2607}
+{"testID":42,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":2608}
+{"test":{"id":44,"name":"changed returned configuration pin and typed auth failure both close","suiteID":0,"groupIDs":[4],"metadata":{"skip":false,"skipReason":null},"line":360,"column":3,"url":"file:///private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/source/apps/operations/test/unit/printer_agent_runtime_profile_test.dart"},"type":"testStart","time":2608}
+{"testID":44,"messageType":"print","message":"[AuditEventService] Found 1 unsynced events. Starting batch sync.","type":"print","time":2634}
+{"testID":44,"messageType":"print","message":"[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP","type":"print","time":2635}
+{"testID":44,"messageType":"print","message":"[AuditEventService] Batch sync failed. Will retry later.","type":"print","time":2635}
+{"testID":43,"messageType":"print","message":"[AuditEventService] Found 1 unsynced events. Starting batch sync.","type":"print","time":2635}
+{"testID":43,"messageType":"print","message":"[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP","type":"print","time":2636}
+{"testID":43,"messageType":"print","message":"[AuditEventService] Batch sync failed. Will retry later.","type":"print","time":2636}
+{"testID":44,"messageType":"print","message":"[AuditEventService] Found 2 unsynced events. Starting batch sync.","type":"print","time":2643}
+{"testID":44,"messageType":"print","message":"[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP","type":"print","time":2643}
+{"testID":44,"messageType":"print","message":"[AuditEventService] Batch sync failed. Will retry later.","type":"print","time":2643}
+{"testID":43,"messageType":"print","message":"[AuditEventService] Found 2 unsynced events. Starting batch sync.","type":"print","time":2645}
+{"testID":43,"messageType":"print","message":"[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP","type":"print","time":2648}
+{"testID":43,"messageType":"print","message":"[AuditEventService] Batch sync failed. Will retry later.","type":"print","time":2648}
+{"testID":44,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":2649}
+{"testID":43,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":2672}
+{"test":{"id":45,"name":"typed profileMismatch stays visible until manual retry","suiteID":2,"groupIDs":[6],"metadata":{"skip":false,"skipReason":null},"line":174,"column":5,"url":"package:flutter_test/src/widget_tester.dart","root_line":148,"root_column":5,"root_url":"file:///private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/source/apps/operations/test/widget/printer_agent_status_card_test.dart"},"type":"testStart","time":2672}
+{"testID":45,"messageType":"print","message":"[AuditEventService] Found 1 unsynced events. Starting batch sync.","type":"print","time":2698}
+{"testID":45,"messageType":"print","message":"[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP","type":"print","time":2698}
+{"testID":45,"messageType":"print","message":"[AuditEventService] Batch sync failed. Will retry later.","type":"print","time":2698}
+{"testID":45,"messageType":"print","message":"[AuditEventService] Found 2 unsynced events. Starting batch sync.","type":"print","time":2706}
+{"testID":45,"messageType":"print","message":"[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP","type":"print","time":2708}
+{"testID":45,"messageType":"print","message":"[AuditEventService] Batch sync failed. Will retry later.","type":"print","time":2708}
+{"testID":45,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":2730}
+{"test":{"id":46,"name":"typed provisioningHeld stays visible until manual retry","suiteID":2,"groupIDs":[6],"metadata":{"skip":false,"skipReason":null},"line":174,"column":5,"url":"package:flutter_test/src/widget_tester.dart","root_line":148,"root_column":5,"root_url":"file:///private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/source/apps/operations/test/widget/printer_agent_status_card_test.dart"},"type":"testStart","time":2730}
+{"testID":46,"messageType":"print","message":"[AuditEventService] Found 1 unsynced events. Starting batch sync.","type":"print","time":2754}
+{"testID":46,"messageType":"print","message":"[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP","type":"print","time":2755}
+{"testID":46,"messageType":"print","message":"[AuditEventService] Batch sync failed. Will retry later.","type":"print","time":2755}
+{"testID":46,"messageType":"print","message":"[AuditEventService] Found 2 unsynced events. Starting batch sync.","type":"print","time":2763}
+{"testID":46,"messageType":"print","message":"[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP","type":"print","time":2765}
+{"testID":46,"messageType":"print","message":"[AuditEventService] Batch sync failed. Will retry later.","type":"print","time":2765}
+{"testID":46,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":2786}
+{"test":{"id":47,"name":"typed protocolMismatch stays visible until manual retry","suiteID":2,"groupIDs":[6],"metadata":{"skip":false,"skipReason":null},"line":174,"column":5,"url":"package:flutter_test/src/widget_tester.dart","root_line":148,"root_column":5,"root_url":"file:///private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/source/apps/operations/test/widget/printer_agent_status_card_test.dart"},"type":"testStart","time":2786}
+{"testID":47,"messageType":"print","message":"[AuditEventService] Found 1 unsynced events. Starting batch sync.","type":"print","time":2811}
+{"testID":47,"messageType":"print","message":"[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP","type":"print","time":2811}
+{"testID":47,"messageType":"print","message":"[AuditEventService] Batch sync failed. Will retry later.","type":"print","time":2811}
+{"testID":47,"messageType":"print","message":"[AuditEventService] Found 2 unsynced events. Starting batch sync.","type":"print","time":2818}
+{"testID":47,"messageType":"print","message":"[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP","type":"print","time":2820}
+{"testID":47,"messageType":"print","message":"[AuditEventService] Batch sync failed. Will retry later.","type":"print","time":2820}
+{"testID":47,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":2844}
+{"test":{"id":48,"name":"unknown exception is a typed visible failure without secret text","suiteID":2,"groupIDs":[6],"metadata":{"skip":false,"skipReason":null},"line":174,"column":5,"url":"package:flutter_test/src/widget_tester.dart","root_line":170,"root_column":3,"root_url":"file:///private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/source/apps/operations/test/widget/printer_agent_status_card_test.dart"},"type":"testStart","time":2844}
+{"testID":48,"messageType":"print","message":"[AuditEventService] Found 1 unsynced events. Starting batch sync.","type":"print","time":2869}
+{"testID":48,"messageType":"print","message":"[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP","type":"print","time":2869}
+{"testID":48,"messageType":"print","message":"[AuditEventService] Batch sync failed. Will retry later.","type":"print","time":2869}
+{"testID":48,"messageType":"print","message":"[AuditEventService] Found 2 unsynced events. Starting batch sync.","type":"print","time":2877}
+{"testID":48,"messageType":"print","message":"[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP","type":"print","time":2879}
+{"testID":48,"messageType":"print","message":"[AuditEventService] Batch sync failed. Will retry later.","type":"print","time":2879}
+{"testID":48,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":2896}
+{"test":{"id":49,"name":"missing installation refuses health before any call","suiteID":2,"groupIDs":[6],"metadata":{"skip":false,"skipReason":null},"line":174,"column":5,"url":"package:flutter_test/src/widget_tester.dart","root_line":184,"root_column":3,"root_url":"file:///private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/source/apps/operations/test/widget/printer_agent_status_card_test.dart"},"type":"testStart","time":2896}
+{"testID":49,"messageType":"print","message":"[AuditEventService] Found 1 unsynced events. Starting batch sync.","type":"print","time":2921}
+{"testID":49,"messageType":"print","message":"[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP","type":"print","time":2921}
+{"testID":49,"messageType":"print","message":"[AuditEventService] Batch sync failed. Will retry later.","type":"print","time":2921}
+{"testID":49,"messageType":"print","message":"[AuditEventService] Found 2 unsynced events. Starting batch sync.","type":"print","time":2929}
+{"testID":49,"messageType":"print","message":"[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP","type":"print","time":2931}
+{"testID":49,"messageType":"print","message":"[AuditEventService] Batch sync failed. Will retry later.","type":"print","time":2931}
+{"testID":49,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":2949}
+{"test":{"id":50,"name":"foreign device response never becomes available","suiteID":2,"groupIDs":[6],"metadata":{"skip":false,"skipReason":null},"line":174,"column":5,"url":"package:flutter_test/src/widget_tester.dart","root_line":204,"root_column":5,"root_url":"file:///private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/source/apps/operations/test/widget/printer_agent_status_card_test.dart"},"type":"testStart","time":2949}
+{"testID":50,"messageType":"print","message":"[AuditEventService] Found 1 unsynced events. Starting batch sync.","type":"print","time":2976}
+{"testID":50,"messageType":"print","message":"[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP","type":"print","time":2976}
+{"testID":50,"messageType":"print","message":"[AuditEventService] Batch sync failed. Will retry later.","type":"print","time":2976}
+{"testID":50,"messageType":"print","message":"[AuditEventService] Found 2 unsynced events. Starting batch sync.","type":"print","time":2984}
+{"testID":50,"messageType":"print","message":"[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP","type":"print","time":2986}
+{"testID":50,"messageType":"print","message":"[AuditEventService] Batch sync failed. Will retry later.","type":"print","time":2986}
+{"testID":50,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":3003}
+{"test":{"id":51,"name":"foreign venue response never becomes available","suiteID":2,"groupIDs":[6],"metadata":{"skip":false,"skipReason":null},"line":174,"column":5,"url":"package:flutter_test/src/widget_tester.dart","root_line":204,"root_column":5,"root_url":"file:///private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/source/apps/operations/test/widget/printer_agent_status_card_test.dart"},"type":"testStart","time":3004}
+{"testID":51,"messageType":"print","message":"[AuditEventService] Found 1 unsynced events. Starting batch sync.","type":"print","time":3028}
+{"testID":51,"messageType":"print","message":"[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP","type":"print","time":3028}
+{"testID":51,"messageType":"print","message":"[AuditEventService] Batch sync failed. Will retry later.","type":"print","time":3028}
+{"testID":51,"messageType":"print","message":"[AuditEventService] Found 2 unsynced events. Starting batch sync.","type":"print","time":3036}
+{"testID":51,"messageType":"print","message":"[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP","type":"print","time":3038}
+{"testID":51,"messageType":"print","message":"[AuditEventService] Batch sync failed. Will retry later.","type":"print","time":3038}
+{"testID":51,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":3055}
+{"test":{"id":52,"name":"foreign installation response never becomes available","suiteID":2,"groupIDs":[6],"metadata":{"skip":false,"skipReason":null},"line":174,"column":5,"url":"package:flutter_test/src/widget_tester.dart","root_line":204,"root_column":5,"root_url":"file:///private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/source/apps/operations/test/widget/printer_agent_status_card_test.dart"},"type":"testStart","time":3055}
+{"testID":52,"messageType":"print","message":"[AuditEventService] Found 1 unsynced events. Starting batch sync.","type":"print","time":3083}
+{"testID":52,"messageType":"print","message":"[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP","type":"print","time":3083}
+{"testID":52,"messageType":"print","message":"[AuditEventService] Batch sync failed. Will retry later.","type":"print","time":3083}
+{"testID":52,"messageType":"print","message":"[AuditEventService] Found 2 unsynced events. Starting batch sync.","type":"print","time":3090}
+{"testID":52,"messageType":"print","message":"[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP","type":"print","time":3092}
+{"testID":52,"messageType":"print","message":"[AuditEventService] Batch sync failed. Will retry later.","type":"print","time":3092}
+{"testID":52,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":3108}
+{"test":{"id":53,"name":"identity change during await rejects old response","suiteID":2,"groupIDs":[6],"metadata":{"skip":false,"skipReason":null},"line":174,"column":5,"url":"package:flutter_test/src/widget_tester.dart","root_line":226,"root_column":3,"root_url":"file:///private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/source/apps/operations/test/widget/printer_agent_status_card_test.dart"},"type":"testStart","time":3108}
+{"testID":53,"messageType":"print","message":"[AuditEventService] Found 1 unsynced events. Starting batch sync.","type":"print","time":3136}
+{"testID":53,"messageType":"print","message":"[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP","type":"print","time":3136}
+{"testID":53,"messageType":"print","message":"[AuditEventService] Batch sync failed. Will retry later.","type":"print","time":3136}
+{"testID":53,"messageType":"print","message":"[AuditEventService] Found 2 unsynced events. Starting batch sync.","type":"print","time":3144}
+{"testID":53,"messageType":"print","message":"[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP","type":"print","time":3146}
+{"testID":53,"messageType":"print","message":"[AuditEventService] Batch sync failed. Will retry later.","type":"print","time":3146}
+{"testID":53,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":3179}
+{"test":{"id":54,"name":"cached response is historical and disappears on later binding change","suiteID":2,"groupIDs":[6],"metadata":{"skip":false,"skipReason":null},"line":174,"column":5,"url":"package:flutter_test/src/widget_tester.dart","root_line":248,"root_column":3,"root_url":"file:///private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/source/apps/operations/test/widget/printer_agent_status_card_test.dart"},"type":"testStart","time":3179}
+{"testID":54,"messageType":"print","message":"[AuditEventService] Found 1 unsynced events. Starting batch sync.","type":"print","time":3210}
+{"testID":54,"messageType":"print","message":"[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP","type":"print","time":3210}
+{"testID":54,"messageType":"print","message":"[AuditEventService] Batch sync failed. Will retry later.","type":"print","time":3210}
+{"testID":54,"messageType":"print","message":"[AuditEventService] Found 2 unsynced events. Starting batch sync.","type":"print","time":3218}
+{"testID":54,"messageType":"print","message":"[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP","type":"print","time":3220}
+{"testID":54,"messageType":"print","message":"[AuditEventService] Batch sync failed. Will retry later.","type":"print","time":3220}
+{"testID":54,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":3246}
+{"test":{"id":55,"name":"restoration hold suppresses cached health without a new probe","suiteID":2,"groupIDs":[6],"metadata":{"skip":false,"skipReason":null},"line":174,"column":5,"url":"package:flutter_test/src/widget_tester.dart","root_line":272,"root_column":3,"root_url":"file:///private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/source/apps/operations/test/widget/printer_agent_status_card_test.dart"},"type":"testStart","time":3246}
+{"testID":55,"messageType":"print","message":"[AuditEventService] Found 1 unsynced events. Starting batch sync.","type":"print","time":3275}
+{"testID":55,"messageType":"print","message":"[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP","type":"print","time":3275}
+{"testID":55,"messageType":"print","message":"[AuditEventService] Batch sync failed. Will retry later.","type":"print","time":3275}
+{"testID":55,"messageType":"print","message":"[AuditEventService] Found 2 unsynced events. Starting batch sync.","type":"print","time":3283}
+{"testID":55,"messageType":"print","message":"[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP","type":"print","time":3285}
+{"testID":55,"messageType":"print","message":"[AuditEventService] Batch sync failed. Will retry later.","type":"print","time":3285}
+{"testID":55,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":3307}
+{"test":{"id":56,"name":"replacement profile invalidates pending result without probing new profile","suiteID":2,"groupIDs":[6],"metadata":{"skip":false,"skipReason":null},"line":174,"column":5,"url":"package:flutter_test/src/widget_tester.dart","root_line":292,"root_column":3,"root_url":"file:///private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/source/apps/operations/test/widget/printer_agent_status_card_test.dart"},"type":"testStart","time":3307}
+{"testID":56,"messageType":"print","message":"[AuditEventService] Found 1 unsynced events. Starting batch sync.","type":"print","time":3336}
+{"testID":56,"messageType":"print","message":"[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP","type":"print","time":3336}
+{"testID":56,"messageType":"print","message":"[AuditEventService] Batch sync failed. Will retry later.","type":"print","time":3336}
+{"testID":56,"messageType":"print","message":"[AuditEventService] Found 2 unsynced events. Starting batch sync.","type":"print","time":3343}
+{"testID":56,"messageType":"print","message":"[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP","type":"print","time":3345}
+{"testID":56,"messageType":"print","message":"[AuditEventService] Batch sync failed. Will retry later.","type":"print","time":3345}
+{"testID":56,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":3372}
+{"test":{"id":57,"name":"repeated refresh while pending creates one request","suiteID":2,"groupIDs":[6],"metadata":{"skip":false,"skipReason":null},"line":174,"column":5,"url":"package:flutter_test/src/widget_tester.dart","root_line":314,"root_column":3,"root_url":"file:///private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/source/apps/operations/test/widget/printer_agent_status_card_test.dart"},"type":"testStart","time":3372}
+{"testID":57,"messageType":"print","message":"[AuditEventService] Found 1 unsynced events. Starting batch sync.","type":"print","time":3403}
+{"testID":57,"messageType":"print","message":"[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP","type":"print","time":3404}
+{"testID":57,"messageType":"print","message":"[AuditEventService] Batch sync failed. Will retry later.","type":"print","time":3404}
+{"testID":57,"messageType":"print","message":"[AuditEventService] Found 2 unsynced events. Starting batch sync.","type":"print","time":3415}
+{"testID":57,"messageType":"print","message":"[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP","type":"print","time":3418}
+{"testID":57,"messageType":"print","message":"[AuditEventService] Batch sync failed. Will retry later.","type":"print","time":3418}
+{"testID":57,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":3450}
+{"test":{"id":58,"name":"diagnostics-only token cannot see or call health","suiteID":2,"groupIDs":[6],"metadata":{"skip":false,"skipReason":null},"line":174,"column":5,"url":"package:flutter_test/src/widget_tester.dart","root_line":341,"root_column":3,"root_url":"file:///private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/source/apps/operations/test/widget/printer_agent_status_card_test.dart"},"type":"testStart","time":3450}
+{"testID":58,"messageType":"print","message":"[AuditEventService] Found 1 unsynced events. Starting batch sync.","type":"print","time":3483}
+{"testID":58,"messageType":"print","message":"[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP","type":"print","time":3483}
+{"testID":58,"messageType":"print","message":"[AuditEventService] Batch sync failed. Will retry later.","type":"print","time":3483}
+{"testID":58,"messageType":"print","message":"[AuditEventService] Found 2 unsynced events. Starting batch sync.","type":"print","time":3491}
+{"testID":58,"messageType":"print","message":"[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP","type":"print","time":3493}
+{"testID":58,"messageType":"print","message":"[AuditEventService] Batch sync failed. Will retry later.","type":"print","time":3493}
+{"testID":58,"messageType":"print","message":"[AuditEventService] Found 3 unsynced events. Starting batch sync.","type":"print","time":3499}
+{"testID":58,"messageType":"print","message":"[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP","type":"print","time":3500}
+{"testID":58,"messageType":"print","message":"[AuditEventService] Batch sync failed. Will retry later.","type":"print","time":3500}
+{"testID":58,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":3513}
+{"test":{"id":59,"name":"revoked token refuses captured button and invalidates pending result","suiteID":2,"groupIDs":[6],"metadata":{"skip":false,"skipReason":null},"line":174,"column":5,"url":"package:flutter_test/src/widget_tester.dart","root_line":357,"root_column":3,"root_url":"file:///private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/source/apps/operations/test/widget/printer_agent_status_card_test.dart"},"type":"testStart","time":3513}
+{"testID":59,"messageType":"print","message":"[AuditEventService] Found 1 unsynced events. Starting batch sync.","type":"print","time":3551}
+{"testID":59,"messageType":"print","message":"[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP","type":"print","time":3551}
+{"testID":59,"messageType":"print","message":"[AuditEventService] Batch sync failed. Will retry later.","type":"print","time":3551}
+{"testID":59,"messageType":"print","message":"[AuditEventService] Found 2 unsynced events. Starting batch sync.","type":"print","time":3560}
+{"testID":59,"messageType":"print","message":"[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP","type":"print","time":3561}
+{"testID":59,"messageType":"print","message":"[AuditEventService] Batch sync failed. Will retry later.","type":"print","time":3561}
+{"testID":59,"messageType":"print","message":"[DeveloperAccess] locked (manual)","type":"print","time":3571}
+{"testID":59,"messageType":"print","message":"[AuditEventService] Found 3 unsynced events. Starting batch sync.","type":"print","time":3578}
+{"testID":59,"messageType":"print","message":"[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP","type":"print","time":3578}
+{"testID":59,"messageType":"print","message":"[AuditEventService] Batch sync failed. Will retry later.","type":"print","time":3578}
+{"testID":59,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":3587}
+{"test":{"id":60,"name":"held status fits width 320.0 at enlarged text scale","suiteID":2,"groupIDs":[6],"metadata":{"skip":false,"skipReason":null},"line":174,"column":5,"url":"package:flutter_test/src/widget_tester.dart","root_line":387,"root_column":5,"root_url":"file:///private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/source/apps/operations/test/widget/printer_agent_status_card_test.dart"},"type":"testStart","time":3587}
+{"testID":60,"messageType":"print","message":"[AuditEventService] Found 1 unsynced events. Starting batch sync.","type":"print","time":3618}
+{"testID":60,"messageType":"print","message":"[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP","type":"print","time":3618}
+{"testID":60,"messageType":"print","message":"[AuditEventService] Batch sync failed. Will retry later.","type":"print","time":3618}
+{"testID":60,"messageType":"print","message":"[AuditEventService] Found 2 unsynced events. Starting batch sync.","type":"print","time":3626}
+{"testID":60,"messageType":"print","message":"[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP","type":"print","time":3628}
+{"testID":60,"messageType":"print","message":"[AuditEventService] Batch sync failed. Will retry later.","type":"print","time":3628}
+{"testID":60,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":3650}
+{"test":{"id":61,"name":"held status fits width 640.0 at enlarged text scale","suiteID":2,"groupIDs":[6],"metadata":{"skip":false,"skipReason":null},"line":174,"column":5,"url":"package:flutter_test/src/widget_tester.dart","root_line":387,"root_column":5,"root_url":"file:///private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/source/apps/operations/test/widget/printer_agent_status_card_test.dart"},"type":"testStart","time":3651}
+{"testID":61,"messageType":"print","message":"[AuditEventService] Found 1 unsynced events. Starting batch sync.","type":"print","time":3681}
+{"testID":61,"messageType":"print","message":"[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP","type":"print","time":3681}
+{"testID":61,"messageType":"print","message":"[AuditEventService] Batch sync failed. Will retry later.","type":"print","time":3681}
+{"testID":61,"messageType":"print","message":"[AuditEventService] Found 2 unsynced events. Starting batch sync.","type":"print","time":3689}
+{"testID":61,"messageType":"print","message":"[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP","type":"print","time":3691}
+{"testID":61,"messageType":"print","message":"[AuditEventService] Batch sync failed. Will retry later.","type":"print","time":3691}
+{"testID":61,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":3709}
+{"test":{"id":62,"name":"held status fits width 1024.0 at enlarged text scale","suiteID":2,"groupIDs":[6],"metadata":{"skip":false,"skipReason":null},"line":174,"column":5,"url":"package:flutter_test/src/widget_tester.dart","root_line":387,"root_column":5,"root_url":"file:///private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/source/apps/operations/test/widget/printer_agent_status_card_test.dart"},"type":"testStart","time":3709}
+{"testID":62,"messageType":"print","message":"[AuditEventService] Found 1 unsynced events. Starting batch sync.","type":"print","time":3738}
+{"testID":62,"messageType":"print","message":"[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP","type":"print","time":3738}
+{"testID":62,"messageType":"print","message":"[AuditEventService] Batch sync failed. Will retry later.","type":"print","time":3738}
+{"testID":62,"messageType":"print","message":"[AuditEventService] Found 2 unsynced events. Starting batch sync.","type":"print","time":3751}
+{"testID":62,"messageType":"print","message":"[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP","type":"print","time":3752}
+{"testID":62,"messageType":"print","message":"[AuditEventService] Batch sync failed. Will retry later.","type":"print","time":3752}
+{"testID":62,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":3777}
+{"test":{"id":63,"name":"held status fits width 1280.0 at enlarged text scale","suiteID":2,"groupIDs":[6],"metadata":{"skip":false,"skipReason":null},"line":174,"column":5,"url":"package:flutter_test/src/widget_tester.dart","root_line":387,"root_column":5,"root_url":"file:///private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/source/apps/operations/test/widget/printer_agent_status_card_test.dart"},"type":"testStart","time":3778}
+{"testID":63,"messageType":"print","message":"[AuditEventService] Found 1 unsynced events. Starting batch sync.","type":"print","time":3810}
+{"testID":63,"messageType":"print","message":"[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP","type":"print","time":3810}
+{"testID":63,"messageType":"print","message":"[AuditEventService] Batch sync failed. Will retry later.","type":"print","time":3810}
+{"testID":63,"messageType":"print","message":"[AuditEventService] Found 2 unsynced events. Starting batch sync.","type":"print","time":3818}
+{"testID":63,"messageType":"print","message":"[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP","type":"print","time":3820}
+{"testID":63,"messageType":"print","message":"[AuditEventService] Batch sync failed. Will retry later.","type":"print","time":3820}
+{"testID":63,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":3837}
+{"test":{"id":64,"name":"shared developer printer pane attaches actual neutral factory without existing actions","suiteID":2,"groupIDs":[6],"metadata":{"skip":false,"skipReason":null},"line":174,"column":5,"url":"package:flutter_test/src/widget_tester.dart","root_line":418,"root_column":3,"root_url":"file:///private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/source/apps/operations/test/widget/printer_agent_status_card_test.dart"},"type":"testStart","time":3837}
+{"testID":64,"messageType":"print","message":"[AuditEventService] Found 1 unsynced events. Starting batch sync.","type":"print","time":3864}
+{"testID":64,"messageType":"print","message":"[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP","type":"print","time":3864}
+{"testID":64,"messageType":"print","message":"[AuditEventService] Batch sync failed. Will retry later.","type":"print","time":3864}
+{"testID":64,"messageType":"print","message":"[AuditEventService] Found 2 unsynced events. Starting batch sync.","type":"print","time":3872}
+{"testID":64,"messageType":"print","message":"[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP","type":"print","time":3874}
+{"testID":64,"messageType":"print","message":"[AuditEventService] Batch sync failed. Will retry later.","type":"print","time":3874}
+{"testID":64,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":3977}
+{"test":{"id":65,"name":"manual card uses real profile and mTLS health then shows actual offline failure","suiteID":2,"groupIDs":[6],"metadata":{"skip":false,"skipReason":null},"line":174,"column":5,"url":"package:flutter_test/src/widget_tester.dart","root_line":458,"root_column":3,"root_url":"file:///private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/source/apps/operations/test/widget/printer_agent_status_card_test.dart"},"type":"testStart","time":3977}
+{"testID":65,"messageType":"print","message":"[AuditEventService] Found 1 unsynced events. Starting batch sync.","type":"print","time":4007}
+{"testID":65,"messageType":"print","message":"[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP","type":"print","time":4007}
+{"testID":65,"messageType":"print","message":"[AuditEventService] Batch sync failed. Will retry later.","type":"print","time":4007}
+{"testID":65,"messageType":"print","message":"[AuditEventService] Found 2 unsynced events. Starting batch sync.","type":"print","time":4015}
+{"testID":65,"messageType":"print","message":"[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP","type":"print","time":4017}
+{"testID":65,"messageType":"print","message":"[AuditEventService] Batch sync failed. Will retry later.","type":"print","time":4017}
+{"testID":65,"messageType":"print","message":"Actual manual UI → readonly profile → pinned mTLS health PASS; controlled offline failure PASS; child asserts zero jobs/receipts/claims/attempts/beeps. Synthetic enrollment only.","type":"print","time":4237}
+{"testID":65,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":4259}
+{"success":true,"type":"done","time":4266}

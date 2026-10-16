@@ -287,7 +287,8 @@ class SalesRepository {
   /// Idempotent on [receiptId]: editing the amount rewrites the same receipt
   /// rather than adding a second one. Returns the receipt id.
   static Future<String?> recordAdvanceReceipt({
-    required int orderId,
+    required int? orderId,
+    String? reservationId,
     required double amount,
     required String collectedBy,
     String? receiptId,
@@ -296,6 +297,7 @@ class SalesRepository {
     'recordAdvanceReceipt',
     () => _updateTrackedRecordAdvanceReceipt(
       orderId: orderId,
+      reservationId: reservationId,
       amount: amount,
       collectedBy: collectedBy,
       receiptId: receiptId,
@@ -304,16 +306,34 @@ class SalesRepository {
   );
 
   static Future<String?> _updateTrackedRecordAdvanceReceipt({
-    required int orderId,
+    required int? orderId,
+    String? reservationId,
     required double amount,
     required String collectedBy,
     String? receiptId,
     String? businessDate,
   }) async {
     final box = DatabaseCore.salesBox;
+    if (reservationId != null &&
+        (box == null || orderId != null || reservationId.trim().isEmpty)) {
+      throw StateError(
+        'Reservation advance receipt needs initialized storage and one parent',
+      );
+    }
     if (box == null) return null;
     final id = receiptId ?? _uuid.v4();
     final existingKey = _advanceReceiptKey(id);
+    if (existingKey != null) {
+      final existing = box.get(existingKey) as Map;
+      if (existing['reservationId'] != null) {
+        if ((existing['totalAmount'] as num).toDouble() != amount) {
+          throw StateError(
+            'ჯავშნის მიღებული ავანსის შეცვლას ცალკე ფინანსური გადაწყვეტილება სჭირდება',
+          );
+        }
+        return id;
+      }
+    }
 
     if (amount <= 0) {
       if (existingKey != null) {
@@ -339,6 +359,7 @@ class SalesRepository {
       'recordType': SaleRecord.recordTypeAdvanceReceipt,
       'advanceReceiptId': id,
       'orderId': orderId,
+      if (reservationId != null) 'reservationId': reservationId,
       'tableNumbers': <String>[],
       'floor': '',
       'items': <Map<String, dynamic>>[],
@@ -409,6 +430,12 @@ class SalesRepository {
     if (raw is! Map) return;
     final updated = Map<String, dynamic>.from(raw);
     if (updated['appliedToClosureId'] == closureId) return;
+    if (updated['reservationId'] != null &&
+        updated['appliedToClosureId'] != null) {
+      throw StateError(
+        'Reservation advance has already been applied to another closure',
+      );
+    }
     updated['appliedToClosureId'] = closureId;
     updated['appliedAt'] = BusinessDayRepository.getCurrentDateTime()
         .toIso8601String();

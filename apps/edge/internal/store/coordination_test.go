@@ -189,7 +189,8 @@ func TestCoordinationMigrationFromPhase1(t *testing.T) {
 	dir := t.TempDir()
 	s, id := testutil.Bound(t, dir)
 	a := terminal(t, s)
-	for _, q := range []string{"DROP TABLE request_result", "DROP TABLE committed_event", "DROP TABLE projection", "DROP TABLE coordination", "DELETE FROM schema_migration WHERE version=2", "PRAGMA user_version=1"} {
+	operationalDropEmptyQueueFixture(t, s.DB)
+	for _, q := range []string{"DROP TABLE op_effect", "DROP TABLE op_event", "DROP TABLE op_request", "DROP TABLE op_entity", "DROP TABLE op_authority", "DROP TABLE request_result", "DROP TABLE committed_event", "DROP TABLE projection", "DROP TABLE coordination", "DELETE FROM schema_migration WHERE version>=2", "PRAGMA user_version=1"} {
 		if _, e := s.DB.Exec(q); e != nil {
 			t.Fatal(e)
 		}

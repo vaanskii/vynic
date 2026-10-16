@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:uuid/uuid.dart';
 import 'package:vynic/core/database/database_core.dart';
+import '../printing/print_identity_admission.dart';
 
 /// Where this installation's Cloud identity lives on disk.
 ///
@@ -48,9 +49,14 @@ class EdgeDeviceCredentialStore {
 
   /// Reads the stored identity, creating an installation id on first run.
   ///
-  /// Never throws: a POS whose credential file is unreadable must still start
-  /// and take orders. It simply has no Cloud identity until one is provisioned.
-  static Future<void> load() async {
+  /// File errors are reported without preventing offline startup. Reloading an
+  /// identity while a native print is unresolved is explicitly refused.
+  static Future<void> load() => PrintIdentityAdmission.changeIdentity(_load);
+
+  static Future<void> _load() async {
+    // The disk identity belongs to the selected data directory. A reload must
+    // not retain fields from a prior file when it is missing, cleared or broken.
+    _clearIdentityMemory();
     _loaded = true;
     try {
       final file = _file();
@@ -80,8 +86,11 @@ class EdgeDeviceCredentialStore {
 
       await _absorbProvisionFile();
     } catch (error) {
-      // Deliberately no credential material in the message.
-      debugPrint('[Edge] Could not read the device identity file: $error');
+      // A JSON FormatException can contain the original credential text.
+      debugPrint(
+        '[Edge] Could not read the device identity file (${error.runtimeType}); '
+        'Cloud identity is unavailable; local restaurant data is retained.',
+      );
     }
   }
 
@@ -123,7 +132,10 @@ class EdgeDeviceCredentialStore {
   ///
   /// Rejects a malformed value rather than persisting something that would fail
   /// on every request with no way to tell why.
-  static Future<bool> save(String rawCredential) async {
+  static Future<bool> save(String rawCredential) =>
+      PrintIdentityAdmission.changeIdentity(() => _save(rawCredential));
+
+  static Future<bool> _save(String rawCredential) async {
     final trimmed = rawCredential.trim();
     if (!_isWellFormed(trimmed)) return false;
 
@@ -147,11 +159,29 @@ class EdgeDeviceCredentialStore {
     required String venueId,
     required String venueName,
     DateTime? enrolledAt,
+  }) => PrintIdentityAdmission.changeIdentity(
+    () => _saveEnrollment(
+      rawCredential: rawCredential,
+      venueId: venueId,
+      venueName: venueName,
+      enrolledAt: enrolledAt,
+    ),
+  );
+
+  static Future<bool> _saveEnrollment({
+    required String rawCredential,
+    required String venueId,
+    required String venueName,
+    DateTime? enrolledAt,
   }) async {
     final trimmed = rawCredential.trim();
     if (!_isWellFormed(trimmed)) return false;
 
     final previous = _snapshot();
+    if (venueId.trim().isEmpty) return false;
+    // Validate before changing memory or disk. A new credential is not a
+    // restaurant-data migration, including after credentials were cleared.
+    DatabaseCore.validateVenueBinding(venueId);
     _credential = trimmed;
     _deviceId = trimmed.split('.')[1];
     _venueId = venueId;
@@ -169,7 +199,9 @@ class EdgeDeviceCredentialStore {
   }
 
   /// Forgets this installation's credential, keeping its installation id.
-  static Future<void> clear() async {
+  static Future<void> clear() => PrintIdentityAdmission.changeIdentity(_clear);
+
+  static Future<void> _clear() async {
     _credential = null;
     _deviceId = null;
     _venueId = null;
@@ -203,20 +235,26 @@ class EdgeDeviceCredentialStore {
       if (raw is! Map<String, dynamic>) return null;
       return _asNonEmptyString(raw['credential']);
     } catch (error) {
-      debugPrint('[Edge] Could not confirm the stored credential: $error');
+      debugPrint(
+        '[Edge] Could not confirm the stored credential (${error.runtimeType}).',
+      );
       return null;
     }
   }
 
   @visibleForTesting
   static void resetForTest() {
+    _clearIdentityMemory();
+    _loaded = false;
+  }
+
+  static void _clearIdentityMemory() {
     _credential = null;
     _installationId = null;
     _deviceId = null;
     _venueId = null;
     _venueName = null;
     _enrolledAt = null;
-    _loaded = false;
   }
 
   /// Takes a credential from the operator drop file, then removes it.

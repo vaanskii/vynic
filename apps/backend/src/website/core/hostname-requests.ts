@@ -72,62 +72,6 @@ export class HostnameRequestsService {
       throw new ConflictException('Website address is unavailable');
   }
   /**
-   * Records a paid owner's wish for another address. Nothing is bound here:
-   * the availability check is advisory and is repeated at approval.
-   */
-  async create(venueId: string, customerAccountId: string, value: unknown) {
-    const slug = requestableSlug(value);
-    const hostname = saasHostname(slug);
-    try {
-      return await this.db.$transaction(async (tx) => {
-        const config = await this.lock(tx, venueId);
-        if (
-          await tx.websiteHostnameRequest.findFirst({
-            where: { venueId, status: 'PENDING' },
-          })
-        )
-          throw new ConflictException(
-            'A hostname request is already awaiting review',
-          );
-        if (slug === config.assignedSlug)
-          throw new ConflictException('This is already your website address');
-        await this.available(tx, hostname, slug);
-        const currentHostname = saasHostname(config.assignedSlug!);
-        const row = await tx.websiteHostnameRequest.create({
-          data: {
-            venueId,
-            requestedBy: customerAccountId,
-            slug,
-            hostname,
-            currentHostname,
-          },
-          select: customerFields,
-        });
-        const event = {
-          action: 'website.hostname_change_requested',
-          targetType: 'Venue',
-          targetId: venueId,
-          metadata: {
-            requestId: row.id,
-            currentHostname,
-            hostname,
-            customerAccountId,
-          },
-        };
-        await tx.customerAuditEvent.create({
-          data: { ...event, customerAccountId },
-        });
-        await tx.platformAuditEvent.create({ data: event });
-        return row;
-      });
-    } catch (error) {
-      throw unavailableOnConflict(
-        error,
-        'A hostname request is already awaiting review',
-      );
-    }
-  }
-  /**
    * Operator decision. Approval re-validates the name and re-checks, under the
    * Venue, configuration and global name locks, that nobody claimed it since
    * the owner asked; only then does the one SaaS binding move. The old SaaS

@@ -5,6 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { procurementSummary } from './procurement-summary';
+import { StockLocations, type StockLocationInput } from './stock-locations';
 import { InventoryCostService } from './inventory-cost.service';
 import { SupplierPayments } from './supplier-payments';
 import { Prisma, StockItemClassification } from '@prisma/client';
@@ -29,6 +30,7 @@ import {
   type InventoryActor,
 } from './inventory-audit';
 import { presentMovement } from './receiving.service';
+import { historyPage, type HistoryQuery } from './history-page';
 import { RecipeService, menuGroup } from './recipe.service';
 
 export { InventoryAuditAction };
@@ -77,6 +79,63 @@ export class InventoryService {
     private readonly prisma: PrismaService,
     private readonly recipes: RecipeService,
   ) {}
+
+  locations(tenant: TenantContext) {
+    return new StockLocations(this.prisma).list(tenant);
+  }
+
+  createLocation(actor: InventoryActor, input: StockLocationInput) {
+    return new StockLocations(this.prisma).create(actor, input);
+  }
+
+  renameLocation(actor: InventoryActor, id: string, input: StockLocationInput) {
+    return new StockLocations(this.prisma).rename(actor, id, input);
+  }
+
+  locationBalances(tenant: TenantContext, id: string) {
+    return new StockLocations(this.prisma).itemBalances(tenant, id);
+  }
+
+  async movementPage(
+    tenant: TenantContext,
+    id: string,
+    query: HistoryQuery = {},
+  ) {
+    if (
+      !(await this.prisma.stockItem.findFirst({
+        where: { id, venueId: tenant.venueId },
+        select: { id: true },
+      }))
+    )
+      throw new NotFoundException('Stock item not found');
+    const page = historyPage('movements:' + tenant.venueId + ':' + id, query);
+    const rows = await this.prisma.stockMovement.findMany({
+      where: {
+        venueId: tenant.venueId,
+        stockItemId: id,
+        createdAt: { lt: page.createdBefore },
+        businessDate: {
+          gte: page.from ?? undefined,
+          lte: page.to ?? undefined,
+        },
+        ...(page.cursor
+          ? {
+              OR: [
+                { createdAt: { lt: new Date(page.cursor.at) } },
+                {
+                  createdAt: new Date(page.cursor.at),
+                  id: { lt: page.cursor.id },
+                },
+              ],
+            }
+          : {}),
+      },
+      orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+      take: page.limit + 1,
+    });
+    const result = page.envelope(rows, (row) => row.createdAt);
+    return { ...result, items: result.items.map(presentMovement) };
+  }
 
   getUnits() {
     return INVENTORY_UNIT_DEFINITIONS;
@@ -151,7 +210,10 @@ export class InventoryService {
           tenant,
           rows.map((r) => r.id),
         )
-      : new Map();
+      : new Map<
+          string,
+          { cost: Prisma.Decimal | null; provisional: boolean }
+        >();
     return rows.map((row) => ({
       ...this.presentStockItem(row, balances.get(row.id)),
       ...(withPrices
@@ -161,7 +223,9 @@ export class InventoryService {
               costs.get(row.id + ':' + row.baseUnit)?.cost?.toFixed(6) ?? null,
             costStatus: costs.get(row.id + ':' + row.baseUnit)?.provisional
               ? 'PROVISIONAL'
-              : 'AVAILABLE',
+              : costs.get(row.id + ':' + row.baseUnit)?.cost != null
+                ? 'AVAILABLE'
+                : 'NO_PURCHASE_HISTORY',
             lastPurchaseUnitCost:
               prices.get(row.id + ':' + row.baseUnit) ?? null,
           }
@@ -389,7 +453,11 @@ export class InventoryService {
           {
             unitCost: g.cost?.toFixed(6) ?? null,
             inventoryValue: g.value.toFixed(12),
-            status: g.provisional ? 'PROVISIONAL' : 'AVAILABLE',
+            status: g.provisional
+              ? 'PROVISIONAL'
+              : g.cost != null
+                ? 'AVAILABLE'
+                : 'NO_PURCHASE_HISTORY',
           },
         ]),
       ),

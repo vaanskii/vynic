@@ -1,0 +1,73 @@
+[
+  {
+    "name": "final-printer-agent",
+    "command": [
+      "go",
+      "build",
+      "-mod=readonly",
+      "-o",
+      "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/final-printer-agent",
+      "./cmd/printer-agent"
+    ],
+    "exitCode": 0,
+    "startedAtUTC": "2026-10-06T17:20:48.312211+00:00",
+    "finishedAtUTC": "2026-10-06T17:20:49.447339+00:00",
+    "sourceManifestSHA256": "193e4800e5d0733a30bc6c8d4ac993590219363941e69a787bba5ac3681c8f68",
+    "binarySHA256": "1e295b435bea3422fa069ea930eaae1b91aff1d43b5713f3c080edd65d6cdc8e",
+    "bytes": 23759618
+  },
+  {
+    "name": "final-printer-agent-race",
+    "command": [
+      "go",
+      "build",
+      "-mod=readonly",
+      "-race",
+      "-o",
+      "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/final-printer-agent-race",
+      "./cmd/printer-agent"
+    ],
+    "exitCode": 0,
+    "startedAtUTC": "2026-10-06T17:20:49.458116+00:00",
+    "finishedAtUTC": "2026-10-06T17:20:50.933438+00:00",
+    "sourceManifestSHA256": "193e4800e5d0733a30bc6c8d4ac993590219363941e69a787bba5ac3681c8f68",
+    "binarySHA256": "fd0fcd11f0a6d94cb33c4e9776d63d117eff3626bd0b0673b767c17d56f582d8",
+    "bytes": 32892946
+  },
+  {
+    "name": "final-operational-proof-server.test",
+    "command": [
+      "go",
+      "test",
+      "-mod=readonly",
+      "-c",
+      "-o",
+      "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/final-operational-proof-server.test",
+      "./internal/server"
+    ],
+    "exitCode": 0,
+    "startedAtUTC": "2026-10-06T17:20:50.946560+00:00",
+    "finishedAtUTC": "2026-10-06T17:20:51.695872+00:00",
+    "sourceManifestSHA256": "193e4800e5d0733a30bc6c8d4ac993590219363941e69a787bba5ac3681c8f68",
+    "binarySHA256": "e08dbae96d94a271c8a84013d7f859d44c07a8d0268b392ce06dd7f68ea8cea1",
+    "bytes": 25354354
+  },
+  {
+    "name": "final-printer-agent-server.test",
+    "command": [
+      "go",
+      "test",
+      "-mod=readonly",
+      "-c",
+      "-o",
+      "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/final-printer-agent-server.test",
+      "./internal/printeragent"
+    ],
+    "exitCode": 0,
+    "startedAtUTC": "2026-10-06T17:20:51.705799+00:00",
+    "finishedAtUTC": "2026-10-06T17:20:52.339729+00:00",
+    "sourceManifestSHA256": "193e4800e5d0733a30bc6c8d4ac993590219363941e69a787bba5ac3681c8f68",
+    "binarySHA256": "35b654ad939564d2cc01869eb334a1c4cb95ccfbef270f8a16bb8e687d457a8a",
+    "bytes": 24823410
+  }
+]

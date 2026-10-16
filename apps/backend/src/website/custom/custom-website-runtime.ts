@@ -3,6 +3,7 @@ import { lookup as dnsLookup } from 'node:dns/promises';
 import * as http from 'node:http';
 import * as https from 'node:https';
 import { BlockList, isIP } from 'node:net';
+import { createHash } from 'node:crypto';
 
 /**
  * Whether a CUSTOM site answers on its domain, observed on demand.
@@ -14,7 +15,12 @@ import { BlockList, isIP } from 'node:net';
 export type RuntimeAvailability = 'UNKNOWN' | 'REACHABLE' | 'UNREACHABLE';
 
 /** Whether the shared backend answers for this Venue through the same domain. */
-export type RuntimeApiState = 'OK' | 'WRONG_SITE' | 'FAILED' | 'NOT_CHECKED';
+export type RuntimeApiState =
+  | 'OK'
+  | 'WRONG_SITE'
+  | 'UNVERIFIED'
+  | 'FAILED'
+  | 'NOT_CHECKED';
 
 export interface RuntimeTarget {
   hostname: string;
@@ -32,6 +38,18 @@ export interface RuntimeCheck {
   url: string;
   frontend: { status: number | null; detail: string };
   api: { state: RuntimeApiState; status: number | null; detail: string };
+  build: {
+    state: 'VERIFIED' | 'UNRECORDED' | 'WRONG_BUILD' | 'FAILED' | 'NOT_CHECKED';
+    status: number | null;
+    detail: string;
+    observedBuildId: string | null;
+    expectedBuildId: string | null;
+    siteKey: string | null;
+  };
+  /** Local or Docker observations never constitute a production acceptance. */
+  environment: 'LOCAL_DEVELOPMENT' | 'LOCAL_DOCKER' | 'PUBLIC_HTTPS';
+  rendererDeployed: boolean;
+  bindingIdentityVerified: boolean;
 }
 
 const TIMEOUT_MS = 5000;
@@ -177,6 +195,7 @@ function fetchPinned(
           Host: url.host,
           Accept: readBody ? 'application/json' : 'text/html,*/*',
           'User-Agent': 'Vynic-CustomWebsite-Check/1',
+          'Cache-Control': 'no-cache',
         },
         // Connect only to the address that was validated above.
         lookup: (_host, options, callback) => {
@@ -191,7 +210,7 @@ function fetchPinned(
           if (!readBody) return;
           size += chunk.length;
           if (size > MAX_BODY_BYTES) {
-            response.destroy();
+            response.destroy(new Error('Response exceeds 64 KB'));
             return;
           }
           chunks.push(chunk);
@@ -203,7 +222,9 @@ function fetchPinned(
             body: Buffer.concat(chunks).toString('utf8'),
           });
         response.on('end', done);
-        response.on('close', done);
+        response.on('close', () => {
+          if (!response.complete) reject(new Error('Incomplete response'));
+        });
         response.on('error', reject);
         if (!readBody) response.resume();
       },
@@ -212,16 +233,27 @@ function fetchPinned(
       request.destroy(new Error('No answer within 5 seconds')),
     );
     request.on('error', reject);
+    const deadline = setTimeout(
+      () => request.destroy(new Error('No complete answer within 5 seconds')),
+      TIMEOUT_MS,
+    );
+    request.on('close', () => clearTimeout(deadline));
     request.end();
   });
 }
 
-function parseBootstrap(
-  body: string,
-): { mode?: unknown; profile?: { name?: unknown } } | null {
+const object = (value: unknown): value is Record<string, unknown> =>
+  !!value && typeof value === 'object' && !Array.isArray(value);
+const fingerprint = (value: unknown): value is string =>
+  typeof value === 'string' && /^[a-f0-9]{64}$/.test(value);
+const digest = (text: string) =>
+  createHash('sha256').update(text).digest('hex');
+function parseJson(answer: Fetched): Record<string, unknown> | null {
+  if (answer.status !== 200 || !answer.contentType.includes('json'))
+    return null;
   try {
-    const value: unknown = JSON.parse(body);
-    return value && typeof value === 'object' ? value : null;
+    const value: unknown = JSON.parse(answer.body);
+    return object(value) ? value : null;
   } catch {
     return null;
   }
@@ -248,11 +280,32 @@ function failure(error: unknown) {
  */
 export async function checkCustomWebsite(
   target: RuntimeTarget,
-  expected: { venueName: string },
+  expected: {
+    venueIdentity: string;
+    siteKey: string | null;
+    buildId: string | null;
+  },
   resolve: Resolve = resolveAll,
 ): Promise<RuntimeCheck> {
   const checkedAt = new Date().toISOString();
-  const base = { checkedAt, hostname: target.hostname, url: target.url };
+  const base = {
+    checkedAt,
+    hostname: target.hostname,
+    url: target.url,
+    environment: target.local
+      ? ('LOCAL_DEVELOPMENT' as const)
+      : target.dockerProxy
+        ? ('LOCAL_DOCKER' as const)
+        : ('PUBLIC_HTTPS' as const),
+  };
+  const unchecked: RuntimeCheck['build'] = {
+    state: 'NOT_CHECKED',
+    status: null,
+    detail: 'Not checked',
+    observedBuildId: null,
+    expectedBuildId: expected.buildId,
+    siteKey: null,
+  };
   const where = await destination(target, resolve);
   if ('refused' in where)
     return {
@@ -260,19 +313,24 @@ export async function checkCustomWebsite(
       availability: 'UNREACHABLE',
       frontend: { status: null, detail: where.refused },
       api: { state: 'NOT_CHECKED', status: null, detail: where.refused },
+      build: { ...unchecked, detail: where.refused },
+      rendererDeployed: false,
+      bindingIdentityVerified: false,
     };
 
   let frontend: RuntimeCheck['frontend'];
+  let html: string | null = null;
   try {
-    const page = await fetchPinned(target, where.address, '/', false);
-    const ok = page.status >= 200 && page.status < 400;
+    const page = await fetchPinned(target, where.address, '/', true);
+    const ok = page.status >= 200 && page.status < 300;
+    html = ok && page.contentType.includes('text/html') ? page.body : null;
     frontend = {
       status: page.status,
       detail: ok
-        ? page.status >= 300
-          ? `Answers with a redirect (${page.status})`
-          : 'Frontend answers'
-        : `Frontend answered ${page.status}`,
+        ? 'Frontend answers'
+        : page.status >= 300 && page.status < 400
+          ? `Redirect refused (${page.status})`
+          : `Frontend answered ${page.status}`,
     };
   } catch (error) {
     frontend = { status: null, detail: failure(error) };
@@ -286,37 +344,127 @@ export async function checkCustomWebsite(
       '/api/website/venue',
       true,
     );
-    const json =
-      answer.status === 200 && answer.contentType.includes('json')
-        ? parseBootstrap(answer.body)
-        : null;
-    api = !json
-      ? {
-          state: 'FAILED',
-          status: answer.status,
-          detail:
-            answer.status === 200
-              ? '/api is not proxied to the Vynic backend'
-              : `/api answered ${answer.status}`,
-        }
-      : json.profile?.name === expected.venueName
-        ? { state: 'OK', status: 200, detail: 'Backend answers for this Venue' }
-        : {
-            state: 'WRONG_SITE',
-            status: 200,
-            detail: 'Backend answered for a different restaurant',
-          };
+    const json = parseJson(answer);
+    if (!json || json.schemaVersion !== 1)
+      api = {
+        state: 'FAILED',
+        status: answer.status,
+        detail:
+          answer.status === 200
+            ? '/api is not a supported Vynic bootstrap'
+            : `/api answered ${answer.status}`,
+      };
+    else if (!object(json.identity) || !fingerprint(json.identity.venue))
+      api = {
+        state: 'UNVERIFIED',
+        status: 200,
+        detail: 'Backend has no stable public Venue identity',
+      };
+    else if (
+      json.identity.venue !== expected.venueIdentity ||
+      json.mode !== 'CUSTOM' ||
+      !object(json.site) ||
+      json.site.key !== expected.siteKey ||
+      !expected.siteKey
+    )
+      api = {
+        state: 'WRONG_SITE',
+        status: 200,
+        detail: 'Backend Venue or CUSTOM binding identity differs',
+      };
+    else
+      api = {
+        state: 'OK',
+        status: 200,
+        detail: 'Stable Venue and CUSTOM binding match',
+      };
   } catch (error) {
     api = { state: 'FAILED', status: null, detail: failure(error) };
   }
 
+  let build: RuntimeCheck['build'];
+  let rendererDeployed = false;
+  try {
+    const answer = await fetchPinned(
+      target,
+      where.address,
+      '/vynic-site-manifest.json',
+      true,
+    );
+    const manifest = parseJson(answer);
+    const valid =
+      manifest &&
+      manifest.schemaVersion === 1 &&
+      ['CUSTOM', 'SAAS'].includes(String(manifest.renderer)) &&
+      fingerprint(manifest.buildId) &&
+      fingerprint(manifest.htmlDigest) &&
+      (manifest.renderer === 'CUSTOM'
+        ? typeof manifest.siteKey === 'string' &&
+          /^[a-z0-9][a-z0-9-]{0,62}[a-z0-9]$/.test(manifest.siteKey)
+        : manifest.siteKey === null);
+    if (!valid || !manifest)
+      build = {
+        ...unchecked,
+        state: 'FAILED',
+        status: answer.status,
+        detail: 'No valid build manifest; deployment is unverified',
+      };
+    else {
+      rendererDeployed = html !== null && digest(html) === manifest.htmlDigest;
+      const observed = {
+        status: answer.status,
+        observedBuildId: manifest.buildId as string,
+        expectedBuildId: expected.buildId,
+        siteKey: manifest.siteKey as string | null,
+      };
+      if (
+        !rendererDeployed ||
+        manifest.renderer !== 'CUSTOM' ||
+        manifest.siteKey !== expected.siteKey ||
+        !expected.siteKey
+      )
+        build = {
+          ...observed,
+          state: 'WRONG_BUILD',
+          detail:
+            'Served HTML or renderer/app key differs from the manifest/binding',
+        };
+      else if (!expected.buildId)
+        build = {
+          ...observed,
+          state: 'UNRECORDED',
+          detail:
+            'Observed build; record the independently reviewed artifact fingerprint before verifying it',
+        };
+      else if (manifest.buildId !== expected.buildId)
+        build = {
+          ...observed,
+          state: 'WRONG_BUILD',
+          detail:
+            'Observed build differs from the recorded artifact fingerprint',
+        };
+      else
+        build = {
+          ...observed,
+          state: 'VERIFIED',
+          detail: 'Served HTML and recorded CUSTOM build fingerprint match',
+        };
+    }
+  } catch (error) {
+    build = { ...unchecked, state: 'FAILED', detail: failure(error) };
+  }
   return {
     ...base,
     availability:
-      frontend.status !== null && frontend.status < 400
+      frontend.status !== null &&
+      frontend.status >= 200 &&
+      frontend.status < 300
         ? 'REACHABLE'
         : 'UNREACHABLE',
     frontend,
     api,
+    build,
+    rendererDeployed,
+    bindingIdentityVerified: api.state === 'OK' && build.state === 'VERIFIED',
   };
 }

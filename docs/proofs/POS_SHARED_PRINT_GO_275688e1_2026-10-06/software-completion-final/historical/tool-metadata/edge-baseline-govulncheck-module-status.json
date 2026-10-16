@@ -1,0 +1,1 @@
+{"exitCode": 0, "workingDirectory": "source/apps/edge/cmd/edge", "invocation": "govulncheck -json -scan=module", "priorAttempts": "patterns rejected; then root directory contained no Go files; both failed before complete assessment"}

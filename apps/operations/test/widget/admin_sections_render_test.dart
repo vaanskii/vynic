@@ -4,6 +4,7 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
 
@@ -29,6 +30,8 @@ import 'package:vynic/core/models/reservation.dart';
 import 'package:vynic/core/models/table.dart';
 import 'package:vynic/core/models/user.dart';
 import 'package:vynic/core/services/security/developer_access.dart';
+import 'package:vynic/core/ui/pos_scaled_surface.dart';
+import 'package:vynic/core/ui/pos_theme.dart';
 
 /// Builds every admin section under the panel's real theme and asserts none of
 /// them throws. The restyle touched all fourteen, and a section that fails to
@@ -92,34 +95,71 @@ Future<void> _seed() async {
       User(username: entry.$1, pinCode: '0000', role: entry.$2),
     );
   }
+  // Synthetic populated fixtures; all boxes live in this test's temp directory.
+  await DatabaseCore.menuBox!.add(
+    MenuCategoryDB.create(
+      slug: 'synthetic-hot',
+      translationsEn: {'name': 'Hot dishes'},
+      translationsKa: {'name': 'ცხელი კერძები'},
+      items: [
+        for (final item in [
+          ('იმერული ხაჭაპური', 16.0),
+          ('ჩაქაფული ტარხუნით და თეთრი ღვინით', 26.0),
+          ('ხინკალი ქალაქური', 2.5),
+        ])
+          MenuItemDB.create(
+            translationsEn: {'name': item.$1},
+            translationsKa: {'name': item.$1},
+            price: item.$2,
+          ),
+      ],
+    ),
+  );
+  final today = DateTime.now();
+  for (var i = 0; i < 3; i++) {
+    await DatabaseCore.reservationBox!.put(
+      'synthetic-$i',
+      Reservation(
+        id: 'synthetic-$i',
+        customerName: [
+          'ნინო საცდელი',
+          'გიორგი ტესტი',
+          'მარიამ გრძელი საცდელი გვარი',
+        ][i],
+        customerPhone: '55500000$i',
+        tableNumbers: [i + 1],
+        reservationDate: today,
+        reservationTime: '${18 + i}:30',
+        numberOfGuests: 4 + i,
+        createdAt: today,
+        createdBy: 'giorgi',
+        status: i == 2 ? 'hold' : 'confirmed',
+      ),
+    );
+  }
 }
 
 /// The management centre's shell, including the theme the real screen wraps
 /// its content in.
-Widget _shell(Size size, Widget section) {
-  return MediaQuery(
-    data: MediaQueryData(size: size),
-    child: MaterialApp(
-      debugShowCheckedModeBanner: false,
-      home: Builder(
-        builder: (context) => Theme(
-          data: AdminTheme.of(context),
-          child: Scaffold(
-            backgroundColor: const Color(0xFFF7F6F4),
-            body: RepaintBoundary(
-              key: const ValueKey('shot'),
-              child: SizedBox(
-                width: size.width,
-                height: size.height,
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    const SizedBox(width: 236),
-                    Expanded(child: ClipRect(child: section)),
-                  ],
-                ),
-              ),
-            ),
+Widget _shell(Widget section) {
+  return MaterialApp(
+    theme: PosTheme.light,
+    debugShowCheckedModeBanner: false,
+    builder: (context, child) => RepaintBoundary(
+      key: const ValueKey('shot'),
+      child: PosScaledSurface(scale: 1, child: child!),
+    ),
+    home: Builder(
+      builder: (context) => Theme(
+        data: AdminTheme.of(context),
+        child: Scaffold(
+          backgroundColor: const Color(0xFFF7F6F4),
+          body: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const SizedBox(width: 236),
+              Expanded(child: ClipRect(child: section)),
+            ],
           ),
         ),
       ),
@@ -134,6 +174,7 @@ Future<void> _shoot(WidgetTester tester, String name) async {
   final image = await boundary.toImage(pixelRatio: 1.0);
   final bytes = await image.toByteData(format: ui.ImageByteFormat.png);
   await File('$_outDir/$name.png').writeAsBytes(bytes!.buffer.asUint8List());
+  image.dispose();
 }
 
 Future<void> _render(
@@ -142,14 +183,25 @@ Future<void> _render(
   Widget section, {
   Size size = const Size(1440, 900),
 }) async {
-  tester.view.physicalSize = size;
+  tester.view.physicalSize = Platform.environment['VYNIC_RENDER_COMPACT'] == '1'
+      ? const Size(1024, 768)
+      : size;
   tester.view.devicePixelRatio = 1.0;
   addTearDown(tester.view.reset);
 
-  await tester.pumpWidget(_shell(size, section));
+  await tester.pumpWidget(_shell(section));
   await tester.pump(const Duration(milliseconds: 300));
 
   expect(tester.takeException(), isNull, reason: '$name failed to build');
+  for (final dropdown in tester.widgetList<DropdownButton<DateTime>>(
+    find.byType(DropdownButton<DateTime>),
+  )) {
+    expect(
+      dropdown.style?.fontFamily,
+      PosTheme.fontFamily,
+      reason: '$name month selector must retain the bundled Georgian font',
+    );
+  }
 
   if (_outDir != null) {
     await tester.runAsync(() => _shoot(tester, name));
@@ -158,6 +210,12 @@ Future<void> _render(
 
 void main() {
   setUpAll(() async {
+    await (FontLoader(
+      PosTheme.fontFamily,
+    )..addFont(rootBundle.load('assets/fonts/NotoSansGeorgian.ttf'))).load();
+    await (FontLoader(
+      'MaterialIcons',
+    )..addFont(rootBundle.load('fonts/MaterialIcons-Regular.otf'))).load();
     _outDir = Platform.environment['VYNIC_DUMP_DIR'];
     if (_outDir != null) Directory(_outDir!).createSync(recursive: true);
     _tempDir = await Directory.systemTemp.createTemp('vynic_render_dump');
@@ -398,7 +456,7 @@ void main() {
         onReceiptServiceFeeLineVisibleChanged: (_) {},
         closeReceiptServiceFeeLineVisible: false,
         onCloseReceiptServiceFeeLineVisibleChanged: (_) {},
-        serviceFeePercentDisplay: '10%',
+        serviceFeePercentDisplay: '10',
         isSavingServiceFee: false,
         defaultLanguageSetting: 'ka',
         onDefaultLanguageSettingChanged: (_) {},

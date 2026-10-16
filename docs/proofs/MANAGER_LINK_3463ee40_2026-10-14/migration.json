@@ -1,0 +1,10 @@
+{
+  "status": "PASS",
+  "fromMigrations": 76,
+  "toMigrations": 77,
+  "all76HistoricalMigrationChecksumsUnchanged": true,
+  "venueDeviceStaffPinHashAndActivationValuesUnchanged": true,
+  "initialLinkTableEmpty": true,
+  "repeatDeploy": "NOOP",
+  "liveDataTouched": false
+}

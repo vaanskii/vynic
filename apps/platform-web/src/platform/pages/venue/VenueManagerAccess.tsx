@@ -56,7 +56,9 @@ export function VenueManagerAccess({
           </p>
         )}
       </Panel>
-      {enabled && <VenueCommercialTab venueId={venue.id} accessOnly />}
+      {enabled && (
+        <VenueCommercialTab key={venue.id} venueId={venue.id} accessOnly />
+      )}
     </>
   );
 }

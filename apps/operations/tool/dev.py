@@ -8,6 +8,7 @@ import subprocess
 import tempfile
 
 from product import prepare
+from build_config import public_build_config, validate_public_origin
 
 
 def link(path, target):
@@ -40,6 +41,14 @@ def main():
     parser.add_argument('product', choices=['pos', 'manager'])
     parser.add_argument('--prepare-only', action='store_true')
     args, flutter_args = parser.parse_known_args()
+    try:
+        config = public_build_config(Path(__file__).resolve().parents[1] / '.env')
+        if config.get('VYNIC_ENV', 'development') != 'development':
+            parser.error('Developer configuration must use VYNIC_ENV=development')
+        api_url = validate_public_origin(os.environ.get('VYNIC_DEV_API_URL') or
+                                        config.get('VYNIC_API_URL') or 'http://api.vynic.localhost')
+    except ValueError as error:
+        parser.error(str(error))
     if any(arg in ('--release', '--profile') or arg.startswith('--dart-define=VYNIC_ENV=')
            for arg in flutter_args):
         parser.error('These shortcuts are for debug development only')
@@ -56,8 +65,7 @@ def main():
                '--dart-define=VYNIC_ENV=development',
                # Opens the POS developer panel without a token; see DeveloperAccess.
                '--dart-define=VYNIC_DEVELOPER_UNLOCK=true']
-    if os.environ.get('VYNIC_DEV_API_URL'):
-        command.append(f"--dart-define=VYNIC_API_URL={os.environ['VYNIC_DEV_API_URL']}")
+    command.append(f"--dart-define=VYNIC_API_URL={api_url}")
     raise SystemExit(subprocess.call(command + flutter_args, cwd=destination))
 
 

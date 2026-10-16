@@ -1,0 +1,12 @@
+{
+  "apps/operations/lib/core/services/edge/operational_proof/client.dart": "8dd5b07ca905aec3240c0b077e06845ea92488dc89724b74da57eac6704c4338",
+  "apps/operations/lib/core/services/edge/operational_proof/domain.dart": "e14f30e884ae492b172f5ca310395c6932f0f08902beff89e0527f5ccf131c1c",
+  "apps/operations/lib/core/services/edge/operational_proof/frame_store.dart": "95d5893daa62522d96c6688e6b8195c1af4dd191a84b54788877e102a0b22c53",
+  "apps/operations/lib/core/services/edge/operational_proof/intent_adapter.dart": "143e73f8606289f399431682f338ee898eb0f6f1afaf941a9310c4cf012f76e5",
+  "apps/operations/lib/core/services/edge/operational_proof/ordinary_planner.dart": "2b63ba76ff9864e1c92099e7e62a863a7426552d3d4b3d8019e81f5cadd1875f",
+  "apps/operations/lib/core/services/edge/operational_proof/planning_view.dart": "38973bfff6f373abfa575be72c0d1af962ef8c6040c6d5134f92c9052872fe17",
+  "apps/operations/lib/core/database/repositories/order_table_mutation_repository.dart": "9939c54d5b6b9fc927f35ddac94548925d90fab47dea7e0446700b72ecd87a17",
+  "apps/operations/lib/core/models/order.dart": "271c255416aa245ed47f3d31116c7f32fd5e4726f5344e9c9c726c6ecec2a9c1",
+  "apps/operations/test/unit/operational_ordinary_planner_test.dart": "bed0e69dc31b0ea4070c66c7de9f37a7ead2fc1bd716776f8b0d702f28fa172b",
+  "apps/operations/test/unit/operational_proof_client_test.dart": "ac90249cf5d7c0fd4120cdf3072454b6701b0faf24ed88cfbb71a9ed3ddd48fd"
+}

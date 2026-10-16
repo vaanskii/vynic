@@ -1,0 +1,692 @@
+<!doctype html>
+<html lang="ka" data-composition-variables='[{"id":"loopOut","type":"boolean","label":"Fade to the empty stage at the end (web)","default":false}]'>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+    <title>Vynic — launch film</title>
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <link rel="stylesheet" href="film.css" />
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="60" data-width="1920" data-height="1080">
+      <div id="stage" class="clip" data-start="0" data-duration="60" data-track-index="0">
+        <div id="bg-grid"></div>
+
+        <div id="world">
+          <div class="glow" id="glow-hub" style="left: 1700px; top: 530px; width: 1200px; height: 1200px"></div>
+          <div class="glow" id="glow-pos" style="left: 570px; top: 660px; width: 1400px; height: 1100px"></div>
+          <div class="glow" id="glow-mgr" style="left: 2910px; top: 200px; width: 1000px; height: 1000px"></div>
+          <div class="glow" id="glow-web" style="left: 2800px; top: 1300px; width: 1400px; height: 1200px"></div>
+          <div class="glow" id="glow-vk" style="left: 4500px; top: 1300px; width: 1400px; height: 1200px"></div>
+
+          <!-- restaurant geometry that surfaces around the mark (a floor plan in outline) -->
+          <svg id="blueprint" viewBox="0 0 6200 2700">
+            <g class="bp">
+              <rect pathLength="1" x="1800" y="720" width="190" height="130" rx="12" /><rect pathLength="1" x="1720" y="1330" width="150" height="150" rx="75" />
+              <rect pathLength="1" x="2900" y="690" width="210" height="130" rx="12" /><rect pathLength="1" x="3080" y="1320" width="160" height="160" rx="80" />
+              <rect pathLength="1" x="2020" y="1450" width="230" height="130" rx="12" /><rect pathLength="1" x="2700" y="1460" width="190" height="130" rx="12" />
+              <rect pathLength="1" x="3180" y="940" width="150" height="150" rx="75" /><rect pathLength="1" x="1740" y="960" width="140" height="210" rx="12" />
+            </g>
+          </svg>
+
+          <svg id="links" viewBox="0 0 6200 2700">
+            <path class="link-base" id="lb-pos" d="M 2020 1172 L 2170 1172" />
+            <path class="link-base" id="lb-mgr" d="M 2430 1080 L 2520 1080 L 2800 650 L 3200 650" />
+            <path class="link-base" id="lb-web" d="M 2330 1260 L 2480 1490 L 2750 1490" />
+            <path class="link" id="l-pos" pathLength="1" d="M 2020 1172 L 2170 1172" />
+            <path class="link" id="l-mgr" pathLength="1" d="M 2430 1080 L 2520 1080 L 2800 650 L 3200 650" />
+            <path class="link" id="l-web" pathLength="1" d="M 2330 1260 L 2480 1490 L 2750 1490" />
+            <!-- the V's thick stroke, extended along its own axis, traces the POS terminal -->
+            <path class="link vtrace" id="v-trace-a" pathLength="1" d="M 2246 1084 L 1982.5 680 L 550 680 Q 520 680 520 710 L 520 1610 Q 520 1640 550 1640 L 1270 1640" />
+            <path class="link vtrace" id="v-trace-b" pathLength="1" d="M 1982.5 680 L 1990 680 Q 2020 680 2020 710 L 2020 1610 Q 2020 1640 1990 1640 L 1270 1640" />
+            <path class="pulse" id="p-pos" pathLength="1" d="M 2170 1172 L 2020 1172" />
+            <path class="pulse" id="p-mgr" pathLength="1" d="M 2430 1080 L 2520 1080 L 2800 650 L 3200 650" />
+            <path class="pulse" id="p-web" pathLength="1" d="M 2330 1260 L 2480 1490 L 2750 1490" />
+          </svg>
+
+          <!-- Vynic foundation: the restaurant record -->
+          <div id="record">
+            <div class="rec-title mono">VYNIC · რესტორნის ჩანაწერი</div>
+            <div class="rec-sub">ფიქალი</div>
+            <div class="rec-row" id="row-menu"><span class="name">მენიუ</span><span class="state mono"><span class="st-idle">1 კატალოგი</span></span><i class="hl"></i></div>
+            <div class="rec-row" id="row-orders"><span class="name">მაგიდები და შეკვეთები</span><span class="state mono"><span class="st-idle">20:38</span><span class="st-ok">✓ 20:41</span></span><i class="hl"></i></div>
+            <div class="rec-row" id="row-ledger"><span class="name">გაყიდვები</span><span class="state"><span class="st-idle">დახურვისას</span></span></div>
+          </div>
+
+          <!-- POS: the restaurant's own terminal -->
+          <div id="pos-stand"><i class="neck"></i><i class="base"></i></div>
+          <div id="pos">
+            <div id="pos-screen">
+              <div class="p-top">
+                <div class="l"><svg class="p-badge" viewBox="0 0 100 100"><g transform="translate(20 20) scale(0.6)" fill="none" stroke="#4c4272" stroke-linecap="round"><path d="M22 26 L52 72" stroke-width="19" /><path d="M52 72 L84 18" stroke-width="11" /></g></svg><b>Vynic POS</b><span class="crumb">მაგიდები</span></div>
+                <div class="r"><span class="chip mono">20:41</span><span class="chip">KA</span><span class="chip bell"><i></i></span><span class="chip user"><i>ნ</i>ნინო</span></div>
+              </div>
+
+              <div id="p-floorview">
+                <div class="p-tabs"><span class="tab on">მაგიდები</span><span class="tab">დათვლა</span><span class="tab">გატანები<em>1</em></span><span class="tab">რეზერვაცია</span><span class="settings">პარამეტრები</span></div>
+                <div class="p-main">
+                  <div class="floor-head">
+                    <div class="pills"><span class="on">სართული 1 <b>8</b></span><span>სართული 2 <b>4</b></span></div>
+                    <div class="legend"><span><i style="background: #d6d3cf"></i>თავისუფალი</span><span><i style="background: #d9a531"></i>დაკავებული</span><span><i style="background: #b994c8"></i>რეზერვი</span></div>
+                  </div>
+                  <div class="canvas">
+                    <div class="obj bar">ბარი</div>
+                    <div class="obj stage">სცენა</div>
+                    <div class="tbl occ" style="left: 70px; top: 170px; width: 170px; height: 124px"><i class="ch" style="left: 36px; top: 0"></i><i class="ch" style="right: 36px; top: 0"></i><i class="ch" style="left: 36px; bottom: 0"></i><i class="ch" style="right: 36px; bottom: 0"></i><div class="surf"><span class="nm">მაგიდა 1</span><span class="meta mono">128.40 ₾</span></div></div>
+                    <div class="tbl round" style="left: 300px; top: 164px; width: 140px; height: 140px"><i class="ch" style="left: 59px; top: 0"></i><i class="ch" style="left: 59px; bottom: 0"></i><i class="ch v" style="left: 0; top: 59px"></i><i class="ch v" style="right: 0; top: 59px"></i><div class="surf"><span class="nm">მაგიდა 2</span><span class="meta">4 სტუმარი</span></div></div>
+                    <div class="tbl" style="left: 500px; top: 170px; width: 170px; height: 124px"><i class="ch" style="left: 36px; top: 0"></i><i class="ch" style="right: 36px; top: 0"></i><i class="ch" style="left: 36px; bottom: 0"></i><i class="ch" style="right: 36px; bottom: 0"></i><div class="surf"><span class="nm">მაგიდა 3</span><span class="meta">4 სტუმარი</span></div></div>
+                    <div class="tbl" id="t4" style="left: 730px; top: 196px; width: 196px; height: 134px"><i class="ch" style="left: 40px; top: 0"></i><i class="ch" style="right: 40px; top: 0"></i><i class="ch" style="left: 40px; bottom: 0"></i><i class="ch" style="right: 40px; bottom: 0"></i><div class="surf before"><span class="nm">მაგიდა 4</span><span class="meta">4 სტუმარი</span></div><div class="surf after"><span class="nm">მაგიდა 4</span><span class="meta mono">46.20 ₾</span></div><i id="t4-ring"></i></div>
+                    <div class="tbl round" style="left: 80px; top: 390px; width: 140px; height: 140px"><i class="ch" style="left: 59px; top: 0"></i><i class="ch" style="left: 59px; bottom: 0"></i><i class="ch v" style="left: 0; top: 59px"></i><i class="ch v" style="right: 0; top: 59px"></i><div class="surf"><span class="nm">მაგიდა 5</span><span class="meta">2 სტუმარი</span></div></div>
+                    <div class="tbl res" style="left: 300px; top: 404px; width: 180px; height: 124px"><i class="ch" style="left: 38px; top: 0"></i><i class="ch" style="right: 38px; top: 0"></i><i class="ch" style="left: 38px; bottom: 0"></i><i class="ch" style="right: 38px; bottom: 0"></i><div class="surf"><span class="nm">მაგიდა 6</span><span class="meta mono">20:30</span></div></div>
+                    <div class="tbl" style="left: 530px; top: 404px; width: 190px; height: 124px"><i class="ch" style="left: 40px; top: 0"></i><i class="ch" style="right: 40px; top: 0"></i><i class="ch" style="left: 40px; bottom: 0"></i><i class="ch" style="right: 40px; bottom: 0"></i><div class="surf"><span class="nm">მაგიდა 7</span><span class="meta">6 სტუმარი</span></div></div>
+                    <div class="tbl round" style="left: 790px; top: 400px; width: 140px; height: 140px"><i class="ch" style="left: 59px; top: 0"></i><i class="ch" style="left: 59px; bottom: 0"></i><i class="ch v" style="left: 0; top: 59px"></i><i class="ch v" style="right: 0; top: 59px"></i><div class="surf"><span class="nm">მაგიდა 8</span><span class="meta">4 სტუმარი</span></div></div>
+                    <i class="ripple" id="rip-t4" style="left: 828px; top: 263px"></i>
+                  </div>
+                </div>
+                <div class="p-side">
+                  <div class="lbl">SERVICE RIGHT NOW</div>
+                  <div class="kpis">
+                    <div class="kpi"><p>თავისუფალი</p><b class="sw"><span class="a">6</span><span class="b">5</span></b></div>
+                    <div class="kpi amber"><p>დაკავებული</p><b class="sw"><span class="a">1</span><span class="b">2</span></b></div>
+                    <div class="kpi"><p>დაჯავშნილი</p><b>1</b></div>
+                    <div class="kpi"><p>გადასახდელი</p><b>0</b></div>
+                  </div>
+                  <div class="attn"><div class="lbl">NEEDS ATTENTION <b>0</b></div><span>ყურადღება არ სჭირდება</span></div>
+                  <div class="next"><div class="lbl">NEXT RESERVATIONS</div><b>მაგიდა 6 · 20:30</b><span>4 სტუმარი</span></div>
+                </div>
+              </div>
+
+              <div id="p-editor">
+                <div class="e-head"><span class="back">←</span><div><b>შეკვეთის რედაქტირება</b><span>მაგიდა 4</span></div><div class="search">⌕&nbsp;&nbsp;პროდუქტის ძიება...</div></div>
+                <div class="e-cats"><div class="lbl">კატეგორიები</div><div class="on">ყველა პროდუქტი</div><div>ცომეული</div><div>სალათები</div><div>ცხელი კერძები</div><div>სასმელები</div><div>დესერტები</div></div>
+                <div class="e-grid">
+                  <div class="tile" id="tile-1"><div class="tn">ხაჭაპური აჭარული</div><div class="tp mono">22.00 ₾</div><div class="add">+</div><i class="flash"></i></div>
+                  <div class="tile"><div class="tn">ხაჭაპური იმერული</div><div class="tp mono">18.00 ₾</div><div class="add">+</div></div>
+                  <div class="tile"><div class="tn">ლობიანი</div><div class="tp mono">12.00 ₾</div><div class="add">+</div></div>
+                  <div class="tile" id="tile-2"><div class="tn">ქართული სალათი</div><div class="tp mono">14.00 ₾</div><div class="add">+</div><i class="flash"></i></div>
+                  <div class="tile"><div class="tn">ბადრიჯანი ნიგვზით</div><div class="tp mono">12.00 ₾</div><div class="add">+</div></div>
+                  <div class="tile"><div class="tn">ფხალეულის დაფა</div><div class="tp mono">19.00 ₾</div><div class="add">+</div></div>
+                  <div class="tile" id="tile-3"><div class="tn">ლიმონათი</div><div class="tp mono">6.00 ₾</div><div class="add">+</div><i class="flash"></i></div>
+                  <div class="tile"><div class="tn">ტარხუნის ლიმონათი</div><div class="tp mono">6.00 ₾</div><div class="add">+</div></div>
+                  <div class="tile"><div class="tn">ყველი სულგუნი</div><div class="tp mono">13.00 ₾</div><div class="add">+</div></div>
+                  <div class="tile"><div class="tn">მწვადი</div><div class="tp mono">24.00 ₾</div><div class="add">+</div></div>
+                  <div class="tile"><div class="tn">ჩაქაფული</div><div class="tp mono">26.00 ₾</div><div class="add">+</div></div>
+                  <div class="tile"><div class="tn">ჩურჩხელა</div><div class="tp mono">6.00 ₾</div><div class="add">+</div></div>
+                </div>
+                <i class="ripple" id="rip-1" style="left: 461px; top: 155px"></i>
+                <i class="ripple" id="rip-2" style="left: 461px; top: 273px"></i>
+                <i class="ripple" id="rip-3" style="left: 461px; top: 391px"></i>
+                <div class="e-order">
+                  <div class="o-head"><b>შეკვეთა</b><span>სერვისი <i class="tog">ჩართ.</i></span></div>
+                  <div class="o-line" id="line-1" style="top: 70px"><em>1</em><div><b>ხაჭაპური აჭარული</b><span class="step">− 1 +</span></div><span class="mono">22.00</span></div>
+                  <div class="o-line" id="line-2" style="top: 136px"><em>1</em><div><b>ქართული სალათი</b><span class="step">− 1 +</span></div><span class="mono">14.00</span></div>
+                  <div class="o-line" id="line-3" style="top: 202px"><em>1</em><div><b>ლიმონათი</b><span class="step">− 1 +</span></div><span class="mono">6.00</span></div>
+                  <div class="o-sums">
+                    <div class="row"><span>ჯამი პროდუქტები (<span id="t-count">0</span>)</span><span class="mono" id="t-sum">0.00</span></div>
+                    <div class="row"><span>სერვისი (10%)</span><span class="mono" id="t-svc">0.00</span></div>
+                    <div class="total"><span>სულ ჯამი</span><b class="mono" id="t-total">0.00 ₾</b></div>
+                  </div>
+                  <div class="o-go" id="o-go"><span class="c1">✓ შეკვეთის დადასტურება</span><span class="c2">✓ სამზარეულოში გაიგზავნა</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div id="token" class="cap mono" data-layout-allow-overlap><i></i>მაგიდა 4 · 3 პოზიცია · 46.20 ₾</div>
+
+          <!-- Vynic Manager: Dashboard → Inventory (Georgian, light theme) -->
+          <div id="phone">
+            <div class="screen">
+              <div class="m-status"><span>20:42</span><span>●●● ▮</span></div>
+              <div class="m-page" id="m-dash">
+                <div class="m-spin" id="m-spin"><i></i></div>
+                <div class="m-scroll" id="m-scroll">
+                  <div class="m-hello">საღამო მშვიდობისა,</div>
+                  <div class="m-name">ნინო</div>
+                  <div class="m-bell"><i></i></div>
+                  <div class="m-card" style="top: 140px">
+                    <div class="m-dayrow"><span class="m-open"><i></i>ღია</span><span class="m-clock">◷ 9 სთ 39 წთ</span></div>
+                    <div class="m-l" style="margin-top: 10px">აქტიური სამუშაო დღე</div>
+                    <div class="m-v">2026-09-30</div>
+                    <div class="m-l" style="margin-top: 4px">⇥ გახსნა: 11:02, 30.09</div>
+                  </div>
+                  <div class="m-card" style="top: 306px">
+                    <div class="m-l">აქტიური ცვლის შემოსავალი <span class="chev">›</span></div>
+                    <div class="m-rev"><span class="lari">₾</span><span id="m-rev">2,868.65</span></div>
+                    <div class="m-l">დახურული + ღია მაგიდები</div>
+                    <div class="m-row closed"><span>✓&nbsp; დახურული</span><span>₾1,282.45</span></div>
+                    <div class="m-row open" id="m-open-row"><span class="lab"><span class="o1">ღია (2)</span><span class="o2" style="opacity: 0">ღია (3)</span></span><span>₾<span id="m-open">1,586.20</span></span></div>
+                    <div class="m-tiles"><div class="t cash"><span>ნაღდი (დახურ.)</span><b>₾340.85</b></div><div class="t card"><span>ბარათი (დახურ.)</span><b>₾941.60</b></div></div>
+                  </div>
+                  <div class="m-card" id="m-inv-card" style="top: 694px">
+                    <div class="m-ihead"><span class="ico"></span>მარაგები<span class="go">გახსნა →</span></div>
+                    <div class="m-kv"><span>დღევანდელი შესყიდვები</span><b>0.00 ₾</b></div>
+                    <div class="m-warn"><i></i><span>დაბალი მარაგი</span><span>2 ›</span></div>
+                    <i class="m-tapfx" id="tap-open" style="right: 8px; top: 8px; width: 104px; height: 34px"></i>
+                  </div>
+                </div>
+              </div>
+
+              <div class="m-page" id="m-inv">
+                <div class="i-title">მარაგები</div>
+                <div class="i-menu"></div>
+                <div class="i-add">＋ ახალი მიღება<i class="m-tapfx" id="tap-add" style="inset: 0; border-radius: 26px; background: rgba(255, 255, 255, 0.28)"></i></div>
+                <div class="i-today"><span>დღეს მივიღეთ</span><b id="inv-today">0.00 ₾</b></div>
+                <div class="i-chip"><i></i>დაბალი მარაგი:<span class="n"><span class="lo2">2</span><span class="lo1" style="opacity: 0">1</span></span></div>
+                <div class="i-rule"></div>
+                <div class="i-h" style="top: 292px">ყოველდღიური სამუშაო</div>
+                <div class="i-dest" style="top: 322px"><i class="ic"></i><div><div class="t">მიღებების ისტორია</div><div class="s">შენახული მიღებები და მონახაზები</div></div><i class="chv"></i></div>
+                <div class="i-dest" id="dest-stock" style="top: 378px"><i class="ic"></i><div><div class="t">ნაშთები</div><div class="s">14 პროდუქტი მარაგში</div></div><i class="chv"></i><i class="m-tapfx" id="tap-stock" style="inset: -4px -8px; border-radius: 12px"></i></div>
+                <div class="i-dest" style="top: 434px"><i class="ic"></i><div><div class="t">გადახდები და დავალიანება</div><div class="s">ვის რამდენი დარჩა გადასახდელი</div></div><i class="chv"></i></div>
+                <div class="i-h" style="top: 508px">დღევანდელი მიღებები</div>
+                <div class="i-empty" id="inv-empty">დღეს მიღება ჯერ არ არის</div>
+                <div class="i-rcpt" id="inv-rcpt">
+                  <div class="top"><span class="sup">ქალაქის წისქვილი</span><span class="badge">მარაგში დაემატა</span></div>
+                  <div class="bot"><span class="chip2">1 პოზიცია</span><b>60.00 ₾</b></div>
+                </div>
+              </div>
+
+              <div class="m-page" id="m-stock">
+                <div class="s-head"><i></i>ნაშთები</div>
+                <div class="s-filters"><span class="on">ყველა</span><span>დაბალი მარაგი</span><span>უარყოფითი მარაგი</span></div>
+                <div class="s-card hot" id="s-flour" style="top: 176px"><b>ფქვილი</b><span>მარაგშია: 21.500 კგ</span><em class="plus">+20.000 კგ</em></div>
+                <div class="s-card low" style="top: 262px"><b>ყველი სულგუნი</b><span>მარაგშია: 1.200 კგ · <strong>დაბალი მარაგი</strong></span><span class="min">მინიმალური მარაგი: 3 კგ</span></div>
+                <div class="s-card" style="top: 368px"><b>კარაქი</b><span>მარაგშია: 4.500 კგ</span></div>
+                <div class="s-card" style="top: 446px"><b>მზესუმზირის ზეთი</b><span>მარაგშია: 8.000 ლ</span></div>
+                <div class="s-card" style="top: 524px"><b>ლიმონი</b><span>მარაგშია: 3.200 კგ</span></div>
+              </div>
+
+              <div id="m-recv">
+                <div class="r-head"><i></i>ახალი მიღება</div>
+                <div class="r-card" style="top: 108px"><div class="k">მომწოდებელი</div><div class="v">ქალაქის წისქვილი</div></div>
+                <div class="r-pay">გადახდა</div>
+                <div class="r-opt" style="top: 214px"><i></i>ჯერ არ გადამიხდია</div>
+                <div class="r-opt" style="top: 250px"><i></i>სრულად გადავიხადე</div>
+                <div class="r-opt on" style="top: 286px"><i></i>ნაწილობრივ გადავიხადე</div>
+                <div class="r-amt" style="top: 326px"><span>ახლა გადავიხადე ₾</span><b>30.00</b></div>
+                <div class="r-card r-sum" style="top: 392px">
+                  <div class="h">დაემატება მარაგში:</div>
+                  <div class="r-line">ფქვილი <b>+20.000 კგ</b></div>
+                  <div class="rule"></div>
+                  <div class="r-row"><span>მიღების ღირებულება:</span><span>60.00 ₾</span></div>
+                  <div class="r-row"><span>ახლა გადახდილი:</span><span>30.00 ₾</span></div>
+                  <div class="r-row debt" id="r-debt"><span>დავალიანება:</span><span>30.00 ₾</span></div>
+                </div>
+                <div class="r-go">მიღების დადასტურება<i class="m-tapfx" id="tap-go" style="inset: 0; border-radius: 27px; background: rgba(255, 255, 255, 0.28)"></i></div>
+              </div>
+
+              <div class="m-nav"><span id="m-pill"><i></i></span><i style="left: 32px; opacity: 0"></i><i style="left: 91px"></i><i style="left: 150px"></i><i style="left: 209px"></i><i style="left: 268px"></i><i style="left: 327px"></i></div>
+            </div>
+          </div>
+          <div id="token2" class="cap mono" data-layout-allow-overlap><i></i>მაგიდა 4 · 46.20 ₾</div>
+
+          <!-- SaaS: a Vynic-hosted restaurant site (classic theme), fully populated -->
+          <div class="webwin" id="saas">
+            <div class="chrome"><i></i><i></i><i></i><div class="url">pikali.vynic.ge</div></div>
+            <div class="view" id="saas-view">
+              <div class="scroller"><div class="sp" id="saas-page">
+                <section class="s-hero cull"><img src="assets/img/saas/hero.jpg" alt="" /><div class="in"><h1>ფიქალი</h1><i class="rule"></i><p>ქართული სამზარეულო ძველ თბილისში — ღია ცეცხლზე, სეზონური პროდუქტით.</p></div></section>
+                <section class="s-about cull"><div class="eyebrow">ჩვენ შესახებ</div><h2>სადილი, როგორც სახლში</h2><p>ფიქალი 2019 წლიდან ამზადებს კლასიკურ ქართულ კერძებს ადგილობრივი ფერმერების პროდუქტით. სუფრა ჩვენთან ყოველთვის გაშლილია — მეგობრებისთვის, ოჯახისთვის და სტუმრებისთვის.</p></section>
+                <section class="s-menu">
+                  <div class="eyebrow cull">მენიუ</div><p class="intro cull">მენიუ ყოველდღე ახლდება სეზონური პროდუქტით.</p>
+                  <h3 class="cull">ხინკალი</h3>
+                  <div class="items">
+                    <div class="it cull" id="saas-dish"><p><span class="n">ხინკალი ქალაქური</span><i></i><span class="p">1,20 ₾</span></p><small>საქონლის და ღორის ხორცი, მწვანილით · 1 ც.</small></div>
+                    <div class="it cull"><p><span class="n">ხინკალი მთიულური</span><i></i><span class="p">1,20 ₾</span></p><small>ხორცი, წიწაკა, მწვანილის გარეშე · 1 ც.</small></div>
+                    <div class="it cull"><p><span class="n">ხინკალი სოკოთი</span><i></i><span class="p">1,40 ₾</span></p><small>ტყის სოკო, ხახვი · 1 ც.</small></div>
+                    <div class="it cull"><p><span class="n">ხინკალი ყველით</span><i></i><span class="p">1,40 ₾</span></p><small>იმერული ყველი · 1 ც.</small></div>
+                  </div>
+                  <h3 class="cull">ცომეული</h3>
+                  <div class="items">
+                    <div class="it cull"><p><span class="n">ხაჭაპური აჭარული</span><i></i><span class="p">22,00 ₾</span></p><small>სულგუნი, კვერცხი, კარაქი</small></div>
+                    <div class="it cull"><p><span class="n">ხაჭაპური იმერული</span><i></i><span class="p">18,00 ₾</span></p><small>იმერული ყველით</small></div>
+                    <div class="it cull"><p><span class="n">ლობიანი</span><i></i><span class="p">12,00 ₾</span></p><small>რაჭული ლობიო, ცომი ქვის ღუმელში</small></div>
+                    <div class="it cull"><p><span class="n">პენოვანი</span><i></i><span class="p">16,00 ₾</span></p><small>ფენოვანი ცომი, სულგუნი</small></div>
+                  </div>
+                  <h3 class="cull">სალათები და ცივი კერძები</h3>
+                  <div class="items">
+                    <div class="it cull"><p><span class="n">ქართული სალათი</span><i></i><span class="p">14,00 ₾</span></p><small>კიტრი, პომიდორი, ნიგვზის სოუსი</small></div>
+                    <div class="it cull"><p><span class="n">ბადრიჯანი ნიგვზით</span><i></i><span class="p">12,00 ₾</span></p><small>ნიგვზის პასტა, ბროწეული</small></div>
+                    <div class="it cull"><p><span class="n">ფხალეულის დაფა</span><i></i><span class="p">19,00 ₾</span></p><small>ისპანახი, ჭარხალი, მწვანე ლობიო</small></div>
+                    <div class="it cull"><p><span class="n">ყველის დაფა</span><i></i><span class="p">16,00 ₾</span></p><small>სულგუნი, იმერული, გუდის ყველი</small></div>
+                  </div>
+                  <h3 class="cull">სასმელები</h3>
+                  <div class="items">
+                    <div class="it cull"><p><span class="n">ლიმონათი</span><i></i><span class="p">6,00 ₾</span></p><small>მსხალი, ტარხუნა, ნაღები</small></div>
+                    <div class="it cull"><p><span class="n">ქართული ღვინო, ჭიქა</span><i></i><span class="p">9,00 ₾</span></p><small>საფერავი ან რქაწითელი</small></div>
+                  </div>
+                </section>
+                <section class="s-gallery cull"><div class="eyebrow">გალერეა</div><div class="grid"><img src="assets/img/saas/g1.jpg" alt="" /><img src="assets/img/saas/g2.jpg" alt="" /><img src="assets/img/saas/g3.jpg" alt="" /><img src="assets/img/saas/g4.jpg" alt="" /></div></section>
+                <section class="s-visit">
+                  <div class="cull"><div class="eyebrow">სამუშაო საათები</div><dl><dt>ორშაბათი – ხუთშაბათი</dt><dd>12:00 – 23:00</dd><dt>პარასკევი – შაბათი</dt><dd>12:00 – 00:00</dd><dt>კვირა</dt><dd>12:00 – 22:00</dd></dl></div>
+                  <div class="cull"><div class="eyebrow">კონტაქტი</div><dl><dt>მისამართი</dt><dd>თბილისი, ძველი ქალაქი</dd><dt>ტელეფონი</dt><dd>+995 32 2 00 00 00</dd></dl><span class="map">რუკაზე ნახვა →</span></div>
+                </section>
+              </div></div>
+              <div class="s-header"><div class="brand">ფიქალი<small>ბისტრო · თბილისი</small></div><nav><span>ჩვენ შესახებ</span><span id="nav-menu">მენიუ</span><span>გალერეა</span><span>სამუშაო საათები</span><span>კონტაქტი</span></nav><span class="lang">ქარ · EN</span><i class="m-tapfx" id="tap-nav" style="left: 855px; top: 18px; width: 86px; height: 32px; border-radius: 6px; background: rgba(125, 91, 46, 0.18)"></i></div>
+            </div>
+          </div>
+
+          <!-- CUSTOM: Vankisi, a standalone bespoke frontend on the same foundation -->
+          <div class="webwin dark" id="vk">
+            <div class="chrome"><i></i><i></i><i></i><div class="url">vankisi.vynic.ge</div></div>
+            <div class="view" id="vk-view">
+              <div class="vp" id="vk-page">
+                <section class="v-hero cull">
+                  <img src="assets/img/vankisi/atmosphere.jpg" alt="" />
+                  <div class="in">
+                    <img class="logo" src="assets/img/vankisi/logo.svg" alt="" />
+                    <h2>გემოს უმაღლესი ხელოვნება</h2>
+                    <h1>ვანკისი</h1>
+                    <p>ადგილი, სადაც ტრადიცია ხვდება გემოს</p>
+                    <div class="btns"><span class="gold">მაგიდის დაჯავშნა →</span><span class="line">მენიუს ნახვა</span></div>
+                  </div>
+                </section>
+                <section class="v-menu cull">
+                  <div class="cat"><i></i><h2>ხინკალი</h2><i></i></div>
+                  <div class="cols">
+                    <div class="pic"><img src="assets/img/vankisi/khinkali.jpg" alt="" /></div>
+                    <div class="list">
+                      <h3>ტრადიციული</h3>
+                      <div class="row" id="vk-row1"><span class="n">ხინკალი ქალაქური</span><i></i><span class="p">1.20 ₾</span></div>
+                      <div class="row"><span class="n">ხინკალი მთიულური</span><i></i><span class="p">1.20 ₾</span></div>
+                      <div class="row"><span class="n">ხინკალი სოკოთი</span><i></i><span class="p">1.40 ₾</span></div>
+                      <div class="row"><span class="n">ხინკალი ყველით</span><i></i><span class="p">1.40 ₾</span></div>
+                      <h3 style="margin-top: 34px">ცომეული</h3>
+                      <div class="row"><span class="n">ხაჭაპური აჭარული</span><i></i><span class="p">22.00 ₾</span></div>
+                    </div>
+                  </div>
+                </section>
+              </div>
+            </div>
+          </div>
+
+          <!-- the shared content object: one dish, two presentations -->
+          <div id="dish" data-layout-allow-overlap>
+            <div class="dc dc-saas" data-layout-allow-overlap><p data-layout-allow-overlap><span class="n" data-layout-allow-overlap>ხინკალი ქალაქური</span><i></i><span class="p" data-layout-allow-overlap>1,20 ₾</span></p><small data-layout-allow-overlap>საქონლის და ღორის ხორცი, მწვანილით · 1 ც.</small></div>
+            <div class="dc dc-vk" data-layout-allow-overlap><p data-layout-allow-overlap><span class="n" data-layout-allow-overlap>ხინკალი ქალაქური</span><i></i><span class="p" data-layout-allow-overlap>1.20 ₾</span></p></div>
+          </div>
+
+          <!-- the mark -->
+          <div id="hub">
+            <div id="hub-tile"></div>
+            <svg id="hub-mark" viewBox="0 0 100 100">
+              <g transform="translate(12.9 12.9) scale(0.742)">
+                <path class="v-thick" pathLength="1" d="M52 72 L22 26" stroke-width="19" />
+                <path class="v-thin" pathLength="1" d="M52 72 L84 18" stroke-width="11" />
+                <path class="v-light" id="v-light" pathLength="1" d="M22 26 L52 72 L84 18" filter="url(#v-glow)" />
+              </g>
+              <defs><filter id="v-glow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="2.2" result="b" /><feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge></filter></defs>
+            </svg>
+            <i id="hub-spark"></i>
+          </div>
+          <div id="wordmark"><span id="wordmark-text">Vynic</span></div>
+          <div id="tagline"><span id="tagline-text">რესტორნის მართვის ერთიანი სისტემა</span></div>
+        </div>
+
+        <div id="vignette"></div>
+
+        <div id="cap-scrim"></div>
+        <div id="caps">
+          <div class="fc" id="cap-pos"><div class="fc-k">01 · სალარო</div><div class="fc-h">მაგიდიდან<br>სამზარეულომდე</div><div class="fc-p">აირჩიეთ მაგიდა, დაამატეთ კერძები და შეკვეთა სამზარეულოში გაგზავნეთ.</div></div>
+          <div class="fc" id="cap-found" data-layout-allow-overlap><div class="fc-k">02 · ერთი სისტემა</div><div class="fc-h">მონაცემები<br>ერთ ადგილას</div><div class="fc-p">შეკვეთები, გაყიდვები და მენიუ რესტორნის ერთიან ჩანაწერში ინახება.</div></div>
+          <div class="fc" id="cap-mgr"><div class="fc-k">03 · მენეჯერი</div><div class="fc-h">რესტორანი<br>თქვენს ტელეფონში</div><div class="fc-p">დღის შემოსავალი, ღია მაგიდები და სამუშაო დღის მდგომარეობა.</div></div>
+          <div class="fc" id="cap-inv"><div class="fc-k">04 · მარაგები</div><div class="fc-h">მიღებები<br>და ნაშთები</div><div class="fc-p">მომწოდებლისგან მიღებული საქონელი მარაგს ემატება, გადაუხდელი თანხა კი დავალიანებად აღირიცხება.</div></div>
+          <div class="fc" id="cap-saas"><div class="fc-k">05 · ვებსაიტი</div><div class="fc-h">მზა ვებსაიტი<br>რესტორნისთვის</div><div class="fc-p">მენიუ, ფოტოები, სამუშაო საათები და კონტაქტი — იმავე სისტემიდან.</div></div>
+          <div class="fc" id="cap-custom"><div class="fc-k">06 · ინდივიდუალური ვებსაიტი</div><div class="fc-h">თქვენი ბრენდის<br>დიზაინით</div><div class="fc-p">ინდივიდუალურად შექმნილი საიტი, რომელიც იმავე Vynic-ის სისტემაზე მუშაობს.</div></div>
+          <div class="fc fc-low" id="cap-eco"><div class="fc-h">სალარო. მენეჯერი. ვებსაიტი.</div></div>
+        </div>
+      </div>
+
+      <!-- AUDIO: music + SFX stems. No narration: the story is carried by on-screen Georgian captions. -->
+      <audio id="music" src="assets/audio/music.wav" data-start="0" data-duration="60" data-track-index="10" data-volume="0.45" data-audio-group="music"></audio>
+      <audio id="sfx" src="assets/audio/sfx.wav" data-start="0" data-duration="60" data-track-index="11" data-volume="0.9" data-audio-group="sfx"></audio>
+    </div>
+
+    <script>
+// Vynic launch film: one world, one camera, one paused timeline (60.0s).
+// Scene map and timings: STORYBOARD.md. On-screen Georgian captions carry the story (no narration).
+(function () {
+  const vars = (window.__hyperframes && window.__hyperframes.getVariables) ? window.__hyperframes.getVariables() : {};
+  const W = 1920, H = 1080;
+  const world = document.getElementById("world");
+  const grid = document.getElementById("bg-grid");
+
+  // Camera: world point (x, y) at frame centre, scale s.
+  const cam = { x: 2510, y: 1130, s: 1.0 };
+  function applyCamera() {
+    world.style.transform = "translate(" + (W / 2 - cam.s * cam.x).toFixed(2) + "px," + (H / 2 - cam.s * cam.y).toFixed(2) + "px) scale(" + cam.s.toFixed(4) + ")";
+    grid.style.backgroundPosition = (-cam.x * 0.18).toFixed(1) + "px " + (-cam.y * 0.18).toFixed(1) + "px";
+  }
+  applyCamera();
+  const CAM = {
+    openIn: { x: 2510, y: 1130, s: 1.06 },
+    pos: { x: 890, y: 1170, s: 0.78 },
+    posIn: { x: 898, y: 1165, s: 0.82 },
+    term: { x: 1560, y: 1210, s: 0.62 },
+    termDrift: { x: 1610, y: 1200, s: 0.6 },
+    mid: { x: 1880, y: 1130, s: 0.8 },
+    mgr: { x: 3110, y: 700, s: 1.0 },
+    mgrIn: { x: 3127, y: 700, s: 1.06 },
+    saas: { x: 3079, y: 1890, s: 0.85 },
+    vk: { x: 4779, y: 1890, s: 0.85 },
+    eco: { x: 2660, y: 1290, s: 0.44 },
+    lock: { x: 2510, y: 1130, s: 1.1 },
+    lockIn: { x: 2510, y: 1130, s: 1.13 },
+  };
+  function camTo(tl, t, at, dur, ease) {
+    tl.to(cam, { x: t.x, y: t.y, s: t.s, duration: dur, ease: ease || "power3.inOut", onUpdate: applyCamera }, at);
+  }
+
+  // The V's vertex inside its 260px tile (for the spark).
+  const U = 2.6;
+  const spark = document.getElementById("hub-spark");
+  spark.style.left = ((12.9 + 52 * 0.742) * U - 14).toFixed(1) + "px";
+  spark.style.top = ((12.9 + 72 * 0.742) * U - 14).toFixed(1) + "px";
+
+  const fmt = (n) => n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  function counter(tl, el, from, to, at, dur, render) {
+    const p = { v: from };
+    tl.fromTo(p, { v: from }, { v: to, duration: dur, ease: "power3.out", immediateRender: false, onUpdate: () => { el.textContent = render ? render(p.v) : fmt(p.v); } }, at);
+  }
+  // Constant-speed travel along a polyline with one ease for the whole trip.
+  function along(pts) {
+    const seg = [], total = [0];
+    for (let i = 1; i < pts.length; i++) { const d = Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]); seg.push(d); total.push(total[i - 1] + d); }
+    const len = total[total.length - 1];
+    return (p) => {
+      const d = Math.max(0, Math.min(1, p)) * len;
+      let i = 1; while (i < total.length - 1 && total[i] < d) i++;
+      const k = seg[i - 1] ? (d - total[i - 1]) / seg[i - 1] : 0;
+      return [pts[i - 1][0] + (pts[i][0] - pts[i - 1][0]) * k, pts[i - 1][1] + (pts[i][1] - pts[i - 1][1]) * k];
+    };
+  }
+  function travel(tl, sel, pts, at, dur, extra, ease) {
+    const el = document.querySelector(sel), path = along(pts), p = { t: 0 };
+    tl.fromTo(p, { t: 0 }, { t: 1, duration: dur, ease: ease || "power2.inOut", immediateRender: false,
+      onUpdate: () => { const q = path(p.t); gsap.set(el, { x: q[0], y: q[1] }); } }, at);
+    if (extra) tl.to(sel, Object.assign({ duration: dur, ease: ease || "power2.inOut" }, extra), at);
+  }
+  const tl = gsap.timeline({ paused: true });
+  // Page scroll inside a browser window. Content scrolled fully out of the viewport is hidden,
+  // so nothing clipped counts as on-screen. Offsets are measured once, here, not at tween time.
+  function scrollPage(pageSel, viewTop, viewH) {
+    const page = document.querySelector(pageSel);
+    const items = Array.from(page.querySelectorAll(".cull")).map((el) => ({ el, top: el.offsetTop, bottom: el.offsetTop + el.offsetHeight }));
+    const cull = () => {
+      const S = -gsap.getProperty(page, "y");
+      for (const it of items) it.el.style.visibility = (it.bottom < S + viewTop || it.top > S + viewH) ? "hidden" : "visible";
+    };
+    cull();
+    return (y, at, dur, ease) => tl.to(page, { y, duration: dur, ease, onUpdate: cull }, at);
+  }
+  // Capsules start where their data lives (T4 on the POS floor; the hub's Manager branch).
+  tl.set("#token", { x: 1398, y: 1171 }, 0);
+  tl.set("#token2", { x: 2430, y: 1080 }, 0);
+  const tap = (rip, at) => tl.fromTo(rip, { opacity: 0.85, scale: 0.25 }, { opacity: 0, scale: 1.7, duration: 0.7, ease: "power2.out", immediateRender: false }, at);
+  const tapFx = (sel, at) => tl.fromTo(sel, { opacity: 0 }, { opacity: 1, duration: 0.12, ease: "power2.out", yoyo: true, repeat: 1, immediateRender: false }, at);
+  // Captions: eyebrow, headline and line rise in; the whole block fades out. The scrim keeps them legible.
+  function capIn(sel, at) {
+    tl.fromTo(sel, { opacity: 0, y: 0 }, { opacity: 1, duration: 0.01 }, at);
+    tl.fromTo(sel + " > *", { opacity: 0, y: 22, filter: "blur(6px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: 0.8, ease: "power3.out", stagger: 0.12 }, at);
+  }
+  const capOut = (sel, at) => tl.to(sel, { opacity: 0, y: -10, duration: 0.45, ease: "power2.in" }, at);
+  const scrim = (to, at, dur) => tl.to("#cap-scrim", { opacity: to, duration: dur || 0.7, ease: "sine.inOut" }, at);
+
+  /* ============ 1 · The system starts (0.0 – 6.0), one shot into the POS ============ */
+  camTo(tl, CAM.openIn, 0, 4.4, "sine.inOut");
+  tl.fromTo("#glow-hub", { opacity: 0, scale: 0.7 }, { opacity: 0.5, scale: 1, duration: 2.0, ease: "sine.out" }, 0.15);
+  tl.fromTo("#hub-spark", { opacity: 0, scale: 0.2 }, { opacity: 1, scale: 1, duration: 0.4, ease: "power2.out" }, 0.2);
+  tl.fromTo(".v-thick", { strokeDashoffset: 1 }, { strokeDashoffset: 0, duration: 0.8, ease: "power2.inOut" }, 0.45);
+  tl.fromTo(".v-thin", { strokeDashoffset: 1 }, { strokeDashoffset: 0, duration: 0.7, ease: "power2.inOut" }, 0.95);
+  tl.to("#hub-spark", { opacity: 0, scale: 1.8, duration: 0.6, ease: "power2.out" }, 1.0);
+  tl.fromTo("#bg-grid", { opacity: 0, "--gw": "16%", "--gh": "18%" }, { opacity: 1, "--gw": "62%", "--gh": "70%", duration: 1.6, ease: "power2.out" }, 1.05);
+  tl.fromTo("#hub-tile", { opacity: 0, scale: 0.94 }, { opacity: 1, scale: 1, duration: 1.1, ease: "expo.out" }, 1.1);
+  tl.set("#wordmark", { autoAlpha: 1 }, 1.28);
+  tl.fromTo("#wordmark-text", { opacity: 0, y: 34, filter: "blur(14px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: 1.0, ease: "expo.out" }, 1.3);
+  tl.set("#v-light", { opacity: 1 }, 1.65);
+  tl.fromTo("#v-light", { strokeDashoffset: 0.16 }, { strokeDashoffset: -1.02, duration: 0.75, ease: "power1.inOut" }, 1.65);
+  tl.set("#v-light", { opacity: 0 }, 2.4);
+  tl.to(".v-thick", { stroke: "#f7f6f4", duration: 0.35, ease: "sine.out" }, 1.72);
+  tl.to(".v-thin", { stroke: "#f7f6f4", duration: 0.35, ease: "sine.out" }, 2.0);
+  // A restaurant floor surfaces around the mark, in outline.
+  tl.set(".bp rect", { opacity: 1 }, 2.4);
+  tl.fromTo(".bp rect", { strokeDashoffset: 1 }, { strokeDashoffset: 0, duration: 1.2, ease: "power2.inOut", stagger: 0.08 }, 2.4);
+  tl.to(".bp rect", { opacity: 0, duration: 0.7, ease: "sine.in" }, 4.3);
+  // The camera begins to move; the thick stroke extends along its own axis and traces the terminal.
+  camTo(tl, CAM.pos, 4.4, 1.6);
+  tl.to("#wordmark-text", { opacity: 0, filter: "blur(8px)", duration: 0.45, ease: "sine.in" }, 4.35);
+  tl.set("#wordmark", { autoAlpha: 0 }, 4.85);
+  tl.to("#glow-hub", { opacity: 0, duration: 0.9, ease: "sine.inOut" }, 4.5);
+  tl.to("#hub", { opacity: 0, duration: 0.5, ease: "sine.inOut" }, 4.7);
+  tl.set("#v-trace-a", { opacity: 1 }, 4.45);
+  tl.fromTo("#v-trace-a", { strokeDashoffset: 1 }, { strokeDashoffset: 0, duration: 1.1, ease: "power2.inOut" }, 4.45);
+  tl.set("#v-trace-b", { opacity: 1 }, 4.63);
+  tl.fromTo("#v-trace-b", { strokeDashoffset: 1 }, { strokeDashoffset: 0, duration: 0.92, ease: "power2.inOut" }, 4.63);
+  tl.fromTo(["#pos", "#pos-stand"], { opacity: 0 }, { opacity: 1, duration: 0.6, ease: "power2.out" }, 5.3);
+  tl.fromTo("#glow-pos", { opacity: 0 }, { opacity: 0.5, duration: 1.2, ease: "sine.out" }, 5.2);
+  tl.to(["#v-trace-a", "#v-trace-b"], { opacity: 0, duration: 0.45, ease: "sine.inOut" }, 5.7);
+
+  /* ============ 2 · POS runs service (6.0 – 18.2) ============ */
+  camTo(tl, CAM.posIn, 6.0, 5.8, "sine.inOut");
+  scrim(1, 6.0);
+  capIn("#cap-pos", 6.3);
+  tl.to(".canvas .tbl:not(#t4), .canvas .obj", { opacity: 0.55, duration: 0.45, ease: "sine.inOut" }, 7.1);
+  tl.fromTo("#t4", { scale: 1 }, { scale: 1.035, duration: 0.45, ease: "power2.out" }, 7.1);
+  tl.fromTo("#t4-ring", { opacity: 0, scale: 1.06 }, { opacity: 0.35, scale: 1, duration: 0.45, ease: "power2.out" }, 7.1);
+  tap("#rip-t4", 7.6);
+  tl.to("#t4-ring", { opacity: 1, duration: 0.25, ease: "power3.out" }, 7.6);
+  tl.to("#t4", { scale: 1, duration: 0.35, ease: "power3.out" }, 7.6);
+  tl.to("#p-floorview", { autoAlpha: 0, duration: 0.35, ease: "power2.in" }, 7.9);
+  tl.set(".canvas .tbl:not(#t4), .canvas .obj", { opacity: 1 }, 8.3);
+  tl.set("#p-editor", { autoAlpha: 1 }, 8.05);
+  tl.fromTo("#p-editor", { opacity: 0, x: 30 }, { opacity: 1, x: 0, duration: 0.6, ease: "expo.out", immediateRender: false }, 8.05);
+  const tSum = document.getElementById("t-sum"), tSvc = document.getElementById("t-svc"), tTotal = document.getElementById("t-total"), tCount = document.getElementById("t-count");
+  const items = [
+    { at: 8.8, rip: "#rip-1", tile: "#tile-1", line: "#line-1", from: 0, to: 22, n: 1 },
+    { at: 9.5, rip: "#rip-2", tile: "#tile-2", line: "#line-2", from: 22, to: 36, n: 2 },
+    { at: 10.2, rip: "#rip-3", tile: "#tile-3", line: "#line-3", from: 36, to: 42, n: 3 },
+  ];
+  items.forEach((it) => {
+    tap(it.rip, it.at);
+    tl.fromTo(it.tile + " .flash", { opacity: 1 }, { opacity: 0, duration: 0.6, ease: "power2.out", immediateRender: false }, it.at);
+    tl.fromTo(it.line, { opacity: 0, x: -24 }, { opacity: 1, x: 0, duration: 0.5, ease: "power3.out" }, it.at);
+    counter(tl, tSum, it.from, it.to, it.at, 0.55);
+    counter(tl, tSvc, it.from * 0.1, it.to * 0.1, it.at, 0.55);
+    counter(tl, tTotal, it.from * 1.1, it.to * 1.1, it.at, 0.55, (v) => fmt(v) + " ₾");
+    counter(tl, tCount, it.n - 1, it.n, it.at, 0.2, (v) => String(Math.round(v)));
+  });
+  tl.to("#o-go", { backgroundColor: "#5a4f86", duration: 0.25, ease: "sine.out" }, 10.9);
+  tl.to("#o-go", { scale: 0.97, duration: 0.1, ease: "power2.in" }, 11.15);
+  tl.to("#o-go", { scale: 1, duration: 0.4, ease: "power3.out" }, 11.25);
+  tl.set("#o-go .c1", { autoAlpha: 0 }, 11.25);
+  tl.fromTo("#o-go .c2", { opacity: 0 }, { opacity: 1, duration: 0.3, ease: "power2.out" }, 11.25);
+  // Back to the floor: Table 4 is occupied.
+  tl.to("#p-editor", { autoAlpha: 0, duration: 0.35, ease: "power2.in" }, 11.9);
+  tl.to("#p-floorview", { autoAlpha: 1, duration: 0.45, ease: "power2.out" }, 12.15);
+  tl.set("#t4 .surf.before", { autoAlpha: 0 }, 12.15);
+  tl.to("#t4 .surf.after", { opacity: 1, duration: 0.4, ease: "power2.out" }, 12.15);
+  tl.to(".kpi b.sw .a", { opacity: 0, duration: 0.2 }, 12.3);
+  tl.to(".kpi b.sw .b", { opacity: 1, duration: 0.3 }, 12.4);
+  capOut("#cap-pos", 12.6);
+  scrim(0, 12.8);
+  // The camera steps back: a local application on the restaurant's own terminal.
+  camTo(tl, CAM.term, 13.2, 2.2, "power2.inOut");
+  camTo(tl, CAM.termDrift, 15.4, 2.8, "sine.inOut");
+  tl.to("#glow-pos", { opacity: 0.35, duration: 1.0, ease: "sine.inOut" }, 13.4);
+  tl.to("#hub", { opacity: 1, duration: 0.8, ease: "sine.inOut" }, 16.3);
+  tl.to("#glow-hub", { opacity: 0.45, duration: 0.9, ease: "sine.out" }, 16.3);
+  tl.to(["#lb-pos", "#l-pos"], { opacity: 1, duration: 0.2 }, 17.2);
+  tl.fromTo("#l-pos", { strokeDashoffset: 1 }, { strokeDashoffset: 0, duration: 0.6, ease: "power2.inOut" }, 17.2);
+
+  /* ============ 3 · One restaurant foundation (18.2 – 24.3) ============ */
+  tl.fromTo("#t4-ring", { opacity: 1 }, { opacity: 0.4, duration: 0.3, yoyo: true, repeat: 1, ease: "sine.inOut", immediateRender: false }, 18.1);
+  tl.fromTo("#token", { opacity: 0, scale: 0.6 }, { opacity: 1, scale: 1, duration: 0.4, ease: "power2.out" }, 18.2);
+  camTo(tl, CAM.mid, 18.4, 1.6);
+  travel(tl, "#token", [[1398, 1171], [2020, 1172], [2300, 1172]], 18.7, 1.35, { scale: 0.5 });
+  tl.to("#token", { opacity: 0, duration: 0.15, ease: "power1.in" }, 19.95);
+  tl.to("#pos", { opacity: 0.12, duration: 0.9, ease: "power2.inOut" }, 19.3);
+  tl.to("#pos-stand", { opacity: 0.12, duration: 0.9, ease: "power2.inOut" }, 19.3);
+  tl.fromTo("#record", { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.9, ease: "expo.out" }, 19.4);
+  scrim(1, 18.7);
+  capIn("#cap-found", 19.3);
+  tl.to("#glow-hub", { opacity: 0.85, duration: 0.3, ease: "sine.out" }, 20.1);
+  tl.to("#glow-hub", { opacity: 0.55, duration: 0.6, ease: "sine.inOut" }, 20.42);
+  tl.fromTo("#row-orders .hl", { opacity: 0 }, { opacity: 1, duration: 0.3, ease: "power2.out" }, 20.1);
+  tl.to("#row-orders .st-idle", { opacity: 0, duration: 0.2 }, 20.1);
+  tl.fromTo("#row-orders .st-ok", { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.4, ease: "power3.out" }, 20.15);
+  tl.to("#row-orders .hl", { opacity: 0.3, duration: 0.6, ease: "sine.inOut" }, 20.6);
+  tl.to(["#lb-mgr", "#lb-web", "#l-mgr", "#l-web"], { opacity: 1, duration: 0.2 }, 20.9);
+  tl.fromTo(["#l-mgr", "#l-web"], { strokeDashoffset: 1 }, { strokeDashoffset: 0, duration: 0.9, ease: "power2.inOut", stagger: 0.15 }, 20.9);
+  tl.fromTo("#row-menu .hl", { opacity: 0 }, { opacity: 1, duration: 0.3, ease: "power2.out" }, 21.4);
+  tl.to("#row-menu .hl", { opacity: 0.3, duration: 0.6, ease: "sine.inOut" }, 21.9);
+  tl.to("#p-web", { opacity: 1, duration: 0.05 }, 21.5);
+  tl.fromTo("#p-web", { strokeDashoffset: 0.05 }, { strokeDashoffset: -1, duration: 0.8, ease: "power1.inOut", immediateRender: false }, 21.5);
+  tl.to("#p-web", { opacity: 0, duration: 0.1 }, 22.25);
+  capOut("#cap-found", 22.7);
+  // The synced figure leaves the record for Manager; the camera follows it.
+  tl.fromTo("#token2", { opacity: 0, scale: 0.8 }, { opacity: 1, scale: 1, duration: 0.35, ease: "power2.out" }, 22.5);
+  travel(tl, "#token2", [[2430, 1080], [2520, 1080], [2800, 650], [3200, 650], [3364, 644]], 22.5, 1.7);
+  tl.to("#token2", { opacity: 0, scale: 0.5, duration: 0.3, ease: "power2.in" }, 24.15);
+  camTo(tl, CAM.mgr, 22.6, 1.7);
+  tl.to(["#hub", "#record", "#pos", "#pos-stand"], { opacity: 0, duration: 0.5, ease: "power2.inOut" }, 23.0);
+  tl.to(["#glow-hub", "#glow-pos"], { opacity: 0.1, duration: 0.7, ease: "sine.inOut" }, 23.0);
+  tl.fromTo("#phone", { opacity: 0, y: 70, scale: 0.96, rotation: -1.5 }, { opacity: 1, y: 0, scale: 1, rotation: 0, duration: 1.2, ease: "expo.out" }, 23.0);
+  tl.fromTo("#glow-mgr", { opacity: 0 }, { opacity: 0.5, duration: 1.0, ease: "sine.out" }, 23.3);
+
+  /* ============ 4 · Manager: Dashboard → Inventory (24.3 – 38.6) ============ */
+  camTo(tl, CAM.mgrIn, 24.3, 5.4, "sine.inOut");
+  capIn("#cap-mgr", 24.2);
+  // Connector lines rest while the Manager and website scenes carry captions; they return for the ecosystem.
+  tl.to("#links", { opacity: 0, duration: 0.6, ease: "sine.inOut" }, 24.3);
+  // A. Dashboard: pull to refresh, then the figures land (Manager reads Vynic Cloud).
+  tl.to("#m-scroll", { y: 48, duration: 0.35, ease: "power2.out" }, 24.8);
+  tl.fromTo("#m-spin", { opacity: 0, rotation: 0 }, { opacity: 1, rotation: 200, duration: 0.45, ease: "none" }, 24.8);
+  tl.to("#m-spin", { opacity: 0, rotation: 320, duration: 0.25, ease: "power1.in" }, 25.25);
+  tl.to("#m-scroll", { y: 0, duration: 0.45, ease: "power3.out" }, 25.2);
+  counter(tl, document.getElementById("m-rev"), 2868.65, 2914.85, 25.3, 1.0);
+  counter(tl, document.getElementById("m-open"), 1586.2, 1632.4, 25.3, 0.9);
+  tl.to(".m-row.open .o1", { opacity: 0, duration: 0.2 }, 25.3);
+  tl.to(".m-row.open .o2", { opacity: 1, duration: 0.3 }, 25.35);
+  tl.fromTo("#m-open-row", { backgroundColor: "#fff7ea" }, { backgroundColor: "#ffefd2", duration: 0.35, ease: "power2.out", yoyo: true, repeat: 1 }, 25.3);
+  // More than sales: scroll to the Inventory card.
+  tl.to("#m-scroll", { y: -330, duration: 1.0, ease: "power3.inOut" }, 28.0);
+  tapFx("#tap-open", 29.5);
+  capOut("#cap-mgr", 29.45);
+  tl.to("#m-dash", { x: -60, opacity: 0, duration: 0.35, ease: "power2.in" }, 29.75);
+  tl.to("#m-pill", { x: 177, duration: 0.55, ease: "power3.inOut" }, 29.75);
+  tl.to(".m-nav > i:nth-of-type(1)", { opacity: 1, duration: 0.3 }, 29.9);
+  tl.to(".m-nav > i:nth-of-type(4)", { opacity: 0, duration: 0.2 }, 29.95);
+  tl.set("#m-inv", { autoAlpha: 1 }, 29.95);
+  tl.fromTo("#m-inv", { x: 60, opacity: 0 }, { x: 0, opacity: 1, duration: 0.55, ease: "power3.out", immediateRender: false }, 29.95);
+  capIn("#cap-inv", 30.1);
+  // B. Receive goods: review → confirm.
+  tapFx("#tap-add", 31.0);
+  tl.set("#m-recv", { autoAlpha: 1 }, 31.15);
+  tl.fromTo("#m-recv", { y: 856 }, { y: 0, duration: 0.6, ease: "expo.out", immediateRender: false }, 31.15);
+  tl.to("#m-inv", { opacity: 0, duration: 0.3, ease: "power1.in" }, 31.15);
+  tl.fromTo("#r-debt", { boxShadow: "0 0 0 0 rgba(245, 158, 11, 0)" }, { boxShadow: "0 0 0 3px rgba(245, 158, 11, 0.5)", duration: 0.35, ease: "power2.out", yoyo: true, repeat: 1 }, 32.4);
+  tapFx("#tap-go", 33.3);
+  tl.to("#m-recv", { y: 856, duration: 0.45, ease: "power3.in" }, 33.5);
+  tl.set("#m-recv", { autoAlpha: 0 }, 33.96);
+  tl.to("#m-inv", { opacity: 1, duration: 0.35, ease: "power1.out" }, 33.55);
+  counter(tl, document.getElementById("inv-today"), 0, 60, 33.95, 0.6, (v) => fmt(v) + " ₾");
+  tl.to(".i-chip .lo2", { opacity: 0, y: -8, duration: 0.2, ease: "power2.in" }, 34.0);
+  tl.fromTo(".i-chip .lo1", { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.3, ease: "power3.out" }, 34.1);
+  tl.to("#inv-empty", { opacity: 0, duration: 0.15 }, 33.95);
+  tl.fromTo("#inv-rcpt", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.5, ease: "power3.out" }, 34.05);
+  // Stock balances: the flour arrived; another item is low.
+  tapFx("#tap-stock", 35.3);
+  tl.to("#m-inv", { x: -60, opacity: 0, duration: 0.35, ease: "power2.in" }, 35.5);
+  tl.set("#m-stock", { autoAlpha: 1 }, 35.7);
+  tl.fromTo("#m-stock", { x: 60, opacity: 0 }, { x: 0, opacity: 1, duration: 0.55, ease: "power3.out", immediateRender: false }, 35.7);
+  tl.fromTo("#s-flour", { boxShadow: "0 0 0 0 rgba(16, 185, 129, 0)" }, { boxShadow: "0 0 0 3px rgba(16, 185, 129, 0.45)", duration: 0.4, ease: "power2.out", yoyo: true, repeat: 1 }, 36.3);
+  capOut("#cap-inv", 38.4);
+  tl.to("#glow-mgr", { opacity: 0.12, duration: 0.8, ease: "sine.inOut" }, 38.8);
+
+  /* ============ 5 · The restaurant online: SaaS → Custom (38.6 – 52.7) ============ */
+  camTo(tl, CAM.saas, 38.6, 1.7);
+  tl.to("#p-web", { opacity: 1, duration: 0.05 }, 39.2);
+  tl.fromTo("#p-web", { strokeDashoffset: 0.05 }, { strokeDashoffset: -1, duration: 0.8, ease: "power1.inOut", immediateRender: false }, 39.2);
+  tl.to("#p-web", { opacity: 0, duration: 0.1 }, 39.95);
+  tl.fromTo("#saas", { opacity: 0, y: 60, scale: 0.97, rotationX: 6, transformPerspective: 2400, transformOrigin: "50% 100%" },
+    { opacity: 1, y: 0, scale: 1, rotationX: 0, duration: 1.3, ease: "expo.out" }, 39.3);
+  tl.fromTo("#glow-web", { opacity: 0 }, { opacity: 0.4, duration: 1.0, ease: "sine.out" }, 39.5);
+  capIn("#cap-saas", 40.2);
+  // A fully populated site: about → menu → gallery → hours and contact …
+  const saasScroll = scrollPage("#saas-page", 68, 834);
+  saasScroll(-1816, 41.3, 2.6, "power2.inOut");
+  // … then the visitor taps "მენიუ".
+  tapFx("#tap-nav", 43.9);
+  saasScroll(-860, 44.1, 1.1, "power3.inOut");
+  capOut("#cap-saas", 46.6);
+  // The shared content object: one dish lifts out of the SaaS menu …
+  tl.set("#dish", { autoAlpha: 1 }, 46.5);
+  tl.set("#saas-dish", { opacity: 0 }, 46.52);
+  tl.fromTo("#dish", { y: 0, scale: 1, boxShadow: "0 0 0 rgba(0,0,0,0)" }, { y: -14, scale: 1.04, boxShadow: "0 26px 50px rgba(0,0,0,0.35)", duration: 0.5, ease: "power3.out" }, 46.52);
+  // … the camera follows it to a bespoke frontend on the same foundation …
+  gsap.set("#vk-page", { y: -834 });
+  const vkScroll = scrollPage("#vk-page", 0, 834);
+  tl.fromTo("#vk", { opacity: 0, y: 40 }, { opacity: 1, y: 0, duration: 0.9, ease: "expo.out" }, 46.9);
+  tl.fromTo("#glow-vk", { opacity: 0 }, { opacity: 0.35, duration: 1.0, ease: "sine.out" }, 47.3);
+  camTo(tl, CAM.vk, 47.0, 2.0, "power2.inOut");
+  travel(tl, "#dish", [[0, -14], [1080, -110], [2160, -68]], 47.1, 1.9);
+  tl.to("#dish .dc-vk", { opacity: 1, duration: 0.45, ease: "sine.inOut" }, 47.9);
+  // … and settles into the Vankisi menu exactly where its row is.
+  tl.to("#dish", { scale: 1, boxShadow: "0 0 0 rgba(0,0,0,0)", duration: 0.35, ease: "power3.out" }, 49.0);
+  tl.set("#vk-row1", { opacity: 1 }, 49.38);
+  tl.set("#dish", { autoAlpha: 0 }, 49.4);
+  tl.to("#glow-web", { opacity: 0.15, duration: 0.8, ease: "sine.inOut" }, 48.0);
+  tl.to("#saas", { opacity: 0, duration: 0.7, ease: "sine.inOut" }, 48.2);
+  capIn("#cap-custom", 49.3);
+  // The bespoke brand: scroll up to Vankisi's own hero.
+  vkScroll(0, 50.3, 1.4, "power2.inOut");
+  capOut("#cap-custom", 52.65);
+  scrim(0, 52.7, 0.9);
+
+  /* ============ 6 · One Vynic ecosystem (52.7 – 56.8) ============ */
+  camTo(tl, CAM.eco, 52.7, 1.5, "power2.inOut");
+  tl.to("#saas", { scale: 0.72, transformOrigin: "0% 0%", duration: 1.4, ease: "power3.inOut" }, 52.8);
+  tl.to("#vk", { x: -660, scale: 0.72, transformOrigin: "0% 0%", duration: 1.4, ease: "power3.inOut" }, 52.8);
+  tl.to(["#hub", "#pos", "#pos-stand"], { opacity: 1, duration: 0.7, ease: "power2.out" }, 52.9);
+  tl.to("#links", { opacity: 1, duration: 0.7, ease: "sine.inOut" }, 52.9);
+  tl.to("#saas", { opacity: 1, duration: 0.7, ease: "power2.out" }, 52.8);
+  tl.to(["#glow-pos", "#glow-mgr", "#glow-web", "#glow-vk"], { opacity: 0.3, duration: 0.8, ease: "sine.inOut" }, 53.0);
+  tl.to("#glow-hub", { opacity: 0.8, duration: 0.8, ease: "sine.inOut" }, 53.0);
+  ["#p-pos", "#p-mgr", "#p-web"].forEach((sel, i) => {
+    tl.to(sel, { opacity: 1, duration: 0.05 }, 54.3);
+    tl.fromTo(sel, { strokeDashoffset: 0.05 }, { strokeDashoffset: -1, duration: i === 1 ? 0.8 : 0.7, ease: "power1.inOut", immediateRender: false }, 54.3);
+  });
+  tl.to(["#p-pos", "#p-mgr", "#p-web"], { opacity: 0, duration: 0.1 }, 55.1);
+  capIn("#cap-eco", 54.0);
+  capOut("#cap-eco", 56.55);
+
+  /* ============ 7 · Lockup (56.8 – 60.0) ============ */
+  const fold = [["#pos", 420, -80], ["#pos-stand", 420, -80], ["#phone", -420, 150], ["#saas", -380, -230], ["#vk", -1200, -300]];
+  fold.forEach(([sel, dx, dy]) => {
+    // #vk rests at x -660 here and the others at 0, so absolute targets are seek-safe.
+    tl.to(sel, { opacity: 0, scale: 0.6, x: dx, y: dy, duration: 0.6, ease: "power3.in" }, 56.8);
+  });
+  tl.to(["#l-pos", "#l-mgr", "#l-web"], { strokeDashoffset: -1, duration: 0.5, ease: "power2.in" }, 56.8);
+  tl.to(".link-base", { opacity: 0, duration: 0.5, ease: "power2.in" }, 56.8);
+  tl.set(["#l-pos", "#l-mgr", "#l-web"], { opacity: 0 }, 57.32);                 // no round cap left behind
+  tl.to(["#glow-pos", "#glow-mgr", "#glow-web", "#glow-vk"], { opacity: 0, duration: 0.6 }, 56.8);
+  camTo(tl, CAM.lock, 57.0, 0.9);
+  camTo(tl, CAM.lockIn, 57.9, 2.1, "sine.inOut");
+  tl.to("#hub-tile", { opacity: 0, duration: 0.6, ease: "power2.inOut" }, 57.2);
+  tl.set("#wordmark", { autoAlpha: 1 }, 57.55);
+  tl.fromTo("#wordmark-text", { opacity: 0, x: -44, y: 34, filter: "blur(14px)" }, { opacity: 1, x: -44, y: 0, filter: "blur(0px)", duration: 1.0, ease: "expo.out", immediateRender: false }, 57.6);
+  tl.set("#tagline", { autoAlpha: 1 }, 57.9);
+  tl.fromTo("#tagline-text", { x: 58, yPercent: 110 }, { x: 58, yPercent: 0, duration: 0.8, ease: "expo.out" }, 57.95);
+  tl.to("#glow-hub", { opacity: 0.55, duration: 1.1, ease: "sine.inOut" }, 57.6);
+
+  if (vars.loopOut === true) {
+    tl.to(["#hub", "#wordmark", "#tagline"], { opacity: 0, duration: 0.5, ease: "power2.in" }, 59.45);
+    tl.to(["#glow-hub", "#bg-grid"], { opacity: 0, duration: 0.5, ease: "power2.in" }, 59.45);
+  }
+
+  window.__timelines = window.__timelines || {};
+  window.__timelines["main"] = tl;
+})();
+    </script>
+  </body>
+</html>

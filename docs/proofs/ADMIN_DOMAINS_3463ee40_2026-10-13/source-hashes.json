@@ -1,0 +1,22 @@
+{
+  "apps/backend/src/platform/platform-venue-config.service.ts": "857a0f369f12d876d95fa3883a697a4099965a71c7b97187450da0cc04435f95",
+  "apps/backend/src/platform/platform-venues.controller.ts": "66d2174831c5bce6ab94821c5728488dd3f6c1b989c7d03f38ca0598d740acfd",
+  "apps/backend/src/customer/customer-website.controller.ts": "8532ddaaf8b0e0ea6dd54aee6ac2cfa2e399174c15e70ecaf1da81261f69519b",
+  "apps/backend/src/website/core/hostname-requests.ts": "1adb707095ffdc9e4080344ec7c85522520e55159679a4aad70378e40b59b6d6",
+  "apps/backend/src/website/core/website-core.service.ts": "727f7d78012f042dfdaeb84cf14b737e2575ed6cdfeebd03bcaad768a5a709e1",
+  "apps/backend/src/website/provisioning/website-provisioning.integration.spec.ts": "b4163189b7155c2f66b0ce7daec5e41cbc8df21cf20820182d026bb3c5c05ac0",
+  "apps/platform-web/src/platform/pages/venue/VenueWebsiteTab.tsx": "62f78ea0345f75237ac6695d2133bbcbf750f0d307d7d6ccb30927b3895307ea",
+  "apps/platform-web/src/platform/pages/venue/HostnameReviews.tsx": "3f957055c5f86284ac445941c6b09c371ba052a4fdfb2fc90f06f0b827fe4030",
+  "apps/platform-web/src/platform/api.ts": "7909186c3e72e1a744c75403364bb95b0518b330dcc2384c5719f70c143bcc54",
+  "apps/platform-web/src/customer/HostnameRequest.tsx": "f5b3caf60afe7f752e80985d0eebd7ecfa498d715df120bfe87323e3000299fb",
+  "apps/platform-web/src/test/commercial-control-ux.test.tsx": "ff79ae342412500f946360ce3010d763a7d3d5110a90cd74af2916d95458f3f4",
+  "apps/platform-web/src/test/product-website.integration.test.tsx": "631fa9e829feb547d967938b5fd055a43dced901499c04b30765407108f81e40",
+  "docs/WEBSITE_SAAS_HOSTNAMES.md": "0a8594b225e333341e0ba2e0ad4691f12c2cfdc2f27d79afc1a9bc081ec2080b",
+  "docs/CUSTOM_WEBSITES.md": "9bd73b196e8d32e2e403c17cd324eb0af5ccba128510afaa4dab01340456382a",
+  "docs/agent-state/VYNIC_PROJECT_STATE.md": "204496be17cfeeb71e0e75414ea4d89ee961c2e91316435a7326d6b9f41311f8",
+  "docs/agent-state/VYNIC_DECISIONS.md": "3604af067741a06604c774d57772f0e879a4eebeefd028ecc507e20e6bd4a8a3",
+  "apps/backend/src/platform/platform-domain-hostname.ts": "3c65ea4ea427e5f5f0f3ea1d5a262bbc16e0315d8aeb62c411f626445b734a68",
+  "apps/backend/src/platform/platform-domains.integration.spec.ts": "34f324fbd10495a923edea2820c27bee349d63b4a4ea71296ea25e379ff7f9af",
+  "apps/platform-web/src/platform/types.ts": "d53e12155b5373bc0063041a43a193c78f4213d3c6d7193d01ed9902ee0a0bc9",
+  "docs/agent-state/VYNIC_CODE_MAP.md": "a3a99d6030872bce69489f0fc9e0fc01ac94b7a8a7bfc42991ba19da51013cb0"
+}

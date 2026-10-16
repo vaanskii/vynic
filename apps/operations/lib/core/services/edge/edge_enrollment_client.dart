@@ -114,6 +114,7 @@ class EdgeEnrollmentClient {
               'enrollmentCode': code,
               'installationId': installationId,
               'platform': platform,
+              'managerSetupVersion': 1,
               'menuClient': menuClient ?? MenuClientCompatibility.report,
               if (displayName != null && displayName.isNotEmpty)
                 'displayName': displayName,
@@ -149,7 +150,10 @@ class EdgeEnrollmentClient {
     final credential = _string(body['credential']);
     final venue = body['venue'];
     final device = body['device'];
-    if (credential == null || venue is! Map || device is! Map) {
+    if (credential == null ||
+        venue is! Map ||
+        _string(venue['id']) == null ||
+        device is! Map) {
       return const EdgeEnrollmentResult.failed(
         EdgeEnrollmentOutcome.serverError,
         message: 'The server did not return a usable device credential.',

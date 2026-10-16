@@ -1,0 +1,21 @@
+{
+  "recordedAtUTC": "2026-10-06T16:04:14.109831+00:00",
+  "scope": "Frozen isolated Flutter candidate; synthetic printer/RPC only",
+  "sourceReceiptSHA256": "c2a83b9a97a37bd754b89c016df8f83929d234d4af688b5303f748d1366347d6",
+  "sourceFiles": 898,
+  "sourceOriginalCopyAfterEqual": true,
+  "visibleTests": 535,
+  "selectedSuites": 36,
+  "skipped": 0,
+  "errors": 0,
+  "testMachineDoneSuccess": true,
+  "analysisFiles": 59,
+  "analysisClean": true,
+  "formattedRootDartFiles": 6,
+  "formatChangedFiles": 0,
+  "fixtureSHA256": "54759339446b8ab938b7d1f6162fb7f9bd8b240f26404b5d97718958521efc53",
+  "testsSHA256": "9e06a4f306a5d438becb161e1ee3a3e44bc1ace34a432029515e128879d51f4f",
+  "analysisSHA256": "4d3bf77f0057b1bd4f6b02bf829e1f5a71fadecb662dcd41d9b7fac0d2e76af1",
+  "physicalJobs": 0,
+  "exactCommittedRuntime": false
+}

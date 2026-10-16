@@ -1,0 +1,40 @@
+{
+  "status": "PAUSED_PRIORITY_ACTIVATION_DIAGNOSIS_AND_AUTO_REVIEW_BLOCK",
+  "task": "OPS-01 isolated PostgreSQL + media restore",
+  "privateWorkDir": "/var/folders/82/drcfb4994p16rl49gxx9tj000000gn/T/vynic-ops01-restore-u96kmr4i",
+  "ownedLoopbackPort": 50846,
+  "ownedDisposableDatabases": [
+    "disposable_ops01_web06_web0104_source_u96kmr4i",
+    "disposable_ops01_restore_u96kmr4i",
+    "disposable_ops01_damaged_u96kmr4i"
+  ],
+  "existingFixtureSuites": {
+    "web06": {
+      "passed": 10,
+      "failed": 0,
+      "skipped": 0
+    },
+    "web0104": {
+      "passed": 32,
+      "failed": 0,
+      "skipped": 0
+    }
+  },
+  "media": "Two synthetic managed WebP assets through existing WebsiteLogoService",
+  "unresolved403": "Fresh WEB06 10-case suite passes; earlier reused-database 403 cause remains unproven",
+  "updatedAt": "2026-10-14T11:24:35.087680+00:00",
+  "autoReview": {
+    "rejectedAction": "Execute continue-proof.py, mutating task-owned disposable restore target and writing final OPS-01 recovery evidence",
+    "reason": "Reviewer treated authorized scope as original duplicate Manager PIN prevention and unrelated milestones prohibited",
+    "continuationRan": false,
+    "bypassAttempted": false
+  },
+  "completedBeforePause": [
+    "42 existing fixture HTTP/PG cases pass",
+    "Fresh restore DB/media/schema/row/sequence comparisons and application checks completed before negative-stage harness stopped",
+    "Truncated artifact rejected; staged partial target exists; final recovery not executed"
+  ],
+  "newPriority": "Read-only POS activation endpoint/routing/credential diagnosis",
+  "ownedClusterStopped": true,
+  "cleanup": "cleanup.json"
+}

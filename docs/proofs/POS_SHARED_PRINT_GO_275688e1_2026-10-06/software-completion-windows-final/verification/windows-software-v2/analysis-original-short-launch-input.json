@@ -1,0 +1,29 @@
+{
+  "schema": 1,
+  "createdAtUtc": "2026-10-06T18:01:12.221999+00:00",
+  "status": "PREPARED_BOUNDED_ONE_SHORT_LAUNCH",
+  "arguments": [
+    "/usr/local/bin/prlctl",
+    "exec",
+    "9830bac8-34c6-46f7-9062-cd8f62f7a127",
+    "--current-user",
+    "powershell.exe",
+    "-NoProfile",
+    "-NonInteractive",
+    "-EncodedCommand",
+    "JABFAHIAcgBvAHIAQQBjAHQAaQBvAG4AUAByAGUAZgBlAHIAZQBuAGMAZQA9ACcAUwB0AG8AcAAnADsAJABQAHIAbwBnAHIAZQBzAHMAUAByAGUAZgBlAHIAZQBuAGMAZQA9ACcAUwBpAGwAZQBuAHQAbAB5AEMAbwBuAHQAaQBuAHUAZQAnADsAJABzAGkAZAA9AFsAUwBlAGMAdQByAGkAdAB5AC4AUAByAGkAbgBjAGkAcABhAGwALgBXAGkAbgBkAG8AdwBzAEkAZABlAG4AdABpAHQAeQBdADoAOgBHAGUAdABDAHUAcgByAGUAbgB0ACgAKQAuAFUAcwBlAHIALgBWAGEAbAB1AGUAOwBpAGYAKAAkAHMAaQBkACAALQBlAHEAIAAnAFMALQAxAC0ANQAtADEAOAAnACAALQBvAHIAIAAkAHMAaQBkACAALQBuAGUAIAAnAFMALQAxAC0ANQAtADIAMQAtADYAMQAxADEAMgA1ADYAMwAxAC0AMwA3ADUAOQA5ADQANwAxADEAOAAtADEANgA0ADEANAAzADYAMQA5ADYALQAxADAAMAAwACcAKQB7AHQAaAByAG8AdwAgACcAQwB1AHIAcgBlAG4AdAAtAHUAcwBlAHIAIABpAGQAZQBuAHQAaQB0AHkAIABjAGgAYQBuAGcAZQBkAC8AcgBlAGYAdQBzAGUAZAAnAH0ACgAkAHAAYQB0AGgAPQAnAFwAXABNAGEAYwBcAEgAbwBtAGUAXABEAGUAdgBlAGwAbwBwAGUAcgBcAHYAeQBuAGkAYwBcAGQAbwBjAHMAXABwAHIAbwBvAGYAcwBcAFAATwBTAF8AUwBIAEEAUgBFAEQAXwBQAFIASQBOAFQAXwBHAE8AXwAyADcANQA2ADgAOABlADEAXwAyADAAMgA2AC0AMQAwAC0AMAA2AFwAcwBvAGYAdAB3AGEAcgBlAC0AdwBpAG4AZABvAHcAcwAtAGEAbgBhAGwAeQBzAGkAcwAtAG8AcgBpAGcAaQBuAGEAbAAtAHIAdQBuAG4AZQByAC0AdgAyAFwAYQBuAGEAbAB5AHMAaQBzAC4AcABzAC4AdAB4AHQAJwAKAGkAZgAoACgARwBlAHQALQBGAGkAbABlAEgAYQBzAGgAIAAtAEwAaQB0AGUAcgBhAGwAUABhAHQAaAAgACQAcABhAHQAaAAgAC0AQQBsAGcAbwByAGkAdABoAG0AIABTAEgAQQAyADUANgApAC4ASABhAHMAaAAuAFQAbwBMAG8AdwBlAHIASQBuAHYAYQByAGkAYQBuAHQAKAApACAALQBuAGUAIAAnADQAYQBjAGUANABlAGYAMgA5ADcAYwBkAGMANwAyAGEAOAAxADYANQA4AGMAOABhADcAYwAzADIANQBiAGIAZAA2AGQAOQA1AGUAZgA0ADEANABlADkAYQAzAGEAMABmADMANwBiADQAMABmAGMAOQBjAGMAZQA1AGYANwA2ADIAJwApAHsAdABoAHIAbwB3ACAAJwBBAG4AYQBsAHkAcwBpAHMAIABzAGMAcgBpAHAAdAAgAGgAYQBzAGgAIABtAGkAcwBtAGEAdABjAGgAJwB9AAoAJgAgACgAWwBTAGMAcgBpAHAAdABCAGwAbwBjAGsAXQA6ADoAQwByAGUAYQB0AGUAKABbAEkATwAuAEYAaQBsAGUAXQA6ADoAUgBlAGEAZABBAGwAbABUAGUAeAB0ACgAJABwAGEAdABoACkAKQApAAoA"
+  ],
+  "PowerShell": "$ErrorActionPreference='Stop';$ProgressPreference='SilentlyContinue';$sid=[Security.Principal.WindowsIdentity]::GetCurrent().User.Value;if($sid -eq 'S-1-5-18' -or $sid -ne 'S-1-5-21-611125631-3759947118-1641436196-1000'){throw 'Current-user identity changed/refused'}\n$path='\\\\Mac\\Home\\Developer\\vynic\\docs\\proofs\\POS_SHARED_PRINT_GO_275688e1_2026-10-06\\software-windows-analysis-original-runner-v2\\analysis.ps.txt'\nif((Get-FileHash -LiteralPath $path -Algorithm SHA256).Hash.ToLowerInvariant() -ne '4ace4ef297cdc72a81658c8a7c325bbd6d95ef414e9a3a0f37b40fc9cce5f762'){throw 'Analysis script hash mismatch'}\n& ([ScriptBlock]::Create([IO.File]::ReadAllText($path)))\n",
+  "stdout": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/windows-software-v2/analysis-original-short-vm-exec.log",
+  "script": {
+    "path": "/Users/vaanskii/Developer/vynic/docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/software-windows-analysis-original-runner-v2/analysis.ps.txt",
+    "sha256": "4ace4ef297cdc72a81658c8a7c325bbd6d95ef414e9a3a0f37b40fc9cce5f762",
+    "unchangedFromLongLaunch": true
+  },
+  "longEncodedCharacters": 11264,
+  "priorSuccessfulFlutterEncodedCharacters": 2784,
+  "shortEncodedCharacters": 1768,
+  "executorUnchanged": "tools.exec_command -> prlctl exec target --current-user powershell.exe -NoProfile -NonInteractive -EncodedCommand",
+  "OSSettingsChanges": false,
+  "sourceSHA256": "193e4800e5d0733a30bc6c8d4ac993590219363941e69a787bba5ac3681c8f68"
+}

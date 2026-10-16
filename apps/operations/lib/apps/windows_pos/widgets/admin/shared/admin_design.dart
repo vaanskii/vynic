@@ -1,4 +1,6 @@
+import 'package:vynic/apps/windows_pos/widgets/shared/pos_surface.dart';
 import 'package:flutter/material.dart';
+import 'package:vynic/core/ui/pos_theme.dart';
 import 'package:vynic/core/ui/vynic_floor_tokens.dart';
 
 /// The admin panel's design tokens.
@@ -72,7 +74,11 @@ abstract final class AdminDesign {
       elevation: 0,
       shadowColor: Colors.transparent,
       padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
-      textStyle: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700),
+      textStyle: const TextStyle(
+        fontFamily: PosTheme.fontFamily,
+        fontSize: 13.5,
+        fontWeight: FontWeight.w700,
+      ),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(radius),
       ),
@@ -89,7 +95,11 @@ abstract final class AdminDesign {
         color: foreground == danger ? VynicFloorTokens.dangerBorder : border,
       ),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
-      textStyle: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600),
+      textStyle: const TextStyle(
+        fontFamily: PosTheme.fontFamily,
+        fontSize: 13.5,
+        fontWeight: FontWeight.w600,
+      ),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(radius),
       ),
@@ -99,10 +109,8 @@ abstract final class AdminDesign {
 
 /// The heading at the top of an admin section.
 ///
-/// Same API as before — icon, title, subtitle, optional action and badge — but
-/// it now matches the page headings on the home sections: a 22px title over one
-/// muted line, no oversized display type, and a soft lavender icon tile instead
-/// of a teal one.
+/// Uses the operational page heading, with responsive actions and badges.
+/// The icon parameter remains available to existing section call sites.
 class AdminSectionHeader extends StatelessWidget {
   const AdminSectionHeader({
     super.key,
@@ -121,83 +129,31 @@ class AdminSectionHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
-      decoration: AdminDesign.panelDecoration(),
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
       child: LayoutBuilder(
         builder: (context, constraints) {
-          final isCompact = constraints.maxWidth < 620;
-          final titleContent = Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Container(
-                width: 42,
-                height: 42,
-                decoration: BoxDecoration(
-                  color: VynicFloorTokens.accentSoft,
-                  borderRadius: BorderRadius.circular(AdminDesign.radius),
-                  border: Border.all(color: const Color(0xFFE2DCF2)),
-                ),
-                child: Icon(icon, color: VynicFloorTokens.accentText, size: 20),
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      title,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        color: VynicFloorTokens.text,
-                        fontSize: 22,
-                        fontWeight: FontWeight.w800,
-                        height: 1.15,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      subtitle,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        color: VynicFloorTokens.textMuted,
-                        fontSize: 13,
-                        height: 1.35,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              if (!isCompact && badge != null) ...[
-                const SizedBox(width: 12),
-                badge!,
-              ],
-            ],
+          final compact = constraints.maxWidth < 620;
+          final actions = Wrap(
+            spacing: 12,
+            runSpacing: 12,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [if (badge != null) badge!, if (action != null) action!],
           );
-
-          if (!isCompact || action == null) {
-            return Row(
-              children: [
-                Expanded(child: titleContent),
-                if (action != null) ...[const SizedBox(width: 16), action!],
-              ],
-            );
-          }
-
           return Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              titleContent,
-              if (badge != null) ...[
-                const SizedBox(height: 12),
-                Align(alignment: Alignment.centerLeft, child: badge!),
+              PosPageHeading(
+                title: title,
+                subtitle: subtitle,
+                trailing: compact || (badge == null && action == null)
+                    ? null
+                    : actions,
+              ),
+              if (compact && (badge != null || action != null)) ...[
+                const SizedBox(height: 16),
+                actions,
               ],
-              const SizedBox(height: 14),
-              action!,
             ],
           );
         },

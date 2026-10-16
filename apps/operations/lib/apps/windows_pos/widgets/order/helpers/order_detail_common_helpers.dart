@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:vynic/core/models/order.dart';
+import 'package:vynic/core/models/user.dart';
 import 'package:vynic/core/models/reservation.dart';
 import 'package:vynic/core/models/table_layout.dart';
 import 'package:vynic/core/services/database_service.dart';
@@ -7,6 +8,13 @@ import 'package:vynic/core/utils/table_naming.dart';
 import 'package:vynic/apps/windows_pos/widgets/floor_plan/floor_plan_names.dart';
 
 class OrderDetailCommonHelpers {
+  /// Shared admission for the existing order editor and its direct Takeaways entry.
+  static bool canModifyOrder(User user, Order order) {
+    if (user.isAdmin || !DatabaseService.isTableCloseRestrictedToOwner())
+      return true;
+    return (order.openedByUserId ?? order.createdBy) == user.username;
+  }
+
   static String tableDisplayName({
     required String tableNumber,
     required String floor,

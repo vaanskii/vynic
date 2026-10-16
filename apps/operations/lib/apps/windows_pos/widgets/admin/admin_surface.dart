@@ -1,5 +1,6 @@
 import 'package:vynic/core/widgets/pos_text.dart';
 import 'package:flutter/material.dart';
+import 'package:vynic/core/ui/pos_theme.dart';
 import 'package:vynic/apps/windows_pos/widgets/shared/pos_surface.dart';
 import 'package:vynic/core/ui/vynic_floor_tokens.dart';
 
@@ -154,6 +155,7 @@ abstract final class AdminTheme {
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
+          minimumSize: PosTheme.controlSize,
           backgroundColor: VynicFloorTokens.accentStrong,
           foregroundColor: VynicFloorTokens.panel,
           disabledBackgroundColor: VynicFloorTokens.badgeFill,
@@ -161,7 +163,7 @@ abstract final class AdminTheme {
           elevation: 0,
           shadowColor: Colors.transparent,
           padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
-          textStyle: const TextStyle(
+          textStyle: base.textTheme.labelLarge?.copyWith(
             fontSize: 13.5,
             fontWeight: FontWeight.w700,
           ),
@@ -172,11 +174,12 @@ abstract final class AdminTheme {
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
+          minimumSize: PosTheme.controlSize,
           backgroundColor: VynicFloorTokens.panel,
           foregroundColor: VynicFloorTokens.text,
           disabledForegroundColor: VynicFloorTokens.textFaint,
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
-          textStyle: const TextStyle(
+          textStyle: base.textTheme.labelLarge?.copyWith(
             fontSize: 13.5,
             fontWeight: FontWeight.w600,
           ),
@@ -188,10 +191,11 @@ abstract final class AdminTheme {
       ),
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
+          minimumSize: PosTheme.controlSize,
           foregroundColor: VynicFloorTokens.accentText,
           disabledForegroundColor: VynicFloorTokens.textFaint,
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-          textStyle: const TextStyle(
+          textStyle: base.textTheme.labelLarge?.copyWith(
             fontSize: 13.5,
             fontWeight: FontWeight.w600,
           ),
@@ -202,6 +206,7 @@ abstract final class AdminTheme {
       ),
       iconButtonTheme: IconButtonThemeData(
         style: IconButton.styleFrom(
+          minimumSize: PosTheme.controlSize,
           foregroundColor: VynicFloorTokens.textMuted,
           highlightColor: VynicFloorTokens.accentSoft,
         ),
@@ -214,15 +219,15 @@ abstract final class AdminTheme {
           horizontal: 14,
           vertical: 13,
         ),
-        hintStyle: const TextStyle(
+        hintStyle: base.textTheme.bodyMedium?.copyWith(
           color: VynicFloorTokens.textFaint,
           fontSize: 13.5,
         ),
-        labelStyle: const TextStyle(
+        labelStyle: base.textTheme.bodyMedium?.copyWith(
           color: VynicFloorTokens.textMuted,
           fontSize: 13.5,
         ),
-        floatingLabelStyle: const TextStyle(
+        floatingLabelStyle: base.textTheme.bodyMedium?.copyWith(
           color: VynicFloorTokens.accentText,
           fontSize: 13.5,
         ),
@@ -255,7 +260,7 @@ abstract final class AdminTheme {
           borderRadius: BorderRadius.circular(radius),
           side: const BorderSide(color: VynicFloorTokens.panelBorder),
         ),
-        textStyle: const TextStyle(
+        textStyle: base.textTheme.bodyMedium?.copyWith(
           color: VynicFloorTokens.text,
           fontSize: 13.5,
         ),
@@ -313,12 +318,12 @@ abstract final class AdminTheme {
         backgroundColor: VynicFloorTokens.panel,
         surfaceTintColor: Colors.transparent,
         elevation: 6,
-        titleTextStyle: const TextStyle(
+        titleTextStyle: base.textTheme.titleLarge?.copyWith(
           color: VynicFloorTokens.text,
           fontSize: 18,
           fontWeight: FontWeight.w800,
         ),
-        contentTextStyle: const TextStyle(
+        contentTextStyle: base.textTheme.bodyMedium?.copyWith(
           color: VynicFloorTokens.textMuted,
           fontSize: 13.5,
           height: 1.4,
@@ -346,7 +351,7 @@ abstract final class AdminTheme {
         backgroundColor: VynicFloorTokens.badgeFill,
         selectedColor: VynicFloorTokens.accentSoft,
         side: const BorderSide(color: VynicFloorTokens.panelBorder),
-        labelStyle: const TextStyle(
+        labelStyle: base.textTheme.labelLarge?.copyWith(
           color: VynicFloorTokens.text,
           fontSize: 12.5,
           fontWeight: FontWeight.w600,
@@ -360,11 +365,14 @@ abstract final class AdminTheme {
           color: VynicFloorTokens.text,
           borderRadius: BorderRadius.circular(8),
         ),
-        textStyle: const TextStyle(color: VynicFloorTokens.panel, fontSize: 12),
+        textStyle: base.textTheme.bodySmall?.copyWith(
+          color: VynicFloorTokens.panel,
+          fontSize: 12,
+        ),
       ),
       snackBarTheme: SnackBarThemeData(
         backgroundColor: VynicFloorTokens.text,
-        contentTextStyle: const TextStyle(
+        contentTextStyle: base.textTheme.bodyMedium?.copyWith(
           color: VynicFloorTokens.panel,
           fontSize: 13.5,
         ),

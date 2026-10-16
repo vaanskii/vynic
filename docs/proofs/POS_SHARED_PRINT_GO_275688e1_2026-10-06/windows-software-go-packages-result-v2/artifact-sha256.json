@@ -1,0 +1,77 @@
+{
+  "schema": 2,
+  "files": {
+    "amd64-printer-agent-command.stderr.log": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "amd64-printer-agent-command.stdout.log": {
+      "sha256": "9df2e56041ed720bcf65cb118c03c59e9d4308e6cf7b468271cab762a5dfb0e0",
+      "bytes": 1829
+    },
+    "amd64-printeragent.stderr.log": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "amd64-printeragent.stdout.log": {
+      "sha256": "22d623b85629b212b42e77d3e24e4c3a0a81a4e4cacb3a793e6e166bfe47d09d",
+      "bytes": 6099
+    },
+    "amd64-printerdaemon.stderr.log": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "amd64-printerdaemon.stdout.log": {
+      "sha256": "a61c497461fb402aa92142b520a1016c6811f488e893e07155782a8292ff365f",
+      "bytes": 16020
+    },
+    "amd64-printerprovisioning.stderr.log": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "amd64-printerprovisioning.stdout.log": {
+      "sha256": "82f467e9e80649e2c148c7402b0c14ee40361d4360055ba584410d0b6da45127",
+      "bytes": 18107
+    },
+    "arm64-printer-agent-command.stderr.log": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "arm64-printer-agent-command.stdout.log": {
+      "sha256": "8a532adfae0cfe2b158d33e658b117a665969753d8233460d9669b38ad2f990c",
+      "bytes": 1829
+    },
+    "arm64-printeragent.stderr.log": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "arm64-printeragent.stdout.log": {
+      "sha256": "f1ad5e89b405cb6916f42dc476a04dc0c5e428c8d686dc9c4b8ecf30f3d15052",
+      "bytes": 6099
+    },
+    "arm64-printerdaemon.stderr.log": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "arm64-printerdaemon.stdout.log": {
+      "sha256": "49cd26559a0e0b6a4aae9313a6c57d7fc123c4b5fe259cb045cc2049954e8efc",
+      "bytes": 16020
+    },
+    "arm64-printerprovisioning.stderr.log": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "arm64-printerprovisioning.stdout.log": {
+      "sha256": "88e4bb10c67f18642f4621fabc499d3e25f39a52cda9b2074c80d6eb195e65c6",
+      "bytes": 18107
+    },
+    "verified-windows-software-go-packages.json": {
+      "sha256": "60a07b83aa83d4e60cda75c6035715b8d1eb7dae4ef6225dfe1c242b182f06ae",
+      "bytes": 139134
+    },
+    "windows-software-go-packages.json": {
+      "sha256": "f08745536b0304271af665d544e7ac42a6cfeb3044655cf10ff4f6dc9a5be957",
+      "bytes": 15623
+    }
+  }
+}

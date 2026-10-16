@@ -1,0 +1,188 @@
+{
+  "recordedAtUTC": "2026-10-06T15:12:41.825368+00:00",
+  "sourceRoot": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/source",
+  "ownedSourceManifest": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/printhost-verification/v2/owned-source.sha256",
+  "ownedSourceManifestSHA256": "24b268003a61ca59bf98e64da1cc833691c68ccbc344047245ad337917ece1d5",
+  "ownedFiles": [
+    {
+      "path": "apps/edge/internal/printhost/INSTALLATION_PLAN.md",
+      "sha256": "e8c13f715dd280f762ba0c2eee954b0e3200b87c0dcedc40ce94bbc7f3aacd46",
+      "bytes": 5200
+    },
+    {
+      "path": "apps/edge/internal/printhost/host.go",
+      "sha256": "55eafb67ed59aef51fbfb5181b22be010a265833bbd523140b8b855b3662bfe4",
+      "bytes": 9921
+    },
+    {
+      "path": "apps/edge/internal/printhost/host_test.go",
+      "sha256": "03c2253726ef07528a1f93ff561c04cd834afeb95573e0dc5c414e3aabbf13fb",
+      "bytes": 16326
+    },
+    {
+      "path": "apps/edge/internal/printhost/pins.go",
+      "sha256": "9e94a889f56e947cebc3f4b8f663d04fc9dbd5c4b7b1af957246b8a6808b3a8d",
+      "bytes": 8022
+    },
+    {
+      "path": "apps/edge/internal/printhost/proof_composition.go",
+      "sha256": "1a05166b0731b4670b2ce5329893561df386b9955eabcbf825f6d0b92c4b1d35",
+      "bytes": 2503
+    },
+    {
+      "path": "apps/edge/internal/printhost/queue_lifecycle_test.go",
+      "sha256": "a2bae11d7234158ef94f239fad4ac8f92c3ed9a1d93f75b577939f5aac7b3fc9",
+      "bytes": 16798
+    },
+    {
+      "path": "apps/edge/internal/printhost/service.go",
+      "sha256": "1a242519ede401c8954dbfe3941e483834e2b7e3416c9b263bd5de61ceea1937",
+      "bytes": 3199
+    },
+    {
+      "path": "apps/edge/internal/printhost/service_test.go",
+      "sha256": "2c0bb78ea73507e3c6fa3a3f38df5de4d2d166ae3e5b3facd82a73cab0a4e51e",
+      "bytes": 9577
+    },
+    {
+      "path": "apps/edge/internal/printhost/service_windows.go",
+      "sha256": "2701581e0d34f98b96449c12a9eb1ad5c9936b6cad050cb7a1aa56ade4d76fee",
+      "bytes": 2348
+    }
+  ],
+  "toolEnvironment": {
+    "path": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/tool-env.sh",
+    "sha256": "4300dd4f696b0e98fd26a4ff7df112e4958107baa58d69c3355c7e7b5fd6f76b"
+  },
+  "moduleSnapshotAtRecord": [
+    {
+      "path": "apps/edge/go.mod",
+      "sha256": "991702cf9414a4acd7536fab5275e1da12b36f043409f6fe94dee2d878cdfcdc"
+    },
+    {
+      "path": "apps/edge/go.sum",
+      "sha256": "561b9a04ed2552e61d5187a89b023415fa4b9c5af1ea827a6707b7779234ca56"
+    }
+  ],
+  "validation": [
+    {
+      "name": "unit",
+      "command": "go test -mod=readonly -json ./internal/printhost -count=1 -timeout=30s",
+      "workdir": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/source/apps/edge",
+      "exitCode": 0,
+      "log": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/printhost-verification/v2/unit.jsonl",
+      "logSHA256": "ed1967bb8186df285b74339873a39aa803f23d6556ea65f9d457f3c63fa1d246"
+    },
+    {
+      "name": "race",
+      "command": "go test -mod=readonly -race -json ./internal/printhost -count=1 -timeout=60s",
+      "workdir": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/source/apps/edge",
+      "exitCode": 0,
+      "log": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/printhost-verification/v2/race.jsonl",
+      "logSHA256": "d57c2445be135d6bc27d3126b20b9a682256f1a7901c4b423a06c2e394a314dd"
+    },
+    {
+      "name": "vet",
+      "command": "go vet -mod=readonly ./internal/printhost",
+      "workdir": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/source/apps/edge",
+      "exitCode": 0,
+      "log": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/printhost-verification/v2/vet.log",
+      "logSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "windows-amd64",
+      "command": "CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go test -mod=readonly -c -o /tmp/vynic-readiness-resume-20261006-uv9ayewl/printhost-verification/v2/printhost-windows-amd64.test.exe ./internal/printhost",
+      "workdir": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/source/apps/edge",
+      "exitCode": 0,
+      "log": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/printhost-verification/v2/windows-amd64.log",
+      "logSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "windows-arm64",
+      "command": "CGO_ENABLED=0 GOOS=windows GOARCH=arm64 go test -mod=readonly -c -o /tmp/vynic-readiness-resume-20261006-uv9ayewl/printhost-verification/v2/printhost-windows-arm64.test.exe ./internal/printhost",
+      "workdir": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/source/apps/edge",
+      "exitCode": 0,
+      "log": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/printhost-verification/v2/windows-arm64.log",
+      "logSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ],
+  "topLevelTests": 19,
+  "subtests": 13,
+  "format": "gofmt -l: no output",
+  "whitespace": "git diff --no-index --check for each of nine new owned files: no diagnostics; exit 1 is new-file difference",
+  "windowsCrossBuilds": [
+    {
+      "path": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/printhost-verification/v2/printhost-windows-amd64.test.exe",
+      "sha256": "f5a84932aa35f677be5a04ab49823574e40ca255213dfad758a3d5de27de5a2f",
+      "bytes": 23958528,
+      "peMachine": "0x8664",
+      "executed": false
+    },
+    {
+      "path": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/printhost-verification/v2/printhost-windows-arm64.test.exe",
+      "sha256": "ee49d475aac967b3eb06fd3e414e957885ef1db2138b5d9236299c8cf913f8fd",
+      "bytes": 22575616,
+      "peMachine": "0xaa64",
+      "executed": false
+    }
+  ],
+  "wired": [
+    "actual proof Store.FenceAdmission",
+    "actual proof Scheduler.Start/Stop",
+    "actual durable aggregate and per-printer hold queries",
+    "explicit durable resource close after original primary and optional beep drain"
+  ],
+  "sourceOnly": [
+    "Windows svc.Run adapter has no executable entrypoint",
+    "role/scope and pinned health API has no production listener/client wiring",
+    "SCM lifecycle was cross-compiled only",
+    "logical shared-scope pins are not a physical RAW fence"
+  ],
+  "limits": [
+    "proof scheduler rejects real physical sender",
+    "VENUE_SHARED physical sender refused until separately qualified downstream fence",
+    "STARTED recovery remains UNCERTAIN without replay",
+    "old reader/helper/schema/artifact binding refused",
+    "Windows forced shutdown/JobObject/account/driver/printer model remains unqualified",
+    "no original checkout edits/port/commit by this agent"
+  ],
+  "reviewFixes": [
+    "reject nil and typed-nil ownership before any open/start",
+    "caller probe deadline/cancellation returns caller error without holding or stopping healthy host",
+    "ControlService observes host stop-started event without polling, reports StopPending through actual drain, then Stopped with original trusted runtime failure diagnostic/error"
+  ],
+  "blockedActions": [],
+  "persistentSystemChanges": 0,
+  "physicalPrints": 0,
+  "receiptVersion": 2,
+  "previousCheckpoint": {
+    "path": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/printhost-verification/checkpoint.json",
+    "sha256": "1bae740d20ac6edd03897b83a8f859029030b14ba8fc7c60148de224ea0af24a",
+    "manifestPath": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/printhost-verification/owned-source.sha256",
+    "manifestSHA256": "44ef5a532142ebd5e77bfd4c156cccb2e15f893b801500648ce3ddd603cbcf8d",
+    "preserved": true
+  },
+  "changedFromPreviousReceipt": [
+    "apps/edge/internal/printhost/host.go",
+    "apps/edge/internal/printhost/service.go",
+    "apps/edge/internal/printhost/service_test.go"
+  ],
+  "testCounts": {
+    "unit": {
+      "topLevel": 19,
+      "subtests": 13,
+      "elapsed": 0.421
+    },
+    "race": {
+      "topLevel": 19,
+      "subtests": 13,
+      "elapsed": 2.388
+    }
+  },
+  "newRegressionEvidence": [
+    "runtime trusted pin mismatch with no SCM command retains owner until actual worker drain and preserves original failure",
+    "runtime storage failure with no SCM command retains owner until actual worker drain and preserves original error identity",
+    "caller canceled health and deadline admission keep service Running and next normal admission succeeds"
+  ],
+  "independentReview": "v2 source and receipt submitted for final hash-qualified Astra review; review receipt remains separate"
+}

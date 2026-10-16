@@ -1,0 +1,22 @@
+{
+  "exitCode": 0,
+  "command": [
+    "go",
+    "build",
+    "-mod=readonly",
+    "./..."
+  ],
+  "environmentOverrides": {
+    "GOOS": "windows",
+    "GOARCH": "amd64",
+    "CGO_ENABLED": "0",
+    "GOPROXY": "off"
+  },
+  "workingDirectory": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/final-cohort/apps/edge",
+  "startedAtUTC": "2026-10-06T17:28:14.337491+00:00",
+  "finishedAtUTC": "2026-10-06T17:28:16.155398+00:00",
+  "sourceManifestSHA256": "193e4800e5d0733a30bc6c8d4ac993590219363941e69a787bba5ac3681c8f68",
+  "output": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/final-windows-amd64-build.jsonl",
+  "stderr": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/final-windows-amd64-build.stderr",
+  "physicalPrints": 0
+}

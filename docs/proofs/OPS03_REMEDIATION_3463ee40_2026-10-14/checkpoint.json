@@ -1,0 +1,67 @@
+{
+  "status": "COMPLETE_COMPATIBLE_SOURCE_INTEGRATED_WITH_RELEASE_GAPS",
+  "privateRoot": "/private/var/folders/82/drcfb4994p16rl49gxx9tj000000gn/T/vynic-ops03-remediation-eazxgm7i",
+  "candidate": "/private/var/folders/82/drcfb4994p16rl49gxx9tj000000gn/T/vynic-ops03-remediation-eazxgm7i/candidate",
+  "scope": "Lock graph and inventory coverage plus justified compatible security dependency fixes",
+  "integratedChanges": true,
+  "liveServicesTouched": false,
+  "printerChanges": false,
+  "triagedVersions": 41,
+  "triagedIds": 107,
+  "backendRuntimeMatches": 12,
+  "developmentOnlyMatches": 19,
+  "coverageFix": "Arborist node.dev flags retain shared production nodes; backend runtime SBOM now 362 components with Nest and proxy-addr",
+  "breakingOrUnfixed": [
+    "deepmerge-ts 7\u21928 requires breaking compatibility decision",
+    "Vankisi sharp 0.34\u21920.35 outside declared minor",
+    "braces and sprintf-js have no fixed-version event in current records",
+    "Shared Go/generated/printer-bound module changes deferred pending call-path boundary"
+  ],
+  "beforeSBOM": {
+    "qualified": 5,
+    "incomplete": 3,
+    "failed": 4
+  },
+  "candidateSBOM": {
+    "qualified": 12,
+    "incomplete": 0,
+    "failed": 0
+  },
+  "candidateChangesIntegrated": true,
+  "webChecks": "all four web builds and client typecheck PASS; test summaries being recorded",
+  "multerFinal": "2.4.0 compatible second-pass fix",
+  "helperRegressionPassed": 22,
+  "backendAggregate": {
+    "passed": 906,
+    "failed": 0,
+    "skipped": 895
+  },
+  "focusedPg": "64 cases passed in combined run; corrected standalone CUSTOM 17/17 candidate and original-dependency comparison PASS",
+  "webRegressionPassed": 284,
+  "websiteManifestRegressionPassed": 7,
+  "inventoryRegressionPassed": 23,
+  "finalSBOMScopes": 12,
+  "concurrentIntegrationTargetsChanged": [],
+  "ownedClusterStopped": true,
+  "afterAdvisories": {
+    "matchedPackages": 5,
+    "ids": 11,
+    "criticalIds": 0
+  },
+  "builds": "PASS backend + four web builds + shared client typecheck",
+  "npmCi": "six initial PASS; backend/Vankisi final changed locks reinstalled PASS",
+  "running": null,
+  "blocker": "None for the compatible source changes; breaking/unfixed/Go/image/native gates remain",
+  "finalQualification": "/Users/vaanskii/Developer/vynic/docs/proofs/OPS03_REMEDIATION_3463ee40_2026-10-14/qualification.json",
+  "tests": {
+    "distinctBackendPassed": 987,
+    "backendAggregateSkipped": 895,
+    "focusedPgPassed": 81,
+    "otherOptInNotRun": 814,
+    "webPassed": 284,
+    "manifestPassed": 7,
+    "inventoryPassed": 23
+  },
+  "remaining": "deepmerge 8 and Vankisi Sharp 0.35 decisions; braces/sprintf no recorded fixed event; Go effective graph/stdlib/call paths and image/native provenance gates",
+  "gitDiffCheck": "PASS_FINAL"
+}

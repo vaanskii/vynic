@@ -1,3 +1,5 @@
+import { Reveal } from "./Reveal";
+
 type SectionHeadingProps = {
   id?: string;
   kicker?: string;
@@ -16,7 +18,7 @@ export function SectionHeading({
   const centered = align === "center";
 
   return (
-    <div id={id} className={centered ? "mx-auto max-w-3xl text-center" : "max-w-3xl"}>
+    <Reveal className={centered ? "mx-auto max-w-3xl text-center" : "max-w-3xl"} id={id}>
       {kicker ? (
         <p className="mb-4 font-vynic-mono text-xs font-semibold uppercase tracking-[0.18em] text-vynic-plum">
           {kicker}
@@ -34,6 +36,6 @@ export function SectionHeading({
           {body}
         </p>
       ) : null}
-    </div>
+    </Reveal>
   );
 }

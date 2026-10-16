@@ -1,0 +1,32 @@
+{
+  "compiler": {
+    "package": "typescript",
+    "version": "5.9.3",
+    "path": "/Users/vaanskii/Developer/vynic/apps/backend/node_modules/typescript/bin/tsc",
+    "noAcquisition": true
+  },
+  "sourceHashes": {
+    "apps/backend/src/customer/printer-runtime-config.ts": "de487e4da88ac68226ea694ba8bd1961a889afc48b92d39080f947ab672624c5",
+    "apps/backend/src/customer/printer-runtime-config.spec.ts": "89f31fd4aa14113656368f3afe3b40161d22eac9116f6d24d83c7fd3b2bf83d9",
+    "apps/backend/src/customer/printer-runtime-persistence.ts": "cf2002779fc564c3a4964d82768f53cb49262a486ac57682130d3b9cc8255b13",
+    "apps/backend/src/customer/printer-runtime-persistence.spec.ts": "f5b4fcbdab0ea70017771cc495eaa0b8da5054fcfbfa5b798df827b6b9cb7cf7",
+    "apps/backend/src/customer/customer.service.ts": "64a1a9700cb0a34f6fe7c2c24c5c12b8f68bdaa2abd87127af5217bc540c8012",
+    "apps/backend/src/customer/customer.controller.ts": "175206a5e53ef31a5efaaaca72a7721bb06ef20b666b54c5b06e9b81cf7adc1a",
+    "apps/backend/src/entitlements/commercial-state.ts": "2f5b407225c0a68b1b6a54077f95958bace6712546fd063c128347bfa74a423f",
+    "apps/backend/src/entitlements/effective-features.ts": "2347866bac1b7744f704c10becda68d0781ae46ac3cb322fd384bf57cec8028a",
+    "apps/backend/src/entitlements/subscription-policy.ts": "1ffbea264663876551d70c48f3d39a18ab945dd880cafe0dbca5036f94ed3f9d",
+    "apps/backend/src/platform/control-actor.ts": "b179cb52d6c69ee0c55eb2a045d7924b696c108c0c744b9c2c9b74608185983d",
+    "apps/backend/prisma/schema.prisma": "50e6df09eede76e0446e27d95885d1b8e448fb71177357a04199d1c85a1300b0",
+    "apps/backend/prisma/migrations/20261015120000_printer_runtime_preparation/migration.sql": "cd85a8168291815bcad59d821e136d45f4af348c003745e30fa6b6c44cb82d99"
+  },
+  "compiledHashes": {
+    "compiled/customer/printer-runtime-config.js": "2e445abbbb98dd2dd9850600c72b23e45a7f90b18bdd891d269910dcf787eca7",
+    "compiled/customer/printer-runtime-persistence.js": "2991654f41799ba3e9a41545bbb25592a1456fe5c5f1a0d1c3d86447f45b8839",
+    "compiled/entitlements/commercial-state.js": "10209fc9293919378c2e20a274a782b38bd38716ac280f7bdc3cca5467f01fe0",
+    "compiled/entitlements/effective-features.js": "e464b9d1de31270ffc2c041634dbccf2d8af9edb3cea708811c4773d506ad69f",
+    "compiled/entitlements/subscription-policy.js": "0fefc7a0d8de5fc00b5fda60f8db64573c3ec2285208cd7249a4d1ca658711f3",
+    "compiled/platform/control-actor.js": "d43aa81f5bc89faa359e0f97c814ba25155591ff078fbb9bfd40f8c7c9683230"
+  },
+  "proofScriptSha256": "d05d693ba3cdf41ea76191a0cdd742c223d2d1ee6b6a658dc9e002265f6659be",
+  "migrationsReceiptSha256": "03b8fe3de486b673223a0b33fa200b83d5eb63f443f284b1302ef6c526980cb5"
+}

@@ -1,6 +1,7 @@
 import { withOperationalAuthority } from '../edge/operational-authority';
 import type { EdgeDeviceContext } from '../edge/edge-device-context';
 import { presentMovement } from './receiving.service';
+import { historyPage, type HistoryQuery } from './history-page';
 import {
   BadRequestException,
   ConflictException,
@@ -351,6 +352,57 @@ export class SaleConsumptionService {
       omit: { snapshot: true },
       include: { lines: { orderBy: { lineSeq: 'asc' } } },
     });
+  }
+
+  async page(tenant: TenantContext, query: HistoryQuery = {}) {
+    const page = historyPage('consumptions:' + tenant.venueId, query);
+    const rows = await this.prisma.saleConsumption.findMany({
+      where: {
+        venueId: tenant.venueId,
+        createdAt: { lt: page.createdBefore },
+        businessDate: {
+          gte: page.from ?? undefined,
+          lte: page.to ?? undefined,
+        },
+        ...(page.unmapped ? { lines: { some: { status: 'UNMAPPED' } } } : {}),
+        ...(page.cursor
+          ? {
+              OR: [
+                { closedAt: { lt: new Date(page.cursor.at) } },
+                {
+                  closedAt: new Date(page.cursor.at),
+                  id: { lt: page.cursor.id },
+                },
+              ],
+            }
+          : {}),
+      },
+      orderBy: [{ closedAt: 'desc' }, { id: 'desc' }],
+      take: page.limit + 1,
+      omit: { snapshot: true },
+      include: {
+        lines: {
+          orderBy: { lineSeq: 'asc' },
+          include: { components: { include: { movements: true } } },
+        },
+      },
+    });
+    const result = page.envelope(rows, (row) => row.closedAt);
+    return {
+      ...result,
+      items: result.items.map((row) => ({
+        ...row,
+        lines: row.lines.map((line) => ({
+          ...line,
+          components: line.components.map((component) => ({
+            ...component,
+            movements: component.movements.map(presentMovement),
+            baseQuantityPerUnit: component.baseQuantityPerUnit.toFixed(6),
+            totalBaseQuantity: component.totalBaseQuantity.toFixed(6),
+          })),
+        })),
+      })),
+    };
   }
 
   async detail(tenant: TenantContext, id: string) {

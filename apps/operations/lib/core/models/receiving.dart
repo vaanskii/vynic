@@ -135,6 +135,12 @@ class StockMovement {
     this.receivingSupplierName,
     this.consumptionId,
     this.orderId,
+    this.inventoryValueDelta,
+    this.costPerBaseUnit,
+    this.valuationStatus,
+    this.valuationSequence,
+    this.valueOrigin,
+    this.effectiveAt,
   });
 
   final String id;
@@ -151,6 +157,12 @@ class StockMovement {
   final String? receivingSupplierName;
   final String? consumptionId;
   final int? orderId;
+  final String? inventoryValueDelta,
+      costPerBaseUnit,
+      valuationStatus,
+      valuationSequence,
+      valueOrigin;
+  final DateTime? effectiveAt;
 
   double get quantityValue => double.tryParse(quantityDeltaBase) ?? 0;
   bool get isNegative => quantityValue < 0;
@@ -169,6 +181,14 @@ class StockMovement {
       businessDate: _text(json['businessDate']) ?? '',
       actorName: _text(json['actorName']) ?? '',
       createdAt: _date(json['createdAt']),
+      inventoryValueDelta: _text(json['inventoryValueDelta']),
+      costPerBaseUnit: _text(json['costPerBaseUnit']),
+      valuationStatus: _text(json['valuationStatus']),
+      valuationSequence: _text(json['valuationSequence']),
+      valueOrigin: _text(json['valueOrigin']),
+      effectiveAt: json['effectiveAt'] == null
+          ? null
+          : _date(json['effectiveAt']),
       receivingId: _text(json['receivingId']),
       reversalOfMovementId: _text(json['reversalOfMovementId']),
       receivingWaybillNumber: _text(nested['waybillNumber']),
@@ -344,9 +364,11 @@ class StockItemDetail {
     this.lastPurchaseUnitCost,
     this.recentMovements = const <StockMovement>[],
     this.usedBy = const <StockItemUsage>[],
+    this.includesReconstructedHistory = false,
   });
 
   final String? costStatus, inventoryValue;
+  final bool includesReconstructedHistory;
   final List<Map> purchaseHistory, suppliers;
   final StockItem item;
   final String? weightedUnitCost;
@@ -361,6 +383,10 @@ class StockItemDetail {
   factory StockItemDetail.fromJson(Map<String, dynamic> json) {
     return StockItemDetail(
       item: StockItem.fromJson(json),
+      includesReconstructedHistory:
+          ((json['currentCost'] as Map?)?['provenance']
+              as Map?)?['includesReconstructedHistory'] ==
+          true,
       costStatus: (json['currentCost'] as Map?)?['status'] as String?,
       inventoryValue:
           (json['currentCost'] as Map?)?['inventoryValue'] as String?,

@@ -81,7 +81,13 @@ describeDatabase('Public website tenant isolation (PostgreSQL)', () => {
           data: { menuItems?: unknown },
         ) => priceBookingCart(menu, tenant, data.menuItems),
         preparePayment: () => Promise.resolve(null),
-        createOrder: () => Promise.resolve(null),
+        createOrder: () =>
+          Promise.resolve({
+            id: 'synthetic-tenant-bank-order',
+            _links: {
+              redirect: { href: 'https://bank.test.invalid/synthetic' },
+            },
+          }),
       } as never,
       bridge,
     );
@@ -177,6 +183,9 @@ describeDatabase('Public website tenant isolation (PostgreSQL)', () => {
   });
 
   afterAll(async () => {
+    await prisma.websiteReservationDayHold.deleteMany({
+      where: { venueId: { in: venueIds } },
+    });
     await prisma.websiteReservation.deleteMany({
       where: { venueId: { in: venueIds } },
     });

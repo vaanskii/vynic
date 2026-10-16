@@ -108,8 +108,10 @@ shown as blocking Cloud access even though assigned entitlements remain.
 
 Venue **Commercial** provides subscription state/dates/notes and explicit Start
 trial, Activate/Reactivate, Mark past due, Suspend and Cancel actions. Mutations
-require confirmation. The same section lists Manager access and provides Create,
-Reset PIN/Reactivate and Disable. PIN inputs clear after success/closing and
+require confirmation. The same section lists existing Manager access and provides
+Create, Reset PIN/Reactivate and Disable after initial POS registration. A Venue
+without Manager history receives a one-use activation invitation instead; the
+person registers only in its enrolled Primary POS. PIN inputs clear after success/closing and
 normal reads never return them. Errors preserve a retry key and the operator's
 inputs so transient failures can be retried.
 
@@ -117,6 +119,7 @@ inputs so transient failures can be retried.
 | --- | --- |
 | GET/PUT `/platform/venues/:venueId/subscription` | Platform read / SUPER_ADMIN mutation |
 | GET/POST `/platform/venues/:venueId/managers` | List / create actual Staff, MANAGER or ADMIN |
+| POST `/platform/venues/:venueId/manager-activation` | SUPER_ADMIN issues initial one-use invitation; no Staff or PIN created |
 | POST `/platform/venues/:venueId/managers/:staffId/reset` | Reset PIN and reactivate; same Staff identity |
 | POST `/platform/venues/:venueId/managers/:staffId/disable` | Set inactive; never hard-delete Cloud Staff |
 | GET/POST `/platform/users` | List / create PlatformUser with initial password |
@@ -125,6 +128,11 @@ inputs so transient failures can be retried.
 Staff mutations require a UUID `requestId`. Create also requires `displayName`,
 `username`, `role`, `pin`; reset requires `pin`. PINs retain the 4–6 digit rule
 and cannot duplicate another active Staff PIN in that Venue.
+Initial Staff cannot be created through the Platform create action before POS
+registration. The owner cabinet can issue an initial invitation but cannot create,
+reset or disable existing Manager access. Recovery is a Vynic Platform Admin action.
+Ordinary authenticated POS/Manager operational permissions remain unchanged.
+
 Platform users use SUPER_ADMIN or SUPPORT_READONLY. The shared Platform guard
 rejects every non-read method for SUPPORT_READONLY. Platform tokens remain a
 separate audience/principal; Manager tokens cannot enter cross-Venue APIs.
@@ -133,7 +141,12 @@ and distributes it through their own secure channel. No email is sent here.
 
 ## Staff authority, durable delivery and conflicts
 
-A Venue row lock serializes Platform access changes with Staff snapshot sync.
+A Venue row lock serializes Platform access changes, normal Manager Staff changes,
+initial POS activation and Staff snapshot sync. Every writer rejects a proposed
+PIN already held by another active Staff in that Venue, including Platform-managed
+Staff. Reactivation and Manager role promotion check retained credentials too.
+Unchanged old snapshots remain idempotent; an existing duplicate is not silently
+rewritten and still fails unique-match login until an authorized PIN change.
 One transaction writes Cloud Staff, encrypted existing PIN vault, EdgeCommand
 and PlatformAuditEvent. No Device needs to be online or enrolled at mutation
 time; the untargeted Venue command waits for a Device to enroll and claim it.
@@ -174,6 +187,46 @@ The existing transport still carries plaintext PIN inside the Device-only comman
 payload, and the existing Cloud PIN vault remains recoverable/encrypted. This is
 an explicit compatibility limit, not a full PIN-security redesign. Platform
 responses and audit metadata never contain PINs, passwords or hashes.
+
+## რეგისტრაცია და შემოწმება — Admin და მომხმარებელი
+
+პირველი POS-ისთვის საჭიროა **ერთი ერთჯერადი დაკავშირების კოდი**: ის რესტორანს
+აკავშირებს და პირველი Manager-ის რეგისტრაციის უფლებასაც შეიცავს. სახელსა და პირად
+PIN-ს მომხმარებელი POS-ში ირჩევს. Manager აპისთვის Platform Admin გასცემს ვადიან ერთჯერად დაკავშირების
+კოდს; შემდეგ შესვლა მხოლოდ პირადი PIN-ით ხდება.
+
+1. **Vynic Platform Admin:** ამტკიცებს წვდომის მოთხოვნას ან ქმნის მფლობელის მოწვევას;
+   რესტორანს ანიჭებს POS-ისა და Manager-ის მოქმედ პაკეტს. კაბინეტის ანგარიში და
+   რესტორნის Staff სხვადასხვა იდენტობაა.
+2. **Admin ან მფლობელი:** Devices/POS სექციაში ქმნის დაკავშირების კოდს პირველი
+   Manager-ის რეგისტრაციის მონიშნული არჩევანით. უფლება მხოლოდ Manager-ის ისტორიის
+   არმქონე რესტორანშია ხელმისაწვდომი; ჩვეულებრივი დამატებითი კოდი ამ უფლებას არ იძლევა.
+3. **მომხმარებელი:** კოდს შეიყვანს POS-ში. პირველი არჩეული Primary POS სთავაზობს
+   სახელის, 4–6-ციფრიანი PIN-ისა და დადასტურების ფორმას; მეორე აქტივაციის კოდი საჭირო
+   აღარ არის. დამატებითი POS ელოდება მთავარ POS-ზე რეგისტრაციას და წვდომის მიწოდებას.
+   უნივერსალური/default PIN არ არსებობს; საწყისი რეგისტრაცია კაბინეტში ან Manager
+   აპში არ სრულდება.
+4. **მომხმარებელი:** ტოვებს POS-ს ინტერნეტთან დაკავშირებულს წვდომის მიღებამდე,
+   შედის PIN-ით და ასრულებს რესტორნის საწყის პარამეტრებს. Manager აპში ერთხელ
+   შეიყვანს Platform Admin-ისგან მიღებულ ერთჯერად დაკავშირების კოდს; ამავე backend-ზე აპის გახსნა ან ჩვეულებრივი
+   გასვლა ამ არჩევანს არ შლის. PIN, თავად რესტორნის არჩევისას, არ ინახება.
+5. **დამატებითი POS:** შექმნის ჩვეულებრივ დაკავშირების კოდს პირველი Manager-ის
+   არჩევანის გარეშე. ახალი Manager არ იქმნება და Primary ავტომატურად არ იცვლება.
+   დაკავშირებული მოწყობილობების რაოდენობა არ არის რამდენიმე POS-ის ერთობლივი
+   ოპერაციული მუშაობის დადასტურება; POS-02.C ცალკე რჩება.
+6. **შემდგომი აღდგენა:** მხოლოდ Vynic Platform Admin ადგენს ახალ უნიკალურ PIN-ს.
+   მფლობელის კაბინეტი არსებულ Manager PIN-ს ვერ ხედავს და ვერ აღადგენს. ახალი PIN
+   POS-ს Edge-ით მიეწოდება; ჩვეულებრივი POS/Manager Staff ოპერაციები არსებულ როლებსა
+   და Platform-managed ჩანაწერების შეზღუდვებს ინარჩუნებს.
+
+ძველი ხელით აქტივაციის API თავსებადობისთვის დარჩა; ახალი პანელები ერთკოდიან პროცესს
+იყენებს. მიმდინარე გაშვების ბრძანებები: [SINGLE_POS_ONBOARDING.md](SINGLE_POS_ONBOARDING.md).
+
+რეალური ხელით შემოწმება მომხმარებელმა უნდა შეასრულოს: სწორი რესტორნის არჩევა,
+Primary POS enrollment, ერთი წარმატებული აქტივაცია, POS/Manager login, აპის restart,
+კაბინეტიდან აღდგენის უარყოფა და Admin reset-ის მიწოდება. PIN/ერთჯერადი კოდი არ უნდა
+მოხვდეს ეკრანის ან ჟურნალის გაზიარებულ ჩანაწერში. იზოლირებული ტესტების წარმატება არ
+ნიშნავს Windows release-ის, ფიზიკური მოწყობილობების ან ამ რეალური გზის მიღებას.
 
 ## Audit
 

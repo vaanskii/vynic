@@ -1,0 +1,30 @@
+[
+  {
+    "label": "backend-foundation-pg",
+    "exitCode": 0,
+    "command": [
+      "npm",
+      "test",
+      "--",
+      "--runInBand",
+      "--runTestsByPath",
+      "src/edge-foundation/edge-foundation.integration.spec.ts"
+    ]
+  },
+  {
+    "label": "inventory-subset-pg",
+    "exitCode": 0,
+    "command": [
+      "npm",
+      "test",
+      "--",
+      "--runInBand",
+      "--runTestsByPath",
+      "src/inventory/receiving.integration.spec.ts",
+      "src/inventory/sale-consumption.integration.spec.ts",
+      "src/inventory/procurement-rework.integration.spec.ts",
+      "src/inventory/procurement.integration.spec.ts",
+      "src/inventory/catalog-cost.integration.spec.ts"
+    ]
+  }
+]

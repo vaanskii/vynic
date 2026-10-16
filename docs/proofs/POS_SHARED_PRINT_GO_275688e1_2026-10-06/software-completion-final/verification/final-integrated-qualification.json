@@ -1,0 +1,334 @@
+{
+  "status": "PASS_AVAILABLE_MAC_AND_STATIC_CHECKS",
+  "recordedAtUTC": "2026-10-06T17:35:41.226579+00:00",
+  "sourceManifestSHA256": "193e4800e5d0733a30bc6c8d4ac993590219363941e69a787bba5ac3681c8f68",
+  "sourceFiles": 1109,
+  "sourceAndSnapshotUnchanged": true,
+  "Go": {
+    "edge-tests": {
+      "status": {
+        "exitCode": 0,
+        "command": [
+          "go",
+          "test",
+          "-mod=readonly",
+          "-count=1",
+          "-json",
+          "./..."
+        ],
+        "environmentOverrides": {
+          "GOPROXY": "off"
+        },
+        "workingDirectory": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/final-cohort/apps/edge",
+        "startedAtUTC": "2026-10-06T17:22:50.276113+00:00",
+        "finishedAtUTC": "2026-10-06T17:23:50.554397+00:00",
+        "sourceManifestSHA256": "193e4800e5d0733a30bc6c8d4ac993590219363941e69a787bba5ac3681c8f68",
+        "output": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/final-edge-tests.jsonl",
+        "stderr": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/final-edge-tests.stderr",
+        "physicalPrints": 0,
+        "actualForegroundExecutable": {
+          "path": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/final-printer-agent",
+          "sha256": "1e295b435bea3422fa069ea930eaae1b91aff1d43b5713f3c080edd65d6cdc8e",
+          "sourceManifestSHA256": "193e4800e5d0733a30bc6c8d4ac993590219363941e69a787bba5ac3681c8f68",
+          "beforeAfterUnchanged": true
+        }
+      },
+      "statusSHA256": "0ae4664efaff7958d0c571518ebaa5846ba723a88ff7e6aa0f44b3df2505d617",
+      "outputSHA256": "20d0917d9bc6bfd1e535b30ac419e5f52ebf84ba4c6464931bebae418c03e455",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "testOutcomes": {
+        "pass": 764,
+        "skip": 9
+      },
+      "topLevelPassed": 225,
+      "skippedFixtureEntrypoints": [
+        "TestQueueTCPKillChild",
+        "TestOperationalProofProcess",
+        "TestPrinterAgentProcess",
+        "TestSetupCrashWorker",
+        "TestOperationalCrashWorker",
+        "TestCrashWorker",
+        "TestRetentionCrashChild",
+        "TestUpdaterChild",
+        "TestRaftProcessFixture"
+      ]
+    },
+    "edge-race": {
+      "status": {
+        "exitCode": 0,
+        "command": [
+          "go",
+          "test",
+          "-mod=readonly",
+          "-race",
+          "-count=1",
+          "-json",
+          "./..."
+        ],
+        "environmentOverrides": {
+          "GOPROXY": "off"
+        },
+        "workingDirectory": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/final-cohort/apps/edge",
+        "startedAtUTC": "2026-10-06T17:26:31.269375+00:00",
+        "finishedAtUTC": "2026-10-06T17:29:05.005481+00:00",
+        "sourceManifestSHA256": "193e4800e5d0733a30bc6c8d4ac993590219363941e69a787bba5ac3681c8f68",
+        "output": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/final-edge-race.jsonl",
+        "stderr": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/final-edge-race.stderr",
+        "physicalPrints": 0,
+        "actualForegroundExecutable": {
+          "path": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/final-printer-agent-race",
+          "sha256": "fd0fcd11f0a6d94cb33c4e9776d63d117eff3626bd0b0673b767c17d56f582d8",
+          "sourceManifestSHA256": "193e4800e5d0733a30bc6c8d4ac993590219363941e69a787bba5ac3681c8f68",
+          "beforeAfterUnchanged": true
+        }
+      },
+      "statusSHA256": "2a6a2f7e48b5f8485a8328cc5cf07bf56e04141f65231451731a9602f53da948",
+      "outputSHA256": "67bc8df9c5349b0777f08945bdd7ce960fbd61ae8c04f036a34328b6b98d8960",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "testOutcomes": {
+        "pass": 764,
+        "skip": 9
+      },
+      "topLevelPassed": 225,
+      "skippedFixtureEntrypoints": [
+        "TestOperationalProofProcess",
+        "TestQueueTCPKillChild",
+        "TestPrinterAgentProcess",
+        "TestSetupCrashWorker",
+        "TestRetentionCrashChild",
+        "TestUpdaterChild",
+        "TestOperationalCrashWorker",
+        "TestCrashWorker",
+        "TestRaftProcessFixture"
+      ]
+    },
+    "edge-vet": {
+      "status": {
+        "exitCode": 0,
+        "command": [
+          "go",
+          "vet",
+          "-mod=readonly",
+          "./..."
+        ],
+        "environmentOverrides": {
+          "GOPROXY": "off"
+        },
+        "workingDirectory": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/final-cohort/apps/edge",
+        "startedAtUTC": "2026-10-06T17:28:14.337481+00:00",
+        "finishedAtUTC": "2026-10-06T17:28:15.246850+00:00",
+        "sourceManifestSHA256": "193e4800e5d0733a30bc6c8d4ac993590219363941e69a787bba5ac3681c8f68",
+        "output": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/final-edge-vet.jsonl",
+        "stderr": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/final-edge-vet.stderr",
+        "physicalPrints": 0
+      },
+      "statusSHA256": "1b1069f9699cd67c8eceb559cc2142f94d89cb1f6f172a9989a06b6ec7ec0039",
+      "outputSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "windows-amd64-build": {
+      "status": {
+        "exitCode": 0,
+        "command": [
+          "go",
+          "build",
+          "-mod=readonly",
+          "./..."
+        ],
+        "environmentOverrides": {
+          "GOOS": "windows",
+          "GOARCH": "amd64",
+          "CGO_ENABLED": "0",
+          "GOPROXY": "off"
+        },
+        "workingDirectory": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/final-cohort/apps/edge",
+        "startedAtUTC": "2026-10-06T17:28:14.337491+00:00",
+        "finishedAtUTC": "2026-10-06T17:28:16.155398+00:00",
+        "sourceManifestSHA256": "193e4800e5d0733a30bc6c8d4ac993590219363941e69a787bba5ac3681c8f68",
+        "output": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/final-windows-amd64-build.jsonl",
+        "stderr": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/final-windows-amd64-build.stderr",
+        "physicalPrints": 0
+      },
+      "statusSHA256": "8edc4edad70814a7062b5805c22f1a2fad7f1cc8f9e75b971387913233a18c81",
+      "outputSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "windows-arm64-build": {
+      "status": {
+        "exitCode": 0,
+        "command": [
+          "go",
+          "build",
+          "-mod=readonly",
+          "./..."
+        ],
+        "environmentOverrides": {
+          "GOOS": "windows",
+          "GOARCH": "arm64",
+          "CGO_ENABLED": "0",
+          "GOPROXY": "off"
+        },
+        "workingDirectory": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/final-cohort/apps/edge",
+        "startedAtUTC": "2026-10-06T17:28:14.337472+00:00",
+        "finishedAtUTC": "2026-10-06T17:28:16.279681+00:00",
+        "sourceManifestSHA256": "193e4800e5d0733a30bc6c8d4ac993590219363941e69a787bba5ac3681c8f68",
+        "output": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/final-windows-arm64-build.jsonl",
+        "stderr": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/final-windows-arm64-build.stderr",
+        "physicalPrints": 0
+      },
+      "statusSHA256": "e24180822c028c0dcf9e69d90610ebe01294c2ce991b0c571d3b13d057717af0",
+      "outputSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "contracts-test": {
+      "status": {
+        "exitCode": 0,
+        "command": [
+          "go",
+          "test",
+          "-mod=readonly",
+          "-count=1",
+          "-json",
+          "./..."
+        ],
+        "environmentOverrides": {
+          "GOPROXY": "off"
+        },
+        "workingDirectory": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/final-cohort/packages/contracts/generated/go",
+        "startedAtUTC": "2026-10-06T17:28:14.337472+00:00",
+        "finishedAtUTC": "2026-10-06T17:28:15.273177+00:00",
+        "sourceManifestSHA256": "193e4800e5d0733a30bc6c8d4ac993590219363941e69a787bba5ac3681c8f68",
+        "output": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/final-contracts-test.jsonl",
+        "stderr": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/final-contracts-test.stderr",
+        "physicalPrints": 0
+      },
+      "statusSHA256": "47c05eb5b7667deb5a095acc04b19c59100e76fd5740ba9b76b653e2d6d68a7d",
+      "outputSHA256": "65e77bb033bae33ed4a2689ac3fa71beab64e908ab96683ccd88756238988edc",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "edge-govuln": {
+      "status": {
+        "exitCode": 0,
+        "command": [
+          "govulncheck",
+          "-json",
+          "-scan=symbol",
+          "./..."
+        ],
+        "environmentOverrides": {},
+        "workingDirectory": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/final-cohort/apps/edge",
+        "startedAtUTC": "2026-10-06T17:29:28.078511+00:00",
+        "finishedAtUTC": "2026-10-06T17:29:31.101179+00:00",
+        "sourceManifestSHA256": "193e4800e5d0733a30bc6c8d4ac993590219363941e69a787bba5ac3681c8f68",
+        "output": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/final-edge-govuln.jsonl",
+        "stderr": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/final-edge-govuln.stderr",
+        "physicalPrints": 0
+      },
+      "statusSHA256": "050ebdaa9a165edb2ad646639d53750d086ea9dfd0f74a5ed44038c53dd92017",
+      "outputSHA256": "5df75a0dba3753934fff2a66ce7c5738cf3cb3e8906d57990dd5d76d389bdb35",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "findings": 0,
+      "scannerConfiguration": {
+        "protocol_version": "v1.0.0",
+        "scanner_name": "govulncheck",
+        "scanner_version": "v1.8.0",
+        "db": "https://vuln.go.dev",
+        "db_last_modified": "2026-10-01T20:24:15Z",
+        "go_version": "go1.26.8",
+        "scan_level": "symbol",
+        "scan_mode": "source"
+      }
+    },
+    "windows-govuln": {
+      "status": {
+        "exitCode": 0,
+        "command": [
+          "govulncheck",
+          "-json",
+          "-scan=symbol",
+          "./..."
+        ],
+        "environmentOverrides": {
+          "GOOS": "windows",
+          "GOARCH": "amd64",
+          "CGO_ENABLED": "0"
+        },
+        "workingDirectory": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/final-cohort/apps/edge",
+        "startedAtUTC": "2026-10-06T17:31:21.576506+00:00",
+        "finishedAtUTC": "2026-10-06T17:31:24.488262+00:00",
+        "sourceManifestSHA256": "193e4800e5d0733a30bc6c8d4ac993590219363941e69a787bba5ac3681c8f68",
+        "output": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/final-windows-govuln.jsonl",
+        "stderr": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/final-windows-govuln.stderr",
+        "physicalPrints": 0
+      },
+      "statusSHA256": "d215e9b09c83de948aa170086ae62af5f2d81e52255a0ff77e62f4f24ecb2b19",
+      "outputSHA256": "a113dadc482a4b7f9955da546ed6620f04124d21c6f85a05efefc0ab0789e741",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "findings": 0,
+      "scannerConfiguration": {
+        "protocol_version": "v1.0.0",
+        "scanner_name": "govulncheck",
+        "scanner_version": "v1.8.0",
+        "db": "https://vuln.go.dev",
+        "db_last_modified": "2026-10-01T20:24:15Z",
+        "go_version": "go1.26.8",
+        "scan_level": "symbol",
+        "scan_mode": "source"
+      }
+    },
+    "contracts-govuln": {
+      "status": {
+        "exitCode": 0,
+        "command": [
+          "govulncheck",
+          "-json",
+          "-scan=module"
+        ],
+        "environmentOverrides": {},
+        "workingDirectory": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/final-cohort/packages/contracts/generated/go/vynic/edge/v1",
+        "startedAtUTC": "2026-10-06T17:31:34.880842+00:00",
+        "finishedAtUTC": "2026-10-06T17:31:36.558040+00:00",
+        "sourceManifestSHA256": "193e4800e5d0733a30bc6c8d4ac993590219363941e69a787bba5ac3681c8f68",
+        "output": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/final-contracts-govuln.jsonl",
+        "stderr": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/final-contracts-govuln.stderr",
+        "physicalPrints": 0
+      },
+      "statusSHA256": "1df3744c174a8a4c151dbda6e886a3d1e9d3ce549b4bcadb984e4866af000cdd",
+      "outputSHA256": "1ff8f25ff814ee430c4cc40fbcb11e7c3d39359159ca2e7dc69adb41179492d7",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "findings": 0,
+      "scannerConfiguration": {
+        "protocol_version": "v1.0.0",
+        "scanner_name": "govulncheck",
+        "scanner_version": "v1.8.0",
+        "db": "https://vuln.go.dev",
+        "db_last_modified": "2026-10-01T20:24:15Z",
+        "go_version": "go1.26.8",
+        "scan_level": "module",
+        "scan_mode": "source"
+      }
+    }
+  },
+  "Flutter": {
+    "normalizedReceiptSHA256": "0686b57f966a32688e564fd2986d2c432a0ef1548514e49b12df1c2291f51629",
+    "visiblePass": 623,
+    "hiddenPass": 51,
+    "suites": 39,
+    "skip": 0,
+    "error": 0,
+    "analysisFiles": 68,
+    "analysisReceiptSHA256": "919864a34363eadb9b289103537548c81d3660cad71189b51d869a0da2f7cd50"
+  },
+  "WindowsNewRuntime": "NOT_RUN_BLOCKED_AUTOMATIC_APPROVAL",
+  "SCMInstallation": "NOT_RUN",
+  "physicalPrintJobs": 0,
+  "productionAdmission": "HELD_PROVISIONING",
+  "milestoneStatus": "NOT_DONE",
+  "exactCommittedRuntimeQualified": false,
+  "originalDirtyWorkspaceQualified": false,
+  "retainedWrapperHistory": [
+    "final-integrated-wrapper-failure-v1.json",
+    "final-flutter-tests-wrapper-failure.json",
+    "final-flutter-tests-v2-receipt.json"
+  ]
+}

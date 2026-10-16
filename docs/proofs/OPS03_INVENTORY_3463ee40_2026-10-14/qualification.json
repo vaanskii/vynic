@@ -1,0 +1,74 @@
+{
+  "status": "BOUNDED_AUDIT_COMPLETE_WITH_RELEASE_GAPS",
+  "head": "3463ee406184fec7f53818416e11d0e5f5602c87",
+  "scope": "OPS-03 offline locked composition plus current public advisory matching and read-only local image metadata",
+  "toolingTests": {
+    "passed": 19,
+    "failed": 0
+  },
+  "inventory": {
+    "projects": 12,
+    "componentOccurrences": 2583,
+    "npmCliEmittedSboms": 8,
+    "qualifiedScopedSboms": 5,
+    "scopeIncompleteSboms": 3,
+    "failedSboms": 4
+  },
+  "actualAdvisoryQuery": {
+    "queried": 1764,
+    "requests": 18,
+    "matchedPackageVersions": 41,
+    "advisoryIds": 107,
+    "recordDetailsFetched": 107,
+    "status": "QUERY_COMPLETED",
+    "publicFieldsOnly": true,
+    "countsByEcosystem": {
+      "Go": 1,
+      "npm": 40
+    }
+  },
+  "runtimeImages": {
+    "captured": 6,
+    "inspectable": 3,
+    "unavailableImageObjects": 3,
+    "backendLockHashMatchesSource": false,
+    "lockedNameVersionSetMatches": true,
+    "installedGraphOrCodeAttested": false,
+    "OSVulnerabilityScan": false
+  },
+  "preservation": {
+    "all24BaselineManifestsLocksAndRecipesByteIdentical": true,
+    "allInspectedEnvFilesByteIdentical": true,
+    "runtimeSourceOrPolicyChanges": false,
+    "realDataOrCredentialsChanged": false,
+    "globalToolInstalled": false,
+    "dependencyVersionsOrLocksChanged": false,
+    "printerSourceChanged": false,
+    "liveServiceRestartDeploymentPushCommitOrPurchase": false,
+    "OPS01DeniedRestoreRetried": false,
+    "newProductOrRecoveryPolicyDecided": false
+  },
+  "remainingGates": [
+    "Platform/Vankisi portable lock graph completeness",
+    "Reliable runtime/build SBOM scope; npm omit-dev skipped direct runtime dependencies",
+    "Reachability and compatible remediation of advisory matches; no residual risk accepted",
+    "Full effective Go module graph/std library/call paths",
+    "Native SDK/plugin and container OS/image-layer security checks",
+    "Frozen source/image/binary provenance and unavailable image objects",
+    "Owner-only live POS restart acceptance and pre-existing deferred printer fixture/hardware qualification"
+  ],
+  "nextDependencyReadyStep": "OPS-03.B: repair and qualify lock/composition completeness in an isolated candidate, then prepare compatibility-tested runtime/proxy/parser fixes; no forced upgrades",
+  "privateEvidenceRoot": "/private/var/folders/82/drcfb4994p16rl49gxx9tj000000gn/T/vynic-ops03-inventory-wrrimltb",
+  "proofFiles": [
+    "inventory.json",
+    "components.json",
+    "public-osv-queries.json",
+    "advisory-matches.json",
+    "docker-provenance.json",
+    "public-query-preflight.json",
+    "source-hashes.json"
+  ],
+  "POSFix": "../POS_STARTUP_VENUE_3463ee40_2026-10-14/qualification.json",
+  "stalledCommands": false,
+  "approvalsPending": false
+}

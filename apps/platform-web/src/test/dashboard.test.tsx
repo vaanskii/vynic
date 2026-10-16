@@ -92,7 +92,7 @@ const venueStatus = (patch: Record<string, unknown> = {}) => ({
   subscription: { status: "TRIAL", trialEndsAt: "2026-10-23T00:00:00Z" },
   managers: [],
   devices: [],
-  enrollments: [],
+  enrollments: [] as { id: string; code: string; expiresAt: string; status: string; initialManagerSetup: boolean }[],
   checklist: { restaurant: true, manager: false, menu: false },
   ready: false,
   ...patch,
@@ -263,6 +263,11 @@ function serve({
         return state.menu;
       }
       if (path.endsWith("/website")) return state.site;
+      if (path.endsWith("/enrollments")) {
+        const issued = { id: "synthetic-enrollment", code: "synthetic-once", expiresAt: "2099-01-01T00:00:00Z", status: "PENDING", initialManagerSetup: body.initialManagerSetup === true };
+        state.venues = state.venues.map((v) => ({ ...v, enrollments: [issued] }));
+        return issued;
+      }
       if (path.endsWith("/managers"))
         return { id: "m1", displayName: body.displayName };
       throw new Error(`unexpected ${path}`);
@@ -410,6 +415,7 @@ describe("Owner portal", () => {
       "მენიუ",
       "ფოტოები",
       "სამუშაო საათები",
+      "ონლაინ გადახდები",
       "მოწყობილობები / POS",
       "მენეჯერები",
       "გამოწერა",
@@ -710,25 +716,63 @@ describe("Menu section", () => {
 });
 
 describe("Operational sections", () => {
-  it("manages restaurant code and managers outside the website", async () => {
-    serve();
-    const user = userEvent.setup();
+  it("existing Manager access is read-only in the owner cabinet", async () => {
+    serve({
+      venues: [
+        venueStatus({
+          managers: [
+            {
+              id: "existing",
+              username: "giorgi",
+              displayName: "Giorgi",
+              isActive: true,
+            },
+          ],
+        }),
+      ],
+    });
     renderPortal("/dashboard/managers");
-    await user.click(
-      await screen.findByRole("button", { name: "კოდის კოპირება" }),
-    );
-    expect(await navigator.clipboard.readText()).toBe("tabla-7");
-    await user.type(screen.getByLabelText("მენეჯერის სახელი"), "Nino");
-    await user.type(screen.getByLabelText("მომხმარებლის სახელი"), "nino");
-    await user.type(screen.getByLabelText("PIN"), "482915");
-    await user.click(screen.getByRole("button", { name: "მენეჯერის შექმნა" }));
-    await waitFor(() =>
-      expect(calls("venues/venue-a/managers")[0][1]).toMatchObject({
-        pin: "482915",
-        role: "MANAGER",
+    expect(await screen.findByText("Giorgi")).toBeVisible();
+    expect(
+      screen.queryByRole("button", {
+        name: /PIN-ის შეცვლა|გამორთვა|მენეჯერის დამატება|აქტივაციის კოდის მიღება/,
       }),
-    );
-    expect(calls("venues/venue-a/payments/bog")).toHaveLength(0);
+    ).not.toBeInTheDocument();
+    expect(screen.queryByLabelText("PIN")).not.toBeInTheDocument();
+  });
+  it("directs Manager installation linking to support without owner code or PIN mutation", async () => {
+    serve();
+    renderPortal("/dashboard/managers");
+    expect((await screen.findAllByText(/Vynic-ის მხარდაჭერისგან მიიღეთ ერთჯერადი დაკავშირების კოდი/))[0]).toBeVisible();
+    expect(screen.queryByRole("button", { name: "კოდის კოპირება" })).not.toBeInTheDocument();
+    expect(screen.queryByLabelText("PIN")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "აქტივაციის კოდის მიღება" })).not.toBeInTheDocument();
+    expect(calls("venues/venue-a/manager-links")).toHaveLength(0);
+    expect(calls("venues/venue-a/managers")).toHaveLength(0);
+  });
+
+  it.each([true, false])("owner enrollment carries only the server's first Manager eligibility (%s)", async (eligible) => {
+    serve({ venues: [venueStatus({ initialManagerSetupEligible: eligible })] });
+    const user = userEvent.setup();
+    renderPortal("/dashboard/devices");
+    await user.click(await screen.findByRole("button", { name: "მოწყობილობის კოდის შექმნა" }));
+    await waitFor(() => expect(calls("venues/venue-a/enrollments")).toHaveLength(1));
+    expect(calls("venues/venue-a/enrollments")[0][1]).toEqual({ initialManagerSetup: eligible });
+    expect(await screen.findByText("synthetic-once")).toBeVisible();
+    expect(calls("venues/venue-a/manager-activation")).toHaveLength(0);
+  });
+
+  it("owner can connect an additional POS while first Manager registration is still pending", async () => {
+    serve({ venues: [venueStatus({ initialManagerSetupEligible: true })] });
+    const user = userEvent.setup();
+    renderPortal("/dashboard/devices");
+    const checkbox = await screen.findByRole("checkbox", { name: "პირველი Manager-ის რეგისტრაციაც" });
+    expect(checkbox).toBeChecked();
+    await user.click(checkbox);
+    await user.click(screen.getByRole("button", { name: "მოწყობილობის კოდის შექმნა" }));
+    expect(await screen.findByText("synthetic-once")).toBeVisible();
+    expect(calls("venues/venue-a/enrollments")[0][1]).toEqual({ initialManagerSetup: false });
+    expect(calls("venues/venue-a/manager-activation")).toHaveLength(0);
   });
 
   it("shows plan and payment availability in their own sections", async () => {
@@ -738,8 +782,8 @@ describe("Operational sections", () => {
     expect(await screen.findByText("Starter")).toBeVisible();
     expect(screen.getByText("საცდელი პერიოდი")).toBeVisible();
     expect(
-      (await nav()).queryByRole("button", { name: "ონლაინ გადახდები" }),
-    ).toBeNull();
+      (await nav()).getByRole("button", { name: "ონლაინ გადახდები" }),
+    ).toBeVisible();
     await user.click(
       (await nav()).getByRole("button", { name: "მოწყობილობები / POS" }),
     );

@@ -52,7 +52,7 @@ export function HostnameReviews({
   return (
     <Panel
       title="Hostname change request"
-      description="Owners on an ACTIVE paid Website plan may ask for another SaaS address. Trials cannot."
+      description="Previous requests remain available for review. New address changes are handled by Platform Admin after customers contact support."
     >
       {requests.isPending ? (
         <p>Loading requests…</p>

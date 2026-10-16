@@ -1,0 +1,90 @@
+{
+  "status": "PASS_NARROW_WEB07_PHONE_FIX_FULL_WEB07_REMAINS_OPEN",
+  "head": "3463ee406184fec7f53818416e11d0e5f5602c87",
+  "qualifiedAtUtc": "2026-10-13T16:40:47.230499+00:00",
+  "uncommitted": true,
+  "scope": {
+    "bug": "Footer displayed +995 599 98 93 76 but linked placeholder tel:+995000000000",
+    "result": "Single displayed-phone constant also derives tel:+995599989376",
+    "fullSharedInfoIntegration": "NOT_IMPLEMENTED_BY_THIS_FIX",
+    "onlyIntendedSourceDiff": true,
+    "stylesAndOtherMarkupByteIdentical": true
+  },
+  "checks": [
+    {
+      "name": "frontend-aggregate",
+      "exitCode": 0,
+      "passed": 211,
+      "failed": 0,
+      "skipped": 0
+    },
+    {
+      "name": "platform-build",
+      "exitCode": 0
+    },
+    {
+      "name": "vankisi-build",
+      "exitCode": 0
+    },
+    {
+      "name": "new-test-lint",
+      "exitCode": 0
+    },
+    {
+      "name": "footer-lint",
+      "exitCode": 0
+    }
+  ],
+  "focusedTests": {
+    "new": 3,
+    "languages": [
+      "ka",
+      "en",
+      "ru"
+    ],
+    "failed": 0
+  },
+  "browser": {
+    "method": "CUA actual Footer and LanguageProvider in isolated loopback fixture",
+    "languages": [
+      "ka",
+      "en",
+      "ru"
+    ],
+    "hrefAndTextMatch": true,
+    "keyboardFocus": true,
+    "telephoneActivated": false,
+    "screenshot": "footer-phone.jpg",
+    "checks": "browser-checks.json",
+    "tab": "CLOSED"
+  },
+  "concurrentPlan": {
+    "POS02C": "IN_PROGRESS in separate task; latest local proof 64 Flutter +38 Go test/subtest records; no hardware acceptance",
+    "INV01F2": "PRODUCT_DECISIONS_UNAPPROVED_UNTOUCHED"
+  },
+  "boundaries": {
+    "backendOrSchemaChanged": false,
+    "liveDataOrCredentialsChanged": false,
+    "deployed": false,
+    "pushed": false,
+    "committed": false,
+    "callPlaced": false,
+    "printerHardwareTouched": false,
+    "existingServicesRestarted": false
+  },
+  "cleanup": {
+    "ownedPreview": "STOPPED",
+    "portClosed": true
+  },
+  "sourceHashes": {
+    "apps/vankisi-custom-web/src/components/Footer.tsx": "61a97c926c037df774fe0c39fc2d843b145d42fb4837c70ae208479ee1912cfe",
+    "apps/platform-web/src/test/vankisi-footer-contact.test.tsx": "280d5725faecd45e4aba85549ec61ee4554f680ecca84bf363145812313f4888"
+  },
+  "privateLogs": "/tmp/vynic-web07-phone-ku1zesjc",
+  "limitations": [
+    "This closes only the telephone/display mismatch, not shared hours/contact/gallery ownership or WEB05 deployment attestation.",
+    "Browser QA used a fixture rendering the real component, not a live deployed website.",
+    "No telephone call was placed; the actual OS dialer/carrier was not tested.",
+    "Backend and completed bank/POS proofs were not redundantly rerun for this link-only change."
+  ]
+}

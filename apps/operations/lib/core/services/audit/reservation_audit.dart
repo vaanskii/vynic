@@ -66,6 +66,7 @@ abstract final class ReservationAuditAction {
       case ReservationStatus.completed:
         return complete;
       case ReservationStatus.pending:
+      case ReservationStatus.hold:
       case ReservationStatus.preparing:
       case ReservationStatus.inProgress:
       case ReservationStatus.unknown:
@@ -135,6 +136,11 @@ abstract final class ReservationAudit {
       if (reservation.linkedOrderId != null)
         'linkedOrderId': reservation.linkedOrderId,
       'preOrderItemCount': reservation.preOrderItems?.length ?? 0,
+      if (reservation.advanceAmount > 0) ...{
+        'advanceAmount': reservation.advanceAmount,
+        'advanceCollectedOn': reservation.advanceCollectedOn,
+        'advanceReceiptId': reservation.advanceReceiptId,
+      },
     };
   }
 }

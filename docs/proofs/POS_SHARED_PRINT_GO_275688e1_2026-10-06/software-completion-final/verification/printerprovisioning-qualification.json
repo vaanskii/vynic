@@ -1,0 +1,1339 @@
+{
+  "schema": 1,
+  "createdAtUtc": "2026-10-06T17:03:56.372591+00:00",
+  "status": "passed-validation-only",
+  "sourceManifest": {
+    "path": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/printerprovisioning-owned-source-hashes.json",
+    "sha256": "9080f12d87eab43ef601192efb11b89543ff5f3c2887b8b11ba808cfa62d06d5",
+    "bytes": 1710
+  },
+  "sourceFiles": 7,
+  "sourceBeforeAfterUnchanged": true,
+  "independentReview": {
+    "path": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/printerprovisioning-independent-review.json",
+    "sha256": "efee605a225833838925b4b9901bb02209fc336565f212f8774af80a99073aff",
+    "bytes": 2245
+  },
+  "normal": {
+    "log": {
+      "path": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/provisioning-seam-unit.jsonl",
+      "sha256": "95fd6afa401a63e59f655a240f3981f32de0ee6ba98138e023d8fb66b069082a",
+      "bytes": 145078
+    },
+    "status": "passed",
+    "packages": {
+      "vynic.local/edge/internal/printeragent": {
+        "passRecords": 37,
+        "topLevelPass": 7,
+        "skipRecords": 1,
+        "elapsedSeconds": 0.494,
+        "tests": [
+          {
+            "test": "TestAuthenticatedHealthStrictHeldBytesAndZeroQueueWrites/wrongHash",
+            "status": "pass"
+          },
+          {
+            "test": "TestAuthenticatedHealthStrictHeldBytesAndZeroQueueWrites/changedExactBytes",
+            "status": "pass"
+          },
+          {
+            "test": "TestAuthenticatedHealthStrictHeldBytesAndZeroQueueWrites/wrongJob",
+            "status": "pass"
+          },
+          {
+            "test": "TestAuthenticatedHealthStrictHeldBytesAndZeroQueueWrites/unknownWire",
+            "status": "pass"
+          },
+          {
+            "test": "TestAuthenticatedHealthStrictHeldBytesAndZeroQueueWrites/venueId",
+            "status": "pass"
+          },
+          {
+            "test": "TestAuthenticatedHealthStrictHeldBytesAndZeroQueueWrites/deviceId",
+            "status": "pass"
+          },
+          {
+            "test": "TestAuthenticatedHealthStrictHeldBytesAndZeroQueueWrites/installationId",
+            "status": "pass"
+          },
+          {
+            "test": "TestAuthenticatedHealthStrictHeldBytesAndZeroQueueWrites/authorityEpoch",
+            "status": "pass"
+          },
+          {
+            "test": "TestAuthenticatedHealthStrictHeldBytesAndZeroQueueWrites/routeRevision",
+            "status": "pass"
+          },
+          {
+            "test": "TestAuthenticatedHealthStrictHeldBytesAndZeroQueueWrites/configRevision",
+            "status": "pass"
+          },
+          {
+            "test": "TestAuthenticatedHealthStrictHeldBytesAndZeroQueueWrites/bindingRevision",
+            "status": "pass"
+          },
+          {
+            "test": "TestAuthenticatedHealthStrictHeldBytesAndZeroQueueWrites/registryRevision",
+            "status": "pass"
+          },
+          {
+            "test": "TestAuthenticatedHealthStrictHeldBytesAndZeroQueueWrites",
+            "status": "pass"
+          },
+          {
+            "test": "TestFreshMutualTLSClientScopePinRevocationAndProtocol/wrongHost",
+            "status": "pass"
+          },
+          {
+            "test": "TestFreshMutualTLSClientScopePinRevocationAndProtocol/foreignClient",
+            "status": "pass"
+          },
+          {
+            "test": "TestFreshMutualTLSClientScopePinRevocationAndProtocol/oldVersion",
+            "status": "pass"
+          },
+          {
+            "test": "TestFreshMutualTLSClientScopePinRevocationAndProtocol/oldReader",
+            "status": "pass"
+          },
+          {
+            "test": "TestFreshMutualTLSClientScopePinRevocationAndProtocol/unknownCap",
+            "status": "pass"
+          },
+          {
+            "test": "TestFreshMutualTLSClientScopePinRevocationAndProtocol/unknownNestedWire",
+            "status": "pass"
+          },
+          {
+            "test": "TestFreshMutualTLSClientScopePinRevocationAndProtocol/wrongCA",
+            "status": "pass"
+          },
+          {
+            "test": "TestFreshMutualTLSClientScopePinRevocationAndProtocol/reissuedUnpinned",
+            "status": "pass"
+          },
+          {
+            "test": "TestFreshMutualTLSClientScopePinRevocationAndProtocol/wrongHost#01",
+            "status": "pass"
+          },
+          {
+            "test": "TestFreshMutualTLSClientScopePinRevocationAndProtocol/duplicatePurpose",
+            "status": "pass"
+          },
+          {
+            "test": "TestFreshMutualTLSClientScopePinRevocationAndProtocol/extraDNS",
+            "status": "pass"
+          },
+          {
+            "test": "TestFreshMutualTLSClientScopePinRevocationAndProtocol/encodedURI",
+            "status": "pass"
+          },
+          {
+            "test": "TestFreshMutualTLSClientScopePinRevocationAndProtocol/wrongEKU",
+            "status": "pass"
+          },
+          {
+            "test": "TestFreshMutualTLSClientScopePinRevocationAndProtocol",
+            "status": "pass"
+          },
+          {
+            "test": "TestCandidateReceivesFreshCopiedDERAndNeverAdmits",
+            "status": "pass"
+          },
+          {
+            "test": "TestLostHealthACKReconnectHasNoAdmissionOrOptimisticReceipt",
+            "status": "pass"
+          },
+          {
+            "test": "TestStopTimeoutRetainsActualHealthHandlerAndFencesNewRPC",
+            "status": "pass"
+          },
+          {
+            "test": "TestConstructorPreflightAndChangedHealthFailClosed/wrongServerName",
+            "status": "pass"
+          },
+          {
+            "test": "TestConstructorPreflightAndChangedHealthFailClosed/extraServerURI",
+            "status": "pass"
+          },
+          {
+            "test": "TestConstructorPreflightAndChangedHealthFailClosed/wrongEKU",
+            "status": "pass"
+          },
+          {
+            "test": "TestConstructorPreflightAndChangedHealthFailClosed/expired",
+            "status": "pass"
+          },
+          {
+            "test": "TestConstructorPreflightAndChangedHealthFailClosed/notYetValid",
+            "status": "pass"
+          },
+          {
+            "test": "TestConstructorPreflightAndChangedHealthFailClosed",
+            "status": "pass"
+          },
+          {
+            "test": "TestEstablishedChannelServerExpiryAndTypedNilHealthSource",
+            "status": "pass"
+          },
+          {
+            "test": "TestPrinterAgentProcess",
+            "status": "skip"
+          }
+        ]
+      },
+      "vynic.local/edge/internal/printerprovisioning": {
+        "passRecords": 112,
+        "topLevelPass": 12,
+        "skipRecords": 0,
+        "elapsedSeconds": 0.002,
+        "tests": [
+          {
+            "test": "TestOptionalServerAdapterReadsCurrentStateEveryAttempt",
+            "status": "pass"
+          },
+          {
+            "test": "TestAdapterConstructorFreezeAndFailurePropagation",
+            "status": "pass"
+          },
+          {
+            "test": "TestAdapterRejectsChangedPinsAndExportedJobMutation/scope",
+            "status": "pass"
+          },
+          {
+            "test": "TestAdapterRejectsChangedPinsAndExportedJobMutation/cluster",
+            "status": "pass"
+          },
+          {
+            "test": "TestAdapterRejectsChangedPinsAndExportedJobMutation/profile",
+            "status": "pass"
+          },
+          {
+            "test": "TestAdapterRejectsChangedPinsAndExportedJobMutation/host",
+            "status": "pass"
+          },
+          {
+            "test": "TestAdapterRejectsChangedPinsAndExportedJobMutation/revision",
+            "status": "pass"
+          },
+          {
+            "test": "TestAdapterRejectsChangedPinsAndExportedJobMutation",
+            "status": "pass"
+          },
+          {
+            "test": "TestConcurrentValidationRetainsImmutableGrantAndJob",
+            "status": "pass"
+          },
+          {
+            "test": "TestStrictSignedAndBodyJSONRejectsAliasesAndUnknownFields/wrapperUnknown",
+            "status": "pass"
+          },
+          {
+            "test": "TestStrictSignedAndBodyJSONRejectsAliasesAndUnknownFields/wrapperCase",
+            "status": "pass"
+          },
+          {
+            "test": "TestStrictSignedAndBodyJSONRejectsAliasesAndUnknownFields/wrapperDuplicate",
+            "status": "pass"
+          },
+          {
+            "test": "TestStrictSignedAndBodyJSONRejectsAliasesAndUnknownFields/wrapperNull",
+            "status": "pass"
+          },
+          {
+            "test": "TestStrictSignedAndBodyJSONRejectsAliasesAndUnknownFields/wrapperInvalidBase64",
+            "status": "pass"
+          },
+          {
+            "test": "TestStrictSignedAndBodyJSONRejectsAliasesAndUnknownFields/wrapperTrailing",
+            "status": "pass"
+          },
+          {
+            "test": "TestStrictSignedAndBodyJSONRejectsAliasesAndUnknownFields/bodyUnknown",
+            "status": "pass"
+          },
+          {
+            "test": "TestStrictSignedAndBodyJSONRejectsAliasesAndUnknownFields/bodyCase",
+            "status": "pass"
+          },
+          {
+            "test": "TestStrictSignedAndBodyJSONRejectsAliasesAndUnknownFields/bodyDuplicate",
+            "status": "pass"
+          },
+          {
+            "test": "TestStrictSignedAndBodyJSONRejectsAliasesAndUnknownFields/nestedCase",
+            "status": "pass"
+          },
+          {
+            "test": "TestStrictSignedAndBodyJSONRejectsAliasesAndUnknownFields/nestedEscapedDuplicate",
+            "status": "pass"
+          },
+          {
+            "test": "TestStrictSignedAndBodyJSONRejectsAliasesAndUnknownFields/nestedUnknown",
+            "status": "pass"
+          },
+          {
+            "test": "TestStrictSignedAndBodyJSONRejectsAliasesAndUnknownFields/bodyTrailing",
+            "status": "pass"
+          },
+          {
+            "test": "TestStrictSignedAndBodyJSONRejectsAliasesAndUnknownFields/bodyInvalidUTF8",
+            "status": "pass"
+          },
+          {
+            "test": "TestStrictSignedAndBodyJSONRejectsAliasesAndUnknownFields/bodyVersion",
+            "status": "pass"
+          },
+          {
+            "test": "TestStrictSignedAndBodyJSONRejectsAliasesAndUnknownFields/fractionGeneration",
+            "status": "pass"
+          },
+          {
+            "test": "TestStrictSignedAndBodyJSONRejectsAliasesAndUnknownFields/oversizedGrant",
+            "status": "pass"
+          },
+          {
+            "test": "TestStrictSignedAndBodyJSONRejectsAliasesAndUnknownFields/oversizedBody",
+            "status": "pass"
+          },
+          {
+            "test": "TestStrictSignedAndBodyJSONRejectsAliasesAndUnknownFields",
+            "status": "pass"
+          },
+          {
+            "test": "TestCompleteFrozenIdentityAndRouteCannotRetarget/venue",
+            "status": "pass"
+          },
+          {
+            "test": "TestCompleteFrozenIdentityAndRouteCannotRetarget/device",
+            "status": "pass"
+          },
+          {
+            "test": "TestCompleteFrozenIdentityAndRouteCannotRetarget/installation",
+            "status": "pass"
+          },
+          {
+            "test": "TestCompleteFrozenIdentityAndRouteCannotRetarget/host",
+            "status": "pass"
+          },
+          {
+            "test": "TestCompleteFrozenIdentityAndRouteCannotRetarget/epoch",
+            "status": "pass"
+          },
+          {
+            "test": "TestCompleteFrozenIdentityAndRouteCannotRetarget/terminal",
+            "status": "pass"
+          },
+          {
+            "test": "TestCompleteFrozenIdentityAndRouteCannotRetarget/origin",
+            "status": "pass"
+          },
+          {
+            "test": "TestCompleteFrozenIdentityAndRouteCannotRetarget/physical",
+            "status": "pass"
+          },
+          {
+            "test": "TestCompleteFrozenIdentityAndRouteCannotRetarget/alias",
+            "status": "pass"
+          },
+          {
+            "test": "TestCompleteFrozenIdentityAndRouteCannotRetarget/routeRevision",
+            "status": "pass"
+          },
+          {
+            "test": "TestCompleteFrozenIdentityAndRouteCannotRetarget/configRevision",
+            "status": "pass"
+          },
+          {
+            "test": "TestCompleteFrozenIdentityAndRouteCannotRetarget/bindingRevision",
+            "status": "pass"
+          },
+          {
+            "test": "TestCompleteFrozenIdentityAndRouteCannotRetarget/registryRevision",
+            "status": "pass"
+          },
+          {
+            "test": "TestCompleteFrozenIdentityAndRouteCannotRetarget/IP",
+            "status": "pass"
+          },
+          {
+            "test": "TestCompleteFrozenIdentityAndRouteCannotRetarget/IPAlias",
+            "status": "pass"
+          },
+          {
+            "test": "TestCompleteFrozenIdentityAndRouteCannotRetarget/port",
+            "status": "pass"
+          },
+          {
+            "test": "TestCompleteFrozenIdentityAndRouteCannotRetarget/profileDimension",
+            "status": "pass"
+          },
+          {
+            "test": "TestCompleteFrozenIdentityAndRouteCannotRetarget/profileUnknownLanguage",
+            "status": "pass"
+          },
+          {
+            "test": "TestCompleteFrozenIdentityAndRouteCannotRetarget/profileReorder",
+            "status": "pass"
+          },
+          {
+            "test": "TestCompleteFrozenIdentityAndRouteCannotRetarget/changedPrimaryWithoutHash",
+            "status": "pass"
+          },
+          {
+            "test": "TestCompleteFrozenIdentityAndRouteCannotRetarget/windows/queue",
+            "status": "pass"
+          },
+          {
+            "test": "TestCompleteFrozenIdentityAndRouteCannotRetarget/windows/driver",
+            "status": "pass"
+          },
+          {
+            "test": "TestCompleteFrozenIdentityAndRouteCannotRetarget/windows/port",
+            "status": "pass"
+          },
+          {
+            "test": "TestCompleteFrozenIdentityAndRouteCannotRetarget",
+            "status": "pass"
+          },
+          {
+            "test": "TestSignedConfigurationBytesAndHashesAreExact/reorderedConfiguration",
+            "status": "pass"
+          },
+          {
+            "test": "TestSignedConfigurationBytesAndHashesAreExact/routeUnknown",
+            "status": "pass"
+          },
+          {
+            "test": "TestSignedConfigurationBytesAndHashesAreExact/routeCase",
+            "status": "pass"
+          },
+          {
+            "test": "TestSignedConfigurationBytesAndHashesAreExact/destinationCase",
+            "status": "pass"
+          },
+          {
+            "test": "TestSignedConfigurationBytesAndHashesAreExact/destinationDuplicate",
+            "status": "pass"
+          },
+          {
+            "test": "TestSignedConfigurationBytesAndHashesAreExact",
+            "status": "pass"
+          },
+          {
+            "test": "TestStrictJobKeysAndZeroValueCannotProduceAJob",
+            "status": "pass"
+          },
+          {
+            "test": "TestCandidatePreservesCompleteFrozenBytesAndNeverAdmits/tcp/LOCAL",
+            "status": "pass"
+          },
+          {
+            "test": "TestCandidatePreservesCompleteFrozenBytesAndNeverAdmits/tcp/VENUE_SHARED",
+            "status": "pass"
+          },
+          {
+            "test": "TestCandidatePreservesCompleteFrozenBytesAndNeverAdmits/windowsSpooler/LOCAL",
+            "status": "pass"
+          },
+          {
+            "test": "TestCandidatePreservesCompleteFrozenBytesAndNeverAdmits/windowsSpooler/VENUE_SHARED",
+            "status": "pass"
+          },
+          {
+            "test": "TestCandidatePreservesCompleteFrozenBytesAndNeverAdmits",
+            "status": "pass"
+          },
+          {
+            "test": "TestPinnedIssuerAndPrinterOnlySignatureDomain/wrongIssuer",
+            "status": "pass"
+          },
+          {
+            "test": "TestPinnedIssuerAndPrinterOnlySignatureDomain/bodyWhitespaceTamper",
+            "status": "pass"
+          },
+          {
+            "test": "TestPinnedIssuerAndPrinterOnlySignatureDomain/noDomain",
+            "status": "pass"
+          },
+          {
+            "test": "TestPinnedIssuerAndPrinterOnlySignatureDomain/oldProofDomain",
+            "status": "pass"
+          },
+          {
+            "test": "TestPinnedIssuerAndPrinterOnlySignatureDomain/FOUNDATION_ONLY",
+            "status": "pass"
+          },
+          {
+            "test": "TestPinnedIssuerAndPrinterOnlySignatureDomain/ISOLATED_PROOF",
+            "status": "pass"
+          },
+          {
+            "test": "TestPinnedIssuerAndPrinterOnlySignatureDomain/VYNIC_OPERATIONAL_PROOF",
+            "status": "pass"
+          },
+          {
+            "test": "TestPinnedIssuerAndPrinterOnlySignatureDomain/printer",
+            "status": "pass"
+          },
+          {
+            "test": "TestPinnedIssuerAndPrinterOnlySignatureDomain/#00",
+            "status": "pass"
+          },
+          {
+            "test": "TestPinnedIssuerAndPrinterOnlySignatureDomain",
+            "status": "pass"
+          },
+          {
+            "test": "TestLifetimeGenerationRevocationAndTrustedStateFailClosed/expired",
+            "status": "pass"
+          },
+          {
+            "test": "TestLifetimeGenerationRevocationAndTrustedStateFailClosed/futureIssue",
+            "status": "pass"
+          },
+          {
+            "test": "TestLifetimeGenerationRevocationAndTrustedStateFailClosed/futureNotBefore",
+            "status": "pass"
+          },
+          {
+            "test": "TestLifetimeGenerationRevocationAndTrustedStateFailClosed/zeroIssue",
+            "status": "pass"
+          },
+          {
+            "test": "TestLifetimeGenerationRevocationAndTrustedStateFailClosed/reversedWindow",
+            "status": "pass"
+          },
+          {
+            "test": "TestLifetimeGenerationRevocationAndTrustedStateFailClosed/policyLifetimeExceeded",
+            "status": "pass"
+          },
+          {
+            "test": "TestLifetimeGenerationRevocationAndTrustedStateFailClosed/oldGeneration",
+            "status": "pass"
+          },
+          {
+            "test": "TestLifetimeGenerationRevocationAndTrustedStateFailClosed/futureGeneration",
+            "status": "pass"
+          },
+          {
+            "test": "TestLifetimeGenerationRevocationAndTrustedStateFailClosed/revokedCurrent",
+            "status": "pass"
+          },
+          {
+            "test": "TestLifetimeGenerationRevocationAndTrustedStateFailClosed/differentCurrentGrant",
+            "status": "pass"
+          },
+          {
+            "test": "TestLifetimeGenerationRevocationAndTrustedStateFailClosed/differentCurrentBodyHash",
+            "status": "pass"
+          },
+          {
+            "test": "TestLifetimeGenerationRevocationAndTrustedStateFailClosed/unpersistedGeneration",
+            "status": "pass"
+          },
+          {
+            "test": "TestLifetimeGenerationRevocationAndTrustedStateFailClosed/rollbackCurrentGeneration",
+            "status": "pass"
+          },
+          {
+            "test": "TestLifetimeGenerationRevocationAndTrustedStateFailClosed/missingIssuerPin",
+            "status": "pass"
+          },
+          {
+            "test": "TestLifetimeGenerationRevocationAndTrustedStateFailClosed/missingCurrentStateHash",
+            "status": "pass"
+          },
+          {
+            "test": "TestLifetimeGenerationRevocationAndTrustedStateFailClosed/missingClock",
+            "status": "pass"
+          },
+          {
+            "test": "TestLifetimeGenerationRevocationAndTrustedStateFailClosed/missingLifetimePolicy",
+            "status": "pass"
+          },
+          {
+            "test": "TestLifetimeGenerationRevocationAndTrustedStateFailClosed/unknownScope",
+            "status": "pass"
+          },
+          {
+            "test": "TestLifetimeGenerationRevocationAndTrustedStateFailClosed/localWithCluster",
+            "status": "pass"
+          },
+          {
+            "test": "TestLifetimeGenerationRevocationAndTrustedStateFailClosed",
+            "status": "pass"
+          },
+          {
+            "test": "TestSignedWrongContextAndAuthenticatedDERRefused/venueId",
+            "status": "pass"
+          },
+          {
+            "test": "TestSignedWrongContextAndAuthenticatedDERRefused/deviceId",
+            "status": "pass"
+          },
+          {
+            "test": "TestSignedWrongContextAndAuthenticatedDERRefused/installationId",
+            "status": "pass"
+          },
+          {
+            "test": "TestSignedWrongContextAndAuthenticatedDERRefused/hostId",
+            "status": "pass"
+          },
+          {
+            "test": "TestSignedWrongContextAndAuthenticatedDERRefused/authorityEpoch",
+            "status": "pass"
+          },
+          {
+            "test": "TestSignedWrongContextAndAuthenticatedDERRefused/terminalId",
+            "status": "pass"
+          },
+          {
+            "test": "TestSignedWrongContextAndAuthenticatedDERRefused/originInstallationId",
+            "status": "pass"
+          },
+          {
+            "test": "TestSignedWrongContextAndAuthenticatedDERRefused/clientId",
+            "status": "pass"
+          },
+          {
+            "test": "TestSignedWrongContextAndAuthenticatedDERRefused/clientCertificateSha256",
+            "status": "pass"
+          },
+          {
+            "test": "TestSignedWrongContextAndAuthenticatedDERRefused/wrongObservedClient",
+            "status": "pass"
+          },
+          {
+            "test": "TestSignedWrongContextAndAuthenticatedDERRefused/wrongDER",
+            "status": "pass"
+          },
+          {
+            "test": "TestSignedWrongContextAndAuthenticatedDERRefused/emptyDER",
+            "status": "pass"
+          },
+          {
+            "test": "TestSignedWrongContextAndAuthenticatedDERRefused/invalidPinnedDER",
+            "status": "pass"
+          },
+          {
+            "test": "TestSignedWrongContextAndAuthenticatedDERRefused/expiredLeaf",
+            "status": "pass"
+          },
+          {
+            "test": "TestSignedWrongContextAndAuthenticatedDERRefused/signedSharedOnLocal",
+            "status": "pass"
+          },
+          {
+            "test": "TestSignedWrongContextAndAuthenticatedDERRefused/wrongSharedMembership",
+            "status": "pass"
+          },
+          {
+            "test": "TestSignedWrongContextAndAuthenticatedDERRefused/wrongSharedCluster",
+            "status": "pass"
+          },
+          {
+            "test": "TestSignedWrongContextAndAuthenticatedDERRefused",
+            "status": "pass"
+          }
+        ]
+      }
+    },
+    "dataRaceWarning": false
+  },
+  "race": {
+    "log": {
+      "path": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/provisioning-seam-race.jsonl",
+      "sha256": "2e40f6ed23581b63a6f1c176943736b778ca1cda0886d0c2d25b00e6df449e10",
+      "bytes": 145175
+    },
+    "status": "passed",
+    "packages": {
+      "vynic.local/edge/internal/printeragent": {
+        "passRecords": 37,
+        "topLevelPass": 7,
+        "skipRecords": 1,
+        "elapsedSeconds": 2.902,
+        "tests": [
+          {
+            "test": "TestAuthenticatedHealthStrictHeldBytesAndZeroQueueWrites/changedExactBytes",
+            "status": "pass"
+          },
+          {
+            "test": "TestAuthenticatedHealthStrictHeldBytesAndZeroQueueWrites/wrongJob",
+            "status": "pass"
+          },
+          {
+            "test": "TestAuthenticatedHealthStrictHeldBytesAndZeroQueueWrites/unknownWire",
+            "status": "pass"
+          },
+          {
+            "test": "TestAuthenticatedHealthStrictHeldBytesAndZeroQueueWrites/wrongHash",
+            "status": "pass"
+          },
+          {
+            "test": "TestAuthenticatedHealthStrictHeldBytesAndZeroQueueWrites/venueId",
+            "status": "pass"
+          },
+          {
+            "test": "TestAuthenticatedHealthStrictHeldBytesAndZeroQueueWrites/deviceId",
+            "status": "pass"
+          },
+          {
+            "test": "TestAuthenticatedHealthStrictHeldBytesAndZeroQueueWrites/installationId",
+            "status": "pass"
+          },
+          {
+            "test": "TestAuthenticatedHealthStrictHeldBytesAndZeroQueueWrites/authorityEpoch",
+            "status": "pass"
+          },
+          {
+            "test": "TestAuthenticatedHealthStrictHeldBytesAndZeroQueueWrites/routeRevision",
+            "status": "pass"
+          },
+          {
+            "test": "TestAuthenticatedHealthStrictHeldBytesAndZeroQueueWrites/configRevision",
+            "status": "pass"
+          },
+          {
+            "test": "TestAuthenticatedHealthStrictHeldBytesAndZeroQueueWrites/bindingRevision",
+            "status": "pass"
+          },
+          {
+            "test": "TestAuthenticatedHealthStrictHeldBytesAndZeroQueueWrites/registryRevision",
+            "status": "pass"
+          },
+          {
+            "test": "TestAuthenticatedHealthStrictHeldBytesAndZeroQueueWrites",
+            "status": "pass"
+          },
+          {
+            "test": "TestFreshMutualTLSClientScopePinRevocationAndProtocol/foreignClient",
+            "status": "pass"
+          },
+          {
+            "test": "TestFreshMutualTLSClientScopePinRevocationAndProtocol/oldVersion",
+            "status": "pass"
+          },
+          {
+            "test": "TestFreshMutualTLSClientScopePinRevocationAndProtocol/oldReader",
+            "status": "pass"
+          },
+          {
+            "test": "TestFreshMutualTLSClientScopePinRevocationAndProtocol/unknownCap",
+            "status": "pass"
+          },
+          {
+            "test": "TestFreshMutualTLSClientScopePinRevocationAndProtocol/unknownNestedWire",
+            "status": "pass"
+          },
+          {
+            "test": "TestFreshMutualTLSClientScopePinRevocationAndProtocol/wrongHost",
+            "status": "pass"
+          },
+          {
+            "test": "TestFreshMutualTLSClientScopePinRevocationAndProtocol/wrongCA",
+            "status": "pass"
+          },
+          {
+            "test": "TestFreshMutualTLSClientScopePinRevocationAndProtocol/reissuedUnpinned",
+            "status": "pass"
+          },
+          {
+            "test": "TestFreshMutualTLSClientScopePinRevocationAndProtocol/wrongHost#01",
+            "status": "pass"
+          },
+          {
+            "test": "TestFreshMutualTLSClientScopePinRevocationAndProtocol/duplicatePurpose",
+            "status": "pass"
+          },
+          {
+            "test": "TestFreshMutualTLSClientScopePinRevocationAndProtocol/extraDNS",
+            "status": "pass"
+          },
+          {
+            "test": "TestFreshMutualTLSClientScopePinRevocationAndProtocol/encodedURI",
+            "status": "pass"
+          },
+          {
+            "test": "TestFreshMutualTLSClientScopePinRevocationAndProtocol/wrongEKU",
+            "status": "pass"
+          },
+          {
+            "test": "TestFreshMutualTLSClientScopePinRevocationAndProtocol",
+            "status": "pass"
+          },
+          {
+            "test": "TestCandidateReceivesFreshCopiedDERAndNeverAdmits",
+            "status": "pass"
+          },
+          {
+            "test": "TestLostHealthACKReconnectHasNoAdmissionOrOptimisticReceipt",
+            "status": "pass"
+          },
+          {
+            "test": "TestStopTimeoutRetainsActualHealthHandlerAndFencesNewRPC",
+            "status": "pass"
+          },
+          {
+            "test": "TestConstructorPreflightAndChangedHealthFailClosed/wrongServerName",
+            "status": "pass"
+          },
+          {
+            "test": "TestConstructorPreflightAndChangedHealthFailClosed/extraServerURI",
+            "status": "pass"
+          },
+          {
+            "test": "TestConstructorPreflightAndChangedHealthFailClosed/wrongEKU",
+            "status": "pass"
+          },
+          {
+            "test": "TestConstructorPreflightAndChangedHealthFailClosed/expired",
+            "status": "pass"
+          },
+          {
+            "test": "TestConstructorPreflightAndChangedHealthFailClosed/notYetValid",
+            "status": "pass"
+          },
+          {
+            "test": "TestConstructorPreflightAndChangedHealthFailClosed",
+            "status": "pass"
+          },
+          {
+            "test": "TestEstablishedChannelServerExpiryAndTypedNilHealthSource",
+            "status": "pass"
+          },
+          {
+            "test": "TestPrinterAgentProcess",
+            "status": "skip"
+          }
+        ]
+      },
+      "vynic.local/edge/internal/printerprovisioning": {
+        "passRecords": 112,
+        "topLevelPass": 12,
+        "skipRecords": 0,
+        "elapsedSeconds": 2.094,
+        "tests": [
+          {
+            "test": "TestOptionalServerAdapterReadsCurrentStateEveryAttempt",
+            "status": "pass"
+          },
+          {
+            "test": "TestAdapterConstructorFreezeAndFailurePropagation",
+            "status": "pass"
+          },
+          {
+            "test": "TestAdapterRejectsChangedPinsAndExportedJobMutation/scope",
+            "status": "pass"
+          },
+          {
+            "test": "TestAdapterRejectsChangedPinsAndExportedJobMutation/cluster",
+            "status": "pass"
+          },
+          {
+            "test": "TestAdapterRejectsChangedPinsAndExportedJobMutation/profile",
+            "status": "pass"
+          },
+          {
+            "test": "TestAdapterRejectsChangedPinsAndExportedJobMutation/host",
+            "status": "pass"
+          },
+          {
+            "test": "TestAdapterRejectsChangedPinsAndExportedJobMutation/revision",
+            "status": "pass"
+          },
+          {
+            "test": "TestAdapterRejectsChangedPinsAndExportedJobMutation",
+            "status": "pass"
+          },
+          {
+            "test": "TestConcurrentValidationRetainsImmutableGrantAndJob",
+            "status": "pass"
+          },
+          {
+            "test": "TestStrictSignedAndBodyJSONRejectsAliasesAndUnknownFields/wrapperUnknown",
+            "status": "pass"
+          },
+          {
+            "test": "TestStrictSignedAndBodyJSONRejectsAliasesAndUnknownFields/wrapperCase",
+            "status": "pass"
+          },
+          {
+            "test": "TestStrictSignedAndBodyJSONRejectsAliasesAndUnknownFields/wrapperDuplicate",
+            "status": "pass"
+          },
+          {
+            "test": "TestStrictSignedAndBodyJSONRejectsAliasesAndUnknownFields/wrapperNull",
+            "status": "pass"
+          },
+          {
+            "test": "TestStrictSignedAndBodyJSONRejectsAliasesAndUnknownFields/wrapperInvalidBase64",
+            "status": "pass"
+          },
+          {
+            "test": "TestStrictSignedAndBodyJSONRejectsAliasesAndUnknownFields/wrapperTrailing",
+            "status": "pass"
+          },
+          {
+            "test": "TestStrictSignedAndBodyJSONRejectsAliasesAndUnknownFields/bodyUnknown",
+            "status": "pass"
+          },
+          {
+            "test": "TestStrictSignedAndBodyJSONRejectsAliasesAndUnknownFields/bodyCase",
+            "status": "pass"
+          },
+          {
+            "test": "TestStrictSignedAndBodyJSONRejectsAliasesAndUnknownFields/bodyDuplicate",
+            "status": "pass"
+          },
+          {
+            "test": "TestStrictSignedAndBodyJSONRejectsAliasesAndUnknownFields/nestedCase",
+            "status": "pass"
+          },
+          {
+            "test": "TestStrictSignedAndBodyJSONRejectsAliasesAndUnknownFields/nestedEscapedDuplicate",
+            "status": "pass"
+          },
+          {
+            "test": "TestStrictSignedAndBodyJSONRejectsAliasesAndUnknownFields/nestedUnknown",
+            "status": "pass"
+          },
+          {
+            "test": "TestStrictSignedAndBodyJSONRejectsAliasesAndUnknownFields/bodyTrailing",
+            "status": "pass"
+          },
+          {
+            "test": "TestStrictSignedAndBodyJSONRejectsAliasesAndUnknownFields/bodyInvalidUTF8",
+            "status": "pass"
+          },
+          {
+            "test": "TestStrictSignedAndBodyJSONRejectsAliasesAndUnknownFields/bodyVersion",
+            "status": "pass"
+          },
+          {
+            "test": "TestStrictSignedAndBodyJSONRejectsAliasesAndUnknownFields/fractionGeneration",
+            "status": "pass"
+          },
+          {
+            "test": "TestStrictSignedAndBodyJSONRejectsAliasesAndUnknownFields/oversizedGrant",
+            "status": "pass"
+          },
+          {
+            "test": "TestStrictSignedAndBodyJSONRejectsAliasesAndUnknownFields/oversizedBody",
+            "status": "pass"
+          },
+          {
+            "test": "TestStrictSignedAndBodyJSONRejectsAliasesAndUnknownFields",
+            "status": "pass"
+          },
+          {
+            "test": "TestCompleteFrozenIdentityAndRouteCannotRetarget/venue",
+            "status": "pass"
+          },
+          {
+            "test": "TestCompleteFrozenIdentityAndRouteCannotRetarget/device",
+            "status": "pass"
+          },
+          {
+            "test": "TestCompleteFrozenIdentityAndRouteCannotRetarget/installation",
+            "status": "pass"
+          },
+          {
+            "test": "TestCompleteFrozenIdentityAndRouteCannotRetarget/host",
+            "status": "pass"
+          },
+          {
+            "test": "TestCompleteFrozenIdentityAndRouteCannotRetarget/epoch",
+            "status": "pass"
+          },
+          {
+            "test": "TestCompleteFrozenIdentityAndRouteCannotRetarget/terminal",
+            "status": "pass"
+          },
+          {
+            "test": "TestCompleteFrozenIdentityAndRouteCannotRetarget/origin",
+            "status": "pass"
+          },
+          {
+            "test": "TestCompleteFrozenIdentityAndRouteCannotRetarget/physical",
+            "status": "pass"
+          },
+          {
+            "test": "TestCompleteFrozenIdentityAndRouteCannotRetarget/alias",
+            "status": "pass"
+          },
+          {
+            "test": "TestCompleteFrozenIdentityAndRouteCannotRetarget/routeRevision",
+            "status": "pass"
+          },
+          {
+            "test": "TestCompleteFrozenIdentityAndRouteCannotRetarget/configRevision",
+            "status": "pass"
+          },
+          {
+            "test": "TestCompleteFrozenIdentityAndRouteCannotRetarget/bindingRevision",
+            "status": "pass"
+          },
+          {
+            "test": "TestCompleteFrozenIdentityAndRouteCannotRetarget/registryRevision",
+            "status": "pass"
+          },
+          {
+            "test": "TestCompleteFrozenIdentityAndRouteCannotRetarget/IP",
+            "status": "pass"
+          },
+          {
+            "test": "TestCompleteFrozenIdentityAndRouteCannotRetarget/IPAlias",
+            "status": "pass"
+          },
+          {
+            "test": "TestCompleteFrozenIdentityAndRouteCannotRetarget/port",
+            "status": "pass"
+          },
+          {
+            "test": "TestCompleteFrozenIdentityAndRouteCannotRetarget/profileDimension",
+            "status": "pass"
+          },
+          {
+            "test": "TestCompleteFrozenIdentityAndRouteCannotRetarget/profileUnknownLanguage",
+            "status": "pass"
+          },
+          {
+            "test": "TestCompleteFrozenIdentityAndRouteCannotRetarget/profileReorder",
+            "status": "pass"
+          },
+          {
+            "test": "TestCompleteFrozenIdentityAndRouteCannotRetarget/changedPrimaryWithoutHash",
+            "status": "pass"
+          },
+          {
+            "test": "TestCompleteFrozenIdentityAndRouteCannotRetarget/windows/queue",
+            "status": "pass"
+          },
+          {
+            "test": "TestCompleteFrozenIdentityAndRouteCannotRetarget/windows/driver",
+            "status": "pass"
+          },
+          {
+            "test": "TestCompleteFrozenIdentityAndRouteCannotRetarget/windows/port",
+            "status": "pass"
+          },
+          {
+            "test": "TestCompleteFrozenIdentityAndRouteCannotRetarget",
+            "status": "pass"
+          },
+          {
+            "test": "TestSignedConfigurationBytesAndHashesAreExact/reorderedConfiguration",
+            "status": "pass"
+          },
+          {
+            "test": "TestSignedConfigurationBytesAndHashesAreExact/routeUnknown",
+            "status": "pass"
+          },
+          {
+            "test": "TestSignedConfigurationBytesAndHashesAreExact/routeCase",
+            "status": "pass"
+          },
+          {
+            "test": "TestSignedConfigurationBytesAndHashesAreExact/destinationCase",
+            "status": "pass"
+          },
+          {
+            "test": "TestSignedConfigurationBytesAndHashesAreExact/destinationDuplicate",
+            "status": "pass"
+          },
+          {
+            "test": "TestSignedConfigurationBytesAndHashesAreExact",
+            "status": "pass"
+          },
+          {
+            "test": "TestStrictJobKeysAndZeroValueCannotProduceAJob",
+            "status": "pass"
+          },
+          {
+            "test": "TestCandidatePreservesCompleteFrozenBytesAndNeverAdmits/tcp/LOCAL",
+            "status": "pass"
+          },
+          {
+            "test": "TestCandidatePreservesCompleteFrozenBytesAndNeverAdmits/tcp/VENUE_SHARED",
+            "status": "pass"
+          },
+          {
+            "test": "TestCandidatePreservesCompleteFrozenBytesAndNeverAdmits/windowsSpooler/LOCAL",
+            "status": "pass"
+          },
+          {
+            "test": "TestCandidatePreservesCompleteFrozenBytesAndNeverAdmits/windowsSpooler/VENUE_SHARED",
+            "status": "pass"
+          },
+          {
+            "test": "TestCandidatePreservesCompleteFrozenBytesAndNeverAdmits",
+            "status": "pass"
+          },
+          {
+            "test": "TestPinnedIssuerAndPrinterOnlySignatureDomain/wrongIssuer",
+            "status": "pass"
+          },
+          {
+            "test": "TestPinnedIssuerAndPrinterOnlySignatureDomain/bodyWhitespaceTamper",
+            "status": "pass"
+          },
+          {
+            "test": "TestPinnedIssuerAndPrinterOnlySignatureDomain/noDomain",
+            "status": "pass"
+          },
+          {
+            "test": "TestPinnedIssuerAndPrinterOnlySignatureDomain/oldProofDomain",
+            "status": "pass"
+          },
+          {
+            "test": "TestPinnedIssuerAndPrinterOnlySignatureDomain/FOUNDATION_ONLY",
+            "status": "pass"
+          },
+          {
+            "test": "TestPinnedIssuerAndPrinterOnlySignatureDomain/ISOLATED_PROOF",
+            "status": "pass"
+          },
+          {
+            "test": "TestPinnedIssuerAndPrinterOnlySignatureDomain/VYNIC_OPERATIONAL_PROOF",
+            "status": "pass"
+          },
+          {
+            "test": "TestPinnedIssuerAndPrinterOnlySignatureDomain/printer",
+            "status": "pass"
+          },
+          {
+            "test": "TestPinnedIssuerAndPrinterOnlySignatureDomain/#00",
+            "status": "pass"
+          },
+          {
+            "test": "TestPinnedIssuerAndPrinterOnlySignatureDomain",
+            "status": "pass"
+          },
+          {
+            "test": "TestLifetimeGenerationRevocationAndTrustedStateFailClosed/expired",
+            "status": "pass"
+          },
+          {
+            "test": "TestLifetimeGenerationRevocationAndTrustedStateFailClosed/futureIssue",
+            "status": "pass"
+          },
+          {
+            "test": "TestLifetimeGenerationRevocationAndTrustedStateFailClosed/futureNotBefore",
+            "status": "pass"
+          },
+          {
+            "test": "TestLifetimeGenerationRevocationAndTrustedStateFailClosed/zeroIssue",
+            "status": "pass"
+          },
+          {
+            "test": "TestLifetimeGenerationRevocationAndTrustedStateFailClosed/reversedWindow",
+            "status": "pass"
+          },
+          {
+            "test": "TestLifetimeGenerationRevocationAndTrustedStateFailClosed/policyLifetimeExceeded",
+            "status": "pass"
+          },
+          {
+            "test": "TestLifetimeGenerationRevocationAndTrustedStateFailClosed/oldGeneration",
+            "status": "pass"
+          },
+          {
+            "test": "TestLifetimeGenerationRevocationAndTrustedStateFailClosed/futureGeneration",
+            "status": "pass"
+          },
+          {
+            "test": "TestLifetimeGenerationRevocationAndTrustedStateFailClosed/revokedCurrent",
+            "status": "pass"
+          },
+          {
+            "test": "TestLifetimeGenerationRevocationAndTrustedStateFailClosed/differentCurrentGrant",
+            "status": "pass"
+          },
+          {
+            "test": "TestLifetimeGenerationRevocationAndTrustedStateFailClosed/differentCurrentBodyHash",
+            "status": "pass"
+          },
+          {
+            "test": "TestLifetimeGenerationRevocationAndTrustedStateFailClosed/unpersistedGeneration",
+            "status": "pass"
+          },
+          {
+            "test": "TestLifetimeGenerationRevocationAndTrustedStateFailClosed/rollbackCurrentGeneration",
+            "status": "pass"
+          },
+          {
+            "test": "TestLifetimeGenerationRevocationAndTrustedStateFailClosed/missingIssuerPin",
+            "status": "pass"
+          },
+          {
+            "test": "TestLifetimeGenerationRevocationAndTrustedStateFailClosed/missingCurrentStateHash",
+            "status": "pass"
+          },
+          {
+            "test": "TestLifetimeGenerationRevocationAndTrustedStateFailClosed/missingClock",
+            "status": "pass"
+          },
+          {
+            "test": "TestLifetimeGenerationRevocationAndTrustedStateFailClosed/missingLifetimePolicy",
+            "status": "pass"
+          },
+          {
+            "test": "TestLifetimeGenerationRevocationAndTrustedStateFailClosed/unknownScope",
+            "status": "pass"
+          },
+          {
+            "test": "TestLifetimeGenerationRevocationAndTrustedStateFailClosed/localWithCluster",
+            "status": "pass"
+          },
+          {
+            "test": "TestLifetimeGenerationRevocationAndTrustedStateFailClosed",
+            "status": "pass"
+          },
+          {
+            "test": "TestSignedWrongContextAndAuthenticatedDERRefused/venueId",
+            "status": "pass"
+          },
+          {
+            "test": "TestSignedWrongContextAndAuthenticatedDERRefused/deviceId",
+            "status": "pass"
+          },
+          {
+            "test": "TestSignedWrongContextAndAuthenticatedDERRefused/installationId",
+            "status": "pass"
+          },
+          {
+            "test": "TestSignedWrongContextAndAuthenticatedDERRefused/hostId",
+            "status": "pass"
+          },
+          {
+            "test": "TestSignedWrongContextAndAuthenticatedDERRefused/authorityEpoch",
+            "status": "pass"
+          },
+          {
+            "test": "TestSignedWrongContextAndAuthenticatedDERRefused/terminalId",
+            "status": "pass"
+          },
+          {
+            "test": "TestSignedWrongContextAndAuthenticatedDERRefused/originInstallationId",
+            "status": "pass"
+          },
+          {
+            "test": "TestSignedWrongContextAndAuthenticatedDERRefused/clientId",
+            "status": "pass"
+          },
+          {
+            "test": "TestSignedWrongContextAndAuthenticatedDERRefused/clientCertificateSha256",
+            "status": "pass"
+          },
+          {
+            "test": "TestSignedWrongContextAndAuthenticatedDERRefused/wrongObservedClient",
+            "status": "pass"
+          },
+          {
+            "test": "TestSignedWrongContextAndAuthenticatedDERRefused/wrongDER",
+            "status": "pass"
+          },
+          {
+            "test": "TestSignedWrongContextAndAuthenticatedDERRefused/emptyDER",
+            "status": "pass"
+          },
+          {
+            "test": "TestSignedWrongContextAndAuthenticatedDERRefused/invalidPinnedDER",
+            "status": "pass"
+          },
+          {
+            "test": "TestSignedWrongContextAndAuthenticatedDERRefused/expiredLeaf",
+            "status": "pass"
+          },
+          {
+            "test": "TestSignedWrongContextAndAuthenticatedDERRefused/signedSharedOnLocal",
+            "status": "pass"
+          },
+          {
+            "test": "TestSignedWrongContextAndAuthenticatedDERRefused/wrongSharedMembership",
+            "status": "pass"
+          },
+          {
+            "test": "TestSignedWrongContextAndAuthenticatedDERRefused/wrongSharedCluster",
+            "status": "pass"
+          },
+          {
+            "test": "TestSignedWrongContextAndAuthenticatedDERRefused",
+            "status": "pass"
+          }
+        ]
+      }
+    },
+    "dataRaceWarning": false
+  },
+  "vet": {
+    "status": "passed",
+    "log": {
+      "path": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/provisioning-vet.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    }
+  },
+  "format": {
+    "status": "passed",
+    "method": "gofmt -l internal/printerprovisioning returned no files"
+  },
+  "candidateBoundary": {
+    "purpose": "VYNIC_PRINTER_ONLY_CANDIDATE",
+    "version": 1,
+    "signature": "Ed25519 over UTF8 domain vynic/printer-provisioning/candidate/v1 followed by NUL and SHA256(exact raw JSON body)",
+    "issuer": "Separately pinned trusted input, absent from untrusted grant",
+    "currentState": "Fresh server-owned registration/current grant SHA/generation=highwater/revoked-through/clock/lifetime/current route on every call",
+    "peer": "Fresh authenticated ClientID plus exact DER, current client-auth purpose/validity/host URI; caller remains responsible for mutual-TLS chain verification",
+    "route": "One explicit alias/physical UUID, exact captured endpoint, four revisions, profile raw JSON+SHA, LOCAL or VENUE_SHARED cluster/membership pin; no autodetection/normalization",
+    "job": "Strict existing printqueue.FrozenJob v1; Raw()/IDs/rendered bytes/header/cut/attempt IDs/digest unchanged",
+    "output": "Immutable private validation-only artifact; no receipt, transport, production authority or persistence",
+    "server": "Optional source-level candidate preflight; even successful candidate returns HELD_PROVISIONING and no submission result"
+  },
+  "remainingProductionRequirements": [
+    "Server-owned production printer grant issuer, key custody/rotation, Device-to-Venue and client/terminal/origin enrollment authority; no production issuer exists here.",
+    "Persistent rollback-resistant authorization generation/highwater, revocation and current grant/route state plus atomic fresh reads coordinated with future admission; this package accepts trusted snapshots but writes no storage.",
+    "Explicit trusted clock, offline maximum-lifetime/expiry/revocation policy, certificate enrollment/rotation and operational cutover decision.",
+    "Reviewed signed route/alias/physical registry activation and revision-change workflow; this candidate validator neither registers a printer nor activates a route.",
+    "Production admission bridge, full writer/auth/host fencing and model-specific physical qualification; VENUE_SHARED v1 validation does not enable Raft admission or physical dispatch."
+  ],
+  "retainedHistory": [
+    {
+      "log": {
+        "path": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/provisioning-first-unit.jsonl",
+        "sha256": "716640b9402ddc14c6a17c59eef8c86372ba940ad4896973d61d09ce756c64de",
+        "bytes": 52510
+      },
+      "status": "passed",
+      "scope": "Initial53 records before additional strictness/route/adapter tests"
+    },
+    {
+      "log": {
+        "path": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/provisioning-second-unit.jsonl",
+        "sha256": "1282c02a70252a9f98cc0a4559228bb6b97bd4c837c72532c27f319cd0a6d023",
+        "bytes": 109111
+      },
+      "status": "failed-test-fixture",
+      "reason": "Windows queue fixture was already uppercase; ToUpper did not alter bytes, so refusal assertion expected an error on identical data. Corrected test-only mutation uses ToLower; production unchanged."
+    },
+    {
+      "log": {
+        "path": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/provisioning-seam-unit-sandbox-denied.jsonl",
+        "sha256": "60643f16509d9f17b1e588d04d36f7910fdfbfb937c809834f7c16a8d6eb1479",
+        "bytes": 123016
+      },
+      "status": "sandbox-denied",
+      "reason": "listen tcp 127.0.0.1:0: bind: operation not permitted for7 mTLS fixture starts; validator112 records passed. Identical command retried once with explicit authorized escalation, then normal receipt passed."
+    }
+  ],
+  "safety": {
+    "physicalCalls": 0,
+    "newProductionCredentialsOrTrust": 0,
+    "productionReceipts": 0,
+    "oldSourceOrProofEdits": 0,
+    "writes": "New isolated internal/printerprovisioning files and qualification artifacts only; synthetic keys generated in-memory and public DER/grants in t.TempDir"
+  },
+  "scopeLimit": "This package receipt is separate from parent combined final Go/native Windows/CLI qualification and later acceptance matrix."
+}

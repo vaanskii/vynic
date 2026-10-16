@@ -1,3 +1,4 @@
+import { ManagerActivationService } from '../auth/manager-activation.service';
 import { isFreshDisposableDatabase } from '../../test/disposable-database';
 import { HostnameRequestsService } from '../website/core/hostname-requests';
 import { SubscriptionService } from '../subscriptions/subscription.service';
@@ -21,6 +22,7 @@ import { CustomerWebsiteController } from './customer-website.controller';
 import { CustomerPaymentsController } from './customer-payments.controller';
 import { CustomerCatalogController } from './restaurant-foundation.controller';
 import { RestaurantFoundationService } from './restaurant-foundation.service';
+import { MenuCatalogService } from '../menu-catalog/menu-catalog.service';
 import { OwnerInvitationsService } from './owner-invitations.service';
 import {
   CustomerOwnerInvitationsController,
@@ -265,7 +267,12 @@ const url = process.env.COMMERCIAL_TEST_DATABASE_URL;
         ],
         [
           RestaurantFoundationService,
-          new RestaurantFoundationService(db, owners, access),
+          new RestaurantFoundationService(
+            db,
+            owners,
+            access,
+            new MenuCatalogService(db),
+          ),
         ],
       ];
       const module = await Test.createTestingModule({
@@ -765,17 +772,25 @@ const url = process.env.COMMERCIAL_TEST_DATABASE_URL;
         where: { key: 'POS_MANAGER' },
       });
       await assign(a, plan, 'ACTIVE');
-      await http()
-        .post(`${base(a)}/managers`)
-        .set(auth(a.token))
-        .send({
-          requestId: randomUUID(),
-          username: 'manager-' + tag,
-          displayName: 'Manager',
-          role: 'MANAGER',
-          pin: '684219',
-        })
-        .expect(201);
+      const credentials = new DeviceCredentialService(db);
+      const device = await credentials.issueCredential({
+        venueId: a.id,
+        installationId: randomUUID(),
+        displayName: 'Synthetic POS',
+        platform: 'WINDOWS',
+      });
+      const pos = await credentials.verifyCredential(device.credential);
+      const registration = new ManagerActivationService(
+        db,
+        new StaffPinVault(db),
+      );
+      const grant = await registration.issue(actor, a.id);
+      await registration.complete(pos!, {
+        code: grant.code,
+        requestId: randomUUID(),
+        name: 'manager-' + tag,
+        pin: '684219',
+      });
       const active = (await http().get(base(a)).set(auth(a.token)).expect(200))
         .body;
       expect(active.venue.loginCode).toBe(a.loginCode);
@@ -801,7 +816,7 @@ const url = process.env.COMMERCIAL_TEST_DATABASE_URL;
         .post(`${base(a)}/managers/${staffId}/disable`)
         .set(auth(a.token))
         .send({ requestId: randomUUID() })
-        .expect(201);
+        .expect(403);
     });
     it('trial extension/reactivation and suspension are audited; missing dates cannot grant trials', async () => {
       await assign(a, websitePlan);

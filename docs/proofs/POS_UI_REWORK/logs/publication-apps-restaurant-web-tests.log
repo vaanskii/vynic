@@ -1,0 +1,5 @@
+
+> vynic-restaurant-web@0.1.0 test
+> vitest run --maxWorkers=2 --reporter=json --outputFile=/tmp/vynic-publication-validation/apps-restaurant-web-tests.json
+
+JSON report written to /tmp/vynic-publication-validation/apps-restaurant-web-tests.json

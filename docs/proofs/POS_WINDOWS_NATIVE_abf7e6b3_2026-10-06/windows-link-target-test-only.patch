@@ -1,0 +1,52 @@
+--- a/apps/operations/test/unit/pos02_acceptance_runner_test.dart
++++ b/apps/operations/test/unit/pos02_acceptance_runner_test.dart
+@@ -899,12 +899,15 @@
+           Link(extra).createSync(marker.path);
+       }
+       final type = FileSystemEntity.typeSync(extra, followLinks: false);
++      final targetBefore = entryType == 'ownerAlias'
++          ? Link(extra).targetSync()
++          : null;
+       expectOutputRefused(spec, dir);
+       expect(FileSystemEntity.typeSync(extra, followLinks: false), type);
+       if (entryType == 'file')
+         expect(File(extra).readAsStringSync(), 'PRESERVE');
+       if (entryType == 'ownerAlias') {
+-        expect(Link(extra).targetSync(), marker.path);
++        expect(Link(extra).targetSync(), targetBefore);
+       }
+       expect(marker.readAsBytesSync(), ownerBytes);
+       expect(File('${dir.path}/result.json').existsSync(), false);
+@@ -935,8 +938,9 @@
+     final bytes = elsewhere.readAsBytesSync();
+     marker.deleteSync();
+     Link(marker.path).createSync(elsewhere.path);
++    final targetBefore = Link(marker.path).targetSync();
+     expectOutputRefused(spec, dir);
+-    expect(Link(marker.path).targetSync(), elsewhere.path);
++    expect(Link(marker.path).targetSync(), targetBefore);
+     expect(elsewhere.readAsBytesSync(), bytes);
+     expect(File('${dir.path}/result.json').existsSync(), false);
+   });
+@@ -948,8 +952,9 @@
+     final parent = dir.parent;
+     final elsewhere = parent.renameSync('${temp.path}/external-results');
+     Link(parent.path).createSync(elsewhere.path);
++    final targetBefore = Link(parent.path).targetSync();
+     expectOutputRefused(spec, dir);
+-    expect(Link(parent.path).targetSync(), elsewhere.path);
++    expect(Link(parent.path).targetSync(), targetBefore);
+     expect(File('${dir.path}/OWNER.json').readAsBytesSync(), markerBytes);
+     expect(File('${dir.path}/result.json').existsSync(), false);
+   });
+@@ -960,8 +965,9 @@
+     final result = Link('${dir.path}/result.json');
+     final target = '${temp.path}/missing-result.json';
+     result.createSync(target);
++    final targetBefore = result.targetSync();
+     expectOutputRefused(spec, dir);
+-    expect(result.targetSync(), target);
++    expect(result.targetSync(), targetBefore);
+     expect(File(target).existsSync(), false);
+   });
+ }

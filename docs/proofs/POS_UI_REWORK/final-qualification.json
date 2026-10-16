@@ -1,0 +1,21 @@
+{
+  "flutter_analysis": "PASS: no issues",
+  "aggregate": {
+    "passed": 2700,
+    "skipped": 17,
+    "failed": 44,
+    "failure_names_identical_to_before": true,
+    "additional_failures": []
+  },
+  "last_layout_checks": {
+    "passed": 26,
+    "failed": 0
+  },
+  "last_home_asset_captures": {
+    "passed": 4,
+    "failed": 0
+  },
+  "native_windows": "NOT RUN: macOS host",
+  "live_data_used": false,
+  "library_images": 37
+}

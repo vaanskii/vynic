@@ -1,0 +1,14 @@
+{
+  "status": "PASS",
+  "writerPid": 87301,
+  "readerPid": 87367,
+  "restart": {
+    "backendBefore": 87241,
+    "backendAfter": 87325,
+    "databaseRestarted": true,
+    "reportsAndCutoversIdentical": true,
+    "durableCutoversAfterRestart": 5
+  },
+  "temporaryHiveRemoved": true,
+  "credentialsRemoved": true
+}

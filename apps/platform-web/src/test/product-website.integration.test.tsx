@@ -62,6 +62,98 @@ describe("venue product and website controls", () => {
     await waitFor(() => expect(productReads).toBeGreaterThan(1));
   });
 
+  it("shows the exact assigned SaaS address separately from same-prefix external aliases", async () => {
+    installApi((request) => {
+      if (request.url.pathname.endsWith("/product"))
+        return {
+          body: {
+            ...product,
+            website: {
+              ...product.website,
+              hostname: "tabla.vynic.localhost",
+              provisioning: {
+                status: "PUBLISHED",
+                assignedSlug: "tabla",
+                publishedAt: null,
+              },
+            },
+          },
+        };
+      if (request.url.pathname.endsWith("/domains"))
+        return {
+          body: ["tabla.example", "tabla.vynic.localhost"].map(
+            (hostname, i) => ({
+              id: i === 0 ? ids.domain : ids.plan,
+              venueId: ids.venue,
+              hostname,
+              status: "ACTIVE",
+              createdAt: "2026-08-31T10:00:00.000Z",
+              updatedAt: "2026-08-31T10:00:00.000Z",
+            }),
+          ),
+        };
+      return undefined;
+    });
+    renderPlatform(`/venues/${ids.venue}/website`);
+    expect(
+      await screen.findByText("Current SaaS address: tabla.vynic.localhost"),
+    ).toBeVisible();
+    expect(screen.getByText("Custom domains: tabla.example")).toBeVisible();
+  });
+
+  it("retains the old domain and error when the displayed hostname is stale", async () => {
+    installApi((request) => {
+      if (request.url.pathname.endsWith("/domains"))
+        return {
+          body: [
+            {
+              id: ids.domain,
+              venueId: ids.venue,
+              hostname: "current.vynic.localhost",
+              status: "ACTIVE",
+              createdAt: "2026-08-31T10:00:00.000Z",
+              updatedAt: "2026-08-31T10:00:00.000Z",
+            },
+          ],
+        };
+      if (request.method === "PATCH")
+        return {
+          status: 409,
+          body: { message: "Hostname changed. Refresh before editing." },
+        };
+      return undefined;
+    });
+    const user = userEvent.setup();
+    renderPlatform(`/venues/${ids.venue}/website`);
+    await user.click(
+      await screen.findByRole("button", { name: "Change hostname" }),
+    );
+    const dialog = await screen.findByRole("dialog", {
+      name: "Change hostname",
+    });
+    const field = within(dialog).getByRole("textbox", {
+      name: /^New hostname/,
+    });
+    await user.clear(field);
+    await user.type(field, "new.vynic.localhost");
+    await user.type(
+      within(dialog).getByRole("textbox", { name: "Change reason" }),
+      "Support request",
+    );
+    await user.click(
+      within(dialog).getByRole("button", { name: "Save hostname" }),
+    );
+    expect(
+      await within(dialog).findByText(
+        "Hostname changed. Refresh before editing.",
+      ),
+    ).toBeVisible();
+    expect(
+      within(dialog).getByRole("textbox", { name: /^New hostname/ }),
+    ).toHaveValue("new.vynic.localhost");
+    expect(screen.queryByText(/Hostname changed. Check DNS/)).toBeNull();
+  });
+
   it("surfaces a WebsiteMode inconsistency without silently correcting it", async () => {
     installApi((request) =>
       request.url.pathname.endsWith("/product")
@@ -116,6 +208,17 @@ describe("venue product and website controls", () => {
         ];
         return { body: domains[1] };
       }
+      if (
+        request.url.pathname.endsWith(`/domains/${ids.domain}`) &&
+        request.method === "PATCH"
+      ) {
+        domains = domains.map((item) =>
+          item.id === ids.domain
+            ? { ...item, hostname: String(request.body?.hostname) }
+            : item,
+        );
+        return { body: domains[0] };
+      }
       if (request.url.pathname.endsWith(`/domains/${ids.domain}/status`)) {
         domains = domains.map((item) =>
           item.id === ids.domain ? { ...item, status: "DISABLED" } : item,
@@ -151,7 +254,44 @@ describe("venue product and website controls", () => {
       ).toBe(true),
     );
 
-    const activeDomainRow = screen.getByText("vankisi.example").closest("tr");
+    const originalRow = screen.getByText("vankisi.example").closest("tr");
+    await user.click(
+      within(originalRow as HTMLElement).getByRole("button", {
+        name: "Change hostname",
+      }),
+    );
+    const renameDialog = await screen.findByRole("dialog", {
+      name: "Change hostname",
+    });
+    const hostnameField = within(renameDialog).getByRole("textbox", {
+      name: /^New hostname/,
+    });
+    await user.clear(hostnameField);
+    await user.type(hostnameField, "restaurant.vynic.localhost");
+    await user.type(
+      within(renameDialog).getByRole("textbox", { name: "Change reason" }),
+      "Customer contacted support",
+    );
+    await user.click(
+      within(renameDialog).getByRole("button", { name: "Save hostname" }),
+    );
+    await waitFor(() =>
+      expect(
+        api.requests.find(
+          (request) =>
+            request.method === "PATCH" &&
+            request.url.pathname.endsWith(`/domains/${ids.domain}`),
+        )?.body,
+      ).toEqual({
+        hostname: "restaurant.vynic.localhost",
+        expectedHostname: "vankisi.example",
+        reason: "Customer contacted support",
+      }),
+    );
+    expect(await screen.findByText("restaurant.vynic.localhost")).toBeVisible();
+    const activeDomainRow = screen
+      .getByText("restaurant.vynic.localhost")
+      .closest("tr");
     expect(activeDomainRow).not.toBeNull();
     await user.click(
       within(activeDomainRow as HTMLElement).getByRole("button", {
@@ -171,7 +311,9 @@ describe("venue product and website controls", () => {
       ).toBe(true),
     );
 
-    const disabledDomainRow = screen.getByText("vankisi.example").closest("tr");
+    const disabledDomainRow = screen
+      .getByText("restaurant.vynic.localhost")
+      .closest("tr");
     expect(disabledDomainRow).not.toBeNull();
     await user.click(
       within(disabledDomainRow as HTMLElement).getByRole("button", {

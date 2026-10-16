@@ -1,0 +1,12 @@
+{
+  "recordedAtUTC": "2026-10-06T17:59:53.780188+00:00",
+  "status": "TEST_LOADERS_BLOCKED_BY_SANDBOX_LOOPBACK_PERMISSION",
+  "actualProcessExit": 1,
+  "failedHiddenLoaders": 39,
+  "visibleTestsExecuted": 0,
+  "sourceChanged": false,
+  "analysis68PassedSeparately": true,
+  "runtimeFailure": false,
+  "cause": "Flutter test server bind to literal127.0.0.1 ephemeral ports returned EPERM in default restricted sandbox.",
+  "next": "Same exact frozen-source test selection in authorized elevated execution with new output paths; initial failure/logs/status retained."
+}

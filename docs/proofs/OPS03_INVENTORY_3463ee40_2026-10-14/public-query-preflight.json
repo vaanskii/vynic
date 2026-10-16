@@ -1,0 +1,19 @@
+{
+  "endpoint": "https://api.osv.dev/v1/querybatch",
+  "bodyFields": [
+    "queries[].package.ecosystem",
+    "queries[].package.name",
+    "queries[].version"
+  ],
+  "publicPackageVersionQueries": 1764,
+  "ecosystemCounts": {
+    "Go": 29,
+    "Pub": 173,
+    "npm": 1562
+  },
+  "rootApplicationsAndLocalDependenciesExcluded": true,
+  "environmentOrCredentialsOrSourceOrBusinessFields": false,
+  "bodySha256": "6d34b8b862cb031038f7e1422dc9f0ee9a87c6b89c92790cf3407861bd192d46",
+  "networkRequestsMade": 0,
+  "registryTokensAndProxyConfigForwarded": false
+}

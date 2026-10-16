@@ -1,0 +1,14 @@
+{
+  "source": "docs/proofs/POS02_WINDOWS_RECOVERY_2026-10-04/proof.json",
+  "sha256": "95b1c81219de0267f63cc3464a053aff938c0d231447a2d5a504068e963f3ff0",
+  "checks": {
+    "POS02NotDone": true,
+    "developmentBuild": true,
+    "installed24FilesMatch": true,
+    "startupVerified": true,
+    "sealed883": true,
+    "product96Pass": true,
+    "aggregateFailed": true,
+    "noPhysicalJobs": true
+  }
+}

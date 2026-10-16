@@ -1,3 +1,4 @@
+import 'package:vynic/core/ui/widgets/pos_dialog.dart';
 import 'dart:convert';
 import 'package:vynic/apps/windows_pos/widgets/admin/backup_password_dialog.dart';
 import 'package:vynic/core/widgets/pos_text.dart';
@@ -12,6 +13,7 @@ import 'dart:io';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import '../widgets/shared/print_jobs.dart';
 import 'package:vynic/apps/windows_pos/widgets/admin/shared/admin_design.dart';
 import 'package:intl/intl.dart';
 import 'package:vynic/core/services/pos/backup_file_picker.dart';
@@ -71,8 +73,8 @@ class AdminScreen extends StatefulWidget {
   /// Destinations that need a signed developer token.
   ///
   /// These are the tools a venue cannot be trusted with once the app is sold:
-  /// the backend URL and printer plumbing brick sync and printing when they
-  /// are guessed at, the error log is a support tool rather than a business
+  /// the backend URL and printer plumbing can brick sync and printing when
+  /// guessed at, the error log is a support tool rather than a business
   /// one, and „developer" itself holds restore, wipe and PIN recovery.
   static const List<String> developerSections = [
     'errors',
@@ -475,7 +477,7 @@ class _AdminScreenState extends State<AdminScreen> {
         text: _formatMoneyField(staffOverride ?? config.staffDailyCost),
       );
     }
-    final result = await showDialog<Map<String, Map<String, double>>>(
+    final result = await showPosModal<Map<String, Map<String, double>>>(
       context: context,
       builder: (ctx) {
         return StatefulBuilder(
@@ -1472,7 +1474,7 @@ class _AdminScreenState extends State<AdminScreen> {
         title: 'პროგრამის შესახებ',
         section: 'about',
       ),
-      // Terminal plumbing and the developer tools, only while a signed token
+      // Developer tools, only while a signed token
       // is active. They are absent rather than disabled: a greyed-out
       // „კავშირი" is an invitation to ask what it does.
       if (_isDeveloperUnlocked) ...[
@@ -1484,11 +1486,12 @@ class _AdminScreenState extends State<AdminScreen> {
             title: 'შეცდომები',
             section: 'errors',
           ),
-        _buildMenuItem(
-          icon: Icons.print,
-          title: 'პრინტერები',
-          section: 'printers',
-        ),
+        if (DeveloperAccess.can(DeveloperScope.printers))
+          _buildMenuItem(
+            icon: Icons.print,
+            title: 'პრინტერები',
+            section: 'printers',
+          ),
         _buildMenuItem(
           icon: Icons.lan_outlined,
           title: 'კავშირი',
@@ -1539,8 +1542,8 @@ class _AdminScreenState extends State<AdminScreen> {
             borderRadius: BorderRadius.circular(10),
             onTap: () => Navigator.of(context).pop(),
             child: Container(
-              width: 36,
-              height: 36,
+              width: 56,
+              height: 56,
               decoration: BoxDecoration(
                 color: VynicFloorTokens.metricFill,
                 borderRadius: BorderRadius.circular(8),
@@ -1613,13 +1616,14 @@ class _AdminScreenState extends State<AdminScreen> {
       color: isSelected
           ? VynicFloorTokens.accentText
           : VynicFloorTokens.textMuted,
-      fontSize: 13,
+      fontSize: 15,
       fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
     );
 
     Widget content = AnimatedContainer(
       duration: const Duration(milliseconds: 200),
       curve: Curves.easeOut,
+      constraints: const BoxConstraints(minHeight: 56),
       margin: const EdgeInsets.symmetric(vertical: 3),
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       decoration: BoxDecoration(
@@ -1887,6 +1891,12 @@ class _AdminScreenState extends State<AdminScreen> {
   }
 
   Future<void> _savePrinterSettings() async {
+    if (!DeveloperAccess.can(DeveloperScope.printers)) {
+      unawaited(
+        showErrorToast(context, 'Developer printer access is required.'),
+      );
+      return;
+    }
     final kitchenIp = _kitchenPrinterController.text.trim();
     final receiptIp = _receiptPrinterController.text.trim();
     const port = 9100;
@@ -1905,7 +1915,6 @@ class _AdminScreenState extends State<AdminScreen> {
     });
 
     try {
-      await DatabaseService.savePrintersList(const <Map<String, dynamic>>[]);
       await DatabaseService.savePrinterConfiguration(
         kitchenIp: kitchenIp,
         receiptIp: receiptIp,
@@ -1931,6 +1940,12 @@ class _AdminScreenState extends State<AdminScreen> {
   }
 
   Future<void> _testPrinterConnections() async {
+    if (!DeveloperAccess.can(DeveloperScope.printers)) {
+      unawaited(
+        showErrorToast(context, 'Developer printer access is required.'),
+      );
+      return;
+    }
     final kitchenIp = _kitchenPrinterController.text.trim();
     final receiptIp = _receiptPrinterController.text.trim();
     const port = 9100;
@@ -2372,7 +2387,7 @@ class _AdminScreenState extends State<AdminScreen> {
       final legacyIncomplete =
           header is Map && !header.containsKey('formatVersion');
       if (legacyIncomplete) {
-        final accepted = await showDialog<bool>(
+        final accepted = await showPosModal<bool>(
           context: context,
           builder: (dialogContext) => AlertDialog(
             title: const Text('ძველი სარეზერვო ასლი'),
@@ -2424,7 +2439,7 @@ class _AdminScreenState extends State<AdminScreen> {
 
       // Startup completes recovered closures before normal sync resumes.
 
-      final acknowledged = await showDialog<bool>(
+      final acknowledged = await showPosModal<bool>(
         context: context,
         barrierDismissible: false,
         builder: (dialogContext) {
@@ -2502,10 +2517,13 @@ class _AdminScreenState extends State<AdminScreen> {
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
-                          textStyle: const TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w700,
-                          ),
+                          textStyle: Theme.of(dialogContext)
+                              .textTheme
+                              .labelLarge
+                              ?.copyWith(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w700,
+                              ),
                         ),
                         child: const PosText('გაგრძელება'),
                       ),
@@ -2605,7 +2623,7 @@ class _AdminScreenState extends State<AdminScreen> {
       return;
     }
 
-    await showDialog<void>(
+    await showPosModal<void>(
       context: context,
       barrierColor: Colors.black54,
       builder: (dialogContext) {
@@ -2685,7 +2703,7 @@ class _AdminScreenState extends State<AdminScreen> {
                                       DatabaseService.getGeorgianFormattedDate(
                                         date,
                                       );
-                                  final confirmed = await showDialog<bool>(
+                                  final confirmed = await showPosModal<bool>(
                                     context: dialogContext,
                                     barrierColor: Colors.black26,
                                     builder: (confirmCtx) {
@@ -3119,7 +3137,7 @@ class _AdminScreenState extends State<AdminScreen> {
     );
     final georgianTarget = DatabaseService.getGeorgianFormattedDate(targetDate);
 
-    final confirmed = await showDialog<bool>(
+    final confirmed = await showPosModal<bool>(
       context: context,
       barrierColor: Colors.black26,
       builder: (dialogContext) {
@@ -3325,6 +3343,8 @@ class _AdminScreenState extends State<AdminScreen> {
   }
 
   Future<void> _reprintSaleReceipt(Map<String, dynamic> sale) async {
+    final reason = await requestLabeledPrintCopyReason(context);
+    if (reason == null || !mounted) return;
     final itemMaps = _resolveSaleItemsForPrint(sale);
     final items = itemMaps.map((item) {
       final qty = item['quantity'] ?? 0;
@@ -3345,8 +3365,10 @@ class _AdminScreenState extends State<AdminScreen> {
         .join(', ');
     final paymentLabel = PaymentUtils.formatPaymentDisplay(sale);
 
-    PrinterService.printReceiptInBackground(
+    await PrinterService.printReceiptInBackground(
       items: items,
+      copyOf: 'sale/${sale['orderId']}/${sale['date'] ?? 'unknown'}',
+      copyReason: reason,
       subtotal: subtotal,
       serviceFee: includeServiceFee ? serviceFee : null,
       includeServiceFee: includeServiceFee,
@@ -3360,8 +3382,8 @@ class _AdminScreenState extends State<AdminScreen> {
           showPosToast(
             context: context,
             message: success
-                ? 'Receipt sent to printer'
-                : 'Printer unavailable. Please check connection.',
+                ? 'Sent to printer — check paper'
+                : 'Printing unconfirmed — review print jobs and check paper.',
             style: success ? PosToastStyle.success : PosToastStyle.error,
           ),
         );
@@ -3438,6 +3460,8 @@ class _AdminScreenState extends State<AdminScreen> {
   }
 
   Future<void> _reprintSaleFullReceipt(Map<String, dynamic> sale) async {
+    final reason = await requestLabeledPrintCopyReason(context);
+    if (reason == null || !mounted) return;
     final itemMaps = _resolveSaleItemsForPrint(sale);
     final items = itemMaps.map((item) {
       final qty = item['quantity'] ?? 0;
@@ -3473,8 +3497,10 @@ class _AdminScreenState extends State<AdminScreen> {
         .join(', ');
     final paymentLabel = PaymentUtils.formatPaymentDisplay(sale);
 
-    PrinterService.printReceiptInBackground(
+    await PrinterService.printReceiptInBackground(
       items: items,
+      copyOf: 'sale/${sale['orderId']}/${sale['date'] ?? 'unknown'}',
+      copyReason: reason,
       subtotal: subtotal,
       serviceFee: includeServiceFee ? serviceFee : null,
       includeServiceFee: includeServiceFee,
@@ -3492,7 +3518,7 @@ class _AdminScreenState extends State<AdminScreen> {
             context: context,
             message: success
                 ? 'Full receipt sent to printer'
-                : 'Printer unavailable. Please check connection.',
+                : 'Printing unconfirmed — review print jobs and check paper.',
             style: success ? PosToastStyle.success : PosToastStyle.error,
           ),
         );
@@ -3671,7 +3697,7 @@ class _AdminScreenState extends State<AdminScreen> {
     bool destructive = false,
   }) async {
     final controller = TextEditingController();
-    final result = await showDialog<String>(
+    final result = await showPosModal<String>(
       context: context,
       builder: (dialogContext) {
         return StatefulBuilder(
@@ -3763,7 +3789,7 @@ class _AdminScreenState extends State<AdminScreen> {
     }
 
     final orderId = sale['orderId'];
-    final confirmed = await showDialog<bool>(
+    final confirmed = await showPosModal<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
         backgroundColor: AdminDesign.text,
@@ -3828,6 +3854,10 @@ class _AdminScreenState extends State<AdminScreen> {
     // expired mid-session or was never presented.
     if (AdminScreen.developerSections.contains(_selectedSection) &&
         !_isDeveloperUnlocked) {
+      return _buildSettingsSection();
+    }
+    if (_selectedSection == 'printers' &&
+        !DeveloperAccess.can(DeveloperScope.printers)) {
       return _buildSettingsSection();
     }
 

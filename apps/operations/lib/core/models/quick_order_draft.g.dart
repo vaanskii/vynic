@@ -27,13 +27,15 @@ class QuickOrderDraftAdapter extends TypeAdapter<QuickOrderDraft> {
       createdAt: fields[7] as DateTime,
       createdBy: fields[8] as String,
       displayName: fields[9] as String?,
+      customerName: fields[10] as String?,
+      customerPhone: fields[11] as String?,
     );
   }
 
   @override
   void write(BinaryWriter writer, QuickOrderDraft obj) {
     writer
-      ..writeByte(10)
+      ..writeByte(12)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -53,7 +55,11 @@ class QuickOrderDraftAdapter extends TypeAdapter<QuickOrderDraft> {
       ..writeByte(8)
       ..write(obj.createdBy)
       ..writeByte(9)
-      ..write(obj.displayName);
+      ..write(obj.displayName)
+      ..writeByte(10)
+      ..write(obj.customerName)
+      ..writeByte(11)
+      ..write(obj.customerPhone);
   }
 
   @override

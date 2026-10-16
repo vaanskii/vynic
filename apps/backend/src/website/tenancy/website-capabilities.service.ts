@@ -7,6 +7,7 @@ import {
 import { Prisma, WebsiteCapabilityKey } from '@prisma/client';
 import { PrismaService } from '../../prisma.service';
 import { activeMenuItem } from '../../menu-catalog/menu-active';
+import { latestBogIntegrationStatus } from '../../payment-integrations/payment-integration-status';
 import { VenueEntitlementsService } from '../../entitlements/venue-entitlements.service';
 import {
   CapabilityFacts,
@@ -42,10 +43,7 @@ export class WebsiteCapabilitiesService {
           select: { workingHours: true, gallery: true },
         }),
         this.db.websiteTable.count({ where: { venueId, isActive: true } }),
-        this.db.paymentIntegration.findFirst({
-          where: { venueId, provider: 'BOG' },
-          select: { enabled: true },
-        }),
+        latestBogIntegrationStatus(this.db, venueId),
       ]);
     const size = (value: Prisma.JsonValue | undefined) =>
       Array.isArray(value) ? value.length : 0;

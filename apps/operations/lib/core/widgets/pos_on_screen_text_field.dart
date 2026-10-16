@@ -7,6 +7,7 @@ import 'package:vynic/core/widgets/pos_keyboard/pos_keyboard_language.dart';
 import 'package:vynic/core/widgets/pos_keyboard/pos_keyboard_sheet.dart';
 import 'package:vynic/core/widgets/pos_keyboard/pos_input_mode.dart';
 import 'package:vynic/core/services/pos/pos_locale.dart';
+import 'package:vynic/core/ui/vynic_floor_tokens.dart';
 export 'package:vynic/core/widgets/pos_keyboard/pos_input_mode.dart';
 
 bool shouldUsePosOnScreenKeyboard([BuildContext? context]) =>
@@ -66,6 +67,8 @@ class _PosFieldState extends State<PosOnScreenTextField> {
   late String _last;
   bool _opening = false;
   bool _normalizing = false;
+  final _ownedFocus = FocusNode();
+  FocusNode get _focus => widget.focusNode ?? _ownedFocus;
   @override
   void initState() {
     super.initState();
@@ -76,12 +79,40 @@ class _PosFieldState extends State<PosOnScreenTextField> {
   void _keepVisible() {
     if (!_opening || PosInputSettings.keyboardHeight.value == 0) return;
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted && _opening)
+      if (mounted && _opening) {
         Scrollable.ensureVisible(
           context,
-          alignment: 0,
-          duration: const Duration(milliseconds: 120),
+          alignmentPolicy: ScrollPositionAlignmentPolicy.keepVisibleAtEnd,
         );
+        // Pages keep their size beneath the dock. Reveal only the covered
+        // portion in the field's own scrollable, in its local scale.
+        final render = context.findRenderObject();
+        final scrollable = Scrollable.maybeOf(context);
+        if (render is RenderBox &&
+            scrollable != null &&
+            scrollable.position.axis == Axis.vertical) {
+          final origin = render.localToGlobal(Offset.zero);
+          final scale =
+              (render.localToGlobal(const Offset(0, 1)).dy - origin.dy).abs();
+          final view = View.of(context);
+          final keyboardTop =
+              view.physicalSize.height / view.devicePixelRatio -
+              PosInputSettings.keyboardHeight.value * scale;
+          final overlap =
+              render.localToGlobal(Offset(0, render.size.height)).dy -
+              keyboardTop +
+              12 * scale;
+          if (overlap > 0 && scale > 0) {
+            final position = scrollable.position;
+            position.jumpTo(
+              (position.pixels + overlap / scale).clamp(
+                position.minScrollExtent,
+                position.maxScrollExtent,
+              ),
+            );
+          }
+        }
+      }
     });
   }
 
@@ -144,6 +175,7 @@ class _PosFieldState extends State<PosOnScreenTextField> {
   @override
   void dispose() {
     widget.controller.removeListener(_changed);
+    _ownedFocus.dispose();
     PosInputSettings.keyboardHeight.removeListener(_keepVisible);
     super.dispose();
   }
@@ -151,11 +183,9 @@ class _PosFieldState extends State<PosOnScreenTextField> {
   Future<void> _open() async {
     if (_opening) return;
     _opening = true;
-    await Scrollable.ensureVisible(
-      context,
-      alignment: 0,
-      duration: const Duration(milliseconds: 160),
-    );
+    _focus.requestFocus();
+    // The dock listener reveals only obscured content after its first layout.
+    // A visible field must not jump to the top or wait for a pre-scroll.
     if (!mounted) {
       _opening = false;
       return;
@@ -197,22 +227,34 @@ class _PosFieldState extends State<PosOnScreenTextField> {
     final numeric = widget.mode != PosInputMode.text;
     return TextField(
       controller: widget.controller,
-      focusNode: widget.focusNode,
+      focusNode: _focus,
       enabled: widget.enabled,
-      readOnly: touch,
+      readOnly: touch && !PosInputSettings.active,
       showCursor: true,
+      cursorColor: PosInputSettings.active
+          ? VynicFloorTokens.accentStrong
+          : null,
+      cursorWidth: 2,
       obscureText: widget.mode == PosInputMode.pin,
       enableSuggestions: widget.mode != PosInputMode.pin,
       autocorrect: !numeric,
       maxLines: widget.maxLines,
       style: widget.style,
-      keyboardType: numeric
+      keyboardType: touch && PosInputSettings.active
+          ? TextInputType.none
+          : numeric
           ? TextInputType.numberWithOptions(
               decimal: widget.mode == PosInputMode.decimal,
             )
           : TextInputType.text,
       inputFormatters: _formatters,
       onTap: touch && widget.enabled ? _open : null,
+      onTapOutside: PosInputSettings.active
+          ? (_) {
+              // Mouse clicks on dock keys must not clear the field's caret/focus.
+              if (!_opening) _focus.unfocus();
+            }
+          : null,
       decoration: widget.decoration.copyWith(
         labelText: PosLocale.tr(context, widget.decoration.labelText),
         hintText: PosLocale.tr(context, widget.decoration.hintText),

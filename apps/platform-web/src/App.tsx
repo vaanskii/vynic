@@ -10,7 +10,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { LocaleProvider, localeHref, preferredLocale } from "./lib/i18n";
-import { HomePage } from "./pages/HomePage";
+import { MarketingSite } from "./pages/MarketingSite";
 import { AuthProvider } from "./platform/auth";
 import { LoginPage } from "./platform/LoginPage";
 import { NotFoundPage } from "./platform/NotFoundPage";
@@ -58,27 +58,28 @@ export function AppRoutes({
   return (
     <Routes>
       <Route path="/" element={<PublicHomeRedirect />} />
+      {/* Product site: home plus /pos, /manager, /floor-plan, /reservations. */}
       <Route
         path="/product"
         element={
           <LocaleProvider>
-            <HomePage />
+            <MarketingSite />
           </LocaleProvider>
         }
       />
       <Route
-        path="/en"
+        path="/en/*"
         element={
           <LocaleProvider>
-            <HomePage />
+            <MarketingSite />
           </LocaleProvider>
         }
       />
       <Route
-        path="/ka"
+        path="/ka/*"
         element={
           <LocaleProvider>
-            <HomePage />
+            <MarketingSite />
           </LocaleProvider>
         }
       />

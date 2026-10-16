@@ -1,0 +1,40 @@
+{
+  "verdict": "PASS bounded Dart v2 envelope, v1 guard extraction and four actual contract golden pairs",
+  "supersedes": "printer-validation/dart-cluster-independent-review.json",
+  "source_sha256": {
+    "apps/operations/lib/core/services/printing/shared_print_effect.dart": "685b7208368e1757a551249ffcadc46580cc496ce71ef8944c660db9dae791bb",
+    "apps/operations/lib/core/services/printing/cluster_print_effect.dart": "c029cce6ac995cfed2bd2af306170233da26a8e4a197d1091fd508450cd57134",
+    "apps/operations/tool/shared_print_fixture.dart": "3de345853565e7ab1071d02b387836ff0293c030a9e4da3de6336c65501e63ea",
+    "apps/operations/tool/cluster_print_fixture.dart": "53c51fde5dd0f11fdb5ce3c7792de7851048d7e1c002978fb1c9abce1197b08e",
+    "apps/operations/test/unit/shared_print_effect_test.dart": "59c7532611497b0b681de9928aff8563bc0670d90884c323bd828522ef9680d7",
+    "apps/operations/test/unit/cluster_print_effect_test.dart": "773394b7566630226419410b57edf6970e08f2a6a760eb4c1a2f1805bb5e8431"
+  },
+  "evidence": {
+    "recorded_dart_tests": 14,
+    "recorded_test_log_sha256": "c717a1fbb7cb927191591b9f06d97e5106154f03f7a7a6a2c5cece549417f2aa",
+    "independent_Go_contract_tests": 3,
+    "independent_Go_contract_log_sha256": "958c0265fa1d494cc8f8d4cd992d489e95e490045287b0d65326fda98c6c7ba0",
+    "initial_sandbox_test": "Membership loopback bind denied; retained cluster-independent-contracts.jsonl; authorized retry passed",
+    "independently_regenerated_golden_sha256": {
+      "local_tcp.config.json": "5fb77a085478e13e841b4a9e504973fad13b54cb13260f809f2265f561fa6104",
+      "local_tcp.job.json": "4b2a9926ba64c7a2e3123993fe1586a9adbdfd44323e4ef1a1a7c6775cb1382f",
+      "shared_tcp.config.json": "631484beb05a8d5e53b0049bda893813c2ce247c15de5c1d82ccc4620d0b89f1",
+      "shared_tcp.job.json": "dfc155cc16c5f6b18c6ff80bff90c1994ae27040fb69d7afa1deaf4124bb1120",
+      "shared_usb.config.json": "1c8e94daf8dbd24a2c13e7c8c8e1ebf660f3d6f3e5989bd43f7f33d8adcf2e2b",
+      "shared_usb.job.json": "31e2179da2e87ea1b13376dc7dcd41cbe23ff4dd1e6e377fa43c7ea3dca15f97",
+      "unknown_beep.config.json": "2f02b5d6b6fb0dda028d819e0fccc42957d51996e4d3c3673dff207d558230c7",
+      "unknown_beep.job.json": "beca2a55a0554f39fa8e5fef7b04ce3c90398778ac43471874229cb2c87c5120"
+    }
+  },
+  "closed_findings": [
+    "LOCAL fixedDevice versus VENUE_SHARED cluster TCP ownership aligned",
+    "Unknown optional beep preserves exact raw configuration SHA while canonical job beep disables it; Go matches canonical profile semantics",
+    "Pristine-original guard extraction preserves v1 byte identity"
+  ],
+  "limits": [
+    "No Raft/FSM final approval: implementation and tests still evolving",
+    "No production authority, Hive/RPC/normal startup or physical dispatch attachment",
+    "Server must authenticate origin and retain exact current config/physical mapping",
+    "Shared RAW downstream fence unresolved; physical dispatch remains denied"
+  ]
+}

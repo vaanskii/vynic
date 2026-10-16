@@ -1,0 +1,176 @@
+{
+  "artifacts": {
+    "printer-agent-server-windows.test.exe": {
+      "bytes": 25833472,
+      "sha256": "471d6ba9576e378c7d62a633550d34597ea5d9de452effa477a5ce7398299149"
+    },
+    "printer-agent-server.test": {
+      "bytes": 24823410,
+      "sha256": "12be5c600028066e93d9135fe91637df0026e40d274d78d1809c22c5a4e977f2"
+    }
+  },
+  "claims": {
+    "SCMRegistrationPerformed": false,
+    "admission": "HELD_PROVISIONING",
+    "candidateGrantAlgorithm": "Ed25519, separate from transport certificates; validation-only optional seam.",
+    "candidateSourceOwnership": "Separate printerprovisioning agent; this receipt qualifies the held server interface, not production authority or that package independently.",
+    "fixtureCertificateAlgorithm": "ECDSA_P256",
+    "fixtureCredentials": "Ephemeral temporary test files only; no installation or real credential issuance.",
+    "heldSubmitQueueWrites": 0,
+    "normalStartupAttachment": false,
+    "originInterpretation": "currentDeviceInstallationId is readonly POS enrollment context, distinct from pins.installationId; neither grants production terminal/origin authority.",
+    "physicalDispatch": "HELD",
+    "physicalJobsPerformed": 0,
+    "priorSealedSourceEdited": false,
+    "productionAdmissionBlocker": "Missing real printer-only issuer, signed Device/Venue/both-installations/terminal/origin certificate registration, protected persisted high-water/revocation freshness source and authoritative physical route/cutover bridge.",
+    "proofAuthorityPromotion": false,
+    "queueTablesAssertedZero": [
+      "pq_job",
+      "pq_receipt",
+      "pq_claim",
+      "pq_attempt",
+      "pq_beep"
+    ],
+    "serviceCLIInstallerUIOwnership": "Separate agents; final integrated source/test snapshot required.",
+    "signedProductionAuthority": false,
+    "successfulReceipts": 0,
+    "tlsVersion": "1.3"
+  },
+  "createdAt": "2026-10-06T17:05:22.904061+00:00",
+  "diagnosticResolution": "Initial Ed25519 fixture TLS was unsupported by actual Dart3.12; P-256 fixture now passes. Initial analyzer sandbox timestamp and earlier wrong vet cwd are retained; scoped successful reruns are the cited final evidence.",
+  "generationReceipt": "printer-agent-generation-receipt.json",
+  "generationReceiptSha256": "05393b30548c988482972c6be063394f55d1fbd5ee594fa2e00dc62797c2d261",
+  "logs": {
+    "printer-agent-baseline-guard.json": {
+      "bytes": 535,
+      "sha256": "3223f478bbafdf1ac02fb1425c2cb7e09e51df00655ee8b2a840315eb4894bae"
+    },
+    "printer-agent-darwin-buildinfo.log": {
+      "bytes": 392,
+      "sha256": "23e0e2e46df04ebbe3808810576451afd46bbd9ecc618e62f5358797f5649736"
+    },
+    "printer-agent-distinct-installation-dart-test.log": {
+      "bytes": 1506,
+      "sha256": "69f1ccfa0611fd082263d0e924391ee502deb610c4c4737588ffda82624f5596"
+    },
+    "printer-agent-distinct-installation-fixture-build.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "printer-agent-distinct-installation-race.jsonl": {
+      "bytes": 36200,
+      "sha256": "2117aa0f6f6a872d4eef873aebd41895d46b292719307c1f05387d1e8f4db7d1"
+    },
+    "printer-agent-distinct-installation-race.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "printer-agent-final-format.log": {
+      "bytes": 47,
+      "sha256": "de230ee3a258be1211e3b168c04dbd546303a71d1a2ad203a76e547836a3589e"
+    },
+    "printer-agent-final-generation-check.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "printer-agent-final-three-analysis-qualified.log": {
+      "bytes": 96,
+      "sha256": "7f46eb662da98729177ce2d81f2af379311bd7c0b2133cd7a2e8119e92d184be"
+    },
+    "printer-agent-final-vet.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "printer-agent-generation.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "printer-agent-whitespace-check.json": {
+      "bytes": 2202,
+      "sha256": "2d03e948610f54a2ad7675966470dc9297db4fda676ee235a33eccce41431c6b"
+    },
+    "printer-agent-windows-buildinfo.log": {
+      "bytes": 322,
+      "sha256": "9f09300af750bd176d770f606872d0e42a11f693e91449d3438e5ab74c4caec4"
+    },
+    "printer-agent-windows-fixture-build.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  },
+  "ownedManifest": "printer-agent-owned-source-manifest.json",
+  "ownedManifestSha256": "ed7394dbb31b1a61addf1c6fe76421e4c6868ecfc0e538990a6584f1a1b19b3e",
+  "readOnlyBackendEvidence": {
+    "apps/backend/src/auth/device-credential.service.ts": "70265d3455d7540ad6e01f3d8e4964c24caae3ab560cb0e1100e2315ddc15f6d",
+    "apps/backend/src/customer/printer-runtime-config.ts": "de487e4da88ac68226ea694ba8bd1961a889afc48b92d39080f947ab672624c5",
+    "apps/backend/src/customer/printer-runtime-persistence.ts": "cf2002779fc564c3a4964d82768f53cb49262a486ac57682130d3b9cc8255b13",
+    "apps/backend/src/edge-foundation/edge-foundation.ts": "8544aa3e275a75802963a5ed95c876fb2bbd1dd409f8b43e5db5d80a0a1bb4db",
+    "apps/backend/src/edge/device-enrollment.service.ts": "7a340b7bc2e4d44b8f64eed8560047359d57a98cafff471845c5403882d91655"
+  },
+  "result": "PASS_BOUNDED_HELD_SOFTWARE",
+  "retainedInitialDiagnostics": [
+    "printer-agent-dart-first-test.log",
+    "printer-agent-tls-diagnostic-dart.log",
+    "printer-agent-tls-diagnostic-go.log",
+    "printer-agent-first-vet-wrong-workdir.log",
+    "printer-agent-final-three-analysis.log"
+  ],
+  "validation": {
+    "analysis": {
+      "exitCode": 0,
+      "files": [
+        "apps/operations/lib/core/services/printing/printer_agent_profile.dart",
+        "apps/operations/lib/core/services/printing/printer_agent_client.dart",
+        "apps/operations/test/unit/printer_agent_client_test.dart"
+      ],
+      "issues": 0
+    },
+    "dart": {
+      "actualChildGoProcessMutualTLS": true,
+      "command": "flutter --suppress-analytics test --no-pub test/unit/printer_agent_client_test.dart",
+      "environment": {
+        "VYNIC_PRINTER_AGENT_GO_FIXTURE": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/tools/printer-agent-server.test"
+      },
+      "exitCode": 0,
+      "passed": 23,
+      "unequalPosAndGoInstallationUUIDs": true,
+      "workingDirectory": "apps/operations"
+    },
+    "format": {
+      "changed": 0,
+      "exitCode": 0,
+      "files": 3
+    },
+    "generationCheck": {
+      "diff": "",
+      "exitCode": 0
+    },
+    "goRace": {
+      "command": "GOPROXY=off go test -mod=readonly -race -count=1 -json ./internal/printeragent",
+      "exitCode": 0,
+      "failRecords": 0,
+      "packagePassRecords": 1,
+      "passedTestRecords": 37,
+      "raceFindings": 0,
+      "skip": [
+        "TestPrinterAgentProcess"
+      ],
+      "skipMeaning": "Child-process entry runs in the actual Dart/UI fixture; deliberately skipped when no fixture directory is provided.",
+      "topLevelPassed": 7,
+      "workingDirectory": "apps/edge"
+    },
+    "goVet": {
+      "command": "GOPROXY=off go vet -mod=readonly ./internal/printeragent",
+      "exitCode": 0
+    },
+    "whitespace": {
+      "diagnostics": 0,
+      "files": 14
+    },
+    "windowsBuild": {
+      "command": "GOPROXY=off GOOS=windows GOARCH=amd64 CGO_ENABLED=0 go test -c -mod=readonly -o tools/printer-agent-server-windows.test.exe ./internal/printeragent",
+      "executionClaim": "Cross-compiled only; no Windows execution claimed by this receipt.",
+      "exitCode": 0
+    }
+  }
+}

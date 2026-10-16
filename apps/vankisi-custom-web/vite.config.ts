@@ -31,6 +31,7 @@ export default defineConfig({
     strictPort: true,
     proxy: {
       '/api': { target: apiTarget, changeOrigin: false },
+      '/media/website-logos': { target: apiTarget, changeOrigin: false },
     },
   },
 })

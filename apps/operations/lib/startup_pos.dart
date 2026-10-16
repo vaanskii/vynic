@@ -14,6 +14,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import 'package:vynic/core/ui/pos_scaled_surface.dart';
+import 'package:vynic/core/ui/pos_theme.dart';
 import 'package:vynic/apps/windows_pos/screens/login_screen.dart';
 import 'package:vynic/apps/windows_pos/widgets/staff_lock_screen.dart';
 import 'package:vynic/core/services/database_service.dart';
@@ -21,7 +22,6 @@ import 'package:vynic/core/services/printing/printer_service.dart';
 import 'package:vynic/core/services/pos/app_mode.dart';
 import 'package:vynic/core/services/pos/pos_display_settings_controller.dart';
 import 'package:vynic/core/services/sync/manager_sync_service.dart';
-import 'package:vynic/core/services/edge/edge_device_credential_store.dart';
 import 'package:vynic/core/services/edge/edge_transport_service.dart';
 import 'package:vynic/core/services/edge/inventory_projection_sync_service.dart';
 import 'package:vynic/core/services/menu/pos_menu_sync_service.dart';
@@ -48,6 +48,7 @@ Future<void> startPos() async {
     debugPrint('POS local data startup failed: $error\n$stack');
     runApp(
       MaterialApp(
+        theme: PosTheme.light,
         home: Scaffold(
           body: Center(
             child: Padding(
@@ -64,7 +65,8 @@ Future<void> startPos() async {
     return;
   }
   if (Platform.isWindows) PosQuit.enableWindowsTracking();
-  await EdgeDeviceCredentialStore.load();
+  // DatabaseCore loaded and validated this directory's identity before recovery.
+  // Reloading it here could replace that binding after local data was admitted.
   await PosDisplaySettingsController.loadFromStorage();
   PosInputSettings.load();
   await PrinterService.initialize();
@@ -131,6 +133,7 @@ class _PosAppState extends State<PosApp> with WidgetsBindingObserver {
           supportedLocales: const [Locale('ka'), Locale('en')],
           localizationsDelegates: GlobalMaterialLocalizations.delegates,
           title: 'Vynic POS',
+          theme: PosTheme.light,
           navigatorKey: navigatorKey,
           debugShowCheckedModeBanner: false,
           // App-wide activity detector: any pointer interaction resets the POS idle

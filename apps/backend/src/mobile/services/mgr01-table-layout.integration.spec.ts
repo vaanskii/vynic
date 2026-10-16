@@ -23,6 +23,11 @@ import { InventoryService } from '../../inventory/inventory.service';
 import { SaleConsumptionService } from '../../inventory/sale-consumption.service';
 import { DeviceCredentialService } from '../../auth/device-credential.service';
 import type { ManagerAuthContext } from '../../auth/manager-auth-context';
+import type {
+  OrderSync,
+  TableLayoutSync,
+  TableSync,
+} from '../../pos/sync/sync-payload';
 
 import { LegacyPosTenantService } from '../../auth/legacy-pos-tenant.service';
 import { SyncController } from '../../pos/sync/sync.controller';
@@ -49,7 +54,7 @@ integration('MGR01 generic layout real HTTP/PostgreSQL', () => {
     venueId: string;
   const ids = Array.from({ length: 7 }, () => randomUUID());
   const day = '2026-10-07';
-  const physical = () => [
+  const physical = (): TableSync[] => [
     {
       tableId: ids[0],
       tableNumber: '10',
@@ -139,7 +144,7 @@ integration('MGR01 generic layout real HTTP/PostgreSQL', () => {
       currentBill: 17,
     },
   ];
-  const orders = () => [
+  const orders = (): OrderSync[] => [
     {
       posOrderId: 70,
       status: 'confirmed',
@@ -170,7 +175,13 @@ integration('MGR01 generic layout real HTTP/PostgreSQL', () => {
       items: [],
     },
   ];
-  const snapshot = () => ({
+  const snapshot = (): {
+    realtimeOnly: boolean;
+    businessDate: string;
+    tables: TableSync[];
+    orders: OrderSync[];
+    tableLayout: TableLayoutSync;
+  } => ({
     realtimeOnly: true,
     businessDate: day,
     tables: [

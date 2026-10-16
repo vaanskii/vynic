@@ -1,0 +1,10 @@
+{
+  "caseIdentity": "file + fullName + same-name occurrence ordinal (existing parameterized tests can reuse fullName)",
+  "aggregatePassed": 906,
+  "postgresPassed": 51,
+  "overlap": 0,
+  "combinedPassed": 957,
+  "newDefaultCases": 42,
+  "newPostgresCases": 9,
+  "remainingOptInCasesNotRun": 844
+}

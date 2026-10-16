@@ -1,0 +1,32 @@
+{
+  "recordedAtUTC": "2026-10-06T17:58:04.139098+00:00",
+  "previousSourceManifestSHA256": "193e4800e5d0733a30bc6c8d4ac993590219363941e69a787bba5ac3681c8f68",
+  "sourceManifestSHA256": "faaaec2f1ece4f8259353666000eb4c0d3aee6143e73ae7fdf90772a937b581b",
+  "fileCount": 1109,
+  "changedFiles": {
+    "apps/operations/test/unit/printer_agent_runtime_profile_test.dart": {
+      "previous": {
+        "sha256": "d4f7c08db3c086704f4fa480970fa3676693534ec29ad12b78a2849f8bc165d2",
+        "bytes": 16346
+      },
+      "current": {
+        "sha256": "2418752a45d5fdbf1ee764071ba79869d76d4696a1ff4444ab62cdccf7db9a21",
+        "bytes": 16627
+      }
+    },
+    "apps/operations/test/widget/printer_agent_status_card_test.dart": {
+      "previous": {
+        "sha256": "540c5df33fbf5e4efc67fd5a807a0322b2eb461e134bb15ff328cdcbf9f6243f",
+        "bytes": 22938
+      },
+      "current": {
+        "sha256": "114da755f85c962c9cd73576fbd6d60331c2f29b17bbb26cdfaf10ea5e9277cf",
+        "bytes": 23130
+      }
+    }
+  },
+  "unchangedFiles": 1107,
+  "unchangedGoContractProtoRepositoryInputs": 201,
+  "retainedGoAvailableQualificationSHA256": "ae81ebc6baaa8030c27efa92ca03cb92ad7046cb123c2d66a9dca5fbef91dcfd",
+  "reason": "Only native path generation in two Dart test fixtures changed. Retained macOS Go normal/race/static/scanner checks qualify unchanged Go source, not a newly rerun full-cohort test. New full Dart/Windows qualifications are separate."
+}

@@ -1,3 +1,4 @@
+import 'package:vynic/core/ui/widgets/pos_dialog.dart';
 import 'dart:developer' as developer;
 import 'package:vynic/core/database/repositories/order_table_mutation_repository.dart';
 import 'package:vynic/core/services/pos/update/update_readiness.dart';
@@ -315,7 +316,7 @@ class _OrderDetailContentSectionState extends State<OrderDetailContentSection> {
   }
 
   Future<void> _showOrderItemsDialog(List<Widget> children) async {
-    await showDialog<void>(
+    await showPosModal<void>(
       context: context,
       builder: (dialogContext) {
         final size = MediaQuery.of(dialogContext).size;
@@ -634,7 +635,7 @@ class _OrderDetailContentSectionState extends State<OrderDetailContentSection> {
                   return;
                 }
 
-                final shouldClose = await showDialog<bool>(
+                final shouldClose = await showPosModal<bool>(
                   context: dialogContext,
                   barrierDismissible: false,
                   builder: (confirmContext) => AlertDialog(
@@ -714,7 +715,7 @@ class _OrderDetailContentSectionState extends State<OrderDetailContentSection> {
                     .where((item) => item.quantity > 0)
                     .toList();
 
-                await showDialog<void>(
+                await showPosModal<void>(
                   context: dialogContext,
                   builder: (itemsDialogContext) {
                     return AlertDialog(
@@ -1264,7 +1265,7 @@ class _OrderDetailContentSectionState extends State<OrderDetailContentSection> {
     bool keyboardVisible = false;
     final selectedQuantities = <String, int>{};
 
-    return showDialog<Map<String, int>>(
+    return showPosModal<Map<String, int>>(
       context: context,
       barrierDismissible: false,
       builder: (dialogContext) {
@@ -1276,7 +1277,7 @@ class _OrderDetailContentSectionState extends State<OrderDetailContentSection> {
                 return;
               }
 
-              final shouldClose = await showDialog<bool>(
+              final shouldClose = await showPosModal<bool>(
                 context: dialogContext,
                 barrierDismissible: false,
                 builder: (confirmContext) => AlertDialog(
@@ -1310,7 +1311,7 @@ class _OrderDetailContentSectionState extends State<OrderDetailContentSection> {
             }
 
             Future<void> openSelectedProductsModal() async {
-              await showDialog<void>(
+              await showPosModal<void>(
                 context: dialogContext,
                 barrierDismissible: false,
                 builder: (manageContext) {

@@ -1,0 +1,50 @@
+{
+  "status": "PASS_SOURCE_AND_ISOLATED_TESTS_NOT_DEPLOYED",
+  "qualification": "qualification.json",
+  "focused": {
+    "passed": 53,
+    "failed": 0,
+    "skipped": 0,
+    "done": true,
+    "failedFiles": {},
+    "evidence": "/private/var/folders/82/drcfb4994p16rl49gxx9tj000000gn/T/vynic-pos-startup-z88mdtt_/focused.jsonl"
+  },
+  "nonPrinterSerial": {
+    "passed": 2135,
+    "failed": 0,
+    "skipped": 15,
+    "done": true,
+    "failedFiles": {},
+    "evidence": "/private/var/folders/82/drcfb4994p16rl49gxx9tj000000gn/T/vynic-pos-startup-z88mdtt_/non-printer.jsonl"
+  },
+  "fullFlutter": {
+    "passed": 2608,
+    "failed": 44,
+    "skipped": 17,
+    "done": true,
+    "failedFiles": {
+      "cloud_printer_runtime_sync_test.dart": 20,
+      "printer_route_catalog_test.dart": 8,
+      "pos02_print_delivery_test.dart": 14,
+      "printer_route_configuration_test.dart": 2
+    },
+    "evidence": "/private/var/folders/82/drcfb4994p16rl49gxx9tj000000gn/T/vynic-pos-startup-z88mdtt_/aggregate-initial.jsonl"
+  },
+  "beforeTaskPrivateBaseline": {
+    "passed": 55,
+    "failed": 44,
+    "skipped": 0,
+    "done": true,
+    "failedFiles": {
+      "cloud_printer_runtime_sync_test.dart": 20,
+      "printer_route_catalog_test.dart": 8,
+      "pos02_print_delivery_test.dart": 14,
+      "printer_route_configuration_test.dart": 2
+    },
+    "evidence": "/private/var/folders/82/drcfb4994p16rl49gxx9tj000000gn/T/vynic-pos-startup-z88mdtt_/baseline-printer.jsonl"
+  },
+  "nativeAndBuild": "PASS",
+  "liveDataChanges": false,
+  "envPreserved": true,
+  "next": "OPS-03 dependency/advisory inventory and build composition/provenance, no dependency upgrades or deployment"
+}

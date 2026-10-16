@@ -111,14 +111,15 @@ const url = process.env.COMMERCIAL_TEST_DATABASE_URL;
         },
       });
     // Website-bearing assignments need the operator's implementation choice.
-    const withMode = (extra: { planId?: string }) =>
+    type Extra = { planId?: string } & Record<string, unknown>;
+    const withMode = (extra: Extra) =>
       [website.id, full.id].includes(extra.planId)
         ? { websiteMode: 'SAAS', ...extra }
         : extra;
     const action = (
       id: string,
       action: string,
-      extra: { planId?: string } = {},
+      extra: Extra = {},
       now = middle,
     ) =>
       service.action(
@@ -268,13 +269,104 @@ const url = process.env.COMMERCIAL_TEST_DATABASE_URL;
       await expect(action(v.id, 'RESUME', {}, renewal)).rejects.toThrow(
         'Extend',
       );
+      // Extension reactivates the expired Trial explicitly, keeping its plan.
+      const until = at('2027-11-01').toISOString();
+      await expect(
+        action(v.id, 'EXTEND_TRIAL', { trialEndsAt: until }, renewal),
+      ).rejects.toThrow('Confirm reactivating');
+      await expect(
+        action(
+          v.id,
+          'EXTEND_TRIAL',
+          { trialEndsAt: at('2027-10-20').toISOString(), confirm: true },
+          renewal,
+        ),
+      ).rejects.toThrow('after the current Trial end');
+      await action(
+        v.id,
+        'EXTEND_TRIAL',
+        { trialEndsAt: until, confirm: true },
+        renewal,
+      );
+      const reactivated = await state(v.id, renewal);
+      expect(reactivated.allowed).toBe(true);
+      expect(reactivated.features).toContain('WEBSITE');
+      expect(reactivated.features).not.toContain('POS');
+      expect(reactivated.venue.subscription).toMatchObject({
+        status: 'TRIAL',
+        suspendedFrom: null,
+        trialEndedAt: null,
+      });
+      expect(
+        await db.platformAuditEvent.findFirst({
+          where: { targetId: v.id, action: 'subscription.extend_trial' },
+        }),
+      ).toMatchObject({
+        metadata: { from: 'SUSPENDED', to: 'TRIAL', reactivated: true },
+      });
+      await lifecycle.reconcile(v.id, at('2027-11-02'));
       await action(
         v.id,
         'TRIAL',
         { planId: full.id, trialEndsAt: at('2027-11-10').toISOString() },
+        at('2027-11-02'),
+      );
+      expect((await state(v.id, at('2027-11-02'))).features).toContain('POS');
+    });
+    it('gifts one period of a plan without recording a payment', async () => {
+      const v = await venue();
+      await action(
+        v.id,
+        'GRANT_ACTIVE',
+        { planId: full.id, confirm: true, complimentary: true },
+        start,
+      );
+      const gifted = await state(v.id, middle);
+      expect(gifted.features).toContain('POS');
+      expect(gifted.venue.subscription).toMatchObject({
+        status: 'ACTIVE',
+        paymentState: 'COMPLIMENTARY',
+        currentPeriodEndsAt: renewal,
+      });
+      expect(
+        await db.platformAuditEvent.findFirst({
+          where: { targetId: v.id, action: 'subscription.grant_active' },
+        }),
+      ).toMatchObject({ metadata: { source: 'COMPLIMENTARY' } });
+      expect(
+        await db.subscriptionBillingOperation.count({
+          where: { venueId: v.id },
+        }),
+      ).toBe(0);
+      // After the gift the agreed plan price is due like any renewal.
+      await new CommercialLifecycleService(db).reconcile(v.id, renewal);
+      expect((await state(v.id, renewal)).venue.subscription).toMatchObject({
+        status: 'PAST_DUE',
+        paymentState: 'DUE',
+      });
+    });
+    it('a lapsed Trial can be converted to a paid plan directly', async () => {
+      const v = await venue();
+      await action(
+        v.id,
+        'TRIAL',
+        { planId: website.id, trialEndsAt: renewal.toISOString() },
+        start,
+      );
+      await new CommercialLifecycleService(db).reconcile(v.id, renewal);
+      await action(
+        v.id,
+        'GRANT_ACTIVE',
+        { planId: full.id, confirm: true },
         renewal,
       );
-      expect((await state(v.id, renewal)).features).toContain('POS');
+      const s = await state(v.id, renewal);
+      expect(s.venue.subscription).toMatchObject({
+        status: 'ACTIVE',
+        billingManaged: true,
+        suspendedFrom: null,
+      });
+      expect(s.features).toContain('POS');
     });
     it('first purchase anchors Sep 25 to Oct 25; Trial conversion anchors successful Sep 30 purchase', async () => {
       const v = await venue();

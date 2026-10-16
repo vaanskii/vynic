@@ -1,0 +1,22 @@
+﻿{
+    "physicalTests":  "NOT_RUN",
+    "architecture":  "Arm64",
+    "identity":  "VANSKI\\vaanskii",
+    "scmTests":  "NOT_RUN",
+    "results":  [
+                    {
+                        "exitCode":  0,
+                        "regex":  "^Test",
+                        "durationSeconds":  0.046851899999999995,
+                        "package":  "printstation"
+                    },
+                    {
+                        "exitCode":  0,
+                        "regex":  "^Test(Station|LocalStation)",
+                        "durationSeconds":  22.745854299999998,
+                        "package":  "printcluster"
+                    }
+                ],
+    "work":  "C:\\Users\\vaanskii\\AppData\\Local\\Temp\\vynic-print-station-ee3eb97488b24db2b14690bec3c9197f",
+    "sid":  "S-1-5-21-611125631-3759947118-1641436196-1000"
+}

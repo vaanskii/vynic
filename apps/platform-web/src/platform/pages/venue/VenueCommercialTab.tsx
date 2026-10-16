@@ -5,7 +5,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { platformApi } from "../../api";
 import { useAuth } from "../../auth";
 import type { ManagerAccess } from "../../types";
-import { errorMessage, formatRelativeTime } from "../../format";
+import { errorMessage, formatDateTime, formatRelativeTime } from "../../format";
 import { Button } from "../../components/Button";
 import { Field, Input, Select, FormError } from "../../components/Form";
 import { Panel } from "../../components/Page";
@@ -56,6 +56,13 @@ export function VenueCommercialTab({
     pin: "",
   });
   const [feedback, setFeedback] = useState("");
+  const links = useQuery({ queryKey: ["manager-links", venueId], queryFn: () => platformApi.managerLinks(venueId), enabled: showAccess, refetchInterval: (query) => query.state.data?.some((row) => row.status === "PENDING") ? 4000 : false });
+  const [issuedLink, setIssuedLink] = useState<{ id: string; code: string; expiresAt: string } | null>(null);
+  const closeLink = () => { setIssuedLink(null); issueLink.reset(); };
+  const issueLink = useMutation({ gcTime: 0, mutationFn: () => platformApi.issueManagerLink(venueId), onSuccess: async (result) => {
+    setIssuedLink(result); await client.invalidateQueries({ queryKey: ["manager-links", venueId] });
+  }});
+  const cancelLink = useMutation({ mutationFn: (id: string) => platformApi.cancelManagerLink(venueId, id), onSuccess: () => client.invalidateQueries({ queryKey: ["manager-links", venueId] }) });
   const changeAccess = useMutation({
     mutationFn: () =>
       platformApi.managerAccess(
@@ -104,12 +111,26 @@ export function VenueCommercialTab({
       {showAccess && (
         <Panel
           title="Manager access"
-          description="რესტორნის კოდი შეიყვანეთ ერთხელ, შემდეგ გამოიყენეთ პირადი PIN. POS-ზე PIN განახლდება მთავარ ტერმინალთან სინქრონიზაციის შემდეგ."
+          description="ახალი Manager აპი დააკავშირეთ ერთჯერადი კოდით, შემდეგ გამოიყენეთ პირადი PIN. POS-ზე PIN განახლდება მთავარ ტერმინალთან სინქრონიზაციის შემდეგ."
         >
-          {canEdit && (
+          {canEdit && !!managers.data?.length && (
             <Button tone="primary" onClick={() => openAccess("create")}>
               Create Manager
             </Button>
+          )}
+          {canEdit && !managers.data?.length && (
+            <>
+              <p>
+                პირველი რეგისტრაცია სრულდება მხოლოდ დაკავშირებულ POS
+                აპლიკაციაში: მომხმარებელი შეიყვანს სახელს და აირჩევს პირად
+                PIN-ს. შემდეგ ამავე PIN-ით შედის Manager აპში.
+              </p>
+              <Link className="platform-button platform-button--primary"
+                to={`/venues/${venueId}/devices`}>
+                პირველი POS-ის დაკავშირების კოდის შექმნა
+              </Link>
+              <p>მოწყობილობებში შექმენით დაკავშირების კოდი პირველი Manager-ის რეგისტრაციის უფლებით. მომხმარებელს POS-ში მეორე კოდის შეყვანა აღარ დასჭირდება.</p>
+            </>
           )}
           {awaitingDelivery && (
             <div className="platform-callout" role="status">
@@ -197,6 +218,18 @@ export function VenueCommercialTab({
           </div>
         </Panel>
       )}
+      {showAccess && <Panel title="Manager app connection" description="One expiring code links one Manager installation to this restaurant. It does not create a Manager or replace PIN login.">
+        {canEdit && <Button disabled={!managers.data?.some((m) => m.isActive)} loading={issueLink.isPending} onClick={() => issueLink.mutate()}>Create Manager linking code</Button>}
+        {!managers.data?.some((m) => m.isActive) && <p>Complete the first Manager registration on the Primary POS first.</p>}
+        <FormError>{issueLink.error ? errorMessage(issueLink.error) : cancelLink.error ? errorMessage(cancelLink.error) : undefined}</FormError>
+        {links.isPending ? <LoadingState label="Loading Manager links" /> : links.error ? <ErrorState error={errorMessage(links.error)} retry={() => void links.refetch()} /> : links.data?.map((link) => <div className="platform-feature-row" key={link.id}>
+          <span>{link.status === "CANCELLED" ? "Cancelled" : link.status === "LINKED" ? "Linked" : link.status === "EXPIRED" ? "Expired" : "Waiting for linking"} · {formatDateTime(link.expiresAt)}</span>
+          {canEdit && link.status === "PENDING" && <Button disabled={cancelLink.isPending} onClick={() => cancelLink.mutate(link.id)}>Cancel linking code</Button>}
+        </div>)}
+      </Panel>}
+      <Dialog open={issuedLink !== null} onOpenChange={(open) => { if (!open) closeLink(); }} title="Manager linking code" description="Shown once. Creating a new code cancels earlier unused linking codes. Existing linked apps keep their selection and still require PIN." footer={<Button onClick={closeLink}>Done</Button>}>
+        {issuedLink && <div className="platform-secret"><code>{issuedLink.code}</code><p>Expires {formatDateTime(issuedLink.expiresAt)}</p><p>Enter this code in Vynic Manager once. Then sign in with the personal PIN chosen on the POS.</p></div>}
+      </Dialog>
       <Dialog
         open={access !== null}
         onOpenChange={(open) => {

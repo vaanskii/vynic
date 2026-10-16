@@ -1,0 +1,17 @@
+{
+  "check": "web06-regression",
+  "result": {
+    "passed": 7,
+    "failed": 0,
+    "skipped": 0
+  },
+  "passedCases": [
+    "WEB-06 current BOG readiness / real HTTP and PostgreSQL SAAS r1 -> r2 keeps payment/reservation readiness on the current enabled revision",
+    "WEB-06 current BOG readiness / real HTTP and PostgreSQL CUSTOM r1 -> r2 keeps payment/reservation readiness on the current enabled revision",
+    "WEB-06 current BOG readiness / real HTTP and PostgreSQL uses revision order even when historical timestamps are out of order",
+    "WEB-06 current BOG readiness / real HTTP and PostgreSQL disconnect reports the latest disabled revision; reconnect keeps all previous revisions",
+    "WEB-06 current BOG readiness / real HTTP and PostgreSQL keeps missing-config Venue isolated and refuses another owner payment settings",
+    "WEB-06 current BOG readiness / real HTTP and PostgreSQL status reads expose no secrets, need no decryption key and never rewrite stored history",
+    "WEB-06 current BOG readiness / real HTTP and PostgreSQL keeps entitlement and explicit capability policy independent of configured readiness"
+  ]
+}

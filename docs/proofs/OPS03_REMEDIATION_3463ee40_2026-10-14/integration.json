@@ -1,0 +1,70 @@
+{
+  "status": "INTEGRATED",
+  "files": [
+    {
+      "path": "apps/backend/package.json",
+      "sha256": "99a6859298553388341cdf9c2a5d50b337505e82437c9b6c798cd9d1e56367da"
+    },
+    {
+      "path": "apps/backend/package-lock.json",
+      "sha256": "8de56455c5e72811744d712d38733473b65d0edd4638b165fd9b94dcba0e8cbf"
+    },
+    {
+      "path": "apps/platform-web/package.json",
+      "sha256": "507097527c1d27ba9a799ae8d31b2572a21338a53e4fffe5efa1e5613dcc50ab"
+    },
+    {
+      "path": "apps/platform-web/package-lock.json",
+      "sha256": "141681ebe084b0caa4376c2e03ab3cd502ee9876681f91be24d6f3b7acde2914"
+    },
+    {
+      "path": "apps/vankisi-custom-web/package.json",
+      "sha256": "6a95183ecbb83472accb8e9fc3f621ea236bbf0055e2a9eb4351779aeffd9cf1"
+    },
+    {
+      "path": "apps/vankisi-custom-web/package-lock.json",
+      "sha256": "1645b7f7814f7841c65510fb88d3dc3059c7b8f0bbece4a886f6502b785639a3"
+    },
+    {
+      "path": "apps/restaurant-web/package.json",
+      "sha256": "73e64539c330ba748f2d51fd013066878f62bb606779776308ecc7b06c8efbf2"
+    },
+    {
+      "path": "apps/restaurant-web/package-lock.json",
+      "sha256": "09ea1e077323b75fad4b416f72fc62d83d00bd05f8bc17a66546df8ef6f40c50"
+    },
+    {
+      "path": "packages/website-client/package.json",
+      "sha256": "13915d6e095cb56898ff94c42ff4f570764e39fc2a648a34b50045e2a97569e6"
+    },
+    {
+      "path": "packages/website-client/package-lock.json",
+      "sha256": "29e13fc283de65aad22453753c1892420079c72ceab39ca3c58ba9cc57ad482f"
+    },
+    {
+      "path": "templates/custom-site/package.json",
+      "sha256": "97a4df184f3bebc565a5cdabb2fcd1747ad8dac1d03aaafb457fb12c8bde480a"
+    },
+    {
+      "path": "templates/custom-site/package-lock.json",
+      "sha256": "95cc478c580e0895a007d70549b68e9eacd2b3ed157b8922972da991ba93e9e2"
+    },
+    {
+      "path": "scripts/release_inventory.py",
+      "sha256": "247b6f1f8922d124f3984e396d4da426523654eb5686a30c6d4b6d3d3d1fd844"
+    },
+    {
+      "path": "scripts/npm_lock_sbom.cjs",
+      "sha256": "83bb5ced818e372a2d6bc728939b5833cb8671dfbe359e5387be8f40bd527acc"
+    },
+    {
+      "path": "scripts/npm_lock_sbom_test.cjs",
+      "sha256": "9575cb36ee915526513b3b28d443cb9936070515f0fcdce254ea3a248f05c06f"
+    }
+  ],
+  "environmentUnchanged": true,
+  "sourceSnapshotMatches": true,
+  "runtimeNodeModulesChanged": false,
+  "liveServicesTouched": false,
+  "printerFilesChanged": false
+}

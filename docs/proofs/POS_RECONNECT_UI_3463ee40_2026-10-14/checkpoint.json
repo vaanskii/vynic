@@ -1,0 +1,16 @@
+{
+  "status": "PAUSED_UNTESTED_NAVIGATION_PATCH_FOR_FLOW_PROPOSAL",
+  "task": "First-activation stale enrollment recovery navigation",
+  "privateWorkDir": "/var/folders/82/drcfb4994p16rl49gxx9tj000000gn/T/vynic-pos-reconnect-shv4nvi1",
+  "scope": "Expose existing first-run enrollment form; no authorization or credential behavior changes; no live reprovision/activation",
+  "priorDiagnosis": "../POS_ACTIVATION_DIAGNOSIS_3463ee40_2026-10-14/diagnosis.json",
+  "OPS01": "Paused; denied restore not retried",
+  "updatedAt": "2026-10-14T11:33:29.650046+00:00",
+  "changes": [
+    "PosFirstRun now has optional test service/client seams",
+    "Waiting branch has reconnect action, guarded return to existing enrollment form, explanatory notice and cancel",
+    "Existing enrollment success returns to waiting branch"
+  ],
+  "validation": "Not run before user priority change; no hot restart/rebuild or live reprovision",
+  "newPriority": "Read-only onboarding/backend configuration review and simplified flow proposal"
+}

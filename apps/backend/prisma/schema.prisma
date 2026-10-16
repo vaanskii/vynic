@@ -331,9 +331,33 @@ enum ReceivingStatus {
 /// is the only state that has produced StockMovements. CANCELLED keeps both the
 /// document and its original movements and adds reversals beside them, because
 /// this is financial history rather than an editable balance.
+/// A quantity location, independent of the Venue-wide D015 valuation basis.
+/// Default locations preserve old clients and every pre-location movement.
+model StockLocation {
+  id        String   @id @default(uuid())
+  venueId   String
+  name      String
+  isDefault Boolean  @default(false)
+  creationRequestId   String?
+  creationFingerprint String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  venue     Venue    @relation(fields: [venueId], references: [id], onDelete: Cascade)
+  receivings Receiving[]
+  movements  StockMovement[]
+
+  @@unique([venueId, id])
+  @@unique([venueId, creationRequestId])
+  @@index([venueId, name, id])
+  @@schema("pos")
+}
+
 model Receiving {
   id                   String          @id @default(uuid())
   venueId              String
+  /// Optional to old Prisma callers; SQL assigns a default and prohibits NULL.
+  locationId           String?
+  location             StockLocation? @relation(fields: [venueId, locationId], references: [venueId, id], onDelete: Restrict)
   supplierId           String?
   /// Display truth frozen at creation. A later Supplier rename must not
   /// rewrite what this document said when it was received.
@@ -431,6 +455,10 @@ enum StockMovementType {
 model StockMovement {
   id                     String                    @id @default(uuid())
   venueId                String
+  /// SQL requires a location, derives receipts from their document and
+  /// reversals from the original. Legacy consumption uses the default.
+  locationId             String?
+  location               StockLocation? @relation(fields: [venueId, locationId], references: [venueId, id], onDelete: Restrict)
   stockItemId            String
   movementType           StockMovementType
   /// Signed change in the Stock Item's own base unit.
@@ -465,6 +493,7 @@ model StockMovement {
   @@unique([consumptionComponentId, movementType])
   @@unique([receivingLineId, movementType])
   @@index([venueId, stockItemId, createdAt, id])
+  @@index([venueId, locationId, stockItemId])
   @@index([venueId, receivingId])
   @@index([venueId, movementType, businessDate])
   @@schema("pos")
@@ -754,6 +783,48 @@ model SaleLedgerDay {
   @@schema("pos")
 }
 
+/// One-use initial Manager invitation. A verifier, never a reusable default PIN.
+model ManagerActivation {
+  id           String    @id @default(uuid())
+  venueId      String    @unique
+  secretHash   String
+  expiresAt    DateTime
+  consumedAt   DateTime?
+  requestId    String?
+  staffId      String?
+  issuerId     String
+  issuerType   String
+  /// Single-code setup grants are bound by the server to one enrollment/Device.
+  setupEnrollmentId String? @unique
+  setupDeviceId String?
+  setupEnrollment DeviceEnrollment? @relation("ManagerSetupEnrollment", fields: [setupEnrollmentId, venueId], references: [id, venueId], onDelete: Restrict, onUpdate: Restrict)
+  setupDevice Device? @relation("ManagerSetupDevice", fields: [setupDeviceId, venueId], references: [id, venueId], onDelete: Restrict, onUpdate: Restrict)
+  createdAt    DateTime  @default(now())
+  venue        Venue     @relation(fields: [venueId], references: [id], onDelete: Restrict)
+
+  @@schema("pos")
+}
+
+/// One-use Venue selection for a Manager installation. Never authorizes Staff login.
+model ManagerVenueLink {
+  id                       String   @id @default(uuid())
+  venueId                  String
+  codeSelector             String   @unique
+  codeHash                 String
+  expiresAt                DateTime
+  attemptCount             Int      @default(0)
+  consumedAt               DateTime?
+  consumedInstallationId   String?
+  cancelledAt              DateTime?
+  issuedByPlatformUserId   String
+  createdAt                DateTime @default(now())
+  venue                    Venue @relation(fields: [venueId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  issuer                   PlatformUser @relation(fields: [issuedByPlatformUserId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@index([venueId, createdAt])
+  @@schema("pos")
+}
+
 model Staff {
   platformManaged Boolean @default(false)
   displayName String?
@@ -810,6 +881,10 @@ model PosReservation {
   /// Set when this record is the POS's bookkeeping for a walk-in or takeaway
   /// order rather than a real booking.
   linkedOrderId    Int?
+  /// POS-owned receipt collected before the guests are seated; never revenue.
+  advanceAmount   Decimal   @default(0) @db.Decimal(18, 2)
+  advanceCollectedOn String?
+  advanceReceiptId String?
   posCreatedAt     DateTime?
   syncedAt         DateTime  @updatedAt
   venue            Venue     @relation(fields: [venueId], references: [id], onDelete: Restrict)
@@ -1079,6 +1154,7 @@ model PlatformUser {
 
   auditEvents       PlatformAuditEvent[]
   deviceEnrollments DeviceEnrollment[]
+  managerVenueLinks ManagerVenueLink[]
 
   @@schema("pos")
 }
@@ -1220,10 +1296,13 @@ model Venue {
   obligationReserves        ObligationReserveEntry[]
   obligationPayments        ObligationPayment[]
   stockItems                StockItem[]
+  stockLocations            StockLocation[]
   suppliers                 Supplier[]
   cloudSales                CloudSale[]
   saleLedgerDays            SaleLedgerDay[]
   staff                     Staff[]
+  managerActivation         ManagerActivation?
+  managerVenueLinks          ManagerVenueLink[]
   auditReports              AuditReport[]
   posReservations           PosReservation[]
   auditEventLogs            AuditEventLog[]
@@ -1247,6 +1326,9 @@ model Venue {
   websiteTables             WebsiteTable[]
   menuWebsitePresentations  MenuItemWebsitePresentation[]
   websiteBookings           WebsiteReservation[]
+  websiteDeliveryIntents    WebsiteReservationDeliveryIntent[]
+  websiteDayHolds           WebsiteReservationDayHold[]
+  websitePaymentObservations WebsitePaymentObservation[]
   edgeCommands              EdgeCommand[]
   deviceEnrollments         DeviceEnrollment[]
   receivings                Receiving[]
@@ -1259,6 +1341,9 @@ model Venue {
   consumptionComponents     MenuConsumptionComponent[]
   menuTombstones            MenuCatalogTombstone[]
   menuMutations             MenuCatalogMutation[]
+  printerRuntimeRequests    DevicePrinterRuntimeRequest[]
+  printerAuthority PrinterVenueAuthority?
+  printerInstallations PrinterInstallation[]
 
   @@index([organizationId])
   @@schema("pos")
@@ -1290,9 +1375,37 @@ model Device {
   targetedCommands EdgeCommand[]      @relation("EdgeCommandTarget")
   claimedCommands  EdgeCommand[]      @relation("EdgeCommandClaim")
   enrollments      DeviceEnrollment[]
+  managerSetupGrants ManagerActivation[] @relation("ManagerSetupDevice")
+  printerRuntimeRequests DevicePrinterRuntimeRequest[]
+  printerInstallations PrinterInstallation[]
+
+  @@unique([id, venueId])
 
   @@index([status])
   @@index([venueId])
+  @@schema("pos")
+}
+
+/// Immutable PREPARED printer-write receipts. Device/actor binding and the
+/// original JSON response survive later revisions; this is not an activation log.
+model DevicePrinterRuntimeRequest {
+  deviceId         String
+  requestId        String
+  venueId          String
+  actorType        String
+  actorId          String
+  inputSha256      String
+  expectedRevision Int
+  outcomeStatus    Int
+  // PostgreSQL JSON preserves the original canonical response text for retries.
+  outcome          Json @db.Json
+  createdAt        DateTime @default(now())
+
+  device Device @relation(fields: [deviceId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  venue  Venue  @relation(fields: [venueId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@id([deviceId, requestId])
+  @@index([venueId, createdAt])
   @@schema("pos")
 }
 
@@ -1324,6 +1437,8 @@ model DeviceEnrollment {
   codeHash                String
   displayName             String
   platform                String
+  /// Explicitly grants first-Manager setup; ordinary/additional POS codes do not.
+  initialManagerSetup Boolean @default(false)
   expiresAt               DateTime
   /// Failed redemptions against this code. A ceiling fails it closed.
   attemptCount            Int       @default(0)
@@ -1342,7 +1457,9 @@ model DeviceEnrollment {
   device    Device?      @relation(fields: [deviceId], references: [id], onDelete: SetNull)
   customerActor CustomerAccount? @relation(fields: [createdByCustomerAccountId], references: [id], onDelete: Restrict)
   createdBy PlatformUser? @relation(fields: [createdByPlatformUserId], references: [id], onDelete: Restrict)
+  managerSetupGrants ManagerActivation[] @relation("ManagerSetupEnrollment")
 
+  @@unique([id, venueId])
   @@index([venueId, createdAt])
   @@index([expiresAt])
   @@index([deviceId])
@@ -1539,6 +1656,8 @@ enum CustomWebsiteStatus {
 model CustomWebsiteBinding {
   venueId    String              @id
   siteKey    String?
+  /// Expected public artifact fingerprint; null is legacy/unrecorded, not verified.
+  expectedBuildId String?
   status     CustomWebsiteStatus @default(SETUP_PENDING)
   statusNote String?
   createdAt  DateTime            @default(now())
@@ -1889,6 +2008,18 @@ model WebsiteReservation {
   paymentStatus    String?
   notes            String?
   posReservationId String?
+  /// Frozen exact money snapshot for new bookings only; legacy rows stay unknown.
+  paymentExpectedMinor String?
+  paymentCurrency String?
+  paymentState String @default("PENDING")
+  paymentGrossMinor String?
+  paymentRefundedMinor String?
+  paymentTimelyProofAt DateTime?
+  paymentReviewReason String?
+  paymentWindowStartedAt DateTime?
+  holdExpiresAt DateTime?
+  holdState String?
+  nextPaymentCheckAt DateTime?
   numberOfGuests   Int?
   createdAt        DateTime                 @default(now())
   updatedAt        DateTime                 @updatedAt
@@ -1896,11 +2027,83 @@ model WebsiteReservation {
   venue  Venue                     @relation(fields: [venueId], references: [id], onDelete: Restrict)
   user   WebsiteUser?              @relation(fields: [userId], references: [id])
   tables WebsiteReservationTable[]
+  deliveryIntents WebsiteReservationDeliveryIntent[]
+  dayHolds WebsiteReservationDayHold[]
+  paymentObservations WebsitePaymentObservation[]
 
+  @@unique([id, venueId])
   @@unique([venueId, posReservationId])
   @@index([venueId, date])
   @@map("reservations")
   @@schema("website")
+}
+
+/// One retained whole-day occupancy per physical POS table code. A partial
+/// unique SQL index excludes RELEASED rows; duplicate web aliases share a code.
+model WebsiteReservationDayHold {
+  id String @id @default(uuid())
+  venueId String
+  reservationId String
+  serviceDate String
+  tableCode Int
+  status String @default("HELD")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  venue Venue @relation(fields: [venueId], references: [id], onDelete: Restrict)
+  reservation WebsiteReservation @relation(fields: [reservationId, venueId], references: [id, venueId], onDelete: Restrict)
+
+  @@unique([reservationId, tableCode])
+  @@index([venueId, serviceDate, status])
+  @@schema("pos")
+}
+
+/// Sanitized immutable provider observation + original financial decision.
+/// No buyer/PAN/auth codes, merchant credentials or raw provider payloads.
+model WebsitePaymentObservation {
+  id String @id @default(uuid())
+  venueId String
+  reservationId String
+  paymentId String
+  source String
+  fingerprint String
+  facts Json
+  decision String
+  reason String?
+  observedAt DateTime
+  createdAt DateTime @default(now())
+  venue Venue @relation(fields: [venueId], references: [id], onDelete: Restrict)
+  reservation WebsiteReservation @relation(fields: [reservationId, venueId], references: [id, venueId], onDelete: Restrict)
+
+  @@unique([venueId, reservationId, fingerprint])
+  @@index([venueId, reservationId, createdAt])
+  @@schema("pos")
+}
+
+/// Immutable payment handoff, not a new booking or payment policy. Historical
+/// bookings are never automatically backfilled or replayed.
+model WebsiteReservationDeliveryIntent {
+  id                       String             @id @default(uuid())
+  venueId                  String
+  reservationId            String
+  kind                     String
+  status                   String             @default("PENDING")
+  proposedPosReservationId String
+  snapshot                 Json
+  commandPayload           Json?
+  queueTransport           String?
+  queueId                  String?
+  attemptCount             Int                @default(0)
+  nextAttemptAt            DateTime           @default(now())
+  lastErrorCode            String?
+  createdAt                DateTime           @default(now())
+  updatedAt                DateTime           @updatedAt
+  venue                    Venue              @relation(fields: [venueId], references: [id], onDelete: Restrict)
+  reservation              WebsiteReservation @relation(fields: [reservationId, venueId], references: [id, venueId], onDelete: Restrict)
+
+  @@unique([venueId, reservationId, kind])
+  @@index([status, nextAttemptAt])
+  @@index([venueId, proposedPosReservationId])
+  @@schema("pos")
 }
 
 model WebsiteReservationTable {
@@ -2464,5 +2667,34 @@ model MenuCatalogMutation {
   @@id([venueId, mutationId])
   @@index([venueId, entityId])
   @@index([venueId, createdAt])
+  @@schema("pos")
+}
+
+/// Printer-purpose Go identity. Never reused as a POS installation or Foundation grant.
+model PrinterInstallation {
+  id String @id
+  venueId String
+  deviceId String
+  publicKey String @unique
+  certificateSha256 String @unique
+  revokedAt DateTime?
+  createdAt DateTime @default(now())
+  venue Venue @relation(fields: [venueId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  device Device @relation(fields: [deviceId, venueId], references: [id, venueId], onDelete: Restrict, onUpdate: Restrict)
+  @@index([venueId])
+  @@index([deviceId])
+  @@schema("pos")
+}
+
+/// Current server-owned configuration and monotonically increasing signed snapshot sequence.
+model PrinterVenueAuthority {
+  venueId String @id
+  clusterId String @unique
+  revision Int @default(0)
+  generation Int @default(0)
+  configuration Json
+  fixedBindings Json
+  updatedAt DateTime @updatedAt
+  venue Venue @relation(fields: [venueId], references: [id], onDelete: Restrict, onUpdate: Restrict)
   @@schema("pos")
 }

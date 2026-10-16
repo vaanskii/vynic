@@ -1,0 +1,47 @@
+{
+  "checkedAt": "2026-10-03T17:10:59.829031+00:00",
+  "url": "https://10.10.10.3:8443",
+  "tlsCaValidated": true,
+  "setupSha256": "a23432b5955abb26c946dbc0fb9a0ee43a16bdeb83ffedb54b55bd888a357d91",
+  "setupPeMachine": "0x8664",
+  "posVersion": "1.0.13",
+  "posRelease": 14,
+  "posArtifactSha256": "f79a780c3eca7d82e027871709fc48dcdd0d9000a68c0f2fb8f4ac275aefeda3",
+  "posBuildReceipt": {
+    "product": "vynic-pos",
+    "version": "1.0.13",
+    "sourceSha256": "fe53104f5d18b3e0408e311b72795731b82ae8fdfe90dd739e3a197c83f58047",
+    "environment": "development",
+    "apiOrigin": "http://10.10.10.3:3000"
+  },
+  "posExpiresAt": "2026-09-28T21:08:18.394698Z",
+  "posExpired": true,
+  "bootstrapExpiresAt": "2026-09-28T21:08:18.394698Z",
+  "bootstrapExpired": true,
+  "savedStatus": "READY",
+  "publicFileCount": 101,
+  "releaseStateAndPublicUnchanged": true,
+  "publishingWatcher": false,
+  "publicBoundaryChecks": {
+    "private/lan-key.pem": 404,
+    "artifacts/": 403
+  },
+  "revisedSourcePublished": false,
+  "newCandidateSourceSha256": "db74149c4680d05e16a3a1f53906b269bf76be3d1d71e78796119633d15ff51a",
+  "physicalAllowance": 0,
+  "startup": {
+    "serverPid": 32757,
+    "url": "https://10.10.10.3:8443",
+    "mode": "serve-only",
+    "publishingWatcher": false,
+    "tlsCaValidated": true,
+    "log": "/Users/vaanskii/VynicLocalReleases/logs/https-serve-only.log"
+  },
+  "serverHelper": "/tmp/vynic_pos02_serve_only_20261003.py",
+  "serverHelperSha256": "79ecc86afe9696f6e02bdb4ccd1313c1ee9d03969500790aa9af5574f7b9d696",
+  "head": "275688e1e5c5dc0e26e62705ab0c7670cf16d99a",
+  "windowsSideReachability": "PENDING_NOT_RUN",
+  "vmOperations": "HELD",
+  "releaseBuildPublicationPerformed": false,
+  "milestoneDone": false
+}

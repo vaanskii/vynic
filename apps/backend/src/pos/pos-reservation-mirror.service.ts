@@ -1,3 +1,4 @@
+import type { Prisma } from '@prisma/client';
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
 import type { TenantContext } from '../auth/pos-auth-context';
@@ -17,6 +18,9 @@ export interface MirroredPosReservation {
   createdBy?: string;
   isTakeAway: boolean;
   linkedOrderId: number | null;
+  advanceAmount?: number;
+  advanceCollectedOn?: string | null;
+  advanceReceiptId?: string | null;
 }
 
 export interface MirrorFreshness {
@@ -78,12 +82,13 @@ export class PosReservationMirrorService {
   async listForDate(
     tenant: Pick<TenantContext, 'venueId'>,
     dateKey: string,
+    db: Pick<Prisma.TransactionClient, 'posReservation'> = this.prisma,
   ): Promise<MirroredPosReservation[]> {
     const start = new Date(`${dateKey}T00:00:00.000Z`);
     if (Number.isNaN(start.getTime())) return [];
     const end = new Date(start.getTime() + 24 * 60 * 60_000 - 1);
 
-    const rows = await this.prisma.posReservation.findMany({
+    const rows = await db.posReservation.findMany({
       where: {
         venueId: tenant.venueId,
         reservationDate: { gte: start, lte: end },
@@ -102,8 +107,9 @@ export class PosReservationMirrorService {
    */
   async freshness(
     tenant: Pick<TenantContext, 'venueId'>,
+    db: Pick<Prisma.TransactionClient, 'posReservation'> = this.prisma,
   ): Promise<MirrorFreshness> {
-    const newest = await this.prisma.posReservation.findFirst({
+    const newest = await db.posReservation.findFirst({
       where: { venueId: tenant.venueId },
       orderBy: { syncedAt: 'desc' },
       select: { syncedAt: true },
@@ -130,6 +136,9 @@ function toWireShape(row: {
   createdBy: string | null;
   isTakeAway: boolean;
   linkedOrderId: number | null;
+  advanceAmount?: unknown;
+  advanceCollectedOn?: string | null;
+  advanceReceiptId?: string | null;
 }): MirroredPosReservation {
   return {
     id: row.posReservationId,
@@ -147,5 +156,12 @@ function toWireShape(row: {
     createdBy: row.createdBy ?? undefined,
     isTakeAway: row.isTakeAway,
     linkedOrderId: row.linkedOrderId,
+    ...(Number(row.advanceAmount ?? 0) > 0
+      ? {
+          advanceAmount: Number(row.advanceAmount),
+          advanceCollectedOn: row.advanceCollectedOn,
+          advanceReceiptId: row.advanceReceiptId,
+        }
+      : {}),
   };
 }

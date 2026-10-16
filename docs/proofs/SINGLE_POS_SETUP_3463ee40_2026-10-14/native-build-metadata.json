@@ -1,0 +1,20 @@
+{
+  "pos": {
+    "environment": "development",
+    "apiOrigin": "http://api.vynic.localhost",
+    "bundleId": "ge.vynic.pos",
+    "appPath": "/Users/vaanskii/Developer/vynic/apps/operations/.dart_tool/vynic-dev/pos/apps/operations/build/macos/Build/Products/Debug/Vynic POS.app",
+    "legacyPrivateKeysInDefines": false,
+    "envAssets": false,
+    "launched": false
+  },
+  "manager": {
+    "environment": "development",
+    "apiOrigin": "http://api.vynic.localhost",
+    "bundleId": "ge.vynic.manager",
+    "appPath": "/Users/vaanskii/Developer/vynic/apps/operations/.dart_tool/vynic-dev/manager/apps/operations/build/macos/Build/Products/Debug/Vynic Manager.app",
+    "legacyPrivateKeysInDefines": false,
+    "envAssets": false,
+    "launched": false
+  }
+}

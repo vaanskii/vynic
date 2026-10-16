@@ -1,0 +1,21 @@
+{"protocolVersion":"0.1.1","runnerVersion":null,"pid":40427,"type":"start","time":0}
+{"suite":{"id":0,"platform":"vm","path":"/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/source/apps/operations/test/unit/shared_print_effect_test.dart"},"type":"suite","time":0}
+{"test":{"id":1,"name":"loading /private/tmp/vynic-readiness-resume-20261006-uv9ayewl/source/apps/operations/test/unit/shared_print_effect_test.dart","suiteID":0,"groupIDs":[],"metadata":{"skip":false,"skipReason":null},"line":null,"column":null,"url":null},"type":"testStart","time":0}
+{"count":1,"time":1,"type":"allSuites"}
+{"testID":1,"result":"success","skipped":false,"hidden":true,"type":"testDone","time":643}
+{"group":{"id":2,"suiteID":0,"parentID":null,"name":"","metadata":{"skip":false,"skipReason":null},"testCount":7,"line":null,"column":null,"url":null},"type":"group","time":644}
+{"test":{"id":3,"name":"freezes exact original header, raster and cut without mutable references","suiteID":0,"groupIDs":[2],"metadata":{"skip":false,"skipReason":null},"line":28,"column":3,"url":"file:///private/tmp/vynic-readiness-resume-20261006-uv9ayewl/source/apps/operations/test/unit/shared_print_effect_test.dart"},"type":"testStart","time":644}
+{"testID":3,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":665}
+{"test":{"id":4,"name":"Windows identity includes exact frozen owner, queue, driver and port","suiteID":0,"groupIDs":[2],"metadata":{"skip":false,"skipReason":null},"line":51,"column":3,"url":"file:///private/tmp/vynic-readiness-resume-20261006-uv9ayewl/source/apps/operations/test/unit/shared_print_effect_test.dart"},"type":"testStart","time":666}
+{"testID":4,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":667}
+{"test":{"id":5,"name":"refuses a changed Venue or retargeted registry before producing effects","suiteID":0,"groupIDs":[2],"metadata":{"skip":false,"skipReason":null},"line":76,"column":3,"url":"file:///private/tmp/vynic-readiness-resume-20261006-uv9ayewl/source/apps/operations/test/unit/shared_print_effect_test.dart"},"type":"testStart","time":667}
+{"testID":5,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":669}
+{"test":{"id":6,"name":"refuses submitted, uncertain, copied and repeat attempts","suiteID":0,"groupIDs":[2],"metadata":{"skip":false,"skipReason":null},"line":92,"column":3,"url":"file:///private/tmp/vynic-readiness-resume-20261006-uv9ayewl/source/apps/operations/test/unit/shared_print_effect_test.dart"},"type":"testStart","time":669}
+{"testID":6,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":672}
+{"test":{"id":7,"name":"requires explicit canonical attempt and matching enrolled USB Device","suiteID":0,"groupIDs":[2],"metadata":{"skip":false,"skipReason":null},"line":154,"column":3,"url":"file:///private/tmp/vynic-readiness-resume-20261006-uv9ayewl/source/apps/operations/test/unit/shared_print_effect_test.dart"},"type":"testStart","time":672}
+{"testID":7,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":673}
+{"test":{"id":8,"name":"holds conditional and previously requeued tickets for explicit migration","suiteID":0,"groupIDs":[2],"metadata":{"skip":false,"skipReason":null},"line":171,"column":3,"url":"file:///private/tmp/vynic-readiness-resume-20261006-uv9ayewl/source/apps/operations/test/unit/shared_print_effect_test.dart"},"type":"testStart","time":673}
+{"testID":8,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":675}
+{"test":{"id":9,"name":"holds stale or different local alias mappings even at the same endpoint","suiteID":0,"groupIDs":[2],"metadata":{"skip":false,"skipReason":null},"line":210,"column":3,"url":"file:///private/tmp/vynic-readiness-resume-20261006-uv9ayewl/source/apps/operations/test/unit/shared_print_effect_test.dart"},"type":"testStart","time":675}
+{"testID":9,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":676}
+{"success":true,"type":"done","time":681}

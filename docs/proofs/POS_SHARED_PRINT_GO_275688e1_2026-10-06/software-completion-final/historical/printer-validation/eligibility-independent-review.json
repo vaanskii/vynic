@@ -1,0 +1,21 @@
+{
+  "verdict": "PASS bounded isolated logical gate; physical dispatch denied",
+  "reviewed_sha256": {
+    "source/apps/edge/internal/printeligibility/gate.go": "72ad434093c2fe9f9c97de623e0a6bb436e96ca7167565023519f1664e29a48c",
+    "source/apps/edge/internal/printeligibility/gate_test.go": "8470d2132bd9e5f7c6c897bae551dce302b0eb673d2441fe41382df8f0e85004",
+    "printer-validation/eligibility-tests.jsonl": "877ddc307a264522e7f11c92c34df4d95ef16d103ebf8d6a3fca4747e6bb3c4d"
+  },
+  "closed_findings": [
+    "Binding-generation regression at higher committed index",
+    "Retained job identity replacement at higher committed index"
+  ],
+  "evidence": "Independent source review and parse of recorded five passing tests; no independent rerun claimed",
+  "limits": [
+    "Proof-only untrusted evidence seam; no production quorum/authentication adapter",
+    "No LOCAL physical permit",
+    "CheckPhysical always returns physical-fence-pending after logical eligibility",
+    "Expected-UNSAFE loopback proves lease-only RAW stale writer counterexample; not an HA qualification",
+    "Socket-close test proves buffered bytes can remain deliverable; it does not characterize any physical printer",
+    "No production activation, printer I/O or infrastructure changes"
+  ]
+}

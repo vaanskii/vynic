@@ -1,9 +1,15 @@
 import { List, X } from "@phosphor-icons/react";
-import { useState } from "react";
+import { gsap } from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { motion, useReducedMotion } from "motion/react";
+import { useEffect, useRef, useState } from "react";
 import vynicLogo from "../../assets/vynic-logo.png";
 import { hasCustomerSession } from "../../customer/api";
 import { localeHref, useLocale } from "../../lib/i18n";
 import { ButtonLink } from "../ui/Button";
+import { curve, duration } from "../../lib/motion";
+
+gsap.registerPlugin(ScrollTrigger);
 
 const focusRing =
   "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-vynic-plum";
@@ -14,7 +20,24 @@ const focusRing =
  */
 export function Navbar() {
   const [open, setOpen] = useState(false);
+  const headerRef = useRef<HTMLElement>(null);
+  const reduceMotion = useReducedMotion();
   const { copy, locale } = useLocale();
+
+  // A hairline shadow once the page has scrolled; written to the DOM directly.
+  useEffect(() => {
+    const header = headerRef.current;
+    if (!header) return;
+    const trigger = ScrollTrigger.create({
+      start: 12,
+      end: "max",
+      onToggle: (self) => {
+        header.dataset.scrolled = String(self.isActive);
+      },
+    });
+    header.dataset.scrolled = String(trigger.isActive);
+    return () => trigger.kill();
+  }, []);
   const home = localeHref(locale);
   const signedIn = hasCustomerSession();
   const navItems = [
@@ -33,7 +56,7 @@ export function Navbar() {
       };
 
   return (
-    <header className="sticky top-0 z-30 border-b border-vynic-border/80 bg-vynic-background/92 backdrop-blur-xl">
+    <header ref={headerRef} className="vynic-header sticky top-0 z-30 border-b border-vynic-border/80 bg-vynic-background/92 backdrop-blur-xl">
       <nav className="mx-auto flex h-14 max-w-7xl items-center justify-between gap-3 px-4 sm:px-6 lg:px-8">
         <a
           href={home}
@@ -53,7 +76,7 @@ export function Navbar() {
             <a
               key={item.href}
               href={item.href}
-              className={`whitespace-nowrap text-sm font-medium text-vynic-muted transition hover:text-vynic-charcoal focus-visible:rounded-[8px] ${focusRing}`}
+              className={`vynic-nav-link whitespace-nowrap text-sm font-medium text-vynic-muted transition-colors duration-200 hover:text-vynic-charcoal focus-visible:rounded-[8px] ${focusRing}`}
             >
               {item.label}
             </a>
@@ -96,8 +119,16 @@ export function Navbar() {
         </div>
       </nav>
 
+      {/* Opens with a short settle; closes instantly so an in-page link
+          scrolls to the right place (the menu sits in the sticky header). */}
       {open ? (
-        <div className="border-t border-vynic-border bg-vynic-background px-4 py-4 xl:hidden">
+        <motion.div
+          key="mobile-nav"
+          className="border-t border-vynic-border bg-vynic-background px-4 py-4 xl:hidden"
+          initial={reduceMotion ? false : { opacity: 0, y: -8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: duration.base, ease: curve.out }}
+        >
           <div className="mx-auto grid max-w-7xl gap-2">
             {navItems.map((item) => (
               <a
@@ -118,7 +149,7 @@ export function Navbar() {
               </a>
             </div>
           </div>
-        </div>
+        </motion.div>
       ) : null}
     </header>
   );

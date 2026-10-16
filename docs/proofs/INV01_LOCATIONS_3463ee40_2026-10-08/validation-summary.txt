@@ -1,0 +1,39 @@
+inventory-regression.log
+Test Suites: 9 passed, 9 total
+Tests:       89 passed, 89 total
+
+backend-aggregate.log
+Test Suites: 53 skipped, 75 passed, 75 of 128 total
+Tests:       713 skipped, 870 passed, 1583 total
+
+backend-typecheck.log
+
+
+backend-build.log
+
+
+new-files-lint.log
+
+
+changed-files-format.log
+All matched files use Prettier code style!
+
+prisma-validate.log
+The schema at prisma/schema.prisma is valid 🚀
+
+prisma-diff.log
+  [*] Renamed the foreign key "DevicePrinterRuntimeRequest_device_fkey" to "DevicePrinterRuntimeRequest_deviceId_fkey"
+  [*] Renamed the foreign key "DevicePrinterRuntimeRequest_venue_fkey" to "DevicePrinterRuntimeRequest_venueId_fkey"
+
+prisma-baseline-diff.log
+  [*] Renamed the foreign key "DevicePrinterRuntimeRequest_device_fkey" to "DevicePrinterRuntimeRequest_deviceId_fkey"
+  [*] Renamed the foreign key "DevicePrinterRuntimeRequest_venue_fkey" to "DevicePrinterRuntimeRequest_venueId_fkey"
+
+migration-retry.log
+No pending migrations to apply.
+
+flutter-consumer-checks.log
+00:00 +27: All tests passed!
+
+owned-pg-stop.log
+server stopped

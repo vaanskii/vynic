@@ -1,0 +1,22 @@
+{
+  "passed": 16,
+  "failed": 0,
+  "cases": [
+    "Commercial Access Hardening \u2014 disposable PostgreSQL and real HTTP public requests create no account, Venue, subscription, domain, enrollment or media",
+    "Commercial Access Hardening \u2014 disposable PostgreSQL and real HTTP approval and invitation acceptance grant dashboard ownership but no package",
+    "Commercial Access Hardening \u2014 disposable PostgreSQL and real HTTP NO_PLAN refuses all direct paid APIs while identity editing stays available",
+    "Commercial Access Hardening \u2014 disposable PostgreSQL and real HTTP customers can request a trial but only an operator can activate its chosen plan",
+    "Commercial Access Hardening \u2014 disposable PostgreSQL and real HTTP expired trials suspend once, suppress client feature keys, stop public serving and release domains after grace",
+    "Commercial Access Hardening \u2014 disposable PostgreSQL and real HTTP ACTIVE media quotas include unattached files and prohibit cross-Venue references",
+    "Commercial Access Hardening \u2014 disposable PostgreSQL and real HTTP WEBSITE overrides close every draft/preview/menu/upload/publication API",
+    "Commercial Access Hardening \u2014 disposable PostgreSQL and real HTTP adopts referenced legacy disk media with ownership and quota accounting",
+    "Commercial Access Hardening \u2014 disposable PostgreSQL and real HTTP NON_FISCAL_CLOSE is never inherited, only an explicit Venue override",
+    "Commercial Access Hardening \u2014 disposable PostgreSQL and real HTTP catalog edits preserve agreed prices and reject policy features",
+    "Commercial Access Hardening \u2014 disposable PostgreSQL and real HTTP Manager provisioning is deliberate, accepted owners use memberships, suspension hides credentials",
+    "Commercial Access Hardening \u2014 disposable PostgreSQL and real HTTP trial extension/reactivation and suspension are audited; missing dates cannot grant trials",
+    "Commercial Access Hardening \u2014 disposable PostgreSQL and real HTTP a fresh missing-subscription Venue cannot use even ENABLED overrides; only marked legacy can",
+    "Commercial Access Hardening \u2014 disposable PostgreSQL and real HTTP cross-Venue requests stay denied, while migrated CUSTOM fixtures remain entitled",
+    "Commercial Access Hardening \u2014 disposable PostgreSQL and real HTTP HTTP billing boundary rejects owner payment claims, isolates tenants and accepts audited manual confirmation",
+    "Commercial Access Hardening \u2014 disposable PostgreSQL and real HTTP read-only support cannot quote, confirm money or mutate commercial access"
+  ]
+}

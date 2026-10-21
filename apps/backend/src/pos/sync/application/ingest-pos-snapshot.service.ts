@@ -27,6 +27,7 @@ export interface SnapshotIngestResult {
   staffNeedingPin?: string[];
   /** Revisions durably accepted by the Cloud ledger. */
   saleLedgerAck?: Array<{ posSaleId: string; revision: number }>;
+  saleLedgerRetryDates?: string[];
 }
 
 /**
@@ -119,6 +120,7 @@ export class IngestPosSnapshotService {
     // asynchronous full snapshot runs. Realtime snapshots intentionally skip
     // financial history work.
     let saleLedgerAck: Array<{ posSaleId: string; revision: number }> = [];
+    let saleLedgerRetryDates: string[] = [];
     let ledgerApplied = false;
     const saleLedgerService = ledgerSync;
     if (
@@ -130,6 +132,7 @@ export class IngestPosSnapshotService {
         saleLedgerService.sync(tenant, data.saleLedger, data.saleLedgerDays),
       );
       saleLedgerAck = result.acknowledgements;
+      saleLedgerRetryDates = result.retryBusinessDates;
       ledgerApplied = true;
     }
 
@@ -267,6 +270,7 @@ export class IngestPosSnapshotService {
       syncedAt: new Date().toISOString(),
       ...(staffNeedingPin.length > 0 ? { staffNeedingPin } : {}),
       ...(saleLedgerAck.length > 0 ? { saleLedgerAck } : {}),
+      ...(saleLedgerRetryDates?.length > 0 ? { saleLedgerRetryDates } : {}),
     };
   }
 }

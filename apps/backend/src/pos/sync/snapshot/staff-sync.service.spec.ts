@@ -130,6 +130,10 @@ class FakeStaffDb {
   };
 
   readonly posCallbackOutbox = { findMany: () => Promise.resolve([]) };
+  readonly edgeRows: Array<{ type: string; payload: unknown }> = [];
+  readonly edgeCommand = {
+    findMany: jest.fn(() => Promise.resolve(this.edgeRows)),
+  };
 }
 
 /** The plain-PIN vault, backed by a map instead of an encrypted setting row. */
@@ -323,6 +327,52 @@ describe('StaffSyncService — an older POS that sends every PIN', () => {
 });
 
 describe('StaffSyncService — reconcile', () => {
+  it('retains a queued create and protects an in-flight rename from an older snapshot', async () => {
+    const h = makeService({ created: '1234', renamed: '5678' });
+    h.db.rows.push(
+      row('created', 'hashed:1234', 'WAITER'),
+      row('renamed', 'hashed:5678', 'SUPERVISOR'),
+    );
+    h.db.edgeRows.push(
+      { type: 'STAFF_CREATE', payload: { username: 'created' } },
+      {
+        type: 'STAFF_RENAME',
+        payload: { oldUsername: 'old', newUsername: 'renamed' },
+      },
+    );
+    const result = await h.sync([
+      { username: 'old', role: 'WAITER', pin: '9999' },
+    ]);
+    expect(h.db.rows.map((r) => r.username)).toEqual(['created', 'renamed']);
+    expect(result.pinsHashed).toBe(0);
+    expect(h.vault.write).not.toHaveBeenCalled();
+    expect(h.db.edgeCommand.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          venueId: TENANT.venueId,
+          status: { in: ['PENDING', 'CLAIMED'] },
+        }),
+      }),
+    );
+  });
+
+  it.each(['STAFF_PIN_UPDATE', 'STAFF_ROLE_UPDATE', 'STAFF_DELETE'])(
+    '%s prevents a stale snapshot restoring the previous credential or activity',
+    async (type) => {
+      const h = makeService({ mary: '5678' });
+      const member = row('mary', 'hashed:5678', 'SUPERVISOR');
+      member.isActive = type !== 'STAFF_DELETE';
+      h.db.rows.push(member);
+      h.db.edgeRows.push({ type, payload: { username: 'mary' } });
+      await h.sync([{ username: 'mary', role: 'WAITER', pin: '1234' }]);
+      expect(h.db.rows[0]).toEqual(member);
+      expect(h.db.rows[0].pinHash).toBe('hashed:5678');
+      expect(h.db.rows[0].role).toBe('SUPERVISOR');
+      expect(h.db.rows[0].isActive).toBe(type !== 'STAFF_DELETE');
+      expect(hashMock).not.toHaveBeenCalled();
+    },
+  );
+
   it('deletes a member the snapshot no longer names', async () => {
     const h = makeService({ mary: '1234', nino: '5678' });
     h.db.rows.push(

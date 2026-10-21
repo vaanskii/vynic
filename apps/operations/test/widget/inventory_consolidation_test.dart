@@ -121,11 +121,13 @@ void main() {
         expect(find.byKey(const Key('inventory-home')), findsNothing);
       }
       expect(find.byKey(const Key('inventory-add')), findsNothing);
-      final add = find.widgetWithText(OutlinedButton, 'რედაქტირება').first;
-      await tester.ensureVisible(add);
+      final actions = find.byTooltip('მოქმედებები').first;
+      await tester.ensureVisible(actions);
       await tester.pumpAndSettle();
-      expect(tester.getSize(add).height, greaterThanOrEqualTo(48));
-      await tester.tap(add);
+      expect(tester.getSize(actions).height, greaterThanOrEqualTo(44));
+      await tester.tap(actions);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('რედაქტირება'));
       await tester.pumpAndSettle();
       expect(find.text('როგორ ვითვლით საწყობში?'), findsOneWidget);
       expect(find.text('როგორ მოდის მომწოდებლისგან?'), findsOneWidget);

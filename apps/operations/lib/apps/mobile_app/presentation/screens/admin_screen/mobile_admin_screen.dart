@@ -1,3 +1,6 @@
+import '../../widgets/manager_design_components.dart';
+import 'package:vynic/apps/mobile_app/presentation/widgets/manager_modal.dart';
+import 'package:vynic/apps/mobile_app/theme/manager_theme.dart';
 import 'package:vynic/core/models/sale_visibility.dart';
 import '../../widgets/venue_profile_card.dart';
 import 'package:vynic/core/services/manager_app/manager_entitlements.dart';
@@ -42,7 +45,7 @@ part 'tabs/mobile_admin_recipes.dart';
 part 'tabs/mobile_admin_settings_tab.dart';
 part 'shared/mobile_admin_shared_widgets.dart';
 
-/// Manager console (მართვა) — flat POS-style layout for mobile.
+/// Manager workspace with adaptive, bounded report and administration surfaces.
 class MobileAdminScreen extends StatefulWidget {
   final User user;
   final VoidCallback onLogout;
@@ -54,11 +57,9 @@ class MobileAdminScreen extends StatefulWidget {
   });
 
   static const adminTabs = <({String label, IconData icon})>[
-    (label: 'ანგარიში', icon: Icons.analytics_outlined),
-    (label: 'გაყიდვები', icon: Icons.receipt_long_outlined),
-    (label: 'აუდიტი', icon: Icons.fact_check_outlined),
-    (label: 'აქტივობა', icon: Icons.history_outlined),
     (label: 'გუნდი', icon: Icons.people_outline),
+    (label: 'ანგარიშები', icon: Icons.analytics_outlined),
+    (label: 'აუდიტი', icon: Icons.fact_check_outlined),
     (label: 'პარამეტრები', icon: Icons.settings_outlined),
   ];
 
@@ -118,11 +119,7 @@ class _MobileAdminScreenState extends State<MobileAdminScreen>
     with SingleTickerProviderStateMixin {
   late final TabController _tabs;
   int _activeTab = 0;
-  late final _visibleTabs = [
-    for (final entry in MobileAdminScreen.adminTabs.indexed)
-      if (entry.$1 != 3 || ManagerEntitlements.has(FeatureKeys.advancedAudit))
-        entry.$2,
-  ];
+  final _visibleTabs = MobileAdminScreen.adminTabs;
 
   @override
   void initState() {
@@ -147,106 +144,129 @@ class _MobileAdminScreenState extends State<MobileAdminScreen>
       backgroundColor: AdminTheme.bg,
       body: SafeArea(
         bottom: false,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 8, 12, 0),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'მართვა',
-                          style: TextStyle(
-                            color: AdminTheme.text,
-                            fontSize: 26,
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: -0.5,
-                          ),
-                        ),
-                        SizedBox(height: 2),
-                        Text(
-                          '$roleLabel · ${widget.user.username}',
-                          style: TextStyle(
-                            color: AdminTheme.textDim,
-                            fontSize: 13,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ],
-                    ),
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 1424),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Padding(
+                  padding: EdgeInsets.fromLTRB(
+                    MediaQuery.sizeOf(context).width < 700 ? 20 : 32,
+                    20,
+                    MediaQuery.sizeOf(context).width < 700 ? 20 : 32,
+                    0,
                   ),
-                  const _AdminConnectionDot(size: 12),
-                ],
-              ),
-            ),
-            SizedBox(height: 12),
-            Container(
-              decoration: BoxDecoration(
-                border: Border(
-                  bottom: BorderSide(color: AdminTheme.border, width: 1),
-                ),
-              ),
-              child: TabBar(
-                controller: _tabs,
-                isScrollable: true,
-                tabAlignment: TabAlignment.start,
-                labelPadding: const EdgeInsets.symmetric(horizontal: 14),
-                indicatorColor: AdminTheme.primary,
-                indicatorWeight: 3,
-                indicatorSize: TabBarIndicatorSize.label,
-                dividerColor: Colors.transparent,
-                labelColor: AdminTheme.text,
-                unselectedLabelColor: AdminTheme.textDim,
-                labelStyle: const TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w700,
-                ),
-                unselectedLabelStyle: const TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w500,
-                ),
-                tabs: [
-                  for (final t in _visibleTabs)
-                    Tab(
-                      height: 48,
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(t.icon, size: 18),
-                          SizedBox(width: 6),
-                          Text(t.label),
-                        ],
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'მართვა',
+                              style: TextStyle(
+                                color: AdminTheme.text,
+                                fontSize: MediaQuery.sizeOf(context).width < 700
+                                    ? 25
+                                    : 30,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            SizedBox(height: 2),
+                            Text(
+                              'გუნდი, ანგარიშები და პარამეტრები · $roleLabel',
+                              style: TextStyle(
+                                color: AdminTheme.textDim,
+                                fontSize: 13,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
+                      const _AdminConnectionDot(size: 12),
+                    ],
+                  ),
+                ),
+                SizedBox(height: 12),
+                Container(
+                  margin: EdgeInsets.symmetric(
+                    horizontal: MediaQuery.sizeOf(context).width < 700
+                        ? 20
+                        : 32,
+                  ),
+                  padding: const EdgeInsets.all(4),
+                  decoration: BoxDecoration(
+                    color: AdminTheme.surfaceElevated,
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: TabBar(
+                    controller: _tabs,
+                    isScrollable: true,
+                    tabAlignment: TabAlignment.start,
+                    labelPadding: const EdgeInsets.symmetric(horizontal: 14),
+                    indicator: BoxDecoration(
+                      color: AdminTheme.surface,
+                      borderRadius: BorderRadius.circular(10),
                     ),
-                ],
-              ),
-            ),
-            Expanded(
-              child: TabBarView(
-                controller: _tabs,
-                children: [
-                  for (final entry in <Widget>[
-                    _ReportTab(),
-                    _SalesTab(),
-                    _AuditTab(),
-                    if (ManagerEntitlements.has(FeatureKeys.advancedAudit))
-                      _ActivityTab(),
-                    _UsersTab(currentUser: widget.user),
-                    _SettingsTab(user: widget.user, onLogout: widget.onLogout),
-                  ].indexed)
-                    AdminTabViewport(
-                      active: _activeTab == entry.$1,
-                      child: entry.$2,
+                    indicatorSize: TabBarIndicatorSize.tab,
+                    dividerColor: Colors.transparent,
+                    labelColor: AdminTheme.text,
+                    unselectedLabelColor: AdminTheme.textDim,
+                    labelStyle: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
                     ),
-                ],
-              ),
+                    unselectedLabelStyle: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                    ),
+                    tabs: [
+                      for (final t in _visibleTabs)
+                        Tab(
+                          key: ValueKey('manager-top-tab-${t.label}'),
+                          height: 44,
+                          text: t.label,
+                        ),
+                    ],
+                  ),
+                ),
+                Expanded(
+                  child: TabBarView(
+                    controller: _tabs,
+                    children: [
+                      for (final entry in <Widget>[
+                        _UsersTab(currentUser: widget.user),
+                        const _ManagerReportsDirectory(),
+                        if (ManagerEntitlements.has(FeatureKeys.advancedAudit))
+                          _ActivityTab(
+                            onOpenOperationalAudit: () => showDialog<void>(
+                              context: context,
+                              builder: (_) => ManagerPageDialog(
+                                title: 'ოპერაციული აუდიტი',
+                                child: _AuditTab(),
+                              ),
+                            ),
+                          )
+                        else
+                          _AuditTab(),
+                        _SettingsTab(
+                          user: widget.user,
+                          onLogout: widget.onLogout,
+                        ),
+                      ].indexed)
+                        AdminTabViewport(
+                          active: _activeTab == entry.$1,
+                          child: entry.$2,
+                        ),
+                    ],
+                  ),
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );
@@ -290,4 +310,43 @@ class _AdminTabViewportState extends State<AdminTabViewport> {
 
   @override
   Widget build(BuildContext context) => widget.child;
+}
+
+/// The reference directory opens existing reports in the shared detail frame.
+class _ManagerReportsDirectory extends StatelessWidget {
+  const _ManagerReportsDirectory();
+  @override
+  Widget build(BuildContext context) => ListView(
+    padding: _adminScrollPadding(context),
+    children: [
+      ManagerPanel(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const ManagerSectionHeading('ანგარიშები და გაყიდვები'),
+            for (final entry in <(String, Widget)>[
+              ('დღის ანგარიში', _ReportTab()),
+              ('თვიური გაყიდვები', _SalesTab()),
+              (
+                'პროდუქტების შედეგები',
+                _ReportTab(focus: _ReportFocus.products),
+              ),
+              (
+                'თანამშრომლების შედეგები',
+                _ReportTab(focus: _ReportFocus.staff),
+              ),
+            ])
+              ManagerDetailLink(
+                entry.$1,
+                onTap: () => showDialog<void>(
+                  context: context,
+                  builder: (_) =>
+                      ManagerPageDialog(title: entry.$1, child: entry.$2),
+                ),
+              ),
+          ],
+        ),
+      ),
+    ],
+  );
 }

@@ -84,6 +84,35 @@ export class StaffSyncService {
     staff: StaffSync[],
     db: Prisma.TransactionClient,
   ): Promise<StaffSyncResult> {
+    const [legacyRows, edgeRows] = await Promise.all([
+      db.posCallbackOutbox.findMany({
+        where: {
+          venueId: tenant.venueId,
+          status: 'pending',
+          endpoint: { startsWith: '/mobile-user-' },
+        },
+        select: { endpoint: true, payload: true },
+      }),
+      db.edgeCommand.findMany({
+        where: {
+          venueId: tenant.venueId,
+          status: { in: ['PENDING', 'CLAIMED'] },
+          type: {
+            in: [
+              'STAFF_CREATE',
+              'STAFF_RENAME',
+              'STAFF_PIN_UPDATE',
+              'STAFF_ROLE_UPDATE',
+              'STAFF_DELETE',
+            ],
+          },
+        },
+        select: { type: true, payload: true },
+      }),
+    ]);
+    const pendingRows = [...legacyRows, ...edgeRows];
+    const protectedUsernames = pendingStaffUsernames(pendingRows);
+    const pendingSnapshotNames = pendingStaffUsernames(pendingRows, true);
     const plainPinsByUsername = await this.pinVault.read(tenant, db);
     let pinsMapChanged = false;
     let pinsHashed = 0;
@@ -92,6 +121,9 @@ export class StaffSyncService {
     const pinsToCheck = new Map<string, string>();
     for (const member of staff) {
       incomingUsernames.add(member.username);
+      // The POS can still hold the pre-command name/role/PIN. Do not undo a
+      // committed Cloud mutation while either transport is awaiting its ACK.
+      if (pendingSnapshotNames.has(member.username)) continue;
       const identity = {
         venueId_username: {
           venueId: tenant.venueId,
@@ -172,15 +204,6 @@ export class StaffSyncService {
     // (create/rename/pin/role): the POS simply hasn't applied it yet, so its
     // current snapshot legitimately predates the user. Deleting here would
     // wrongly remove a manager-created user until the POS catches up.
-    const pendingUserRows = await (db as any).posCallbackOutbox.findMany({
-      where: {
-        venueId: tenant.venueId,
-        status: 'pending',
-        endpoint: { startsWith: '/mobile-user-' },
-      },
-      select: { endpoint: true, payload: true },
-    });
-    const protectedUsernames = pendingStaffUsernames(pendingUserRows);
     const existing = await (db as any).staff.findMany({
       where: { venueId: tenant.venueId },
       select: {

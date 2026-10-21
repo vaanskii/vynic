@@ -183,7 +183,10 @@ void main() {
         controller.loadAll,
         (request) => request.url.path == '/mobile/dashboard'
             ? response(metrics(120))
-            : request.url.path == '/mobile/sales-report'
+            : const [
+                '/mobile/sales-report',
+                '/mobile/financials',
+              ].contains(request.url.path)
             ? response({})
             : response([]),
       );
@@ -361,7 +364,9 @@ void main() {
         switch (request.url.path) {
           case '/mobile/dashboard':
             return response(metrics(fail ? 240 : 120));
+          case '/mobile/financials':
           case '/mobile/sales-report':
+          case '/mobile/product-analytics':
             return response({'topItems': []});
           case '/mobile/sales-daily':
             return fail
@@ -397,7 +402,9 @@ void main() {
             switch (request.url.path) {
               case '/mobile/dashboard':
                 return response({...metrics(120), 'businessDate': day});
+              case '/mobile/financials':
               case '/mobile/sales-report':
+              case '/mobile/product-analytics':
                 return response({'topItems': []});
               case '/mobile/reservations':
                 expect(request.url.queryParameters['date'], day);
@@ -423,6 +430,117 @@ void main() {
       controller.dispose();
     },
   );
+  test(
+    'dashboard product quantities use the ledger for the displayed business date',
+    () async {
+      final paths = <Uri>[];
+      final bundle = await run(
+        const DashboardRemoteService().fetchDashboardBundle,
+        (request) {
+          paths.add(request.url);
+          switch (request.url.path) {
+            case '/mobile/dashboard':
+              return response({...metrics(120), 'businessDate': '2026-10-06'});
+            case '/mobile/product-analytics':
+              return response({
+                'byQuantity': [
+                  {
+                    'menuItemId': 'stable-menu',
+                    'quantity': 7,
+                    'revenue': '35.00',
+                  },
+                ],
+                'byRevenue': [],
+              });
+            case '/mobile/financials':
+              return response({});
+            default:
+              return response([]);
+          }
+        },
+      );
+      final product = paths.singleWhere(
+        (uri) => uri.path == '/mobile/product-analytics',
+      );
+      expect(product.queryParameters, {
+        'from': '2026-10-06',
+        'to': '2026-10-06',
+      });
+      expect(
+        paths
+            .singleWhere((uri) => uri.path == '/mobile/staff-performance')
+            .queryParameters,
+        {'from': '2026-10-06', 'to': '2026-10-06'},
+      );
+      expect(paths.any((uri) => uri.path == '/mobile/sales-report'), isFalse);
+      expect(bundle.productAnalytics!['byQuantity'][0]['quantity'], 7);
+      expect(bundle.reads['product_analytics']!.apiAvailable, isTrue);
+    },
+  );
+  test(
+    'retiring abandoned page statuses preserves newer reads, other queries and session fencing',
+    () {
+      ManagerDataReads.activate('synthetic-scope');
+      const old = ManagerReadStatus(
+        key: 'sale_history',
+        query: '/mobile/sales?cursor=old',
+      );
+      const other = ManagerReadStatus(key: 'tables', query: '/mobile/tables');
+      ManagerDataReads.publish('synthetic-scope', old);
+      ManagerDataReads.publish('synthetic-scope', other);
+      const newer = ManagerReadStatus(
+        key: 'sale_history',
+        query: '/mobile/sales?cursor=new',
+      );
+      ManagerDataReads.publish('synthetic-scope', newer);
+      ManagerDataReads.release('different-scope', [old, other]);
+      expect(ManagerDataReads.statuses.value.values, contains(old));
+      ManagerDataReads.release('synthetic-scope', [old]);
+      expect(ManagerDataReads.statuses.value.values, isNot(contains(old)));
+      expect(ManagerDataReads.statuses.value['sale_history'], same(newer));
+      expect(ManagerDataReads.statuses.value.values, contains(other));
+    },
+  );
+  for (final code in [401, 403]) {
+    test(
+      'dashboard access denial $code clears retained memory and recovers on a fresh read',
+      () async {
+        final controller = DashboardController(
+          const DashboardRepository(DashboardRemoteService()),
+        );
+        Future<void> load(bool denied) => run(controller.loadAll, (request) {
+          if (denied) return response({}, status: code);
+          switch (request.url.path) {
+            case '/mobile/dashboard':
+              return response(metrics(120));
+            case '/mobile/financials':
+            case '/mobile/sales-report':
+            case '/mobile/product-analytics':
+              return response({'topItems': []});
+            case '/mobile/sales-daily':
+              return response([
+                {'date': '2026-10-06', 'totalRevenue': 99},
+              ]);
+            default:
+              return response([]);
+          }
+        });
+        await load(false);
+        expect(controller.state.metrics!.todayRevenue, 120);
+        await load(true);
+        expect(controller.state.metrics, isNull);
+        expect(controller.state.financials, isNull);
+        expect(controller.state.productAnalytics, isNull);
+        expect(controller.state.salesDaily, isEmpty);
+        expect(controller.state.reads['dashboard']!.httpStatus, code);
+        expect(controller.state.reads['dashboard']!.location, 'unavailable');
+        await load(false);
+        expect(controller.state.metrics!.todayRevenue, 120);
+        expect(controller.state.reads['dashboard']!.accessDenied, isFalse);
+        controller.dispose();
+      },
+    );
+  }
   test(
     'controller disposal during request never notifies or creates refresh timer',
     () async {

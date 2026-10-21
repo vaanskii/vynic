@@ -821,6 +821,7 @@ describe('POST /sync/manager-data — order sync and table linking', () => {
         venueId: 'venue-a',
         tableNumber: '6',
         floor: 'first',
+        activeOrderId: 9,
       });
       expect(at(free?.arg, 'data')).toEqual({
         isReserved: false,

@@ -27,3 +27,6 @@ Thumbs.db
 !.env.docker.example
 !.env.production.example
 deploy/production-tls/
+
+# Rendered captures only; keep the preview app's source, assets and config visible.
+/experiments/manager-design-preview/previews/

@@ -22,6 +22,7 @@ import {
   resolveRecipeQuantity,
 } from './inventory-quantity';
 import { inventoryUnit } from './inventory-unit';
+import { lockStockItems } from './stock-item-lock';
 
 export interface RecipeComponentInput {
   stockItemId?: unknown;
@@ -478,6 +479,7 @@ export class RecipeService {
         inputs.map((row) => requiredText(row.stockItemId, 'stockItemId')),
       ),
     );
+    await lockStockItems(tx, actor.venueId, ids);
     const items = await tx.stockItem.findMany({
       where: { id: { in: ids }, venueId: actor.venueId },
       select: { id: true, name: true, baseUnit: true },

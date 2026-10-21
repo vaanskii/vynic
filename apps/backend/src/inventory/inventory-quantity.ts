@@ -256,9 +256,15 @@ export function perUnitQuantity(
   if (yieldQuantity.lessThanOrEqualTo(0)) {
     throw new BadRequestException('yieldQuantity must be greater than zero');
   }
-  return baseQuantity
+  const perUnit = baseQuantity
     .dividedBy(yieldQuantity)
     .toDecimalPlaces(PER_UNIT_SCALE, ROUND_HALF_UP);
+  if (perUnit.lessThanOrEqualTo(0)) {
+    throw new BadRequestException(
+      'Consumption per sold unit must be at least 0.000001 base units after rounding',
+    );
+  }
+  return perUnit;
 }
 
 export interface LineMoney {

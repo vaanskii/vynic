@@ -41,70 +41,70 @@ class _SettingsTabState extends State<_SettingsTab>
   /// connects to — e.g. http://10.10.10.4:3000 — without rebuilding the app.
   Future<void> _editBackendUrl() async {
     if (!ApiConfig.allowDeveloperOverride) return;
-    final controller = TextEditingController(text: ApiConfig.baseUrl);
     String? error;
 
     final saved = await showDialog<bool>(
       context: context,
-      builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setLocal) => AlertDialog(
-          title: const Text('Backend მისამართი'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'შეიყვანეთ Windows POS სერვერის მისამართი '
-                '(მაგ. http://10.10.10.4:3000).',
-                style: TextStyle(fontSize: 12),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: controller,
-                autofocus: true,
-                keyboardType: TextInputType.url,
-                decoration: InputDecoration(
-                  hintText: 'http://10.10.10.4:3000',
-                  errorText: error,
-                  border: const OutlineInputBorder(),
+      builder: (ctx) => _AdminControllerScope(
+        initialText: ApiConfig.baseUrl,
+        builder: (controller) => StatefulBuilder(
+          builder: (ctx, setLocal) => ManagerFormDialog(
+            title: const Text('Backend მისამართი'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'შეიყვანეთ Windows POS სერვერის მისამართი '
+                  '(მაგ. http://10.10.10.4:3000).',
+                  style: TextStyle(fontSize: 12),
                 ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: controller,
+                  autofocus: true,
+                  keyboardType: TextInputType.url,
+                  decoration: InputDecoration(
+                    hintText: 'http://10.10.10.4:3000',
+                    errorText: error,
+                    border: const OutlineInputBorder(),
+                  ),
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () async {
+                  await ManagerAppPreferences.setBackendUrlOverride(null);
+                  ApiConfig.resetResolvedUrlLog();
+                  if (ctx.mounted) Navigator.pop(ctx, true);
+                },
+                child: const Text('ნაგულისხმევზე დაბრუნება'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, false),
+                child: const Text('გაუქმება'),
+              ),
+              ElevatedButton(
+                onPressed: () async {
+                  final normalized = ApiConfig.normalizeEditableBackendUrl(
+                    controller.text,
+                  );
+                  if (normalized == null) {
+                    setLocal(() => error = 'არასწორი მისამართი');
+                    return;
+                  }
+                  await ManagerAppPreferences.setBackendUrlOverride(normalized);
+                  ApiConfig.resetResolvedUrlLog();
+                  if (ctx.mounted) Navigator.pop(ctx, true);
+                },
+                child: const Text('შენახვა'),
               ),
             ],
           ),
-          actions: [
-            TextButton(
-              onPressed: () async {
-                await ManagerAppPreferences.setBackendUrlOverride(null);
-                ApiConfig.resetResolvedUrlLog();
-                if (ctx.mounted) Navigator.pop(ctx, true);
-              },
-              child: const Text('ნაგულისხმევზე დაბრუნება'),
-            ),
-            TextButton(
-              onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('გაუქმება'),
-            ),
-            ElevatedButton(
-              onPressed: () async {
-                final normalized = ApiConfig.normalizeEditableBackendUrl(
-                  controller.text,
-                );
-                if (normalized == null) {
-                  setLocal(() => error = 'არასწორი მისამართი');
-                  return;
-                }
-                await ManagerAppPreferences.setBackendUrlOverride(normalized);
-                ApiConfig.resetResolvedUrlLog();
-                if (ctx.mounted) Navigator.pop(ctx, true);
-              },
-              child: const Text('შენახვა'),
-            ),
-          ],
         ),
       ),
     );
-
-    controller.dispose();
 
     if (saved == true) {
       // Reconnect the realtime socket to the new URL; REST calls read
@@ -260,173 +260,180 @@ class _SettingsTabState extends State<_SettingsTab>
       ),
       padding: _adminScrollPadding(context),
       children: [
-        const VenueProfileCard(),
-        const SizedBox(height: 16),
-        if (_remoteUnavailable || _opsUnavailable) ...[
-          const _AdminOfflineBanner(
-            message:
-                'სერვერთან კავშირი არ არის. ოპერაციული და რესტორანის მონაცემები განახლდება კავშირის აღდგენისას.',
-          ),
-          SizedBox(height: 16),
-        ],
-        _SettingsSection(
-          title: 'ოპერაცია',
-          children: showOpsSkeleton
-              ? [
-                  _SettingsTileSkeleton(),
-                  _SettingsTileSkeleton(),
-                  _SettingsTileSkeleton(),
-                  _SettingsTileSkeleton(),
-                ]
-              : [
-                  _SettingsTile(
-                    icon: Icons.today_outlined,
-                    label: 'საქმიანი დღე',
-                    value: businessDate,
-                    unavailable: opsDisabled,
-                  ),
-                  _SettingsTile(
-                    icon: Icons.schedule_outlined,
-                    label: 'სტატუსი',
-                    value: ops != null
-                        ? _businessDayStatusLabel(ops.businessDayStatus)
-                        : '—',
-                    unavailable: opsDisabled,
-                  ),
-                  _SettingsTile(
-                    icon: Icons.play_circle_outline,
-                    label: 'ცვლის დაწყება',
-                    value: _formatOpened(ops?.businessDayOpenedAt),
-                    unavailable: opsDisabled,
-                  ),
-                  _SettingsTile(
-                    icon: Icons.timelapse_outlined,
-                    label: 'ხანგრძლივობა',
-                    value: _formatShiftDuration(ops),
-                    unavailable: opsDisabled,
-                  ),
-                  _SettingsTile(
-                    icon: Icons.table_bar_outlined,
-                    label: 'მაგიდები',
-                    value: ops != null
-                        ? '${ops.occupiedTables} დაკავებული / ${ops.totalTables} სულ'
-                        : '—',
-                    unavailable: opsDisabled,
-                  ),
-                  _SettingsTile(
-                    icon: Icons.receipt_outlined,
-                    label: 'შეკვეთები დღეს',
-                    value: ops != null ? '${ops.todayOrderCount}' : '—',
-                    unavailable: opsDisabled,
-                  ),
-                ],
-        ),
-        SizedBox(height: 16),
-        _SettingsSection(
-          title: 'სესია',
-          children: [
-            _SettingsTile(
-              icon: Icons.person_rounded,
-              label: 'მომხმარებელი',
-              value: widget.user.username,
-            ),
-            _SettingsTile(
-              icon: Icons.admin_panel_settings_rounded,
-              label: 'როლი',
-              value: widget.user.roleLabelKa,
-            ),
-          ],
-        ),
-        SizedBox(height: 16),
-        _SettingsSection(
-          title: 'მომსახურება',
-          children: showRestaurantSkeleton
-              ? [
-                  _SettingsTileSkeleton(),
-                  _SettingsTileSkeleton(),
-                  _SettingsTileSkeleton(),
-                ]
-              : [
-                  _SettingsTile(
-                    icon: Icons.percent_rounded,
-                    label: 'სერვისის ფი',
-                    value: serviceFee != null
-                        ? '${serviceFee.toStringAsFixed(0)}%${serviceFeeEnabled ? '' : ' (გამორთ.)'}'
-                        : '—',
-                    unavailable: restaurantDisabled || serviceFee == null,
-                  ),
-                  _SettingsTile(
-                    icon: Icons.payments_rounded,
-                    label: 'ვალუტა',
-                    value: currency ?? 'GEL',
-                    unavailable: restaurantDisabled && currency == null,
-                  ),
-                ],
-        ),
-        SizedBox(height: 16),
-        if (ApiConfig.allowDeveloperOverride)
-          _SettingsSection(
-            title: 'კავშირი',
+        ManagerPanel(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              const Padding(
+                padding: EdgeInsets.only(bottom: 12),
+                child: Text(
+                  'რესტორნის პარამეტრები',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                ),
+              ),
+              const VenueProfileCard(compact: true),
+              if (_remoteUnavailable || _opsUnavailable) ...[
+                const _AdminOfflineBanner(
+                  message:
+                      'სერვერთან კავშირი არ არის. ოპერაციული და რესტორანის მონაცემები განახლდება კავშირის აღდგენისას.',
+                ),
+              ],
+              _SettingsSection(
+                title: 'საქმიანი დღე',
+                children: showOpsSkeleton
+                    ? [
+                        _SettingsTileSkeleton(),
+                        _SettingsTileSkeleton(),
+                        _SettingsTileSkeleton(),
+                        _SettingsTileSkeleton(),
+                      ]
+                    : [
+                        _SettingsTile(
+                          icon: Icons.today_outlined,
+                          label: 'საქმიანი დღე',
+                          value: businessDate,
+                          unavailable: opsDisabled,
+                        ),
+                        _SettingsTile(
+                          icon: Icons.schedule_outlined,
+                          label: 'სტატუსი',
+                          value: ops != null
+                              ? _businessDayStatusLabel(ops.businessDayStatus)
+                              : '—',
+                          unavailable: opsDisabled,
+                        ),
+                        _SettingsTile(
+                          icon: Icons.play_circle_outline,
+                          label: 'ცვლის დაწყება',
+                          value: _formatOpened(ops?.businessDayOpenedAt),
+                          unavailable: opsDisabled,
+                        ),
+                        _SettingsTile(
+                          icon: Icons.timelapse_outlined,
+                          label: 'ხანგრძლივობა',
+                          value: _formatShiftDuration(ops),
+                          unavailable: opsDisabled,
+                        ),
+                        _SettingsTile(
+                          icon: Icons.table_bar_outlined,
+                          label: 'მაგიდები',
+                          value: ops != null
+                              ? '${ops.occupiedTables} დაკავებული / ${ops.totalTables} სულ'
+                              : '—',
+                          unavailable: opsDisabled,
+                        ),
+                        _SettingsTile(
+                          icon: Icons.receipt_outlined,
+                          label: 'შეკვეთები დღეს',
+                          value: ops != null ? '${ops.todayOrderCount}' : '—',
+                          unavailable: opsDisabled,
+                        ),
+                      ],
+              ),
+              _SettingsSection(
+                title: 'სესია',
+                children: [
+                  _SettingsTile(
+                    icon: Icons.person_rounded,
+                    label: 'მომხმარებელი',
+                    value: widget.user.username,
+                  ),
+                  _SettingsTile(
+                    icon: Icons.admin_panel_settings_rounded,
+                    label: 'როლი',
+                    value: widget.user.roleLabelKa,
+                  ),
+                ],
+              ),
+              _SettingsSection(
+                title: 'მომსახურება',
+                children: showRestaurantSkeleton
+                    ? [
+                        _SettingsTileSkeleton(),
+                        _SettingsTileSkeleton(),
+                        _SettingsTileSkeleton(),
+                      ]
+                    : [
+                        _SettingsTile(
+                          icon: Icons.percent_rounded,
+                          label: 'სერვისის ფი',
+                          value: serviceFee != null
+                              ? '${serviceFee.toStringAsFixed(0)}%${serviceFeeEnabled ? '' : ' (გამორთ.)'}'
+                              : '—',
+                          unavailable: restaurantDisabled || serviceFee == null,
+                        ),
+                        _SettingsTile(
+                          icon: Icons.payments_rounded,
+                          label: 'ვალუტა',
+                          value: currency ?? 'GEL',
+                          unavailable: restaurantDisabled && currency == null,
+                        ),
+                      ],
+              ),
               if (ApiConfig.allowDeveloperOverride)
-                _SettingsTile(
-                  icon: Icons.dns_rounded,
-                  label: 'Backend',
-                  value: ApiConfig.baseUrl,
-                  small: true,
-                  onTap: _editBackendUrl,
-                  trailing: Icon(
-                    Icons.edit_outlined,
-                    size: 18,
-                    color: AdminTheme.primary,
+                _SettingsSection(
+                  title: 'კავშირი',
+                  children: [
+                    if (ApiConfig.allowDeveloperOverride)
+                      _SettingsTile(
+                        icon: Icons.dns_rounded,
+                        label: 'Backend',
+                        value: ApiConfig.baseUrl,
+                        small: true,
+                        onTap: _editBackendUrl,
+                        trailing: Icon(
+                          Icons.edit_outlined,
+                          size: 18,
+                          color: AdminTheme.primary,
+                        ),
+                      ),
+                  ],
+                ),
+              _SettingsSection(
+                title: 'გარეგნობა და აპლიკაცია',
+                children: [
+                  const _SettingsTile(
+                    icon: Icons.smartphone_outlined,
+                    label: 'ვერსია',
+                    value: '1.0.0',
+                  ),
+                  ValueListenableBuilder<ManagerDashboardAppearance>(
+                    valueListenable: ManagerAppPreferences.dashboardAppearance,
+                    builder: (context, appearance, _) {
+                      return _DashboardAppearanceTile(
+                        appearance: appearance,
+                        onChanged: ManagerAppPreferences.setDashboardAppearance,
+                      );
+                    },
+                  ),
+                ],
+              ),
+              const Divider(height: 24),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: widget.onLogout,
+                  icon: Icon(Icons.logout_rounded, color: AdminTheme.bad),
+                  label: Text(
+                    'გასვლა',
+                    style: TextStyle(
+                      color: AdminTheme.bad,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 15,
+                    ),
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    side: BorderSide(color: AdminTheme.bad, width: 1.5),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
                   ),
                 ),
+              ),
             ],
           ),
-        SizedBox(height: 16),
-        _SettingsSection(
-          title: 'აპლიკაცია',
-          children: [
-            const _SettingsTile(
-              icon: Icons.smartphone_outlined,
-              label: 'ვერსია',
-              value: '1.0.0',
-            ),
-            ValueListenableBuilder<ManagerDashboardAppearance>(
-              valueListenable: ManagerAppPreferences.dashboardAppearance,
-              builder: (context, appearance, _) {
-                return _DashboardAppearanceTile(
-                  appearance: appearance,
-                  onChanged: ManagerAppPreferences.setDashboardAppearance,
-                );
-              },
-            ),
-          ],
         ),
-        SizedBox(height: 28),
-        SizedBox(
-          width: double.infinity,
-          child: OutlinedButton.icon(
-            onPressed: widget.onLogout,
-            icon: Icon(Icons.logout_rounded, color: AdminTheme.bad),
-            label: Text(
-              'გასვლა',
-              style: TextStyle(
-                color: AdminTheme.bad,
-                fontWeight: FontWeight.w700,
-                fontSize: 15,
-              ),
-            ),
-            style: OutlinedButton.styleFrom(
-              side: BorderSide(color: AdminTheme.bad, width: 1.5),
-              padding: const EdgeInsets.symmetric(vertical: 14),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
-            ),
-          ),
-        ),
-        SizedBox(height: 8),
       ],
     );
   }
@@ -439,15 +446,26 @@ class _SettingsSection extends StatelessWidget {
   const _SettingsSection({required this.title, required this.children});
 
   @override
-  Widget build(BuildContext context) => Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      _AdminSectionTitle(title: title),
-      _AdminPanel(
-        padding: EdgeInsets.zero,
-        child: Column(children: children),
+  Widget build(BuildContext context) => ListTile(
+    contentPadding: EdgeInsets.zero,
+    title: Text(
+      title,
+      style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
+    ),
+    trailing: const Icon(Icons.chevron_right, size: 18),
+    onTap: () => showDialog<void>(
+      context: context,
+      builder: (context) => ManagerFormDialog(
+        title: Text(title),
+        content: Column(mainAxisSize: MainAxisSize.min, children: children),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('დახურვა'),
+          ),
+        ],
       ),
-    ],
+    ),
   );
 }
 
@@ -464,29 +482,18 @@ class _DashboardAppearanceTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(Icons.palette_outlined, size: 20, color: AdminTheme.primary),
-          SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'დაფის თემა',
-                  style: TextStyle(fontSize: 12, color: AdminTheme.textDim),
-                ),
-                Text(
-                  'ღია ან მუქი გარეგნობა',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: AdminTheme.text,
-                  ),
-                ),
-              ],
+          Text(
+            'გარეგნობა',
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: AdminTheme.text,
             ),
           ),
+          const SizedBox(height: 12),
           SegmentedButton<ManagerDashboardAppearance>(
             segments: [
               for (final mode in ManagerDashboardAppearance.values)
@@ -550,6 +557,7 @@ class _SettingsTile extends StatelessWidget {
                   label,
                   style: TextStyle(fontSize: 12, color: AdminTheme.textDim),
                 ),
+                const SizedBox(height: 4),
                 Text(
                   muted ? 'მიუწვდომელია' : value,
                   style: TextStyle(
@@ -567,8 +575,32 @@ class _SettingsTile extends StatelessWidget {
     );
 
     return Opacity(
-      opacity: muted ? 0.45 : 1,
+      opacity: 1,
       child: onTap == null ? content : InkWell(onTap: onTap, child: content),
     );
   }
+}
+
+// Keep input ownership inside the route until its reverse transition completes.
+class _AdminControllerScope extends StatefulWidget {
+  const _AdminControllerScope({
+    required this.initialText,
+    required this.builder,
+  });
+  final String initialText;
+  final Widget Function(TextEditingController) builder;
+  @override
+  State<_AdminControllerScope> createState() => _AdminControllerScopeState();
+}
+
+class _AdminControllerScopeState extends State<_AdminControllerScope> {
+  late final controller = TextEditingController(text: widget.initialText);
+  @override
+  void dispose() {
+    controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => widget.builder(controller);
 }

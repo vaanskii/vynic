@@ -100,6 +100,20 @@ export class SaleConsumptionService {
       throw new BadRequestException('Invalid consumption snapshot');
     if (snapshot.catalogGeneratedAt != null)
       instant(snapshot.catalogGeneratedAt);
+    // Validate nested shapes before deriving the lock set. Malformed input
+    // must remain a client error and cannot reach persistence or lock queries.
+    const itemIds: string[] = [
+      ...new Set<string>(
+        snapshot.lines.flatMap((rawLine: unknown) => {
+          const line = object(rawLine);
+          if (!Array.isArray(line.components) || line.components.length > 500)
+            throw new BadRequestException('Invalid components');
+          return line.components.map((rawComponent: unknown) =>
+            text(object(rawComponent).stockItemId, 'stockItemId'),
+          );
+        }),
+      ),
+    ].sort();
     const frozen = {
       posSaleId,
       closureId,
@@ -113,13 +127,6 @@ export class SaleConsumptionService {
         // Serialize the same durable identity across devices/processes, including
         // its first insertion; timestamps are never idempotency keys.
         await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtextextended(${tenant.venueId + ':' + posSaleId}, 0))`;
-        const itemIds: string[] = [
-          ...new Set<string>(
-            snapshot.lines.flatMap((l: any) =>
-              l.components.map((c: any) => String(c.stockItemId)),
-            ),
-          ),
-        ].sort();
         if (itemIds.length)
           await tx.$queryRaw(
             Prisma.sql`SELECT id FROM pos."StockItem" WHERE "venueId"=${tenant.venueId} AND id IN (${Prisma.join(itemIds)}) ORDER BY id FOR UPDATE`,

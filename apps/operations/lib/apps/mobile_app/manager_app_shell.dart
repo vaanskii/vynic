@@ -1,3 +1,5 @@
+import 'package:vynic/apps/mobile_app/presentation/screens/manager_counting_screen.dart';
+import 'package:vynic/core/services/sync/api_config.dart';
 import 'package:vynic/core/services/manager_app/manager_operation_request.dart';
 import 'package:vynic/apps/mobile_app/presentation/widgets/manager_operations_panel.dart';
 import 'package:vynic/core/services/manager_app/manager_entitlements.dart';
@@ -461,9 +463,27 @@ class _ManagerAppShellState extends State<ManagerAppShell>
     return ManagerThemeListener(
       child: Builder(
         builder: (context) {
-          final theme = managerThemeOf(context);
-          return ManagerNavigationFrame(
-            backgroundColor: theme.scaffoldBackground,
+          return ManagerAdaptiveNavigation(
+            username: widget.user.username,
+            venueName:
+                ManagerAppPreferences.selectedVenue(ApiConfig.baseUrl)?.name ??
+                'Vynic Manager',
+            onNotifications: _openNotificationsSheet,
+            unreadCount: AppNotificationHistoryStore.instance.entries.value
+                .where((e) => !e.isRead)
+                .length,
+            onCalculate: () => Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) =>
+                    managerThemedPage(ManagerCountingScreen(user: widget.user)),
+              ),
+            ),
+            selectedIndex: _selectedIndex,
+            items: [
+              for (final index in _destinations)
+                ManagerAppShell.navItems[index],
+            ],
+            onTap: _onItemTapped,
             body: Stack(
               clipBehavior: Clip.none,
               children: [
@@ -508,17 +528,6 @@ class _ManagerAppShellState extends State<ManagerAppShell>
                   ],
                 ),
               ],
-            ),
-            bottomNavigationBar: ManagerGlassNavBar(
-              key: ValueKey(_pageController),
-              pageController: _pageController,
-              selectedIndex: _selectedIndex,
-              itemCount: _destinations.length,
-              items: [
-                for (final index in _destinations)
-                  ManagerAppShell.navItems[index],
-              ],
-              onTap: _onItemTapped,
             ),
           );
         },

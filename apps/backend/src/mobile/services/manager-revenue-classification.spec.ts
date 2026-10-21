@@ -22,7 +22,12 @@ type Fixture = {
 function makePrisma(fixture: Fixture = {}) {
   const settings = fixture.settings ?? {};
   return {
-    saleLedgerDay: { findUnique: jest.fn().mockResolvedValue(null) },
+    saleLedgerDay: {
+      findUnique: jest.fn().mockResolvedValue(null),
+      findMany: jest.fn().mockResolvedValue([]),
+    },
+    cloudSale: { findMany: jest.fn().mockResolvedValue([]) },
+    $queryRaw: jest.fn().mockResolvedValue([]),
     setting: {
       findUnique: jest.fn(({ where }: any) => {
         const key = where.venueId_key?.key;
@@ -363,7 +368,7 @@ describe('Manager Sale-derived revenue truth', () => {
     expect(prisma.order.findMany).not.toHaveBeenCalled();
   });
 
-  it('returns unavailable staff/top-item revenue instead of raw Order totals', async () => {
+  it('uses detailed Sales for staff/products and never raw Order totals', async () => {
     const prisma = makePrisma({
       settings: { currentBusinessDate: date },
     });

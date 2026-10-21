@@ -241,14 +241,71 @@ describe('MGR04 accepted source provenance', () => {
       'UNKNOWN',
     );
   });
-  test('counted menus are Cloud data and unsupported staff attribution is unavailable', async () => {
+  test('counted menus are Cloud data and absent snapshot stamps stay unknown', async () => {
     expect((await managerSource(db, auth, 'counted_menus')).source).toBe(
       'CLOUD',
     );
     expect(
       (await managerSource(db, auth, 'staff_performance')).completeness,
-    ).toBe('UNAVAILABLE');
+    ).toBe('UNKNOWN');
   });
+  test.each([
+    ['getStaffPerformance', 'COMPLETE', 'KNOWN'],
+    ['getStaffPerformance', 'PARTIAL', 'PARTIAL'],
+    ['getTopItems', 'COMPLETE', 'KNOWN'],
+    ['getTopItems', 'PARTIAL', 'PARTIAL'],
+  ])(
+    '%s uses date-scoped %s ledger provenance',
+    async (handler, day, expected) => {
+      values.set('venue-a:currentBusinessDate', '2026-10-07');
+      (db.saleLedgerDay.findUnique as jest.Mock).mockResolvedValue({
+        completeness: day,
+      });
+      await recordManagerSource(
+        db,
+        auth,
+        {
+          ...full(),
+          saleLedgerDays: [
+            {
+              businessDate: '2026-10-07',
+              expectedSaleCount: 0,
+              expectedRevenue: '0.00',
+              uploadComplete: true,
+            },
+          ],
+        },
+        true,
+        true,
+        true,
+      );
+      const headers: Record<string, string> = {};
+      const context = {
+        getHandler: () => ({ name: handler }),
+        switchToHttp: () => ({
+          getRequest: () => ({
+            user: auth,
+            query: { from: '2026-10-07', to: '2026-10-07' },
+          }),
+          getResponse: () => ({
+            setHeader: (key: string, value: string) => {
+              headers[key] = value;
+            },
+          }),
+        }),
+      } as unknown as ExecutionContext;
+      await firstValueFrom(
+        await new ManagerDataFreshnessInterceptor(db).intercept(context, {
+          handle: () => of([]),
+        }),
+      );
+      expect(JSON.parse(headers[FRESHNESS_HEADER])).toMatchObject({
+        source: 'POS',
+        sourceUpdatedAt: '2026-10-07T10:00:00.000Z',
+        completeness: expected,
+      });
+    },
+  );
   test('metadata is read before handler data so concurrent ingest cannot label old payload newer', async () => {
     await recordManagerSource(db, auth, full(), true, true);
     const headers: Record<string, string> = {};

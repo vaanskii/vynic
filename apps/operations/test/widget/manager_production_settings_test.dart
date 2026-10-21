@@ -21,7 +21,9 @@ void main() {
     await tester.pump(const Duration(seconds: 1));
     await tester.pump(const Duration(seconds: 1));
     await tester.scrollUntilVisible(
-      find.text(ApiConfig.allowDeveloperOverride ? 'კავშირი' : 'აპლიკაცია'),
+      find.text(
+        ApiConfig.allowDeveloperOverride ? 'კავშირი' : 'გარეგნობა და აპლიკაცია',
+      ),
       300,
       scrollable: find
           .descendant(
@@ -32,7 +34,7 @@ void main() {
     );
     if (!ApiConfig.allowDeveloperOverride) {
       expect(find.text('კავშირი'), findsNothing);
-      expect(find.text('აპლიკაცია'), findsOneWidget);
+      expect(find.text('გარეგნობა და აპლიკაცია'), findsOneWidget);
       expect(find.text('Backend'), findsNothing);
       expect(find.textContaining('http'), findsNothing);
       expect(find.textContaining('localhost'), findsNothing);
@@ -40,6 +42,8 @@ void main() {
       expect(find.textContaining('API'), findsNothing);
     } else {
       expect(find.text('კავშირი'), findsOneWidget);
+      await tester.tap(find.text('კავშირი'));
+      await tester.pumpAndSettle();
       expect(find.text('Backend'), findsOneWidget);
     }
     expect(tester.takeException(), isNull);

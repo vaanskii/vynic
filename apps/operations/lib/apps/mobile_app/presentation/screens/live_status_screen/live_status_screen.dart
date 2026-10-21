@@ -1,3 +1,5 @@
+import '../../widgets/manager_design_components.dart';
+import 'package:vynic/apps/mobile_app/presentation/widgets/manager_modal.dart';
 import 'package:vynic/apps/mobile_app/presentation/widgets/manager_data_status.dart';
 import 'package:vynic/core/services/manager_app/manager_data_read.dart';
 import 'package:vynic/apps/mobile_app/presentation/widgets/manager_operations_panel.dart';
@@ -55,9 +57,11 @@ class _LiveStatusScreenState extends State<LiveStatusScreen> {
   bool _takeawayLoading = true;
 
   int _viewIndex = 0;
+  TableModel? _inspectedTable;
 
   /// 0 = all, 1 = free, 2 = occupied, 3 = reserved.
   int _tableFilter = 0;
+  String? _selectedFloor;
   static const List<String> _tableFilters = [
     'ყველა',
     'თავისუფალი',
@@ -173,6 +177,11 @@ class _LiveStatusScreenState extends State<LiveStatusScreen> {
     ManagerToast.showSnackBar(context, message, isError: isError, icon: icon);
   }
 
+  void _inspectTable(TableModel table) =>
+      setState(() => _inspectedTable = table);
+
+  void _selectFloor(String floor) => setState(() => _selectedFloor = floor);
+
   void _setTableFilter(int index) {
     if (_tableFilter == index) return;
     setState(() => _tableFilter = index);
@@ -247,7 +256,7 @@ class _LiveStatusScreenState extends State<LiveStatusScreen> {
   }
 
   Future<_TakeawayInfo?> _showTakeawayInfoSheet() {
-    return showModalBottomSheet<_TakeawayInfo>(
+    return showManagerModal<_TakeawayInfo>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
@@ -293,184 +302,164 @@ class _LiveStatusScreenState extends State<LiveStatusScreen> {
               ),
               SafeArea(
                 bottom: false,
-                child: Column(
-                  children: [
-                    // ── Header ────────────────────────────────────────────
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(24, 20, 24, 14),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'მაგიდები',
-                                  style: TextStyle(
-                                    color: MobileGlassTheme.textPrimary,
-                                    fontSize: 30,
-                                    fontWeight: FontWeight.bold,
-                                    letterSpacing: -0.5,
+                child: ManagerContentWidth(
+                  maxWidth: 1424,
+                  child: Column(
+                    children: [
+                      // ── Header ────────────────────────────────────────────
+                      Padding(
+                        padding: EdgeInsets.fromLTRB(
+                          MediaQuery.sizeOf(context).width < 700 ? 20 : 32,
+                          20,
+                          MediaQuery.sizeOf(context).width < 700 ? 20 : 32,
+                          20,
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'მაგიდები',
+                                    style: TextStyle(
+                                      color: MobileGlassTheme.textPrimary,
+                                      fontSize: 30,
+                                      fontWeight: FontWeight.w600,
+                                      letterSpacing: 0,
+                                    ),
                                   ),
-                                ),
-                                SizedBox(height: 4),
-                                Text(
-                                  isTables
-                                      ? (ManagerDataReads
-                                                    .statuses
-                                                    .value['tables']
-                                                    ?.location ==
-                                                'unavailable'
-                                            ? 'მონაცემები მიუწვდომელია'
-                                            : '$activeCount აქტიური • ${allTables.length} სულ')
-                                      : '$takeawayCount აქტიური გატანა',
-                                  style: TextStyle(
-                                    color: MobileGlassTheme.textSecondary,
-                                    fontSize: 14,
+                                  SizedBox(height: 4),
+                                  Text(
+                                    isTables
+                                        ? (ManagerDataReads
+                                                      .statuses
+                                                      .value['tables']
+                                                      ?.location ==
+                                                  'unavailable'
+                                              ? 'მონაცემები მიუწვდომელია'
+                                              : '$activeCount აქტიური • ${allTables.length} სულ')
+                                        : '$takeawayCount აქტიური გატანა',
+                                    style: TextStyle(
+                                      color: MobileGlassTheme.textSecondary,
+                                      fontSize: 14,
+                                    ),
                                   ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          if (!isTables)
-                            _GlassPanel(
-                              onTap: _openNewTakeaway,
-                              shape: BoxShape.circle,
-                              padding: const EdgeInsets.all(12),
-                              child: Icon(
-                                Icons.add_rounded,
-                                color: MobileGlassTheme.textPrimary,
+                                ],
                               ),
                             ),
-                        ],
-                      ),
-                    ),
-                    // ── View switcher (Tables / Takeaways) ────────────────
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 24),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: _viewPill(
-                              label: 'მაგიდები',
-                              icon: Icons.table_bar_rounded,
-                              badge: activeCount,
-                              isActive: isTables,
-                              onTap: () => setState(() => _viewIndex = 0),
-                            ),
-                          ),
-                          SizedBox(width: 12),
-                          Expanded(
-                            child: _viewPill(
-                              label: 'გატანები',
-                              icon: Icons.takeout_dining_rounded,
-                              badge: takeawayCount,
-                              isActive: !isTables,
-                              onTap: () => setState(() => _viewIndex = 1),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    SizedBox(height: 6),
-                    Expanded(
-                      child: RefreshIndicator(
-                        color: MobileGlassTheme.primary,
-                        backgroundColor: MobileGlassTheme.surfaceCard,
-                        onRefresh: _loadAll,
-                        child: isTables
-                            ? ManagerDataSection(
-                                block: 'tables',
-                                status: _displayReads['tables'],
-                                child: _buildTablesView(),
-                              )
-                            : ManagerDataSection(
-                                block: 'takeaway',
-                                status: _displayReads['takeaway'],
-                                child: _buildTakeawayView(),
+                            if (!isTables)
+                              _GlassPanel(
+                                onTap: _openNewTakeaway,
+                                shape: BoxShape.circle,
+                                padding: const EdgeInsets.all(12),
+                                child: Icon(
+                                  Icons.add_rounded,
+                                  color: MobileGlassTheme.textPrimary,
+                                ),
                               ),
+                          ],
+                        ),
                       ),
-                    ),
-                  ],
+                      Padding(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: MediaQuery.sizeOf(context).width < 700
+                              ? 20
+                              : 32,
+                        ),
+                        child: Align(
+                          alignment: Alignment.centerLeft,
+                          child: ManagerSegments(
+                            labels: const ['მაგიდები', 'გატანები'],
+                            selected: _viewIndex,
+                            onSelect: (value) =>
+                                setState(() => _viewIndex = value),
+                          ),
+                        ),
+                      ),
+                      SizedBox(height: 6),
+                      Expanded(
+                        child: RefreshIndicator(
+                          color: MobileGlassTheme.primary,
+                          backgroundColor: MobileGlassTheme.surfaceCard,
+                          onRefresh: _loadAll,
+                          child: isTables
+                              ? ManagerDataSection(
+                                  block: 'tables',
+                                  status: _displayReads['tables'],
+                                  child: LayoutBuilder(
+                                    builder: (context, constraints) {
+                                      final selected = _inspectedTable;
+                                      final list = _buildTablesView();
+                                      if (selected == null) return list;
+                                      final detail = Material(
+                                        color: MobileGlassTheme.surfaceCard,
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            18,
+                                          ),
+                                          side: BorderSide(
+                                            color:
+                                                MobileGlassTheme.borderSubtle,
+                                          ),
+                                        ),
+                                        clipBehavior: Clip.antiAlias,
+                                        child: MobileOrderDetailScreen(
+                                          key: ValueKey(
+                                            'inspector-${selected.activeOrderId}',
+                                          ),
+                                          user: widget.user,
+                                          orderId: selected.activeOrderId!,
+                                          floor: selected.floor,
+                                          onClose: (result) {
+                                            setState(
+                                              () => _inspectedTable = null,
+                                            );
+                                            if (result != null) _loadTables();
+                                          },
+                                        ),
+                                      );
+                                      if (constraints.maxWidth < 1000)
+                                        return Padding(
+                                          padding: const EdgeInsets.all(16),
+                                          child: detail,
+                                        );
+                                      return Row(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.stretch,
+                                        children: [
+                                          Expanded(child: list),
+                                          SizedBox(
+                                            width: 410,
+                                            child: Padding(
+                                              padding:
+                                                  const EdgeInsets.fromLTRB(
+                                                    0,
+                                                    16,
+                                                    24,
+                                                    24,
+                                                  ),
+                                              child: detail,
+                                            ),
+                                          ),
+                                        ],
+                                      );
+                                    },
+                                  ),
+                                )
+                              : ManagerDataSection(
+                                  block: 'takeaway',
+                                  status: _displayReads['takeaway'],
+                                  child: _buildTakeawayView(),
+                                ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _viewPill({
-    required String label,
-    required IconData icon,
-    required int badge,
-    required bool isActive,
-    required VoidCallback onTap,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      behavior: HitTestBehavior.opaque,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 220),
-        padding: const EdgeInsets.symmetric(vertical: 13),
-        decoration: BoxDecoration(
-          color: isActive
-              ? MobileGlassTheme.primary
-              : MobileGlassTheme.surface(0.06),
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(
-            color: isActive
-                ? MobileGlassTheme.primary
-                : MobileGlassTheme.border(0.12),
-          ),
-        ),
-        child: FittedBox(
-          fit: BoxFit.scaleDown,
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                icon,
-                size: 18,
-                color: isActive ? Colors.white : MobileGlassTheme.textSecondary,
-              ),
-              SizedBox(width: 8),
-              Text(
-                label,
-                style: TextStyle(
-                  color: isActive ? Colors.white : MobileGlassTheme.textPrimary,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              if (badge > 0) ...[
-                SizedBox(width: 8),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 7,
-                    vertical: 2,
-                  ),
-                  decoration: BoxDecoration(
-                    color: isActive
-                        ? Colors.white.withValues(alpha: 0.25)
-                        : MobileGlassTheme.surface(0.12),
-                    borderRadius: BorderRadius.circular(999),
-                  ),
-                  child: Text(
-                    '$badge',
-                    style: TextStyle(
-                      color: isActive
-                          ? Colors.white
-                          : MobileGlassTheme.textPrimary,
-                      fontSize: 11,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ],
             ],
           ),
         ),
@@ -491,6 +480,7 @@ class _GlassPanel extends StatelessWidget {
   final VoidCallback? onTap;
   final VoidCallback? onLongPress;
   final Color? borderColor;
+  final Color? backgroundColor;
   final double borderWidth;
 
   const _GlassPanel({
@@ -501,6 +491,7 @@ class _GlassPanel extends StatelessWidget {
     this.onTap,
     this.onLongPress,
     this.borderColor,
+    this.backgroundColor,
     this.borderWidth = 1,
   });
 
@@ -520,7 +511,7 @@ class _GlassPanel extends StatelessWidget {
       decoration: BoxDecoration(
         shape: shape,
         borderRadius: shape == BoxShape.rectangle ? radius : null,
-        color: fill,
+        color: backgroundColor ?? fill,
         border: Border.all(
           color: borderColor ?? theme.cardBorder,
           width: borderWidth,
@@ -551,11 +542,15 @@ class _GlassPanel extends StatelessWidget {
     }
 
     if (onTap != null || onLongPress != null) {
-      panel = GestureDetector(
-        onTap: onTap,
-        onLongPress: onLongPress,
-        behavior: HitTestBehavior.opaque,
-        child: panel,
+      panel = Material(
+        color: Colors.transparent,
+        borderRadius: radius,
+        child: InkWell(
+          onTap: onTap,
+          onLongPress: onLongPress,
+          borderRadius: radius,
+          child: panel,
+        ),
       );
     }
     return panel;
@@ -563,27 +558,11 @@ class _GlassPanel extends StatelessWidget {
 }
 
 class _GlowOrb extends StatelessWidget {
+  const _GlowOrb({required this.color, required this.size});
   final Color color;
   final double size;
-  const _GlowOrb({required this.color, required this.size});
-
   @override
-  Widget build(BuildContext context) {
-    return IgnorePointer(
-      child: Container(
-        width: size,
-        height: size,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          color: color.withOpacity(0.15),
-        ),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 80, sigmaY: 80),
-          child: Container(color: Colors.transparent),
-        ),
-      ),
-    );
-  }
+  Widget build(BuildContext context) => const SizedBox.shrink();
 }
 
 // ── Takeaway creation helpers ─────────────────────────────────────────────────
@@ -726,7 +705,11 @@ class _TakeawayInfoSheetState extends State<_TakeawayInfoSheet> {
                       ),
                     ),
                     child: _waitInPlace
-                        ? const Icon(Icons.check, size: 14, color: Colors.white)
+                        ? Icon(
+                            Icons.check,
+                            size: 14,
+                            color: MobileGlassTheme.onPrimary,
+                          )
                         : null,
                   ),
                 ],
@@ -783,7 +766,7 @@ class _TakeawayInfoSheetState extends State<_TakeawayInfoSheet> {
               ),
               style: ElevatedButton.styleFrom(
                 backgroundColor: MobileGlassTheme.primary,
-                foregroundColor: Colors.white,
+                foregroundColor: MobileGlassTheme.onPrimary,
                 disabledBackgroundColor: MobileGlassTheme.primary.withValues(
                   alpha: 0.30,
                 ),

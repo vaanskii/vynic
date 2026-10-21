@@ -12,6 +12,7 @@ import { PrismaService } from '../../prisma.service';
 import { MobileController } from '../mobile.controller';
 import { MobileDashboardService } from './mobile-dashboard.service';
 import { MobileReportsService } from './mobile-reports.service';
+import { MobileMenuService } from './mobile-menu.service';
 import { MobileSaleLedgerService } from './mobile-sale-ledger.service';
 import { MobileReservationsService } from './mobile-reservations.service';
 import { PosReservationMirrorService } from '../../pos/pos-reservation-mirror.service';
@@ -35,7 +36,15 @@ import { seedMenu03 } from '../../../test/menu03.fixture';
 import { isFreshDisposableDatabase } from '../../../test/disposable-database';
 import type { ManagerSourceStamp } from './manager-data-freshness';
 import type { TenantContext } from '../../auth/pos-auth-context';
-import { writeFileSync } from 'node:fs';
+import {
+  writeFileSync,
+  readFileSync,
+  existsSync,
+  appendFileSync,
+  mkdirSync,
+} from 'node:fs';
+import { createServer } from 'node:http';
+import { join } from 'node:path';
 
 function stub<T>(value: unknown): T {
   return value as T;
@@ -201,9 +210,11 @@ const url = process.env.MGR04_TEST_DATABASE_URL;
                     ? new MobileReportsService(db)
                     : t === MobileSaleLedgerService
                       ? new MobileSaleLedgerService(db)
-                      : t === MobileReservationsService
-                        ? reservations
-                        : {},
+                      : t === MobileMenuService
+                        ? new MobileMenuService(db, stub(gateway), stub({}))
+                        : t === MobileReservationsService
+                          ? reservations
+                          : {},
             })),
           JwtStrategy,
           ManagerTenantService,
@@ -358,6 +369,167 @@ const url = process.env.MGR04_TEST_DATABASE_URL;
           .freshness?.sourceUpdatedAt,
       ).toBe(source1);
     });
+
+    test('financial response identifies its business day and complete ledger metadata clears limitations', async () => {
+      expect(
+        (
+          await post({
+            ...snapshot(),
+            saleLedger: [],
+            saleLedgerDays: [
+              {
+                businessDate: day,
+                expectedSaleCount: 0,
+                expectedRevenue: '0.00',
+                uploadComplete: true,
+              },
+            ],
+          })
+        ).status,
+      ).toBe(201);
+      const financials = await get('/mobile/financials');
+      expect(record(financials.body).businessDate).toBe(day);
+      for (const route of [
+        'financial-summary',
+        'sales',
+        'product-analytics',
+        'sale-staff-analytics',
+      ]) {
+        const result = await get(`/mobile/${route}?from=${day}&to=${day}`);
+        expect(result.status).toBe(200);
+        expect(record(result.body).provenance).toBe('LEDGER_COMPLETE');
+        expect(result.freshness?.completeness).toBe('KNOWN');
+      }
+    });
+    test('creator/product adapters share ledger freshness and keep private reports authenticated', async () => {
+      const wire = {
+        posSaleId: 'shared-report-sale',
+        posOrderId: 1001,
+        closureId: 'shared-report-close',
+        businessDate: day,
+        createdAt: source1,
+        closedAt: source2,
+        sourceUpdatedAt: source2,
+        revision: 1,
+        gross: '120.00',
+        subtotal: '120.00',
+        serviceFee: '0.00',
+        discount: '0.00',
+        manualAdjustment: '0.00',
+        advanceApplied: '0.00',
+        amountDueNow: '120.00',
+        collectedNow: '120.00',
+        paymentMethod: 'cash',
+        isFiscal: true,
+        isCancelled: false,
+        restoredToOrder: false,
+        createdBy: 'Recorded creator',
+        closedById: 'Recorded closer',
+        tableNumbers: ['1'],
+        floor: 'first',
+        lines: [
+          {
+            lineSeq: 0,
+            itemName: 'Frozen product',
+            quantity: 3,
+            unitPrice: '40.00',
+            lineTotal: '120.00',
+          },
+        ],
+        payments: [{ method: 'cash', amount: '120.00' }],
+      };
+      const declaration = {
+        businessDate: day,
+        expectedSaleCount: 1,
+        expectedRevenue: '120.00',
+        uploadComplete: true,
+      };
+      const accepted = await post({
+        ...snapshot(),
+        saleLedger: [wire],
+        saleLedgerDays: [declaration],
+      });
+      expect(accepted.status).toBe(201);
+      for (const route of ['staff-performance', 'top-items']) {
+        const result = await get(`/mobile/${route}?from=${day}&to=${day}`);
+        expect(result.status).toBe(200);
+        expect(result.freshness?.completeness).toBe('KNOWN');
+        expect(await get(`/mobile/${route}`, '')).toMatchObject({
+          status: 401,
+        });
+      }
+      expect(
+        (await get(`/mobile/staff-performance?from=${day}&to=${day}`)).body,
+      ).toEqual([
+        expect.objectContaining({
+          waiterName: 'Recorded creator',
+          totalSales: 120,
+          identityStable: false,
+        }),
+      ]);
+      const closer = await get(
+        `/mobile/sale-staff-analytics?from=${day}&to=${day}`,
+      );
+      expect(record(closer.body).staff).toEqual([
+        expect.objectContaining({
+          staffName: 'Recorded closer',
+          revenue: '120.00',
+        }),
+      ]);
+      const report = record(
+        (await get('/mobile/sales-report?period=today')).body,
+      );
+      expect(report.byWaiter).toEqual([
+        expect.objectContaining({
+          waiterName: 'Recorded creator',
+          totalSales: 120,
+        }),
+      ]);
+      expect(record(report.staffAttribution).provenance).toBe(
+        'LEDGER_COMPLETE',
+      );
+      const allTime = record(
+        (await get('/mobile/sales-report?period=all')).body,
+      );
+      expect(record(allTime.staffAttribution).provenance).toBe(
+        'LEDGER_COMPLETE',
+      );
+      await db.setting.update({
+        where: { venueId_key: { venueId, key: 'salesSummary:all_time' } },
+        data: { value: JSON.stringify({ totalRevenue: 240, orderCount: 2 }) },
+      });
+      const missingHistory = record(
+        (await get('/mobile/sales-report?period=all')).body,
+      );
+      expect(record(missingHistory.staffAttribution).provenance).toBe(
+        'PARTIAL',
+      );
+      // Real ingest response carries the repair request without authorizing
+      // writes to another venue or fabricating the missing historical Sale.
+      await db.cloudSale.deleteMany({
+        where: { venueId, posSaleId: wire.posSaleId },
+      });
+      const lost = await post({ ...snapshot(), saleLedgerDays: [declaration] });
+      expect(record(lost.body).saleLedgerRetryDates).toEqual([day]);
+    });
+
+    test('missing indexed daily summary is unavailable and marks otherwise fresh history partial', async () => {
+      expect((await post(snapshot())).status).toBe(201);
+      await db.setting.deleteMany({
+        where: { venueId, key: `salesSummary:${day}` },
+      });
+      const daily = await get('/mobile/sales-daily');
+      expect(daily.status).toBe(200);
+      expect(daily.body).toEqual([
+        expect.objectContaining({
+          date: day,
+          available: false,
+          totalRevenue: null,
+          profit: null,
+        }),
+      ]);
+      expect(daily.freshness?.completeness).toBe('PARTIAL');
+    });
     test('realtime advances tables while omitted reporting and reservations retain their age', async () => {
       expect((await post(snapshot())).status).toBe(201);
       const { tables, tableLayout, orders } = snapshot();
@@ -470,7 +642,7 @@ const url = process.env.MGR04_TEST_DATABASE_URL;
       ).toBe(400);
       expect((await get('/mobile/tables')).freshness).toEqual(previous);
     });
-    test('today-only upload cannot freshen all-time report; missing top-items are unavailable', async () => {
+    test('today-only upload cannot freshen all-time report; detailed products need ledger coverage', async () => {
       expect((await post(snapshot())).status).toBe(201);
       const old = await get('/mobile/sales-report?period=all');
       expect(old.status).toBe(200);
@@ -487,7 +659,7 @@ const url = process.env.MGR04_TEST_DATABASE_URL;
           ?.sourceUpdatedAt,
       ).toBe(source1);
       expect((await get('/mobile/top-items')).freshness?.completeness).toBe(
-        'UNAVAILABLE',
+        'UNKNOWN',
       );
     });
     test('skipped malformed reservation rows return PARTIAL, not complete empty list', async () => {
@@ -537,5 +709,198 @@ const url = process.env.MGR04_TEST_DATABASE_URL;
         completeness: 'UNKNOWN',
       });
     });
+    if (process.env.MGR04_NATIVE_RUNTIME_DIR) {
+      test('isolated native Manager reads actual backend ledger data', async () => {
+        const out = process.env.MGR04_NATIVE_RUNTIME_DIR!;
+        const wirePath = process.env.POS_RETAINED_SALES_WIRE_OUTPUT;
+        if (!wirePath) throw Error('Synthetic Dart wire fixture is required');
+        mkdirSync(out, { recursive: true });
+        const template = (
+          JSON.parse(readFileSync(wirePath, 'utf8')) as Array<
+            Record<string, unknown>
+          >
+        )[0];
+        const reportingV2 = process.env.MGR04_NATIVE_REPORTING_V2 === '1';
+        const runtimeDay = reportingV2
+          ? new Date().toISOString().substring(0, 10)
+          : day;
+        const missingDay = new Date(`${runtimeDay}T12:00:00.000Z`);
+        missingDay.setUTCDate(missingDay.getUTCDate() - 1);
+        const missingDate = missingDay.toISOString().substring(0, 10);
+        const rows = Array.from({ length: 31 }, (_, index) => ({
+          ...template,
+          posSaleId: `native-qa-${index}`,
+          posOrderId: 10000 + index,
+          closureId: `native-qa-closure-${index}`,
+          businessDate: runtimeDay,
+          ...(reportingV2
+            ? {
+                createdBy: 'QA creator',
+                closedById: 'QA closer',
+                createdAt: `${runtimeDay}T09:00:00.000Z`,
+                closedAt: `${runtimeDay}T10:30:00.000Z`,
+              }
+            : {}),
+        }));
+        const revenue = (Number(template.gross) * rows.length).toFixed(2);
+        const raw = snapshot();
+        const daySummary = {
+          ...summary,
+          date: runtimeDay,
+          totalRevenue: Number(revenue),
+          orderCount: rows.length,
+          cashRevenue: Number(revenue),
+          paymentBreakdown: { cash: Number(revenue) },
+        };
+        const accepted = await post({
+          ...raw,
+          businessDate: runtimeDay,
+          syncedAt: new Date().toISOString(),
+          salesSummary: daySummary,
+          salesAllTimeSummary: {
+            ...raw.salesAllTimeSummary,
+            totalRevenue: Number(revenue),
+            orderCount: rows.length,
+            cashRevenue: Number(revenue),
+            paymentBreakdown: { cash: Number(revenue) },
+          },
+          salesHistoryByDate: {
+            [runtimeDay]: daySummary,
+            ...(reportingV2
+              ? { [missingDate]: { ...daySummary, date: missingDate } }
+              : {}),
+          },
+          saleLedger: rows,
+          saleLedgerDays: [
+            {
+              businessDate: runtimeDay,
+              expectedSaleCount: rows.length,
+              expectedRevenue: revenue,
+              legacyRevenue: revenue,
+              uploadComplete: false,
+            },
+          ],
+        });
+        expect(accepted.status).toBe(201);
+        if (reportingV2) {
+          await db.setting.deleteMany({
+            where: { venueId, key: `salesSummary:${missingDate}` },
+          });
+          const creator = await get(
+            `/mobile/staff-performance?from=${runtimeDay}&to=${runtimeDay}`,
+          );
+          expect(creator.status).toBe(200);
+          expect(creator.body).toEqual(
+            expect.arrayContaining([
+              expect.objectContaining({ waiterName: 'QA creator' }),
+            ]),
+          );
+          const closer = await get(
+            `/mobile/sale-staff-analytics?from=${runtimeDay}&to=${runtimeDay}&attribution=closer`,
+          );
+          expect(closer.status).toBe(200);
+          expect(record(closer.body).staff).toEqual(
+            expect.arrayContaining([
+              expect.objectContaining({ staffName: 'QA closer' }),
+            ]),
+          );
+          const daily = await get('/mobile/sales-daily');
+          expect(daily.status).toBe(200);
+          expect(daily.body).toEqual(
+            expect.arrayContaining([
+              expect.objectContaining({
+                date: missingDate,
+                available: false,
+                totalRevenue: null,
+              }),
+            ]),
+          );
+        }
+        const server = createServer((req, res) => {
+          void (async () => {
+            const path = req.url ?? '/';
+            if (req.method !== 'GET') {
+              res.writeHead(405);
+              res.end();
+              return;
+            }
+            if (path === '/__qa/bootstrap') {
+              res.setHeader('content-type', 'application/json');
+              res.end(
+                JSON.stringify({
+                  token,
+                  businessDate: runtimeDay,
+                  expectedRevenue: revenue,
+                }),
+              );
+              return;
+            }
+            const target = new URL(path, base);
+            if (!path.startsWith('/mobile/') || target.origin !== base) {
+              res.writeHead(404);
+              res.end();
+              return;
+            }
+            const response = await fetch(target, {
+              headers: {
+                Authorization: String(req.headers.authorization ?? ''),
+              },
+              redirect: 'manual',
+            });
+            appendFileSync(
+              join(out, 'native-reads.jsonl'),
+              JSON.stringify({
+                method: req.method,
+                path,
+                status: response.status,
+              }) + '\n',
+            );
+            for (const name of ['content-type', 'x-vynic-data-freshness']) {
+              const value = response.headers.get(name);
+              if (value) res.setHeader(name, value);
+            }
+            res.writeHead(response.status);
+            res.end(await response.text());
+          })().catch((error: unknown) => {
+            res.writeHead(500);
+            res.end(String(error));
+          });
+        });
+        await new Promise<void>((resolve) =>
+          server.listen(
+            Number(process.env.MGR04_QA_PORT ?? 0),
+            '127.0.0.1',
+            resolve,
+          ),
+        );
+        const address = server.address();
+        if (!address || typeof address === 'string')
+          throw Error('Owned proxy has no port');
+        const ready = {
+          origin: `http://127.0.0.1:${address.port}`,
+          businessDate: runtimeDay,
+          expectedRevenue: revenue,
+          saleCount: rows.length,
+          methodsAllowed: ['GET'],
+          synthetic: true,
+          ...(reportingV2
+            ? {
+                creator: 'QA creator',
+                closer: 'QA closer',
+                missingHistoricalSummaryDate: missingDate,
+              }
+            : {}),
+        };
+        writeFileSync(join(out, 'ready.json'), JSON.stringify(ready, null, 2));
+        try {
+          while (!existsSync(join(out, 'STOP')))
+            await new Promise((resolve) => setTimeout(resolve, 250));
+        } finally {
+          await new Promise<void>((resolve, reject) =>
+            server.close((error) => (error ? reject(error) : resolve())),
+          );
+        }
+      }, 3600000);
+    }
   },
 );

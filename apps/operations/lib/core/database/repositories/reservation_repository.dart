@@ -154,7 +154,9 @@ class ReservationRepository {
     final legacyCodes = tableRefs != null
         ? ReservationTableAvailability.legacyCodesOf(tableRefs)
         : tableNumbers;
-    if (!isTakeAway && !(notes?.startsWith('Order #') ?? false)) {
+    if (!isTakeAway &&
+        linkedOrderId == null &&
+        !(notes?.trim().startsWith('Order #') ?? false)) {
       _assertHoldAvailability(refs, reservationDate, status);
     }
 
@@ -607,12 +609,6 @@ class ReservationRepository {
           0) {
         throw StateError('დადასტურებამდე განაახლეთ გასული ჯავშნის თარიღი');
       }
-      _assertHoldAvailability(
-        ReservationTableAvailability.tableRefsOf(reservation),
-        reservation.reservationDate,
-        'hold',
-        excludeId: reservation.id,
-      );
     }
     if (previousEnum == ReservationStatus.hold &&
         [
@@ -621,6 +617,14 @@ class ReservationRepository {
           ReservationStatus.preparing,
         ].contains(nextEnum)) {
       throw StateError('დროებითი დაკავება ჯერ ჯავშნად უნდა დადასტურდეს');
+    }
+    if (ReservationTableAvailability.isRealTableBooking(reservation)) {
+      _assertHoldAvailability(
+        ReservationTableAvailability.tableRefsOf(reservation),
+        reservation.reservationDate,
+        newStatus,
+        excludeId: reservation.id,
+      );
     }
     reservation.status = newStatus;
     await reservation.save();
@@ -1120,7 +1124,7 @@ class ReservationRepository {
         }
       });
 
-  /// Holds share the existing whole-calendar-day booking conflict rule.
+  /// All real unactivated bookings share the whole-calendar-day conflict rule.
   static void _assertHoldAvailability(
     Iterable<TableRef> refs,
     DateTime date,
@@ -1136,9 +1140,6 @@ class ReservationRepository {
                   BusinessDayRepository.dateKey(date) &&
               ReservationTableAvailability.isRealTableBooking(r),
         );
-    if (ReservationStatus.fromStorage(status) != ReservationStatus.hold &&
-        !sameDay.any((r) => r.statusEnum == ReservationStatus.hold))
-      return;
     final unavailable =
         ReservationTableAvailability.unavailableTableRefsFromReservations(
           reservations: sameDay,

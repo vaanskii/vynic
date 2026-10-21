@@ -547,10 +547,12 @@ export class WebsitePosReservationBridgeService
       if (!raw || typeof raw !== 'object') continue;
       const entry = raw as Record<string, unknown>;
       const id = String(entry.id ?? '').trim();
+      const cloudVariantId = String(entry.variantId ?? '').trim();
       const quantity = Math.max(1, Math.floor(Number(entry.quantity) || 1));
       const price = Number(entry.price) || 0;
       let name = String(entry.name ?? '').trim();
       let menuItemId: string | null = null;
+      let variantId: string | null = null;
       if (!name && id) {
         const menuItem = await this.menuService.getMenuItemById(tenant, id, db);
         name =
@@ -565,6 +567,18 @@ export class WebsitePosReservationBridgeService
           db,
         );
       }
+      if (cloudVariantId) {
+        variantId = await this.menuService.getPosVariantIdByCloudId(
+          tenant,
+          id,
+          cloudVariantId,
+          db,
+        );
+        if (!menuItemId || !variantId)
+          throw new ConflictException(
+            'Website menu variant identity unavailable',
+          );
+      }
       if (!name) continue;
       items.push({
         itemKey: `${name}_${price.toFixed(2)}`,
@@ -574,6 +588,7 @@ export class WebsitePosReservationBridgeService
         total: price * quantity,
         comment: null,
         ...(menuItemId ? { menuItemId } : {}),
+        ...(variantId ? { variantId } : {}),
       });
     }
     return items;

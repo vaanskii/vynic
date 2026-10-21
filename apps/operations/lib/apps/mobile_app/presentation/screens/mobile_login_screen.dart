@@ -1,11 +1,10 @@
 import 'package:vynic/core/models/manager_venue_selection.dart';
 import 'package:http/http.dart' as http;
-import 'package:vynic/apps/mobile_app/theme/manager_dashboard_theme.dart';
 import 'package:vynic/apps/mobile_app/theme/manager_theme.dart';
 import 'package:vynic/apps/mobile_app/presentation/widgets/mobile_glass_ui.dart';
 import 'dart:async';
 import 'dart:math' as math;
-import 'dart:ui';
+import 'package:flutter/services.dart';
 
 import 'package:flutter/material.dart';
 import 'package:vynic/apps/mobile_app/manager_app_shell.dart';
@@ -25,30 +24,22 @@ class MobileLoginScreen extends StatefulWidget {
   State<MobileLoginScreen> createState() => _MobileLoginScreenState();
 }
 
-class _MobileLoginScreenState extends State<MobileLoginScreen>
-    with SingleTickerProviderStateMixin {
+class _MobileLoginScreenState extends State<MobileLoginScreen> {
   String _pin = '';
   ManagerVenueSelection? _selectedVenue;
   String? _selectionError;
   final _venueCode = TextEditingController();
   bool _isLoading = false;
 
-  late final AnimationController _pulseController;
-
   @override
   void initState() {
     super.initState();
     _selectedVenue = ManagerAppPreferences.selectedVenue(ApiConfig.baseUrl);
-    _pulseController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 2400),
-    )..repeat(reverse: true);
   }
 
   @override
   void dispose() {
     _venueCode.dispose();
-    _pulseController.dispose();
     super.dispose();
   }
 
@@ -324,160 +315,278 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
 
   @override
   Widget build(BuildContext context) {
-    return MobileGlassScreen(
-      orbs: [
-        Positioned(
-          top: -120,
-          right: -80,
-          child: MobileGlowOrb(color: MobileGlassTheme.primary, size: 320),
-        ),
-        Positioned(
-          bottom: -60,
-          left: -100,
-          child: MobileGlowOrb(color: MobileGlassTheme.accent, size: 280),
-        ),
-        Positioned(
-          top: 180,
-          left: -40,
-          child: MobileGlowOrb(color: MobileGlassTheme.good, size: 180),
-        ),
-      ],
-      body: Stack(
-        children: [
-          Positioned.fill(child: _LoginGridBackground()),
-          Center(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 420),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    _buildBrandHeader(),
-                    SizedBox(height: 28),
-                    _buildConnectionSwitcher(),
-                    SizedBox(height: 14),
-                    MobileGlassCard(
-                      padding: const EdgeInsets.fromLTRB(20, 24, 20, 20),
-                      radius: 28,
-                      borderColor: MobileGlassTheme.primary.withValues(
-                        alpha: 0.25,
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          if (_selectionError != null)
-                            Padding(
-                              padding: const EdgeInsets.only(bottom: 12),
-                              child: Text(
-                                _selectionError!,
+    return ManagerThemeListener(
+      child: Builder(
+        builder: (context) {
+          final theme = managerThemeOf(context);
+          return Scaffold(
+            backgroundColor: theme.scaffoldBackground,
+            body: SafeArea(
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  final wide = constraints.maxWidth >= 960;
+                  final form = ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 440),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        if (!wide) ...[
+                          _buildBrandHeader(),
+                          const SizedBox(height: 32),
+                        ],
+                        _buildConnectionSwitcher(),
+                        MobileGlassCard(
+                          radius: 22,
+                          padding: const EdgeInsets.all(24),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                _selectedVenue == null
+                                    ? Icons.storefront_outlined
+                                    : Icons.lock_outline_rounded,
+                                color: theme.primary,
+                                size: 30,
+                              ),
+                              const SizedBox(height: 16),
+                              Text(
+                                _selectedVenue == null
+                                    ? 'რესტორანთან დაკავშირება'
+                                    : 'კეთილი იყოს დაბრუნება',
+                                textAlign: TextAlign.center,
                                 style: TextStyle(
-                                  color: Theme.of(context).colorScheme.error,
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.w700,
+                                  color: theme.textPrimary,
                                 ),
                               ),
-                            ),
-                          if (_selectedVenue == null) ...[
-                            TextField(
-                              key: const Key('manager-venue-code'),
-                              controller: _venueCode,
-                              enabled: !_isLoading,
-                              autocorrect: false,
-                              enableSuggestions: false,
-                              obscureText: true,
-                              maxLength: 32,
-                              textInputAction: TextInputAction.done,
-                              onSubmitted: (_) => _selectVenue(),
-                              decoration: const InputDecoration(
-                                labelText: 'რესტორანთან დაკავშირების კოდი',
-                                hintText: 'Vynic-ის მხარდაჭერის ერთჯერადი კოდი',
-                                helperText:
-                                    'ერთხელ დააკავშირეთ; შემდეგ შესვლისთვის მხოლოდ PIN დაგჭირდებათ.',
-                                helperMaxLines: 2,
-                                counterText: '',
-                                border: OutlineInputBorder(),
-                              ),
-                              onChanged: (_) => _clearPin(),
-                            ),
-                            const SizedBox(height: 20),
-                            _LoginGradientButton(
-                              label: _isLoading ? 'მოწმდება…' : 'გაგრძელება',
-                              enabled: !_isLoading,
-                              onPressed: _selectVenue,
-                            ),
-                          ] else ...[
-                            Text(
-                              _selectedVenue!.name,
-                              textAlign: TextAlign.center,
-                              style: Theme.of(context).textTheme.headlineSmall,
-                            ),
-                            if (_selectedVenue!.branchName?.isNotEmpty ?? false)
-                              Text(
-                                _selectedVenue!.branchName!,
-                                textAlign: TextAlign.center,
-                              ),
-                            if (_selectedVenue!.address?.isNotEmpty ?? false)
-                              Text(
-                                _selectedVenue!.address!,
-                                textAlign: TextAlign.center,
-                              ),
-                            const SizedBox(height: 20),
-                            Text(
-                              'შეიყვანეთ PIN კოდი',
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600,
-                                color: MobileGlassTheme.muted(0.75),
-                                letterSpacing: 0.4,
-                              ),
-                            ),
-                            SizedBox(height: 24),
-                            _buildPinDots(),
-                            SizedBox(height: 28),
-                            _buildNumberPad(),
-                            SizedBox(height: 24),
-                            if (_isLoading)
-                              Center(
-                                child: SizedBox(
-                                  height: 48,
-                                  width: 48,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2.5,
-                                    color: MobileGlassTheme.primary,
+                              const SizedBox(height: 10),
+                              if (_selectionError != null)
+                                Padding(
+                                  padding: const EdgeInsets.only(bottom: 16),
+                                  child: Semantics(
+                                    liveRegion: true,
+                                    child: Text(
+                                      _selectionError!,
+                                      style: TextStyle(
+                                        color: theme.bad,
+                                        height: 1.5,
+                                      ),
+                                    ),
                                   ),
                                 ),
+                              if (_selectedVenue == null) ...[
+                                Text(
+                                  'ერთხელ დააკავშირეთ აპლიკაცია თქვენს რესტორანთან.',
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    color: theme.textSecondary,
+                                    height: 1.5,
+                                  ),
+                                ),
+                                const SizedBox(height: 28),
+                                TextField(
+                                  key: const Key('manager-venue-code'),
+                                  controller: _venueCode,
+                                  enabled: !_isLoading,
+                                  autocorrect: false,
+                                  enableSuggestions: false,
+                                  obscureText: true,
+                                  maxLength: 32,
+                                  textInputAction: TextInputAction.done,
+                                  onSubmitted: (_) => _selectVenue(),
+                                  onChanged: (_) => _clearPin(),
+                                  decoration: const InputDecoration(
+                                    labelText: 'დაკავშირების კოდი',
+                                    hintText: 'ერთჯერადი კოდი',
+                                    counterText: '',
+                                    helperText:
+                                        'კოდი მიიღეთ Vynic-ის მხარდაჭერისგან. შემდეგ მხოლოდ PIN დაგჭირდებათ.',
+                                    helperMaxLines: 3,
+                                  ),
+                                ),
+                                const SizedBox(height: 24),
+                                FilledButton(
+                                  onPressed: _isLoading ? null : _selectVenue,
+                                  child: Text(
+                                    _isLoading ? 'მოწმდება…' : 'გაგრძელება',
+                                  ),
+                                ),
+                              ] else ...[
+                                Text(
+                                  _selectedVenue!.name,
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    fontSize: 17,
+                                    fontWeight: FontWeight.w700,
+                                    color: theme.primary,
+                                  ),
+                                ),
+                                if (_selectedVenue!.branchName?.isNotEmpty ??
+                                    false)
+                                  Text(
+                                    _selectedVenue!.branchName!,
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(
+                                      color: theme.textSecondary,
+                                    ),
+                                  ),
+                                if (_selectedVenue!.address?.isNotEmpty ??
+                                    false)
+                                  Text(
+                                    _selectedVenue!.address!,
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(
+                                      color: theme.textSecondary,
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                const SizedBox(height: 24),
+                                Focus(
+                                  autofocus: true,
+                                  onKeyEvent: (_, event) {
+                                    if (event is! KeyDownEvent || _isLoading)
+                                      return KeyEventResult.ignored;
+                                    if (event.logicalKey ==
+                                        LogicalKeyboardKey.backspace) {
+                                      _deleteDigit();
+                                      return KeyEventResult.handled;
+                                    }
+                                    if (event.logicalKey ==
+                                            LogicalKeyboardKey.enter ||
+                                        event.logicalKey ==
+                                            LogicalKeyboardKey.numpadEnter) {
+                                      if (_pin.length >= 4) _login();
+                                      return KeyEventResult.handled;
+                                    }
+                                    final digit = event.character;
+                                    if (digit != null &&
+                                        RegExp(r'^[0-9]$').hasMatch(digit)) {
+                                      _addDigit(digit);
+                                      return KeyEventResult.handled;
+                                    }
+                                    return KeyEventResult.ignored;
+                                  },
+                                  child: Column(
+                                    children: [
+                                      Text(
+                                        'შეიყვანეთ PIN კოდი',
+                                        style: TextStyle(
+                                          color: theme.textSecondary,
+                                          fontSize: 13,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 18),
+                                      _buildPinDots(),
+                                      const SizedBox(height: 18),
+                                      _buildNumberPad(),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(height: 18),
+                                FilledButton(
+                                  onPressed: !_isLoading && _pin.length >= 4
+                                      ? _login
+                                      : null,
+                                  child: _isLoading
+                                      ? const SizedBox(
+                                          width: 22,
+                                          height: 22,
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 2,
+                                          ),
+                                        )
+                                      : const Text('შესვლა'),
+                                ),
+                                const SizedBox(height: 6),
+                                TextButton(
+                                  onPressed: _isLoading ? null : _switchVenue,
+                                  child: const Text('რესტორნის შეცვლა'),
+                                ),
+                              ],
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 22),
+                        Text(
+                          'დაცული წვდომა · Vynic Manager',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: theme.textSecondary,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                  return SingleChildScrollView(
+                    keyboardDismissBehavior:
+                        ScrollViewKeyboardDismissBehavior.onDrag,
+                    padding: EdgeInsets.symmetric(
+                      horizontal: constraints.maxWidth < 400 ? 16 : 32,
+                      vertical: 28,
+                    ),
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(
+                        minHeight: math.max(0, constraints.maxHeight - 56),
+                      ),
+                      child: Center(
+                        child: wide
+                            ? ConstrainedBox(
+                                constraints: const BoxConstraints(
+                                  maxWidth: 1050,
+                                ),
+                                child: Row(
+                                  children: [
+                                    Expanded(
+                                      child: Padding(
+                                        padding: const EdgeInsets.only(
+                                          right: 80,
+                                        ),
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            _buildBrandHeader(),
+                                            const SizedBox(height: 48),
+                                            Text(
+                                              'თქვენი რესტორანი.\nერთი სამუშაო სივრცე.',
+                                              style: TextStyle(
+                                                fontSize: 38,
+                                                height: 1.35,
+                                                fontWeight: FontWeight.w700,
+                                                color: theme.textPrimary,
+                                              ),
+                                            ),
+                                            const SizedBox(height: 20),
+                                            Text(
+                                              'მაგიდები, რეზერვაციები, ფინანსები და გუნდი — ყველაფერი ერთად.',
+                                              style: TextStyle(
+                                                fontSize: 16,
+                                                height: 1.7,
+                                                color: theme.textSecondary,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                    form,
+                                  ],
+                                ),
                               )
-                            else
-                              _LoginGradientButton(
-                                label: 'შესვლა',
-                                enabled: _pin.length >= 4,
-                                onPressed: _login,
-                              ),
-                            TextButton(
-                              onPressed: _isLoading ? null : _switchVenue,
-                              child: const Text('რესტორნის შეცვლა'),
-                            ),
-                          ],
-                        ],
+                            : form,
                       ),
                     ),
-                    SizedBox(height: 20),
-                    Text(
-                      'დაცული წვდომა • PIN ავტორიზაცია',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 11,
-                        letterSpacing: 1.2,
-                        fontWeight: FontWeight.w600,
-                        color: MobileGlassTheme.muted(0.35),
-                      ),
-                    ),
-                  ],
-                ),
+                  );
+                },
               ),
             ),
-          ),
-        ],
+          );
+        },
       ),
     );
   }
@@ -485,79 +594,25 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
   Widget _buildBrandHeader() {
     final theme = managerThemeOf(context);
     return Column(
+      mainAxisSize: MainAxisSize.min,
       children: [
-        AnimatedBuilder(
-          animation: _pulseController,
-          builder: (context, child) {
-            final t = _pulseController.value;
-            return Container(
-              padding: const EdgeInsets.all(22),
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: RadialGradient(
-                  colors: [
-                    MobileGlassTheme.primary.withValues(alpha: 0.22 + t * 0.08),
-                    MobileGlassTheme.primary.withValues(alpha: 0.04),
-                  ],
-                ),
-                border: Border.all(
-                  color: MobileGlassTheme.primary.withValues(
-                    alpha: 0.35 + t * 0.15,
-                  ),
-                  width: 1.5,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: MobileGlassTheme.primary.withValues(
-                      alpha: 0.18 + t * 0.12,
-                    ),
-                    blurRadius: 28 + t * 12,
-                    spreadRadius: 2,
-                  ),
-                ],
-              ),
-              child: child,
-            );
-          },
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(18),
-            child: Image.asset(
-              'assets/logo/vynic-logo.png',
-              width: 64,
-              height: 64,
-              fit: BoxFit.cover,
-            ),
-          ),
-        ),
-        SizedBox(height: 22),
-        ShaderMask(
-          shaderCallback: (bounds) => LinearGradient(
-            colors: [
-              theme.textPrimary,
-              MobileGlassTheme.primary,
-              MobileGlassTheme.accent,
-            ],
-            stops: const [0.2, 0.65, 1],
-          ).createShader(bounds),
-          child: Text(
-            'Vynic Manager',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 30,
-              fontWeight: FontWeight.w900,
-              color: theme.textPrimary,
-              letterSpacing: -0.5,
-            ),
-          ),
-        ),
-        SizedBox(height: 8),
         Text(
-          'რესტორნის მართვის სისტემა',
-          textAlign: TextAlign.center,
+          'vynic',
           style: TextStyle(
-            fontSize: 13,
-            color: MobileGlassTheme.muted(0.55),
-            letterSpacing: 0.6,
+            fontSize: 42,
+            fontWeight: FontWeight.w800,
+            letterSpacing: -1.8,
+            color: theme.textPrimary,
+          ),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          'MANAGER',
+          style: TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 3,
+            color: theme.textSecondary,
           ),
         ),
       ],
@@ -635,39 +690,28 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
   }
 
   Widget _buildPinDots() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: List.generate(6, (i) {
-        final filled = i < _pin.length;
-        return AnimatedContainer(
-          duration: const Duration(milliseconds: 180),
-          curve: Curves.easeOutCubic,
-          margin: const EdgeInsets.symmetric(horizontal: 7),
-          width: filled ? 16 : 14,
-          height: filled ? 16 : 14,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: filled
-                ? MobileGlassTheme.primary
-                : MobileGlassTheme.surface(0.08),
-            border: Border.all(
-              color: filled
-                  ? MobileGlassTheme.primary.withValues(alpha: 0.9)
-                  : MobileGlassTheme.border(0.22),
-              width: 1.5,
+    final theme = managerThemeOf(context);
+    return Semantics(
+      label: 'PIN: ${_pin.length} ციფრი შეყვანილია',
+      liveRegion: true,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          for (var i = 0; i < 6; i++)
+            Container(
+              width: 14,
+              height: 14,
+              margin: const EdgeInsets.symmetric(horizontal: 9),
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: i < _pin.length ? theme.primary : theme.surfaceMuted,
+                border: Border.all(
+                  color: i < _pin.length ? theme.primary : theme.cardBorder,
+                ),
+              ),
             ),
-            boxShadow: filled
-                ? [
-                    BoxShadow(
-                      color: MobileGlassTheme.primary.withValues(alpha: 0.45),
-                      blurRadius: 10,
-                      spreadRadius: 1,
-                    ),
-                  ]
-                : null,
-          ),
-        );
-      }),
+        ],
+      ),
     );
   }
 
@@ -711,236 +755,32 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
   }
 }
 
-class _LoginGridBackground extends StatelessWidget {
-  const _LoginGridBackground();
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = managerThemeOf(context);
-    return CustomPaint(
-      painter: _GridPainter(theme),
-      child: const SizedBox.expand(),
-    );
-  }
-}
-
-class _GridPainter extends CustomPainter {
-  _GridPainter(this.theme);
-
-  final DashboardThemeData theme;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    const spacing = 36.0;
-    final gridColor = theme.isDark
-        ? Colors.white.withValues(alpha: 0.045)
-        : theme.textPrimary.withValues(alpha: 0.06);
-    final paint = Paint()
-      ..color = gridColor
-      ..strokeWidth = 1;
-
-    for (var x = 0.0; x <= size.width; x += spacing) {
-      canvas.drawLine(Offset(x, 0), Offset(x, size.height), paint);
-    }
-    for (var y = 0.0; y <= size.height; y += spacing) {
-      canvas.drawLine(Offset(0, y), Offset(size.width, y), paint);
-    }
-
-    final center = Offset(size.width * 0.5, size.height * 0.38);
-    final ringPaint = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1
-      ..color = theme.primary.withValues(alpha: 0.06);
-    canvas.drawCircle(
-      center,
-      math.min(size.width, size.height) * 0.42,
-      ringPaint,
-    );
-    canvas.drawCircle(
-      center,
-      math.min(size.width, size.height) * 0.28,
-      ringPaint,
-    );
-  }
-
-  @override
-  bool shouldRepaint(covariant _GridPainter oldDelegate) =>
-      oldDelegate.theme != theme;
-}
-
-class _LoginPadButton extends StatefulWidget {
+class _LoginPadButton extends StatelessWidget {
   const _LoginPadButton({required this.label, required this.onTap});
-
   final String label;
   final VoidCallback onTap;
-
   @override
-  State<_LoginPadButton> createState() => _LoginPadButtonState();
-}
-
-class _LoginPadButtonState extends State<_LoginPadButton> {
-  bool _pressed = false;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = managerThemeOf(context);
-    final isDelete = widget.label == '⌫';
-    final isClear = widget.label == 'C';
-    final isAction = isDelete || isClear;
-
-    return GestureDetector(
-      onTapDown: (_) => setState(() => _pressed = true),
-      onTapUp: (_) => setState(() => _pressed = false),
-      onTapCancel: () => setState(() => _pressed = false),
-      onTap: widget.onTap,
-      child: AnimatedScale(
-        scale: _pressed ? 0.94 : 1,
-        duration: const Duration(milliseconds: 100),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(18),
-          child: theme.useGlassCards
-              ? BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
-                  child: _padFace(
-                    theme: theme,
-                    pressed: _pressed,
-                    isDelete: isDelete,
-                    isClear: isClear,
-                    isAction: isAction,
-                  ),
-                )
-              : _padFace(
-                  theme: theme,
-                  pressed: _pressed,
-                  isDelete: isDelete,
-                  isClear: isClear,
-                  isAction: isAction,
-                ),
-        ),
-      ),
-    );
-  }
-
-  Widget _padFace({
-    required DashboardThemeData theme,
-    required bool pressed,
-    required bool isDelete,
-    required bool isClear,
-    required bool isAction,
-  }) {
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 120),
-      width: 84,
-      height: 58,
-      decoration: BoxDecoration(
-        color: pressed
-            ? theme.primary.withValues(alpha: 0.18)
-            : theme.heroCardBackground,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(
-          color: isDelete
-              ? theme.bad.withValues(alpha: pressed ? 0.5 : 0.28)
-              : isClear
-              ? theme.warn.withValues(alpha: pressed ? 0.5 : 0.28)
-              : theme.cardBorder,
-        ),
-        boxShadow: pressed
-            ? [
-                BoxShadow(
-                  color:
-                      (isDelete
-                              ? theme.bad
-                              : isClear
-                              ? theme.warn
-                              : theme.primary)
-                          .withValues(alpha: 0.2),
-                  blurRadius: 14,
-                ),
-              ]
-            : null,
-      ),
-      child: Center(
-        child: Text(
-          widget.label,
-          style: TextStyle(
-            fontSize: isAction ? 20 : 24,
-            fontWeight: FontWeight.w700,
-            color: isDelete
-                ? theme.bad
-                : isClear
-                ? theme.warn
-                : theme.textPrimary,
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _LoginGradientButton extends StatelessWidget {
-  const _LoginGradientButton({
-    required this.label,
-    required this.enabled,
-    required this.onPressed,
-  });
-
-  final String label;
-  final bool enabled;
-  final VoidCallback onPressed;
-
-  @override
-  Widget build(BuildContext context) {
-    return Opacity(
-      opacity: enabled ? 1 : 0.45,
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: enabled ? onPressed : null,
-          borderRadius: BorderRadius.circular(16),
-          child: Ink(
-            height: 54,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(16),
-              gradient: enabled
-                  ? LinearGradient(
-                      colors: [
-                        MobileGlassTheme.primary,
-                        MobileGlassTheme.accent,
-                      ],
-                      begin: Alignment.centerLeft,
-                      end: Alignment.centerRight,
-                    )
-                  : null,
-              color: enabled ? null : MobileGlassTheme.surface(0.12),
-              border: Border.all(
-                color: enabled
-                    ? Colors.white.withValues(alpha: 0.12)
-                    : MobileGlassTheme.border(0.12),
-              ),
-              boxShadow: enabled
-                  ? [
-                      BoxShadow(
-                        color: MobileGlassTheme.primary.withValues(alpha: 0.35),
-                        blurRadius: 18,
-                        offset: const Offset(0, 6),
-                      ),
-                    ]
-                  : null,
-            ),
-            child: Center(
-              child: Text(
+  Widget build(BuildContext context) => SizedBox(
+    width: 88,
+    height: 52,
+    child: OutlinedButton(
+      onPressed: onTap,
+      child: Semantics(
+        label: label == '⌫'
+            ? 'ბოლო ციფრის წაშლა'
+            : label == 'C'
+            ? 'PIN-ის გასუფთავება'
+            : label,
+        child: label == '⌫'
+            ? const Icon(Icons.backspace_outlined, size: 22)
+            : Text(
                 label,
                 style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 16,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: 0.4,
+                  fontSize: 22,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
-            ),
-          ),
-        ),
       ),
-    );
-  }
+    ),
+  );
 }

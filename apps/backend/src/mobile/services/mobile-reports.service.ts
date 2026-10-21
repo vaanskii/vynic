@@ -9,6 +9,7 @@ import {
 } from '../util/mobile-date.util';
 import { settingIdentity } from '../../tenancy/tenant-identity';
 import type { TenantContext } from '../../tenancy/tenant-context';
+import { MobileSaleLedgerService } from './mobile-sale-ledger.service';
 
 /**
  * Read-only reporting for the mobile manager app: audit log, sales report,
@@ -20,7 +21,10 @@ import type { TenantContext } from '../../tenancy/tenant-context';
  */
 @Injectable()
 export class MobileReportsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly saleLedger?: MobileSaleLedgerService,
+  ) {}
 
   async getAuditLog(
     tenant: TenantContext,
@@ -422,6 +426,20 @@ export class MobileReportsService {
       }))
       .sort((a, b) => b.totalRevenue - a.totalRevenue);
 
+    const ledger = this.saleLedger ?? new MobileSaleLedgerService(this.prisma);
+    const staff =
+      period === 'all'
+        ? await ledger.getRecordedStaffHistory(tenant)
+        : await ledger.getStaff(tenant, {
+            from: currentBusinessDate ?? from.toISOString().slice(0, 10),
+            to:
+              currentBusinessDate ??
+              (through ? new Date(through.valueOf() - 86400000) : now)
+                .toISOString()
+                .slice(0, 10),
+            attribution: 'creator',
+          });
+
     return {
       period,
       from: from.toISOString(),
@@ -450,9 +468,22 @@ export class MobileReportsService {
       ),
       topItems,
       topItemsByCategory,
-      // The current Cloud Order mirror cannot prove Sale revenue semantics per
-      // waiter. Return unavailable rather than manufacturing a revenue rank.
-      byWaiter: [],
+      staffAttribution: {
+        from: staff.from,
+        to: staff.to,
+        provenance: staff.provenance,
+        warning: staff.warning,
+        attribution: staff.attribution,
+        basis: staff.attributionBasis,
+        identityWarning: staff.attributionWarning,
+      },
+      byWaiter: staff.staff.map((row) => ({
+        ...row,
+        waiterName: row.staffName,
+        totalSales: Number(row.revenue),
+        orderCount: row.saleCount,
+        avgOrderValue: Number(row.averageSale),
+      })),
     };
   }
 
@@ -526,13 +557,20 @@ export class MobileReportsService {
     }
     allDates ??= new Set<string>(Array.from(summaryByDate.keys()));
     let rows = Array.from(allDates).map((date) => {
-      const summary = summaryByDate.get(date);
-      const totalRevenue = Number(summary?.totalRevenue ?? 0);
+      const summary = summaryByDate.get(date) as
+        | Record<string, unknown>
+        | undefined;
+      const available =
+        summary != null &&
+        typeof summary.totalRevenue === 'number' &&
+        Number.isFinite(summary.totalRevenue);
+      const totalRevenue = available ? Number(summary.totalRevenue) : null;
       const totalExpenses = Number(
         summary?.totalExpenses ?? expensesByDate.get(date) ?? 0,
       );
       return {
         date,
+        available,
         totalRevenue,
         closedOrders: Number(summary?.orderCount ?? 0),
         cancelledOrders: Number(summary?.cancelledOrders ?? 0),
@@ -542,7 +580,10 @@ export class MobileReportsService {
           ? summary.closedTables
           : [],
         totalExpenses: Math.round(totalExpenses * 100) / 100,
-        profit: Math.round((totalRevenue - totalExpenses) * 100) / 100,
+        profit:
+          totalRevenue == null
+            ? null
+            : Math.round((totalRevenue - totalExpenses) * 100) / 100,
       };
     });
     if (month && /^\d{4}-\d{2}$/.test(month)) {
@@ -553,35 +594,14 @@ export class MobileReportsService {
   }
 
   async getTopItems(tenant: TenantContext, limit: number) {
-    const businessDateSetting = await (this.prisma as any).setting.findUnique({
-      where: settingIdentity(tenant, 'currentBusinessDate'),
+    const ledger = this.saleLedger ?? new MobileSaleLedgerService(this.prisma);
+    const products = await ledger.getProducts(tenant, {
+      limit: Math.min(limit, 50),
     });
-    const businessDate =
-      businessDateSetting?.value ?? todayStart().toISOString().split('T')[0];
-    const summarySetting = await (this.prisma as any).setting.findUnique({
-      where: settingIdentity(tenant, `salesSummary:${businessDate}`),
-    });
-    if (!summarySetting?.value) return [];
-
-    try {
-      const summary = JSON.parse(summarySetting.value) as {
-        topItems?: Array<{ name: string; qty: number; revenue: number }>;
-      };
-      if (!Array.isArray(summary.topItems)) return [];
-      return summary.topItems
-        .map((item) => ({
-          name: String(item.name ?? ''),
-          qty: Number(item.qty ?? 0),
-          revenue: Math.round(Number(item.revenue ?? 0) * 100) / 100,
-        }))
-        .sort((a, b) => b.revenue - a.revenue)
-        .slice(0, Math.min(limit, 50));
-    } catch (error) {
-      console.warn(
-        `[MobileReports] Invalid Sale-derived top-items summary for ${businessDate}; revenue unavailable.`,
-        error,
-      );
-      return [];
-    }
+    return products.byRevenue.map((item) => ({
+      ...item,
+      qty: item.quantity,
+      revenue: Number(item.revenue),
+    }));
   }
 }

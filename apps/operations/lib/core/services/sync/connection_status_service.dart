@@ -19,6 +19,8 @@ class ConnectionStatusService {
   );
 
   static bool _initialized = false;
+  static int _localRevision = 0;
+  static int get localRevision => _localRevision;
 
   static void initialize() {
     if (_initialized) return;
@@ -30,6 +32,7 @@ class ConnectionStatusService {
   }
 
   static void markPendingLocalChange() {
+    _localRevision++;
     hasPendingLocalChanges.value = true;
   }
 
@@ -39,14 +42,19 @@ class ConnectionStatusService {
     backendState.value = BackendConnectionState.syncing;
   }
 
-  static Future<void> markSuccess({bool clearPendingChanges = true}) async {
+  static Future<void> markSuccess({
+    bool clearPendingChanges = true,
+    int? acknowledgedRevision,
+  }) async {
     initialize();
     final now = DateTime.now();
     lastAttemptAt.value = now;
     lastSyncedAt.value = now;
     lastError.value = null;
     backendState.value = BackendConnectionState.connected;
-    if (clearPendingChanges) {
+    if (clearPendingChanges &&
+        (acknowledgedRevision == null ||
+            acknowledgedRevision == _localRevision)) {
       hasPendingLocalChanges.value = false;
     }
     await DatabaseService.saveLastManagerSyncAt(now);

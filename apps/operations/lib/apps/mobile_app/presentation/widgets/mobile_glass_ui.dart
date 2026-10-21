@@ -1,5 +1,3 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 import 'package:vynic/apps/mobile_app/theme/manager_dashboard_theme.dart';
 import 'package:vynic/apps/mobile_app/theme/manager_theme.dart';
@@ -14,6 +12,8 @@ abstract final class MobileGlassTheme {
   static Color get bg => data.scaffoldBackground;
   static Color get primary => data.primary;
   static Color get accent => data.info;
+  static Color get onPrimary =>
+      data.isDark ? const Color(0xFF21182E) : Colors.white;
   static Color get good => data.good;
   static Color get bad => data.bad;
   static Color get warn => data.warn;
@@ -27,10 +27,7 @@ abstract final class MobileGlassTheme {
   static Color get borderSubtle => data.borderSubtle;
 
   static Color muted([double opacity = 0.55]) {
-    if (data.isDark) {
-      return Colors.white.withValues(alpha: opacity);
-    }
-    return data.textSecondary.withValues(alpha: opacity.clamp(0.0, 1.0));
+    return data.textSecondary;
   }
 
   static Color border([double opacity = 0.1]) {
@@ -61,16 +58,7 @@ class MobileGlowOrb extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: size,
-      height: size,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        gradient: RadialGradient(
-          colors: [color.withValues(alpha: 0.35), color.withValues(alpha: 0)],
-        ),
-      ),
-    );
+    return const SizedBox.shrink();
   }
 }
 
@@ -91,40 +79,14 @@ class MobileGlassCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = MobileGlassTheme.of(context);
-    final content = Container(
-      padding: padding,
-      decoration: BoxDecoration(
-        color: theme.useGlassCards
-            ? MobileGlassTheme.surface()
-            : theme.heroCardBackground,
+    return Material(
+      color: theme.surfaceCard,
+      shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(radius),
-        border: Border.all(color: borderColor ?? theme.cardBorder),
-        boxShadow: theme.isDark
-            ? null
-            : [
-                BoxShadow(
-                  color: theme.cardShadow,
-                  blurRadius: 16,
-                  offset: const Offset(0, 6),
-                ),
-              ],
+        side: BorderSide(color: borderColor ?? theme.cardBorder),
       ),
-      child: child,
-    );
-
-    if (!theme.useGlassCards) {
-      return ClipRRect(
-        borderRadius: BorderRadius.circular(radius),
-        child: content,
-      );
-    }
-
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(radius),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-        child: content,
-      ),
+      clipBehavior: Clip.antiAlias,
+      child: Padding(padding: padding, child: child),
     );
   }
 }
@@ -142,13 +104,10 @@ class MobileGlassScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = MobileGlassTheme.of(context);
-    return Scaffold(
-      backgroundColor: theme.scaffoldBackground,
-      body: Stack(
-        children: [
-          ...orbs,
-          SafeArea(child: body),
-        ],
+    return ManagerThemeListener(
+      child: Scaffold(
+        backgroundColor: theme.scaffoldBackground,
+        body: Stack(children: [SafeArea(child: body)]),
       ),
     );
   }
@@ -172,7 +131,7 @@ class MobileGlassHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = MobileGlassTheme.of(context);
     return Padding(
-      padding: const EdgeInsets.fromLTRB(4, 4, 12, 8),
+      padding: const EdgeInsets.fromLTRB(12, 18, 16, 18),
       child: Row(
         children: [
           if (onBack != null)
@@ -190,14 +149,18 @@ class MobileGlassHeader extends StatelessWidget {
                   title,
                   style: TextStyle(
                     color: theme.textPrimary,
-                    fontSize: 20,
+                    fontSize: 24,
                     fontWeight: FontWeight.w800,
                   ),
                 ),
                 if (subtitle != null && subtitle!.isNotEmpty)
                   Text(
                     subtitle!,
-                    style: TextStyle(color: theme.textSecondary, fontSize: 12),
+                    style: TextStyle(
+                      color: theme.textSecondary,
+                      fontSize: 13,
+                      height: 1.5,
+                    ),
                   ),
               ],
             ),
@@ -228,36 +191,28 @@ class MobileGlassPrimaryButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final fill = color ?? MobileGlassTheme.of(context).primary;
-    final btn = Material(
-      color: fill,
-      borderRadius: BorderRadius.circular(14),
-      child: InkWell(
-        onTap: onPressed,
-        borderRadius: BorderRadius.circular(14),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (icon != null) ...[
-                Icon(icon, color: Colors.white, size: 20),
-                SizedBox(width: 8),
-              ],
-              Flexible(
-                child: Text(
-                  label,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w700,
-                    fontSize: 15,
-                  ),
-                ),
-              ),
-            ],
+    final btn = FilledButton(
+      onPressed: onPressed,
+      style: FilledButton.styleFrom(
+        backgroundColor: fill,
+        foregroundColor:
+            ThemeData.estimateBrightnessForColor(fill) == Brightness.light
+            ? const Color(0xFF21182E)
+            : Colors.white,
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (icon != null) ...[Icon(icon, size: 20), SizedBox(width: 8)],
+          Flexible(
+            child: Text(
+              label,
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
+            ),
           ),
-        ),
+        ],
       ),
     );
     return expand ? SizedBox(width: double.infinity, child: btn) : btn;

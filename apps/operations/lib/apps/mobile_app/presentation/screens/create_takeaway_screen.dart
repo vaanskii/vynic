@@ -64,6 +64,13 @@ class _CreateTakeawayScreenState extends State<CreateTakeawayScreen> {
             'itemName': i['itemName'],
             'unitPrice': i['unitPrice'],
             'qty': i['quantity'],
+            'key':
+                i['itemKey'] ??
+                (i['menuItemId'] != null
+                    ? 'menu:${i['menuItemId']}${i['variantId'] != null ? '/variant:${i['variantId']}' : ''}'
+                    : i['itemName']),
+            'menuItemId': i['menuItemId'],
+            'variantId': i['variantId'],
           },
       ]);
     } catch (_) {
@@ -134,9 +141,11 @@ class _CreateTakeawayScreenState extends State<CreateTakeawayScreen> {
         .map(
           (e) => MenuSelectionLine(
             key: e.key,
-            itemName: e.key,
+            itemName: e.value.itemName ?? e.key,
             unitPrice: e.value.price,
             qty: e.value.quantity,
+            menuItemId: e.value.menuItemId,
+            variantId: e.value.variantId,
           ),
         )
         .toList();
@@ -158,6 +167,9 @@ class _CreateTakeawayScreenState extends State<CreateTakeawayScreen> {
               'itemName': e.itemName,
               'qty': e.qty,
               'unitPrice': e.unitPrice,
+              'key': e.key,
+              'menuItemId': e.menuItemId,
+              'variantId': e.variantId,
             },
           )
           .toList(),
@@ -265,7 +277,7 @@ class _CreateTakeawayScreenState extends State<CreateTakeawayScreen> {
                         SizedBox(height: 12),
                         SectionCard(
                           title: 'გამოსატანი დრო',
-                          child: GestureDetector(
+                          child: InkWell(
                             onTap: _pickTime,
                             child: AbsorbPointer(
                               child: TextField(
@@ -304,15 +316,7 @@ class _CreateTakeawayScreenState extends State<CreateTakeawayScreen> {
                         CartSummarySection(
                           cart: s.cart,
                           total: s.total,
-                          onInc: (itemName) {
-                            final matches = s.menuItems.where(
-                              (e) => e.name == itemName,
-                            );
-                            if (matches.isNotEmpty) {
-                              final item = matches.first;
-                              _controller.incrementItem(item);
-                            }
-                          },
+                          onInc: _controller.incrementCartItem,
                           onDec: _controller.decrementItem,
                         ),
                         if (s.cart.isNotEmpty) SizedBox(height: 12),
@@ -327,7 +331,7 @@ class _CreateTakeawayScreenState extends State<CreateTakeawayScreen> {
                                 color: MobileGlassTheme.primary,
                               ),
                               label: Text(
-                                'Windows სტილის მენიუს გახსნა',
+                                'მენიუს გახსნა',
                                 style: TextStyle(
                                   color: MobileGlassTheme.primary,
                                   fontWeight: FontWeight.w600,
@@ -387,12 +391,11 @@ class _CreateTakeawayScreenState extends State<CreateTakeawayScreen> {
                           onPressed: s.submitting ? null : _submit,
                           style: ElevatedButton.styleFrom(
                             backgroundColor: MobileGlassTheme.primary,
-                            foregroundColor: Colors.white,
+                            foregroundColor: MobileGlassTheme.onPrimary,
                             disabledBackgroundColor: MobileGlassTheme.primary
                                 .withValues(alpha: 0.35),
-                            disabledForegroundColor: Colors.white.withValues(
-                              alpha: 0.7,
-                            ),
+                            disabledForegroundColor: MobileGlassTheme.onPrimary
+                                .withValues(alpha: 0.7),
                             padding: const EdgeInsets.symmetric(vertical: 16),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(14),
@@ -400,20 +403,20 @@ class _CreateTakeawayScreenState extends State<CreateTakeawayScreen> {
                             elevation: 0,
                           ),
                           child: s.submitting
-                              ? const SizedBox(
+                              ? SizedBox(
                                   width: 20,
                                   height: 20,
                                   child: CircularProgressIndicator(
                                     strokeWidth: 2,
-                                    color: Colors.white,
+                                    color: MobileGlassTheme.onPrimary,
                                   ),
                                 )
                               : Text(
                                   s.cart.isEmpty
                                       ? 'შეკვეთის შექმნა'
                                       : 'შეკვეთის შექმნა — ${s.total.toStringAsFixed(2)} ₾',
-                                  style: const TextStyle(
-                                    color: Colors.white,
+                                  style: TextStyle(
+                                    color: MobileGlassTheme.onPrimary,
                                     fontWeight: FontWeight.bold,
                                     fontSize: 16,
                                   ),

@@ -192,9 +192,12 @@ export class FinanceController {
     const payroll = payrollEnabled
       ? await this.payroll.overview(t)
       : await financeDates(this.db, t);
-    await this.obligations.overview(t);
+    const obligationOverview = await this.obligations.overview(t);
     const cycles = await this.db.obligationCycle.findMany({
-      where: { venueId: t.venueId, periodMonth: { lte: payroll.periodMonth } },
+      where: {
+        venueId: t.venueId,
+        periodMonth: { lte: obligationOverview.periodMonth },
+      },
       include: { payments: true, reserves: true },
       orderBy: { dueDate: 'asc' },
     });

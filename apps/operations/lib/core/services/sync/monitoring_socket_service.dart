@@ -44,6 +44,9 @@ class MonitoringSocketService {
   static final ValueNotifier<bool> isConnected = ValueNotifier<bool>(false);
   static final ValueNotifier<bool> apiError = ValueNotifier<bool>(false);
 
+  /// A retained token on the PIN screen is not a running monitoring session.
+  static final ValueNotifier<bool> isSessionActive = ValueNotifier<bool>(false);
+
   /// True while disconnected and a reconnect attempt is scheduled or in flight.
   static final ValueNotifier<bool> isReconnecting = ValueNotifier<bool>(false);
 
@@ -96,6 +99,7 @@ class MonitoringSocketService {
     // Mark as initialising; clear after first connect or 6-second timeout
     // so the UI never flashes a connection-error banner on first open.
     isInitializing.value = true;
+    isSessionActive.value = true;
     _initTimer = Timer(const Duration(seconds: 6), _clearInitializing);
     _connect();
   }
@@ -345,6 +349,7 @@ class MonitoringSocketService {
   // ── Dispose ────────────────────────────────────────────────────────────────
 
   static void dispose() {
+    isSessionActive.value = false;
     _disposed = true;
     _appPaused = false;
     _cancelReconnectTimer();

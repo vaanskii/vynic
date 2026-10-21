@@ -1,3 +1,5 @@
+import '../widgets/manager_modal.dart';
+import '../widgets/manager_design_components.dart';
 import 'package:vynic/apps/mobile_app/presentation/widgets/manager_operations_panel.dart';
 import 'package:vynic/apps/mobile_app/presentation/widgets/mobile_glass_ui.dart';
 import 'package:vynic/apps/mobile_app/presentation/widgets/mobile_menu_pin_sheet.dart';
@@ -50,6 +52,7 @@ class _OrderEditorScreenState extends State<OrderEditorScreen> {
       _editResult != null && !_editResult!.isDone;
   List<MenuCategoryDB> _categories = [];
   String? _selectedCategorySlug;
+  String _menuSearch = '';
   String? _selectedSubcategorySlug;
   bool _isLoading = true;
   bool _hasChanges = false;
@@ -525,12 +528,12 @@ class _OrderEditorScreenState extends State<OrderEditorScreen> {
               if (_editResult!.delivery != PosCommandDelivery.failed)
                 TextButton(
                   onPressed: _saving ? null : _saveChanges,
-                  child: const Text('შედეგის გადამოწმება'),
+                  child: Text('შედეგის გადამოწმება'),
                 ),
               if (!_editResult!.needsCheck)
                 TextButton(
                   onPressed: _discardEdit,
-                  child: const Text('განახლება და მონახაზის გაუქმება'),
+                  child: Text('განახლება და მონახაზის გაუქმება'),
                 ),
             ],
           ),
@@ -585,7 +588,7 @@ class _OrderEditorScreenState extends State<OrderEditorScreen> {
             onPressed: () => Navigator.pop(ctx, true),
             style: ElevatedButton.styleFrom(
               backgroundColor: MobileGlassTheme.bad,
-              foregroundColor: Colors.white,
+              foregroundColor: MobileGlassTheme.onPrimary,
               elevation: 0,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
@@ -639,7 +642,7 @@ class _OrderEditorScreenState extends State<OrderEditorScreen> {
                 const Text('სესია შეიცვალა — გახსენით შეკვეთა თავიდან'),
                 TextButton(
                   onPressed: () => Navigator.of(context).maybePop(),
-                  child: const Text('უკან'),
+                  child: Text('უკან'),
                 ),
               ],
             ),
@@ -824,7 +827,8 @@ class _OrderEditorScreenState extends State<OrderEditorScreen> {
                                       onPressed: () => Navigator.pop(ctx, true),
                                       style: ElevatedButton.styleFrom(
                                         backgroundColor: MobileGlassTheme.bad,
-                                        foregroundColor: Colors.white,
+                                        foregroundColor:
+                                            MobileGlassTheme.onPrimary,
                                         elevation: 0,
                                         shape: RoundedRectangleBorder(
                                           borderRadius: BorderRadius.circular(
@@ -929,69 +933,74 @@ class _OrderEditorScreenState extends State<OrderEditorScreen> {
               child: MobileGlowOrb(color: MobileGlassTheme.good, size: 220),
             ),
           ],
-          body: Column(
-            children: [
-              if (!_isOrderPanelOpen)
-                MobileGlassHeader(
-                  title: _orderTitle(),
-                  subtitle: _orderSubtitle(),
-                  onBack: () async {
-                    if (_hasChanges) {
-                      final shouldPop = await _showExitConfirmation();
-                      if (shouldPop && mounted) Navigator.pop(context);
-                    } else if (mounted) {
-                      Navigator.pop(context);
-                    }
-                  },
-                  actions: [
-                    IconButton(
-                      onPressed: () => setState(() => _isOrderPanelOpen = true),
-                      icon: Badge(
-                        isLabelVisible: _order!.items.isNotEmpty,
-                        backgroundColor: MobileGlassTheme.primary,
-                        label: Text('${_order!.items.length}'),
-                        child: Icon(
-                          Icons.shopping_cart_outlined,
-                          color: MobileGlassTheme.muted(0.85),
-                        ),
-                      ),
-                    ),
-                    IconButton(
-                      onPressed: _viewCheckPdf,
-                      icon: Icon(
-                        Icons.receipt_long_rounded,
-                        color: MobileGlassTheme.muted(0.85),
-                      ),
-                    ),
-                    IconButton(
-                      onPressed: _cancelOrder,
-                      icon: Icon(
-                        Icons.delete_outline_rounded,
-                        color: MobileGlassTheme.bad.withValues(alpha: 0.9),
-                      ),
-                    ),
-                    if (_hasChanges)
-                      TextButton.icon(
-                        onPressed: _saving ? null : _saveChanges,
-                        icon: Icon(
-                          Icons.check_circle_rounded,
-                          size: 18,
-                          color: MobileGlassTheme.good,
-                        ),
-                        label: Text(
-                          'შენახვა',
-                          style: TextStyle(
-                            color: MobileGlassTheme.good,
-                            fontWeight: FontWeight.bold,
+          body: ManagerContentWidth(
+            maxWidth: 760,
+            child: Column(
+              children: [
+                if (!_isOrderPanelOpen)
+                  MobileGlassHeader(
+                    title: _orderTitle(),
+                    subtitle: _orderSubtitle(),
+                    onBack: () async {
+                      if (_hasChanges) {
+                        final shouldPop = await _showExitConfirmation();
+                        if (shouldPop && mounted) Navigator.pop(context);
+                      } else if (mounted) {
+                        Navigator.pop(context);
+                      }
+                    },
+                    actions: [
+                      IconButton(
+                        onPressed: () =>
+                            setState(() => _isOrderPanelOpen = true),
+                        icon: Badge(
+                          isLabelVisible: _order!.items.isNotEmpty,
+                          backgroundColor: MobileGlassTheme.primary,
+                          label: Text('${_order!.items.length}'),
+                          child: Icon(
+                            Icons.shopping_cart_outlined,
+                            color: MobileGlassTheme.muted(0.85),
                           ),
                         ),
                       ),
-                  ],
-                ),
-              if (_editResult != null || _order?.managerEditProjection == null)
-                _editStatus(),
-              Expanded(child: _buildMainStack()),
-            ],
+                      IconButton(
+                        onPressed: _viewCheckPdf,
+                        icon: Icon(
+                          Icons.receipt_long_rounded,
+                          color: MobileGlassTheme.muted(0.85),
+                        ),
+                      ),
+                      IconButton(
+                        onPressed: _cancelOrder,
+                        icon: Icon(
+                          Icons.delete_outline_rounded,
+                          color: MobileGlassTheme.bad.withValues(alpha: 0.9),
+                        ),
+                      ),
+                      if (_hasChanges)
+                        TextButton.icon(
+                          onPressed: _saving ? null : _saveChanges,
+                          icon: Icon(
+                            Icons.check_circle_rounded,
+                            size: 18,
+                            color: MobileGlassTheme.good,
+                          ),
+                          label: Text(
+                            'შენახვა',
+                            style: TextStyle(
+                              color: MobileGlassTheme.good,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                if (_editResult != null ||
+                    _order?.managerEditProjection == null)
+                  _editStatus(),
+                Expanded(child: _buildMainStack()),
+              ],
+            ),
           ),
         ),
       ),
@@ -1025,11 +1034,26 @@ class _OrderEditorScreenState extends State<OrderEditorScreen> {
       );
     }
 
-    return Column(
-      children: [
-        Expanded(child: _buildMenuSelection()),
-        _buildOrderSummaryBar(),
-      ],
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+      child: ManagerPanel(
+        padding: 20,
+        child: Column(
+          children: [
+            TextField(
+              key: const Key('order-menu-search'),
+              onChanged: (value) => setState(() => _menuSearch = value),
+              decoration: const InputDecoration(
+                hintText: 'მენიუში ძებნა',
+                prefixIcon: Icon(Icons.search, size: 20),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Expanded(child: _buildMenuSelection()),
+            _buildOrderSummaryBar(),
+          ],
+        ),
+      ),
     );
   }
 
@@ -1037,66 +1061,23 @@ class _OrderEditorScreenState extends State<OrderEditorScreen> {
     if (_order == null) return const SizedBox.shrink();
     final totalItems = _order!.items.fold(0, (sum, it) => sum + it.quantity);
 
-    return Container(
-      decoration: BoxDecoration(
-        color: MobileGlassTheme.surface(0.1),
-        border: Border(top: BorderSide(color: MobileGlassTheme.border(0.08))),
-      ),
-      padding: const EdgeInsets.fromLTRB(20, 14, 20, 20),
-      child: Wrap(
-        alignment: WrapAlignment.spaceBetween,
-        spacing: 12,
-        runSpacing: 12,
-        children: [
-          GestureDetector(
-            onTap: () => setState(() => _isOrderPanelOpen = true),
-            child: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: MobileGlassTheme.primary.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Icon(
-                    Icons.menu_rounded,
-                    color: MobileGlassTheme.primary,
-                  ),
-                ),
-                SizedBox(width: 12),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      '$totalItems პროდუქტი',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: MobileGlassTheme.muted(),
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    Text(
-                      '${_order!.totalAmount.toStringAsFixed(2)} ₾',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w800,
-                        color: MobileGlassTheme.textPrimary,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          MobileGlassPrimaryButton(
-            label: 'ნახვა',
-            icon: Icons.shopping_cart_outlined,
-            expand: false,
-            onPressed: () => setState(() => _isOrderPanelOpen = true),
-          ),
-        ],
-      ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const Divider(height: 24),
+        ManagerKeyValue('პროდუქტები', '$totalItems'),
+        ManagerKeyValue(
+          'ჯამი',
+          '${_order!.totalAmount.toStringAsFixed(2)} ₾',
+          emphasis: true,
+        ),
+        const SizedBox(height: 12),
+        FilledButton.icon(
+          onPressed: () => setState(() => _isOrderPanelOpen = true),
+          icon: const Icon(Icons.shopping_cart_outlined, size: 18),
+          label: const Text('ნახვა'),
+        ),
+      ],
     );
   }
 
@@ -1141,7 +1122,13 @@ class _OrderEditorScreenState extends State<OrderEditorScreen> {
       (MenuCategoryDB cat) => cat.slug == _selectedCategorySlug,
       orElse: () => _categories.first,
     );
-    final displayItems = _getDisplayItems();
+    final query = _menuSearch.trim().toLowerCase();
+    final displayItems = _getDisplayItems()
+        .where(
+          (item) =>
+              query.isEmpty || item.getName('ka').toLowerCase().contains(query),
+        )
+        .toList();
     final hasSubs =
         selectedCategory.subcategories != null &&
         selectedCategory.subcategories!.isNotEmpty;
@@ -1177,126 +1164,30 @@ class _OrderEditorScreenState extends State<OrderEditorScreen> {
                         0.0;
                     final active = inCart > 0;
 
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 8),
-                      child: GestureDetector(
-                        onTap: () => _showQuantityPicker(item),
-                        behavior: HitTestBehavior.opaque,
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 180),
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 14,
-                            vertical: 12,
-                          ),
-                          decoration: BoxDecoration(
-                            color: active
-                                ? MobileGlassTheme.primary.withValues(
-                                    alpha: 0.12,
-                                  )
-                                : MobileGlassTheme.surfaceCard,
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(
-                              color: active
-                                  ? MobileGlassTheme.primary.withValues(
-                                      alpha: 0.6,
-                                    )
-                                  : MobileGlassTheme.border(0.08),
-                              width: active ? 1.5 : 1,
-                            ),
-                          ),
-                          child: Row(
-                            children: [
-                              if (active) ...[
-                                Container(
-                                  width: 30,
-                                  height: 30,
-                                  alignment: Alignment.center,
-                                  decoration: BoxDecoration(
-                                    color: MobileGlassTheme.primary,
-                                    borderRadius: BorderRadius.circular(9),
-                                  ),
-                                  child: Text(
-                                    '$inCart',
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 13,
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                              ],
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      item.getName('ka'),
-                                      style: TextStyle(
-                                        fontSize: 15,
-                                        fontWeight: FontWeight.w600,
-                                        color: MobileGlassTheme.textPrimary,
-                                      ),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                    const SizedBox(height: 3),
-                                    Row(
-                                      children: [
-                                        Text(
-                                          '${item.price?.toStringAsFixed(1) ?? "0"} ₾',
-                                          style: TextStyle(
-                                            color: MobileGlassTheme.accentText,
-                                            fontSize: 13,
-                                            fontWeight: FontWeight.w600,
-                                          ),
-                                        ),
-                                        if (active && lineTotal > 0) ...[
-                                          Text(
-                                            '  •  ',
-                                            style: TextStyle(
-                                              color: MobileGlassTheme.muted(
-                                                0.25,
-                                              ),
-                                              fontSize: 13,
-                                            ),
-                                          ),
-                                          Text(
-                                            '= ${lineTotal.toStringAsFixed(1)} ₾',
-                                            style: TextStyle(
-                                              fontSize: 13,
-                                              color: MobileGlassTheme.muted(
-                                                0.6,
-                                              ),
-                                              fontWeight: FontWeight.w600,
-                                            ),
-                                          ),
-                                        ],
-                                      ],
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              const SizedBox(width: 10),
-                              Container(
-                                width: 36,
-                                height: 36,
-                                alignment: Alignment.center,
-                                decoration: BoxDecoration(
-                                  color: MobileGlassTheme.primary,
-                                  borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(
-                                    color: MobileGlassTheme.primary,
-                                  ),
-                                ),
-                                child: const Icon(
-                                  Icons.add_rounded,
-                                  size: 20,
-                                  color: Colors.white,
-                                ),
-                              ),
-                            ],
-                          ),
+                    return ListTile(
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
+                      onTap: () => _showQuantityPicker(item),
+                      title: Text(
+                        item.getName('ka'),
+                        style: managerDesignText(
+                          context,
+                          13,
+                          weight: FontWeight.w500,
+                        ),
+                      ),
+                      subtitle: Text(
+                        '${item.price?.toStringAsFixed(2) ?? "0.00"} ₾${active ? ' · არჩეული $inCart · ${lineTotal.toStringAsFixed(2)} ₾' : ''}',
+                        style: managerDesignText(context, 11, muted: true),
+                      ),
+                      trailing: IconButton(
+                        tooltip: 'დამატება',
+                        onPressed: () => _showQuantityPicker(item),
+                        icon: Icon(
+                          Icons.add_circle_outline,
+                          color: MobileGlassTheme.primary,
                         ),
                       ),
                     );
@@ -1334,7 +1225,7 @@ class _OrderEditorScreenState extends State<OrderEditorScreen> {
                   padding: const EdgeInsets.symmetric(horizontal: 4),
                   child: Material(
                     color: isSelected
-                        ? MobileGlassTheme.primary
+                        ? MobileGlassTheme.surfaceCard
                         : MobileGlassTheme.surface(0.08),
                     borderRadius: BorderRadius.circular(10),
                     child: InkWell(
@@ -1515,7 +1406,7 @@ class _OrderEditorScreenState extends State<OrderEditorScreen> {
             onPressed: () => Navigator.pop(context, true),
             style: ElevatedButton.styleFrom(
               backgroundColor: MobileGlassTheme.bad,
-              foregroundColor: Colors.white,
+              foregroundColor: MobileGlassTheme.onPrimary,
               elevation: 0,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),

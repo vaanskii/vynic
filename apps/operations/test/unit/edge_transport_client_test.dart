@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -115,6 +116,49 @@ void main() {
       final broken = clientFor((_) async => http.Response('', 500));
       expect((await broken.claim()).outcome, EdgeTransportOutcome.serverError);
     });
+
+    for (final status in [401, 403]) {
+      test('old $status response permits a new-credential retry', () async {
+        final pending = Completer<http.Response>();
+        final requested = Completer<void>();
+        var credential = 'synthetic-old-credential';
+        var requests = 0;
+        final client = EdgeTransportClient(
+          baseUrl: () => 'http://cloud.test',
+          credential: () => credential,
+          httpClient: MockClient((request) {
+            requests++;
+            if (requests == 1) {
+              expect(
+                request.headers['X-POS-Sync-Key'],
+                'synthetic-old-credential',
+              );
+              requested.complete();
+              return pending.future;
+            }
+            expect(
+              request.headers['X-POS-Sync-Key'],
+              'synthetic-new-credential',
+            );
+            return Future.value(
+              http.Response(claimBody([envelope('new-command')]), 200),
+            );
+          }),
+        );
+        final oldClaim = client.claim();
+        await requested.future;
+        credential = 'synthetic-new-credential';
+        pending.complete(http.Response('', status));
+        final oldResponse = await oldClaim;
+        expect(oldResponse.outcome, EdgeTransportOutcome.ok);
+        expect(oldResponse.commands, isEmpty);
+        final newResponse = await client.claim();
+        expect(newResponse.commands.map((command) => command.commandId), [
+          'new-command',
+        ]);
+        client.close();
+      });
+    }
 
     test(
       'treats a malformed body as a server problem, not as no work',

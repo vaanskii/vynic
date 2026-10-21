@@ -11,6 +11,8 @@ import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:vynic/apps/mobile_app/presentation/widgets/manager_data_status.dart';
 import 'package:vynic/apps/mobile_app/presentation/screens/dashboard_screen.dart';
+import 'package:vynic/apps/mobile_app/theme/manager_dashboard_theme.dart';
+import 'package:vynic/apps/mobile_app/theme/manager_theme.dart';
 import 'package:vynic/core/models/user.dart';
 import 'package:vynic/core/services/auth/auth_token_service.dart';
 import 'package:vynic/core/services/manager_app/manager_data_read.dart';
@@ -26,7 +28,7 @@ void main() {
     await georgian.load();
     await icons.load();
   });
-  final theme = ThemeData(fontFamily: 'NotoSansGeorgian');
+  final theme = managerMaterialTheme(ManagerDashboardAppearance.light);
   final now = DateTime.now().toUtc();
   ManagerReadStatus status({
     String location = 'api',
@@ -70,7 +72,7 @@ void main() {
             ),
           );
           expect(
-            find.textContaining('API: განახლების შეცდომა'),
+            find.text('განახლება ვერ მოხერხდა · მონაცემები შეზღუდულია'),
             findsOneWidget,
           );
           await tester.tap(find.byTooltip('წყარო და დრო'));
@@ -92,18 +94,19 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           theme: theme,
-          home: Scaffold(
-            body: RepaintBoundary(
-              key: key,
-              child: ManagerDataStatusPanel(
+          home: RepaintBoundary(
+            key: key,
+            child: Scaffold(
+              body: ManagerDataStatusPanel(
                 reads: {'dashboard': status(completeness: 'PARTIAL')},
               ),
             ),
           ),
         ),
       );
-      expect(find.textContaining('API: ხელმისაწვდომია'), findsOneWidget);
-      expect(find.textContaining('მონაცემები შეზღუდულია'), findsOneWidget);
+      expect(find.text('მონაცემები შეზღუდულია'), findsOneWidget);
+      expect(find.text('მონაცემები განახლებულია'), findsNothing);
+      expect(find.textContaining('განახლება ვერ მოხერხდა'), findsNothing);
       await tester.tap(find.byTooltip('წყარო და დრო'));
       await tester.pump();
       expect(find.textContaining('სისრულე: არასრული'), findsOneWidget);
@@ -153,11 +156,48 @@ void main() {
         ),
       );
       await tester.pump();
-      expect(find.textContaining('API: განახლების შეცდომა'), findsOneWidget);
+      expect(
+        find.text('განახლება ვერ მოხერხდა · მონაცემები შეზღუდულია'),
+        findsOneWidget,
+      );
+      expect(find.text('მონაცემები განახლებულია'), findsNothing);
       expect(find.text('Retained 120'), findsOneWidget);
       await tester.pumpWidget(const SizedBox.shrink());
     },
   );
+  testWidgets('only current complete data uses the updated banner', (
+    tester,
+  ) async {
+    final fresh = DateTime.now().toUtc();
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: theme,
+        home: Scaffold(
+          body: ManagerDataStatusPanel(
+            reads: {
+              'dashboard': ManagerReadStatus(
+                key: 'dashboard',
+                location: 'api',
+                source: 'POS',
+                completeness: 'KNOWN',
+                apiAvailable: true,
+                sourceUpdatedAt: fresh,
+                receivedAt: fresh,
+                fetchedAt: fresh,
+              ),
+            },
+          ),
+        ),
+      ),
+    );
+    expect(find.text('მონაცემები განახლებულია'), findsOneWidget);
+    expect(find.textContaining('მონაცემები შეზღუდულია'), findsNothing);
+    await tester.tap(find.byTooltip('წყარო და დრო'));
+    await tester.pump();
+    expect(find.textContaining('POS წყაროს დრო'), findsOneWidget);
+    expect(find.textContaining('სისრულე: სრული'), findsOneWidget);
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
   testWidgets(
     'resume triggers explicit refresh and disposal removes observer',
     (tester) async {
@@ -255,7 +295,11 @@ void main() {
           find.textContaining('დაფა: მონაცემები მიუწვდომელია'),
           findsOneWidget,
         );
-        expect(find.textContaining('API: განახლების შეცდომა'), findsOneWidget);
+        expect(
+          find.text('განახლება ვერ მოხერხდა · მონაცემები შეზღუდულია'),
+          findsOneWidget,
+        );
+        expect(find.text('მონაცემები განახლებულია'), findsNothing);
         expect(tester.takeException(), isNull);
         await tester.pumpWidget(const SizedBox.shrink());
       }, () => MockClient((_) async => http.Response('{}', 503)));

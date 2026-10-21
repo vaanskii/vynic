@@ -32,6 +32,7 @@ import {
 import { presentMovement } from './receiving.service';
 import { historyPage, type HistoryQuery } from './history-page';
 import { RecipeService, menuGroup } from './recipe.service';
+import { lockStockItems } from './stock-item-lock';
 
 export { InventoryAuditAction };
 
@@ -614,6 +615,7 @@ export class InventoryService {
     const cleanId = requiredText(id, 'id');
     try {
       return await this.prisma.$transaction(async (tx) => {
+        await lockStockItems(tx, actor.venueId, [cleanId]);
         const existing = await tx.stockItem.findFirst({
           where: { id: cleanId, venueId: actor.venueId },
         });
@@ -647,7 +649,7 @@ export class InventoryService {
           stockBaseUnit,
         );
         if (data.baseUnit != null && data.baseUnit !== existing.baseUnit) {
-          const [receiving, recipe] = await Promise.all([
+          const [receiving, recipe, movement] = await Promise.all([
             tx.receivingLine.findFirst({
               where: {
                 stockItemId: existing.id,
@@ -660,8 +662,11 @@ export class InventoryService {
             tx.menuConsumptionComponent.findFirst({
               where: { venueId: actor.venueId, stockItemId: existing.id },
             }),
+            tx.stockMovement.findFirst({
+              where: { venueId: actor.venueId, stockItemId: existing.id },
+            }),
           ]);
-          if (receiving || recipe)
+          if (receiving || recipe || movement)
             throw new ConflictException(
               'A used stock item must keep its base unit',
             );
@@ -956,6 +961,7 @@ export class InventoryService {
         (input.stockItemId
           ? requiredText(input.stockItemId, 'stockItemId')
           : null);
+      if (stockId) await lockStockItems(tx, actor.venueId, [stockId]);
       let item = stockId
         ? await tx.stockItem.findFirst({
             where: { id: stockId, venueId: actor.venueId, isActive: true },

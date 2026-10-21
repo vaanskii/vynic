@@ -254,4 +254,13 @@ describe('Receiving money', () => {
       /greater than zero/,
     );
   });
+
+  it('rejects batch quantities that round to zero per sold unit', () => {
+    expect(() => perUnitQuantity(decimal('0.001'), decimal('10000'))).toThrow(
+      'Consumption per sold unit must be at least 0.000001 base units after rounding',
+    );
+    expect(perUnitQuantity(decimal('0.001'), decimal('2000')).toFixed(6)).toBe(
+      '0.000001',
+    );
+  });
 });

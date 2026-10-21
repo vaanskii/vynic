@@ -153,8 +153,10 @@ void main() {
             expect(find.text('5 აქტიური • 7 სულ'), findsOneWidget);
             expect(find.text('Terrace'), findsOneWidget);
             expect(find.text('Terrace 1'), findsOneWidget);
+            await tester.tap(find.byKey(const ValueKey('table-zone-first')));
+            await tester.pumpAndSettle();
             expect(find.text('Main 2 · Main 10'), findsOneWidget);
-            expect(find.text('45.0 ₾'), findsOneWidget);
+            expect(find.text('45.00 ₾'), findsOneWidget);
             // A table tap navigates to the actual Manager order view; return retains
             // the configured physical rows and their original route identity.
             await tester.ensureVisible(find.text('Main 2 · Main 10'));
@@ -167,16 +169,8 @@ void main() {
             nav.currentState!.pop();
             await pumpIO(tester);
             await tester.pumpAndSettle();
-            await tester.scrollUntilVisible(
-              find.text('ქართული დარბაზი'),
-              400,
-              scrollable: find
-                  .descendant(
-                    of: find.byKey(const ValueKey('manager-table-list')),
-                    matching: find.byType(Scrollable),
-                  )
-                  .first,
-            );
+            await tester.tap(find.text('ქართული დარბაზი'));
+            await tester.pumpAndSettle();
             expect(find.text('ბაღის მაგიდა'), findsOneWidget);
             final oldCalls = tableCalls;
             MonitoringSocketService.updateCounter.value++;
@@ -188,16 +182,7 @@ void main() {
             expect(tableCalls, beforeTimer + 1);
             if (visit == 0 &&
                 Platform.environment['MGR01_SCREENSHOT_DIR'] != null) {
-              await tester.scrollUntilVisible(
-                find.text('Main 2 · Main 10'),
-                -400,
-                scrollable: find
-                    .descendant(
-                      of: find.byKey(const ValueKey('manager-table-list')),
-                      matching: find.byType(Scrollable),
-                    )
-                    .first,
-              );
+              await tester.tap(find.byKey(const ValueKey('table-zone-first')));
               await tester.pumpAndSettle();
               final boundary =
                   imageKey.currentContext!.findRenderObject()

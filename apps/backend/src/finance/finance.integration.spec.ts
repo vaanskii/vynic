@@ -16,6 +16,8 @@ import { ObligationsService } from './obligations.service';
 import { FinanceController } from './finance.controller';
 import { MobileDashboardService } from '../mobile/services/mobile-dashboard.service';
 import { StaffSyncService } from '../pos/sync/snapshot/staff-sync.service';
+import { BusinessDaySyncService } from '../pos/sync/snapshot/business-day-sync.service';
+import { VenueEntitlementsService } from '../entitlements/venue-entitlements.service';
 import { MobileAuditLogService } from '../mobile/services/mobile-audit-log.service';
 import * as common from './finance-common';
 import type { Actor } from './finance-common';
@@ -633,7 +635,14 @@ const url = process.env.TENANT_INTEGRATION_DATABASE_URL;
     it('Manager Staff removal preserves referenced identity and allows a later stop rule', async () => {
       const service = new MobileUsersService(
         db,
-        { dispatch: async () => ({ delivery: 'queued' }) } as any,
+        {
+          recordCloudMutation: async () => ({
+            transport: 'edge',
+            status: 'QUEUED',
+            commandId: randomUUID(),
+          }),
+          kickRecordedDelivery: jest.fn(),
+        } as any,
         { read: async () => ({}), write: async () => {} } as any,
       );
       await service.deleteUser(a, 'Nika');
@@ -690,6 +699,171 @@ const url = process.env.TENANT_INTEGRATION_DATABASE_URL;
         (await db.staff.findUniqueOrThrow({ where: { id: staff } })).isActive,
       ).toBe(false);
       expect((await payroll.history(a, staff)).periods).toHaveLength(2);
+    });
+    it('keeps one Manager expense through POS echo/replay and refuses deletion of the POS-backed record', async () => {
+      const businessDate = '2026-09-30';
+      await db.setting.create({
+        data: {
+          venueId: b.venueId,
+          key: 'currentBusinessDate',
+          value: businessDate,
+        },
+      });
+      const recordCloudMutation = jest.fn(
+        async (_tx: unknown, _tenant: unknown, _command: any) => ({
+          transport: 'edge',
+          status: 'QUEUED',
+          commandId: randomUUID(),
+        }),
+      );
+      const kickRecordedDelivery = jest.fn();
+      const dashboard = new MobileDashboardService(
+        db,
+        {} as any,
+        { recordCloudMutation, kickRecordedDelivery } as any,
+        {} as any,
+      );
+      const created = await dashboard.createExpense(b, {
+        description: 'Manager taxi expense',
+        category: 'Taxi',
+        amount: 17.25,
+      });
+      const original = await db.expense.findUniqueOrThrow({
+        where: { id: created.id },
+      });
+      expect(original).toMatchObject({
+        venueId: b.venueId,
+        posExpenseId: created.id,
+        businessDate,
+        amount: 17.25,
+      });
+      expect(recordCloudMutation).toHaveBeenCalledTimes(1);
+      expect(kickRecordedDelivery).toHaveBeenCalledWith(b, created.posDelivery);
+      const echo = recordCloudMutation.mock.calls[0][2].payload;
+      expect(echo).toMatchObject({
+        id: original.id,
+        amount: 17.25,
+        businessDate,
+      });
+      // The POS stores the command's source id as its expense id and returns
+      // the same fields in its normal authenticated full snapshot.
+      const sync = new BusinessDaySyncService(db);
+      await sync.recordExpenses(b, [echo]);
+      await Promise.all([
+        sync.recordExpenses(b, [echo]),
+        sync.recordExpenses(b, [echo]),
+      ]);
+      expect(await db.expense.count({ where: { venueId: b.venueId } })).toBe(1);
+      expect(
+        (await db.expense.findUniqueOrThrow({ where: { id: original.id } }))
+          .posExpenseId,
+      ).toBe(original.id);
+      const financials = await dashboard.getFinancials(b);
+      expect(financials.otherExpenses).toBe('17.25');
+      expect(financials.totalOutflows).toBe('17.25');
+      expect(financials.expenseEntries).toEqual([
+        expect.objectContaining({ id: original.id, canDelete: false }),
+      ]);
+      await expect(dashboard.deleteExpense(b, original.id)).rejects.toThrow(
+        'POS',
+      );
+      await sync.recordExpenses(b, [echo]);
+      expect(await db.expense.count({ where: { venueId: b.venueId } })).toBe(1);
+      await expect(dashboard.deleteExpense(a, original.id)).rejects.toThrow(
+        'Expense not found',
+      );
+
+      const cloudOnly = await db.expense.create({
+        data: {
+          venueId: b.venueId,
+          description: 'Old Cloud-only expense',
+          category: 'Taxi',
+          amount: 3,
+          businessDate,
+        },
+      });
+      expect((await dashboard.getFinancials(b)).expenseEntries).toContainEqual(
+        expect.objectContaining({ id: cloudOnly.id, canDelete: true }),
+      );
+      await expect(dashboard.deleteExpense(b, cloudOnly.id)).resolves.toEqual({
+        success: true,
+      });
+    });
+    it('rolls back a Manager expense when its delivery intent cannot be persisted', async () => {
+      const before = await db.expense.count({ where: { venueId: b.venueId } });
+      const kickRecordedDelivery = jest.fn();
+      const dashboard = new MobileDashboardService(
+        db,
+        {} as any,
+        {
+          recordCloudMutation: jest.fn(async () => {
+            throw new Error('synthetic queue persistence failure');
+          }),
+          kickRecordedDelivery,
+        } as any,
+        {} as any,
+      );
+      await expect(
+        dashboard.createExpense(b, {
+          description: 'Must not survive failed queue admission',
+          category: 'Taxi',
+          amount: 8,
+        }),
+      ).rejects.toThrow('synthetic queue persistence failure');
+      expect(await db.expense.count({ where: { venueId: b.venueId } })).toBe(
+        before,
+      );
+      expect(kickRecordedDelivery).not.toHaveBeenCalled();
+    });
+    it('plans calendar-month obligations independently of the payroll feature and previous business month', async () => {
+      const previousNow = now;
+      now = new Date('2026-10-01T12:00:00Z');
+      const feature = jest.spyOn(
+        VenueEntitlementsService.prototype,
+        'hasFeature',
+      );
+      try {
+        await db.setting.upsert({
+          where: {
+            venueId_key: { venueId: b.venueId, key: 'currentBusinessDate' },
+          },
+          create: {
+            venueId: b.venueId,
+            key: 'currentBusinessDate',
+            value: '2026-09-30',
+          },
+          update: { value: '2026-09-30' },
+        });
+        await payroll.setCompensation(b, b.staffId, {
+          compensationType: 'MONTHLY_FIXED',
+          amount: '7.00',
+          effectiveFrom: '2026-09-01',
+        });
+        await obligations.create(b, {
+          name: 'Calendar planning target',
+          type: 'RENT',
+          monthlyAmount: '31.00',
+          dueDay: 31,
+          startsOn: '2026-09-01',
+        });
+        for (const enabled of [true, false]) {
+          feature.mockResolvedValue(enabled);
+          const plan = await controller.planning(b);
+          expect(plan.businessDate).toBe('2026-09-30');
+          expect(plan.today).toBe('2026-10-01');
+          expect(plan.payrollRemaining).toBe(enabled ? '7.00' : null);
+          expect(plan.obligationsRemaining).toBe('62.00');
+          expect(plan.dailyRecommendedReserve).toBe('32.00');
+          expect(plan.recommendations).toContainEqual({
+            name: 'Calendar planning target',
+            periodMonth: '2026-10',
+            amount: '1.00',
+          });
+        }
+      } finally {
+        feature.mockRestore();
+        now = previousNow;
+      }
     });
   },
 );

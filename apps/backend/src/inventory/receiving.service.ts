@@ -34,6 +34,7 @@ import {
 } from './inventory-quantity';
 import { inventoryUnit } from './inventory-unit';
 import { requireStockLocation } from './stock-locations';
+import { lockStockItems } from './stock-item-lock';
 
 export interface ReceivingLineInput {
   stockItemId?: unknown;
@@ -423,6 +424,11 @@ export class ReceivingService {
 
       // Re-validate against live tenancy: a Stock Item may have been disabled
       // or a Supplier reassigned while the draft sat open.
+      await lockStockItems(
+        tx,
+        actor.venueId,
+        lines.map((line) => line.stockItemId),
+      );
       const stockItems = await tx.stockItem.findMany({
         where: {
           id: { in: lines.map((line) => line.stockItemId) },
@@ -453,7 +459,6 @@ export class ReceivingService {
       if (locked.supplierId)
         await this.requireSupplier(tx, actor, locked.supplierId);
 
-      await tx.$queryRaw`SELECT id FROM pos."StockItem" WHERE "venueId"=${actor.venueId} AND id IN (SELECT "stockItemId" FROM pos."ReceivingLine" WHERE "receivingId"=${cleanId}) ORDER BY id FOR UPDATE`;
       const postedAt = new Date();
       await tx.stockMovement.createMany({
         data: lines.map((line) => ({
@@ -750,6 +755,7 @@ export class ReceivingService {
         inputs.map((line) => requiredText(line.stockItemId, 'stockItemId')),
       ),
     );
+    await lockStockItems(tx, actor.venueId, ids);
     const items = await tx.stockItem.findMany({
       where: { id: { in: ids }, venueId: actor.venueId },
       select: {

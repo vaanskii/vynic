@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
+import 'package:vynic/core/services/auth/auth_token_service.dart';
 import 'package:vynic/core/services/notifications/app_notification_history_store.dart';
 import 'package:vynic/core/services/manager_app/mobile_api_service.dart';
 import 'package:vynic/core/services/manager_app/mobile_cache_service.dart';
@@ -12,6 +13,7 @@ class ManagerNotificationInbox {
   ManagerNotificationInbox._();
 
   static void resetSession() {
+    _sessionGeneration++;
     for (final timer in _serviceFeeNotifyTimers.values) {
       timer.cancel();
     }
@@ -21,6 +23,7 @@ class ManagerNotificationInbox {
   }
 
   static const Duration _serviceFeeNotifyQuiet = Duration(milliseconds: 2500);
+  static int _sessionGeneration = 0;
   static final Map<int, Timer> _serviceFeeNotifyTimers = {};
   static final Map<int, _PendingServiceFeeNotify> _serviceFeeNotifyPending = {};
 
@@ -575,46 +578,76 @@ class ManagerNotificationInbox {
   /// Pull notifications persisted on the server while the socket was down.
   static Future<int> syncMissedFromServer() async {
     try {
+      final generation = _sessionGeneration;
+      final scope = MobileApiService.tableRepairScope;
+      final token = AuthTokenService.token;
+      void requireSession() {
+        if (generation != _sessionGeneration ||
+            token != AuthTokenService.token ||
+            !MobileApiService.isCurrentTableRepairScope(scope))
+          throw StateError(
+            'Manager session changed during notification catch-up',
+          );
+      }
+
       final lastSyncRaw = MobileCacheService.lastNotificationsSyncAt;
       final lastSyncDt = lastSyncRaw != null
           ? DateTime.tryParse(lastSyncRaw)
           : null;
-      final since =
-          (lastSyncDt ?? DateTime.now().subtract(const Duration(hours: 24)))
-              .subtract(const Duration(minutes: 1))
-              .toUtc()
-              .toIso8601String();
+      // An installation without a checkpoint uses the server's initial window.
+      // A fast handset clock must not skip notifications before its own "now".
+      final since = lastSyncDt
+          ?.subtract(const Duration(minutes: 1))
+          .toUtc()
+          .toIso8601String();
 
-      final rows = await MobileApiService.getNotifications(since: since);
       var added = 0;
-      for (final row in rows) {
-        final envelope = row['envelope'];
-        if (envelope is Map) {
-          final env = Map<String, dynamic>.from(envelope);
-          ingestWsEnvelope(env, source: 'catchup');
-          added++;
-        } else {
-          final title = (row['title'] ?? '').toString();
-          final body = (row['body'] ?? '').toString();
-          final id = row['id']?.toString();
-          if (body.isNotEmpty) {
-            final ok = AppNotificationHistoryStore.instance.add(
-              dedupeId: id,
-              title: title.isEmpty ? 'შეტყობინება' : title,
-              message: body,
-              source: 'catchup',
-              meta: row['type'] != null
-                  ? {'type': row['type'].toString()}
-                  : null,
-            );
-            if (ok) added++;
+      String? cursor;
+      String? watermark;
+      final seenCursors = <String>{};
+      do {
+        requireSession();
+        final page = await MobileApiService.getNotificationsPage(
+          since: since,
+          cursor: cursor,
+        );
+        requireSession();
+        watermark ??= page.watermark;
+        if (watermark != page.watermark)
+          throw const FormatException(
+            'Notification watermark changed between pages',
+          );
+        for (final row in page.items) {
+          final envelope = row['envelope'];
+          if (envelope is Map) {
+            final env = Map<String, dynamic>.from(envelope);
+            ingestWsEnvelope(env, source: 'catchup');
+            added++;
+          } else {
+            final title = (row['title'] ?? '').toString();
+            final body = (row['body'] ?? '').toString();
+            final id = row['id']?.toString();
+            if (body.isNotEmpty) {
+              final ok = AppNotificationHistoryStore.instance.add(
+                dedupeId: id,
+                title: title.isEmpty ? 'შეტყობინება' : title,
+                message: body,
+                source: 'catchup',
+                meta: row['type'] != null
+                    ? {'type': row['type'].toString()}
+                    : null,
+              );
+              if (ok) added++;
+            }
           }
         }
-      }
+        cursor = page.nextCursor;
+        if (cursor != null && !seenCursors.add(cursor))
+          throw const FormatException('Notification cursor did not advance');
+      } while (cursor != null);
 
-      await MobileCacheService.setLastNotificationsSyncAt(
-        DateTime.now().toUtc().toIso8601String(),
-      );
+      requireSession();
+      await MobileCacheService.setLastNotificationsSyncAt(watermark);
       if (added > 0) {
         debugPrint('[Notifications] Catch-up: $added from server');
       }

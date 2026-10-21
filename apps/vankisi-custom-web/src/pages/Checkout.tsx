@@ -130,6 +130,9 @@ const Checkout = () => {
         selectedTables: Array.isArray(reservationData.selectedTables) ? reservationData.selectedTables : [],
         selectedDate: String(reservationData.resDate || reservationData.selectedDate || ''),
         selectedTime: String(reservationData.resTime || reservationData.selectedTime || ''),
+        ...(reservationData.resGuests !== undefined
+          ? { numberOfGuests: Number(reservationData.resGuests) }
+          : {}),
         menuItems: cartItems.map(item => ({
           id: String(item.id),
           quantity: Number(item.quantity),

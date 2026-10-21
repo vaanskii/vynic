@@ -44,6 +44,8 @@ const PaymentSuccess: React.FC = () => {
           clearCartRef.current();
           for (const key of [
             "reservationData",
+            "vankisi_reservation",
+            "vankisi_preorder",
             "selectedReservationDate",
             "selectedReservationTime",
             "vankisi-cart",

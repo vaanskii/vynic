@@ -148,132 +148,138 @@ class ReservationDetailScreen extends StatelessWidget {
               left: -90,
               child: _GlowOrb(color: MobileGlassTheme.primary, size: 240),
             ),
-            SafeArea(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 12, 20, 8),
-                    child: Row(
-                      children: [
-                        _GlassCircleButton(
-                          icon: Icons.arrow_back_ios_new_rounded,
-                          onTap: () => Navigator.of(context).maybePop(),
-                        ),
-                        SizedBox(width: 14),
-                        Expanded(
-                          child: Text(
-                            'რეზერვაცია',
-                            style: TextStyle(
-                              color: MobileGlassTheme.textPrimary,
-                              fontSize: 24,
-                              fontWeight: FontWeight.bold,
-                              letterSpacing: -0.5,
+            Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 880),
+                child: SafeArea(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 12, 20, 8),
+                        child: Row(
+                          children: [
+                            _GlassCircleButton(
+                              icon: Icons.arrow_back_ios_new_rounded,
+                              onTap: () => Navigator.of(context).maybePop(),
                             ),
-                          ),
+                            SizedBox(width: 14),
+                            Expanded(
+                              child: Text(
+                                'რეზერვაცია',
+                                style: TextStyle(
+                                  color: MobileGlassTheme.textPrimary,
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.bold,
+                                  letterSpacing: -0.5,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
-                  ),
-                  Expanded(
-                    child: ListView(
-                      physics: const BouncingScrollPhysics(),
-                      padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
-                      children: [
-                        _GlassCard(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
+                      ),
+                      Expanded(
+                        child: ListView(
+                          physics: const BouncingScrollPhysics(),
+                          padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
+                          children: [
+                            _GlassCard(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Expanded(
-                                    child: Text(
-                                      name.isEmpty ? 'უსახელო' : name,
-                                      style: TextStyle(
-                                        color: MobileGlassTheme.textPrimary,
-                                        fontSize: 24,
-                                        fontWeight: FontWeight.bold,
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        child: Text(
+                                          name.isEmpty ? 'უსახელო' : name,
+                                          style: TextStyle(
+                                            color: MobileGlassTheme.textPrimary,
+                                            fontSize: 24,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
                                       ),
-                                    ),
+                                      _statusPill(meta),
+                                    ],
                                   ),
-                                  _statusPill(meta),
+                                  SizedBox(height: 18),
+                                  _infoRow(
+                                    Icons.schedule_rounded,
+                                    'დრო',
+                                    time.isEmpty ? '—' : time,
+                                  ),
+                                  _infoRow(
+                                    Icons.calendar_today_rounded,
+                                    'თარიღი',
+                                    date.isEmpty ? '—' : date,
+                                  ),
+                                  _infoRow(
+                                    Icons.groups_rounded,
+                                    'სტუმრები',
+                                    '$guests სტუმარი',
+                                  ),
+                                  _infoRow(
+                                    Icons.table_bar_rounded,
+                                    'მაგიდები',
+                                    tables.isEmpty ? '—' : tables,
+                                  ),
+                                  _infoRow(
+                                    Icons.phone_rounded,
+                                    'ტელეფონი',
+                                    phone.isEmpty ? '—' : phone,
+                                  ),
                                 ],
                               ),
-                              SizedBox(height: 18),
-                              _infoRow(
-                                Icons.schedule_rounded,
-                                'დრო',
-                                time.isEmpty ? '—' : time,
-                              ),
-                              _infoRow(
-                                Icons.calendar_today_rounded,
-                                'თარიღი',
-                                date.isEmpty ? '—' : date,
-                              ),
-                              _infoRow(
-                                Icons.groups_rounded,
-                                'სტუმრები',
-                                '$guests სტუმარი',
-                              ),
-                              _infoRow(
-                                Icons.table_bar_rounded,
-                                'მაგიდები',
-                                tables.isEmpty ? '—' : tables,
-                              ),
-                              _infoRow(
-                                Icons.phone_rounded,
-                                'ტელეფონი',
-                                phone.isEmpty ? '—' : phone,
-                              ),
-                            ],
-                          ),
-                        ),
-                        if (notes.isNotEmpty) ...[
-                          SizedBox(height: 16),
-                          _GlassCard(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
+                            ),
+                            if (notes.isNotEmpty) ...[
+                              SizedBox(height: 16),
+                              _GlassCard(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Icon(
-                                      Icons.notes_rounded,
-                                      color: MobileGlassTheme.textSecondary,
-                                      size: 18,
+                                    Row(
+                                      children: [
+                                        Icon(
+                                          Icons.notes_rounded,
+                                          color: MobileGlassTheme.textSecondary,
+                                          size: 18,
+                                        ),
+                                        SizedBox(width: 8),
+                                        Text(
+                                          'შენიშვნა',
+                                          style: TextStyle(
+                                            color:
+                                                MobileGlassTheme.textSecondary,
+                                            fontSize: 13,
+                                          ),
+                                        ),
+                                      ],
                                     ),
-                                    SizedBox(width: 8),
+                                    SizedBox(height: 8),
                                     Text(
-                                      'შენიშვნა',
+                                      notes,
                                       style: TextStyle(
-                                        color: MobileGlassTheme.textSecondary,
-                                        fontSize: 13,
+                                        color: MobileGlassTheme.textPrimary,
+                                        fontSize: 14,
+                                        height: 1.4,
                                       ),
                                     ),
                                   ],
                                 ),
-                                SizedBox(height: 8),
-                                Text(
-                                  notes,
-                                  style: TextStyle(
-                                    color: MobileGlassTheme.textPrimary,
-                                    fontSize: 14,
-                                    height: 1.4,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                        if (_preOrder.isNotEmpty) ...[
-                          SizedBox(height: 16),
-                          _buildPreOrderCard(),
-                        ],
-                        SizedBox(height: 24),
-                        _buildActions(context, id, status),
-                      ],
-                    ),
+                              ),
+                            ],
+                            if (_preOrder.isNotEmpty) ...[
+                              SizedBox(height: 16),
+                              _buildPreOrderCard(),
+                            ],
+                            SizedBox(height: 24),
+                            _buildActions(context, id, status),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
-                ],
+                ),
               ),
             ),
           ],
@@ -670,29 +676,20 @@ class _PrintCheckButtonState extends State<_PrintCheckButton> {
 
 /// ── shared dark glass widgets ───────────────────────────────────────────
 class _GlassCard extends StatelessWidget {
-  final Widget child;
   const _GlassCard({required this.child});
-
+  final Widget child;
   @override
   Widget build(BuildContext context) {
-    final radius = BorderRadius.circular(22);
-    return ClipRRect(
-      borderRadius: radius,
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
-        child: Container(
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: MobileGlassTheme.surface(0.04),
-            borderRadius: radius,
-            border: Border.all(
-              color: MobileGlassTheme.data.borderSubtle,
-              width: 1,
-            ),
-          ),
-          child: child,
-        ),
+    final theme = MobileGlassTheme.of(context);
+    final radius = BorderRadius.circular(18);
+    return Material(
+      color: theme.surfaceCard,
+      shape: RoundedRectangleBorder(
+        borderRadius: radius,
+        side: BorderSide(color: theme.cardBorder),
       ),
+      clipBehavior: Clip.antiAlias,
+      child: Padding(padding: const EdgeInsets.all(18), child: child),
     );
   }
 }
@@ -728,25 +725,9 @@ class _GlassCircleButton extends StatelessWidget {
 }
 
 class _GlowOrb extends StatelessWidget {
+  const _GlowOrb({required this.color, required this.size});
   final Color color;
   final double size;
-  const _GlowOrb({required this.color, required this.size});
-
   @override
-  Widget build(BuildContext context) {
-    return IgnorePointer(
-      child: Container(
-        width: size,
-        height: size,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          color: color.withValues(alpha: 0.15),
-        ),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 80, sigmaY: 80),
-          child: Container(color: Colors.transparent),
-        ),
-      ),
-    );
-  }
+  Widget build(BuildContext context) => const SizedBox.shrink();
 }

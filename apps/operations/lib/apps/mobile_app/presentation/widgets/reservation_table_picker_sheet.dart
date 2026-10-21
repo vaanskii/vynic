@@ -1,3 +1,4 @@
+import 'package:vynic/apps/mobile_app/presentation/widgets/manager_modal.dart';
 import 'package:flutter/material.dart';
 import 'package:vynic/apps/mobile_app/presentation/widgets/mobile_glass_ui.dart';
 import 'package:vynic/core/models/table.dart';
@@ -75,7 +76,7 @@ class ReservationTablePickerSheet {
     String? selectedFloor;
     final selectedTables = <String>{};
 
-    return showModalBottomSheet<List<int>>(
+    return showManagerModal<List<int>>(
       context: context,
       isScrollControlled: true,
       backgroundColor: MobileGlassTheme.data.surfaceCard,
@@ -173,7 +174,7 @@ class ReservationTablePickerSheet {
                                 color: isTaken
                                     ? Colors.red
                                     : isSel
-                                    ? Colors.white
+                                    ? MobileGlassTheme.onPrimary
                                     : MobileGlassTheme.textPrimary.withValues(
                                         alpha: disabled ? 0.35 : 0.85,
                                       ),
@@ -209,10 +210,10 @@ class ReservationTablePickerSheet {
                             borderRadius: BorderRadius.circular(14),
                           ),
                         ),
-                        child: const Text(
+                        child: Text(
                           'დადასტურება',
                           style: TextStyle(
-                            color: Colors.white,
+                            color: MobileGlassTheme.onPrimary,
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
                           ),

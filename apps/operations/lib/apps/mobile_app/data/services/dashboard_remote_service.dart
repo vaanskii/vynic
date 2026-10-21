@@ -23,12 +23,18 @@ class DashboardRemoteService {
     final results = await Future.wait<ManagerDataRead<dynamic>>([
       Future.value(metrics),
       MobileApiService.captureRead(
-        'sales_report',
-        () => MobileApiService.getSalesReport(period: 'today'),
+        'product_analytics',
+        () => MobileApiService.getProductAnalytics(
+          from: businessDate,
+          to: businessDate,
+        ),
       ),
       MobileApiService.captureRead(
         'staff_performance',
-        MobileApiService.getStaffPerformance,
+        () => MobileApiService.getStaffPerformance(
+          from: businessDate,
+          to: businessDate,
+        ),
       ),
       MobileApiService.captureRead(
         'sales_daily',
@@ -52,14 +58,19 @@ class DashboardRemoteService {
         'counted_menus',
         MobileApiService.getCountedMenus,
       ),
+      MobileApiService.captureRead(
+        'financials',
+        MobileApiService.getFinancials,
+      ),
     ]);
     return DashboardBundle(
       metrics: results[0].data,
-      salesReport: results[1].data,
+      productAnalytics: results[1].data,
       staff: results[2].data,
       salesDaily: results[3].data,
       todayReservations: results[4].data,
       countedMenus: results[5].data,
+      financials: results[6].data,
       reads: {for (final result in results) result.status.key: result.status},
     );
   }

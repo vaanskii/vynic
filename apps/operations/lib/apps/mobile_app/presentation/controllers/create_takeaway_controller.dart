@@ -77,6 +77,15 @@ class CreateTakeawayController extends ChangeNotifier {
     _emit();
   }
 
+  void incrementCartItem(String key) {
+    final cart = Map<String, TakeawayCartEntry>.from(_state.cart);
+    final entry = cart[key];
+    if (entry == null) return;
+    entry.quantity++;
+    _state = _state.copyWith(cart: cart);
+    _emit();
+  }
+
   void replaceCartFromSelection(List<Map<String, dynamic>> lines) {
     final next = <String, TakeawayCartEntry>{};
     for (final line in lines) {
@@ -84,7 +93,14 @@ class CreateTakeawayController extends ChangeNotifier {
       final qty = (line['qty'] as num?)?.toInt() ?? 0;
       final price = (line['unitPrice'] as num?)?.toDouble() ?? 0.0;
       if (name.isEmpty || qty <= 0) continue;
-      next[name] = TakeawayCartEntry(price: price)..quantity = qty;
+      final key = line['key'] as String? ?? name;
+      next[key] = TakeawayCartEntry(
+        price: price,
+        quantity: qty,
+        itemName: name,
+        menuItemId: line['menuItemId'] as String?,
+        variantId: line['variantId'] as String?,
+      );
     }
     _state = _state.copyWith(cart: next);
     _emit();
@@ -106,9 +122,12 @@ class CreateTakeawayController extends ChangeNotifier {
       final items = _state.cart.entries
           .map(
             (e) => {
-              'itemName': e.key,
+              'itemKey': e.key,
+              'itemName': e.value.itemName ?? e.key,
               'unitPrice': e.value.price,
               'quantity': e.value.quantity,
+              if (e.value.menuItemId != null) 'menuItemId': e.value.menuItemId,
+              if (e.value.variantId != null) 'variantId': e.value.variantId,
             },
           )
           .toList();

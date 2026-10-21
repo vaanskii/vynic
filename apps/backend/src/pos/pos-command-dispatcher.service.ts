@@ -162,6 +162,69 @@ export class PosCommandDispatcher {
     return this.dispatchLegacy(tenant, command);
   }
 
+  /** Existing Cloud Staff/expense writes and their delivery intent commit
+   * together. Callers hold the Venue lock; delivery starts only after commit. */
+  async recordCloudMutation(
+    tx: Prisma.TransactionClient,
+    tenant: Pick<TenantContext, 'venueId'>,
+    command: DispatchPosCommand,
+  ): Promise<PosDelivery> {
+    if (
+      ![
+        EdgeCommandTypes.STAFF_CREATE,
+        EdgeCommandTypes.STAFF_PIN_UPDATE,
+        EdgeCommandTypes.STAFF_ROLE_UPDATE,
+        EdgeCommandTypes.STAFF_RENAME,
+        EdgeCommandTypes.STAFF_DELETE,
+        EdgeCommandTypes.EXPENSE_CREATE,
+      ].some((type) => type === command.type)
+    )
+      throw new TypeError('Unsupported transactional Cloud mutation');
+    const device = await tx.device.findFirst({
+      where: { venueId: tenant.venueId },
+      select: { id: true },
+    });
+    if (device) {
+      const row = await tx.edgeCommand.create({
+        data: {
+          venueId: tenant.venueId,
+          type: command.type,
+          payload: command.payload as Prisma.InputJsonObject,
+          idempotencyKey: `${command.type}:${randomUUID()}`,
+          contractVersion: EDGE_COMMAND_CONTRACT_VERSION,
+        },
+      });
+      return { transport: 'edge', status: 'QUEUED', commandId: row.id };
+    }
+    // The shared-key fallback is frozen and identifies only the bootstrap Venue.
+    if (tenant.venueId !== BOOTSTRAP_VENUE_ID)
+      return {
+        transport: 'legacy',
+        status: 'UNAVAILABLE',
+        code: 'enrollment_required',
+      };
+    await tx.posCallbackOutbox.create({
+      data: {
+        venueId: tenant.venueId,
+        endpoint: LEGACY_ENDPOINTS[command.type]!,
+        payload: command.payload as Prisma.InputJsonObject,
+      },
+    });
+    return { transport: 'legacy', status: 'QUEUED' };
+  }
+
+  kickRecordedDelivery(
+    tenant: Pick<TenantContext, 'venueId'>,
+    delivery: PosDelivery,
+  ): void {
+    if (delivery.transport === 'legacy' && delivery.status === 'QUEUED')
+      void this.posOutbox.processDue(tenant).catch((error: unknown) => {
+        this.logger.error(
+          `Recorded POS delivery remains queued: ${String(error)}`,
+        );
+      });
+  }
+
   /** Website payment outbox only: caller holds the Venue lock. Never revive an
    * existing terminal/claimed command, and never make a LAN call in a transaction. */
   async recordWebsiteDelivery(

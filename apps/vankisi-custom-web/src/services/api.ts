@@ -164,6 +164,7 @@ export const tableService = {
     selectedTables: string[]; // Always array, even for single table
     selectedDate: string;
     selectedTime: string;
+    numberOfGuests?: number;
     menuItems?: Array<{
       id: string;
       quantity: number;
@@ -191,6 +192,7 @@ export const tableService = {
     selectedTables: string[];
     selectedDate: string;
     selectedTime: string;
+    numberOfGuests?: number;
     menuItems?: Array<{
       id: string;
       quantity: number;

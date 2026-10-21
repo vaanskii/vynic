@@ -2,6 +2,7 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import type { TenantContext } from '../../../tenancy/tenant-context';
 import { PrismaService } from '../../../prisma.service';
+import { isBusinessDate } from '../../../mobile/util/mobile-date.util';
 import type {
   SaleLedgerDaySync,
   SaleLedgerSync,
@@ -9,7 +10,6 @@ import type {
 } from '../sync-payload';
 
 const MONEY = /^-?\d{1,16}\.\d{2}$/;
-const BUSINESS_DATE = /^\d{4}-\d{2}-\d{2}$/;
 const ALLOWED_PAYMENTS = new Set([
   'cash',
   'card',
@@ -26,6 +26,8 @@ export interface SaleLedgerAck {
 
 export interface SaleLedgerSyncResult {
   acknowledgements: SaleLedgerAck[];
+  /** Re-send genuine retained Sales when an acknowledged day lost Cloud rows. */
+  retryBusinessDates: string[];
 }
 
 /** Cloud equivalent of `SalesRepository.countsAsRevenue`. */
@@ -75,14 +77,16 @@ export class SaleLedgerSyncService {
     days: SaleLedgerDaySync[] | undefined,
   ): Promise<SaleLedgerSyncResult> {
     const acknowledgements: SaleLedgerAck[] = [];
+    const retryBusinessDates: string[] = [];
     for (const sale of sales ?? []) {
       const revision = await this.upsertSale(tenant, sale);
       acknowledgements.push({ posSaleId: sale.posSaleId, revision });
     }
     for (const day of days ?? []) {
-      await this.reconcileDay(tenant, day);
+      if (await this.reconcileDay(tenant, day))
+        retryBusinessDates.push(day.businessDate);
     }
-    return { acknowledgements };
+    return { acknowledgements, retryBusinessDates };
   }
 
   private validate(sale: SaleLedgerSync) {
@@ -97,7 +101,7 @@ export class SaleLedgerSyncService {
     ) {
       throw new BadRequestException('Sale identity/revision is invalid');
     }
-    if (!BUSINESS_DATE.test(sale.businessDate)) {
+    if (!isBusinessDate(sale.businessDate)) {
       throw new BadRequestException('businessDate must be YYYY-MM-DD');
     }
     if (
@@ -314,10 +318,19 @@ export class SaleLedgerSyncService {
   }
 
   private async reconcileDay(tenant: TenantContext, day: SaleLedgerDaySync) {
-    if (!BUSINESS_DATE.test(day.businessDate)) {
+    if (!isBusinessDate(day.businessDate)) {
       throw new BadRequestException('Ledger day must be YYYY-MM-DD');
     }
-    const sales = await (this.prisma as any).cloudSale.findMany({
+    if (
+      day.expectedSaleCount != null &&
+      (!Number.isSafeInteger(day.expectedSaleCount) ||
+        day.expectedSaleCount < 0)
+    ) {
+      throw new BadRequestException(
+        'Expected Sale count must be a non-negative integer',
+      );
+    }
+    const sales = await this.prisma.cloudSale.findMany({
       where: { venueId: tenant.venueId, businessDate: day.businessDate },
       select: {
         gross: true,
@@ -390,5 +403,14 @@ export class SaleLedgerSyncService {
         lastSyncedAt: new Date(),
       },
     });
+    // Never synthesize or delete history to make a count match. Only ask for
+    // replay when this POS says all its genuine rows were already ACKed and
+    // Cloud demonstrably has fewer. Normal partial batches must keep draining.
+    return (
+      day.uploadComplete &&
+      !day.legacySummaryOnly &&
+      day.expectedSaleCount != null &&
+      sales.length < day.expectedSaleCount
+    );
   }
 }

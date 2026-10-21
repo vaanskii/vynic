@@ -68,7 +68,11 @@ current transport status.
   active Staff in the same Venue, including Platform-managed access. Manager
   role promotion checks retained credentials too. Manager CRUD, Platform access
   and POS staff sync serialize on the Venue lock; credential and vault writes
-  are atomic. Unchanged legacy snapshots remain idempotent, but existing
+  are atomic. Manager Staff mutations also record their existing POS delivery
+  intent in that transaction; pending/claimed Edge and pending legacy Staff work
+  protect the Cloud identity, role and credential from an older POS snapshot.
+  Queue persistence failure rolls back the mutation. Unchanged legacy snapshots
+  remain idempotent, but existing
   duplicate Manager PINs still fail login until an authorized PIN change.
 - Cloud-originated POS work uses a persistent pull queue. The Edge initiates the
   connection, executes locally, journals the outcome, and acknowledges it.
@@ -317,6 +321,29 @@ current transport status.
   its last-seen status and a device-selection link; enrollment does not replace
   Primary automatically. Access/enrollment/device mutations show busy feedback
   and prevent repeated submission while pending.
+
+- Manager presentation uses a shared light/dark Material theme and Georgian
+  typography, with named desktop navigation, a compact rail and phone More menu.
+  Management uses Team, Reports, Audit and Settings primary sections. Reports is
+  a four-link directory into actual report/Sales workspaces; Audit presents the
+  entitled Activity feed with operational Audit in secondary access. Team keeps
+  its toolbar inside connected rows and access details in a secondary view.
+  Financial planning uses centered dialogs and actual obligation summaries;
+  receiving, recipes and order detail/editor/cart use connected bounded forms
+  with advanced fields and guarded workflows retained.
+  Connection feedback starts with the authenticated monitoring session, avoiding
+  a false outage at the remembered-venue PIN screen.
+  Count is one destination with New/Saved tabs and retained in-progress drafts;
+  Reservations retains adjacent new reservation and walk-in actions. Wide Tables includes the actual order-detail
+  inspector; forms and selectors use bounded content and centered dialogs.
+  Existing auth, entitlements, financial/inventory workflows, freshness and
+  retained POS requests remain on their established services. Actual-widget
+  synthetic renders and regression evidence: `docs/proofs/MANAGER_PARITY_2026-10-17/README.md`.
+  Dashboard revenue/occupancy charts use the approved preview geometry with real
+  API data; missing values remain unavailable. Dashboard outflows/balance read
+  the existing financial response only when its business date matches.
+  Native/physical interaction and printer qualification are not implied by that
+  UI proof.
 
 - Organization/Venue foundation and Venue-scoped operational data are
   implemented (Steps 4A and 4B1).
@@ -766,10 +793,28 @@ current transport status.
   original visible data or show unavailable instead of false zero/empty success.
   Query/account/origin cache envelopes are flushed together and session-fenced.
   Dashboard, Tables/Takeaway, Financials, Reservations, Counted Menus and Menu
-  Calculator expose bound source/status details and refresh on resume. Runbook:
+  Calculator expose bound source/status details and refresh on resume. The POS
+  mirror retries failed startup uploads and attests idle sources every two minutes;
+  accepted snapshots clear only the local revision they captured. Dashboard product
+  quantities use the existing date-scoped Sale ledger analytics. Financials binds
+  summary, analytics and every Sale page to one business-date range, fences late
+  refresh/session responses, and preserves per-page warning state. Access denials
+  clear retained protected values; successful refresh retires abandoned read states
+  without clearing another query's errors. Open days remain partial until Close Day;
+  missing history remains explicit. Creator and closer analytics now use immutable
+  CloudSale actor snapshots separately; recorded usernames are not stable Staff
+  IDs and historical attribution is never inferred from today's staff directory.
+  The legacy staff-performance/top-items adapters use the same ledger and scoped
+  freshness as detailed analytics. Daily history preserves missing/corrupt indexed
+  rows as unavailable, not zero. If a completed retained day has fewer Cloud rows
+  than declared, the additive retry-date response resets only that day's local
+  Sale ACKs; the existing bounded uploader replays the same genuine identities.
+  Phase-one proof: `docs/proofs/MANAGER_SYNC_2026-10-17/README.md`; backend-first
+  reporting/recovery proof: `docs/proofs/BACKEND_SHARED_REPORTING_2026-10-17/README.md`. Original runbook:
   `docs/MGR04_DATA_FRESHNESS.md`. Exact qualification passed 492 Flutter tests,
   88 backend cases and 44 actual HTTP/PG cases;
-  `docs/proofs/MGR04_COMMITTED_4a46db3_2026-10-07.json`. Analytics remain deferred. POS-02 is
+  `docs/proofs/MGR04_COMMITTED_4a46db3_2026-10-07.json`. Further analytics beyond the
+  recorded Sale product/actor projections remain deferred. POS-02 is
   deferred and VM operations stay HELD.
 - MGR-06 is DONE from `e9b5f0f45966bae091205506b78605b8f719d012`. A clean Git-tree export
   qualified before the conditional local commit; the actual committed archive
@@ -858,6 +903,11 @@ current transport status.
   `StockItemPurchaseUnit` -> global mass/volume, then refuses. Count packaging
   (`box`, `pack`) is never globalised: one venue's box is 24 bottles of lemonade
   and 6 of wine, so the ratio belongs to the Stock Item.
+- Stock Item unit edits, recipe saves and Receiving posting lock affected items
+  in sorted Venue-scoped order. A base unit cannot change after any stock
+  movement, even if its old recipe component has since been removed. A recipe
+  portion that rounds below the six-decimal minimum is rejected; malformed
+  consumption shapes fail explicitly before persistence.
 - Recipe conversion is deliberately narrower than receiving conversion: base
   unit or the global mass/volume table only, then refuse. Item packaging is
   never a consumption unit — a box is how a venue buys lemonade, never how it

@@ -30,7 +30,7 @@ import { PlatformWebsiteDeliveriesController } from '../../platform/platform-web
 import { PlatformAuthService } from '../../platform/platform-auth.service';
 import { PlatformAuthGuard } from '../../platform/platform-auth.guard';
 import { BOOTSTRAP_VENUE_ID } from '../../auth/legacy-pos-tenant.service';
-import type { MenuService } from '../menu/menu.service';
+import { MenuService } from '../menu/menu.service';
 import type { MonitoringGateway } from '../../realtime/monitoring.gateway';
 import type { PosOutboxService } from '../../pos/pos-outbox.service';
 import type { PosCallbackClient } from '../../pos/pos-callback.client';
@@ -56,14 +56,15 @@ const url = process.env.WEB03_TEST_DATABASE_URL;
       (_: string, signature: string) => signature === 'fixture-signature',
     );
     const http = () => request(app.getHttpServer() as Server);
-    const worker = () =>
+    const worker = (menu?: MenuService) =>
       new WebsitePosReservationBridgeService(
         db,
         { broadcastUpdate: broadcast } as unknown as MonitoringGateway,
-        {
-          getMenuItemById: () => Promise.resolve({ nameEn: 'Stored item' }),
-          getPosItemIdByCloudId: () => Promise.resolve('pos-item'),
-        } as unknown as MenuService,
+        menu ??
+          ({
+            getMenuItemById: () => Promise.resolve({ nameEn: 'Stored item' }),
+            getPosItemIdByCloudId: () => Promise.resolve('pos-item'),
+          } as unknown as MenuService),
         new PosReservationMirrorService(db),
         dispatcher,
       );
@@ -95,6 +96,15 @@ const url = process.env.WEB03_TEST_DATABASE_URL;
         bootstrap?: boolean;
         posId?: string;
         confirmed?: boolean;
+        menuItems?: (venueId: string) => Promise<
+          {
+            id: string;
+            variantId?: string;
+            name: string;
+            price: number;
+            quantity: number;
+          }[]
+        >;
       } = {},
     ) {
       const organizationId =
@@ -166,9 +176,18 @@ const url = process.env.WEB03_TEST_DATABASE_URL;
           customerEmail: 'fixture@test.invalid',
           numberOfGuests: 3,
           totalAmount: 25,
-          menuItems: JSON.stringify([
-            { id: 'cloud-item', name: 'Frozen name', price: 12.5, quantity: 2 },
-          ]),
+          menuItems: JSON.stringify(
+            options.menuItems
+              ? await options.menuItems(venue.id)
+              : [
+                  {
+                    id: 'cloud-item',
+                    name: 'Frozen name',
+                    price: 12.5,
+                    quantity: 2,
+                  },
+                ],
+          ),
           ...(!options.confirmed
             ? {
                 paymentExpectedMinor: '2500',
@@ -439,6 +458,55 @@ const url = process.env.WEB03_TEST_DATABASE_URL;
           })
         ).posReservationId,
       ).toBe(intent.proposedPosReservationId);
+    });
+    it('preserves paid variant identity through retirement and stable POS translation', async () => {
+      const f = await fixture({
+        menuItems: async (venueId) => {
+          const item = await db.menuItem.create({
+            data: {
+              venueId,
+              posMenuItemId: 'pos-accepted-drink',
+              nameEn: 'Changed drink',
+              nameKa: 'Changed drink ka',
+              price: 99,
+              retiredAt: new Date(),
+              variants: {
+                create: {
+                  posMenuVariantId: 'pos-accepted-large',
+                  size: 1,
+                  price: 99,
+                  retiredAt: new Date(),
+                },
+              },
+            },
+            include: { variants: true },
+          });
+          return [
+            {
+              id: item.id,
+              variantId: item.variants[0].id,
+              name: 'Paid drink 1L',
+              price: 12.5,
+              quantity: 2,
+            },
+          ];
+        },
+      });
+      await pay(f).expect(200);
+      await worker(new MenuService(db)).processDue(f.venueId);
+      const [command] = await queue(f);
+      expect(command.payload).toMatchObject({
+        preOrderItems: [
+          {
+            menuItemId: 'pos-accepted-drink',
+            variantId: 'pos-accepted-large',
+            itemName: 'Paid drink 1L',
+            unitPrice: 12.5,
+            quantity: 2,
+            total: 25,
+          },
+        ],
+      });
     });
     it.each(['EdgeCommand', 'reservations'] as const)(
       '%s fault leaves paid booking recoverable, no orphan link/queue',

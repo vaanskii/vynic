@@ -61,6 +61,7 @@ export class UserService {
               id: string;
               quantity: number;
               price?: number;
+              name?: string;
             }>;
 
             if (Array.isArray(menuItemsData) && menuItemsData.length > 0) {
@@ -77,8 +78,13 @@ export class UserService {
                 );
                 return {
                   ...reservationItem,
-                  name: dbItem?.nameEn || `Item ${reservationItem.id}`,
-                  price: dbItem?.price || reservationItem.price,
+                  // New bookings already contain the paid name/variant and price.
+                  // Catalog fallback only completes older snapshots missing them.
+                  name:
+                    reservationItem.name ??
+                    dbItem?.nameEn ??
+                    `Item ${reservationItem.id}`,
+                  price: reservationItem.price ?? dbItem?.price,
                 };
               });
             }

@@ -32,8 +32,11 @@ class ConnectionFeedback extends StatefulWidget {
           MonitoringSocketService.isInitializing,
           MonitoringSocketService.isReconnecting,
           MonitoringSocketService.apiError,
+          MonitoringSocketService.isSessionActive,
         ]),
-        enabled: () => AuthTokenService.token != null,
+        enabled: () =>
+            AuthTokenService.token != null &&
+            MonitoringSocketService.isSessionActive.value,
         readConnected: () {
           if (MonitoringSocketService.isAppPaused ||
               MonitoringSocketService.isInitializing.value) {

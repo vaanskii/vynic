@@ -1,9 +1,9 @@
 import 'package:vynic/core/services/manager_app/manager_entitlements.dart';
 import 'package:flutter/material.dart';
 import 'package:vynic/apps/mobile_app/presentation/screens/finance_planning_screen.dart';
-import 'package:vynic/apps/mobile_app/presentation/screens/mobile_admin_screen.dart';
 import 'package:vynic/core/services/manager_app/mobile_api_service.dart';
-import 'package:vynic/core/ui/vynic_spacing.dart';
+import 'manager_design_components.dart';
+import '../../theme/manager_theme.dart';
 
 class FinancialPlanningCard extends StatefulWidget {
   const FinancialPlanningCard({super.key, this.load, this.onOpen});
@@ -45,35 +45,31 @@ class _FinancialPlanningCardState extends State<FinancialPlanningCard> {
       widget.onOpen!(obligations);
       return;
     }
-    await Navigator.of(context).push<void>(
-      MaterialPageRoute(
-        builder: (_) => FinancePlanningScreen(obligations: obligations),
-      ),
-    );
+    await showManagerFinancePlanning(context, obligations: obligations);
     if (mounted) await _load();
   }
 
   @override
-  Widget build(BuildContext context) => Card(
-    key: const Key('dashboard-financial-planning'),
-    color: AdminTheme.surface,
-    child: Padding(
-      padding: const EdgeInsets.all(VynicSpacing.md),
+  Widget build(BuildContext context) {
+    final t = managerThemeOf(context);
+    return ManagerPanel(
+      key: const Key('dashboard-financial-planning'),
+      padding: 22,
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
               Expanded(
-                child: Text(
-                  'ფინანსური გეგმა',
-                  style: Theme.of(context).textTheme.titleMedium,
+                child: ManagerSectionHeading(
+                  'ფინანსური დაგეგმვა',
+                  subtitle: 'პერიოდის დაგეგმილი თანხები',
                 ),
               ),
               IconButton(
                 onPressed: _loading ? null : _load,
                 tooltip: 'ფინანსური გეგმის განახლება',
-                icon: const Icon(Icons.refresh),
+                icon: const Icon(Icons.refresh, size: 18),
               ),
             ],
           ),
@@ -85,35 +81,101 @@ class _FinancialPlanningCardState extends State<FinancialPlanningCard> {
                   : 'განახლება ვერ მოხერხდა. ნაჩვენებია ბოლო მიღებული გეგმა.',
             ),
           if (_data != null) ...[
-            Text(
-              'დღეს გადასადები: ${_data!['dailyRecommendedReserve']} ₾',
-              style: Theme.of(context).textTheme.titleLarge,
-            ),
-            for (final r in financeRows(_data!['recommendations']).take(3))
-              Text('${r['name']} · ${r['periodMonth']}: ${r['amount']} ₾'),
-            const SizedBox(height: 8),
             for (final entry in [
               if (ManagerEntitlements.has(FeatureKeys.payroll))
-                (false, 'ხელფასებზე დარჩენილი', 'payrollRemaining'),
-              (true, 'ვალდებულებებზე დარჩენილი', 'obligationsRemaining'),
+                (false, 'ხელფასები', 'payrollRemaining', Icons.people_outline),
+              (
+                true,
+                'ვალდებულებები',
+                'obligationsRemaining',
+                Icons.event_repeat_outlined,
+              ),
             ])
               Padding(
-                padding: const EdgeInsets.only(top: 8),
-                child: OutlinedButton(
+                padding: const EdgeInsets.only(bottom: 18),
+                child: InkWell(
                   key: ValueKey('planning-${entry.$3}'),
-                  style: OutlinedButton.styleFrom(
-                    minimumSize: const Size(48, 48),
-                  ),
-                  onPressed: () => _open(entry.$1),
-                  child: Align(
-                    alignment: Alignment.centerLeft,
-                    child: Text('${entry.$2}: ${_data![entry.$3]} ₾'),
+                  borderRadius: BorderRadius.circular(8),
+                  onTap: () => _open(entry.$1),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 5),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 38,
+                          height: 38,
+                          decoration: BoxDecoration(
+                            color: t.scaffoldBackground,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Icon(
+                            entry.$4,
+                            size: 19,
+                            color: t.textSecondary,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                entry.$2,
+                                style: managerDesignText(
+                                  context,
+                                  13,
+                                  weight: FontWeight.w500,
+                                ),
+                              ),
+                              Text(
+                                'დარჩენილი გადასახდელი',
+                                style: managerDesignText(
+                                  context,
+                                  10,
+                                  muted: true,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          '${_data![entry.$3]} ₾',
+                          style: managerDesignText(
+                            context,
+                            13,
+                            weight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Icon(
+                          Icons.chevron_right,
+                          size: 17,
+                          color: t.textSecondary,
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
+            // The existing recommendation is retained in addition to the approved rows.
+            ManagerKeyValue(
+              'დღეს გადასადები',
+              '${_data!['dailyRecommendedReserve']} ₾',
+            ),
+            for (final r in financeRows(_data!['recommendations']).take(3))
+              ManagerKeyValue(
+                '${r['name']} · ${r['periodMonth']}',
+                '${r['amount']} ₾',
+              ),
+            const SizedBox(height: 16),
+            Text(
+              'რეზერვი გასავლად არ ითვლება.',
+              style: managerDesignText(context, 10, muted: true),
+            ),
           ],
         ],
       ),
-    ),
-  );
+    );
+  }
 }

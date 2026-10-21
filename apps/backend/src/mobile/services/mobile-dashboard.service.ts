@@ -1,4 +1,5 @@
 import { requestTableRepair } from './manager-table-repair';
+import { randomUUID } from 'node:crypto';
 import type { ManagerAuthContext } from '../../auth/manager-auth-context';
 import { financialPayments } from '../../finance/financial-summary';
 import {
@@ -76,6 +77,7 @@ export interface StaffRankEntry {
 }
 
 export interface FinancialsResponse {
+  businessDate: string;
   metricDefinitions?: {
     revenue: string;
     collected: string;
@@ -108,6 +110,7 @@ export interface FinancialsResponse {
     amount: number;
     paymentType: string;
     createdAt: string;
+    canDelete: boolean;
   }[];
   financialProvenance?: string;
   financialWarning?: string | null;
@@ -468,12 +471,12 @@ export class MobileDashboardService {
     );
   }
 
-  async getStaffPerformance(tenant: TenantContext): Promise<StaffRankEntry[]> {
-    void tenant;
-    // Per-waiter Sale attribution is not present in the authoritative summary
-    // mirror yet. Raw Orders include open/internal/restored states and net
-    // payable values, so an empty unavailable result is the only honest value.
-    return [];
+  async getStaffPerformance(
+    tenant: TenantContext,
+    query: { from?: string; to?: string } = {},
+  ): Promise<StaffRankEntry[]> {
+    const ledger = this.saleLedger ?? new MobileSaleLedgerService(this.prisma);
+    return ledger.getStaffPerformance(tenant, query);
   }
 
   async getFinancials(tenant: TenantContext): Promise<FinancialsResponse> {
@@ -499,6 +502,7 @@ export class MobileDashboardService {
           category: true,
           paymentType: true,
           createdAt: true,
+          posExpenseId: true,
         },
         orderBy: { createdAt: 'desc' },
       }),
@@ -597,6 +601,7 @@ export class MobileDashboardService {
         .toFixed(2),
       ...actual,
       totalOutflows: totalOutflows.toFixed(2),
+      businessDate: currentBusinessDate,
       revenue: r(revenue),
       expenses: r(totalExp),
       profit: new Prisma.Decimal(revenue).minus(totalOutflows).toNumber(),
@@ -617,6 +622,7 @@ export class MobileDashboardService {
         amount: r(Number(e.amount)),
         paymentType: e.paymentType,
         createdAt: e.createdAt.toISOString(),
+        canDelete: !isSalaryCategory(e.category) && e.posExpenseId === null,
       })),
       ...(ledger
         ? {
@@ -682,39 +688,56 @@ export class MobileDashboardService {
       now.getSeconds(),
       now.getMilliseconds(),
     );
-    const created = await this.prisma.expense.create({
-      data: {
-        venueId: tenant.venueId,
-        description,
-        amount,
-        category,
-        paymentType,
-        createdAt,
+    // Use the same identity before dispatch and when the POS echoes the record
+    // back through snapshot ingestion's (Venue, posExpenseId) uniqueness key.
+    const id = randomUUID();
+    const { created, posDelivery } = await this.prisma.$transaction(
+      async (tx) => {
+        await tx.$queryRaw`SELECT "id" FROM "pos"."Venue" WHERE "id"=${tenant.venueId} FOR UPDATE`;
+        const created = await tx.expense.create({
+          data: {
+            id,
+            venueId: tenant.venueId,
+            posExpenseId: id,
+            businessDate: currentBusinessDate,
+            description,
+            amount,
+            category,
+            paymentType,
+            createdAt,
+          },
+          select: {
+            id: true,
+            description: true,
+            category: true,
+            amount: true,
+            paymentType: true,
+            createdAt: true,
+          },
+        });
+        // Cloud allocates the expense id, and the POS upserts on it — so a
+        // redelivered command updates the one record instead of adding a second
+        // expense to a restaurant's day.
+        const posDelivery = await this.posCommands.recordCloudMutation(
+          tx,
+          tenant,
+          {
+            type: EdgeCommandTypes.EXPENSE_CREATE,
+            payload: {
+              id: created.id,
+              description: created.description,
+              category: created.category,
+              amount: Number(created.amount),
+              paymentType: created.paymentType,
+              createdAt: created.createdAt.toISOString(),
+              businessDate: currentBusinessDate,
+            },
+          },
+        );
+        return { created, posDelivery };
       },
-      select: {
-        id: true,
-        description: true,
-        category: true,
-        amount: true,
-        paymentType: true,
-        createdAt: true,
-      },
-    });
-    // Cloud allocates the expense id, and the POS upserts on it — so a
-    // redelivered command updates the one record instead of adding a second
-    // expense to a restaurant's day.
-    const posDelivery = await this.posCommands.dispatch(tenant, {
-      type: EdgeCommandTypes.EXPENSE_CREATE,
-      payload: {
-        id: created.id,
-        description: created.description,
-        category: created.category,
-        amount: Number(created.amount),
-        paymentType: created.paymentType,
-        createdAt: created.createdAt.toISOString(),
-        businessDate: currentBusinessDate,
-      },
-    });
+    );
+    this.posCommands.kickRecordedDelivery(tenant, posDelivery);
     return {
       posDelivery,
       id: created.id,
@@ -737,8 +760,12 @@ export class MobileDashboardService {
       throw new BadRequestException(
         'ძველი ხელფასის ისტორია მხოლოდ წაკითხვისთვისაა',
       );
+    if (existing?.posExpenseId != null)
+      throw new BadRequestException(
+        'ხარჯი ინახება POS-ში და აქედან ვერ წაიშლება',
+      );
     const deleted = await this.prisma.expense.deleteMany({
-      where: { id, venueId: tenant.venueId },
+      where: { id, venueId: tenant.venueId, posExpenseId: null },
     });
     if (deleted.count === 0) {
       throw new NotFoundException('Expense not found');

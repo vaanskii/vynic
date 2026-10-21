@@ -27,6 +27,8 @@ vi.mock("../../../vankisi-custom-web/src/contexts/LanguageContext", () => ({
 }));
 const keys = [
   "reservationData",
+  "vankisi_reservation",
+  "vankisi_preorder",
   "selectedReservationDate",
   "selectedReservationTime",
   "vankisi-cart",

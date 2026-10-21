@@ -338,6 +338,67 @@ const databaseUrl = process.env.TENANT_INTEGRATION_DATABASE_URL;
       mutated.snapshot.lines[0].itemName = 'Changed';
       await expect(service.apply(a, mutated)).rejects.toThrow('immutable');
     });
+    it('historical consumption keeps the base unit after a recipe stops using the item', async () => {
+      const f = await fixture('kg', '0.035');
+      await service.apply(a, payload(f.recipe, 2));
+      const replacement = await inventory.createStockItem(a, {
+        name: `Replacement ${++n}`,
+        baseUnit: 'kg',
+      });
+      await recipes.save(a, {
+        menuItemId: f.menu.id,
+        components: [
+          { stockItemId: replacement.id, quantity: '1', unit: 'kg' },
+        ],
+      });
+      expect(
+        await prisma.receivingLine.count({
+          where: { stockItemId: f.stock.id },
+        }),
+      ).toBe(0);
+      expect(
+        await prisma.menuConsumptionComponent.count({
+          where: { stockItemId: f.stock.id },
+        }),
+      ).toBe(0);
+      const before = await inventory.getStockItem(a, f.stock.id);
+      await expect(
+        inventory.updateStockItem(a, f.stock.id, { baseUnit: 'g' }),
+      ).rejects.toThrow('must keep its base unit');
+      expect(await inventory.getStockItem(a, f.stock.id)).toMatchObject({
+        baseUnit: 'kg',
+        currentStock: before.currentStock,
+      });
+    });
+
+    it.each([
+      null,
+      { components: null },
+      { components: [null] },
+      { components: [{ stockItemId: null }] },
+    ])(
+      'rejects malformed consumption shape %j before persisting effects',
+      async (line) => {
+        const f = await fixture();
+        const row = payload(f.recipe);
+        row.snapshot.lines = [line] as any;
+        const before = await prisma.stockMovement.count({
+          where: { venueId: a.venueId },
+        });
+        await expect(service.apply(a, row)).rejects.toMatchObject({
+          status: 400,
+        });
+        expect(
+          await prisma.saleConsumption.count({
+            where: { venueId: a.venueId, posSaleId: row.posSaleId },
+          }),
+        ).toBe(0);
+        expect(
+          await prisma.stockMovement.count({ where: { venueId: a.venueId } }),
+        ).toBe(before);
+      },
+    );
+
     it('unmapped and internal exclusions remain readable without fabricated movements', async () => {
       const f = await fixture();
       const invalidMapped = payload(f.recipe);

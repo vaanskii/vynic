@@ -51,6 +51,7 @@ class DashboardController extends ChangeNotifier {
         final previous = _state.reads[entry.key];
         reads[entry.key] =
             entry.value.location == 'unavailable' &&
+                !entry.value.accessDenied &&
                 previous?.fetchedAt != null &&
                 previous!.query == entry.value.query
             ? previous.failed(
@@ -59,15 +60,31 @@ class DashboardController extends ChangeNotifier {
               )
             : entry.value;
       }
-      _state = _state.copyWith(
-        metrics: bundle.metrics,
-        salesReport: bundle.salesReport,
-        staff: bundle.staff,
-        salesDaily: bundle.salesDaily,
+      // An access denial must clear retained memory just as it excludes cache.
+      // Transient failures may retain the same-query value with its old status.
+      MobileApiService.releaseReadStatuses(_state.reads.values);
+      _state = DashboardState(
+        metrics: reads['dashboard']?.accessDenied == true
+            ? null
+            : bundle.metrics ?? _state.metrics,
+        productAnalytics: reads['product_analytics']?.accessDenied == true
+            ? null
+            : bundle.productAnalytics ?? _state.productAnalytics,
+        financials: reads['financials']?.accessDenied == true
+            ? null
+            : bundle.financials ?? _state.financials,
+        staff: reads['staff_performance']?.accessDenied == true
+            ? const []
+            : bundle.staff ?? _state.staff,
+        salesDaily: reads['sales_daily']?.accessDenied == true
+            ? const []
+            : bundle.salesDaily ?? _state.salesDaily,
         todayReservations: reads['reservations']?.location == 'unavailable'
             ? const []
-            : bundle.todayReservations,
-        countedMenus: bundle.countedMenus,
+            : bundle.todayReservations ?? _state.todayReservations,
+        countedMenus: reads['counted_menus']?.accessDenied == true
+            ? const []
+            : bundle.countedMenus ?? _state.countedMenus,
         loading: false,
         firstLoadDone: true,
         apiError: reads.values.any(

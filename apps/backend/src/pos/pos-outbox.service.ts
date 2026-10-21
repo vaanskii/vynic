@@ -141,7 +141,7 @@ export class PosOutboxService implements OnModuleInit, OnModuleDestroy {
       this.logger.error(
         `Failed to enqueue POS callback ${item.endpoint}: ${(e as Error).message}`,
       );
-      return;
+      throw e;
     }
 
     // Fire an immediate delivery pass without blocking the HTTP response.

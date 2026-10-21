@@ -1,9 +1,21 @@
 import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
-import { ids, installApi, renderPlatform, venue } from "./platform-test-utils";
+import { ids, installApi, product, renderPlatform, venue } from "./platform-test-utils";
 
 describe("Restaurant Code setup", () => {
+  it("distinguishes the permanent identifier from the one-use linking control", async () => {
+    const api = installApi((request) => {
+      if (request.url.pathname.endsWith('/product'))
+        return { body: { ...product, effectiveFeatures: ['MANAGER_APP', 'POS'] } };
+      if (request.url.pathname.endsWith('/managers')) return { body: [] };
+      return undefined;
+    });
+    renderPlatform(`/venues/${ids.venue}/product`);
+    expect(await screen.findByText(/ეს რესტორნის მუდმივი იდენტიფიკატორია/)).toBeVisible();
+    expect(await screen.findByText('Manager app connection')).toBeVisible();
+    expect(api.requests.some((request) => request.method === 'POST')).toBe(false);
+  });
   it.each([360, 768, 1280])(
     "Venue code remains copyable with Manager disabled at %ipx",
     async (width) => {

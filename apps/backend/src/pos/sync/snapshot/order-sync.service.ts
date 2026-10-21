@@ -261,6 +261,7 @@ export class OrderSyncService {
                 activeOrderId: null,
                 currentBill: 0,
               },
+              pOrderId,
             );
             if (updatedCount > 0) {
               releasedTables = true;

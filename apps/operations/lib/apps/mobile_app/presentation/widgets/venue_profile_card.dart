@@ -1,45 +1,75 @@
+import 'package:vynic/apps/mobile_app/presentation/widgets/manager_modal.dart';
 import 'package:flutter/material.dart';
 import '../../../../core/services/manager_app/manager_entitlements.dart';
 import '../../../../core/services/manager_app/mobile_api_service.dart';
 
 class VenueProfileCard extends StatelessWidget {
-  const VenueProfileCard({super.key});
+  const VenueProfileCard({super.key, this.compact = false});
+  final bool compact;
   @override
   Widget build(BuildContext context) =>
       ValueListenableBuilder<Map<String, dynamic>?>(
         valueListenable: ManagerEntitlements.profile,
-        builder: (context, profile, _) => Card(
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
+        builder: (context, profile, _) => compact
+            ? ListTile(
+                contentPadding: EdgeInsets.zero,
+                title: const Text(
                   'რესტორნის პროფილი',
-                  style: Theme.of(context).textTheme.titleMedium,
+                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
                 ),
-                if (profile == null)
-                  const Text('პროფილი ჯერ არ ჩატვირთულა. გადაამოწმეთ კავშირი.')
-                else ...[
-                  for (final field in _fields)
-                    if ((profile[field.key] as String? ?? '').isNotEmpty)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 8),
-                        child: Text('${field.label}: ${profile[field.key]}'),
+                subtitle: Text(
+                  profile == null
+                      ? 'პროფილი ჯერ არ ჩატვირთულა'
+                      : [profile['name'], profile['branchName']]
+                            .whereType<String>()
+                            .where((s) => s.isNotEmpty)
+                            .join(' · '),
+                  style: const TextStyle(fontSize: 11),
+                ),
+                trailing: const Icon(Icons.chevron_right, size: 18),
+                onTap: profile == null
+                    ? null
+                    : () => showDialog<void>(
+                        context: context,
+                        builder: (_) => _ProfileEditor(profile: profile),
                       ),
-                  TextButton.icon(
-                    icon: const Icon(Icons.edit_outlined),
-                    label: const Text('პროფილის შეცვლა'),
-                    onPressed: () => showDialog<void>(
-                      context: context,
-                      builder: (_) => _ProfileEditor(profile: profile),
-                    ),
+              )
+            : Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'რესტორნის პროფილი',
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
+                      if (profile == null)
+                        const Text(
+                          'პროფილი ჯერ არ ჩატვირთულა. გადაამოწმეთ კავშირი.',
+                        )
+                      else ...[
+                        for (final field in _fields)
+                          if ((profile[field.key] as String? ?? '').isNotEmpty)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 8),
+                              child: Text(
+                                '${field.label}: ${profile[field.key]}',
+                              ),
+                            ),
+                        TextButton.icon(
+                          icon: const Icon(Icons.edit_outlined),
+                          label: const Text('პროფილის შეცვლა'),
+                          onPressed: () => showDialog<void>(
+                            context: context,
+                            builder: (_) => _ProfileEditor(profile: profile),
+                          ),
+                        ),
+                      ],
+                    ],
                   ),
-                ],
-              ],
-            ),
-          ),
-        ),
+                ),
+              ),
       );
 }
 
@@ -99,7 +129,7 @@ class _ProfileEditorState extends State<_ProfileEditor> {
   }
 
   @override
-  Widget build(BuildContext context) => AlertDialog(
+  Widget build(BuildContext context) => ManagerFormDialog(
     title: const Text('რესტორნის პროფილი'),
     content: SizedBox(
       width: 420,

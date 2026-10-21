@@ -42,15 +42,29 @@ export function posWinsOrderConflict(
  * go away, so it must not be protected from removal.
  */
 export function pendingStaffUsernames(
-  rows: Array<{ endpoint: string; payload: unknown }>,
+  rows: Array<{ endpoint?: string; type?: string; payload: unknown }>,
+  snapshotProtection = false,
 ): Set<string> {
   const names = new Set<string>();
   for (const row of rows) {
-    if (!row.endpoint.startsWith('/mobile-user-')) continue;
-    if (row.endpoint === '/mobile-user-delete') continue;
+    const staffType = [
+      'STAFF_CREATE',
+      'STAFF_RENAME',
+      'STAFF_PIN_UPDATE',
+      'STAFF_ROLE_UPDATE',
+      'STAFF_DELETE',
+    ].includes(row.type ?? '');
+    if (!row.endpoint?.startsWith('/mobile-user-') && !staffType) continue;
+    if (
+      !snapshotProtection &&
+      (row.endpoint === '/mobile-user-delete' || row.type === 'STAFF_DELETE')
+    )
+      continue;
     const payload = (row.payload ?? {}) as Record<string, unknown>;
     // For rename, the *new* username is the one that should survive.
-    for (const key of ['username', 'newUsername']) {
+    for (const key of snapshotProtection
+      ? ['username', 'newUsername', 'oldUsername']
+      : ['username', 'newUsername']) {
       const value = payload[key];
       if (typeof value === 'string' && value.trim().length > 0) {
         names.add(value.trim());

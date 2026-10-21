@@ -157,17 +157,35 @@ export class MenuService {
     return this.toWebsiteMenuItem(item, sub);
   }
 
-  /** Resolve a public Cloud item key to the POS identity used on order lines. */
+  /** Resolve an accepted booking's Cloud key, including retained retired rows. */
   async getPosItemIdByCloudId(
     tenant: TenantContext,
     itemId: string,
     db: Prisma.TransactionClient = this.prisma,
   ): Promise<string | null> {
     const item = await db.menuItem.findFirst({
-      where: { id: itemId, venueId: tenant.venueId, ...activeMenuItem },
-      select: { posMenuItemId: true },
+      where: { id: itemId, venueId: tenant.venueId },
+      select: { id: true, posMenuItemId: true },
     });
-    return item?.posMenuItemId ?? null;
+    return item ? (item.posMenuItemId ?? item.id) : null;
+  }
+
+  /** Cloud and POS variant keys can differ; never infer one from a display name. */
+  async getPosVariantIdByCloudId(
+    tenant: TenantContext,
+    itemId: string,
+    variantId: string,
+    db: Prisma.TransactionClient = this.prisma,
+  ): Promise<string | null> {
+    const variant = await db.menuItemVariant.findFirst({
+      where: {
+        id: variantId,
+        menuItemId: itemId,
+        menuItem: { venueId: tenant.venueId },
+      },
+      select: { id: true, posMenuVariantId: true },
+    });
+    return variant ? (variant.posMenuVariantId ?? variant.id) : null;
   }
 
   private menuInclude() {
@@ -221,32 +239,35 @@ export class MenuService {
     const hasSubcategories = subcategories.length > 0;
 
     // Unified sections for the frontend: always iterate `sections`, never guess from empty `items`.
+    const directSection = {
+      type: 'items' as const,
+      id: null as string | null,
+      slug: null as string | null,
+      sortOrder: 0,
+      nameEn: null as string | null,
+      nameKa: null as string | null,
+      translations: [] as Array<{ language: string; name: string }>,
+      items: directItems,
+    };
     const sections = hasSubcategories
-      ? subcategories.map((sub) => ({
-          type: 'subcategory' as const,
-          id: sub.id,
-          slug: sub.slug,
-          sortOrder: sub.sortOrder,
-          nameEn: sub.nameEn,
-          nameKa: sub.nameKa,
-          translations: sub.translations,
-          items: sub.items,
-        }))
-      : [
-          {
-            type: 'items' as const,
-            id: null as string | null,
-            slug: null as string | null,
-            sortOrder: 0,
-            nameEn: null as string | null,
-            nameKa: null as string | null,
-            translations: [] as Array<{ language: string; name: string }>,
-            items: directItems,
-          },
-        ];
+      ? [
+          ...(directItems.length ? [directSection] : []),
+          ...subcategories.map((sub) => ({
+            type: 'subcategory' as const,
+            id: sub.id,
+            slug: sub.slug,
+            sortOrder: sub.sortOrder,
+            nameEn: sub.nameEn,
+            nameKa: sub.nameKa,
+            translations: sub.translations,
+            items: sub.items,
+          })),
+        ]
+      : [directSection];
 
     const totalItemCount = hasSubcategories
-      ? subcategories.reduce((sum, sub) => sum + sub.items.length, 0)
+      ? directItems.length +
+        subcategories.reduce((sum, sub) => sum + sub.items.length, 0)
       : directItems.length;
 
     return {
@@ -263,7 +284,7 @@ export class MenuService {
       hasSubcategories,
       /** `flat` = show category.items; `grouped` = show category.sections (subcategory tabs) */
       displayMode: hasSubcategories ? ('grouped' as const) : ('flat' as const),
-      /** Direct items only — empty when hasSubcategories (use sections instead) */
+      /** Direct items only; sections includes these alongside subcategories. */
       items: directItems,
       subcategories,
       /** Preferred for UI: list of item groups to render */

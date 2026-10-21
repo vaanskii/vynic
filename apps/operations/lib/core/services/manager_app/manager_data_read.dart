@@ -6,6 +6,8 @@ class ManagerReadStatus {
   final DateTime? sourceUpdatedAt, receivedAt, fetchedAt;
   final String? error;
   final bool apiAvailable;
+  final int? httpStatus;
+  bool get accessDenied => httpStatus == 401 || httpStatus == 403;
   const ManagerReadStatus({
     required this.key,
     this.location = 'unavailable',
@@ -17,6 +19,7 @@ class ManagerReadStatus {
     this.fetchedAt,
     this.error,
     this.apiAvailable = false,
+    this.httpStatus,
   });
   factory ManagerReadStatus.fromJson(String key, Map<String, dynamic> json) =>
       ManagerReadStatus(
@@ -32,6 +35,7 @@ class ManagerReadStatus {
         fetchedAt: DateTime.tryParse(json['fetchedAt'] as String? ?? ''),
         error: json['error'] as String?,
         apiAvailable: json['apiAvailable'] == true,
+        httpStatus: (json['httpStatus'] as num?)?.toInt(),
       );
   Map<String, dynamic> toJson() => {
     'location': location,
@@ -43,20 +47,25 @@ class ManagerReadStatus {
     'fetchedAt': fetchedAt?.toUtc().toIso8601String(),
     'error': error,
     'apiAvailable': apiAvailable,
+    'httpStatus': httpStatus,
   };
-  ManagerReadStatus failed(String message, {String? location}) =>
-      ManagerReadStatus(
-        key: key,
-        location: location ?? this.location,
-        source: source,
-        completeness: completeness,
-        query: query,
-        sourceUpdatedAt: sourceUpdatedAt,
-        receivedAt: receivedAt,
-        fetchedAt: fetchedAt,
-        error: message,
-        apiAvailable: false,
-      );
+  ManagerReadStatus failed(
+    String message, {
+    String? location,
+    int? httpStatus,
+  }) => ManagerReadStatus(
+    key: key,
+    location: location ?? this.location,
+    source: source,
+    completeness: completeness,
+    query: query,
+    sourceUpdatedAt: sourceUpdatedAt,
+    receivedAt: receivedAt,
+    fetchedAt: fetchedAt,
+    error: message,
+    apiAvailable: false,
+    httpStatus: httpStatus,
+  );
   bool staleAt(DateTime now) {
     bool old(DateTime? time) =>
         time == null ||
@@ -109,6 +118,17 @@ class ManagerDataReads {
   static void clear() {
     _scope = null;
     statuses.value = const {};
+  }
+
+  /// A refreshed view no longer displays its old pages. Retire only those exact
+  /// status objects; a newer response or another query keeps its own state.
+  static void release(String scope, Iterable<ManagerReadStatus> reads) {
+    if (_scope != scope) return;
+    final retired = reads.toSet();
+    statuses.value = {
+      for (final entry in statuses.value.entries)
+        if (!retired.contains(entry.value)) entry.key: entry.value,
+    };
   }
 
   static bool get hasApiError =>

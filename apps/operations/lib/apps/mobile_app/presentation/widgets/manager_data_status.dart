@@ -1,3 +1,4 @@
+import 'package:vynic/apps/mobile_app/theme/manager_theme.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:vynic/core/services/manager_app/manager_data_read.dart';
@@ -96,10 +97,14 @@ class _ManagerDataStatusPanelState extends State<ManagerDataStatusPanel> {
       final now = DateTime.now().toUtc();
       final apiError = reads.any((r) => !r.apiAvailable);
       final limited = reads.any((r) => r.limitedAt(now));
-      final title =
-          '${apiError ? 'API: განახლების შეცდომა' : 'API: ხელმისაწვდომია'} · ${limited ? 'მონაცემები შეზღუდულია' : 'მონაცემები განახლებულია'}';
+      final theme = managerThemeOf(context);
+      final title = apiError
+          ? 'განახლება ვერ მოხერხდა · მონაცემები შეზღუდულია'
+          : limited
+          ? 'მონაცემები შეზღუდულია'
+          : 'მონაცემები განახლებულია';
       return Material(
-        color: limited ? const Color(0xFF31271C) : const Color(0xFF152B29),
+        color: limited ? theme.warn.withValues(alpha: .1) : theme.surfaceCard,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -112,8 +117,8 @@ class _ManagerDataStatusPanelState extends State<ManagerDataStatusPanel> {
                       padding: const EdgeInsets.all(12),
                       child: Text(
                         title,
-                        style: const TextStyle(
-                          color: Colors.white,
+                        style: TextStyle(
+                          color: theme.textSecondary,
                           fontSize: 12,
                         ),
                       ),
@@ -125,14 +130,14 @@ class _ManagerDataStatusPanelState extends State<ManagerDataStatusPanel> {
                   onPressed: () => setState(() => _expanded = !_expanded),
                   icon: Icon(
                     _expanded ? Icons.expand_less : Icons.expand_more,
-                    color: Colors.white,
+                    color: theme.textSecondary,
                   ),
                 ),
                 if (widget.onRefresh != null)
                   IconButton(
                     tooltip: 'მონაცემების განახლება',
                     onPressed: widget.onRefresh,
-                    icon: const Icon(Icons.refresh, color: Colors.white),
+                    icon: Icon(Icons.refresh, color: theme.textSecondary),
                   ),
               ],
             ),
@@ -160,19 +165,16 @@ class _ManagerDataStatusPanelState extends State<ManagerDataStatusPanel> {
                             '${r.source == 'CLOUD' ? 'Cloud ცვლილების დრო' : 'POS წყაროს დრო'}: ${_time(r.sourceUpdatedAt)} · ასაკი: ${_age(r.sourceUpdatedAt, now)}\n'
                             'Cloud-ში მიღება: ${_time(r.receivedAt)} · სისრულე: ${_completeness(r.completeness)}'
                             '${r.error == null ? '' : '\n${r.error}'}',
-                            style: const TextStyle(
-                              color: Colors.white,
+                            style: TextStyle(
+                              color: theme.textSecondary,
                               fontSize: 12,
                             ),
                           ),
                         ),
                       if (limited)
-                        const Text(
+                        Text(
                           'ეს მონაცემები მიმდინარე POS მდგომარეობას ვერ ადასტურებს. POS ოპერაციის დასრულება დასტურდება მხოლოდ POS-ის პასუხით.',
-                          style: TextStyle(
-                            color: Color(0xFFFFCF8A),
-                            fontSize: 12,
-                          ),
+                          style: TextStyle(color: theme.warn, fontSize: 12),
                         ),
                     ],
                   ),
@@ -244,7 +246,7 @@ class ManagerDataUnavailable extends StatelessWidget {
     padding: const EdgeInsets.all(24),
     child: Text(
       '$label: მონაცემები მიუწვდომელია. სცადეთ განახლება.',
-      style: const TextStyle(color: Color(0xFFFFCF8A), fontSize: 14),
+      style: TextStyle(color: managerThemeOf(context).warn, fontSize: 14),
     ),
   );
 }

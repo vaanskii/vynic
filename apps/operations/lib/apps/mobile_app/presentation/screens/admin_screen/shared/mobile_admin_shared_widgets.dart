@@ -11,6 +11,8 @@ abstract final class AdminTheme {
   static Color get surfaceElevated => _d.adminSurfaceElevated;
   static Color get border => _d.adminBorder;
   static Color get primary => _d.primary;
+  static Color get onPrimary =>
+      _d.isDark ? const Color(0xFF21182E) : Colors.white;
   static Color get accent => _d.info;
   static Color get good => _d.good;
   static Color get bad => _d.bad;
@@ -61,10 +63,11 @@ String? _adminShareSubtitle(num part, num total) {
   return '${(part / total * 100).toStringAsFixed(0)}%';
 }
 
-/// Clears the floating bottom nav when scrolling admin tabs.
+/// Trailing space for content; the shell measures and reserves navigation.
 EdgeInsets _adminScrollPadding(BuildContext context) {
   final bottom = MediaQuery.paddingOf(context).bottom;
-  return EdgeInsets.fromLTRB(16, 12, 16, bottom + 108);
+  final inset = MediaQuery.sizeOf(context).width < 700 ? 20.0 : 32.0;
+  return EdgeInsets.fromLTRB(inset, 20, inset, bottom + 24);
 }
 
 void _adminToast(BuildContext context, String msg, {bool error = false}) {
@@ -193,7 +196,7 @@ class _ErrorWidget extends StatelessWidget {
             label: const Text('თავიდან'),
             style: FilledButton.styleFrom(
               backgroundColor: AdminTheme.primary,
-              foregroundColor: Colors.white,
+              foregroundColor: AdminTheme.onPrimary,
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
             ),
           ),
@@ -218,21 +221,20 @@ class _AdminPanel extends StatelessWidget {
   final Color? accentBorder;
 
   @override
-  Widget build(BuildContext context) {
-    return Container(
-      margin: margin,
-      padding: padding,
-      decoration: BoxDecoration(
-        color: AdminTheme.surface,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
+  Widget build(BuildContext context) => Padding(
+    padding: margin ?? EdgeInsets.zero,
+    child: Material(
+      color: AdminTheme.surface,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(18),
+        side: BorderSide(
           color: accentBorder ?? AdminTheme.border,
-          width: accentBorder != null ? 1.5 : 1,
+          width: accentBorder == null ? 1 : 1.5,
         ),
       ),
-      child: child,
-    );
-  }
+      child: Padding(padding: padding, child: child),
+    ),
+  );
 }
 
 class _AdminSection extends StatelessWidget {
@@ -269,23 +271,13 @@ class _AdminSectionTitle extends StatelessWidget {
     padding: const EdgeInsets.only(bottom: 8, top: 2),
     child: Row(
       children: [
-        Container(
-          width: 3,
-          height: 18,
-          margin: const EdgeInsets.only(right: 10),
-          decoration: BoxDecoration(
-            color: AdminTheme.primary,
-            borderRadius: BorderRadius.circular(2),
-          ),
-        ),
         Expanded(
           child: Text(
-            title.toUpperCase(),
+            title,
             style: TextStyle(
               color: AdminTheme.textMuted,
-              fontSize: 12,
-              fontWeight: FontWeight.w800,
-              letterSpacing: 0.8,
+              fontSize: 15,
+              fontWeight: FontWeight.w700,
             ),
           ),
         ),
@@ -318,10 +310,9 @@ class _AdminHeroMetric extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final accentColor = accent ?? AdminTheme.good;
     return _AdminPanel(
       padding: const EdgeInsets.fromLTRB(20, 20, 20, 18),
-      accentBorder: accentColor.withValues(alpha: 0.5),
+
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -340,7 +331,7 @@ class _AdminHeroMetric extends StatelessWidget {
             style: TextStyle(
               fontSize: 32,
               fontWeight: FontWeight.w800,
-              color: accentColor,
+              color: AdminTheme.text,
               letterSpacing: -1,
               height: 1.1,
             ),
@@ -462,7 +453,7 @@ class _AdminFilterChip extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) => GestureDetector(
+  Widget build(BuildContext context) => InkWell(
     onTap: onTap,
     child: Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
@@ -478,7 +469,7 @@ class _AdminFilterChip extends StatelessWidget {
         style: TextStyle(
           fontSize: 13,
           fontWeight: FontWeight.w700,
-          color: selected ? Colors.white : AdminTheme.textMuted,
+          color: selected ? AdminTheme.onPrimary : AdminTheme.textMuted,
         ),
       ),
     ),
@@ -558,7 +549,10 @@ class _AdminKpiGrid extends StatelessWidget {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final w = (constraints.maxWidth - 10) / 2;
+        final columns = constraints.maxWidth >= 800
+            ? items.length.clamp(1, 4)
+            : 2;
+        final w = (constraints.maxWidth - 10 * (columns - 1)) / columns;
         return Wrap(
           spacing: 10,
           runSpacing: 10,
@@ -596,39 +590,6 @@ class _AdminKpiItem {
     required this.color,
     this.subtitle,
   });
-}
-
-class _AdminPrimaryButton extends StatelessWidget {
-  const _AdminPrimaryButton({
-    required this.label,
-    required this.onPressed,
-    this.icon,
-  });
-
-  final String label;
-  final VoidCallback onPressed;
-  final IconData? icon;
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: double.infinity,
-      child: FilledButton.icon(
-        onPressed: onPressed,
-        icon: Icon(icon ?? Icons.add_rounded, size: 20),
-        label: Text(label),
-        style: FilledButton.styleFrom(
-          backgroundColor: AdminTheme.primary,
-          foregroundColor: Colors.white,
-          padding: const EdgeInsets.symmetric(vertical: 14),
-          textStyle: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10),
-          ),
-        ),
-      ),
-    );
-  }
 }
 
 /// Connection dot only: green = ok, orange = API issue, red = offline.
@@ -678,7 +639,7 @@ Future<bool?> _adminConfirmDialog(
 }) {
   return showDialog<bool>(
     context: context,
-    builder: (ctx) => AlertDialog(
+    builder: (ctx) => ManagerFormDialog(
       backgroundColor: AdminTheme.surface,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
@@ -713,7 +674,7 @@ Future<bool?> _adminFormDialog(
 }) {
   return showDialog<bool>(
     context: context,
-    builder: (ctx) => AlertDialog(
+    builder: (ctx) => ManagerFormDialog(
       backgroundColor: AdminTheme.surface,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
@@ -734,7 +695,7 @@ Future<bool?> _adminFormDialog(
         FilledButton(
           onPressed: () => Navigator.pop(ctx, true),
           style: FilledButton.styleFrom(backgroundColor: AdminTheme.primary),
-          child: Text(confirm, style: const TextStyle(color: Colors.white)),
+          child: Text(confirm, style: TextStyle(color: AdminTheme.onPrimary)),
         ),
       ],
     ),
@@ -745,13 +706,14 @@ InputDecoration _adminInput(String label) => InputDecoration(
   labelText: label,
   labelStyle: TextStyle(color: AdminTheme.textMuted),
   filled: true,
-  fillColor: AdminTheme.surfaceElevated,
+  fillColor: AdminTheme.surface,
+  contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 15),
   enabledBorder: OutlineInputBorder(
     borderSide: BorderSide(color: AdminTheme.border),
     borderRadius: BorderRadius.circular(10),
   ),
   focusedBorder: OutlineInputBorder(
-    borderSide: BorderSide(color: AdminTheme.primary, width: 1.5),
+    borderSide: BorderSide(color: AdminTheme.primary, width: 2),
     borderRadius: BorderRadius.circular(10),
   ),
 );
@@ -797,5 +759,47 @@ Widget _adminRoleDropdown({
         )
         .toList(),
     onChanged: onChanged,
+  );
+}
+
+/// Groups related panels into two natural-height columns when local space permits.
+/// Narrow windows keep the same reading order and full-size touch controls.
+class _AdminSections extends StatelessWidget {
+  const _AdminSections({required this.children});
+  final List<Widget> children;
+  @override
+  Widget build(BuildContext context) => LayoutBuilder(
+    builder: (context, box) {
+      final panels = children
+          .where((child) => child is! SizedBox || child.child != null)
+          .toList();
+      Widget column(Iterable<Widget> content) => Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          for (final entry in content.indexed) ...[
+            if (entry.$1 > 0) const SizedBox(height: 20),
+            entry.$2,
+          ],
+        ],
+      );
+      if (box.maxWidth < 900 * MediaQuery.textScalerOf(context).scale(1))
+        return column(panels);
+      return Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            child: column([
+              for (var i = 0; i < panels.length; i += 2) panels[i],
+            ]),
+          ),
+          const SizedBox(width: 24),
+          Expanded(
+            child: column([
+              for (var i = 1; i < panels.length; i += 2) panels[i],
+            ]),
+          ),
+        ],
+      );
+    },
   );
 }

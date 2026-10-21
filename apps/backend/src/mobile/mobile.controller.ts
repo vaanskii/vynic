@@ -481,6 +481,16 @@ export class MobileController {
   }
 
   /** Missed manager notifications while the app was backgrounded (persisted on server). */
+  @Get('notifications/page')
+  async getNotificationsPage(
+    @ManagerTenant() tenant: TenantContext,
+    @Req() req: { user: { username: string } },
+    @Query('since') since?: string,
+    @Query('cursor') cursor?: string,
+  ) {
+    return this.devices.getNotificationsPage(tenant, req.user.username, since, cursor);
+  }
+
   @Get('notifications')
   async getNotifications(
     @ManagerTenant() tenant: TenantContext,
@@ -539,8 +549,11 @@ export class MobileController {
 
   // GET /mobile/staff-performance
   @Get('staff-performance')
-  async getStaffPerformance(@ManagerTenant() tenant: TenantContext) {
-    return this.dashboard.getStaffPerformance(tenant);
+  async getStaffPerformance(
+    @ManagerTenant() tenant: TenantContext,
+    @Query() query: { from?: string; to?: string },
+  ) {
+    return this.dashboard.getStaffPerformance(tenant, query);
   }
 
   // GET /mobile/financials
@@ -598,7 +611,7 @@ export class MobileController {
   @Get('sale-staff-analytics')
   async getSaleStaffAnalytics(
     @ManagerTenant() tenant: TenantContext,
-    @Query() query: { from?: string; to?: string },
+    @Query() query: { from?: string; to?: string; attribution?: string },
   ) {
     return this.saleLedger.getStaff(tenant, query);
   }

@@ -119,6 +119,8 @@ void main() {
       expect(find.text(beef.name), findsNothing);
       expect(find.text(borjomi.name), findsOneWidget);
       await screenshot(tester, 'catalog-mobile');
+      await tester.tap(find.byTooltip('მოქმედებები').first);
+      await tester.pumpAndSettle();
       await tester.tap(find.text('რედაქტირება').first);
       await tester.pumpAndSettle();
       expect(find.byKey(const Key('stock-classification')), findsOneWidget);
@@ -186,18 +188,20 @@ void main() {
       );
       await tester.pumpAndSettle();
       await flow.chooseReceivingProduct(tester);
-      await tester.ensureVisible(find.text('თარიღი და დოკუმენტის დეტალები'));
+      await tester.ensureVisible(find.text('წყარო და დოკუმენტის დეტალები'));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('თარიღი და დოკუმენტის დეტალები'));
+      await tester.tap(find.text('წყარო და დოკუმენტის დეტალები'));
       await tester.pumpAndSettle();
       expect(find.text('სამუშაო დღე: 2026-09-05'), findsOneWidget);
       expect(
         find.byKey(const ValueKey('receiving-line-item-0-borjomi')),
         findsOneWidget,
       );
+      await openReceivingOptions(tester);
       await tester.ensureVisible(
         find.byKey(const Key('receiving-line-unit-0')),
       );
+      await openReceivingOptions(tester);
       await tester.tap(find.byKey(const Key('receiving-line-unit-0')));
       await tester.pumpAndSettle();
       await tester.tap(find.text('შეკვრა').last);
@@ -316,8 +320,9 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
+    await openRecipeContext(tester);
     expect(find.text('გასაყიდი ფასი: 2.50 ₾'), findsOneWidget);
-    expect(find.text('რეცეპტის მიმდინარე შეფასება: 0.65 ₾'), findsOneWidget);
+    expect(find.text('0.65 ₾'), findsOneWidget);
     await tester.ensureVisible(
       find.text('შენახული შემადგენლობით · მიმდინარე მარაგის ფასი'),
     );
@@ -341,10 +346,7 @@ void main() {
         ),
       ),
     );
-    expect(
-      find.text('რეცეპტის მიმდინარე შეფასება: ვერ გამოითვლება'),
-      findsOneWidget,
-    );
+    expect(find.text('ვერ გამოითვლება'), findsOneWidget);
     expect(
       find.text('ზოგი ინგრედიენტის ღირებულება უცნობია ან წინასწარია.'),
       findsOneWidget,

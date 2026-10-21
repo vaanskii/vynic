@@ -201,7 +201,11 @@ extension _LiveStatusTablesView on _LiveStatusScreenState {
 
     final repairScope = MobileApiService.tableRepairScope;
     final sections = <Widget>[];
+    final selectedFloor = _tablesByFloor.containsKey(_selectedFloor)
+        ? _selectedFloor
+        : _tablesByFloor.keys.first;
     for (final floor in _tablesByFloor.keys) {
+      if (floor != selectedFloor) continue;
       final filtered = _tablesByFloor[floor]!.where(_matchesFilter).toList();
       if (filtered.isEmpty) continue;
       sections.add(
@@ -219,7 +223,12 @@ extension _LiveStatusTablesView on _LiveStatusScreenState {
       physics: const AlwaysScrollableScrollPhysics(
         parent: BouncingScrollPhysics(),
       ),
-      padding: const EdgeInsets.fromLTRB(24, 8, 24, 130),
+      padding: EdgeInsets.fromLTRB(
+        MediaQuery.sizeOf(context).width < 700 ? 20 : 32,
+        16,
+        MediaQuery.sizeOf(context).width < 700 ? 20 : 32,
+        24,
+      ),
       children: [
         TableRepairStatusPanel(
           scope: repairScope,
@@ -237,6 +246,41 @@ extension _LiveStatusTablesView on _LiveStatusScreenState {
             return result;
           },
         ),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            for (final floor in _tablesByFloor.keys)
+              TextButton(
+                key: ValueKey('table-zone-$floor'),
+                onPressed: () => _selectFloor(floor),
+                style: TextButton.styleFrom(
+                  backgroundColor: selectedFloor == floor
+                      ? MobileGlassTheme.surfaceCard
+                      : Colors.transparent,
+                  side: selectedFloor == floor
+                      ? BorderSide(color: MobileGlassTheme.borderSubtle)
+                      : null,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 15,
+                    vertical: 12,
+                  ),
+                ),
+                child: Text(
+                  _tablesByFloor[floor]!.firstOrNull?.floorLabel ?? floor,
+                  style: managerDesignText(
+                    context,
+                    12,
+                    muted: selectedFloor != floor,
+                    weight: selectedFloor == floor
+                        ? FontWeight.w600
+                        : FontWeight.w400,
+                  ),
+                ),
+              ),
+          ],
+        ),
+        const SizedBox(height: 20),
         _buildFilterPills(),
         SizedBox(height: 18),
         if (sections.isEmpty)
@@ -282,44 +326,47 @@ extension _LiveStatusTablesView on _LiveStatusScreenState {
   }
 
   Widget _buildFilterPills() {
-    return SizedBox(
-      height: 38,
-      child: ListView.builder(
-        scrollDirection: Axis.horizontal,
-        physics: const BouncingScrollPhysics(),
-        itemCount: _LiveStatusScreenState._tableFilters.length,
-        itemBuilder: (context, index) {
-          final isSel = _tableFilter == index;
-          return GestureDetector(
-            onTap: () => _setTableFilter(index),
-            behavior: HitTestBehavior.opaque,
-            child: Container(
-              margin: const EdgeInsets.only(right: 8),
-              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
-              decoration: BoxDecoration(
-                color: isSel
-                    ? MobileGlassTheme.primary
-                    : MobileGlassTheme.surface(0.05),
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(
-                  color: isSel
-                      ? MobileGlassTheme.primary
-                      : MobileGlassTheme.border(0.1),
+    final tables = _tablesByFloor.values.expand((v) => v);
+    return Row(
+      children: [
+        Text(
+          '${tables.where((t) => _tableState(t) == 'occupied').length} დაკავებული',
+          style: managerDesignText(
+            context,
+            11,
+          ).copyWith(color: MobileGlassTheme.primary),
+        ),
+        const SizedBox(width: 20),
+        Expanded(
+          child: Text(
+            '${tables.where((t) => _tableState(t) == 'free').length} თავისუფალი',
+            style: managerDesignText(context, 11, muted: true),
+          ),
+        ),
+        PopupMenuButton<int>(
+          tooltip: 'გაფილტვრა',
+          initialValue: _tableFilter,
+          onSelected: _setTableFilter,
+          itemBuilder: (_) => [
+            for (final entry in _LiveStatusScreenState._tableFilters.indexed)
+              PopupMenuItem(value: entry.$1, child: Text(entry.$2)),
+          ],
+          child: Padding(
+            padding: const EdgeInsets.all(10),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  _LiveStatusScreenState._tableFilters[_tableFilter],
+                  style: managerDesignText(context, 11, muted: true),
                 ),
-              ),
-              alignment: Alignment.center,
-              child: Text(
-                _LiveStatusScreenState._tableFilters[index],
-                style: TextStyle(
-                  color: isSel ? Colors.white : MobileGlassTheme.textSecondary,
-                  fontWeight: isSel ? FontWeight.w600 : FontWeight.w400,
-                  fontSize: 13,
-                ),
-              ),
+                const SizedBox(width: 5),
+                const Icon(Icons.filter_list, size: 16),
+              ],
             ),
-          );
-        },
-      ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -374,18 +421,6 @@ extension _LiveStatusTablesView on _LiveStatusScreenState {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Padding(
-          padding: const EdgeInsets.only(bottom: 12, left: 4),
-          child: Text(
-            tables.first.floorLabel ?? floorName.toUpperCase(),
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.bold,
-              color: MobileGlassTheme.textSecondary,
-              letterSpacing: 1.2,
-            ),
-          ),
-        ),
         LayoutBuilder(
           builder: (context, constraints) {
             final width = constraints.maxWidth;
@@ -396,15 +431,15 @@ extension _LiveStatusTablesView on _LiveStatusScreenState {
                 : width >= 340
                 ? 2
                 : 1;
-            final aspect = width >= 640 ? 1.05 : 0.92;
             return GridView.builder(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
               gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: crossAxisCount,
-                crossAxisSpacing: 14,
-                mainAxisSpacing: 14,
-                childAspectRatio: aspect,
+                crossAxisSpacing: 12,
+                mainAxisSpacing: 12,
+                mainAxisExtent:
+                    158 * MediaQuery.textScalerOf(context).scale(14) / 14,
               ),
               itemCount: entries.length,
               itemBuilder: (context, index) => _buildTableCard(
@@ -465,7 +500,7 @@ extension _LiveStatusTablesView on _LiveStatusScreenState {
   }
 
   void _showReservedNoOrderSheet(TableModel table) {
-    showModalBottomSheet(
+    showManagerModal(
       context: context,
       backgroundColor: Colors.transparent,
       builder: (ctx) => Container(
@@ -524,7 +559,7 @@ extension _LiveStatusTablesView on _LiveStatusScreenState {
                 onPressed: () => Navigator.pop(ctx),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: MobileGlassTheme.primary,
-                  foregroundColor: Colors.white,
+                  foregroundColor: MobileGlassTheme.onPrimary,
                   elevation: 0,
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   shape: RoundedRectangleBorder(
@@ -619,10 +654,12 @@ extension _LiveStatusTablesView on _LiveStatusScreenState {
     final Color accent;
     if (state == 'free') {
       accent = MobileGlassTheme.good;
-    } else if (groupKey != null && groupColors.containsKey(groupKey)) {
+    } else if (isCombined &&
+        groupKey != null &&
+        groupColors.containsKey(groupKey)) {
       accent = groupColors[groupKey]!;
     } else if (isOccupied) {
-      accent = MobileGlassTheme.accent;
+      accent = MobileGlassTheme.primary;
     } else {
       accent = MobileGlassTheme.warn;
     }
@@ -641,23 +678,39 @@ extension _LiveStatusTablesView on _LiveStatusScreenState {
               .join(' · ')
         : 'T${displayNumbers.join('-')}';
 
-    final IconData icon = isOccupied
-        ? Icons.local_dining_rounded
-        : isReserved
+    final IconData icon = isReserved
         ? Icons.schedule_rounded
-        : Icons.chair_alt_rounded;
+        : Icons.table_restaurant_outlined;
 
+    final visualTitle = !isCombined && title == 'მაგიდა ${table.tableNumber}'
+        ? table.tableNumber.padLeft(2, '0')
+        : title;
     final elapsed = _elapsedShort(table.reservedAt);
 
     return _GlassPanel(
-      borderRadius: BorderRadius.circular(24),
+      borderRadius: BorderRadius.circular(14),
+      backgroundColor: isOccupied && !managerThemeOf(context).isDark
+          ? const Color(0xFFFAF8FD)
+          : MobileGlassTheme.surfaceCard,
       padding: const EdgeInsets.all(16),
-      borderColor: state == 'free'
-          ? MobileGlassTheme.border(0.15)
-          : accent.withOpacity(0.55),
-      borderWidth: state == 'free' ? 1 : 2,
+      borderColor:
+          _inspectedTable?.activeOrderId != null &&
+              _inspectedTable?.activeOrderId == table.activeOrderId
+          ? accent
+          : isOccupied
+          ? const Color(0xFFDFD5EE)
+          : MobileGlassTheme.borderSubtle,
+      borderWidth:
+          _inspectedTable?.activeOrderId != null &&
+              _inspectedTable?.activeOrderId == table.activeOrderId
+          ? 1.5
+          : 1,
       onTap: hasOrder
           ? () async {
+              if (MediaQuery.sizeOf(context).width >= 1250) {
+                _inspectTable(table);
+                return;
+              }
               final result = await Navigator.push(
                 context,
                 MaterialPageRoute(
@@ -690,12 +743,13 @@ extension _LiveStatusTablesView on _LiveStatusScreenState {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      title,
+                      visualTitle,
+                      semanticsLabel: title,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 18,
+                        fontWeight: FontWeight.w500,
+                        fontSize: 23,
                         color: MobileGlassTheme.textPrimary,
                       ),
                     ),
@@ -715,22 +769,21 @@ extension _LiveStatusTablesView on _LiveStatusScreenState {
                   ],
                 ),
               ),
-              Container(
-                padding: const EdgeInsets.all(6),
-                decoration: BoxDecoration(
-                  color: accent.withOpacity(0.25),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(icon, color: accent, size: 14),
+              Icon(
+                icon,
+                color: isOccupied || isReserved
+                    ? accent
+                    : MobileGlassTheme.textSecondary,
+                size: 21,
               ),
             ],
           ),
           if (isOccupied)
             Text(
-              '${bill.toStringAsFixed(1)} ₾',
+              '${bill.toStringAsFixed(2)} ₾',
               style: TextStyle(
-                fontWeight: FontWeight.w800,
-                fontSize: 21,
+                fontWeight: FontWeight.w600,
+                fontSize: 17,
                 color: MobileGlassTheme.textPrimary,
                 letterSpacing: -0.5,
               ),
@@ -739,9 +792,9 @@ extension _LiveStatusTablesView on _LiveStatusScreenState {
             Text(
               isReserved ? 'რეზერვი' : 'თავისუფალი',
               style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: accent,
+                fontSize: 12,
+                fontWeight: FontWeight.w400,
+                color: MobileGlassTheme.textSecondary,
               ),
             ),
           Row(
@@ -761,7 +814,7 @@ extension _LiveStatusTablesView on _LiveStatusScreenState {
                         : 'პერსონალი',
                     style: TextStyle(
                       color: MobileGlassTheme.textSecondary,
-                      fontSize: 12,
+                      fontSize: 10,
                     ),
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -774,8 +827,8 @@ extension _LiveStatusTablesView on _LiveStatusScreenState {
                       color: isOccupied
                           ? MobileGlassTheme.textSecondary
                           : accent,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w400,
                     ),
                   ),
                 ],
@@ -788,11 +841,11 @@ extension _LiveStatusTablesView on _LiveStatusScreenState {
                 SizedBox(width: 4),
                 Expanded(
                   child: Text(
-                    'walk-in',
+                    'სტუმრის მიღება',
                     style: TextStyle(
                       color: MobileGlassTheme.good.withOpacity(0.9),
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w400,
                     ),
                     overflow: TextOverflow.ellipsis,
                   ),

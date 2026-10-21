@@ -174,10 +174,11 @@ function makeService() {
   const db = new FakeDb();
   const dispatched: TenantContext[] = [];
   const dispatcher = {
-    dispatch: (tenant: TenantContext) => {
+    recordCloudMutation: (_tx: unknown, tenant: TenantContext) => {
       dispatched.push(tenant);
       return Promise.resolve({ delivered: false });
     },
+    kickRecordedDelivery: () => undefined,
   } as unknown as PosCommandDispatcher;
   const vault = new StaffPinVault(db as unknown as PrismaService);
   const users = new MobileUsersService(

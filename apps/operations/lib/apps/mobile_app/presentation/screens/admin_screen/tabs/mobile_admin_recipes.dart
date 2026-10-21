@@ -391,9 +391,7 @@ class _RecipeEditorDialogState extends State<RecipeEditorDialog> {
   Widget build(BuildContext context) {
     return Theme(
       data: inventoryTheme(context),
-      child: AlertDialog(
-        insetPadding: const EdgeInsets.all(VynicSpacing.md),
-        contentPadding: const EdgeInsets.all(VynicSpacing.md),
+      child: ManagerFormDialog(
         key: const Key('recipe-editor'),
         backgroundColor: AdminTheme.surface,
         title: Text(_title, style: TextStyle(color: AdminTheme.text)),
@@ -417,29 +415,9 @@ class _RecipeEditorDialogState extends State<RecipeEditorDialog> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       mainAxisSize: MainAxisSize.min,
       children: [
-        if (detail != null)
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  'გასაყიდი ფასი: ${detail.price.toStringAsFixed(2)} ₾',
-                  key: const Key('recipe-price'),
-                  style: TextStyle(color: AdminTheme.textMuted, fontSize: 12),
-                ),
-              ),
-              _RecipeStatusBadge(configured: detail.recipe?.isActive == true),
-            ],
-          ),
-        const SizedBox(height: 12),
-        Text(
-          _directMode
-              ? '1 გაყიდვა = მარაგიდან'
-              : '${_yield.text} ცალზე საჭიროა:',
-          style: TextStyle(
-            color: AdminTheme.text,
-            fontSize: 18,
-            fontWeight: FontWeight.w700,
-          ),
+        ManagerSectionHeading(
+          _directMode ? '1 გაყიდვა = მარაგიდან' : 'შემადგენლობა',
+          subtitle: 'მიმდინარე თეორიული თვითღირებულება',
         ),
         if (widget.menuGroup != 'FOOD')
           TextButton(
@@ -475,50 +453,36 @@ class _RecipeEditorDialogState extends State<RecipeEditorDialog> {
                   : 'ერთი საქონლიდან ჩამოწერა',
             ),
           ),
-        const Divider(height: 24),
         for (var index = 0; index < _components.length; index++)
-          _componentEditor(index),
-        if (!_directMode) ...[
-          Align(
-            alignment: Alignment.centerLeft,
-            child: TextButton.icon(
-              key: const Key('recipe-add-component'),
-              onPressed: _saving ? null : _pickIngredient,
-              icon: const Icon(Icons.add_rounded, size: 18),
-              label: const Text('ინგრედიენტის დამატება'),
-              style: TextButton.styleFrom(foregroundColor: AdminTheme.primary),
-            ),
-          ),
-          const SizedBox(height: 6),
           ExpansionTile(
             key: PageStorageKey(
-              'inventory-recipe-batch-${widget.menuItemId}-${widget.variantId ?? ''}',
+              'recipe-component-editor-${widget.menuItemId}-$index',
             ),
             tilePadding: EdgeInsets.zero,
-            initiallyExpanded: _yield.text != '1',
-            title: const Text('რამდენიმე პორციაზე მომზადება'),
+            minTileHeight: 36,
+            dense: true,
+            visualDensity: VisualDensity.compact,
+            initiallyExpanded: _components[index].stockItem == null,
+            title: ManagerKeyValue(
+              _components[index].stockItem?.name ?? 'ახალი ინგრედიენტი',
+              '${_components[index].quantity.text} ${_components[index].unit == null ? '' : _unitShort(_components[index].unit!)}',
+            ),
             children: [
-              _InventoryExpansionContents(
-                children: [
-                  TextField(
-                    key: const Key('recipe-yield'),
-                    controller: _yield,
-                    onChanged: (_) => setState(() {}),
-                    keyboardType: const TextInputType.numberWithOptions(
-                      decimal: true,
-                    ),
-                    style: TextStyle(color: AdminTheme.text),
-                    decoration: _adminInput('რამდენ პორციაზეა გაწერილი'),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'დატოვეთ 1, თუ რაოდენობები ერთ პორციაზეა. მაგ. 100 ხინკლის '
-                    'ცომი და ხორცი შეიყვანეთ ერთად და მიუთითეთ 100.',
-                    style: TextStyle(color: AdminTheme.textDim, fontSize: 11),
-                  ),
-                ],
-              ),
+              _InventoryExpansionContents(children: [_componentEditor(index)]),
             ],
+          ),
+        if (!_directMode) ...[
+          TextField(
+            key: const Key('recipe-yield'),
+            controller: _yield,
+            onChanged: (_) => setState(() {}),
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            decoration: _adminInput('პორციის გამოსავალი'),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'დატოვეთ 1, თუ რაოდენობები ერთ პორციაზეა.',
+            style: managerDesignText(context, 11, muted: true),
           ),
         ],
         if (widget.onCreateStockItem != null) ...[
@@ -537,6 +501,47 @@ class _RecipeEditorDialogState extends State<RecipeEditorDialog> {
         if (detail != null &&
             ManagerEntitlements.has(FeatureKeys.profitability))
           CurrentRecipeCostPanel(cost: detail.currentCost),
+        if (!_directMode) ...[
+          Align(
+            alignment: Alignment.centerLeft,
+            child: OutlinedButton.icon(
+              key: const Key('recipe-add-component'),
+              onPressed: _saving ? null : _pickIngredient,
+              icon: const Icon(Icons.add_rounded, size: 18),
+              label: const Text('ინგრედიენტის დამატება'),
+              style: TextButton.styleFrom(foregroundColor: AdminTheme.primary),
+            ),
+          ),
+          const SizedBox(height: 6),
+        ],
+        ExpansionTile(
+          tilePadding: EdgeInsets.zero,
+          title: Text(
+            'პროდუქტის დეტალები',
+            style: managerDesignText(context, 12, muted: true),
+          ),
+          children: [
+            if (detail != null)
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      'გასაყიდი ფასი: ${detail.price.toStringAsFixed(2)} ₾',
+                      key: const Key('recipe-price'),
+                      style: TextStyle(
+                        color: AdminTheme.textMuted,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ),
+                  _RecipeStatusBadge(
+                    configured: detail.recipe?.isActive == true,
+                  ),
+                ],
+              ),
+            const SizedBox(height: 12),
+          ],
+        ),
         if (_error != null) ...[
           const SizedBox(height: 8),
           Align(
@@ -857,9 +862,10 @@ class CurrentRecipeCostPanel extends StatelessWidget {
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Text(
-          'რეცეპტის მიმდინარე შეფასება: ${cost?.total == null ? 'ვერ გამოითვლება' : '${cost!.total} ₾'}',
-          style: TextStyle(color: AdminTheme.text, fontWeight: FontWeight.w700),
+        ManagerKeyValue(
+          'მიმდინარე თვითღირებულება',
+          cost?.total == null ? 'ვერ გამოითვლება' : '${cost!.total} ₾',
+          emphasis: true,
         ),
         if (cost == null || cost!.status == 'NO_ACTIVE_RECIPE')
           Text(
@@ -871,9 +877,9 @@ class CurrentRecipeCostPanel extends StatelessWidget {
             'ზოგი ინგრედიენტის ღირებულება უცნობია ან წინასწარია.',
             style: TextStyle(color: AdminTheme.warn),
           ),
-        Text(
+        const SizedBox(height: 16),
+        const ManagerHelpCallout(
           'მიმდინარე მარაგის მოძრავი საშუალო და შენახული რეცეპტი. ეს არ არის გაყიდვის დახურვის ისტორიული თვითღირებულება.',
-          style: TextStyle(color: AdminTheme.textMuted, fontSize: 12),
         ),
         if (cost?.includesReconstructedHistory == true)
           Text(

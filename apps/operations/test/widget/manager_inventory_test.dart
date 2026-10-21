@@ -76,14 +76,9 @@ void main() {
 
     expect(find.byKey(const Key('inventory-add')), findsNothing);
 
-    await tester.ensureVisible(find.text('რედაქტირება').first);
+    await tester.tap(find.byTooltip('მოქმედებები').first);
     await tester.pumpAndSettle();
-    await tester.drag(
-      find.byKey(const Key('inventory-admin-list')),
-      const Offset(0, -250),
-    );
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('რედაქტირება').first);
+    await tester.tap(find.text('რედაქტირება'));
     await tester.pumpAndSettle();
     expect(find.widgetWithText(TextField, 'Beef'), findsOneWidget);
     await tester.tap(find.text('გაუქმება'));

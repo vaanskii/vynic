@@ -1,6 +1,10 @@
 part of '../mobile_admin_screen.dart';
 
+enum _ReportFocus { all, products, staff }
+
 class _ReportTab extends StatefulWidget {
+  const _ReportTab({this.focus = _ReportFocus.all});
+  final _ReportFocus focus;
   @override
   State<_ReportTab> createState() => _ReportTabState();
 }
@@ -32,11 +36,13 @@ class _ReportTabState extends State<_ReportTab>
         period: _period,
         month: _period == 'month' ? _monthKey : null,
       );
+      if (!mounted) return;
       setState(() {
         _data = data;
         _loading = false;
       });
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         _error = e.toString();
         _loading = false;
@@ -65,6 +71,7 @@ class _ReportTabState extends State<_ReportTab>
   Widget _buildPeriodSelector() => Padding(
     padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
     child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Wrap(
           spacing: 8,
@@ -167,157 +174,241 @@ class _ReportTabState extends State<_ReportTab>
         ),
         padding: _adminScrollPadding(context).copyWith(top: 0),
         children: [
-          _AdminHeroMetric(
-            label: 'შემოსავალი',
-            value: _adminGel(totalRevenue),
-            subtitle:
-                '${_periodLabel()} · $orderCount შეკვეთა · საშ. ${_adminGel(avgOrder)}',
-            accent: AdminTheme.good,
-          ),
-          SizedBox(height: 16),
-          _AdminKpiGrid(
-            items: [
-              _AdminKpiItem(
-                label: 'ნაღდი',
-                value: _adminGel(cashRevenue),
-                subtitle: _adminShareSubtitle(cashRevenue, totalRevenue),
-                icon: Icons.payments_outlined,
-                color: AdminTheme.good,
-              ),
-              _AdminKpiItem(
-                label: 'ბარათი',
-                value: _adminGel(cardRevenue),
-                subtitle: _adminShareSubtitle(cardRevenue, totalRevenue),
-                icon: Icons.credit_card_outlined,
-                color: AdminTheme.accent,
-              ),
-              if (showNonFiscal)
+          if (widget.focus != _ReportFocus.products &&
+              (d['staffAttribution'] as Map?)?['provenance'] == 'PARTIAL')
+            const ManagerHelpCallout(
+              'თანამშრომლების შედეგები მხოლოდ დეტალურ გაყიდვებს მოიცავს. ამ პერიოდის მონაცემები შესაძლოა არასრული იყოს.',
+            ),
+          if (widget.focus != _ReportFocus.products && byWaiter.isNotEmpty)
+            const ManagerHelpCallout(
+              'შედეგები შეკვეთის შემქმნელის ჩაწერილი სახელითაა დაჯგუფებული. სახელის შეცვლა ან ხელახლა გამოყენება ერთი თანამშრომლის იდენტობას ვერ ადასტურებს.',
+            ),
+          if (widget.focus == _ReportFocus.all) ...[
+            _AdminHeroMetric(
+              label: 'შემოსავალი',
+              value: _adminGel(totalRevenue),
+              subtitle:
+                  '${_periodLabel()} · $orderCount შეკვეთა · საშ. ${_adminGel(avgOrder)}',
+              accent: AdminTheme.good,
+            ),
+            SizedBox(height: 16),
+            _AdminKpiGrid(
+              items: [
                 _AdminKpiItem(
-                  label: 'არაფისკალური',
-                  value: _adminGel(nonFiscalRevenue),
-                  subtitle: _adminShareSubtitle(nonFiscalRevenue, totalRevenue),
-                  icon: Icons.receipt_long_outlined,
-                  color: AdminTheme.warn,
+                  label: 'ნაღდი',
+                  value: _adminGel(cashRevenue),
+                  subtitle: _adminShareSubtitle(cashRevenue, totalRevenue),
+                  icon: Icons.payments_outlined,
+                  color: AdminTheme.good,
                 ),
-              _AdminKpiItem(
-                label: 'შეკვეთები',
-                value: '$orderCount',
-                subtitle: 'საშ. ${_adminGel(avgOrder)}',
-                icon: Icons.receipt_outlined,
-                color: AdminTheme.primary,
-              ),
+                _AdminKpiItem(
+                  label: 'ბარათი',
+                  value: _adminGel(cardRevenue),
+                  subtitle: _adminShareSubtitle(cardRevenue, totalRevenue),
+                  icon: Icons.credit_card_outlined,
+                  color: AdminTheme.accent,
+                ),
+                if (showNonFiscal)
+                  _AdminKpiItem(
+                    label: 'არაფისკალური',
+                    value: _adminGel(nonFiscalRevenue),
+                    subtitle: _adminShareSubtitle(
+                      nonFiscalRevenue,
+                      totalRevenue,
+                    ),
+                    icon: Icons.receipt_long_outlined,
+                    color: AdminTheme.warn,
+                  ),
+                _AdminKpiItem(
+                  label: 'შეკვეთები',
+                  value: '$orderCount',
+                  subtitle: 'საშ. ${_adminGel(avgOrder)}',
+                  icon: Icons.receipt_outlined,
+                  color: AdminTheme.primary,
+                ),
+              ],
+            ),
+            SizedBox(height: 16),
+          ],
+          if (widget.focus == _ReportFocus.staff && byWaiter.isEmpty)
+            const ManagerHelpCallout(
+              'ამ პერიოდში თანამშრომლების შედეგები არ არის.',
+            ),
+          if (widget.focus == _ReportFocus.products &&
+              topItems.isEmpty &&
+              topItemsByCategory.isEmpty)
+            const ManagerHelpCallout(
+              'ამ პერიოდში პროდუქტების შედეგები არ არის.',
+            ),
+          _AdminSections(
+            children: [
+              if (widget.focus != _ReportFocus.products)
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    if (widget.focus == _ReportFocus.all)
+                      _AdminSection(
+                        title: 'გადახდის დეტალი',
+                        child: _AdminPanel(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 4,
+                            vertical: 4,
+                          ),
+                          child: breakdownEntries.isEmpty
+                              ? Padding(
+                                  padding: const EdgeInsets.all(14),
+                                  child: Text(
+                                    'გადახდის დეტალი არ არის',
+                                    style: TextStyle(
+                                      color: AdminTheme.textMuted,
+                                    ),
+                                  ),
+                                )
+                              : Column(
+                                  children: [
+                                    for (
+                                      var i = 0;
+                                      i < breakdownEntries.length;
+                                      i++
+                                    ) ...[
+                                      if (i > 0)
+                                        Divider(
+                                          height: 1,
+                                          color: AdminTheme.border,
+                                        ),
+                                      _AdminMetricRow(
+                                        label: _adminPaymentLabel(
+                                          breakdownEntries[i].key,
+                                        ),
+                                        value: _adminGel(
+                                          (breakdownEntries[i].value as num?)
+                                                  ?.toDouble() ??
+                                              0,
+                                        ),
+                                        color: _adminPaymentColor(
+                                          breakdownEntries[i].key,
+                                        ),
+                                      ),
+                                    ],
+                                  ],
+                                ),
+                        ),
+                      ),
+                    if (byWaiter.isNotEmpty) ...[
+                      SizedBox(height: 20),
+                      _AdminSection(
+                        title: 'ოფიციანტები',
+                        trailing: '${byWaiter.length}',
+                        child: Column(
+                          children: byWaiter
+                              .cast<Map<String, dynamic>>()
+                              .map(
+                                (w) => _WaiterRow(
+                                  name: w['waiterName'] as String? ?? '',
+                                  total:
+                                      (w['totalSales'] as num?)?.toDouble() ??
+                                      0,
+                                  count: w['orderCount'] as int? ?? 0,
+                                ),
+                              )
+                              .toList(),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              if (widget.focus != _ReportFocus.staff)
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    if (topItemsByCategory.isNotEmpty) ...[
+                      SizedBox(height: 20),
+                      const _SectionTitle(
+                        'კატეგორიების მიხედვით გაყიდული პოზიციები',
+                      ),
+                      SizedBox(height: 8),
+                      ...topItemsByCategory.cast<Map<String, dynamic>>().map((
+                        cat,
+                      ) {
+                        final catName = cat['category'] as String? ?? 'სხვა';
+                        final catRevenue =
+                            (cat['totalRevenue'] as num?)?.toDouble() ?? 0;
+                        final catItems = (cat['items'] as List?) ?? [];
+                        return Container(
+                          margin: const EdgeInsets.only(bottom: 8),
+                          decoration: BoxDecoration(
+                            color: AdminTheme.surface,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: AdminTheme.border),
+                          ),
+                          child: ExpansionTile(
+                            key: PageStorageKey<String>(
+                              'admin-report-cat-$catName',
+                            ),
+                            tilePadding: const EdgeInsets.fromLTRB(
+                              12,
+                              2,
+                              12,
+                              2,
+                            ),
+                            title: Text(
+                              catName,
+                              style: TextStyle(
+                                fontWeight: FontWeight.w700,
+                                color: AdminTheme.text,
+                              ),
+                            ),
+                            subtitle: Text(
+                              _adminGel(catRevenue),
+                              style: TextStyle(color: AdminTheme.textMuted),
+                            ),
+                            childrenPadding: const EdgeInsets.fromLTRB(
+                              12,
+                              0,
+                              12,
+                              10,
+                            ),
+                            children: catItems
+                                .cast<Map<String, dynamic>>()
+                                .asMap()
+                                .entries
+                                .map((e) {
+                                  return _TopItemRow(
+                                    rank: e.key + 1,
+                                    name: e.value['name'] as String? ?? '',
+                                    qty: (e.value['qty'] as num?)?.toInt() ?? 0,
+                                    revenue:
+                                        (e.value['revenue'] as num?)
+                                            ?.toDouble() ??
+                                        0,
+                                  );
+                                })
+                                .toList(),
+                          ),
+                        );
+                      }),
+                    ] else if (topItems.isNotEmpty) ...[
+                      SizedBox(height: 20),
+                      const _SectionTitle('ტოპ პროდუქტები'),
+                      SizedBox(height: 8),
+                      ...topItems
+                          .cast<Map<String, dynamic>>()
+                          .asMap()
+                          .entries
+                          .map(
+                            (e) => _TopItemRow(
+                              rank: e.key + 1,
+                              name: e.value['name'] as String? ?? '',
+                              qty: e.value['qty'] as int? ?? 0,
+                              revenue:
+                                  (e.value['revenue'] as num?)?.toDouble() ?? 0,
+                            ),
+                          ),
+                    ],
+                  ],
+                ),
             ],
           ),
-          SizedBox(height: 16),
-          _AdminSection(
-            title: 'გადახდის დეტალი',
-            child: _AdminPanel(
-              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
-              child: breakdownEntries.isEmpty
-                  ? Padding(
-                      padding: const EdgeInsets.all(14),
-                      child: Text(
-                        'გადახდის დეტალი არ არის',
-                        style: TextStyle(color: AdminTheme.textMuted),
-                      ),
-                    )
-                  : Column(
-                      children: [
-                        for (var i = 0; i < breakdownEntries.length; i++) ...[
-                          if (i > 0)
-                            Divider(height: 1, color: AdminTheme.border),
-                          _AdminMetricRow(
-                            label: _adminPaymentLabel(breakdownEntries[i].key),
-                            value: _adminGel(
-                              (breakdownEntries[i].value as num?)?.toDouble() ??
-                                  0,
-                            ),
-                            color: _adminPaymentColor(breakdownEntries[i].key),
-                          ),
-                        ],
-                      ],
-                    ),
-            ),
-          ),
-          if (byWaiter.isNotEmpty) ...[
-            SizedBox(height: 20),
-            _AdminSection(
-              title: 'ოფიციანტები',
-              trailing: '${byWaiter.length}',
-              child: Column(
-                children: byWaiter
-                    .cast<Map<String, dynamic>>()
-                    .map(
-                      (w) => _WaiterRow(
-                        name: w['waiterName'] as String? ?? '',
-                        total: (w['totalSales'] as num?)?.toDouble() ?? 0,
-                        count: w['orderCount'] as int? ?? 0,
-                      ),
-                    )
-                    .toList(),
-              ),
-            ),
-          ],
-          if (topItemsByCategory.isNotEmpty) ...[
-            SizedBox(height: 20),
-            const _SectionTitle('კატეგორიების მიხედვით გაყიდული პოზიციები'),
-            SizedBox(height: 8),
-            ...topItemsByCategory.cast<Map<String, dynamic>>().map((cat) {
-              final catName = cat['category'] as String? ?? 'სხვა';
-              final catRevenue = (cat['totalRevenue'] as num?)?.toDouble() ?? 0;
-              final catItems = (cat['items'] as List?) ?? [];
-              return Container(
-                margin: const EdgeInsets.only(bottom: 8),
-                decoration: BoxDecoration(
-                  color: AdminTheme.surface,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AdminTheme.border),
-                ),
-                child: ExpansionTile(
-                  key: PageStorageKey<String>('admin-report-cat-$catName'),
-                  tilePadding: const EdgeInsets.fromLTRB(12, 2, 12, 2),
-                  title: Text(
-                    catName,
-                    style: TextStyle(
-                      fontWeight: FontWeight.w700,
-                      color: AdminTheme.text,
-                    ),
-                  ),
-                  subtitle: Text(
-                    _adminGel(catRevenue),
-                    style: TextStyle(color: AdminTheme.textMuted),
-                  ),
-                  childrenPadding: const EdgeInsets.fromLTRB(12, 0, 12, 10),
-                  children: catItems
-                      .cast<Map<String, dynamic>>()
-                      .asMap()
-                      .entries
-                      .map((e) {
-                        return _TopItemRow(
-                          rank: e.key + 1,
-                          name: e.value['name'] as String? ?? '',
-                          qty: (e.value['qty'] as num?)?.toInt() ?? 0,
-                          revenue:
-                              (e.value['revenue'] as num?)?.toDouble() ?? 0,
-                        );
-                      })
-                      .toList(),
-                ),
-              );
-            }),
-          ] else if (topItems.isNotEmpty) ...[
-            SizedBox(height: 20),
-            const _SectionTitle('ტოპ პროდუქტები'),
-            SizedBox(height: 8),
-            ...topItems.cast<Map<String, dynamic>>().asMap().entries.map(
-              (e) => _TopItemRow(
-                rank: e.key + 1,
-                name: e.value['name'] as String? ?? '',
-                qty: e.value['qty'] as int? ?? 0,
-                revenue: (e.value['revenue'] as num?)?.toDouble() ?? 0,
-              ),
-            ),
-          ],
         ],
       ),
     );

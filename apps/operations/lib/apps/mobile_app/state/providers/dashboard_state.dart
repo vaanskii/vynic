@@ -3,7 +3,8 @@ import 'package:vynic/core/models/monitoring.dart';
 
 class DashboardState {
   final ManagerDashboardMetrics? metrics;
-  final Map<String, dynamic>? salesReport;
+  final Map<String, dynamic>? productAnalytics;
+  final Map<String, dynamic>? financials;
   final List<StaffMetric> staff;
   final List<Map<String, dynamic>> salesDaily;
   final List<Map<String, dynamic>> todayReservations;
@@ -15,7 +16,8 @@ class DashboardState {
 
   const DashboardState({
     this.metrics,
-    this.salesReport,
+    this.productAnalytics,
+    this.financials,
     this.staff = const [],
     this.salesDaily = const [],
     this.todayReservations = const [],
@@ -28,7 +30,8 @@ class DashboardState {
 
   DashboardState copyWith({
     ManagerDashboardMetrics? metrics,
-    Map<String, dynamic>? salesReport,
+    Map<String, dynamic>? productAnalytics,
+    Map<String, dynamic>? financials,
     List<StaffMetric>? staff,
     List<Map<String, dynamic>>? salesDaily,
     List<Map<String, dynamic>>? todayReservations,
@@ -40,7 +43,8 @@ class DashboardState {
   }) {
     return DashboardState(
       metrics: metrics ?? this.metrics,
-      salesReport: salesReport ?? this.salesReport,
+      productAnalytics: productAnalytics ?? this.productAnalytics,
+      financials: financials ?? this.financials,
       staff: staff ?? this.staff,
       salesDaily: salesDaily ?? this.salesDaily,
       todayReservations: todayReservations ?? this.todayReservations,

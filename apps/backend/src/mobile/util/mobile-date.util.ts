@@ -6,6 +6,16 @@
 import { settingIdentity } from '../../tenancy/tenant-identity';
 import type { TenantContext } from '../../tenancy/tenant-context';
 
+/** Date keys must round-trip; JavaScript otherwise normalizes February 31. */
+export function isBusinessDate(value: string): boolean {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+  const instant = new Date(`${value}T00:00:00Z`);
+  return (
+    !Number.isNaN(instant.valueOf()) &&
+    instant.toISOString().slice(0, 10) === value
+  );
+}
+
 export function todayStart(): Date {
   const d = new Date();
   d.setHours(0, 0, 0, 0);

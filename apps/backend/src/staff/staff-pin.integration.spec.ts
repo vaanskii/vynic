@@ -55,7 +55,10 @@ const url = process.env.STAFF_PIN_TEST_DATABASE_URL;
       vault = new StaffPinVault(db);
       mobile = new MobileUsersService(
         db,
-        { dispatch } as unknown as PosCommandDispatcher,
+        {
+          recordCloudMutation: dispatch,
+          kickRecordedDelivery: () => undefined,
+        } as unknown as PosCommandDispatcher,
         vault,
       );
       platform = new PlatformCommercialService(db, vault);

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:vynic/apps/mobile_app/presentation/screens/financials_screen.dart';
 import 'package:vynic/core/models/user.dart';
+import 'package:vynic/apps/mobile_app/presentation/widgets/manager_data_status.dart';
 
 final _manager = User(username: 'manager', pinCode: '0000', role: 'manager');
 
@@ -75,12 +76,75 @@ Map<String, dynamic> saleDetail() => {
 Widget app({
   required Future<Map<String, dynamic>> Function() load,
   Future<Map<String, dynamic>> Function(String)? detail,
+  Future<Map<String, dynamic>> Function(String, String, String)? page,
 }) => MaterialApp(
   theme: ThemeData.dark(),
-  home: FinancialsScreen(user: _manager, loadData: load, loadSale: detail),
+  home: FinancialsScreen(
+    user: _manager,
+    loadData: load,
+    loadSale: detail,
+    loadSalesPage: page,
+  ),
 );
 
 void main() {
+  testWidgets('expense deletion requires explicit server eligibility', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(430, 932);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    final data = fixture();
+    data['expenseEntries'] = [
+      {
+        'id': 'pos-backed',
+        'category': 'Taxi',
+        'description': 'POS expense',
+        'amount': 10,
+        'canDelete': false,
+      },
+      {
+        'id': 'cloud-only',
+        'category': 'Taxi',
+        'description': 'Cloud expense',
+        'amount': 5,
+        'canDelete': true,
+      },
+      {
+        'id': 'unclassified',
+        'category': 'Taxi',
+        'description': 'Older response',
+        'amount': 3,
+      },
+      {
+        'id': 'salary',
+        'category': 'salary',
+        'description': 'Legacy salary',
+        'amount': 8,
+        'canDelete': true,
+      },
+    ];
+    await tester.pumpWidget(app(load: () async => data));
+    await tester.pumpAndSettle();
+    final allowed = find.byKey(const ValueKey('expense-delete-cloud-only'));
+    await tester.scrollUntilVisible(
+      allowed,
+      250,
+      scrollable: find.byType(Scrollable).first,
+    );
+    expect(allowed, findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('expense-delete-pos-backed')),
+      findsNothing,
+    );
+    expect(
+      find.byKey(const ValueKey('expense-delete-unclassified')),
+      findsNothing,
+    );
+    expect(find.byKey(const ValueKey('expense-delete-salary')), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('renders loading, complete ledger sections, list and detail', (
     tester,
   ) async {
@@ -96,7 +160,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('გაყიდვების ისტორია'), findsOneWidget);
     expect(find.text('ტოპ პროდუქტები'), findsOneWidget);
-    expect(find.text('თანამშრომლების შედეგები'), findsOneWidget);
+    expect(find.text('დამხურავი ოპერატორები'), findsOneWidget);
     final saleRow = find.byKey(const ValueKey('sale-cloud-sale-1'));
     await tester.scrollUntilVisible(
       saleRow,
@@ -147,5 +211,106 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('სერვერთან კავშირი ვერ დამყარდა'), findsOneWidget);
     expect(find.text('თავიდან ცდა'), findsOneWidget);
+  });
+  testWidgets(
+    'sales pagination pins dates, deduplicates rows and retains partial history',
+    (tester) async {
+      tester.view.physicalSize = const Size(430, 932);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      final first = {
+        ...fixture(sales: [saleSummary()]),
+        'nextCursor': 'page-2',
+        'saleHistoryFrom': '2026-09-04',
+        'saleHistoryTo': '2026-09-04',
+        'saleHistoryProvenance': 'PARTIAL',
+        'saleHistoryWarning': 'Synthetic partial history',
+      };
+      await tester.pumpWidget(
+        app(
+          load: () async => first,
+          page: (from, to, cursor) async {
+            expectSync(
+              [from, to, cursor],
+              ['2026-09-04', '2026-09-04', 'page-2'],
+            );
+            return {
+              'from': from,
+              'to': to,
+              'provenance': 'LEDGER_COMPLETE',
+              'sales': [
+                saleSummary(),
+                {...saleSummary(), 'id': 'cloud-sale-2'},
+              ],
+            };
+          },
+        ),
+      );
+      await tester.pumpAndSettle();
+      final more = find.text('მეტის ნახვა');
+      await tester.scrollUntilVisible(
+        more,
+        300,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.ensureVisible(more);
+      await tester.pumpAndSettle();
+      await tester.tap(more);
+      await tester.pumpAndSettle();
+      expect(find.byKey(const ValueKey('sale-cloud-sale-1')), findsOneWidget);
+      expect(find.byKey(const ValueKey('sale-cloud-sale-2')), findsOneWidget);
+      expect(first['saleHistoryWarning'], 'Synthetic partial history');
+    },
+  );
+
+  testWidgets('late next page cannot append after a reporting refresh', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(430, 932);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    final pending = Completer<Map<String, dynamic>>();
+    var loads = 0;
+    await tester.pumpWidget(
+      app(
+        load: () async => {
+          ...fixture(
+            sales: [
+              {...saleSummary(), 'id': ++loads == 1 ? 'old' : 'refreshed'},
+            ],
+          ),
+          'nextCursor': 'page-2',
+          'saleHistoryFrom': '2026-09-04',
+          'saleHistoryTo': '2026-09-04',
+        },
+        page: (_, _, _) => pending.future,
+      ),
+    );
+    await tester.pumpAndSettle();
+    final more = find.text('მეტის ნახვა');
+    await tester.scrollUntilVisible(
+      more,
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.ensureVisible(more);
+    await tester.pumpAndSettle();
+    await tester.tap(more);
+    await tester.pump();
+    final boundary = tester.widget<ManagerDataBoundary>(
+      find.byType(ManagerDataBoundary),
+    );
+    boundary.onRefresh!();
+    await tester.pumpAndSettle();
+    pending.complete({
+      'from': '2026-09-04',
+      'to': '2026-09-04',
+      'sales': [
+        {...saleSummary(), 'id': 'late'},
+      ],
+    });
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('sale-refreshed')), findsOneWidget);
+    expect(find.byKey(const ValueKey('sale-late')), findsNothing);
   });
 }

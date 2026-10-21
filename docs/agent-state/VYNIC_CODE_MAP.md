@@ -64,13 +64,13 @@ the implementation and nearby tests. Do not treat this as architecture truth.
 ## Sales / Reports
 
 - POS sales store and revenue predicate: `apps/operations/lib/core/database/repositories/sales_repository.dart`
-- POS Sale identity, bounded selection, exact serialization, ACK state and day completeness declarations: `apps/operations/lib/core/services/sync/sale_ledger_sync_state.dart`; orchestration in `apps/operations/lib/core/services/sync/manager_sync_service.dart`
+- POS Sale identity, bounded selection, exact serialization, ACK state, day completeness declarations and targeted retained-row recovery: `apps/operations/lib/core/services/sync/sale_ledger_sync_state.dart`; orchestration in `apps/operations/lib/core/services/sync/manager_sync_service.dart`
 - Cloud ledger ingestion, exact-money validation, lifecycle revisions and day reconciliation: `apps/backend/src/pos/sync/snapshot/sale-ledger-sync.service.ts`
-- Manager exact summary, keyset Sale list/detail, product and staff analytics: `apps/backend/src/mobile/services/mobile-sale-ledger.service.ts`; routes in `apps/backend/src/mobile/mobile.controller.ts`
-- Manager ledger UI: `apps/operations/lib/apps/mobile_app/presentation/screens/dashboard_screen.dart`, `apps/operations/lib/apps/mobile_app/presentation/screens/financials_screen.dart`
+- Manager exact summary, keyset Sale list/detail, product quantities and separate creator/closer recorded-name analytics: `apps/backend/src/mobile/services/mobile-sale-ledger.service.ts`; routes in `apps/backend/src/mobile/mobile.controller.ts`
+- Manager ledger UI: `apps/operations/lib/apps/mobile_app/presentation/screens/dashboard_screen.dart` (date-scoped product quantities), `apps/operations/lib/apps/mobile_app/presentation/screens/financials_screen.dart` (pinned summary/analytics/Sale pages and per-page read status); sync contract proof: `apps/operations/test/widget/manager_financial_sync_test.dart`, `apps/operations/test/unit/manager_sync_liveness_test.dart`; disposable backend runner: `apps/backend/tool/prove_manager_sync.py`
 - Monthly reports: `apps/operations/lib/core/services/pos/monthly_report_service.dart`
 - POS admin reports: `apps/operations/lib/apps/windows_pos/widgets/admin/admin_financial_reports_panel.dart`
-- Manager backend reports: `apps/backend/src/mobile/services/mobile-reports.service.ts`
+- Manager backend reports and legacy ledger adapters: `apps/backend/src/mobile/services/mobile-reports.service.ts`; shared reporting proof/contract: `docs/proofs/BACKEND_SHARED_REPORTING_2026-10-17/README.md`
 - Cloud money reconciliation: `apps/backend/src/pos/sync/snapshot/business-day-sync.service.ts`
 
 ## Manager Financials / Payroll / Obligations
@@ -159,7 +159,7 @@ the implementation and nearby tests. Do not treat this as architecture truth.
 
 - Module/routes/guard: `apps/backend/src/edge/`
 - Queue lifecycle: `apps/backend/src/edge/edge-command.service.ts`
-- Cloud operation dispatcher: `apps/backend/src/pos/pos-command-dispatcher.service.ts`
+- Cloud operation dispatcher: `apps/backend/src/pos/pos-command-dispatcher.service.ts`; transactional Staff/expense admission: `recordCloudMutation`; real queue/rollback proof: `apps/backend/src/pos/staff-delivery-durability.integration.spec.ts`
 - Frozen fallback: `apps/backend/src/pos/pos-callback.client.ts`, `apps/backend/src/pos/pos-outbox.service.ts`
 - Integration tests: `apps/backend/src/edge/edge-transport.integration.spec.ts`, `apps/backend/src/pos/pos-command-dispatcher.integration.spec.ts`
 - Current migration record: `docs/EDGE_COMMAND_MIGRATION.md`
@@ -202,9 +202,11 @@ the implementation and nearby tests. Do not treat this as architecture truth.
 
 - Remembered Venue/PIN login: `apps/operations/lib/apps/mobile_app/presentation/screens/mobile_login_screen.dart`; safe local selection: `core/models/manager_venue_selection.dart`, `core/services/manager_app/manager_app_preferences.dart` under the same `lib/`. Backend code lookup: `POST /auth/manager-venue` in `apps/backend/src/auth/auth.controller.ts` / `auth.service.ts`. Platform code/access panel: `apps/platform-web/src/platform/pages/venue/VenueManagerAccess.tsx`.
 
-- Flutter shell/screens: `apps/operations/lib/apps/mobile_app/`; primary Inventory beside Financials and notification routing: `manager_app_shell.dart`; measured body/nav separation: `presentation/widgets/manager_glass_nav_bar.dart` (`ManagerNavigationFrame`).
+- Flutter shell/screens: `apps/operations/lib/apps/mobile_app/`; entitlement-aware destinations and notification routing: `manager_app_shell.dart`; phone/rail/sidebar navigation and unified Count entry: `presentation/widgets/manager_glass_nav_bar.dart` (`ManagerAdaptiveNavigation`). Light/dark Material theme: `theme/manager_theme.dart` and `manager_dashboard_theme.dart`; bounded centered overlays: `presentation/widgets/manager_modal.dart`. Actual-widget renders and interaction checks: `apps/operations/test/widget/manager_redesign_render_test.dart`, `manager_login_preview_test.dart`; evidence and printer touchpoints: `docs/proofs/MANAGER_REDESIGN_2026-10-16/README.md`.
+- Unified Count/New/Saved flow: `apps/operations/lib/apps/mobile_app/presentation/screens/manager_counting_screen.dart`. Approved revenue/occupancy chart geometry with real-data inputs: `presentation/widgets/manager_preview_charts.dart` under the same Manager root. Matched reference renders: `apps/operations/test/widget/manager_chart_parity_test.dart`; current route/visual evidence: `docs/proofs/MANAGER_PARITY_2026-10-17/README.md`.
 - Effective feature state: `apps/operations/lib/core/services/manager_app/manager_entitlements.dart`; centralized keys: `core/models/feature_keys.dart`
 - Shared Manager API client: `apps/operations/lib/core/services/manager_app/mobile_api_service.dart`
+- Manager paged notification catch-up: `apps/backend/src/mobile/services/mobile-devices.service.ts` (`/mobile/notifications/page`); client inbox `apps/operations/lib/core/services/notifications/manager_notification_inbox.dart`; PostgreSQL proof `notification-page.integration.spec.ts` beside the backend service.
 - MGR-05 guarded Order editing: Cloud `src/mobile/services/manager-order-edit.ts`, `src/edge/order-edit-result.ts`; POS `lib/core/database/repositories/order_edit_repository.dart` and `lib/core/models/order_edit_projection.dart`; Manager retained requests `lib/core/services/manager_app/order_edit_request.dart` (under the respective backend/operations roots). Runbook: `docs/MGR05_ATOMIC_ORDER_EDIT.md`; synthetic HTTP/PG and SIGKILL runners: backend `tool/prove_mgr05_postgres.py`, operations `tool/prove_mgr05_recovery.py`.
 - MGR-03 retained operation delivery: backend `src/mobile/services/manager-operation.ts`; Manager `lib/core/services/manager_app/manager_operation_request.dart` and `presentation/widgets/manager_operations_panel.dart`; guarded native handler/journal in `lib/core/services/edge/`. Runbook `docs/MGR03_OPERATION_DELIVERY.md`; synthetic runners backend `tool/prove_mgr03_postgres.py`, operations `tool/prove_mgr03_recovery.py` (under the corresponding app roots).
 - MGR-04 freshness: backend `src/mobile/services/manager-data-freshness.ts` stamps authenticated snapshot/ledger provenance and adds response metadata; client `lib/core/services/manager_app/manager_data_read.dart`, `mobile_cache_service.dart` and `presentation/widgets/manager_data_status.dart` bind scoped cache/source details to visible data. Runbook `docs/MGR04_DATA_FRESHNESS.md`; synthetic HTTP/PG runner backend `tool/prove_mgr04_postgres.py` (under the corresponding app roots).
@@ -242,6 +244,7 @@ the implementation and nearby tests. Do not treat this as architecture truth.
 
 ## Inventory
 
+- Unit-sensitive concurrency guard: `apps/backend/src/inventory/stock-item-lock.ts`; PostgreSQL proof: `inventory-unit-integrity.integration.spec.ts` in the same directory.
 - Daily Inventory workflows and rollout: `docs/INVENTORY_DAILY_UX.md`; receipt/recipe HTTP journeys: `apps/operations/test/widget/inventory_final_journeys_test.dart`; archive, inline packaging, date filters and tab scroll proofs: `apps/operations/test/widget/inventory_workflow_test.dart`.
 - Supplier creation → assortment → receiving, association removal and retry proof: `apps/operations/test/widget/supplier_assortment_test.dart`; UI: `SupplierDetailDialog` in `.../tabs/mobile_admin_inventory_tab.dart`, using existing `setSupplierProduct` and the shared inline product form.
 - Main navigation obstruction, guided receipt review/back and incomplete-variant proofs: `apps/operations/test/widget/inventory_navigation_regression_test.dart`.

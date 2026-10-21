@@ -140,6 +140,62 @@ it("a network retry of the same change reuses its mutation id", async () => {
   const ids = writes.map(([, body]) => (body as Record<string, unknown>).mutationId);
   expect(ids[0]).toBe(ids[1]);
 });
+it("a lost create response retries the exact entity and mutation identities", async () => {
+  const accepted = new Map<string, unknown>();
+  api.mockImplementation(async (_path, body) => {
+    if (body === undefined) return { ...catalog, categories: [] };
+    const mutation = body as { mutationId: string };
+    const prior = accepted.get(mutation.mutationId);
+    if (prior) {
+      if (JSON.stringify(prior) !== JSON.stringify(body))
+        throw new CustomerApiError("changed retry", 409, { code: "MUTATION_ID_REUSED" });
+      return { status: "ACCEPTED" };
+    }
+    accepted.set(mutation.mutationId, body);
+    throw new Error("accepted, response lost");
+  });
+  const saved = vi.fn();
+  render(<CatalogEditor venueId="a" onSaved={saved} />);
+  await userEvent.click(await screen.findByRole("button", { name: "კატეგორიის დამატება" }));
+  await userEvent.type(screen.getByLabelText("სახელი ქართულად"), "ჩაი");
+  await userEvent.type(screen.getByLabelText("სახელი ინგლისურად"), "Tea");
+  await userEvent.click(screen.getByRole("button", { name: "შენახვა" }));
+  await screen.findByText(/შენახვა ვერ მოხერხდა/);
+  await userEvent.click(screen.getByRole("button", { name: "შენახვა" }));
+  await waitFor(() => expect(saved).toHaveBeenCalledOnce());
+  const writes = api.mock.calls.filter(([, body]) => body !== undefined);
+  expect(writes).toHaveLength(2);
+  expect(writes[1][1]).toEqual(writes[0][1]);
+  expect(accepted.size).toBe(1);
+});
+it("an accepted create whose reload fails retries the exact accepted mutation", async () => {
+  const accepted = new Map<string, unknown>();
+  let reloads = 0;
+  api.mockImplementation(async (_path, body) => {
+    if (body === undefined) {
+      reloads += 1;
+      if (reloads === 2) throw new Error("catalog reload unavailable");
+      return { ...catalog, categories: [] };
+    }
+    const mutation = body as { mutationId: string };
+    accepted.set(mutation.mutationId, body);
+    return { status: "ACCEPTED" };
+  });
+  const saved = vi.fn();
+  render(<CatalogEditor venueId="a" onSaved={saved} />);
+  await userEvent.click(await screen.findByRole("button", { name: "კატეგორიის დამატება" }));
+  await userEvent.type(screen.getByLabelText("სახელი ქართულად"), "ჩაი");
+  await userEvent.type(screen.getByLabelText("სახელი ინგლისურად"), "Tea");
+  await userEvent.click(screen.getByRole("button", { name: "შენახვა" }));
+  await screen.findByText(/შენახვა ვერ მოხერხდა/);
+  expect(saved).not.toHaveBeenCalled();
+  await userEvent.click(screen.getByRole("button", { name: "შენახვა" }));
+  await waitFor(() => expect(saved).toHaveBeenCalledOnce());
+  const writes = api.mock.calls.filter(([, body]) => body !== undefined);
+  expect(writes).toHaveLength(2);
+  expect(writes[1][1]).toEqual(writes[0][1]);
+  expect(accepted.size).toBe(1);
+});
 it("POS authority offers no catalog writer", async () => {
   api.mockResolvedValue({ authority: "POS", sequence: 0, categories: [] });
   render(<CatalogEditor venueId="a" onSaved={vi.fn()} />);

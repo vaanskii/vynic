@@ -12,6 +12,7 @@ import type {
   TenantContext,
 } from '../../auth/pos-auth-context';
 import type { SyncPayload } from '../../pos/sync/sync-payload';
+import { isBusinessDate } from '../util/mobile-date.util';
 
 export const FRESHNESS_HEADER = 'X-Vynic-Data-Freshness';
 const prefix = 'manager:data-freshness:';
@@ -188,13 +189,8 @@ export async function managerSource(
     source: 'UNKNOWN',
     sourceUpdatedAt: null,
     receivedAt: null,
-    completeness:
-      block === 'staff_performance' || block === 'top_items'
-        ? 'UNAVAILABLE'
-        : 'UNKNOWN',
+    completeness: 'UNKNOWN',
   };
-  // Staff attribution is deliberately unavailable in the existing read model.
-  if (block === 'staff_performance' || block === 'top_items') return unknown;
   if (block === 'counted_menus')
     return { ...unknown, source: 'CLOUD', completeness: 'KNOWN' };
   const [row, venue] = await Promise.all([
@@ -273,12 +269,7 @@ async function ledgerSource(
   });
   const from = query.from ?? current?.value,
     to = query.to ?? from;
-  if (
-    !from ||
-    !to ||
-    !/^\d{4}-\d{2}-\d{2}$/.test(from) ||
-    !/^\d{4}-\d{2}-\d{2}$/.test(to)
-  )
+  if (!from || !to || !isBusinessDate(from) || !isBusinessDate(to))
     return combineSources([]);
   const start = new Date(from + 'T00:00:00Z'),
     end = new Date(to + 'T00:00:00Z');
@@ -354,6 +345,8 @@ export class ManagerDataFreshnessInterceptor implements NestInterceptor {
         'getSales',
         'getProductAnalytics',
         'getSaleStaffAnalytics',
+        'getStaffPerformance',
+        'getTopItems',
       ].includes(context.getHandler().name);
       const sourceBlock = block;
       const read = () =>
@@ -369,6 +362,16 @@ export class ManagerDataFreshnessInterceptor implements NestInterceptor {
           // Ingest commits mirrors and generation together. A mixed read cannot
           // claim a complete source from either side of a concurrent transaction.
           const coherent = JSON.stringify(after) === JSON.stringify(stamp);
+          const missingHistory =
+            context.getHandler().name === 'getSalesDaily' &&
+            Array.isArray(value) &&
+            value.some(
+              (row: unknown) =>
+                row !== null &&
+                typeof row === 'object' &&
+                'available' in row &&
+                row.available === false,
+            );
           context
             .switchToHttp()
             .getResponse<{ setHeader(name: string, value: string): void }>()
@@ -376,7 +379,9 @@ export class ManagerDataFreshnessInterceptor implements NestInterceptor {
               FRESHNESS_HEADER,
               JSON.stringify(
                 coherent
-                  ? stamp
+                  ? missingHistory
+                    ? { ...stamp, completeness: 'PARTIAL' }
+                    : stamp
                   : {
                       source: 'UNKNOWN',
                       sourceUpdatedAt: null,

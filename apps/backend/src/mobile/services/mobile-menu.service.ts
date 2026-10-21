@@ -198,20 +198,16 @@ export class MobileMenuService {
         serviceFeeRate,
         createdBy,
         createdAt: new Date(),
+        items: {
+          create: items.map((item: any) => ({
+            name: item.itemName,
+            quantity: item.quantity,
+            price: item.unitPrice,
+            comment: item.comment,
+          })),
+        },
       },
     });
-
-    for (const item of items) {
-      await (this.prisma as any).quickOrderDraftItem.create({
-        data: {
-          draftId: dbDraft.id,
-          name: item.itemName,
-          quantity: item.quantity,
-          price: item.unitPrice,
-          comment: item.comment,
-        },
-      });
-    }
 
     this.gateway.broadcastUpdate(
       tenant,
@@ -274,8 +270,8 @@ export class MobileMenuService {
     const serviceFeeAmount = shouldInclude ? subtotal * serviceFeeRate : 0;
     const total = subtotal + serviceFeeAmount;
 
-    // Update the draft header, then replace its items (delete + recreate) so the
-    // stored lines exactly match the edited cart. Scoped to this draft's id.
+    // Prisma commits the header and nested replacement as one transaction.
+    // A rejected line cannot leave an updated header or a partly emptied cart.
     await (this.prisma as any).quickOrderDraft.update({
       where: { id: existing.id },
       data: {
@@ -285,23 +281,17 @@ export class MobileMenuService {
         total,
         includeServiceFee: shouldInclude,
         serviceFeeRate,
+        items: {
+          deleteMany: {},
+          create: (items ?? []).map((item: any) => ({
+            name: item.itemName,
+            quantity: item.quantity,
+            price: item.unitPrice,
+            comment: item.comment,
+          })),
+        },
       },
     });
-
-    await (this.prisma as any).quickOrderDraftItem.deleteMany({
-      where: { draftId: existing.id },
-    });
-    for (const item of items ?? []) {
-      await (this.prisma as any).quickOrderDraftItem.create({
-        data: {
-          draftId: existing.id,
-          name: item.itemName,
-          quantity: item.quantity,
-          price: item.unitPrice,
-          comment: item.comment,
-        },
-      });
-    }
 
     this.gateway.broadcastUpdate(
       tenant,

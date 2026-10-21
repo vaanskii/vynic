@@ -1,3 +1,4 @@
+import 'package:vynic/apps/mobile_app/presentation/widgets/manager_modal.dart';
 import 'package:flutter/material.dart';
 import 'package:vynic/core/services/manager_app/finance_correction_request.dart';
 
@@ -91,7 +92,7 @@ class _FinanceCorrectionDialogState extends State<FinanceCorrectionDialog> {
   @override
   Widget build(BuildContext context) => PopScope(
     canPop: !_sending,
-    child: AlertDialog(
+    child: ManagerFormDialog(
       title: const Text('ჩანაწერის კორექტირება'),
       content: SizedBox(
         width: 480,

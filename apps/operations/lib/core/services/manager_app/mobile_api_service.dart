@@ -5,6 +5,7 @@ import 'table_repair_request.dart';
 import 'order_edit_request.dart';
 import 'package:vynic/core/models/order_edit_projection.dart';
 import 'manager_entitlements.dart';
+import 'manager_notification_page.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
@@ -130,10 +131,15 @@ class MobileApiService {
           response?.statusCode != 403) {
         try {
           final value = parse(cached['data']);
-          final status = ManagerReadStatus.fromJson(
-            key,
-            Map<String, dynamic>.from(cached['status'] as Map),
-          ).failed(message, location: 'cache');
+          final status =
+              ManagerReadStatus.fromJson(
+                key,
+                Map<String, dynamic>.from(cached['status'] as Map),
+              ).failed(
+                message,
+                location: 'cache',
+                httpStatus: response?.statusCode,
+              );
           requireSession();
           ManagerDataReads.publish(scope, status);
           _dataStatuses[value] = status;
@@ -148,6 +154,7 @@ class MobileApiService {
         key: key,
         query: path,
         error: message,
+        httpStatus: response?.statusCode,
       );
       ManagerDataReads.publish(scope, unavailable);
       MonitoringSocketService.apiError.value = true;
@@ -192,6 +199,11 @@ class MobileApiService {
   }
 
   static ManagerReadStatus? statusFor(Object data) => _dataStatuses[data];
+
+  static void releaseReadStatuses(Iterable<ManagerReadStatus> reads) {
+    ManagerDataReads.release(tableRepairScope, reads);
+    MonitoringSocketService.apiError.value = ManagerDataReads.hasApiError;
+  }
 
   // Network exceptions may contain endpoint/IP details. Keep them out of release UI.
   static Never _throwNetworkError(Object error, StackTrace stack) {
@@ -333,6 +345,21 @@ class MobileApiService {
   }
 
   /// Persisted manager notifications (while app was in background).
+  static Future<ManagerNotificationPage> getNotificationsPage({
+    String? since,
+    String? cursor,
+  }) async {
+    final query = Uri(queryParameters: {
+      if (since != null) 'since': since,
+      if (cursor != null) 'cursor': cursor,
+    }).query;
+    final response = await _get('/mobile/notifications/page?$query');
+    if (response.statusCode != 200)
+      throw HttpException('Notification catch-up failed (${response.statusCode})');
+    return ManagerNotificationPage.fromJson(jsonDecode(response.body));
+  }
+
+  /// Legacy array response retained for compatible callers.
   static Future<List<Map<String, dynamic>>> getNotifications({
     String? since,
   }) async {
@@ -567,9 +594,12 @@ class MobileApiService {
 
   // ── Staff performance ──────────────────────────────────────────────────────
 
-  static Future<List<StaffMetric>> getStaffPerformance() => _readData(
+  static Future<List<StaffMetric>> getStaffPerformance({
+    String? from,
+    String? to,
+  }) => _readData(
     'staff_performance',
-    '/mobile/staff-performance',
+    '/mobile/staff-performance${from == null ? '' : '?${Uri(queryParameters: {'from': from, if (to != null) 'to': to}).query}'}',
     (json) => (json as List)
         .map((e) => StaffMetric.fromJson(Map<String, dynamic>.from(e as Map)))
         .toList(),
@@ -813,10 +843,12 @@ class MobileApiService {
   static Future<Map<String, dynamic>> getSaleStaffAnalytics({
     String? from,
     String? to,
+    String? attribution,
   }) async {
     final params = <String, String>{
       if (from != null) 'from': from,
       if (to != null) 'to': to,
+      if (attribution != null) 'attribution': attribution,
     };
     final suffix = params.isEmpty
         ? ''
@@ -1022,6 +1054,7 @@ class MobileApiService {
     required double subtotal,
     required bool includeServiceFee,
     required String createdBy,
+    double? serviceFeeRate,
   }) async {
     final payload = {
       'displayName': name,
@@ -1029,6 +1062,7 @@ class MobileApiService {
       'subtotal': subtotal,
       'includeServiceFee': includeServiceFee,
       'createdBy': createdBy,
+      if (serviceFeeRate != null) 'serviceFeeRate': serviceFeeRate,
     };
     final response = await _post('/mobile/counted-menu/save', payload);
     if (response.statusCode != 200 && response.statusCode != 201) {

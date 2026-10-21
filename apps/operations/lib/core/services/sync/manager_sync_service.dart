@@ -35,6 +35,7 @@ class ManagerSyncService {
   static String get serverUrl => ApiConfig.baseUrl;
 
   static bool _startupSyncScheduled = false;
+  static Timer? _startupSyncTimer;
 
   /// Last synced line snapshot per order — diff drives manager notifications + highlights.
   static final Map<int, List<OrderItem>> _lastOrderItemsByOrderId =
@@ -61,7 +62,8 @@ class ManagerSyncService {
 
   static void Function(SyncEvent event)? _previousOnLocalChange;
   static bool _hooksRegistered = false;
-  static bool _realtimeOnly = false;
+  static Timer? _fullSnapshotTimer;
+  static const Duration _fullSnapshotInterval = Duration(minutes: 2);
 
   /// Periodic retry that flushes pending local changes to the backend so a POS
   /// edit made while the server was unreachable reaches it on its own once it
@@ -88,7 +90,24 @@ class ManagerSyncService {
     ConnectionStatusService.markPendingLocalChange();
   }
 
-  static void initialize() {
+  static void initialize() => _initialize();
+
+  @visibleForTesting
+  static void initializeForTesting({
+    required Duration retryInterval,
+    required Duration refreshInterval,
+    required Duration startupDelay,
+  }) => _initialize(
+    retryInterval: retryInterval,
+    refreshInterval: refreshInterval,
+    startupDelay: startupDelay,
+  );
+
+  static void _initialize({
+    Duration retryInterval = _pendingFlushInterval,
+    Duration refreshInterval = _fullSnapshotInterval,
+    Duration startupDelay = const Duration(seconds: 3),
+  }) {
     if (_shuttingDown) return;
     ConnectionStatusService.initialize();
 
@@ -108,14 +127,20 @@ class ManagerSyncService {
 
     // Auto-flush retry loop. The POS has no monitoring socket (that runs on the
     // mobile app), so it can't react to the server returning — instead it polls:
-    // whenever there are unpushed local changes, re-attempt the push until it
-    // lands. A successful push clears the pending flag, so this is a no-op once
-    // everything is in sync.
-    _pendingFlushTimer ??= Timer.periodic(_pendingFlushInterval, (_) {
+    // Retry pending work and failed startup uploads. Even an idle POS must
+    // periodically attest its current snapshot before Manager's five-minute
+    // source freshness limit; API reads alone cannot freshen the POS.
+    _pendingFlushTimer ??= Timer.periodic(retryInterval, (_) {
       if (_pendingFlushInFlight) return;
-      if (!ConnectionStatusService.hasPendingLocalChanges.value) return;
+      if (!ConnectionStatusService.hasPendingLocalChanges.value &&
+          ConnectionStatusService.backendState.value !=
+              BackendConnectionState.offline)
+        return;
       _pendingFlushInFlight = true;
       syncToManagerApp().whenComplete(() => _pendingFlushInFlight = false);
+    });
+    _fullSnapshotTimer ??= Timer.periodic(refreshInterval, (_) {
+      syncToManagerApp();
     });
 
     if (_startupSyncScheduled) return;
@@ -124,7 +149,7 @@ class ManagerSyncService {
     // Delay the initial sync by 3 seconds to ensure the local Hive DB
     // is fully loaded before we push data. This prevents an empty push
     // from overwriting reserved table state on the cloud.
-    Timer(const Duration(seconds: 3), () {
+    _startupSyncTimer = Timer(startupDelay, () {
       debugPrint(
         '[ManagerSync] Backend=${ApiConfig.baseUrl} '
         'ingest=${PosCallbackConfig.baseUrl ?? "not running"}',
@@ -286,10 +311,14 @@ class ManagerSyncService {
 
   static void dispose() {
     _startupSyncScheduled = false;
+    _startupSyncTimer?.cancel();
+    _startupSyncTimer = null;
     _pendingSinceMicros = null;
     _pendingFlushTimer?.cancel();
     _pendingFlushTimer = null;
     _pendingFlushInFlight = false;
+    _fullSnapshotTimer?.cancel();
+    _fullSnapshotTimer = null;
   }
 
   /// Marks that local POS data should be pushed on the next manual sync.
@@ -339,14 +368,8 @@ class ManagerSyncService {
     _markPendingLocalChange();
   }
 
-  static Future<void> syncRealtimeToManagerApp() async {
-    _realtimeOnly = true;
-    try {
-      await syncToManagerApp();
-    } finally {
-      _realtimeOnly = false;
-    }
-  }
+  static Future<void> syncRealtimeToManagerApp() =>
+      _startSnapshot(realtimeOnly: true);
 
   /// Guards against two pushes being in flight at once.
   ///
@@ -355,6 +378,7 @@ class ManagerSyncService {
   /// overlapping pushes made the server delete and recreate the same order's
   /// lines twice over, which surfaced on the manager app as duplicated items.
   static Future<void>? _inFlight;
+  static bool _inFlightRealtimeOnly = false;
   static bool _shuttingDown = false;
 
   /// Stop this POS's mirror worker; pending durable work resumes next launch.
@@ -364,14 +388,18 @@ class ManagerSyncService {
     await _inFlight;
   }
 
-  static Future<void> syncToManagerApp() {
+  static Future<void> syncToManagerApp() => _startSnapshot(realtimeOnly: false);
+
+  static Future<void> _startSnapshot({required bool realtimeOnly}) {
     if (_shuttingDown) return Future<void>.value();
     final running = _inFlight;
     if (running != null) {
-      // Coalesce: the push already running carries the same local state.
+      // A partial push must never consume a requested full reporting upload.
+      if (!realtimeOnly && _inFlightRealtimeOnly) _markPendingLocalChange();
       return running;
     }
-    final next = _syncToManagerApp();
+    _inFlightRealtimeOnly = realtimeOnly;
+    final next = _syncToManagerApp(realtimeOnly: realtimeOnly);
     _inFlight = next;
     return next.whenComplete(() {
       if (identical(_inFlight, next)) _inFlight = null;
@@ -443,7 +471,8 @@ class ManagerSyncService {
         .toList();
   }
 
-  static Future<void> _syncToManagerApp() async {
+  static Future<void> _syncToManagerApp({required bool realtimeOnly}) async {
+    final localRevision = ConnectionStatusService.localRevision;
     // Measurement starts where the work does, carrying how long the oldest
     // unpushed change waited to get here.
     final timing = SyncTiming.begin(pendingSinceMicros: _pendingSinceMicros);
@@ -488,7 +517,7 @@ class ManagerSyncService {
             (sum, t) => sum + ((t['currentBill'] as num?)?.toDouble() ?? 0),
           );
 
-      if (_realtimeOnly) {
+      if (realtimeOnly) {
         final payload = <String, dynamic>{
           'realtimeOnly': true,
           'tables': tables,
@@ -537,8 +566,7 @@ class ManagerSyncService {
         timing.mark('http');
         if (response.statusCode == 200 || response.statusCode == 201) {
           debugPrint('[ManagerSync] Realtime OK (${response.statusCode})');
-          _pendingSinceMicros = null;
-          await ConnectionStatusService.markSuccess();
+          await ConnectionStatusService.markSuccess(clearPendingChanges: false);
         } else {
           debugPrint(
             '[ManagerSync] Realtime failed (${response.statusCode}): ${response.body}',
@@ -1003,12 +1031,18 @@ class ManagerSyncService {
           '[ManagerSync] OK → $serverUrl '
           'callback=${payload['posCallbackUrl'] ?? "missing"}',
         );
-        _pendingSinceMicros = null;
         await _acknowledgeStaffCredentials(staffSelection, response.body);
         final ledgerAckSupported =
             await SaleLedgerSyncState.acknowledgeResponse(response.body);
-        await ConnectionStatusService.markSuccess();
-        if (ledgerAckSupported && saleLedger.isNotEmpty) {
+        await ConnectionStatusService.markSuccess(
+          acknowledgedRevision: localRevision,
+        );
+        if (!ConnectionStatusService.hasPendingLocalChanges.value) {
+          _pendingSinceMicros = null;
+        }
+        if (ledgerAckSupported &&
+            (saleLedger.isNotEmpty ||
+                SaleLedgerSyncState.buildBatch(allSales).isNotEmpty)) {
           // One follow-up full snapshot advances the next bounded batch and,
           // after the final ACK, lets closed-day completeness be proven.
           _markPendingLocalChange();

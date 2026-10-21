@@ -555,6 +555,40 @@ type Created = { id: string; date: string; paymentId: string };
     });
   });
 
+  it('returns the paid menu snapshot even after the catalog name and price differ', async () => {
+    const item = await db.menuItem.create({
+      data: {
+        venueId: fixtures[0].venueId,
+        nameEn: 'Current name',
+        nameKa: 'Current name ka',
+        price: 99,
+      },
+    });
+    const frozen = [
+      {
+        id: item.id,
+        variantId: 'paid-large',
+        name: 'Paid drink 1L',
+        price: 12.5,
+        quantity: 2,
+      },
+    ];
+    const booking = await db.websiteReservation.create({
+      data: {
+        venueId: fixtures[0].venueId,
+        userId: alice.id,
+        date: new Date('2025-01-02'),
+        timeSlot: '18:00',
+        status: 'COMPLETED',
+        menuItems: JSON.stringify(frozen),
+      },
+    });
+    const response = await mine(0, alice).expect(200);
+    expect(
+      response.body.find((row: { id: string }) => row.id === booking.id),
+    ).toMatchObject({ menuItems: frozen });
+  });
+
   it('preserves historical authenticated ownership and does not require matching contact email', async () => {
     const response = await mine(0, alice).expect(200);
     expect(response.body).toEqual(

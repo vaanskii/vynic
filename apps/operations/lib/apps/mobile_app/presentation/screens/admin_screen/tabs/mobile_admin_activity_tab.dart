@@ -7,6 +7,8 @@ part of '../mobile_admin_screen.dart';
 /// story lives in the Audit tab, chronologically; this one is recent activity,
 /// newest first.
 class _ActivityTab extends StatefulWidget {
+  const _ActivityTab({this.onOpenOperationalAudit});
+  final VoidCallback? onOpenOperationalAudit;
   @override
   State<_ActivityTab> createState() => _ActivityTabState();
 }
@@ -152,112 +154,158 @@ class _ActivityTabState extends State<_ActivityTab>
     _load();
   }
 
+  Future<void> _showFilters() => showDialog<void>(
+    context: context,
+    builder: (context) => StatefulBuilder(
+      builder: (context, update) => ManagerFormDialog(
+        title: const Text('აქტივობის ფილტრები'),
+        content: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const ManagerSectionHeading('პერიოდი'),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                for (final range in _activityRanges)
+                  _AdminFilterChip(
+                    label: range.label,
+                    selected: _rangeDays == range.days,
+                    onTap: () {
+                      _applyFilter(rangeDays: range.days, setRange: true);
+                      update(() {});
+                    },
+                  ),
+              ],
+            ),
+            const SizedBox(height: 24),
+            const ManagerSectionHeading('ჩანაწერის ტიპი'),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                for (final filter in _activityFilters)
+                  _AdminFilterChip(
+                    label: filter.label,
+                    selected: _entityType == filter.type && _entityId == null,
+                    onTap: () {
+                      _applyFilter(entityType: filter.type, clearSubject: true);
+                      update(() {});
+                    },
+                  ),
+              ],
+            ),
+            if (_entityIdLabel != null) ...[
+              const SizedBox(height: 16),
+              _AdminFilterChip(
+                label: '✕  $_entityIdLabel',
+                selected: true,
+                onTap: () {
+                  _applyFilter(entityType: _entityType, clearSubject: true);
+                  update(() {});
+                },
+              ),
+            ],
+          ],
+        ),
+        actions: [
+          FilledButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('დახურვა'),
+          ),
+        ],
+      ),
+    ),
+  );
+
   @override
   Widget build(BuildContext context) {
     super.build(context);
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        SizedBox(height: 10),
-        SizedBox(
-          height: 36,
-          child: ListView(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            children: [
-              for (final filter in _activityFilters) ...[
-                _AdminFilterChip(
-                  label: filter.label,
-                  selected: _entityType == filter.type && _entityId == null,
-                  onTap: () =>
-                      _applyFilter(entityType: filter.type, clearSubject: true),
+    return RefreshIndicator(
+      onRefresh: () => _load(),
+      child: ListView(
+        controller: _scroll,
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: _adminScrollPadding(context),
+        children: [
+          ManagerPanel(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: ManagerSectionHeading(
+                        'აქტივობის ჟურნალი',
+                        action: 'ფილტრები',
+                        onAction: _showFilters,
+                      ),
+                    ),
+                    if (widget.onOpenOperationalAudit != null)
+                      PopupMenuButton<String>(
+                        tooltip: 'აუდიტის სხვა ხედები',
+                        onSelected: (_) => widget.onOpenOperationalAudit!(),
+                        itemBuilder: (_) => [
+                          const PopupMenuItem(
+                            value: 'operational',
+                            child: Text('ოპერაციული აუდიტი'),
+                          ),
+                        ],
+                      ),
+                  ],
                 ),
-                SizedBox(width: 8),
+                if (_entityIdLabel != null)
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: TextButton.icon(
+                      onPressed: () => _applyFilter(
+                        entityType: _entityType,
+                        clearSubject: true,
+                      ),
+                      icon: const Icon(Icons.close, size: 16),
+                      label: Text(_entityIdLabel!),
+                    ),
+                  ),
+                if (_loading)
+                  const Padding(
+                    padding: EdgeInsets.all(32),
+                    child: Center(child: CircularProgressIndicator()),
+                  )
+                else if (_error != null)
+                  _ErrorWidget(onRetry: () => _load())
+                else if (_entries.isEmpty)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 24),
+                    child: Text(
+                      'ამ ფილტრით ჩანაწერები არ არის',
+                      style: managerDesignText(context, 13, muted: true),
+                    ),
+                  )
+                else
+                  for (final entry in _entries)
+                    _ActivityRow(
+                      entry: entry,
+                      onDrillIn: entry.entityId == null
+                          ? null
+                          : () => _drillInto(entry),
+                    ),
+                if (_hasMore && !_loading)
+                  const Padding(
+                    padding: EdgeInsets.all(18),
+                    child: Center(
+                      child: SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      ),
+                    ),
+                  ),
               ],
-            ],
-          ),
-        ),
-        SizedBox(height: 8),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: Row(
-            children: [
-              for (final range in _activityRanges) ...[
-                _AdminFilterChip(
-                  label: range.label,
-                  selected: _rangeDays == range.days,
-                  onTap: () =>
-                      _applyFilter(rangeDays: range.days, setRange: true),
-                ),
-                SizedBox(width: 8),
-              ],
-            ],
-          ),
-        ),
-        if (_entityIdLabel != null) ...[
-          SizedBox(height: 8),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: _AdminFilterChip(
-                label: '✕  $_entityIdLabel',
-                selected: true,
-                onTap: () =>
-                    _applyFilter(entityType: _entityType, clearSubject: true),
-              ),
             ),
           ),
         ],
-        SizedBox(height: 8),
-        Expanded(child: _buildBody()),
-      ],
-    );
-  }
-
-  Widget _buildBody() {
-    if (_loading) return _AdminLoading();
-    if (_error != null) {
-      return _ErrorWidget(onRetry: () => _load());
-    }
-    if (_entries.isEmpty) {
-      return Center(
-        child: Text(
-          'ამ ფილტრით ჩანაწერები არ არის',
-          style: TextStyle(color: AdminTheme.textMuted, fontSize: 13),
-        ),
-      );
-    }
-    return RefreshIndicator(
-      color: AdminTheme.primary,
-      onRefresh: () => _load(),
-      child: ListView.separated(
-        controller: _scroll,
-        padding: _adminScrollPadding(context),
-        itemCount: _entries.length + (_hasMore ? 1 : 0),
-        separatorBuilder: (_, __) => SizedBox(height: 8),
-        itemBuilder: (_, index) {
-          if (index >= _entries.length) {
-            return Padding(
-              padding: const EdgeInsets.symmetric(vertical: 18),
-              child: Center(
-                child: SizedBox(
-                  height: 20,
-                  width: 20,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: AdminTheme.primary,
-                  ),
-                ),
-              ),
-            );
-          }
-          final entry = _entries[index];
-          return _ActivityRow(
-            entry: entry,
-            onDrillIn: entry.entityId == null ? null : () => _drillInto(entry),
-          );
-        },
       ),
     );
   }
@@ -272,87 +320,88 @@ class _ActivityRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final subject = entry.subject;
+    final time = entry.createdAt.toLocal();
     final changes = [
       for (final change in entry.changes)
         if (GlobalAuditPresentation.changeLine(change) != null)
           GlobalAuditPresentation.changeLine(change)!,
     ];
-    return GestureDetector(
-      onTap: onDrillIn,
-      child: Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: AdminTheme.surfaceElevated,
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: AdminTheme.border),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    GlobalAuditPresentation.actionLabel(entry.action),
-                    style: TextStyle(
-                      color: AdminTheme.text,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
-                Text(
-                  _activityTime(entry.createdAt),
-                  style: TextStyle(color: AdminTheme.textDim, fontSize: 11),
-                ),
-              ],
+    return ListTile(
+      contentPadding: EdgeInsets.zero,
+      leading: Text(
+        '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}',
+        style: managerDesignText(context, 11, muted: true),
+      ),
+      title: Text(
+        _managerActivityLabel(entry.action),
+        style: managerDesignText(context, 13),
+      ),
+      subtitle: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (entry.subject != null)
+            Text(
+              entry.subject!,
+              style: managerDesignText(context, 11, muted: true),
             ),
-            if (subject != null) ...[
-              SizedBox(height: 3),
-              Text(
-                subject,
-                style: TextStyle(
-                  color: AdminTheme.textMuted,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ],
-            for (final line in changes) ...[
-              SizedBox(height: 3),
-              Text(
-                line,
-                style: TextStyle(color: AdminTheme.accent, fontSize: 12),
-              ),
-            ],
-            SizedBox(height: 6),
-            Row(
-              children: [
-                Icon(Icons.person_outline, size: 13, color: AdminTheme.textDim),
-                SizedBox(width: 4),
-                Flexible(
-                  child: Text(
-                    entry.actorName,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(color: AdminTheme.textDim, fontSize: 11),
+          Text(
+            [
+              entry.actorName,
+              if (entry.source != null) entry.source!,
+            ].join(' · '),
+            style: managerDesignText(context, 11, muted: true),
+          ),
+        ],
+      ),
+      onTap: () => showDialog<void>(
+        context: context,
+        builder: (dialogContext) => ManagerFormDialog(
+          title: Text(_managerActivityLabel(entry.action)),
+          content: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (entry.subject != null)
+                Text(
+                  entry.subject!,
+                  style: managerDesignText(
+                    context,
+                    20,
+                    weight: FontWeight.w600,
                   ),
                 ),
-                if (entry.source != null) ...[
-                  SizedBox(width: 8),
-                  Text(
-                    entry.source!,
-                    style: TextStyle(color: AdminTheme.textDim, fontSize: 11),
+              const SizedBox(height: 18),
+              ManagerKeyValue('თარიღი და დრო', _activityTime(entry.createdAt)),
+              ManagerKeyValue('ავტორი', entry.actorName),
+              if (entry.source != null) ManagerKeyValue('წყარო', entry.source!),
+              if (entry.entityType != null)
+                ManagerKeyValue(
+                  'ტიპი',
+                  GlobalAuditPresentation.entityLabel(entry.entityType),
+                ),
+              if (changes.isNotEmpty) ...[
+                const SizedBox(height: 20),
+                const ManagerSectionHeading('ცვლილებები'),
+                for (final line in changes)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: Text(line, style: managerDesignText(context, 13)),
                   ),
-                ],
-                if (entry.entityType != null) ...[
-                  SizedBox(width: 8),
-                  Text(
-                    GlobalAuditPresentation.entityLabel(entry.entityType),
-                    style: TextStyle(color: AdminTheme.textDim, fontSize: 11),
-                  ),
-                ],
               ],
+              if (onDrillIn != null)
+                ManagerDetailLink(
+                  'ობიექტის ისტორია',
+                  onTap: () {
+                    Navigator.pop(dialogContext);
+                    onDrillIn!();
+                  },
+                ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text('დახურვა'),
             ),
           ],
         ),
@@ -368,3 +417,28 @@ String _activityTime(DateTime dt) {
       '${l.hour.toString().padLeft(2, '0')}:'
       '${l.minute.toString().padLeft(2, '0')}';
 }
+
+String _managerActivityLabel(String action) =>
+    const {
+      'MENU_ITEM_CREATED': 'მენიუს პროდუქტი დაემატა',
+      'MENU_ITEM_UPDATED': 'მენიუს პროდუქტი შეიცვალა',
+      'MENU_ITEM_DELETED': 'მენიუს პროდუქტი წაიშალა',
+      'STAFF_CREATED': 'თანამშრომელი დაემატა',
+      'STAFF_UPDATED': 'თანამშრომელი შეიცვალა',
+      'STAFF_ROLE_CHANGED': 'თანამშრომლის როლი შეიცვალა',
+      'STAFF_PIN_CHANGED': 'თანამშრომლის PIN შეიცვალა',
+      'STAFF_DELETED': 'თანამშრომელი წაიშალა',
+      'RECEIVING_CREATED': 'მიღება შეიქმნა',
+      'RECEIVING_UPDATED': 'მიღება შეიცვალა',
+      'RECEIVING_POSTED': 'მიღება გატარდა',
+      'RECEIVING_CANCELLED': 'მიღება გაუქმდა',
+      'RECIPE_CREATED': 'შემადგენლობა დაემატა',
+      'RECIPE_UPDATED': 'შემადგენლობა შეიცვალა',
+      'RECIPE_DISABLED': 'შემადგენლობა გაითიშა',
+      'CONFIRM_RESERVATION': 'რეზერვაცია დადასტურდა',
+      'CREATE_RESERVATION': 'რეზერვაცია შეიქმნა',
+      'UPDATE_RESERVATION': 'რეზერვაცია შეიცვალა',
+      'ORDER_CREATED': 'შეკვეთა გაიხსნა',
+      'PAYROLL_PAYMENT_RECORDED': 'ხელფასის გადახდა ჩაიწერა',
+    }[action] ??
+    GlobalAuditPresentation.actionLabel(action);

@@ -3,7 +3,8 @@ import 'package:vynic/core/models/monitoring.dart';
 
 class DashboardBundle {
   final ManagerDashboardMetrics? metrics;
-  final Map<String, dynamic>? salesReport;
+  final Map<String, dynamic>? productAnalytics;
+  final Map<String, dynamic>? financials;
   final List<StaffMetric>? staff;
   final List<Map<String, dynamic>>? salesDaily;
   final List<Map<String, dynamic>>? todayReservations;
@@ -14,7 +15,8 @@ class DashboardBundle {
   const DashboardBundle({
     this.reads = const {},
     required this.metrics,
-    required this.salesReport,
+    required this.productAnalytics,
+    this.financials,
     required this.staff,
     this.salesDaily,
     this.todayReservations,

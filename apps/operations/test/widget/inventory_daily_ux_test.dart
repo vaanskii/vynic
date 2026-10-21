@@ -1,4 +1,5 @@
 import 'inventory_test_actions.dart';
+import 'manager_recipes_test.dart' show expandIngredient;
 import 'procurement_rework_test.dart' as flow;
 import 'package:vynic/core/services/manager_app/manager_app_preferences.dart';
 import 'package:vynic/core/services/manager_app/manager_dashboard_appearance.dart';
@@ -61,6 +62,7 @@ MenuRecipeDetail detail(String name, StockItem item, String qty, String unit) =>
       },
     });
 Future<void> select(WidgetTester t, Key key, String text) async {
+  if (key.toString().contains("receiving-price")) await openReceivingOptions(t);
   if (key.toString().contains('payment-mode')) await reviewReceiving(t);
   if (key.toString().contains('price-mode') ||
       key.toString().contains('payment-mode')) {
@@ -617,6 +619,7 @@ void main() {
         ),
       );
       await t.pumpAndSettle();
+      await expandIngredient(t, 1);
       await t.enterText(
         find.byKey(const Key('recipe-component-quantity-1')),
         '35',
@@ -824,7 +827,7 @@ void main() {
       );
       await t.pumpAndSettle();
       await flow.chooseReceivingProduct(t);
-      final disclosure = find.text('თარიღი და დოკუმენტის დეტალები');
+      final disclosure = find.text('წყარო და დოკუმენტის დეტალები');
       await t.ensureVisible(disclosure);
       await t.pumpAndSettle();
       await t.tap(disclosure);

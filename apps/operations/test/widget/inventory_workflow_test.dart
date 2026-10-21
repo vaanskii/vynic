@@ -179,6 +179,7 @@ void main() {
             ),
           );
           await t.pumpAndSettle();
+          await tap(t, find.byTooltip('მოქმედებები').first);
           await tap(t, find.text('ამოღება სიიდან'));
           expect(writes, isEmpty);
           await tap(t, find.text('არქივში გადატანა'));
@@ -188,6 +189,7 @@ void main() {
           await tap(t, find.byKey(const Key('inventory-archived')));
           expect(find.text('პროდუქტი mistake'), findsOneWidget);
           await qa.shot(t, 'flow-archive-${width.toInt()}');
+          await tap(t, find.byTooltip('მოქმედებები').first);
           await tap(t, find.text('აღდგენა'));
           expect(writes.map((r) => r['isActive']), [false, true]);
           await tap(t, find.byKey(const Key('inventory-archived')));

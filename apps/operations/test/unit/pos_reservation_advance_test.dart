@@ -241,6 +241,43 @@ void main() {
       expect(BusinessDayRepository.collectedTotalForDate('2026-10-15'), 6);
     },
   );
+  for (final replacement in [12.0, 3.0, 0.0]) {
+    test(
+      'posted reservation advance cannot be overwritten with $replacement',
+      () async {
+        final id = await booking();
+        await expectLater(
+          SalesRepository.recordAdvanceReceipt(
+            orderId: null,
+            reservationId: id,
+            amount: replacement,
+            collectedBy: 'synthetic',
+            receiptId: 'reservation:$id:advance',
+          ),
+          throwsStateError,
+        );
+        await ReservationRepository.updateReservationDetails(
+          id,
+          customerName: 'Edited guest',
+          actorId: 'synthetic',
+        );
+        expect(ReservationRepository.getReservation(id)!.advanceAmount, 6);
+        expect(
+          SalesRepository.findAdvanceReceipt(
+            'reservation:$id:advance',
+          )!['totalAmount'],
+          6,
+        );
+        expect(BusinessDayRepository.collectedTotalForDate('2026-10-15'), 6);
+        await DatabaseCore.reservationBox!.flush();
+        final boxName = DatabaseCore.reservationBox!.name;
+        await DatabaseCore.reservationBox!.close();
+        DatabaseCore.reservationBox = await Hive.openBox<Reservation>(boxName);
+        expect(ReservationRepository.getReservation(id)!.advanceAmount, 6);
+      },
+    );
+  }
+
   test(
     'concurrent identical booking requests persist one booking and receipt',
     () async {

@@ -242,6 +242,15 @@ void main() {
         }
       },
     );
+  Future<void> openFeeDetails(WidgetTester tester) async {
+    if (find.byType(Switch).evaluate().isNotEmpty) return;
+    final details = find.text('მომსახურების პარამეტრები');
+    await tester.ensureVisible(details);
+    await tester.pumpAndSettle();
+    await tester.tap(details);
+    await tester.pumpAndSettle();
+  }
+
   Future<GlobalKey<NavigatorState>> openScreen(
     WidgetTester tester, {
     bool detail = false,
@@ -284,7 +293,10 @@ void main() {
     );
     await tester.tap(find.text('Open owned screen'));
     await pumpIO(tester);
-    if (holdOrderGet == null) await tester.pumpAndSettle();
+    if (holdOrderGet == null) {
+      await tester.pumpAndSettle();
+      if (detail) await openFeeDetails(tester);
+    }
     return nav;
   }
 
@@ -337,6 +349,7 @@ void main() {
             await tester.tap(find.text('Open owned screen'));
             await pumpIO(tester);
             await tester.pumpAndSettle();
+            await openFeeDetails(tester);
             expect(
               tester.widget<Switch>(find.byType(Switch)).onChanged,
               isNull,

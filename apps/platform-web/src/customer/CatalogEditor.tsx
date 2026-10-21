@@ -81,15 +81,17 @@ export function CatalogEditor({
   const [busy, setBusy] = useState(false);
   const [conflict, setConflict] = useState<Conflict>();
   // A retry of the SAME change reuses its id, so a lost response never applies twice.
-  const retry = useRef<{ key: string; mutationId: string } | undefined>(
+  const retry = useRef<{ key: string; mutationId: string; entityId: string } | undefined>(
     undefined,
   );
   async function send(mutation: Mutation) {
     try {
       await customerApi(`venues/${venueId}/catalog/mutations`, mutation);
-      retry.current = undefined;
       setConflict(undefined);
       await load();
+      // Keep the accepted mutation's identity until its presentation reloads.
+      // Otherwise a reload failure leaves the form open as a second create.
+      retry.current = undefined;
       setEdit(undefined);
       onSaved();
     } catch (failure) {
@@ -276,9 +278,9 @@ export function CatalogEditor({
               edit.node ? content : { ...content, entityId: edit.kind },
             );
             if (retry.current?.key !== key)
-              retry.current = { key, mutationId: crypto.randomUUID() };
+              retry.current = { key, mutationId: crypto.randomUUID(), entityId: content.entityId };
             try {
-              await send({ ...content, mutationId: retry.current.mutationId });
+              await send({ ...content, entityId: retry.current.entityId, mutationId: retry.current.mutationId });
             } finally {
               setBusy(false);
             }

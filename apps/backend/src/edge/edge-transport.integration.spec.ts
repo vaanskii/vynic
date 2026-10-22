@@ -20,6 +20,7 @@ import {
 } from '../shared/contracts/edge-command';
 import { InventoryService } from '../inventory/inventory.service';
 import { RecipeService } from '../inventory/recipe.service';
+import { grantTrialPlan } from '../../test/commercial-access.fixture';
 
 const databaseUrl = process.env.TENANT_INTEGRATION_DATABASE_URL;
 const describeDatabase = databaseUrl ? describe : describe.skip;
@@ -91,13 +92,10 @@ describeDatabase('Cloud → Edge transport (PostgreSQL)', () => {
       },
     });
 
-    await prisma.venueFeatureOverride.createMany({
-      data: [venueAId, venueBId].map((venueId) => ({
-        venueId,
-        featureId: 'feature-inventory',
-        effect: 'ENABLED',
-      })),
-    });
+    // Both restaurants hold Inventory commercially (an override alone cannot
+    // grant access to a Venue without a plan and subscription).
+    await grantTrialPlan(prisma, venueAId, 'POS_MANAGER');
+    await grantTrialPlan(prisma, venueBId, 'POS_MANAGER');
     const issuedA = await credentials.issueCredential({
       venueId: venueAId,
       installationId: `81000000-0000-4000-8000-${suffix}`,

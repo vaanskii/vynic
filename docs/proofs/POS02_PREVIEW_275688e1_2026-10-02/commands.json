@@ -1,0 +1,63 @@
+{
+  "test": {
+    "cwd": "isolated candidate/apps/operations",
+    "argv": [
+      "flutter",
+      "--suppress-analytics",
+      "test",
+      "--no-pub",
+      "--reporter=json",
+      "test/unit/pos02_preview_safety_test.dart",
+      "test/unit/pos02_print_delivery_test.dart",
+      "test/unit/pos02_backup_restore_test.dart",
+      "test/widget/pos02_print_jobs_test.dart"
+    ],
+    "exitCode": 0
+  },
+  "analyze": {
+    "cwd": "isolated preview source/apps/operations",
+    "argv": [
+      "flutter",
+      "--suppress-analytics",
+      "analyze",
+      "--no-pub",
+      "lib",
+      "test",
+      "tool"
+    ],
+    "exitCode": 0
+  },
+  "format": {
+    "argv": [
+      "dart",
+      "--suppress-analytics",
+      "format",
+      "--output=none",
+      "--set-exit-if-changed",
+      "tool/pos02_preview.dart",
+      "test/support/pos02_preview_harness.dart",
+      "test/unit/pos02_preview_safety_test.dart"
+    ],
+    "exitCode": 0,
+    "files": 3,
+    "changes": 0
+  },
+  "build": {
+    "cwd": "separate isolated preview source/apps/operations",
+    "argv": [
+      "flutter",
+      "--suppress-analytics",
+      "build",
+      "macos",
+      "--debug",
+      "--no-pub",
+      "-t",
+      "tool/pos02_preview.dart",
+      "--dart-define=APP_ROLE=pos",
+      "--dart-define=VYNIC_ENV=development",
+      "--dart-define=POS02_TEST_PRINTER_HOST="
+    ],
+    "exitCode": 0,
+    "guiLaunched": false
+  }
+}

@@ -5,6 +5,7 @@ import { EdgeTransportController } from '../edge/edge-transport.controller';
 import { EdgeCommandService } from '../edge/edge-command.service';
 import { DeviceCredentialService } from '../auth/device-credential.service';
 import { Prisma } from '@prisma/client';
+import { randomUUID } from 'node:crypto';
 import { PrismaService } from '../prisma.service';
 import { SaleConsumptionService } from './sale-consumption.service';
 import { InventoryService } from './inventory.service';
@@ -29,7 +30,9 @@ const databaseUrl = process.env.TENANT_INTEGRATION_DATABASE_URL;
       role: 'MANAGER' as const,
     };
     const b = { ...a, venueId: `${organizationId}-b` };
-    const scope = { venueId: { in: [a.venueId, b.venueId] } };
+    // Operated by a real enrolled primary POS, for the Device transport test.
+    const c = { ...a, venueId: randomUUID() };
+    const scope = { venueId: { in: [a.venueId, b.venueId, c.venueId] } };
     let n = 0;
     beforeAll(async () => {
       prisma = new PrismaService({ datasourceUrl: databaseUrl });
@@ -43,7 +46,7 @@ const databaseUrl = process.env.TENANT_INTEGRATION_DATABASE_URL;
           id: organizationId,
           name: 'Consumption test',
           venues: {
-            create: [a, b].map((t) => ({
+            create: [a, b, c].map((t) => ({
               id: t.venueId,
               name: t.venueId,
               timezone: 'Asia/Tbilisi',
@@ -69,6 +72,11 @@ const databaseUrl = process.env.TENANT_INTEGRATION_DATABASE_URL;
       await prisma.menuItem.deleteMany({ where: scope });
       await prisma.menuCategory.deleteMany({ where: scope });
       await prisma.auditEventLog.deleteMany({ where: scope });
+      await prisma.venue.updateMany({
+        where: { organizationId },
+        data: { activeOperationalDeviceId: null },
+      });
+      await prisma.device.deleteMany({ where: scope });
       await prisma.venue.deleteMany({ where: { organizationId } });
       await prisma.organization.delete({ where: { id: organizationId } });
       await prisma.$disconnect();
@@ -330,6 +338,67 @@ const databaseUrl = process.env.TENANT_INTEGRATION_DATABASE_URL;
       mutated.snapshot.lines[0].itemName = 'Changed';
       await expect(service.apply(a, mutated)).rejects.toThrow('immutable');
     });
+    it('historical consumption keeps the base unit after a recipe stops using the item', async () => {
+      const f = await fixture('kg', '0.035');
+      await service.apply(a, payload(f.recipe, 2));
+      const replacement = await inventory.createStockItem(a, {
+        name: `Replacement ${++n}`,
+        baseUnit: 'kg',
+      });
+      await recipes.save(a, {
+        menuItemId: f.menu.id,
+        components: [
+          { stockItemId: replacement.id, quantity: '1', unit: 'kg' },
+        ],
+      });
+      expect(
+        await prisma.receivingLine.count({
+          where: { stockItemId: f.stock.id },
+        }),
+      ).toBe(0);
+      expect(
+        await prisma.menuConsumptionComponent.count({
+          where: { stockItemId: f.stock.id },
+        }),
+      ).toBe(0);
+      const before = await inventory.getStockItem(a, f.stock.id);
+      await expect(
+        inventory.updateStockItem(a, f.stock.id, { baseUnit: 'g' }),
+      ).rejects.toThrow('must keep its base unit');
+      expect(await inventory.getStockItem(a, f.stock.id)).toMatchObject({
+        baseUnit: 'kg',
+        currentStock: before.currentStock,
+      });
+    });
+
+    it.each([
+      null,
+      { components: null },
+      { components: [null] },
+      { components: [{ stockItemId: null }] },
+    ])(
+      'rejects malformed consumption shape %j before persisting effects',
+      async (line) => {
+        const f = await fixture();
+        const row = payload(f.recipe);
+        row.snapshot.lines = [line] as any;
+        const before = await prisma.stockMovement.count({
+          where: { venueId: a.venueId },
+        });
+        await expect(service.apply(a, row)).rejects.toMatchObject({
+          status: 400,
+        });
+        expect(
+          await prisma.saleConsumption.count({
+            where: { venueId: a.venueId, posSaleId: row.posSaleId },
+          }),
+        ).toBe(0);
+        expect(
+          await prisma.stockMovement.count({ where: { venueId: a.venueId } }),
+        ).toBe(before);
+      },
+    );
+
     it('unmapped and internal exclusions remain readable without fabricated movements', async () => {
       const f = await fixture();
       const invalidMapped = payload(f.recipe);
@@ -402,8 +471,20 @@ const databaseUrl = process.env.TENANT_INTEGRATION_DATABASE_URL;
       ).toBe(false);
     });
     it('HTTP consumption uses the authenticated Device Venue and acknowledges valid effects', async () => {
-      const f = await fixture();
+      const f = await fixture('bottle', '1', false, c);
       const row = payload(f.recipe, 1);
+      const credentials = new DeviceCredentialService(prisma);
+      // A real Device credential; the first Device becomes the Venue's primary.
+      const { deviceId, credential } = await credentials.issueCredential({
+        venueId: c.venueId,
+        installationId: randomUUID(),
+        displayName: 'Front POS',
+        platform: 'WINDOWS',
+      });
+      expect(
+        (await prisma.venue.findUniqueOrThrow({ where: { id: c.venueId } }))
+          .activeOperationalDeviceId,
+      ).toBe(deviceId);
       const module = await Test.createTestingModule({
         controllers: [EdgeTransportController],
         providers: [
@@ -414,16 +495,7 @@ const databaseUrl = process.env.TENANT_INTEGRATION_DATABASE_URL;
           { provide: SaleConsumptionService, useValue: service },
           { provide: InventoryService, useValue: inventory },
           { provide: EdgeCommandService, useValue: {} },
-          {
-            provide: DeviceCredentialService,
-            useValue: {
-              isDeviceCredential: (key: string) => key === 'test-device',
-              verifyCredential: async () => ({
-                ...a,
-                deviceId: 'test-device-id',
-              }),
-            },
-          },
+          { provide: DeviceCredentialService, useValue: credentials },
         ],
       }).compile();
       const app = module.createNestApplication();
@@ -435,7 +507,7 @@ const databaseUrl = process.env.TENANT_INTEGRATION_DATABASE_URL;
           .expect(401);
         const response = await request(app.getHttpServer())
           .post('/edge/inventory/consumption')
-          .set('X-POS-Sync-Key', 'test-device')
+          .set('X-POS-Sync-Key', credential)
           .send({ ...row, venueId: b.venueId })
           .expect(201);
         expect(response.body).toEqual({
@@ -444,7 +516,7 @@ const databaseUrl = process.env.TENANT_INTEGRATION_DATABASE_URL;
         });
         expect(
           await prisma.saleConsumption.count({
-            where: { posSaleId: row.posSaleId, venueId: a.venueId },
+            where: { posSaleId: row.posSaleId, venueId: c.venueId },
           }),
         ).toBe(1);
         expect(
@@ -454,7 +526,7 @@ const databaseUrl = process.env.TENANT_INTEGRATION_DATABASE_URL;
         ).toBe(0);
         await request(app.getHttpServer())
           .post('/edge/inventory/consumption')
-          .set('X-POS-Sync-Key', 'test-device')
+          .set('X-POS-Sync-Key', credential)
           .send({})
           .expect(400);
       } finally {

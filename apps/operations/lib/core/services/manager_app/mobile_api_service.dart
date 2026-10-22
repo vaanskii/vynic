@@ -1,4 +1,11 @@
+import 'manager_data_read.dart';
+import '../../models/inventory_history_page.dart';
+import 'manager_operation_request.dart';
+import 'table_repair_request.dart';
+import 'order_edit_request.dart';
+import 'package:vynic/core/models/order_edit_projection.dart';
 import 'manager_entitlements.dart';
+import 'manager_notification_page.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
@@ -11,7 +18,6 @@ import 'package:vynic/core/services/sync/api_config.dart';
 import 'package:vynic/core/services/auth/auth_token_service.dart';
 import 'package:vynic/core/services/manager_app/pos_command_delivery.dart';
 import 'package:vynic/core/services/manager_app/mobile_cache_service.dart';
-import 'package:vynic/core/services/sync/mobile_edit_echo_guard.dart';
 import 'package:vynic/core/services/sync/monitoring_socket_service.dart';
 import 'package:vynic/core/models/global_audit_entry.dart';
 import 'package:vynic/core/models/inventory.dart';
@@ -29,6 +35,175 @@ class MobileApiService {
 
   static const int _maxRetries = 3;
   static const Duration _timeout = Duration(seconds: 12);
+
+  static final Map<String, Future<Object>> _readFlights = {};
+  static final Expando<ManagerReadStatus> _dataStatuses = Expando();
+  static Future<T> _readData<T extends Object>(
+    String key,
+    String path,
+    T Function(dynamic) parse,
+  ) async {
+    final scope = tableRepairScope;
+    final session = AuthTokenService.authHeader['Authorization'];
+    final headers = Map<String, String>.from(_headers);
+    final uri = Uri.parse('$_base$path');
+    final identity = '$scope:$session:$path';
+    ManagerDataReads.activate(scope);
+    void requireSession() {
+      if (!isCurrentTableRepairScope(scope) ||
+          session != AuthTokenService.authHeader['Authorization'])
+        throw StateError('Manager session changed');
+    }
+
+    Future<T> perform() async {
+      http.Response? response;
+      Object? failure;
+      for (var attempt = 0; attempt < _maxRetries; attempt++) {
+        requireSession();
+        try {
+          response = await http.get(uri, headers: headers).timeout(_timeout);
+          requireSession();
+          break;
+        } catch (e) {
+          requireSession();
+          failure = e;
+          if (attempt < _maxRetries - 1)
+            await Future<void>.delayed(Duration(seconds: 1 << attempt));
+        }
+      }
+      requireSession();
+      final cached = MobileCacheService.cachedRead(scope, path);
+      if (response?.statusCode == 200) {
+        try {
+          final json = jsonDecode(response!.body);
+          final data = parse(json);
+          Map<String, dynamic> stamp = {};
+          final header = response.headers['x-vynic-data-freshness'];
+          if (header != null)
+            stamp = Map<String, dynamic>.from(jsonDecode(header) as Map);
+          if (json is Map) {
+            final provenance =
+                json['financialProvenance'] ?? json['provenance'];
+            if (provenance == 'PARTIAL' || provenance == 'LEGACY_FALLBACK')
+              stamp['completeness'] = provenance;
+          }
+          var status = ManagerReadStatus.fromJson(key, {
+            ...stamp,
+            'location': 'api',
+            'fetchedAt': DateTime.now().toUtc().toIso8601String(),
+            'apiAvailable': true,
+            'query': path,
+          });
+          requireSession();
+          try {
+            await MobileCacheService.saveRead(
+              scope,
+              path,
+              json as Object,
+              status,
+            );
+          } catch (_) {
+            // Remote data is valid even when local persistence fails. Never serve
+            // an optimistic Hive memory write as a durable cache on the next failure.
+            status = ManagerReadStatus.fromJson(key, {
+              ...status.toJson(),
+              'error':
+                  'ქეში ვერ შეინახა; ინტერნეტის გარეშე ეს განახლება მიუწვდომელია.',
+            });
+          }
+          requireSession();
+          ManagerDataReads.publish(scope, status);
+          _dataStatuses[data] = status;
+          MonitoringSocketService.apiError.value = ManagerDataReads.hasApiError;
+          return data;
+        } catch (e) {
+          requireSession();
+          failure = e;
+        }
+      }
+      final message = response == null
+          ? 'API მიუწვდომელია — მონაცემები ვერ განახლდა.'
+          : response.statusCode == 200
+          ? 'API მონაცემები ვერ წაიკითხა — განახლება არ მიღებულა.'
+          : 'API შეცდომა (${response.statusCode}) — მონაცემები ვერ განახლდა.';
+      if (cached != null &&
+          response?.statusCode != 401 &&
+          response?.statusCode != 403) {
+        try {
+          final value = parse(cached['data']);
+          final status =
+              ManagerReadStatus.fromJson(
+                key,
+                Map<String, dynamic>.from(cached['status'] as Map),
+              ).failed(
+                message,
+                location: 'cache',
+                httpStatus: response?.statusCode,
+              );
+          requireSession();
+          ManagerDataReads.publish(scope, status);
+          _dataStatuses[value] = status;
+          MonitoringSocketService.apiError.value = ManagerDataReads.hasApiError;
+          return value;
+        } catch (e) {
+          requireSession();
+          failure = e;
+        }
+      }
+      final unavailable = ManagerReadStatus(
+        key: key,
+        query: path,
+        error: message,
+        httpStatus: response?.statusCode,
+      );
+      ManagerDataReads.publish(scope, unavailable);
+      MonitoringSocketService.apiError.value = true;
+      // Diagnostic details remain in developer logs; release UI receives safe copy.
+      debugPrint('[Manager read $key] $failure');
+      throw ManagerReadFailure(unavailable);
+    }
+
+    final existing = _readFlights[identity];
+    if (existing != null) return await existing as T;
+    final future = perform();
+    _readFlights[identity] = future;
+    try {
+      return await future;
+    } finally {
+      if (identical(_readFlights[identity], future))
+        _readFlights.remove(identity);
+    }
+  }
+
+  static Future<ManagerDataRead<T>> captureRead<T>(
+    String key,
+    Future<T> Function() fetch,
+  ) async {
+    final scope = tableRepairScope;
+    T? data;
+    ManagerReadStatus? failure;
+    try {
+      data = await fetch();
+    } catch (e) {
+      if (!isCurrentTableRepairScope(scope)) rethrow;
+      if (e is ManagerReadFailure) failure = e.status;
+    }
+    if (!isCurrentTableRepairScope(scope))
+      throw StateError('Manager session changed');
+    return ManagerDataRead(
+      data,
+      (data == null ? failure : _dataStatuses[data as Object]) ??
+          ManagerDataReads.statuses.value[key] ??
+          ManagerReadStatus(key: key, error: 'მონაცემები მიუწვდომელია.'),
+    );
+  }
+
+  static ManagerReadStatus? statusFor(Object data) => _dataStatuses[data];
+
+  static void releaseReadStatuses(Iterable<ManagerReadStatus> reads) {
+    ManagerDataReads.release(tableRepairScope, reads);
+    MonitoringSocketService.apiError.value = ManagerDataReads.hasApiError;
+  }
 
   // Network exceptions may contain endpoint/IP details. Keep them out of release UI.
   static Never _throwNetworkError(Object error, StackTrace stack) {
@@ -170,6 +345,21 @@ class MobileApiService {
   }
 
   /// Persisted manager notifications (while app was in background).
+  static Future<ManagerNotificationPage> getNotificationsPage({
+    String? since,
+    String? cursor,
+  }) async {
+    final query = Uri(queryParameters: {
+      if (since != null) 'since': since,
+      if (cursor != null) 'cursor': cursor,
+    }).query;
+    final response = await _get('/mobile/notifications/page?$query');
+    if (response.statusCode != 200)
+      throw HttpException('Notification catch-up failed (${response.statusCode})');
+    return ManagerNotificationPage.fromJson(jsonDecode(response.body));
+  }
+
+  /// Legacy array response retained for compatible callers.
   static Future<List<Map<String, dynamic>>> getNotifications({
     String? since,
   }) async {
@@ -195,169 +385,225 @@ class MobileApiService {
   // ── Dashboard ──────────────────────────────────────────────────────────────
 
   static Future<ManagerDashboardMetrics> getDashboard() async {
-    try {
-      final response = await _get('/mobile/dashboard');
-      if (response.statusCode == 200) {
-        final metrics = ManagerDashboardMetrics.fromJson(
-          jsonDecode(response.body) as Map<String, dynamic>,
-        );
-        await MobileCacheService.saveDashboard(metrics);
-        if (metrics.businessDate != null) {
-          MonitoringSocketService.currentBusinessDate.value =
-              metrics.businessDate;
-        }
-        return metrics;
+    final value = await _readData('dashboard', '/mobile/dashboard', (json) {
+      final map = Map<String, dynamic>.from(json as Map);
+      for (final key in ['todayRevenue', 'openTablesPayable', 'totalTables']) {
+        if (map[key] is! num)
+          throw const FormatException('Incomplete dashboard response');
       }
-      debugPrint('[API] Dashboard ${response.statusCode}: ${response.body}');
-      throw Exception('Status ${response.statusCode}');
-    } catch (e) {
-      debugPrint('[API] getDashboard failed ($e), using cache');
-      final cached = MobileCacheService.getCachedDashboard();
-      if (cached != null) return cached;
-      rethrow;
-    }
+      return ManagerDashboardMetrics.fromJson(map);
+    });
+    MonitoringSocketService.currentBusinessDate.value = value.businessDate;
+    return value;
   }
 
   // ── Tables ─────────────────────────────────────────────────────────────────
 
-  static Future<List<TableModel>> getTables() async {
-    try {
-      final response = await _get('/mobile/tables');
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body) as List;
-        final tables = data
-            .map((e) => TableModel.fromJson(e as Map<String, dynamic>))
-            .toList();
-        await MobileCacheService.saveTables(tables);
-        return tables;
-      }
-      throw Exception('Status ${response.statusCode}');
-    } catch (e) {
-      debugPrint('[API] getTables failed ($e), using cache');
-      final cached = MobileCacheService.getCachedTables();
-      if (cached != null) return cached;
-      rethrow;
-    }
+  static Future<List<TableModel>> getTables() => _readData(
+    'tables',
+    '/mobile/tables',
+    (json) => (json as List)
+        .map((e) => TableModel.fromJson(Map<String, dynamic>.from(e as Map)))
+        .toList(),
+  );
+
+  static String get tableRepairScope {
+    final token = AuthTokenService.token;
+    if (token == null || AuthTokenService.username == null)
+      throw StateError('Manager authentication is required');
+    final pieces = token.split('.');
+    if (pieces.length != 3)
+      throw const FormatException('Invalid Manager session');
+    final claims = jsonDecode(
+      utf8.decode(base64Url.decode(base64Url.normalize(pieces[1]))),
+    );
+    if (claims is! Map) throw const FormatException('Invalid Manager claims');
+    final subject = claims['sub'];
+    if (subject is! String || subject.isEmpty)
+      throw const FormatException('Missing Manager principal');
+    // Namespacing only; the server derives all actual authority from Staff.
+    return TableRepairRequests.scope(
+      _base,
+      jsonEncode([subject, AuthTokenService.venueCode]),
+    );
   }
 
-  /// Force-frees a ghost table (emergency manager action).
-  static Future<bool> freeTable(String tableNumber, String floor) async {
+  static bool isCurrentTableRepairScope(String scope) {
     try {
-      final response = await _post(
-        '/mobile/tables/$tableNumber/free?floor=${Uri.encodeComponent(floor)}',
-        {},
-      );
-      final ok = response.statusCode == 200 || response.statusCode == 201;
-      if (ok) {
-        MobileEditEchoGuard.markTableEdited(tableNumber, floor);
-      }
-      return ok;
-    } catch (_) {
+      return tableRepairScope == scope;
+    } on StateError {
+      return false;
+    } on FormatException {
       return false;
     }
   }
 
-  // ── Takeaway orders ────────────────────────────────────────────────────────
-
-  static Future<List<Order>> getTakeawayOrders() async {
-    final response = await _get('/mobile/takeaway-orders');
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body) as List;
-      return data
-          .map((e) => Order.fromJson(e as Map<String, dynamic>))
-          .toList();
+  static Future<TableRepairResult> freeTable(
+    String tableNumber,
+    String floor, {
+    bool refresh = false,
+    String? expectedScope,
+  }) {
+    final String scope;
+    const changed = TableRepairResult(
+      delivery: PosCommandDelivery.failed,
+      code: 'session_changed',
+    );
+    try {
+      scope = tableRepairScope;
+    } on StateError {
+      return Future.value(changed);
+    } on FormatException {
+      return Future.value(changed);
     }
-    throw Exception('getTakeawayOrders failed: ${response.statusCode}');
+    if (expectedScope != null && scope != expectedScope)
+      return Future.value(changed);
+    return TableRepairRequests.submit(
+      scope: scope,
+      number: tableNumber,
+      floor: floor,
+      refresh: refresh,
+      send: (body) {
+        if (tableRepairScope != scope)
+          throw StateError('Manager session changed before repair request');
+        return _post(
+          '/mobile/tables/${Uri.encodeComponent(tableNumber)}/free?floor=${Uri.encodeComponent(floor)}',
+          body,
+        );
+      },
+    );
   }
 
-  static Future<Order> createTakeawayOrder({
+  // ── Takeaway orders ────────────────────────────────────────────────────────
+
+  static Future<List<Order>> getTakeawayOrders() => _readData(
+    'takeaway',
+    '/mobile/takeaway-orders',
+    (json) => (json as List)
+        .map((e) => Order.fromJson(Map<String, dynamic>.from(e as Map)))
+        .toList(),
+  );
+
+  static Future<ManagerOperationResult> createTakeawayOrder({
     required String customerName,
     required String pickupTime,
     required String waiterName,
     required List<Map<String, dynamic>> items,
-  }) async {
-    final response = await _post('/mobile/takeaway-orders', {
-      'customerName': customerName,
-      'pickupTime': pickupTime,
-      'waiterName': waiterName,
-      'items': items,
-    });
-    if (response.statusCode == 200 || response.statusCode == 201) {
-      final order = Order.fromJson(
-        jsonDecode(response.body) as Map<String, dynamic>,
-      );
-      MobileEditEchoGuard.markOrderEdited(order.orderId);
-      return order;
-    }
-    throw Exception(
-      'createTakeawayOrder failed: ${response.statusCode} ${response.body}',
-    );
-  }
+    String? expectedScope,
+    bool newRequest = false,
+  }) => _operation(
+    'takeaway_create',
+    'takeaway_create',
+    {'customerName': customerName, 'pickupTime': pickupTime, 'items': items},
+    expectedScope: expectedScope,
+    newRequest: newRequest,
+  );
 
   /// Create a dine-in (walk-in) order on one or more tables of a single floor.
-  static Future<Map<String, dynamic>> createWalkInOrder({
+  static Future<ManagerOperationResult> createWalkInOrder({
     required List<String> tableNumbers,
     required String floor,
     required String waiterName,
     required List<Map<String, dynamic>> items,
     int guestCount = 0,
-  }) async {
-    final response = await _post('/mobile/walk-in-orders', {
+    String? expectedScope,
+    bool newRequest = false,
+  }) => _operation(
+    'dine_in_create',
+    'dine_in_create',
+    {
       'tableNumbers': tableNumbers,
       'floor': floor,
-      'waiterName': waiterName,
-      'guestCount': guestCount,
       'items': items,
-    });
-    if (response.statusCode == 200 || response.statusCode == 201) {
-      final data = jsonDecode(response.body) as Map<String, dynamic>;
-      final posOrderId = (data['posOrderId'] as num?)?.toInt();
-      if (posOrderId != null) {
-        MobileEditEchoGuard.markOrderEdited(posOrderId);
-      }
-      for (final t in tableNumbers) {
-        MobileEditEchoGuard.markTableEdited(t, floor);
-      }
-      return data;
+      'guestCount': guestCount,
+    },
+    expectedScope: expectedScope,
+    newRequest: newRequest,
+  );
+
+  static Future<ManagerOperationResult> deleteTakeawayOrder(
+    int posOrderId, {
+    String? expectedScope,
+  }) => _operation('takeaway_cancel', 'order_cancel:$posOrderId', {
+    'posOrderId': posOrderId,
+  }, expectedScope: expectedScope);
+
+  static Future<ManagerOperationResult> _operation(
+    String kind,
+    String slot,
+    Map<String, dynamic> body, {
+    String? expectedScope,
+    bool refresh = false,
+    bool newRequest = false,
+  }) {
+    final String scope;
+    try {
+      scope = tableRepairScope;
+    } catch (_) {
+      return Future.value(
+        const ManagerOperationResult(
+          PosCommandDelivery.failed,
+          code: 'session_changed',
+        ),
+      );
     }
-    throw Exception(
-      'createWalkInOrder failed: ${response.statusCode} ${response.body}',
+    if (expectedScope == null || expectedScope != scope)
+      return Future.value(
+        const ManagerOperationResult(
+          PosCommandDelivery.failed,
+          code: 'session_changed',
+        ),
+      );
+    return ManagerOperationRequests.submit(
+      scope: scope,
+      slot: slot,
+      kind: kind,
+      body: body,
+      refresh: refresh,
+      newRequest: newRequest,
+      currentSession: () => isCurrentTableRepairScope(scope),
+      exchange: (request, statusOnly) {
+        if (!isCurrentTableRepairScope(scope))
+          throw StateError('Manager session changed');
+        if (statusOnly)
+          return http
+              .get(
+                Uri.parse(
+                  '$_base/mobile/operation-requests/${request['requestId']}',
+                ),
+                headers: _headers,
+              )
+              .timeout(_timeout);
+        return _post('/mobile/operation-requests/${request['kind']}', {
+          'requestId': request['requestId'],
+          'body': request['body'],
+        });
+      },
     );
   }
 
-  static Future<void> deleteTakeawayOrder(int posOrderId) async {
-    final uri = Uri.parse('$_base/mobile/takeaway-orders/$posOrderId');
-    final response = await http
-        .delete(uri, headers: _headers)
-        .timeout(_timeout)
-        .catchError(_throwNetworkError);
-    if (response.statusCode != 200 && response.statusCode != 201) {
-      throw Exception('deleteTakeawayOrder failed: ${response.statusCode}');
-    }
-    MobileEditEchoGuard.markOrderEdited(posOrderId);
-  }
+  static Future<ManagerOperationResult> refreshOperation(
+    Map<String, dynamic> request,
+  ) => _operation(
+    request['kind'],
+    request['slot'],
+    Map<String, dynamic>.from(request['body']),
+    expectedScope: request['scope'],
+    refresh: true,
+  );
 
   // ── Staff performance ──────────────────────────────────────────────────────
 
-  static Future<List<StaffMetric>> getStaffPerformance() async {
-    try {
-      final response = await _get('/mobile/staff-performance');
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body) as List;
-        final staff = data
-            .map((e) => StaffMetric.fromJson(e as Map<String, dynamic>))
-            .toList();
-        await MobileCacheService.saveStaffPerformance(staff);
-        return staff;
-      }
-      throw Exception('Status ${response.statusCode}');
-    } catch (e) {
-      debugPrint('[API] getStaffPerformance failed ($e), using cache');
-      final cached = MobileCacheService.getCachedStaffPerformance();
-      if (cached != null) return cached;
-      rethrow;
-    }
-  }
+  static Future<List<StaffMetric>> getStaffPerformance({
+    String? from,
+    String? to,
+  }) => _readData(
+    'staff_performance',
+    '/mobile/staff-performance${from == null ? '' : '?${Uri(queryParameters: {'from': from, if (to != null) 'to': to}).query}'}',
+    (json) => (json as List)
+        .map((e) => StaffMetric.fromJson(Map<String, dynamic>.from(e as Map)))
+        .toList(),
+  );
 
   // ── Reservations ────────────────────────────────────────────────────────────
 
@@ -365,18 +611,16 @@ class MobileApiService {
     String? date,
   }) async {
     final query = (date != null && date.isNotEmpty) ? '?date=$date' : '';
-    final response = await _get('/mobile/reservations$query');
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body) as List<dynamic>;
-      return data
-          .whereType<Map>()
-          .map((e) => Map<String, dynamic>.from(e))
-          .toList();
-    }
-    throw Exception('getReservations failed: ${response.statusCode}');
+    return _readData(
+      'reservations',
+      '/mobile/reservations$query',
+      (json) => (json as List)
+          .map((e) => Map<String, dynamic>.from(e as Map))
+          .toList(),
+    );
   }
 
-  static Future<Map<String, dynamic>> createReservation({
+  static Future<ManagerOperationResult> createReservation({
     required String customerName,
     required String customerPhone,
     required List<int> tableNumbers,
@@ -386,43 +630,40 @@ class MobileApiService {
     String? notes,
     String? createdBy,
     List<Map<String, dynamic>>? preOrderItems,
-  }) async {
-    final response = await _post('/mobile/reservations', {
+    String? expectedScope,
+    bool newRequest = false,
+  }) => _operation(
+    'reservation_create',
+    'reservation_create',
+    {
       'customerName': customerName,
       'customerPhone': customerPhone,
       'tableNumbers': tableNumbers,
       'reservationDate': reservationDate,
       'reservationTime': reservationTime,
       'numberOfGuests': numberOfGuests,
-      'notes': notes,
-      'createdBy': createdBy,
-      'status': 'confirmed',
-      'preOrderItems': preOrderItems ?? const [],
-    });
-    if (response.statusCode == 200 || response.statusCode == 201) {
-      return jsonDecode(response.body) as Map<String, dynamic>;
-    }
-    throw Exception('createReservation failed: ${response.statusCode}');
-  }
+      'notes': notes ?? '',
+      'preOrderItems': preOrderItems ?? [],
+    },
+    expectedScope: expectedScope,
+    newRequest: newRequest,
+  );
 
-  static Future<void> updateReservationStatus({
+  static Future<ManagerOperationResult> updateReservationStatus({
     required String reservationId,
     required String status,
-  }) async {
-    final response = await _post('/mobile/reservations/$reservationId/status', {
-      'status': status,
-    });
-    if (response.statusCode != 200 && response.statusCode != 201) {
-      throw Exception('updateReservationStatus failed: ${response.statusCode}');
-    }
-  }
+    String? expectedScope,
+  }) => _operation('reservation_status', 'reservation:$reservationId', {
+    'reservationId': reservationId,
+    'status': status,
+  }, expectedScope: expectedScope);
 
-  static Future<void> deleteReservation(String reservationId) async {
-    final response = await _delete('/mobile/reservations/$reservationId');
-    if (response.statusCode != 200 && response.statusCode != 201) {
-      throw Exception('deleteReservation failed: ${response.statusCode}');
-    }
-  }
+  static Future<ManagerOperationResult> deleteReservation(
+    String reservationId, {
+    String? expectedScope,
+  }) => _operation('reservation_delete', 'reservation:$reservationId', {
+    'reservationId': reservationId,
+  }, expectedScope: expectedScope);
 
   /// Ask the backend to print the reservation check on the Windows POS.
   ///
@@ -448,7 +689,31 @@ class MobileApiService {
   /// Finance mutations carry a caller-generated UUID, retained across retries.
   /// Cloud confirms persistence; no optimistic/offline financial writes.
   static Future<Map<String, dynamic>> financeRead(String path) async {
-    final response = await _get('/mobile/finance/$path');
+    final scope = tableRepairScope, token = AuthTokenService.token;
+    final uri = Uri.parse('$_base/mobile/finance/$path');
+    final headers = Map<String, String>.from(_headers);
+    void requireSession() {
+      if (!isCurrentTableRepairScope(scope) ||
+          AuthTokenService.token != token) {
+        throw StateError('სესია შეიცვალა — განაახლეთ ისტორია');
+      }
+    }
+
+    http.Response? result;
+    for (var attempt = 0; attempt < _maxRetries; attempt++) {
+      requireSession();
+      try {
+        result = await http.get(uri, headers: headers).timeout(_timeout);
+        requireSession();
+        break;
+      } catch (_) {
+        requireSession();
+        if (attempt == _maxRetries - 1) rethrow;
+        await Future<void>.delayed(Duration(seconds: 1 << attempt));
+      }
+    }
+    requireSession();
+    final response = result!;
     if (response.statusCode == 200) {
       return Map<String, dynamic>.from(jsonDecode(response.body) as Map);
     }
@@ -472,22 +737,45 @@ class MobileApiService {
     );
   }
 
-  static Future<Map<String, dynamic>> getFinancials() async {
-    try {
-      final response = await _get('/mobile/financials');
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body) as Map<String, dynamic>;
-        await MobileCacheService.saveFinancials(data);
-        return data;
+  /// One captured authenticated Cloud request. The correction store owns the
+  /// retained UUID and receipt validation; retries are deliberate, never offline.
+  static Future<Map<String, dynamic>> financeCorrectionWrite(
+    String path,
+    Map<String, dynamic> body,
+  ) async {
+    final scope = tableRepairScope, token = AuthTokenService.token;
+    final uri = Uri.parse('$_base/mobile/finance/$path');
+    final headers = Map<String, String>.from(_headers);
+    void requireSession() {
+      if (!isCurrentTableRepairScope(scope) ||
+          AuthTokenService.token != token) {
+        throw StateError('სესია შეიცვალა — განაახლეთ ისტორია');
       }
-      throw Exception('Status ${response.statusCode}');
-    } catch (e) {
-      debugPrint('[API] getFinancials failed ($e), using cache');
-      final cached = MobileCacheService.getCachedFinancials();
-      if (cached != null) return cached;
-      rethrow;
     }
+
+    requireSession();
+    final response = await http
+        .post(uri, headers: headers, body: jsonEncode(body))
+        .timeout(_timeout);
+    requireSession();
+    final decoded = jsonDecode(response.body);
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw Exception(
+        decoded is Map
+            ? decoded['message'] ?? 'კორექტირება ვერ შესრულდა'
+            : 'კორექტირება ვერ შესრულდა (${response.statusCode})',
+      );
+    }
+    if (decoded is! Map)
+      throw const FormatException('კორექტირების შედეგი ვერ დადასტურდა');
+    return Map<String, dynamic>.from(decoded);
   }
+
+  static Future<Map<String, dynamic>> getFinancials() => _readData(
+    'financials',
+    '/mobile/financials',
+    (json) => Map<String, dynamic>.from(json as Map),
+  );
 
   static Future<Map<String, dynamic>> getFinancialSummary({
     String? from,
@@ -500,11 +788,11 @@ class MobileApiService {
     final suffix = params.isEmpty
         ? ''
         : '?${Uri(queryParameters: params).query}';
-    final response = await _get('/mobile/financial-summary$suffix');
-    if (response.statusCode == 200) {
-      return Map<String, dynamic>.from(jsonDecode(response.body) as Map);
-    }
-    throw Exception('getFinancialSummary failed: ${response.statusCode}');
+    return _readData(
+      'ledger_summary',
+      '/mobile/financial-summary$suffix',
+      (json) => Map<String, dynamic>.from(json as Map),
+    );
   }
 
   static Future<Map<String, dynamic>> getSales({
@@ -519,13 +807,11 @@ class MobileApiService {
       if (to != null) 'to': to,
       if (cursor != null) 'cursor': cursor,
     };
-    final response = await _get(
+    return _readData(
+      'sale_history',
       '/mobile/sales?${Uri(queryParameters: params).query}',
+      (json) => Map<String, dynamic>.from(json as Map),
     );
-    if (response.statusCode == 200) {
-      return Map<String, dynamic>.from(jsonDecode(response.body) as Map);
-    }
-    throw Exception('getSales failed: ${response.statusCode}');
   }
 
   static Future<Map<String, dynamic>> getSale(String id) async {
@@ -547,29 +833,31 @@ class MobileApiService {
     final suffix = params.isEmpty
         ? ''
         : '?${Uri(queryParameters: params).query}';
-    final response = await _get('/mobile/product-analytics$suffix');
-    if (response.statusCode == 200) {
-      return Map<String, dynamic>.from(jsonDecode(response.body) as Map);
-    }
-    throw Exception('getProductAnalytics failed: ${response.statusCode}');
+    return _readData(
+      'product_analytics',
+      '/mobile/product-analytics$suffix',
+      (json) => Map<String, dynamic>.from(json as Map),
+    );
   }
 
   static Future<Map<String, dynamic>> getSaleStaffAnalytics({
     String? from,
     String? to,
+    String? attribution,
   }) async {
     final params = <String, String>{
       if (from != null) 'from': from,
       if (to != null) 'to': to,
+      if (attribution != null) 'attribution': attribution,
     };
     final suffix = params.isEmpty
         ? ''
         : '?${Uri(queryParameters: params).query}';
-    final response = await _get('/mobile/sale-staff-analytics$suffix');
-    if (response.statusCode == 200) {
-      return Map<String, dynamic>.from(jsonDecode(response.body) as Map);
-    }
-    throw Exception('getSaleStaffAnalytics failed: ${response.statusCode}');
+    return _readData(
+      'sale_staff',
+      '/mobile/sale-staff-analytics$suffix',
+      (json) => Map<String, dynamic>.from(json as Map),
+    );
   }
 
   static Future<Map<String, dynamic>> createExpense({
@@ -618,39 +906,58 @@ class MobileApiService {
   static Future<Order> getOrder(int posOrderId) async {
     final response = await _get('/mobile/order/$posOrderId');
     if (response.statusCode == 200) {
-      return Order.fromJson(jsonDecode(response.body) as Map<String, dynamic>);
+      final body = jsonDecode(response.body) as Map<String, dynamic>;
+      return body['editProjection'] is Map
+          ? OrderEditProjection.read(
+              Map<String, dynamic>.from(body['editProjection']),
+            )
+          : Order.fromJson(body);
     }
     throw Exception('Status ${response.statusCode}');
   }
 
   // ── Update order ───────────────────────────────────────────────────────────
 
-  static Future<void> updateOrder(Order order, {String? updatedBy}) async {
-    final payload = order.toJson();
-    if (updatedBy != null && updatedBy.trim().isNotEmpty) {
-      payload['updatedBy'] = updatedBy.trim();
+  static Future<OrderEditResult> updateOrder(
+    Order order, {
+    String? updatedBy,
+    String? expectedScope,
+  }) {
+    final String scope;
+    try {
+      scope = tableRepairScope;
+    } catch (_) {
+      return Future.value(
+        const OrderEditResult(
+          PosCommandDelivery.failed,
+          code: 'session_changed',
+        ),
+      );
     }
-    debugPrint('[API] updateOrder orderId=${order.orderId}');
-    debugPrint('[API] updateOrder payload: ${jsonEncode(payload)}');
-    final response = await _post('/mobile/order/${order.orderId}', payload);
-    debugPrint(
-      '[API] updateOrder response ${response.statusCode}: ${response.body}',
+    if (expectedScope != null && scope != expectedScope)
+      return Future.value(
+        const OrderEditResult(
+          PosCommandDelivery.failed,
+          code: 'session_changed',
+        ),
+      );
+    return OrderEditRequests.submit(
+      scope: scope,
+      order: order,
+      currentSession: () => isCurrentTableRepairScope(scope),
+      send: (body) =>
+          _post('/mobile/order/${order.orderId}/edit-request', body),
     );
-    if (response.statusCode != 200 && response.statusCode != 201) {
-      throw Exception('Update failed: ${response.statusCode} ${response.body}');
-    }
-    MobileEditEchoGuard.markOrderEdited(order.orderId);
   }
 
   // ── Cancel order (manager-only) ────────────────────────────────────────────
 
-  static Future<void> cancelOrder(int posOrderId) async {
-    final response = await _post('/mobile/order/$posOrderId/cancel', {});
-    if (response.statusCode != 200 && response.statusCode != 201) {
-      throw Exception('Cancel failed: ${response.statusCode} ${response.body}');
-    }
-    MobileEditEchoGuard.markOrderEdited(posOrderId);
-  }
+  static Future<ManagerOperationResult> cancelOrder(
+    int posOrderId, {
+    String? expectedScope,
+  }) => _operation('order_cancel', 'order_cancel:$posOrderId', {
+    'posOrderId': posOrderId,
+  }, expectedScope: expectedScope);
 
   // ── Print order/table check (manager-only) ─────────────────────────────────
 
@@ -673,22 +980,8 @@ class MobileApiService {
 
   // ── Menu ───────────────────────────────────────────────────────────────────
 
-  static Future<List<dynamic>> getMenu() async {
-    try {
-      final response = await _get('/mobile/menu');
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body) as List<dynamic>;
-        await MobileCacheService.saveMenu(data);
-        return data;
-      }
-      throw Exception('Status ${response.statusCode}');
-    } catch (e) {
-      debugPrint('[API] getMenu failed ($e), using cache');
-      final cached = MobileCacheService.getCachedMenu();
-      if (cached != null) return cached;
-      rethrow;
-    }
-  }
+  static Future<List<dynamic>> getMenu() =>
+      _readData('menu', '/mobile/menu', (json) => json as List<dynamic>);
 
   // ── Restaurant settings ────────────────────────────────────────────────────
 
@@ -714,22 +1007,11 @@ class MobileApiService {
 
   // ── Counted Menus (QuickOrderDrafts) ───────────────────────────────────────
 
-  static Future<List<dynamic>> getCountedMenus() async {
-    try {
-      final response = await _get('/mobile/counted-menus');
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body) as List<dynamic>;
-        await MobileCacheService.saveCountedMenus(data);
-        return data;
-      }
-      throw Exception('Status ${response.statusCode}');
-    } catch (e) {
-      debugPrint('[API] getCountedMenus failed ($e), using cache');
-      final cached = MobileCacheService.getCachedCountedMenus();
-      if (cached != null) return cached;
-      rethrow;
-    }
-  }
+  static Future<List<dynamic>> getCountedMenus() => _readData(
+    'counted_menus',
+    '/mobile/counted-menus',
+    (json) => json as List<dynamic>,
+  );
 
   static Future<void> deleteCountedMenu(String draftId) async {
     final response = await _post('/mobile/counted-menu/$draftId/delete', {});
@@ -772,6 +1054,7 @@ class MobileApiService {
     required double subtotal,
     required bool includeServiceFee,
     required String createdBy,
+    double? serviceFeeRate,
   }) async {
     final payload = {
       'displayName': name,
@@ -779,6 +1062,7 @@ class MobileApiService {
       'subtotal': subtotal,
       'includeServiceFee': includeServiceFee,
       'createdBy': createdBy,
+      if (serviceFeeRate != null) 'serviceFeeRate': serviceFeeRate,
     };
     final response = await _post('/mobile/counted-menu/save', payload);
     if (response.statusCode != 200 && response.statusCode != 201) {
@@ -1105,6 +1389,37 @@ class MobileApiService {
   // ── Recipes / technological cards ─────────────────────────────────────
 
   /// Menu-oriented: every Menu Item, marked configured or not.
+  static Future<InventoryHistoryPage> getInventoryHistoryPage({
+    String? stockItemId,
+    String? from,
+    String? to,
+    bool unmapped = false,
+    String? cursor,
+  }) async {
+    final scope = tableRepairScope;
+    final session = AuthTokenService.authHeader['Authorization'];
+    final path = stockItemId == null
+        ? '/mobile/inventory/consumptions/page'
+        : '/mobile/inventory/stock-items/${Uri.encodeComponent(stockItemId)}/movements';
+    final query = Uri(
+      queryParameters: {
+        'unmapped': '$unmapped',
+        if (from != null) 'from': from,
+        if (to != null) 'to': to,
+        if (cursor != null) 'cursor': cursor,
+      },
+    ).query;
+    final response = await _get('$path?$query');
+    if (!isCurrentTableRepairScope(scope) ||
+        session != AuthTokenService.authHeader['Authorization'])
+      throw StateError('Manager session changed');
+    if (response.statusCode != 200)
+      throw Exception(_apiError('Inventory history', response));
+    return InventoryHistoryPage.fromJson(
+      Map<String, dynamic>.from(jsonDecode(response.body) as Map),
+    );
+  }
+
   static Future<List<Map<String, dynamic>>> getConsumptions({
     String? from,
     String? to,
@@ -1408,48 +1723,26 @@ class MobileApiService {
   static Future<Map<String, dynamic>> getSalesReport({
     String period = 'today',
     String? month,
-  }) async {
-    final query = StringBuffer('?period=$period');
-    if (month != null && month.isNotEmpty) {
-      query.write('&month=$month');
-    }
-    final response = await _get('/mobile/sales-report$query');
-    if (response.statusCode == 200) {
-      return jsonDecode(response.body) as Map<String, dynamic>;
-    }
-    throw Exception('Status ${response.statusCode}');
-  }
+  }) => _readData(
+    'sales_report',
+    '/mobile/sales-report?period=${Uri.encodeQueryComponent(period)}${month == null || month.isEmpty ? '' : '&month=${Uri.encodeQueryComponent(month)}'}',
+    (json) => Map<String, dynamic>.from(json as Map),
+  );
 
   static Future<List<Map<String, dynamic>>> getSalesDaily({
     String? month,
-  }) async {
-    final query = (month != null && month.isNotEmpty) ? '?month=$month' : '';
-    final response = await _get('/mobile/sales-daily$query');
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body) as List<dynamic>;
-      return data
-          .whereType<Map>()
-          .map((e) => Map<String, dynamic>.from(e))
-          .toList();
-    }
-    throw Exception('getSalesDaily failed: ${response.statusCode}');
-  }
+  }) => _readData(
+    'sales_daily',
+    '/mobile/sales-daily${month == null || month.isEmpty ? '' : '?month=${Uri.encodeQueryComponent(month)}'}',
+    (json) =>
+        (json as List).map((e) => Map<String, dynamic>.from(e as Map)).toList(),
+  );
 
   // ── Top items ──────────────────────────────────────────────────────────────
 
-  static Future<List<dynamic>> getTopItems({int limit = 10}) async {
-    try {
-      final response = await _get('/mobile/top-items?limit=$limit');
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body) as List<dynamic>;
-        await MobileCacheService.saveTopItems(data);
-        return data;
-      }
-      throw Exception('Status ${response.statusCode}');
-    } catch (e) {
-      final cached = MobileCacheService.getCachedTopItems();
-      if (cached != null) return cached;
-      rethrow;
-    }
-  }
+  static Future<List<dynamic>> getTopItems({int limit = 10}) => _readData(
+    'top_items',
+    '/mobile/top-items?limit=$limit',
+    (json) => json as List<dynamic>,
+  );
 }

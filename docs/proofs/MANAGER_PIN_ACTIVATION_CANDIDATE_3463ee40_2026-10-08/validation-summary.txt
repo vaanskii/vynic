@@ -1,0 +1,77 @@
+backend-aggregate-final.log
+> pos_app_server@0.0.1 test
+> jest --runInBand
+Test Suites: 53 skipped, 73 passed, 73 of 126 total
+Tests:       713 skipped, 851 passed, 1564 total
+Ran all test suites.
+
+backend-auth-pg.log
+> pos_app_server@0.0.1 test
+> jest --runInBand --runTestsByPath src/staff/staff-pin.integration.spec.ts src/auth/manager-activation.integration.spec.ts src/customer/customer-onboarding.integration.spec.ts src/platform/saas-phase2.integration.spec.ts
+Test Suites: 4 passed, 4 total
+Tests:       55 passed, 55 total
+Ran all test suites within paths "src/staff/staff-pin.integration.spec.ts", "src/auth/manager-activation.integration.spec.ts", "src/customer/customer-onboarding.integration.spec.ts", "src/platform/saas-phase2.integration.spec.ts".
+
+backend-commercial-pg.log
+> pos_app_server@0.0.1 test
+> jest --runInBand --runTestsByPath src/customer/commercial-access.integration.spec.ts
+Test Suites: 1 passed, 1 total
+Tests:       16 passed, 16 total
+Ran all test suites within paths "src/customer/commercial-access.integration.spec.ts".
+
+backend-mgr01-pg.log
+> pos_app_server@0.0.1 test
+> jest --runInBand --runTestsByPath src/mobile/services/mgr01-table-layout.integration.spec.ts
+Test Suites: 1 passed, 1 total
+Tests:       19 passed, 19 total
+Ran all test suites within paths "src/mobile/services/mgr01-table-layout.integration.spec.ts".
+
+backend-platform-pg.log
+> pos_app_server@0.0.1 test
+> jest --runInBand --runTestsByPath src/platform/platform-control-plane.integration.spec.ts
+Test Suites: 1 passed, 1 total
+Tests:       43 passed, 43 total
+Ran all test suites within paths "src/platform/platform-control-plane.integration.spec.ts".
+
+backend-foundation-pg.log
+> pos_app_server@0.0.1 test
+> jest --runInBand --runTestsByPath src/edge-foundation/edge-foundation.integration.spec.ts
+Test Suites: 1 passed, 1 total
+Tests:       8 passed, 8 total
+Ran all test suites within paths "src/edge-foundation/edge-foundation.integration.spec.ts".
+
+inventory-subset-pg.log
+> pos_app_server@0.0.1 test
+> jest --runInBand --runTestsByPath src/inventory/receiving.integration.spec.ts src/inventory/sale-consumption.integration.spec.ts src/inventory/procurement-rework.integration.spec.ts src/inventory/procurement.integration.spec.ts src/inventory/catalog-cost.integration.spec.ts
+Test Suites: 5 passed, 5 total
+Tests:       53 passed, 53 total
+Ran all test suites within paths "src/inventory/receiving.integration.spec.ts", "src/inventory/sale-consumption.integration.spec.ts", "src/inventory/procurement-rework.integration.spec.ts", "src/inventory/procurement.integration.spec.ts", "src/inventory/catalog-cost.integration.spec.ts".
+
+backend-typecheck-final.log
+
+backend-build.log
+> pos_app_server@0.0.1 build
+> nest build
+
+web-aggregate.log
+> vynic-website@0.1.0 test
+> vitest run
+ Test Files  25 passed (25)
+
+web-build.log
+> vynic-website@0.1.0 build
+> tsc -b && vite build
+✓ built in 297ms
+
+flutter-aggregate-final.log
+01:39 +2584 ~16: All tests passed!
+
+flutter-inventory-analyze.log
+No issues found! (ran in 1.3s)
+
+backend-new-auth-lint.log
+
+menu09-native-final.log
+{"status": "PASS", "nativePids": [87301, 87367], "backendPids": [87241, 87325]}
+
+diff-check-final.log

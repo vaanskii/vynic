@@ -1,0 +1,32 @@
+00:00 +0: loading /Users/vaanskii/Developer/vynic/apps/operations/test/widget/pos_payment_forms_test.dart
+00:00 +0: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/pos_payment_forms_test.dart: (setUpAll)
+00:00 +0: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/pos_checkout_forms_test.dart: compact reservation submits guest controls, future hold and cent advance once
+00:00 +1: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/pos_checkout_forms_test.dart: compact reservation submits guest controls, future hold and cent advance once
+00:00 +2: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/pos_checkout_forms_test.dart: compact reservation submits guest controls, future hold and cent advance once
+00:00 +3: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/pos_payment_forms_test.dart: bog selection preserves amount/provider and requires confirmation
+00:00 +4: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/pos_checkout_forms_test.dart: changing only advance or hold requires explicit discard and keeps the input on continue
+00:00 +5: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/pos_payment_forms_test.dart: split selection preserves amount/provider and requires confirmation
+00:01 +6: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/pos_checkout_forms_test.dart: estimate optional contacts return trimmed values; cancel has no persistence
+00:01 +7: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/pos_payment_forms_test.dart: split edits preserve cents and selected bank at 150 percent Georgian text
+00:01 +8: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/pos_payment_forms_test.dart: split edits preserve cents and selected bank at 150 percent Georgian text
+00:01 +9: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/pos_checkout_forms_test.dart: takeaway browser shows saved full names and filters actual contacts and amounts
+00:01 +10: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/pos_payment_forms_test.dart: repeated back and cancellation produce no selection or persisted order changes
+00:01 +11: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/pos_checkout_forms_test.dart: holds are separately visible in Management Center and cannot seat or send kitchen work from Home
+00:01 +12: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/pos_checkout_forms_test.dart: PIN pad stays compact and system back cannot bypass authentication
+00:01 +13: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/pos_checkout_forms_test.dart: fully prepaid payment requires confirmation; cancel retains it and excess is refused
+00:02 +14: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/pos_workflow_test.dart: count isolated 1024 workflow visual
+00:02 +15: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/pos_workflow_test.dart: takeaway isolated 1024 workflow visual
+00:02 +16: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/pos_workflow_test.dart: Count reservation is one tap; repeated dismiss keeps estimate and money
+00:03 +17: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/pos_workflow_test.dart: Count edit is direct and delete dismissal preserves the estimate
+00:03 +18: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/pos_workflow_test.dart: Takeaway payment and cancel are one tap and dismissal never changes the order
+00:03 +19: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/pos_workflow_test.dart: Takeaway editing opens Menu directly and back restores the queue safely
+00:04 +20: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/pos_workflow_test.dart: direct editor retains the same owner and Admin access policy
+00:04 +21: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/pos_workflow_test.dart: count 640.0 narrow workflow retains reachable actions without overflow
+00:04 +22: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/pos_workflow_test.dart: count 800.0 narrow workflow retains reachable actions without overflow
+00:04 +23: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/pos_workflow_test.dart: count 1024.0 narrow workflow retains reachable actions without overflow
+00:04 +24: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/pos_workflow_test.dart: count 1024 painted primary control remains touch sized
+00:04 +25: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/pos_workflow_test.dart: takeaway 640.0 narrow workflow retains reachable actions without overflow
+00:04 +26: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/pos_workflow_test.dart: takeaway 800.0 narrow workflow retains reachable actions without overflow
+00:04 +27: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/pos_workflow_test.dart: takeaway 1024.0 narrow workflow retains reachable actions without overflow
+00:04 +28: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/pos_workflow_test.dart: takeaway 1024 painted primary control remains touch sized
+00:04 +29: All tests passed!

@@ -1,0 +1,105 @@
+{
+  "schema": 1,
+  "createdAtUtc": "2026-10-06T17:55:44.814122+00:00",
+  "source": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/source-v2",
+  "changes": {
+    "apps/operations/test/unit/printer_agent_runtime_profile_test.dart": {
+      "beforeSHA256": "d4f7c08db3c086704f4fa480970fa3676693534ec29ad12b78a2849f8bc165d2",
+      "controlledPaths": [
+        [
+          "root",
+          "server.pem"
+        ],
+        [
+          "root",
+          "client.pem"
+        ],
+        [
+          "root",
+          "client-key.pem"
+        ],
+        [
+          "root",
+          "server.pem"
+        ],
+        [
+          "root",
+          "client.pem"
+        ],
+        [
+          "root",
+          "client-key.pem"
+        ],
+        [
+          "root",
+          "profile.json"
+        ],
+        [
+          "root",
+          "not-present-key.pem"
+        ],
+        [
+          "root",
+          "missing.json"
+        ],
+        [
+          "outside",
+          "key.pem"
+        ],
+        [
+          "root",
+          "linked-key.pem"
+        ],
+        [
+          "outside",
+          "key.pem"
+        ],
+        [
+          "root",
+          "linked-key.pem"
+        ],
+        [
+          "root",
+          "escape"
+        ],
+        [
+          "root",
+          "escape/key.pem"
+        ],
+        [
+          "root",
+          "client-key.pem"
+        ]
+      ],
+      "pathReplacements": 16
+    },
+    "apps/operations/test/widget/printer_agent_status_card_test.dart": {
+      "beforeSHA256": "540c5df33fbf5e4efc67fd5a807a0322b2eb461e134bb15ff328cdcbf9f6243f",
+      "controlledPaths": [
+        [
+          "agentRoot",
+          "stop"
+        ],
+        [
+          "root",
+          "agent"
+        ],
+        [
+          "agentRoot",
+          "ready"
+        ],
+        [
+          "agentRoot",
+          "profile.json"
+        ],
+        [
+          "agentRoot",
+          "profile.json"
+        ]
+      ],
+      "pathReplacements": 5
+    }
+  },
+  "productionEdits": false,
+  "dependencyEdits": false
+}

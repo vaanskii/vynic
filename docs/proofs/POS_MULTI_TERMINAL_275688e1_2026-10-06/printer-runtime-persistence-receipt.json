@@ -1,0 +1,185 @@
+{
+  "kind": "PRINTER_RUNTIME_PREPARED_PERSISTENCE_CANDIDATE",
+  "scope": "Isolated source export only; PREPARED persistence and bound reader compatibility; no activation",
+  "ownedFiles": {
+    "apps/backend/src/customer/customer.service.ts": {
+      "path": "/tmp/vynic-readiness-20261006-a2nbcprb/source/apps/backend/src/customer/customer.service.ts",
+      "sha256": "64a1a9700cb0a34f6fe7c2c24c5c12b8f68bdaa2abd87127af5217bc540c8012",
+      "originalExists": true,
+      "originalSha256": "cfe1e489894a0649c8354357ed9974f506ac9f20627282318be34a35cb04778b"
+    },
+    "apps/backend/src/customer/customer.controller.ts": {
+      "path": "/tmp/vynic-readiness-20261006-a2nbcprb/source/apps/backend/src/customer/customer.controller.ts",
+      "sha256": "175206a5e53ef31a5efaaaca72a7721bb06ef20b666b54c5b06e9b81cf7adc1a",
+      "originalExists": true,
+      "originalSha256": "945b3978048421387cc9a51fe84f11a4d0fee0cd29308b38e021147245365379"
+    },
+    "apps/backend/src/customer/printer-runtime-config.ts": {
+      "path": "/tmp/vynic-readiness-20261006-a2nbcprb/source/apps/backend/src/customer/printer-runtime-config.ts",
+      "sha256": "de487e4da88ac68226ea694ba8bd1961a889afc48b92d39080f947ab672624c5",
+      "originalExists": false,
+      "originalSha256": null
+    },
+    "apps/backend/src/customer/printer-runtime-config.spec.ts": {
+      "path": "/tmp/vynic-readiness-20261006-a2nbcprb/source/apps/backend/src/customer/printer-runtime-config.spec.ts",
+      "sha256": "89f31fd4aa14113656368f3afe3b40161d22eac9116f6d24d83c7fd3b2bf83d9",
+      "originalExists": false,
+      "originalSha256": null
+    },
+    "apps/backend/src/customer/printer-runtime-persistence.ts": {
+      "path": "/tmp/vynic-readiness-20261006-a2nbcprb/source/apps/backend/src/customer/printer-runtime-persistence.ts",
+      "sha256": "cf2002779fc564c3a4964d82768f53cb49262a486ac57682130d3b9cc8255b13",
+      "originalExists": false,
+      "originalSha256": null
+    },
+    "apps/backend/src/customer/printer-runtime-persistence.spec.ts": {
+      "path": "/tmp/vynic-readiness-20261006-a2nbcprb/source/apps/backend/src/customer/printer-runtime-persistence.spec.ts",
+      "sha256": "f5b4fcbdab0ea70017771cc495eaa0b8da5054fcfbfa5b798df827b6b9cb7cf7",
+      "originalExists": false,
+      "originalSha256": null
+    },
+    "apps/backend/prisma/schema.prisma": {
+      "path": "/tmp/vynic-readiness-20261006-a2nbcprb/source/apps/backend/prisma/schema.prisma",
+      "sha256": "50e6df09eede76e0446e27d95885d1b8e448fb71177357a04199d1c85a1300b0",
+      "originalExists": true,
+      "originalSha256": "4bb3615bb309d0315eb186fdd835b5ef2aa8fa540074eca085c6c0d6690283ac"
+    },
+    "apps/backend/prisma/migrations/20261015120000_printer_runtime_preparation/migration.sql": {
+      "path": "/tmp/vynic-readiness-20261006-a2nbcprb/source/apps/backend/prisma/migrations/20261015120000_printer_runtime_preparation/migration.sql",
+      "sha256": "cd85a8168291815bcad59d821e136d45f4af348c003745e30fa6b6c44cb82d99",
+      "originalExists": false,
+      "originalSha256": null
+    }
+  },
+  "originalBaselineHashes": {
+    "apps/backend/src/customer/customer.service.ts": "cfe1e489894a0649c8354357ed9974f506ac9f20627282318be34a35cb04778b",
+    "apps/backend/src/customer/customer.controller.ts": "945b3978048421387cc9a51fe84f11a4d0fee0cd29308b38e021147245365379",
+    "apps/backend/prisma/schema.prisma": "4bb3615bb309d0315eb186fdd835b5ef2aa8fa540074eca085c6c0d6690283ac"
+  },
+  "existingMigrationCount": 65,
+  "existingMigrationHashesUnchanged": true,
+  "sourceUnchangedSinceRealProof": true,
+  "contract": {
+    "writeEnvelopeKeys": [
+      "version",
+      "requestId",
+      "expectedRevision",
+      "minimumReaderVersion",
+      "routes"
+    ],
+    "requestId": "UUID, durable key Device+requestId",
+    "readerHeader": "x-vynic-printer-reader-version: 2",
+    "responseOuterVersion": 1,
+    "phase": "PREPARED",
+    "maxRoutes": 64,
+    "maxCanonicalBytes": 262144,
+    "inputDepthLimit": 32,
+    "inputNodeLimit": 16384,
+    "lockOrder": [
+      "Venue FOR UPDATE",
+      "Device FOR UPDATE scoped id+venue",
+      "Owner membership FOR SHARE scoped customerAccountId+locked organizationId"
+    ],
+    "durableOutcomeStatuses": [
+      200,
+      409
+    ],
+    "immutableOutcomeStorage": "PostgreSQL JSON preserving canonical response text; UPDATE/DELETE/TRUNCATE denied",
+    "actorAuthority": "Existing Customer OWNER membership or Platform principal; commercial POS checked under Venue lock"
+  },
+  "validation": {
+    "jest": {
+      "passed": 160,
+      "domainPassed": 113,
+      "fakeTransactionAndReaderPassed": 47,
+      "log": "printer-runtime-persistence-tests.log",
+      "json": "printer-runtime-persistence-tests.json",
+      "sha256": "4add94d91867c3379bce18abcae03b6b7dadbd43ac568f8f4defa0f7665d5db4"
+    },
+    "strictTypecheck": {
+      "passed": true,
+      "noEmit": true,
+      "log": "printer-runtime-persistence-typecheck.log",
+      "explicitSourceFiles": [
+        "src/customer/printer-runtime-config.ts",
+        "src/customer/printer-runtime-config.spec.ts",
+        "src/customer/printer-runtime-persistence.ts",
+        "src/customer/printer-runtime-persistence.spec.ts",
+        "src/customer/customer.service.ts",
+        "src/customer/customer.controller.ts"
+      ],
+      "command": "node /Users/vaanskii/Developer/vynic/apps/backend/node_modules/typescript/bin/tsc --noEmit --strict --experimentalDecorators --emitDecoratorMetadata --esModuleInterop --module commonjs --moduleResolution node --target ES2022 --baseUrl /Users/vaanskii/Developer/vynic/apps/backend/node_modules --types jest,node --typeRoots /Users/vaanskii/Developer/vynic/apps/backend/node_modules/@types --skipLibCheck src/customer/printer-runtime-config.ts src/customer/printer-runtime-config.spec.ts src/customer/printer-runtime-persistence.ts src/customer/printer-runtime-persistence.spec.ts src/customer/customer.service.ts src/customer/customer.controller.ts",
+      "exitCode": 0
+    },
+    "prismaValidate": {
+      "passed": true,
+      "offlineCachedEngine": true,
+      "log": "printer-runtime-prisma-validate.log"
+    },
+    "whitespace": {
+      "apps/backend/src/customer/customer.service.ts": {
+        "clean": true,
+        "noIndexExitCode": 1
+      },
+      "apps/backend/src/customer/customer.controller.ts": {
+        "clean": true,
+        "noIndexExitCode": 1
+      },
+      "apps/backend/src/customer/printer-runtime-config.ts": {
+        "clean": true,
+        "noIndexExitCode": 1
+      },
+      "apps/backend/src/customer/printer-runtime-config.spec.ts": {
+        "clean": true,
+        "noIndexExitCode": 1
+      },
+      "apps/backend/src/customer/printer-runtime-persistence.ts": {
+        "clean": true,
+        "noIndexExitCode": 1
+      },
+      "apps/backend/src/customer/printer-runtime-persistence.spec.ts": {
+        "clean": true,
+        "noIndexExitCode": 1
+      },
+      "apps/backend/prisma/schema.prisma": {
+        "clean": true,
+        "noIndexExitCode": 1
+      },
+      "apps/backend/prisma/migrations/20261015120000_printer_runtime_preparation/migration.sql": {
+        "clean": true,
+        "noIndexExitCode": 1
+      }
+    },
+    "realPostgreSQL": {
+      "passed": true,
+      "checks": 31,
+      "version": "PostgreSQL 17.11 (Debian 17.11-1.pgdg12+2) on aarch64-unknown-linux-gnu, compiled by gcc (Debian 12.2.0-14+deb12u1) 12.2.0, 64-bit",
+      "runtime": {
+        "node": "v22.23.3",
+        "prisma": "6.19.3",
+        "nestCommon": "11.1.27"
+      },
+      "log": "printer-runtime-pg-proof.log",
+      "json": "printer-runtime-pg-proof-result.json",
+      "sha256": "bf5c95d66955406ea8e02c6c3149b0dbc79f00f64ca0043f1f7eaea9ed75f312",
+      "compiledProvenance": "runtime-pg/provenance.json",
+      "migrationsReceipt": "printer-runtime-pg-migrations-receipt.json",
+      "initialGuardFailureLog": "printer-runtime-pg-proof-attempt1.log",
+      "initialGuardFailureBeforeWrites": true,
+      "imageProvenance": "printer-runtime-pg-image-provenance.json"
+    }
+  },
+  "remainingLimits": [
+    "Cached container dependencies; no fresh locked install",
+    "No HTTP authentication/token acceptance",
+    "No activation, fleet fencing, hardware printing or production rollout",
+    "No deployment or original-workspace changes"
+  ],
+  "originalRepoEdits": false,
+  "existingMigrationsEdited": false,
+  "generatedClientEdited": false,
+  "newAcquisitions": false,
+  "committed": false,
+  "parentOwnedPostgresStoppedOrRemoved": false,
+  "safeForRootToStopOnlyOwnFixture": true
+}

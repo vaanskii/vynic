@@ -1,5 +1,10 @@
+import { Prisma } from '@prisma/client';
+import { BadRequestException } from '@nestjs/common';
+import { readEditProjection } from '../../../shared/contracts/order-edit-projection';
+import type { PosAuthContext } from '../../../auth/pos-auth-context';
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../../prisma.service';
+import { isCanonicalTableId } from '../../../shared/contracts/table-identity';
 import { posWinsOrderConflict } from '../sync-conflict';
 import { OrderSync } from '../sync-payload';
 import {
@@ -38,6 +43,21 @@ export class OrderSyncService {
     let didSyncTables = false;
     let releasedTables = false;
     if (orders) {
+      // Validate every modern projection before any snapshot writes.
+      for (const o of orders) if (o.managerEditProjection !== undefined) {
+        const exact = readEditProjection(o.managerEditProjection, o.posOrderId ?? o.orderId!).order;
+        if(exact.status !== o.status || exact.totalAmount !== o.totalAmount ||
+          o.floor !== undefined && exact.floor !== o.floor || o.includeServiceFee !== undefined && exact.includeServiceFee !== o.includeServiceFee ||
+          o.discountAmount !== undefined && exact.discountAmount !== o.discountAmount || o.manualAdjustmentAmount !== undefined && exact.manualAdjustmentAmount !== o.manualAdjustmentAmount)
+          throw new BadRequestException('inconsistent_order_edit_projection');
+        if(o.items !== undefined && (o.items.length !== exact.items.length || o.items.some((item,index) => {
+          const line=exact.items[index];
+          return (item.itemName ?? item.name ?? '') !== line.itemName || item.quantity !== line.quantity ||
+            (item.unitPrice ?? item.price ?? 0) !== line.unitPrice ||
+            item.menuItemId !== undefined && item.menuItemId !== line.menuItemId ||
+            item.variantId !== undefined && item.variantId !== line.variantId;
+        })))throw new BadRequestException('inconsistent_order_edit_projection');
+      }
       const incomingPosOrderIds = orders
         .map((o) => o.posOrderId ?? o.orderId)
         .filter((id): id is number => id !== undefined && id !== null);
@@ -123,6 +143,7 @@ export class OrderSyncService {
             },
           },
           update: {
+            ...(order.managerEditProjection !== undefined ? { managerEditProjection: { ...readEditProjection(order.managerEditProjection, pOrderId).projection, sourceDeviceId: (tenant as PosAuthContext).deviceId ?? null } } : { managerEditProjection: Prisma.DbNull }),
             status: order.status,
             totalAmount: order.totalAmount,
             paymentType: order.paymentType ?? 'cash',
@@ -144,6 +165,7 @@ export class OrderSyncService {
           create: {
             venueId: tenant.venueId,
             posOrderId: pOrderId,
+            ...(order.managerEditProjection !== undefined ? { managerEditProjection: { ...readEditProjection(order.managerEditProjection, pOrderId).projection, sourceDeviceId: (tenant as PosAuthContext).deviceId ?? null } } : { managerEditProjection: Prisma.DbNull }),
             status: order.status,
             totalAmount: order.totalAmount,
             paymentType: order.paymentType ?? 'cash',
@@ -199,24 +221,19 @@ export class OrderSyncService {
         // Active dine-in orders must reserve tables even when POS table snapshot is stale.
         if (!terminalStatuses.has(status) && !isTakeaway) {
           for (const [tableIndex, rawNum] of tableNumbers.entries()) {
-            const tableNumber = String(rawNum)
-              .replace(/^table\s*/i, '')
-              .trim();
-            if (!tableNumber) continue;
-            await upsertTableRecord(
-              this.prisma,
+            const identity = await this.tableIdentityForOrder(
               tenant,
-              {
-                tableId: order.tableIds?.[tableIndex],
-                tableNumber,
-                floor,
-              },
-              {
-                isReserved: true,
-                activeOrderId: pOrderId,
-                currentBill: order.totalAmount ?? 0,
-              },
+              rawNum,
+              floor,
+              order.tableIds?.[tableIndex],
             );
+            const tableNumber = identity.tableNumber;
+            if (!tableNumber) continue;
+            await upsertTableRecord(this.prisma, tenant, identity, {
+              isReserved: true,
+              activeOrderId: pOrderId,
+              currentBill: order.totalAmount ?? 0,
+            });
             didSyncTables = true;
             console.log(
               `[Sync] Linked table ${tableNumber}/${floor} → order #${pOrderId} (${status})`,
@@ -227,23 +244,24 @@ export class OrderSyncService {
         // When POS closes/pays an order, free linked tables even if table snapshot was skipped.
         if (terminalStatuses.has(status)) {
           for (const [tableIndex, rawNum] of tableNumbers.entries()) {
-            const tableNumber = String(rawNum)
-              .replace(/^table\s*/i, '')
-              .trim();
+            const identity = await this.tableIdentityForOrder(
+              tenant,
+              rawNum,
+              floor,
+              order.tableIds?.[tableIndex],
+            );
+            const tableNumber = identity.tableNumber;
             if (!tableNumber) continue;
             const updatedCount = await updateExistingTableRecord(
               this.prisma,
               tenant,
-              {
-                tableId: order.tableIds?.[tableIndex],
-                tableNumber,
-                floor,
-              },
+              identity,
               {
                 isReserved: false,
                 activeOrderId: null,
                 currentBill: 0,
               },
+              pOrderId,
             );
             if (updatedCount > 0) {
               releasedTables = true;
@@ -306,5 +324,35 @@ export class OrderSyncService {
       }
     }
     return { didSyncTables, releasedTables };
+  }
+
+  private async tableIdentityForOrder(
+    tenant: TenantContext,
+    raw: unknown,
+    floor: string,
+    tableId?: string,
+  ) {
+    const alias = String(raw).trim();
+    // A retained Order may carry a display-era alias. A known UUID resolves
+    // to the current POS layout row, including its floor; Order linking must
+    // never rename the table after the authoritative layout snapshot.
+    if (tableId && isCanonicalTableId(tableId)) {
+      const known = await this.prisma.table.findUnique({
+        where: { id: tableId, venueId: tenant.venueId },
+      });
+      if (known)
+        return { tableId, tableNumber: known.tableNumber, floor: known.floor };
+    }
+    if (!/^table/i.test(alias)) return { tableId, tableNumber: alias, floor };
+    const exact = await this.prisma.table.findUnique({
+      where: {
+        tableIdentifier: { venueId: tenant.venueId, tableNumber: alias, floor },
+      },
+    });
+    return {
+      tableId,
+      tableNumber: exact ? alias : alias.replace(/^table\s*/i, '').trim(),
+      floor,
+    };
   }
 }

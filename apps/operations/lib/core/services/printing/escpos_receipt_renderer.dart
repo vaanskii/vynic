@@ -8,6 +8,7 @@ import 'package:image/image.dart' as imglib;
 import 'package:vynic/core/models/receipt_header_layout.dart';
 
 import 'escpos_bitmap.dart';
+import 'printer_capability_profile.dart';
 
 typedef LoadReceiptLogoImage = Future<ui.Image?> Function();
 typedef GetReceiptLogoContentRect = Future<Rect> Function(ui.Image image);
@@ -64,7 +65,18 @@ class EscposReceiptRenderer {
     required GetReceiptLogoContentRect getReceiptLogoContentRect,
     required ({String name, String address, String phone}) venue,
     required ReceiptHeaderLayout layout,
+    PrinterCapabilityProfile? capabilityProfile,
   }) async {
+    final profile =
+        capabilityProfile ??
+        PrinterCapabilityProfile.genericEscposRaster(
+          cutter: PrinterCutter.full,
+        );
+    if (!profile.hasImplementedRenderer) {
+      throw UnsupportedError(
+        'Printer command language has no implemented renderer',
+      );
+    }
     List<int> bytes = [];
 
     // ESC/POS Commands
@@ -96,9 +108,12 @@ class EscposReceiptRenderer {
       getReceiptLogoContentRect: getReceiptLogoContentRect,
       venue: venue,
       layout: layout,
+      rasterWidthDots: profile.rasterWidthDots,
     );
 
-    if (imageBytes != null) {
+    if (imageBytes == null || imageBytes.isEmpty)
+      throw StateError('Required ticket raster could not be rendered');
+    if (imageBytes.isNotEmpty) {
       // Print the bitmap image
       bytes.addAll(imageBytes);
     }
@@ -106,8 +121,11 @@ class EscposReceiptRenderer {
     // Add spacing before paper cut
     bytes.addAll([0x0A, 0x0A, 0x0A, 0x0A, 0x0A, 0x0A]); // 6 line feeds
 
-    // Cut paper
-    bytes.addAll([gs, 0x56, 0x00]); // GS V 0 - Full cut
+    bytes.addAll(switch (profile.cutter) {
+      PrinterCutter.none => <int>[],
+      PrinterCutter.full => [gs, 0x56, 0x00],
+      PrinterCutter.partial => [gs, 0x56, 0x01],
+    });
 
     return bytes;
   }
@@ -137,7 +155,18 @@ class EscposReceiptRenderer {
     required GetReceiptLogoContentRect getReceiptLogoContentRect,
     required ({String name, String address, String phone}) venue,
     required ReceiptHeaderLayout layout,
+    PrinterCapabilityProfile? capabilityProfile,
   }) async {
+    final profile =
+        capabilityProfile ??
+        PrinterCapabilityProfile.genericEscposRaster(
+          cutter: PrinterCutter.full,
+        );
+    if (!profile.hasImplementedRenderer) {
+      throw UnsupportedError(
+        'Printer command language has no implemented renderer',
+      );
+    }
     try {
       final img = await _generateReceiptUiImage(
         items: items,
@@ -160,6 +189,7 @@ class EscposReceiptRenderer {
         getReceiptLogoContentRect: getReceiptLogoContentRect,
         venue: venue,
         layout: layout,
+        rasterWidthDots: profile.rasterWidthDots,
       );
       if (img == null) return null;
 
@@ -197,14 +227,18 @@ class EscposReceiptRenderer {
     required GetReceiptLogoContentRect getReceiptLogoContentRect,
     required ({String name, String address, String phone}) venue,
     required ReceiptHeaderLayout layout,
+    required int rasterWidthDots,
   }) async {
     try {
       // Create a custom painter for the receipt
       final recorder = ui.PictureRecorder();
       final canvas = Canvas(recorder);
 
-      // Paper width: 80mm = ~576 pixels at 72 DPI
+      // Preserve the existing layout proportions while rasterizing directly at
+      // the selected dot width. Paper millimeters do not determine pixel width.
       const double width = 576;
+      final rasterScale = rasterWidthDots / width;
+      if (rasterScale != 1) canvas.scale(rasterScale);
 
       // Add top padding in header.
       double currentY = 28;
@@ -781,7 +815,10 @@ class EscposReceiptRenderer {
 
       // Finish the picture
       final picture = recorder.endRecording();
-      final img = await picture.toImage(width.toInt(), finalHeight.toInt());
+      final img = await picture.toImage(
+        rasterWidthDots,
+        (finalHeight * rasterScale).toInt(),
+      );
       return img;
     } catch (e) {
       developer.log('Error generating receipt ui.Image: $e');
@@ -814,6 +851,7 @@ class EscposReceiptRenderer {
     required GetReceiptLogoContentRect getReceiptLogoContentRect,
     required ({String name, String address, String phone}) venue,
     required ReceiptHeaderLayout layout,
+    required int rasterWidthDots,
   }) async {
     try {
       final img = await _generateReceiptUiImage(
@@ -837,6 +875,7 @@ class EscposReceiptRenderer {
         getReceiptLogoContentRect: getReceiptLogoContentRect,
         venue: venue,
         layout: layout,
+        rasterWidthDots: rasterWidthDots,
       );
       if (img == null) return null;
 

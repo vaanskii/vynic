@@ -1,4 +1,5 @@
 import 'package:vynic/core/services/audit/money_audit.dart';
+import 'package:vynic/core/services/pos/update/update_readiness.dart';
 
 import '../database_core.dart';
 import 'sales_repository.dart';
@@ -56,6 +57,21 @@ class BusinessDayRepository {
   static String dateKey(DateTime date) =>
       DateTime(date.year, date.month, date.day).toIso8601String().split('T')[0];
 
+  /// Advance a calendar day, including local daylight-saving boundaries.
+  static DateTime nextCalendarDate(DateTime date) {
+    final make = date.isUtc ? DateTime.utc : DateTime.new;
+    return make(
+      date.year,
+      date.month,
+      date.day + 1,
+      date.hour,
+      date.minute,
+      date.second,
+      date.millisecond,
+      date.microsecond,
+    );
+  }
+
   /// Moves the POS onto a different operating date.
   ///
   /// This is not a display setting. Every order, sale and expense recorded
@@ -72,6 +88,21 @@ class BusinessDayRepository {
     required String actorId,
     String reason = '',
     bool allowBackdate = false,
+  }) => UpdateReadiness.track(
+    'setCurrentDate',
+    () => _setCurrentDate(
+      newDate,
+      actorId: actorId,
+      reason: reason,
+      allowBackdate: allowBackdate,
+    ),
+  );
+
+  static Future<BusinessDateChangeOutcome> _setCurrentDate(
+    DateTime newDate, {
+    required String actorId,
+    required String reason,
+    required bool allowBackdate,
   }) async {
     final previousDate = getCurrentDate();
     final previousKey = dateKey(previousDate);
@@ -124,19 +155,20 @@ class BusinessDayRepository {
 
   /// Persists [date] as an operated business day so empty days (without
   /// sales) still show up in business history.
-  static Future<void> rememberOperatedBusinessDate(DateTime date) async {
-    final dateKey = DateTime(
-      date.year,
-      date.month,
-      date.day,
-    ).toIso8601String().split('T')[0];
-    final keys = getOperatedBusinessDateKeys();
-    if (!keys.contains(dateKey)) {
-      keys.add(dateKey);
-      keys.sort();
-      await DatabaseCore.settingsBox!.put(_operatedBusinessDatesKey, keys);
-    }
-  }
+  static Future<void> rememberOperatedBusinessDate(DateTime date) =>
+      UpdateReadiness.track('rememberOperatedBusinessDate', () async {
+        final dateKey = DateTime(
+          date.year,
+          date.month,
+          date.day,
+        ).toIso8601String().split('T')[0];
+        final keys = getOperatedBusinessDateKeys();
+        if (!keys.contains(dateKey)) {
+          keys.add(dateKey);
+          keys.sort();
+          await DatabaseCore.settingsBox!.put(_operatedBusinessDatesKey, keys);
+        }
+      });
 
   /// The one author of `dailySalesTotal`.
   ///
@@ -151,14 +183,15 @@ class BusinessDayRepository {
   /// worth what the guest consumed, not what was handed over at the table.
   /// Money actually taken today is a different question, answered by
   /// [collectedTotalForDate].
-  static Future<void> refreshDailySalesTotalForDate(DateTime date) async {
-    final dateString = dateKey(date);
-    final total = grossSalesTotalForDate(dateString);
-    final currentDateString = dateKey(getCurrentDate());
-    if (currentDateString == dateString) {
-      await DatabaseCore.settingsBox!.put('dailySalesTotal', total);
-    }
-  }
+  static Future<void> refreshDailySalesTotalForDate(DateTime date) =>
+      UpdateReadiness.track('refreshDailySalesTotalForDate', () async {
+        final dateString = dateKey(date);
+        final total = grossSalesTotalForDate(dateString);
+        final currentDateString = dateKey(getCurrentDate());
+        if (currentDateString == dateString) {
+          await DatabaseCore.settingsBox!.put('dailySalesTotal', total);
+        }
+      });
 
   /// Gross sales recorded against [dateString], derived from the records.
   static double grossSalesTotalForDate(String dateString) {

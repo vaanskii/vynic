@@ -1,0 +1,119 @@
+{
+  "postgresDistinctPassed": 212,
+  "postgresPassedSuites": 14,
+  "postgresGroups": [
+    {
+      "group": "core",
+      "json": "postgres-recovery-final-20261018/core-tests.json",
+      "passedCases": 78,
+      "passedSuites": [
+        "apps/backend/src/pos/staff-delivery-durability.integration.spec.ts",
+        "apps/backend/src/pos/sync/snapshot/sale-ledger-sync.integration.spec.ts",
+        "apps/backend/src/inventory/sale-consumption.integration.spec.ts",
+        "apps/backend/src/mobile/services/counted-menu-write.integration.spec.ts",
+        "apps/backend/src/pos/pos-command-dispatcher.integration.spec.ts",
+        "apps/backend/src/inventory/inventory-unit-integrity.integration.spec.ts",
+        "apps/backend/src/mobile/services/notification-page.integration.spec.ts"
+      ]
+    },
+    {
+      "group": "finance",
+      "json": "postgres-recovery-20261018/finance-tests.json",
+      "passedCases": 17,
+      "passedSuites": [
+        "apps/backend/src/finance/finance.integration.spec.ts"
+      ]
+    },
+    {
+      "group": "website",
+      "json": "postgres-recovery-final-20261018/website-tests.json",
+      "passedCases": 27,
+      "passedSuites": [
+        "apps/backend/src/website/reservation/web03-delivery.integration.spec.ts"
+      ]
+    },
+    {
+      "group": "guest",
+      "json": "postgres-recovery-20261018/guest-tests.json",
+      "passedCases": 26,
+      "passedSuites": [
+        "apps/backend/src/website/user/guest-booking-ownership.integration.spec.ts"
+      ]
+    },
+    {
+      "group": "reporting",
+      "json": "postgres-recovery-final-20261018/reporting-tests.json",
+      "passedCases": 14,
+      "passedSuites": [
+        "apps/backend/src/mobile/services/mgr04-freshness.integration.spec.ts"
+      ]
+    },
+    {
+      "group": "access",
+      "json": "postgres-access-20261018/access-tests.json",
+      "passedCases": 40,
+      "passedSuites": [
+        "apps/backend/src/staff/staff-pin.integration.spec.ts",
+        "apps/backend/src/tenancy/manager-tenant-isolation.integration.spec.ts"
+      ]
+    },
+    {
+      "group": "saas",
+      "json": "postgres-saas-20261018/saas-tests.json",
+      "passedCases": 10,
+      "passedSuites": [
+        "apps/backend/src/tenancy/manager-saas.integration.spec.ts"
+      ]
+    }
+  ],
+  "backendUnitPassed": 304,
+  "backendUnitSuites": 20,
+  "flutterDistinctPassed": 207,
+  "flutterFiles": 18,
+  "webDistinctPassed": 76,
+  "webFiles": 12,
+  "nativeFixturePassed": 47,
+  "nativeFixtureOverlapsPostgres": true,
+  "nativeFixtureClusterStoppedAndRemoved": true,
+  "remaining": [],
+  "historicalCountsFrom": "2026-10-18; retained counts are not fresh 2026-10-21 passes",
+  "finalQualification20261021": {
+    "head": "e99d2ca36168b0d85f51b7812eb1dde42464846c",
+    "proof": "final-20261021/README.md",
+    "managerAndroidDebug": "PASS",
+    "managerMacosArm64Debug": "PASS",
+    "managerUnsignedArm64IosSimulatorDebug": "PASS",
+    "iosBundleIdentity": "com.vanski.vynic (retained staging identity; compile only)",
+    "qaMacosArm64Debug": "PASS",
+    "flutterAnalysis": "PASS - No issues",
+    "flutterPassed": 39,
+    "flutterFailed": 0,
+    "flutterSkipped": 0,
+    "flutterFiles": 6,
+    "postgresFixturePassed": 47,
+    "postgresFixtureFailed": 0,
+    "postgresFixtureSkipped": 0,
+    "overlapsHistoricalCounts": true,
+    "nativeDashboard": "PASS - current 372.00 GEL and missing-history gap visually verified",
+    "nativeRequestCount": 26,
+    "nativeRequestMethods": [
+      "GET"
+    ],
+    "nativeRequestStatuses": [
+      200
+    ],
+    "nativeNavigationPagingOffline": "PASS - recovered supported CUA session; actual Creator report/History navigation, cursor pagination, offline reload and cached POS provenance verified",
+    "qaAppClosed": true,
+    "ownedClusterStoppedAndRemoved": true,
+    "normalServicesRestarted": false,
+    "productionSourceEdits": false,
+    "androidApplicationId": "com.vanski.vynic (retained staging identity; debug build only)",
+    "initialNativeRequestCount": 8,
+    "nativeRecoveryProof": "final-20261021/native-recovery-1/README.md",
+    "successfulBuildsRepeatedForRecovery": false,
+    "nativeRecoveryFixtureRepeatedPassed": 47,
+    "nativeRecoveryQaClosedThroughCua": true,
+    "userActionNeeded": "none"
+  },
+  "scopeCompletion": "PASS - requested final Manager local builds and isolated native QA; no whole-product production-readiness claim"
+}

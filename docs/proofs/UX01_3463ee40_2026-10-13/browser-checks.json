@@ -1,0 +1,25 @@
+{
+  "breakpoints": [
+    {
+      "viewport": 375,
+      "pageWidth": 375,
+      "ctaHeight": 44,
+      "ctaHref": "/request-access",
+      "navigationVerified": true
+    },
+    {
+      "viewport": 768,
+      "pageWidth": 768,
+      "ctaHref": "/request-access"
+    },
+    {
+      "viewport": 1440,
+      "pageWidth": 1440,
+      "ctaHref": "/request-access"
+    }
+  ],
+  "keyboardNavigationVerified": true,
+  "syntheticErrorNoSuccess": true,
+  "syntheticRetrySuccess": true,
+  "externalSubmissions": 0
+}

@@ -1,0 +1,404 @@
+{
+  "milestone": "MGR-06",
+  "status": "DONE",
+  "qualifiedAtUTC": "2026-10-07T18:35:08.448069+00:00",
+  "runtimeCommit": "e9b5f0f45966bae091205506b78605b8f719d012",
+  "baseCommit": "5458e3ae869b26332bafb0611ec67c84e0636ec9",
+  "qualifiedGitTree": "2682470f3a5387a1567be27beb47280628df54a1",
+  "exactCommittedExport": true,
+  "qualificationBeforeConditionalLocalCommit": true,
+  "allCommittedGitBlobsMatchQualifiedTestedSource": true,
+  "preExistingWipOverlayUsed": false,
+  "syntheticOnly": true,
+  "behavior": "One linked immutable full signed reversal per original payroll/obligation payment or reserve. Historical dates net old totals; server correction chronology and atomic actor/reason audit are retained. Shared locks serialize payments/reversals. Payment correction restores original reserve consumption; fresh reserve correction refuses nonzero cycle consumption. Manager retains scoped frozen request identities and validates flushed Cloud receipts, resumes uncertain results after reversed history reopen, and fences displayed sessions.",
+  "flutter": {
+    "passed": 569,
+    "suites": 41,
+    "mgr06Cases": 42,
+    "mgr06UnitCases": 28,
+    "mgr06WidgetCases": 14,
+    "regressions": 527,
+    "failed": 0,
+    "skipped": 0,
+    "sequentialFixtures": true,
+    "widths": [
+      360,
+      768,
+      1280
+    ],
+    "textScales": [
+      1,
+      2
+    ],
+    "keyboardInset": 220,
+    "rawReceipt": "flutter-tests.jsonl",
+    "summary": "flutter-summary.json",
+    "selection": "flutter-test-files.json",
+    "visualReceipts": [
+      "widgets/history-768-1.png",
+      "widgets/history-1280-1.png",
+      "widgets/history-360-1.png",
+      "widgets/history-768-2.png",
+      "widgets/history-1280-2.png",
+      "widgets/history-360-2.png"
+    ]
+  },
+  "postgres": {
+    "passed": 27,
+    "mgr06Cases": 13,
+    "legacyFinanceCases": 14,
+    "failed": 0,
+    "skipped": 0,
+    "actualHTTP": true,
+    "freshMigrationReplay": "PASS",
+    "populatedPreviousSchemaUpgrade": {
+      "status": "PASS",
+      "originalTables": 8,
+      "originalRows": 9,
+      "allOriginalFieldsUnchanged": true,
+      "addedFieldsNull": true
+    },
+    "databaseRestartPreservation": "PASS",
+    "migrationDrift": "ZERO",
+    "privatePrismaClientRegeneratedFromExactSchema": true,
+    "ownedClusterStoppedAndRemoved": true,
+    "rawReceipt": "postgres-proof.json",
+    "rawTests": "mgr06-postgres-tests.json"
+  },
+  "backendTests": {
+    "passed": 104,
+    "suites": 8,
+    "failed": 0,
+    "skipped": 0,
+    "rawReceipt": "backend-unit.json"
+  },
+  "analysis": {
+    "files": 8,
+    "issues": 0,
+    "rawReceipt": "analysis.log"
+  },
+  "formatCheck": {
+    "files": 8,
+    "changed": 0,
+    "exitCode": 0
+  },
+  "staticChecks": [
+    {
+      "step": "analysis",
+      "exitCode": 0
+    },
+    {
+      "step": "format-check",
+      "exitCode": 0
+    },
+    {
+      "step": "typescript-build",
+      "exitCode": 0
+    },
+    {
+      "step": "contracts-check",
+      "exitCode": 0
+    },
+    {
+      "step": "new-server-lint",
+      "exitCode": 0
+    },
+    {
+      "step": "prisma-validate",
+      "exitCode": 0
+    },
+    {
+      "step": "upgrade-fixture-syntax",
+      "exitCode": 0
+    },
+    {
+      "step": "proof-runner-syntax",
+      "exitCode": 0
+    },
+    {
+      "step": "correction-spec-types",
+      "exitCode": 0
+    }
+  ],
+  "lint": {
+    "newHelperAndTypedHTTPFixture": "PASS",
+    "legacy": "BASELINE_DEBT_NO_INCREASE",
+    "baseErrors": 1,
+    "currentErrors": 1,
+    "rawReceipt": "legacy-lint-baseline.json"
+  },
+  "builds": {
+    "status": "PASS",
+    "steps": [
+      {
+        "role": "manager",
+        "exitCode": 0,
+        "executablesSha256": {
+          "build/macos/Build/Products/Debug/Vynic Manager.app/Contents/MacOS/Vynic Manager": "56754607bcd2c58fc24021fea73bd8446367f2c49c1a3f3883c9300e87621152",
+          "build/macos/Build/Products/Debug/Vynic Manager.app/Contents/MacOS/Vynic Manager.debug.dylib": "60e674e4c0241c06031cf12a1e600902e77e98ac233f52d14fe520934caa56cd",
+          "build/macos/Build/Products/Debug/Vynic Manager.app/Contents/MacOS/__preview.dylib": "9d43260602b030e5b8f769a6d74a13bf478b50454bdb07b8c70a0cb8188b8fe5"
+        }
+      },
+      {
+        "role": "pos",
+        "exitCode": 0,
+        "executablesSha256": {
+          "build/macos/Build/Products/Debug/Vynic Manager.app/Contents/MacOS/Vynic Manager": "003755809feb3c5a5be65fab670b29079c274be1e7ae8302cc4a07a5071d618c",
+          "build/macos/Build/Products/Debug/Vynic Manager.app/Contents/MacOS/Vynic Manager.debug.dylib": "60e674e4c0241c06031cf12a1e600902e77e98ac233f52d14fe520934caa56cd",
+          "build/macos/Build/Products/Debug/Vynic Manager.app/Contents/MacOS/__preview.dylib": "9d43260602b030e5b8f769a6d74a13bf478b50454bdb07b8c70a0cb8188b8fe5"
+        }
+      }
+    ],
+    "ManagerMacOSDevelopment": "PASS",
+    "POSMacOSDevelopment": "PASS",
+    "Windows": "HELD_NOT_RUN",
+    "physicalPrinterAcceptance": "NOT_DONE_DEFERRED"
+  },
+  "generatedMetadataSideEffect": "build-generated-metadata.json",
+  "toolVersions": {
+    "node": "v24.16.0",
+    "python": "Python 3.9.6",
+    "postgres": "postgres (PostgreSQL) 17.10 (Homebrew)",
+    "xcode": "Xcode 27.0\nBuild version 27A266a",
+    "cocoaPods": "1.16.2",
+    "flutter": "3.44.1",
+    "dart": "3.12.1",
+    "flutterRevision": "924134a44c189315be2148659913dda1671cbe99"
+  },
+  "independentReview": {
+    "status": "APPROVED",
+    "reviewer": "/root/manager_repair_review",
+    "approvedAtUTC": "2026-10-07T18:32:10.128927+00:00",
+    "qualifiedGitTree": "2682470f3a5387a1567be27beb47280628df54a1",
+    "openFindings": 0,
+    "scope": "Final exact-tree qualification, synthetic tests, role builds, complete Git-blob identity and original-workspace preservation",
+    "counts": {
+      "flutter": 569,
+      "flutterSuites": 41,
+      "mgr06Flutter": 42,
+      "backend": 104,
+      "actualHTTPPostgres": 27,
+      "staticChecks": 9
+    },
+    "builds": "Manager and POS macOS development PASS",
+    "source": "2140 regular files and29symlinks match all qualified pre/post/current hashes",
+    "workspace": "6938 original hashes unchanged; HEAD/branch/stash/index preserved",
+    "Windows": "HELD",
+    "physicalPrinters": "NOT_DONE_DEFERRED",
+    "runtimeCommit": "e9b5f0f45966bae091205506b78605b8f719d012",
+    "exactCommittedProofBinding": "APPROVED",
+    "actualCommitEqualsTestedGitTree": true,
+    "completeCommittedArchiveBlobsIndependentlyVerified": true,
+    "reviewedOrdering": "All qualification before conditional local commit; complete actual committed tree/archive matched tested source after commit",
+    "proofBindingApprovedAtUTC": "2026-10-07T18:35:08.309712+00:00"
+  },
+  "sourceIdentity": {
+    "status": "PASS",
+    "baseCommit": "5458e3ae869b26332bafb0611ec67c84e0636ec9",
+    "qualifiedGitTree": "2682470f3a5387a1567be27beb47280628df54a1",
+    "regularFiles": 2140,
+    "symlinks": 29,
+    "allGitBlobsMatched": true,
+    "preExistingWipOverlayUsed": false,
+    "allTrackedSourceMatchesQualifiedTreeAfterVerification": true,
+    "prePostSourceHashesEqual": true,
+    "runtimeCommit": "e9b5f0f45966bae091205506b78605b8f719d012",
+    "runtimeGitTree": "2682470f3a5387a1567be27beb47280628df54a1",
+    "exactCommittedExport": true,
+    "allCommittedGitBlobsMatchQualifiedTestedSource": true,
+    "qualifiedBeforeLocalCommit": true,
+    "allTrackedSourceMatchesRuntimeAfterVerification": true,
+    "mainIndexAndHeadUntouchedAtQualificationExport": true
+  },
+  "runtimeSourceSha256": {
+    "apps/backend/prisma/migrations/20261007170000_finance_entry_corrections/migration.sql": "fb56ab621b0c27cd92fb5cba50d242b19f74adf0a4080bad301eac78d8690ae0",
+    "apps/backend/prisma/schema.prisma": "ab8dc550929f5c5b358a12d04f230f0388b408e4483d34c27ae88109ad34cadd",
+    "apps/backend/src/finance/finance-corrections.ts": "ff73a4fc74361b024674c5b4c7e1584279dbe8bcfa20a0c8223f532be6897c52",
+    "apps/backend/src/finance/finance.controller.ts": "cb79cb858977ea16589359d026893b94b0ad7f02c5098868e445c4f2d7a97a5c",
+    "apps/backend/src/finance/mgr06-corrections.integration.spec.ts": "1e01505b432cb5c3a1ead5f9e2a221040ba0771e11b6c779e7fa53b656ddbceb",
+    "apps/backend/src/finance/obligations.service.ts": "dcf7f1684546221c9d0c26e541e40acd630d07fe90106f41f7ee402d1d6e7cc7",
+    "apps/backend/src/finance/payroll.service.ts": "ba5b8e5fd457d5850bd7c28c9e6df71bfdfe8d7c99269917c2d77098ee5da738",
+    "apps/backend/src/pos/audit/audit-log-entity.ts": "339a7cda68fade10012942cfc2642f3bd3a7b2a246da2dbd1f04ad4cdb92b60b",
+    "apps/backend/tool/mgr06_upgrade_fixture.mjs": "d9c7542474341b8aaaa92783282941c11ec16567e5e1f3634daac3b75a4be4c3",
+    "apps/backend/tool/prove_mgr06_postgres.py": "ecfbebe5406e2ebed12fdddf2eac9f4ea93cd3ef60e3811cf39717fd4d0ec49d",
+    "apps/operations/lib/apps/mobile_app/presentation/screens/finance_planning_screen.dart": "ce30478647c1a4140bdd274ca32fa46d2a68ef4c75cfbdba62200c4f928e53c7",
+    "apps/operations/lib/apps/mobile_app/presentation/widgets/finance_correction_dialog.dart": "0db7900ba9ec5735ffba4c1c80d37e9861f384d5bfc1102726638082136d0472",
+    "apps/operations/lib/apps/mobile_app/presentation/widgets/manager_data_status.dart": "1309022d265e55823eb98d47db1b2f0718ec31207aeb2c6e1f3473026deb5a2f",
+    "apps/operations/lib/core/models/global_audit_entry.dart": "bc95841a34f12e496b1360ef897d4a6f4daa6fd83bb7f5068985ea15fd513132",
+    "apps/operations/lib/core/services/manager_app/finance_correction_request.dart": "28c4563b20102eb45defc4c7ca4f0894aefa1c0b46b62a4a04fe95792c9290b1",
+    "apps/operations/lib/core/services/manager_app/mobile_api_service.dart": "68b465dabdf0705bd950926691cd2d4254a076f74ec4c750285d0cc3b5ecf0b6",
+    "apps/operations/test/unit/mgr06_finance_correction_request_test.dart": "ee61fa2b70bc0637f843f96c7520517e23337dd3a0f0b1e43a7cc87b4f0bf199",
+    "apps/operations/test/widget/mgr06_finance_correction_history_test.dart": "25b32403cd7d11ba05e897e8ae9f4651541495eb5d8b4b584e20f3b4b6679507",
+    "docs/FINANCIALS_STEP47.md": "19cacce19c7f6d69056804caf673a398fb761a246cf67834cfb7deb2139add6e",
+    "docs/MGR06_FINANCIAL_CORRECTIONS.md": "2886444661eac0e10505b87f833ebbf21786a61bbc95315a7f26feb4a4b8cfd4",
+    "docs/agent-state/VYNIC_CODE_MAP.md": "16496f4030db25d5014ec03b5c673c0f6c776b5739ed9eca2e65a59ea826d2aa",
+    "docs/agent-state/VYNIC_PROJECT_STATE.md": "8215222515248d8084296fdc965011849eebdb0038037e3766356eab47b7c7db"
+  },
+  "sourceHashReceipts": [
+    "source-before.json",
+    "source-after.json",
+    "committed-source-before.json",
+    "git-source-records.json"
+  ],
+  "preservation": {
+    "statusEntries": 240,
+    "originalStatusEntriesUnchanged": true,
+    "statusSha256": "f80b4f53c00631f2d0bea3b95d0f1fae141cd54f710bd5f795b63d9add5c8eb8",
+    "status": "PASS",
+    "baselineFileCount": 6938,
+    "unownedBaselineFiles": 6926,
+    "unownedHashesUnchanged": true,
+    "sharedFileOriginalsRecovered": [
+      {
+        "path": "apps/backend/prisma/schema.prisma",
+        "method": "three-way inverse merge",
+        "originalSha256": "de509200de304b0267da9c286155d4fe733fe0a0db5a04c11dea28eb97abc737",
+        "matches": true
+      },
+      {
+        "path": "docs/agent-state/VYNIC_CODE_MAP.md",
+        "method": "three-way inverse merge",
+        "originalSha256": "2d8f7763b7f7aa4e94fda47b3f563a781935fe0c5c803d7e977ab2b611c85287",
+        "matches": true
+      },
+      {
+        "path": "docs/agent-state/VYNIC_PROJECT_STATE.md",
+        "method": "three-way inverse merge",
+        "originalSha256": "cf2a4fa44b3f8d27d5dc254179cc7cd75dd7653afbd393346d8c32e048a103ff",
+        "matches": true
+      }
+    ],
+    "branch": "codex/docker-deployment-foundation",
+    "stash": "9df454225caec647f67ad4f70ef6038dbbbe41d6",
+    "originalHead": "5458e3ae869b26332bafb0611ec67c84e0636ec9",
+    "runtimeCommit": "e9b5f0f45966bae091205506b78605b8f719d012",
+    "currentHead": "e9b5f0f45966bae091205506b78605b8f719d012"
+  },
+  "acceptance": [
+    "Wrong payment corrected without deleting original history",
+    "One inverse for identical and conflicting concurrent requests",
+    "Exact replay after day/server reopen/consumption change",
+    "Historical payroll and obligation outflows reconcile with signed amounts",
+    "Current Staff role/feature and cross-Venue authority guard fresh and retained requests",
+    "Consumed reserves cannot silently be removed or reallocated",
+    "Concurrent reserve reversal and positive payment serialize allocation",
+    "Atomic audit failure rolls back reversal and retry succeeds",
+    "Same-parent/Venue database links, exact signed amount/date/consumption and no reversal chains",
+    "Previous-schema financial/audit records preserve all fields through migration and restart",
+    "Durable frozen identities, response shape validation and corruption/put/flush failures",
+    "Reopened already-reversed history can resume lost response and RAM receipt failures",
+    "Displayed principal/origin, late read and captured HTTP session fencing",
+    "Responsive history/dialogs with keyboard/enlarged text, legacy read-only history"
+  ],
+  "pending": {
+    "milestoneBlockers": [],
+    "POS02PhysicalPrinterDriverPaperAcceptance": "NOT_DONE_DEFERRED",
+    "WindowsVMOperations": "HELD",
+    "WindowsDeviceAndBroaderReleaseQualification": "separate release gates pending",
+    "productionDeployment": "NOT_PERFORMED",
+    "realFinancialMutationOrBankTransfer": "NOT_PERFORMED"
+  },
+  "reproduction": {
+    "flutterCommand": "flutter-test-command.txt",
+    "analysisSelection": "analysis-files.json",
+    "postgresTool": "apps/backend/tool/prove_mgr06_postgres.py",
+    "backendCommand": "backend-command.txt",
+    "cachedToolchainsRequired": true,
+    "newInstalls": false
+  },
+  "earlierTrials": "Earlier isolated fixture corrections/failed compile trials and an interrupted build connection remain outside final qualification receipts. Final exact-source receipts are all passed; disconnected owned build was resumed only after confirming no compiler remained and restoring the input.",
+  "rawReceiptsSha256": {
+    "analysis-files.json": "5562911e41bb8c6b317b8dd9b28600a7743652f923b33021c2ba83e6f2342f18",
+    "analysis.log": "ecfc96aefa05b19d60543dac85490a4ac0680fa0c5a03107a98fdce438002d8e",
+    "backend-command.txt": "d8392092f0174f42a77f47dfde0108aac7d85bc9b86d295bfc685f9e6eb85610",
+    "backend-run.log": "dc9b871d518f0e6405c05396a24a0e3f0f76280786e486e693b9a3e884720ae5",
+    "backend-unit.json": "8c83e945dbd271d99434fa8fcadd072c6c98bec1e4ec46c32584b93e2a3925b7",
+    "backend-unit.log": "32638a7f85866d4a0f226039ea4292f8a3af3d8b76fdb164a55f2d5638db0624",
+    "build-generated-metadata.json": "8b3a150e300bf853dbb556248f2977493f0b4430c8e6aaeb087738d38c620307",
+    "build-manager-command.txt": "1eb1daa5acd54c4acb2ad8445404f0088e46e46ad8f29c6ae1ce38cd0286a54e",
+    "build-manager.log": "ff2227e454df2a632c112bc7fb6977dbdb694477772cb8016d48f65027f3d3e4",
+    "build-pos-command.txt": "681ed075b51df6c09ac6b586e019a1d474e767a28175d271f759318323ecd39c",
+    "build-pos.log": "ea085aaf3f4674e5c811dac8c6e120d5af2199494deafaee9dba73575cf94fc3",
+    "build-run.log": "c345261d587ba3bea57c0a942ffe66c653ae64c08b1a6b8aedc296017b983b83",
+    "builds.json": "bdd79cd627cda8c1a4d53ff0d9ba33f816f8d530b830358912a9cbef115452a4",
+    "committed-source-before.json": "911d4470018da92276fb69248c3a045752ebba2ce14f0356b798d59d61cc476c",
+    "committed-source-symlinks.json": "f2162f7a53ad7b46abd0ff0072dc2ea421e77822fd203f6dc722c20416da7370",
+    "contracts-check.log": "0b4ba9c6834c8b3610e5f982ed6723c8716f429d051990e41d8aee1f394d4c04",
+    "correction-spec-types.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "flutter-run.log": "0bd9a03037ddd9386771674717590eb65aae048064c7ab346e12ad452e0f8712",
+    "flutter-summary.json": "809a4e23469ff52f4e644bea6ccfc2e58e263f0ec39009def5356fcd5ac136f8",
+    "flutter-test-command.txt": "8b06bc861c98ca087bf3137b4233819dde65d9bc7793eca2f417e471b7683206",
+    "flutter-test-files.json": "c6c029266a6ab0e2a15eaec49541a5d79f8776c3fdefc3c90751ea65920a5ad4",
+    "flutter-tests.jsonl": "c5e0e8593bbc4cd08fdc8aa01b5fea2fba6679476ea8f8ec2b15cb66fad7f6c6",
+    "flutter-version.json": "ac18521c70c3e67c1688bd1b75694348c8428b194dcd3ba8a52fb99a81ac9f98",
+    "format-check.log": "f8f6824aff8501eaf6bfb03cf8942be8be1a302418230ada30706ebfcc43f092",
+    "git-source-records.json": "8703d29e479e7e74584f1b30af5b84c15067512214e605f0f2024221c12c6f9a",
+    "independent-provisional-review.json": "692aabed3232d7ae41b9f208791362a45c09bbb55c9ec868bf11acc14f789d2f",
+    "independent-review.json": "fdb8344b2da6a26550daa81f4bb5335be3d63872c9402a695b20204f98d31942",
+    "legacy-lint-base.json": "475c12c57e344ea51d5ea2375ba2f6a257d84e767bd360eb485be7f09268d0e9",
+    "legacy-lint-baseline.json": "88a33f7609d510db4e62ac7827527976ae1c5f6051f14da0fbf143ac017f9af9",
+    "legacy-lint-current.json": "204e3cfd31ddb498e9f4af3ed6f90204aeefd51e36925e09cf6e1952dc2a66dd",
+    "legacy-lint-run.log": "82ea7bc94ba97944b27495d5233197ee62e2fd16bdbe17cf7aba3d98920f5e5c",
+    "mgr06-postgres-tests.json": "592e9d6de9dd1852cefc625add0ece372a892831d4d5c39458a4856274365211",
+    "mgr06-spec-tsconfig.json": "2daa01b7b6445d2d80e8b6009ed718ea76df46e9a5a6d9f59985e17a1990a604",
+    "mgr06-upgrade-original-preserved.json": "00ea36afafd9016542a38979c423b65065aab34445e802da68c6498a111bf0ad",
+    "mgr06-upgrade-original.json": "da25f88a7947957598715ef042f0808001a046ee06568fde9d24c219214fbf26",
+    "new-server-lint.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "pg-create.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "pg-init.log": "92ae347408c144e04d8c55b58f304de1efa6a16d6a36a0fb80f5ccd4cb220830",
+    "pg-integration.log": "693aa02ec16c3d355258008c50ad98d72c6785a6a2f89d3c50d79e38a12d2b9f",
+    "pg-migrate.log": "946e881745498cfde28d1920e204e30a483628a43103a3b54c1afd2789499516",
+    "pg-migration-drift.log": "3417e4b20617991171441c4df1e747f35643e27400e00ae586a79d59a91678c9",
+    "pg-restart-start.log": "66afd0411ccc09366e99fdd99b85f21899c8d2d064f5835126859618802153ad",
+    "pg-restart-stop.log": "ca19178a35ab4153b75b494963b66ce8243e1b94c173107c87b44d09db23652d",
+    "pg-start.log": "66afd0411ccc09366e99fdd99b85f21899c8d2d064f5835126859618802153ad",
+    "pg-stop.log": "ca19178a35ab4153b75b494963b66ce8243e1b94c173107c87b44d09db23652d",
+    "pg-upgrade-before-migrate.log": "ef46163c8ab67926eeffa735b6717d1215d46f1288848e14f21ca4283f3b42b0",
+    "pg-upgrade-create.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "pg-upgrade-migrate.log": "b0cac15d1ddd4427a1ea869c4b23ca421b2fd6099cfbf9193a4de921f25db56d",
+    "pg-upgrade-preserved-after-restart.log": "44dc998c481c6a5bd03b6794ce22b24942ae41b508521f69443ff62bfc9d59bd",
+    "pg-upgrade-preserved.log": "44dc998c481c6a5bd03b6794ce22b24942ae41b508521f69443ff62bfc9d59bd",
+    "pg-upgrade-seed.log": "f6f104ee3cf2d71f25dd3fc80385568031373786b5ab44ec0ede24e923e080cf",
+    "postgres-command.txt": "56087c490cdd3773b3598cc2e85fef8a662b314c1ee667b6a597356f95d42c4d",
+    "postgres-proof.json": "c9cfc2b872601a6f48d5ca1fd304664be276ebbd71bd61037f1e2d5ed2c66b63",
+    "postgres-run.log": "f11a481c58c8e43a50bd9090215197ca12c3c474e5b652fc3a0ced569334019c",
+    "preservation.json": "98264894d33d3dd470d1fd66e623d108ed8d893ae43a5bba30f81ffbb8ed2764",
+    "prisma-generate.log": "9a5f0364d2ee5b5f9f91737ed6e96250aaf8316ee1010c9043148748076be7f8",
+    "prisma-validate.log": "cc0e6164208a94dc9cd0832e91e84ca6b4e33439dabd6a05368cce40930f853a",
+    "proof-runner-syntax.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "pub-offline.log": "e7d7c55f649f5c59fa52a2bfd419f6fbf175d3f1caf8dba96e688daa72795d5e",
+    "source-after.json": "911d4470018da92276fb69248c3a045752ebba2ce14f0356b798d59d61cc476c",
+    "source-before.json": "911d4470018da92276fb69248c3a045752ebba2ce14f0356b798d59d61cc476c",
+    "source-identity-initial.json": "5f3bad63ebf7c4f9180c49484e2b0ade3176ab5801471d90df64582edd33abb5",
+    "source-identity.json": "fdbc05f2227e45cb8f5e3cda37db54c71e241e4ad0364c4202c606d48b6a24af",
+    "source-symlinks.json": "f2162f7a53ad7b46abd0ff0072dc2ea421e77822fd203f6dc722c20416da7370",
+    "static-checks.json": "341cd925e9bce1ea5f29a659b4b25005bfec8b98b2aa12ee283417b2fecc512f",
+    "static-run.log": "f1a9ddc8cb3b98e41d4d0d4399bcd7adc9e24b87cfec2a71d917aa8e366d2779",
+    "tool-versions.json": "a83497d7d0f047c14990e257f3897caf460ac10c6c9631800cd35cd0b651281c",
+    "typescript-build.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "upgrade-fixture-syntax.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "versions-run.log": "0c9636519643cc053a2a41d8be173702ec0544a5f348c1d46b165005e67d34fb",
+    "widgets/history-1280-1.png": "daf1d9e20ca56b798917f5df96d4662f6f1b5f5260e4bdea2a5b904f842c402f",
+    "widgets/history-1280-2.png": "ab665971f1e19b93ecbc20b8cb052e1d285f96238385a620e3cef3eac460b1e4",
+    "widgets/history-360-1.png": "3db94653b1619102fd442069b401a94a00322d77d754c5f437f331b67bc096f9",
+    "widgets/history-360-2.png": "f2204802de5c850528b3b5f081ebe451419a4997457b373875870fb5c02d4fb2",
+    "widgets/history-768-1.png": "6332b503d1086ce040acf0d9267225ab0a4baaa3d79ee35f8a347f655fadff8b",
+    "widgets/history-768-2.png": "363f5d37837f9118194f50530543e4e74dac05b6f18e8ff607422eca8687bfd9",
+    "widgets/partial-source-status.png": "e0064ceb7908e8e1c9ef21bb2fd9f1babc3c8caa5e173c2b7020cb637c41089d"
+  },
+  "archive": {
+    "path": "docs/proofs/MGR06_COMMITTED_e9b5f0f_2026-10-07.zip",
+    "sha256": "9132e2b8bdbd4524bd453b795350bfa4d56871096c5fddf775f2101918abccfd",
+    "entryCount": 77
+  },
+  "packagingReview": {
+    "status": "APPROVED",
+    "reviewer": "/root/manager_repair_review",
+    "archiveSha256": "9132e2b8bdbd4524bd453b795350bfa4d56871096c5fddf775f2101918abccfd",
+    "rawReceiptsChecked": 77,
+    "zipCRC": "PASS",
+    "allManifestEntryHashesAndBytes": "PASS",
+    "countsSourcePreservationAndScope": "PASS",
+    "openFindings": 0
+  }
+}

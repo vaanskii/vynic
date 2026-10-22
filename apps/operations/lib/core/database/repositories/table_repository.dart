@@ -15,6 +15,7 @@ import '../database_core.dart';
 import 'error_log_repository.dart';
 import 'reservation_repository.dart';
 import 'order_repository.dart';
+import 'order_table_mutation_repository.dart';
 import 'settings_repository.dart';
 
 /// Floor plan and live table state: layout, reserve/free, stale-lock
@@ -64,7 +65,15 @@ class TableRepository {
     }
     return [
       for (final table in DatabaseCore.tableBox!.values)
-        if ((table.isReserved || table.activeOrderId != null) &&
+        if ((table.isReserved ||
+                table.activeOrderId != null ||
+                DatabaseCore.orderBox?.values.any(
+                      (o) =>
+                          !o.statusEnum.isTerminal &&
+                          o.floor == table.floor &&
+                          o.tableNumbers.contains(table.tableNumber),
+                    ) ==
+                    true) &&
             layout.tableForLegacy(
                   floor: table.floor,
                   tableNumber: table.tableNumber,
@@ -76,7 +85,7 @@ class TableRepository {
 
   static Future<void> saveActiveRestaurantTableLayout(
     RestaurantTableLayout layout,
-  ) => UpdateReadiness.track(
+  ) => UpdateReadiness.mutate(
     'saveActiveRestaurantTableLayout',
     () => _updateTrackedSaveActiveRestaurantTableLayout(layout),
   );
@@ -96,6 +105,7 @@ class TableRepository {
             : _uuid.v4();
       },
     );
+    OrderTableMutationRepository.requireConsistent();
     final occupied = occupiedTablesMissingFromLayout(canonicalLayout);
     if (occupied.isNotEmpty) {
       final labels = occupied
@@ -123,7 +133,7 @@ class TableRepository {
   /// objects refer to those definitions by ID. Upgrading that existing ID is
   /// therefore additive: Hive table state, orders and reservations keep using
   /// their floor/number aliases while sync gains an immutable UUID.
-  static Future<void> ensureCanonicalTableIdentity() => UpdateReadiness.track(
+  static Future<void> ensureCanonicalTableIdentity() => UpdateReadiness.mutate(
     'ensureCanonicalTableIdentity',
     () => _updateTrackedEnsureCanonicalTableIdentity(),
   );
@@ -140,15 +150,14 @@ class TableRepository {
   }
 
   static Future<void> clearActiveRestaurantTableLayout() =>
-      UpdateReadiness.track(
+      UpdateReadiness.mutate(
         'clearActiveRestaurantTableLayout',
         () => _updateTrackedClearActiveRestaurantTableLayout(),
       );
 
   static Future<void> _updateTrackedClearActiveRestaurantTableLayout() async {
     final previous = getRestaurantTableLayout();
-    await SettingsRepository.clearActiveTableLayout();
-    final reset = getRestaurantTableLayout().withCanonicalTableIds(
+    final reset = RestaurantTableLayouts.current.withCanonicalTableIds(
       generateId: (table) {
         final existing = previous.tableForLegacy(
           floor: table.legacyFloor,
@@ -159,6 +168,13 @@ class TableRepository {
             : _uuid.v4();
       },
     );
+    OrderTableMutationRepository.requireConsistent();
+    if (occupiedTablesMissingFromLayout(reset).isNotEmpty) {
+      throw OrderMutationConflict(
+        'table_busy',
+        'Default layout removes occupied tables',
+      );
+    }
     await SettingsRepository.saveActiveTableLayout(reset);
     await ensureTableLayoutConsistency();
     final layout = getRestaurantTableLayout();
@@ -185,12 +201,23 @@ class TableRepository {
   }
 
   // Initialize default tables
-  static Future<void> initializeTables() => UpdateReadiness.track(
+  static Future<void> initializeTables() => UpdateReadiness.mutate(
     'initializeTables',
     () => _updateTrackedInitializeTables(),
   );
 
   static Future<void> _updateTrackedInitializeTables() async {
+    if (OrderTableMutationRepository.integrityReport().isNotEmpty) {
+      developer.log(
+        'Order/table repair report requires inspection; table initialization skipped',
+        name: 'TableRepository',
+      );
+      return;
+    }
+    if (DatabaseCore.tableBox!.isNotEmpty) {
+      await _updateTrackedEnsureTableLayoutConsistency();
+      return;
+    }
     for (final tableDefinition in getRestaurantTableLayout().tables) {
       final table = TableModel(
         tableNumber: tableDefinition.legacyTableNumber,
@@ -201,7 +228,7 @@ class TableRepository {
     }
   }
 
-  static Future<void> ensureTableLayoutConsistency() => UpdateReadiness.track(
+  static Future<void> ensureTableLayoutConsistency() => UpdateReadiness.mutate(
     'ensureTableLayoutConsistency',
     () => _updateTrackedEnsureTableLayoutConsistency(),
   );
@@ -211,6 +238,13 @@ class TableRepository {
       return;
     }
 
+    if (OrderTableMutationRepository.integrityReport().isNotEmpty) {
+      developer.log(
+        'Order/table repair report requires inspection; layout cleanup skipped',
+        name: 'TableRepository',
+      );
+      return;
+    }
     final allowedByFloor = <String, Set<String>>{};
     for (final entry in getTableLayout().entries) {
       allowedByFloor[entry.key] = entry.value.toSet();
@@ -263,25 +297,37 @@ class TableRepository {
 
   // Get all tables
   static List<TableModel> getAllTables() {
-    return DatabaseCore.tableBox!.values.toList();
+    return DatabaseCore.tableBox!.values
+        .map(OrderTableMutationRepository.detachedTable)
+        .toList();
   }
 
   // Get tables by floor
   static List<TableModel> getTablesByFloor(String floor) {
     return DatabaseCore.tableBox!.values
         .where((table) => table.floor == floor)
+        .map(OrderTableMutationRepository.detachedTable)
         .toList();
   }
 
   // Get table by number and floor
   static TableModel? getTable(String tableNumber, String floor) {
-    try {
-      return DatabaseCore.tableBox!.values.firstWhere(
-        (table) => table.tableNumber == tableNumber && table.floor == floor,
+    final rows =
+        DatabaseCore.tableBox?.values
+            .where((t) => t.tableNumber == tableNumber && t.floor == floor)
+            .toList() ??
+        [];
+    if (rows.length > 1)
+      throw OrderMutationConflict(
+        'repair_required',
+        'Physical table identity is ambiguous',
+        issues: [
+          {'code': 'duplicate_table', 'tableRef': '$floor|$tableNumber'},
+        ],
       );
-    } catch (e) {
-      return null;
-    }
+    return rows.isEmpty
+        ? null
+        : OrderTableMutationRepository.detachedTable(rows.single);
   }
 
   static bool isTableConfigured({
@@ -302,7 +348,7 @@ class TableRepository {
     required String username,
     required int orderId,
     String? reservationId,
-  }) => UpdateReadiness.track(
+  }) => UpdateReadiness.mutate(
     'reserveTable',
     () => _updateTrackedReserveTable(
       tableNumber: tableNumber,
@@ -322,8 +368,58 @@ class TableRepository {
   }) async {
     final table = getTable(tableNumber, floor);
     if (table != null) {
-      table.reserve(username, orderId, reservationId: reservationId);
-      await table.save();
+      final order = OrderTableMutationRepository.persisted(orderId)?.$2;
+      if (order == null ||
+          order.statusEnum.isTerminal ||
+          order.floor != floor ||
+          !order.tableNumbers.contains(tableNumber)) {
+        throw OrderMutationConflict(
+          'repair_required',
+          'Reservation does not belong to the active Order',
+        );
+      }
+      final claims = DatabaseCore.orderBox!.values
+          .where(
+            (o) =>
+                !o.statusEnum.isTerminal &&
+                o.floor == floor &&
+                o.tableNumbers.contains(tableNumber),
+          )
+          .toList();
+      if (claims.length != 1 || claims.single.orderId != orderId) {
+        throw OrderMutationConflict(
+          'repair_required',
+          'Physical table has ambiguous active owners',
+        );
+      }
+      if (table.activeOrderId != null && table.activeOrderId != orderId ||
+          table.isReserved &&
+              table.activeOrderId == null &&
+              table.reservationId != reservationId) {
+        throw OrderMutationConflict(
+          'table_busy',
+          'Physical table is owned by another operation',
+        );
+      }
+      if (table.isReserved &&
+          table.activeOrderId == orderId &&
+          table.reservationId == reservationId)
+        return;
+      final proposed = TableModel.fromJson(
+        OrderTableMutationRepository.tableImage(table),
+      );
+      proposed.reserve(username, orderId, reservationId: reservationId);
+      final key = DatabaseCore.tableBox!
+          .toMap()
+          .entries
+          .singleWhere(
+            (e) =>
+                e.value.floor == table.floor &&
+                e.value.tableNumber == table.tableNumber,
+          )
+          .key;
+      await DatabaseCore.tableBox!.put(key, proposed);
+      await DatabaseCore.tableBox!.flush();
       SyncHub.notify(
         SyncEvent(
           type: SyncEventType.tables,
@@ -345,7 +441,7 @@ class TableRepository {
     required String floor,
     required String username,
     required String reservationId,
-  }) => UpdateReadiness.track(
+  }) => UpdateReadiness.mutate(
     'reserveTableForReservation',
     () => _updateTrackedReserveTableForReservation(
       tableNumber: tableNumber,
@@ -363,8 +459,38 @@ class TableRepository {
   }) async {
     final table = getTable(tableNumber, floor);
     if (table != null) {
-      table.reserveForReservation(username, reservationId);
-      await table.save();
+      OrderTableMutationRepository.requireConsistent(
+        refs: {'$floor|$tableNumber'},
+      );
+      if (table.activeOrderId != null ||
+          table.isReserved && table.reservationId != reservationId ||
+          DatabaseCore.orderBox!.values.any(
+            (o) =>
+                !o.statusEnum.isTerminal &&
+                o.floor == floor &&
+                o.tableNumbers.contains(tableNumber),
+          )) {
+        throw OrderMutationConflict(
+          'table_busy',
+          'Physical table is already owned',
+        );
+      }
+      if (table.isReserved && table.reservationId == reservationId) return;
+      final proposed = TableModel.fromJson(
+        OrderTableMutationRepository.tableImage(table),
+      );
+      proposed.reserveForReservation(username, reservationId);
+      final key = DatabaseCore.tableBox!
+          .toMap()
+          .entries
+          .singleWhere(
+            (e) =>
+                e.value.floor == table.floor &&
+                e.value.tableNumber == table.tableNumber,
+          )
+          .key;
+      await DatabaseCore.tableBox!.put(key, proposed);
+      await DatabaseCore.tableBox!.flush();
       SyncHub.notify(
         SyncEvent(
           type: SyncEventType.tables,
@@ -383,28 +509,76 @@ class TableRepository {
   static Future<void> freeTable({
     required String tableNumber,
     required String floor,
-  }) => UpdateReadiness.track(
-    'freeTable',
-    () => _updateTrackedFreeTable(tableNumber: tableNumber, floor: floor),
-  );
-
-  static Future<void> _updateTrackedFreeTable({
-    required String tableNumber,
-    required String floor,
-  }) async {
+    int? expectedOrderId,
+    String? expectedReservationId,
+  }) => UpdateReadiness.mutate('freeTable', () async {
     final table = getTable(tableNumber, floor);
-    if (table != null) {
-      table.free();
-      await table.save();
-      SyncHub.notify(
-        SyncEvent(
-          type: SyncEventType.tables,
-          action: 'freed',
-          payload: {'tableNumber': tableNumber, 'floor': floor},
-        ),
+    if (table == null) return;
+    if (table.activeOrderId != null && table.activeOrderId != expectedOrderId) {
+      throw OrderMutationConflict(
+        'table_busy',
+        'Table release belongs to another Order',
       );
     }
-  }
+    final owners = DatabaseCore.orderBox!.values
+        .where(
+          (o) =>
+              !o.statusEnum.isTerminal &&
+              o.floor == floor &&
+              o.tableNumbers.contains(tableNumber),
+        )
+        .toList();
+    if (owners.isNotEmpty)
+      throw OrderMutationConflict(
+        'table_busy',
+        'A live Order still owns this table',
+      );
+    if (table.activeOrderId == null &&
+        table.reservationId != null &&
+        table.reservationId != expectedReservationId) {
+      final live =
+          DatabaseCore.reservationBox?.values.any(
+            (r) =>
+                r.id == table.reservationId &&
+                ![
+                  'completed',
+                  'cancelled',
+                  'no-show',
+                ].contains(r.statusEnum.storageValue),
+          ) ??
+          false;
+      if (live)
+        throw OrderMutationConflict(
+          'table_busy',
+          'A live Reservation owns this table',
+        );
+    }
+    if (!table.isReserved &&
+        table.activeOrderId == null &&
+        table.reservationId == null)
+      return;
+    final proposed = TableModel.fromJson(
+      OrderTableMutationRepository.tableImage(table),
+    )..free();
+    final key = DatabaseCore.tableBox!
+        .toMap()
+        .entries
+        .singleWhere(
+          (e) =>
+              e.value.floor == table.floor &&
+              e.value.tableNumber == table.tableNumber,
+        )
+        .key;
+    await DatabaseCore.tableBox!.put(key, proposed);
+    await DatabaseCore.tableBox!.flush();
+    SyncHub.notify(
+      SyncEvent(
+        type: SyncEventType.tables,
+        action: 'freed',
+        payload: {'tableNumber': tableNumber, 'floor': floor},
+      ),
+    );
+  });
 
   static bool _orderContainsTable(Order order, TableModel table) {
     final identifiers = <String>{};
@@ -434,6 +608,14 @@ class TableRepository {
     final trimmed = rawValue.trim();
     if (trimmed.isEmpty) {
       return null;
+    }
+
+    if (getRestaurantTableLayout().tableForLegacy(
+          floor: floor,
+          tableNumber: trimmed,
+        ) !=
+        null) {
+      return trimmed;
     }
 
     final lower = trimmed.toLowerCase();
@@ -580,7 +762,7 @@ class TableRepository {
   }
 
   static Future<List<Map<String, dynamic>>> releaseStaleReservedTables() =>
-      UpdateReadiness.track(
+      UpdateReadiness.mutate(
         'releaseStaleReservedTables',
         () => _updateTrackedReleaseStaleReservedTables(),
       );
@@ -602,7 +784,12 @@ class TableRepository {
       final analysis = _analyzeReservedTable(table, todayKey);
       if (analysis['shouldRelease'] == true) {
         released.add(analysis);
-        await freeTable(tableNumber: table.tableNumber, floor: table.floor);
+        await freeTable(
+          tableNumber: table.tableNumber,
+          floor: table.floor,
+          expectedOrderId: table.activeOrderId,
+          expectedReservationId: table.reservationId,
+        );
       }
     }
 
@@ -610,7 +797,7 @@ class TableRepository {
   }
 
   static Future<void> syncTableReservationsForCurrentDate() =>
-      UpdateReadiness.track(
+      UpdateReadiness.mutate(
         'syncTableReservationsForCurrentDate',
         () => _updateTrackedSyncTableReservationsForCurrentDate(),
       );
@@ -625,6 +812,13 @@ class TableRepository {
         .toIso8601String()
         .split('T')[0];
 
+    if (OrderTableMutationRepository.integrityReport().isNotEmpty) {
+      developer.log(
+        'Table projection sync skipped: ownership repair is required',
+        name: 'TableRepository',
+      );
+      return;
+    }
     // Step 1: clear table locks that do not belong to the selected business date.
     await releaseStaleReservedTables();
 

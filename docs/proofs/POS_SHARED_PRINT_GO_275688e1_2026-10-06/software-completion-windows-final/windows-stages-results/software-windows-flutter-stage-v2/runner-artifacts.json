@@ -1,0 +1,46 @@
+{
+  "schema": 1,
+  "createdAtUtc": "2026-10-06T17:48:58.907230+00:00",
+  "sourceReceiptSHA256": "193e4800e5d0733a30bc6c8d4ac993590219363941e69a787bba5ac3681c8f68",
+  "executionStatus": "PREFLIGHT_PASS_AWAIT_ACTUAL_EXECUTION",
+  "VMExecuted": false,
+  "predecessor": {
+    "path": "/Users/vaanskii/Developer/vynic/docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/software-windows-flutter-stage/runner-artifacts.json",
+    "sha256": "c147cb891424b2f1760f198e27ea3bc977891cd2c4a324e3a3b26de5e01b07f6"
+  },
+  "changes": "Runner stage/result paths and guest task path rebased to fresh v2 outputs; all application/fixture/selector bytes unchanged",
+  "assets": {
+    "analysis-selection.json": {
+      "sha256": "c194b204f6a956d79081acdaec508e2a217104c8a0dafd974b79637ad300490b",
+      "bytes": 3823
+    },
+    "operational-proof-server-windows.test.exe": {
+      "sha256": "2c9370e4c4cfdb55094f63a26a2bf5b45bff43868a1a2c14a0f47c2654c70abb",
+      "bytes": 26370560
+    },
+    "printer-agent-server-windows.test.exe": {
+      "sha256": "f335745e38be573f5ec031478eab4b524a8069c811324ac2a5d39876b676e894",
+      "bytes": 25833472
+    },
+    "run.ps.txt": {
+      "sha256": "0a843d221227e30063236f844182a13b17ba7ac55c2a41d3ba70c1b80ad3b683",
+      "bytes": 5766
+    },
+    "source-manifest.json": {
+      "sha256": "f53338cbe0a30d867ab0b370d861671ace9e31b2de0d88696960ec6c3f6c65d6",
+      "bytes": 193014
+    },
+    "source.zip": {
+      "sha256": "dedd8e046927fe20954e392aaf7b92e76e06145f54b7e7c2f5f5f9920052b066",
+      "bytes": 5780809
+    },
+    "stage-receipt.json": {
+      "sha256": "55cf849d17e7658ce06878a51a6f01c0c2652016e5d026b4b8dc6c52e11bcbbf",
+      "bytes": 1474
+    },
+    "test-selection.json": {
+      "sha256": "7bd71e5071e5da65b5d0d6316bf5548d4a55cfcb48aaf68464fa851b076540b0",
+      "bytes": 1917
+    }
+  }
+}

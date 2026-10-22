@@ -1,0 +1,16 @@
+{
+	"Path": "github.com/hashicorp/raft",
+	"Version": "v1.8.0",
+	"Info": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/github.com/hashicorp/raft/@v/v1.8.0.info",
+	"GoMod": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/github.com/hashicorp/raft/@v/v1.8.0.mod",
+	"Zip": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/github.com/hashicorp/raft/@v/v1.8.0.zip",
+	"Dir": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/github.com/hashicorp/raft@v1.8.0",
+	"Sum": "h1:YbfecBcuTar/LNFEDfVTpqu9Aw+MczTk7MYczvy+62k=",
+	"GoModSum": "h1:agL5fncrpEsbxr5P5KOd2srskDwPY18opjXN5x0661s=",
+	"Origin": {
+		"VCS": "git",
+		"URL": "https://github.com/hashicorp/raft",
+		"Hash": "0f543c056e7e577a54b819a62116335c9661a13a",
+		"Ref": "refs/tags/v1.8.0"
+	}
+}

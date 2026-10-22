@@ -81,6 +81,38 @@ export function requestHostnames(
 }
 
 /**
+ * The one host a request is attributed to.
+ *
+ * Behind a trusted proxy the forwarded host is the name the visitor typed, so
+ * when it is present it is the only candidate: falling back to the direct
+ * `Host` (the proxy's upstream name) would let an unregistered forwarded name
+ * quietly become whichever restaurant owns the internal hostname. Without a
+ * trusted proxy only `Host` is read.
+ */
+export function authoritativeRequestHost(
+  headers: Record<string, string | string[] | undefined>,
+  options: { trustForwardedHost: boolean },
+): string | null {
+  const forwarded = options.trustForwardedHost
+    ? firstEntry(headers['x-forwarded-host'])
+    : [];
+  const raw = forwarded.length ? forwarded : firstEntry(headers['host']);
+  return raw.length ? normalizeHostname(raw[0]) : null;
+}
+
+/**
+ * Whether a local address names no particular site: bare `localhost`, a
+ * loopback literal or a LAN address.
+ *
+ * A named `*.localhost` host (`custom-a.vynic.localhost`) is an explicit choice
+ * of site, so an unregistered one must not be quietly served as the bootstrap
+ * Venue by the development fallback.
+ */
+export function isAnonymousLocalHost(hostname: string): boolean {
+  return isLocalDevelopmentHost(hostname) && !hostname.endsWith('.localhost');
+}
+
+/**
  * Whether a host is a local development address rather than a public name.
  *
  * Used only to decide whether the non-production development fallback applies.

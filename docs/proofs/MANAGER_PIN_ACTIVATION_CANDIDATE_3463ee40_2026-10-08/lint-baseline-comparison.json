@@ -1,0 +1,30 @@
+[
+  {
+    "path": "apps/backend/src/edge-foundation/edge-foundation.integration.spec.ts",
+    "beforeHashConfirmed": true,
+    "beforeErrors": 10,
+    "afterErrors": 10,
+    "addedErrorMessages": []
+  },
+  {
+    "path": "apps/backend/src/mobile/services/mgr01-table-layout.integration.spec.ts",
+    "beforeHashConfirmed": true,
+    "beforeErrors": 44,
+    "afterErrors": 44,
+    "addedErrorMessages": []
+  },
+  {
+    "path": "apps/backend/src/platform/platform-control-plane.integration.spec.ts",
+    "beforeHashConfirmed": true,
+    "beforeErrors": 0,
+    "afterErrors": 0,
+    "addedErrorMessages": []
+  },
+  {
+    "path": "apps/backend/src/platform/platform-password.spec.ts",
+    "beforeHashConfirmed": true,
+    "beforeErrors": 18,
+    "afterErrors": 18,
+    "addedErrorMessages": []
+  }
+]

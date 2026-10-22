@@ -1,0 +1,30 @@
+{
+  "schema": 1,
+  "createdAtUtc": "2026-10-06T17:26:24.799224+00:00",
+  "finalSourceReceiptSHA256": "193e4800e5d0733a30bc6c8d4ac993590219363941e69a787bba5ac3681c8f68",
+  "files": 1109,
+  "sourceZipSHA256": "dedd8e046927fe20954e392aaf7b92e76e06145f54b7e7c2f5f5f9920052b066",
+  "sourceManifestSHA256": "f53338cbe0a30d867ab0b370d861671ace9e31b2de0d88696960ec6c3f6c65d6",
+  "testSuites": 39,
+  "analysisFiles": 68,
+  "fixtures": {
+    "operational-proof-server-windows.test.exe": {
+      "sha256": "2c9370e4c4cfdb55094f63a26a2bf5b45bff43868a1a2c14a0f47c2654c70abb",
+      "bytes": 26370560
+    },
+    "printer-agent-server-windows.test.exe": {
+      "sha256": "f335745e38be573f5ec031478eab4b524a8069c811324ac2a5d39876b676e894",
+      "bytes": 25833472
+    }
+  },
+  "firebaseSdk": "C:\\Users\\vaanskii\\AppData\\Local\\VynicLocalReleaseBuild\\e7a0ffd0bb571781\\apps\\operations\\build\\windows\\x64\\extracted\\firebase_cpp_sdk_windows",
+  "firebaseVersion": "13.5.0",
+  "firebaseVersionHeaderSha256": "8485c4305c02638bca186a082a7c3b94040f995bc542664f3be002610847da24",
+  "guestJobSuffix": "VynicReadinessNative/software-2bd986d1ac2a-flutter-v2",
+  "executionStatus": "PREFLIGHT_PASS_AWAIT_ACTUAL_EXECUTION",
+  "physicalJobs": 0,
+  "productStarted": false,
+  "serviceOperations": false,
+  "sourceScope": "Exact new software cohort; previous898/535 receipts remain immutable",
+  "preflightRetryReceiptSHA256": "351bae1ab6f72632abe0d09849db453362bcc5c83f66e35ed6507b53f540f10e"
+}

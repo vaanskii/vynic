@@ -166,9 +166,9 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.byKey(const Key('receiving-list')), findsOneWidget);
-      expect(find.text('05 სექ'), findsNWidgets(2));
-      expect(find.text('Meat Supplier'), findsNWidgets(2));
-      expect(find.text('ზედნადები 12345'), findsOneWidget);
+      expect(find.textContaining('05 სექ'), findsNWidgets(2));
+      expect(find.textContaining('Meat Supplier'), findsNWidgets(2));
+      expect(find.text('მიღება #12345'), findsOneWidget);
       expect(find.text('750.00 ₾'), findsNWidgets(2));
       // Once as the status filter chip, once as this document's badge.
       expect(find.byKey(const Key('receiving-status-POSTED')), findsOneWidget);
@@ -220,7 +220,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.byKey(const Key('receiving-list')), findsOneWidget);
-      expect(find.text('Meat Supplier'), findsNWidgets(2));
+      expect(find.textContaining('Meat Supplier'), findsNWidgets(2));
       expect(tester.takeException(), isNull);
     });
 
@@ -384,8 +384,8 @@ void main() {
       await tester.pumpAndSettle();
       await flow.chooseReceivingProduct(tester);
 
-      await tester.ensureVisible(find.text('თარიღი და დოკუმენტის დეტალები'));
-      await tester.tap(find.text('თარიღი და დოკუმენტის დეტალები'));
+      await tester.ensureVisible(find.text('წყარო და დოკუმენტის დეტალები'));
+      await tester.tap(find.text('წყარო და დოკუმენტის დეტალები'));
       await tester.pumpAndSettle();
       await tester.enterText(
         find.byKey(const Key('receiving-waybill')),
@@ -403,6 +403,7 @@ void main() {
 
       // The unit dropdown offers the item's own box beside its base unit,
       // named the way restaurant staff read it.
+      await openReceivingOptions(tester);
       await tester.tap(find.byKey(const Key('receiving-line-unit-0')));
       await tester.pumpAndSettle();
       await tester.tap(find.text('ყუთი').last);
@@ -490,7 +491,7 @@ void main() {
       await flow.chooseReceivingProduct(tester);
 
       expect(find.text('მიღების რედაქტირება'), findsOneWidget);
-      await tester.tap(find.text('თარიღი და დოკუმენტის დეტალები'));
+      await tester.tap(find.text('წყარო და დოკუმენტის დეტალები'));
       await tester.pumpAndSettle();
       expect(find.widgetWithText(TextField, '12345'), findsOneWidget);
       expect(find.widgetWithText(TextField, '50'), findsOneWidget);

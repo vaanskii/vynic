@@ -1,8 +1,10 @@
+import 'package:vynic/core/ui/widgets/pos_dialog.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:vynic/core/models/order.dart';
 import 'package:vynic/core/models/quick_order_draft.dart';
+import 'package:vynic/core/services/auth/pos_session.dart';
 import 'package:vynic/core/models/user.dart';
 import 'package:vynic/apps/windows_pos/screens/menu_screen.dart';
 import 'package:vynic/core/services/database_service.dart';
@@ -40,6 +42,18 @@ class HomeCalculatorPage extends StatefulWidget {
 }
 
 class _HomeCalculatorPageState extends State<HomeCalculatorPage> {
+  bool _draftActionRunning = false;
+
+  Future<void> _runDraftAction(Future<void> Function() action) async {
+    if (_draftActionRunning) return;
+    _draftActionRunning = true;
+    try {
+      await action();
+    } finally {
+      _draftActionRunning = false;
+    }
+  }
+
   final TextEditingController _quickOrderGuestsController =
       TextEditingController(text: '2');
 
@@ -58,11 +72,21 @@ class _HomeCalculatorPageState extends State<HomeCalculatorPage> {
       onToggleServiceFee: _toggleQuickOrderServiceFee,
       onOpenServiceFeeConfig: _openQuickOrderServiceFeeConfig,
       onContinueDraft: _openQuickOrderDraft,
-      onPrintDraft: _printQuickOrderDraft,
+      onPrintDraft: (draft) =>
+          _runDraftAction(() => _printQuickOrderDraft(draft)),
       onItemQuantityChanged: _changeQuickOrderItemQuantity,
       serviceFeeAvailable: DatabaseService.isServiceFeeAvailable(),
       canManageDrafts: widget.user.canManageMenuCountDrafts,
-      onOpenDraftManage: _openDraftManageModal,
+      canDeleteDrafts: widget.user.canDeleteMenuCountDrafts,
+      onConfirmDraft: (draft) =>
+          _runDraftAction(() => _confirmQuickOrderDraft(draft)),
+      onRenameDraft: (draft) => _runDraftAction(() async {
+        await _renameQuickOrderDraft(draft);
+      }),
+      onPreviewDraft: (draft) =>
+          _runDraftAction(() => _viewQuickOrderDraftReceipt(draft)),
+      onDeleteDraft: (draft) =>
+          _runDraftAction(() => _deleteQuickOrderDraft(draft.id)),
       onClearAllDrafts: _clearAllQuickOrderDrafts,
       primaryColor: widget.primaryColor,
       secondaryColor: widget.secondaryColor,
@@ -155,7 +179,7 @@ class _HomeCalculatorPageState extends State<HomeCalculatorPage> {
         draft.serviceFeeAmount > 0.0;
     final receiptTotal = includeService ? draft.total : draft.subtotal;
 
-    PrinterService.printReceiptInBackground(
+    await PrinterService.printReceiptInBackground(
       items: lines,
       total: receiptTotal,
       subtotal: draft.subtotal,
@@ -171,14 +195,18 @@ class _HomeCalculatorPageState extends State<HomeCalculatorPage> {
           unawaited(
             showSuccessToast(
               context,
-              isEnglish ? 'Receipt printed' : 'ჩეკი დაიბეჭდა',
+              isEnglish
+                  ? 'Sent to printer — check paper'
+                  : 'გაიგზავნა პრინტერზე — შეამოწმეთ ქაღალდი',
             ),
           );
         } else {
           unawaited(
             showErrorToast(
               context,
-              isEnglish ? 'Printer unavailable' : 'პრინტერი მიუწვდომელია',
+              isEnglish
+                  ? 'Printing unconfirmed — review print jobs'
+                  : 'ბეჭდვა ვერ დადასტურდა — შეამოწმეთ ბეჭდვის სია',
             ),
           );
         }
@@ -222,7 +250,7 @@ class _HomeCalculatorPageState extends State<HomeCalculatorPage> {
     if (!mounted) return;
 
     // Show loading indicator
-    showDialog(
+    showPosModal(
       context: context,
       barrierDismissible: false,
       builder: (context) => const Center(child: CircularProgressIndicator()),
@@ -293,10 +321,11 @@ class _HomeCalculatorPageState extends State<HomeCalculatorPage> {
     final defaultPercent = DatabaseService.getServiceFeePercentage();
     final initialPercent = (draft.serviceFeeRate * 100).clamp(0.0, 100.0);
 
-    final result = await showDialog<ServiceFeeAdjustResult>(
+    final result = await showPosModal<ServiceFeeAdjustResult>(
       context: context,
       barrierDismissible: false,
       builder: (dialogContext) => ServiceFeeAdjustDialog(
+        usePosLayout: true,
         initialIncludeServiceFee: draft.includeServiceFee,
         initialPercentage: initialPercent,
         defaultPercentage: defaultPercent,
@@ -462,57 +491,24 @@ class _HomeCalculatorPageState extends State<HomeCalculatorPage> {
     TimeOfDay? initialTime,
     int? initialGuests,
   }) {
-    return showGeneralDialog<Map<String, dynamic>>(
-      context: context,
-      barrierLabel: title,
-      barrierColor: Colors.black.withValues(alpha: 0.85),
-      barrierDismissible: true,
-      transitionDuration: const Duration(milliseconds: 220),
-      pageBuilder: (dialogContext, animation, secondaryAnimation) {
-        final mediaQuery = MediaQuery.of(dialogContext);
-        return SafeArea(
-          child: Center(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-              child: ConstrainedBox(
-                constraints: BoxConstraints(
-                  maxWidth: mediaQuery.size.width * 0.9,
-                  maxHeight: mediaQuery.size.height * 0.95,
-                ),
-                child: ReservationCreationSheet(
-                  onCancel: () => Navigator.of(dialogContext).pop(),
-                  title: title,
-                  confirmLabel: confirmLabel,
-                  initialName: initialName,
-                  initialPhone: initialPhone,
-                  initialNotes: initialNotes,
-                  initialDate: initialDate,
-                  initialTime: initialTime,
-                  initialGuests: initialGuests,
-                ),
-              ),
-            ),
-          ),
-        );
-      },
-      transitionBuilder: (context, animation, secondaryAnimation, child) {
-        final curved = CurvedAnimation(
-          parent: animation,
-          curve: Curves.easeOutCubic,
-          reverseCurve: Curves.easeInCubic,
-        );
-        return FadeTransition(
-          opacity: curved,
-          child: ScaleTransition(
-            scale: Tween<double>(begin: 0.95, end: 1).animate(curved),
-            child: child,
-          ),
-        );
-      },
+    return ReservationCreationSheet.show(
+      context,
+      form: ReservationCreationSheet(
+        title: title,
+        confirmLabel: confirmLabel,
+        initialName: initialName,
+        initialPhone: initialPhone,
+        initialNotes: initialNotes,
+        initialDate: initialDate,
+        initialTime: initialTime,
+        initialGuests: initialGuests,
+      ),
     );
   }
 
-  Future<Map<String, dynamic>?> _showQuickOrderConfirmationDialog() async {
+  Future<Map<String, dynamic>?> _showQuickOrderConfirmationDialog(
+    QuickOrderDraft draft,
+  ) async {
     final int? initialGuests = int.tryParse(
       _quickOrderGuestsController.text.trim(),
     );
@@ -525,11 +521,14 @@ class _HomeCalculatorPageState extends State<HomeCalculatorPage> {
       confirmLabel: 'დადასტურება',
       initialDate: initialDate,
       initialGuests: initialGuests,
+      initialName: draft.customerName,
+      initialPhone: draft.customerPhone,
     );
   }
 
   Future<void> _confirmQuickOrderDraft(QuickOrderDraft draft) async {
-    final result = await _showQuickOrderConfirmationDialog();
+    if (!widget.user.canManageMenuCountDrafts) return;
+    final result = await _showQuickOrderConfirmationDialog(draft);
     if (result == null) {
       return;
     }
@@ -572,20 +571,29 @@ class _HomeCalculatorPageState extends State<HomeCalculatorPage> {
       return;
     }
 
-    await DatabaseService.createReservation(
-      customerName: customerName,
-      customerPhone: customerPhone,
-      tableRefs: tableRefs,
-      reservationDate: selectedDate,
-      reservationTime: timeString,
-      numberOfGuests: guests,
-      notes: notes,
-      createdBy: widget.user.username,
-      preOrderItems: draft.items,
-      status: 'confirmed',
-    );
+    try {
+      await DatabaseService.createReservation(
+        customerName: customerName,
+        customerPhone: customerPhone,
+        tableRefs: tableRefs,
+        reservationDate: selectedDate,
+        reservationTime: timeString,
+        numberOfGuests: guests,
+        notes: notes,
+        createdBy: widget.user.username,
+        preOrderItems: draft.items,
+        status: result['status'] as String? ?? 'confirmed',
+        advanceAmount: result['advanceAmount'] as double? ?? 0,
+        id: result['id'] as String?,
+      );
+    } catch (error) {
+      if (mounted)
+        unawaited(showErrorToast(context, 'რეზერვაცია ვერ შეიქმნა: $error'));
+      return;
+    }
 
-    await DatabaseService.deleteQuickOrderDraft(draft.id);
+    // Converting an estimate is not deletion. Keep it available for reference;
+    // only an authenticated manager can explicitly remove it.
 
     if (!mounted) {
       return;
@@ -598,7 +606,8 @@ class _HomeCalculatorPageState extends State<HomeCalculatorPage> {
   }
 
   Future<void> _deleteQuickOrderDraft(String id) async {
-    final confirmed = await showDialog<bool>(
+    if (!(PosSession.user ?? widget.user).canDeleteMenuCountDrafts) return;
+    final confirmed = await showPosModal<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
         backgroundColor: Colors.white,
@@ -638,7 +647,7 @@ class _HomeCalculatorPageState extends State<HomeCalculatorPage> {
   }
 
   Future<void> _clearAllQuickOrderDrafts() async {
-    if (!widget.user.canManageMenuCountDrafts) {
+    if (!(PosSession.user ?? widget.user).canDeleteMenuCountDrafts) {
       return;
     }
 
@@ -657,7 +666,7 @@ class _HomeCalculatorPageState extends State<HomeCalculatorPage> {
       return;
     }
 
-    final confirmed = await showDialog<bool>(
+    final confirmed = await showPosModal<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
         backgroundColor: Colors.white,
@@ -726,37 +735,6 @@ class _HomeCalculatorPageState extends State<HomeCalculatorPage> {
     return value;
   }
 
-  Future<void> _openDraftManageModal(QuickOrderDraft draft) async {
-    if (!widget.user.canManageMenuCountDrafts) {
-      return;
-    }
-
-    await showDialog<void>(
-      context: context,
-      barrierColor: Colors.black.withValues(alpha: 0.45),
-      builder: (dialogContext) {
-        return _DraftManagementDialog(
-          draft: draft,
-          onConfirm: () {
-            Navigator.pop(dialogContext);
-            unawaited(_confirmQuickOrderDraft(draft));
-          },
-          onRename: () {
-            return _renameQuickOrderDraft(draft);
-          },
-          onPreview: () {
-            Navigator.pop(dialogContext);
-            unawaited(_viewQuickOrderDraftReceipt(draft));
-          },
-          onDelete: () {
-            Navigator.pop(dialogContext);
-            unawaited(_deleteQuickOrderDraft(draft.id));
-          },
-        );
-      },
-    );
-  }
-
   Future<String?> _openQuickOrderNameKeyboardSheet(
     TextEditingController controller,
   ) async {
@@ -806,262 +784,5 @@ class _HomeCalculatorPageState extends State<HomeCalculatorPage> {
       }
       setState(() {});
     });
-  }
-}
-
-class _DraftManagementDialog extends StatefulWidget {
-  const _DraftManagementDialog({
-    required this.draft,
-    required this.onConfirm,
-    required this.onRename,
-    required this.onPreview,
-    required this.onDelete,
-  });
-
-  final QuickOrderDraft draft;
-  final VoidCallback onConfirm;
-  final Future<String?> Function() onRename;
-  final VoidCallback onPreview;
-  final VoidCallback onDelete;
-
-  @override
-  State<_DraftManagementDialog> createState() => _DraftManagementDialogState();
-}
-
-class _DraftManagementDialogState extends State<_DraftManagementDialog> {
-  late String _title;
-
-  @override
-  void initState() {
-    super.initState();
-    _title = _resolveTitle(widget.draft.displayName);
-  }
-
-  String _resolveTitle(String? value) {
-    final normalized = value?.trim();
-    return normalized?.isNotEmpty == true ? normalized! : 'დათვლილი მენიუ';
-  }
-
-  Future<void> _rename() async {
-    final value = await widget.onRename();
-    if (value == null || !mounted) return;
-    setState(() => _title = _resolveTitle(value));
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final itemCount = widget.draft.items.fold<int>(
-      0,
-      (sum, item) => sum + item.quantity,
-    );
-
-    return Dialog(
-      backgroundColor: Colors.transparent,
-      insetPadding: const EdgeInsets.all(24),
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 620),
-        child: Container(
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: const Color(0xFFDDE4ED)),
-            boxShadow: const [
-              BoxShadow(
-                color: Color(0x260F172A),
-                blurRadius: 32,
-                offset: Offset(0, 16),
-              ),
-            ],
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(22, 18, 14, 16),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 44,
-                      height: 44,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFEAF4FB),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: const Icon(
-                        Icons.receipt_long_outlined,
-                        color: Color(0xFF075E6B),
-                      ),
-                    ),
-                    const SizedBox(width: 13),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            _title,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              color: Color(0xFF102033),
-                              fontSize: 19,
-                              fontWeight: FontWeight.w800,
-                            ),
-                          ),
-                          const SizedBox(height: 3),
-                          Text(
-                            '$itemCount პროდუქტი  •  ${widget.draft.total.toStringAsFixed(2)} ₾',
-                            style: const TextStyle(
-                              color: Color(0xFF64748B),
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    IconButton(
-                      tooltip: 'დახურვა',
-                      onPressed: () => Navigator.pop(context),
-                      icon: const Icon(Icons.close_rounded),
-                    ),
-                  ],
-                ),
-              ),
-              const Divider(height: 1),
-              const Padding(
-                padding: EdgeInsets.fromLTRB(22, 16, 22, 10),
-                child: Text(
-                  'მენიუს მართვა',
-                  style: TextStyle(
-                    color: Color(0xFF102033),
-                    fontSize: 13,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(22, 0, 22, 22),
-                child: GridView.count(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  crossAxisCount: 2,
-                  mainAxisSpacing: 10,
-                  crossAxisSpacing: 10,
-                  childAspectRatio: 2.7,
-                  children: [
-                    _DraftManagementAction(
-                      icon: Icons.check_circle_outline_rounded,
-                      title: 'დადასტურება',
-                      subtitle: 'რეზერვაციაში გადატანა',
-                      color: const Color(0xFF16A34A),
-                      onTap: widget.onConfirm,
-                    ),
-                    _DraftManagementAction(
-                      icon: Icons.drive_file_rename_outline_rounded,
-                      title: 'სახელის შეცვლა',
-                      subtitle: 'მენიუს დასახელება',
-                      color: const Color(0xFF1E3A8A),
-                      onTap: () => unawaited(_rename()),
-                    ),
-                    _DraftManagementAction(
-                      icon: Icons.visibility_outlined,
-                      title: 'ნახვა / PDF',
-                      subtitle: 'ქვითრის წინასწარი ნახვა',
-                      color: const Color(0xFF0F766E),
-                      onTap: widget.onPreview,
-                    ),
-                    _DraftManagementAction(
-                      icon: Icons.delete_outline_rounded,
-                      title: 'წაშლა',
-                      subtitle: 'მენიუს სამუდამოდ წაშლა',
-                      color: const Color(0xFFDC2626),
-                      onTap: widget.onDelete,
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _DraftManagementAction extends StatelessWidget {
-  const _DraftManagementAction({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-    required this.color,
-    required this.onTap,
-  });
-
-  final IconData icon;
-  final String title;
-  final String subtitle;
-  final Color color;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: color.withValues(alpha: 0.055),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(9),
-        side: BorderSide(color: color.withValues(alpha: 0.2)),
-      ),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(9),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-          child: Row(
-            children: [
-              Container(
-                width: 38,
-                height: 38,
-                decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(9),
-                ),
-                child: Icon(icon, color: color, size: 20),
-              ),
-              const SizedBox(width: 11),
-              Expanded(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        color: Color(0xFF102033),
-                        fontSize: 12,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      subtitle,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        color: Color(0xFF64748B),
-                        fontSize: 9,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Icon(Icons.chevron_right_rounded, color: color, size: 19),
-            ],
-          ),
-        ),
-      ),
-    );
   }
 }

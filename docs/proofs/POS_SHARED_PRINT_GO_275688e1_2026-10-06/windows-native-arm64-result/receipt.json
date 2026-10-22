@@ -1,0 +1,18 @@
+﻿{
+    "scope":  "native ARM64 nonphysical helper/core/Go lifecycle qualification",
+    "helperSha256":  "267f3ba86edae2bb0098fd55f1bf1c342d2761a699cf535afb4f4970709a8d94",
+    "helperBytes":  291328,
+    "helperProtocol":  1,
+    "helperMachine":  "0xaa64",
+    "goTestMachine":  "0xaa64",
+    "sourceInputCount":  34,
+    "sourceHashesUnchanged":  true,
+    "cachedInputsCount":  2984,
+    "cachedInputHashesUnchanged":  true,
+    "documentsSubmitted":  0,
+    "productStarted":  false,
+    "flutterEngineStarted":  false,
+    "serviceOperations":  false,
+    "driverOperations":  false,
+    "positiveWrites":  "fake APIs/processes only"
+}

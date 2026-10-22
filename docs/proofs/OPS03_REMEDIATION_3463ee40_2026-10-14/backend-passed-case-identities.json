@@ -1,0 +1,4937 @@
+[
+  [
+    "app.controller.spec.ts",
+    "AppController root should return \"Hello World!\"",
+    1
+  ],
+  [
+    "auth/device-credential.service.spec.ts",
+    "DeviceCredentialService issues a versioned credential once and persists only its verifier",
+    1
+  ],
+  [
+    "auth/device-credential.service.spec.ts",
+    "DeviceCredentialService rejects a DISABLED Device before secret verification",
+    1
+  ],
+  [
+    "auth/device-credential.service.spec.ts",
+    "DeviceCredentialService rejects a Device whose Venue is disabled",
+    1
+  ],
+  [
+    "auth/device-credential.service.spec.ts",
+    "DeviceCredentialService rejects a REVOKED Device before secret verification",
+    1
+  ],
+  [
+    "auth/device-credential.service.spec.ts",
+    "DeviceCredentialService rejects an invalid Device secret without updating lastSeenAt",
+    1
+  ],
+  [
+    "auth/device-credential.service.spec.ts",
+    "DeviceCredentialService rejects an unknown Device without attempting an activity write",
+    1
+  ],
+  [
+    "auth/device-credential.service.spec.ts",
+    "DeviceCredentialService rejects malformed credentials without a database lookup: \"\"",
+    1
+  ],
+  [
+    "auth/device-credential.service.spec.ts",
+    "DeviceCredentialService rejects malformed credentials without a database lookup: \"device-only\"",
+    1
+  ],
+  [
+    "auth/device-credential.service.spec.ts",
+    "DeviceCredentialService rejects malformed credentials without a database lookup: \"vynic-device-v1\"",
+    1
+  ],
+  [
+    "auth/device-credential.service.spec.ts",
+    "DeviceCredentialService rejects malformed credentials without a database lookup: \"vynic-device-v1..secret\"",
+    1
+  ],
+  [
+    "auth/device-credential.service.spec.ts",
+    "DeviceCredentialService rejects malformed credentials without a database lookup: \"vynic-device-v1.11111111-1111-4111-8111-111111111111.short-secret\"",
+    1
+  ],
+  [
+    "auth/device-credential.service.spec.ts",
+    "DeviceCredentialService rejects malformed credentials without a database lookup: \"vynic-device-v1.device-only\"",
+    1
+  ],
+  [
+    "auth/device-credential.service.spec.ts",
+    "DeviceCredentialService rejects malformed credentials without a database lookup: \"vynic-device-v1.device.\"",
+    1
+  ],
+  [
+    "auth/device-credential.service.spec.ts",
+    "DeviceCredentialService rejects malformed credentials without a database lookup: \"vynic-device-v1.not-a-uuid.AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\"",
+    1
+  ],
+  [
+    "auth/device-credential.service.spec.ts",
+    "DeviceCredentialService rejects malformed credentials without a database lookup: \"vynic-device-v2.device.secret\"",
+    1
+  ],
+  [
+    "auth/device-credential.service.spec.ts",
+    "DeviceCredentialService requires a canonical Venue UUID when issuing a credential",
+    1
+  ],
+  [
+    "auth/device-credential.service.spec.ts",
+    "DeviceCredentialService requires a high-entropy UUID installation identity",
+    1
+  ],
+  [
+    "auth/device-credential.service.spec.ts",
+    "DeviceCredentialService throttles lastSeenAt writes inside the five-minute window",
+    1
+  ],
+  [
+    "auth/device-credential.service.spec.ts",
+    "DeviceCredentialService verifies an active Device and updates lastSeenAt after authentication",
+    1
+  ],
+  [
+    "auth/jwt.strategy.spec.ts",
+    "JwtStrategy ignores the username and role carried in the token",
+    1
+  ],
+  [
+    "auth/jwt.strategy.spec.ts",
+    "JwtStrategy puts the server-resolved tenant on the request",
+    1
+  ],
+  [
+    "auth/jwt.strategy.spec.ts",
+    "JwtStrategy rejects a token whose staff member no longer resolves",
+    1
+  ],
+  [
+    "auth/legacy-pos-tenant.service.spec.ts",
+    "LegacyPosTenantService does not authorize an unavailable bootstrap Venue: null",
+    1
+  ],
+  [
+    "auth/legacy-pos-tenant.service.spec.ts",
+    "LegacyPosTenantService does not authorize an unavailable bootstrap Venue: {\"status\": \"DISABLED\"}",
+    1
+  ],
+  [
+    "auth/legacy-pos-tenant.service.spec.ts",
+    "LegacyPosTenantService resolves the shared key only to the deterministic bootstrap ownership",
+    1
+  ],
+  [
+    "auth/manager-activation.controller.spec.ts",
+    "Manager activation throttle bounds invalid invitations without affecting ordinary PIN login counters",
+    1
+  ],
+  [
+    "auth/manager-activation.controller.spec.ts",
+    "Manager activation throttle successful activation cannot reset PIN failures",
+    1
+  ],
+  [
+    "auth/manager-tenant.service.spec.ts",
+    "ManagerTenantService accepts the legacy ADMIN role the same way login does",
+    1
+  ],
+  [
+    "auth/manager-tenant.service.spec.ts",
+    "ManagerTenantService carries the Organization that owns the resolved Venue",
+    1
+  ],
+  [
+    "auth/manager-tenant.service.spec.ts",
+    "ManagerTenantService refuses a deactivated staff member even mid-token",
+    1
+  ],
+  [
+    "auth/manager-tenant.service.spec.ts",
+    "ManagerTenantService refuses a role that may not use the manager app",
+    1
+  ],
+  [
+    "auth/manager-tenant.service.spec.ts",
+    "ManagerTenantService refuses a staff member who no longer exists",
+    1
+  ],
+  [
+    "auth/manager-tenant.service.spec.ts",
+    "ManagerTenantService refuses a staff member whose Venue has been disabled",
+    1
+  ],
+  [
+    "auth/manager-tenant.service.spec.ts",
+    "ManagerTenantService refuses an empty subject without touching the database",
+    1
+  ],
+  [
+    "auth/manager-tenant.service.spec.ts",
+    "ManagerTenantService resolves the Venue from the Staff row rather than anything a client sent",
+    1
+  ],
+  [
+    "auth/manager-venue.spec.ts",
+    "Manager Venue lookup throttling bounds invalid code attempts without locking the independent PIN endpoint",
+    1
+  ],
+  [
+    "auth/manager-venue.spec.ts",
+    "Manager Venue lookup throttling successful identifier lookups never reset PIN failure counters",
+    1
+  ],
+  [
+    "auth/pos-sync.guard.spec.ts",
+    "PosSyncGuard \u2014 transitional authentication accepts a verified Device credential and publishes its Device id",
+    1
+  ],
+  [
+    "auth/pos-sync.guard.spec.ts",
+    "PosSyncGuard \u2014 transitional authentication accepts the configured X-POS-Sync-Key and publishes legacy context",
+    1
+  ],
+  [
+    "auth/pos-sync.guard.spec.ts",
+    "PosSyncGuard \u2014 transitional authentication fails closed in production when the shared key is not configured",
+    1
+  ],
+  [
+    "auth/pos-sync.guard.spec.ts",
+    "PosSyncGuard \u2014 transitional authentication rejects a Device-shaped credential that does not verify",
+    1
+  ],
+  [
+    "auth/pos-sync.guard.spec.ts",
+    "PosSyncGuard \u2014 transitional authentication rejects an invalid shared key",
+    1
+  ],
+  [
+    "auth/pos-sync.guard.spec.ts",
+    "PosSyncGuard \u2014 transitional authentication rejects missing authentication when a shared key is configured",
+    1
+  ],
+  [
+    "auth/pos-sync.guard.spec.ts",
+    "PosSyncGuard \u2014 transitional authentication rejects the shared key when the bootstrap Venue is unavailable",
+    1
+  ],
+  [
+    "auth/pos-sync.guard.spec.ts",
+    "PosSyncGuard \u2014 transitional authentication retains the existing unauthenticated development fallback",
+    1
+  ],
+  [
+    "auth/pos-sync.guard.spec.ts",
+    "PosSyncGuard \u2014 transitional authentication trims the configured and provided legacy key",
+    1
+  ],
+  [
+    "auth/staff-pin-vault.service.spec.ts",
+    "StaffPinVault - a Venue nobody established refuses a blank Venue instead of serving the bootstrap one",
+    1
+  ],
+  [
+    "auth/staff-pin-vault.service.spec.ts",
+    "StaffPinVault - one namespace per Venue gives Venue B its own namespace, with no sight of Venue A",
+    1
+  ],
+  [
+    "auth/staff-pin-vault.service.spec.ts",
+    "StaffPinVault - one namespace per Venue leaves Venue B untouched when the same username changes PIN in Venue A",
+    1
+  ],
+  [
+    "auth/staff-pin-vault.service.spec.ts",
+    "StaffPinVault - one namespace per Venue never leaves a PIN in the stored value",
+    1
+  ],
+  [
+    "auth/staff-pin-vault.service.spec.ts",
+    "StaffPinVault - one namespace per Venue reads nothing for a Venue that has never been written",
+    1
+  ],
+  [
+    "auth/staff-pin-vault.service.spec.ts",
+    "StaffPinVault - one namespace per Venue stores a map in the Venue row it was given",
+    1
+  ],
+  [
+    "auth/staff-pin-vault.service.spec.ts",
+    "StaffPinVault - the bootstrap Venue behaves as it always did when it is the authenticated Venue",
+    1
+  ],
+  [
+    "auth/staff-pin-vault.service.spec.ts",
+    "StaffPinVault - the bootstrap Venue still reads a legacy cleartext row, and re-encrypts it in place",
+    1
+  ],
+  [
+    "customer/customer-password.spec.ts",
+    "owner password length accepts 128 characters for signup and invitations",
+    1
+  ],
+  [
+    "customer/customer-password.spec.ts",
+    "owner password length accepts 15 characters for signup and invitations",
+    1
+  ],
+  [
+    "customer/customer-password.spec.ts",
+    "owner password length accepts 8 characters for signup and invitations",
+    1
+  ],
+  [
+    "customer/customer-password.spec.ts",
+    "owner password length keeps existing login password validation compatible",
+    1
+  ],
+  [
+    "customer/customer-password.spec.ts",
+    "owner password length rejects 0 characters for new passwords",
+    1
+  ],
+  [
+    "customer/customer-password.spec.ts",
+    "owner password length rejects 129 characters for new passwords",
+    1
+  ],
+  [
+    "customer/customer-password.spec.ts",
+    "owner password length rejects 7 characters for new passwords",
+    1
+  ],
+  [
+    "customer/customer-website-logo.http.spec.ts",
+    "Logo upload HTTP transport accepts multipart hero, persists WebP and serves safe headers",
+    1
+  ],
+  [
+    "customer/customer-website-logo.http.spec.ts",
+    "Logo upload HTTP transport accepts multipart logo, persists WebP and serves safe headers",
+    1
+  ],
+  [
+    "customer/customer-website-logo.http.spec.ts",
+    "Logo upload HTTP transport rejects unauthenticated, invalid and oversized uploads",
+    1
+  ],
+  [
+    "customer/customer-website-logo.spec.ts",
+    "Owner logo upload authority checks ownership before processing bytes and leaves save/publication separate",
+    1
+  ],
+  [
+    "customer/customer-website-logo.spec.ts",
+    "Owner logo upload authority rejects another owner and CUSTOM sites before storage",
+    1
+  ],
+  [
+    "customer/customer-website-logo.spec.ts",
+    "Owner logo upload authority uses the same ownership and CUSTOM safeguards for main photos",
+    1
+  ],
+  [
+    "customer/owner-invitations-name.spec.ts",
+    "Invitation applicant name reuse looks up the personal name within the invited organization and email",
+    1
+  ],
+  [
+    "customer/owner-invitations-name.spec.ts",
+    "Invitation applicant name reuse registers without a repeated name using the saved applicant name",
+    1
+  ],
+  [
+    "customer/owner-invitations-name.spec.ts",
+    "Invitation applicant name reuse still collects a name for manual invitations without an approved request",
+    1
+  ],
+  [
+    "customer/printer-runtime-config.spec.ts",
+    "printer runtime v2 complete route/capability validation accepts a missing beep field and emits a complete silent canonical profile",
+    1
+  ],
+  [
+    "customer/printer-runtime-config.spec.ts",
+    "printer runtime v2 complete route/capability validation accepts literal boundary values and hostname TCP destinations",
+    1
+  ],
+  [
+    "customer/printer-runtime-config.spec.ts",
+    "printer runtime v2 complete route/capability validation disables enabled optional unknown sound",
+    1
+  ],
+  [
+    "customer/printer-runtime-config.spec.ts",
+    "printer runtime v2 complete route/capability validation disables enabled optional unsupported sound",
+    1
+  ],
+  [
+    "customer/printer-runtime-config.spec.ts",
+    "printer runtime v2 complete route/capability validation enables only explicit compatible Epson raster sound and disables it for driver rendering",
+    1
+  ],
+  [
+    "customer/printer-runtime-config.spec.ts",
+    "printer runtime v2 complete route/capability validation holds malformed/unknown core capability commandBytes=[27,40,65] without guessing",
+    1
+  ],
+  [
+    "customer/printer-runtime-config.spec.ts",
+    "printer runtime v2 complete route/capability validation holds malformed/unknown core capability cutter=\"automatic\" without guessing",
+    1
+  ],
+  [
+    "customer/printer-runtime-config.spec.ts",
+    "printer runtime v2 complete route/capability validation holds malformed/unknown core capability encoding=\"CP857\" without guessing",
+    1
+  ],
+  [
+    "customer/printer-runtime-config.spec.ts",
+    "printer runtime v2 complete route/capability validation holds malformed/unknown core capability language=\"cp866\" without guessing",
+    1
+  ],
+  [
+    "customer/printer-runtime-config.spec.ts",
+    "printer runtime v2 complete route/capability validation holds malformed/unknown core capability language=\"vendorGuess\" without guessing",
+    1
+  ],
+  [
+    "customer/printer-runtime-config.spec.ts",
+    "printer runtime v2 complete route/capability validation holds malformed/unknown core capability paperWidthMm=121 without guessing",
+    1
+  ],
+  [
+    "customer/printer-runtime-config.spec.ts",
+    "printer runtime v2 complete route/capability validation holds malformed/unknown core capability paperWidthMm=39 without guessing",
+    1
+  ],
+  [
+    "customer/printer-runtime-config.spec.ts",
+    "printer runtime v2 complete route/capability validation holds malformed/unknown core capability protocol=\"1\" without guessing",
+    1
+  ],
+  [
+    "customer/printer-runtime-config.spec.ts",
+    "printer runtime v2 complete route/capability validation holds malformed/unknown core capability rasterWidthDots=2056 without guessing",
+    1
+  ],
+  [
+    "customer/printer-runtime-config.spec.ts",
+    "printer runtime v2 complete route/capability validation holds malformed/unknown core capability rasterWidthDots=63 without guessing",
+    1
+  ],
+  [
+    "customer/printer-runtime-config.spec.ts",
+    "printer runtime v2 complete route/capability validation holds malformed/unknown core capability rasterWidthDots=65 without guessing",
+    1
+  ],
+  [
+    "customer/printer-runtime-config.spec.ts",
+    "printer runtime v2 complete route/capability validation holds malformed/unknown core capability vendorName=\"Epson\" without guessing",
+    1
+  ],
+  [
+    "customer/printer-runtime-config.spec.ts",
+    "printer runtime v2 complete route/capability validation normalizes absent/malformed optional beep \"beep\" without losing valid primary output",
+    1
+  ],
+  [
+    "customer/printer-runtime-config.spec.ts",
+    "printer runtime v2 complete route/capability validation normalizes absent/malformed optional beep [] without losing valid primary output",
+    1
+  ],
+  [
+    "customer/printer-runtime-config.spec.ts",
+    "printer runtime v2 complete route/capability validation normalizes absent/malformed optional beep null without losing valid primary output",
+    1
+  ],
+  [
+    "customer/printer-runtime-config.spec.ts",
+    "printer runtime v2 complete route/capability validation normalizes absent/malformed optional beep undefined without losing valid primary output",
+    1
+  ],
+  [
+    "customer/printer-runtime-config.spec.ts",
+    "printer runtime v2 complete route/capability validation normalizes absent/malformed optional beep {\"capability\":\"epsonEscA97Pattern\",\"enabled\":\"true\"} without losing valid primary output",
+    1
+  ],
+  [
+    "customer/printer-runtime-config.spec.ts",
+    "printer runtime v2 complete route/capability validation normalizes absent/malformed optional beep {\"capability\":\"epsonEscA97Pattern\",\"enabled\":true,\"bytes\":[27,40,65]} without losing valid primary output",
+    1
+  ],
+  [
+    "customer/printer-runtime-config.spec.ts",
+    "printer runtime v2 complete route/capability validation normalizes absent/malformed optional beep {\"capability\":\"futureVendor\",\"enabled\":true} without losing valid primary output",
+    1
+  ],
+  [
+    "customer/printer-runtime-config.spec.ts",
+    "printer runtime v2 complete route/capability validation normalizes absent/malformed optional beep {} without losing valid primary output",
+    1
+  ],
+  [
+    "customer/printer-runtime-config.spec.ts",
+    "printer runtime v2 complete route/capability validation rejects hidden authority fields and route-array metadata without invoking entry getters",
+    1
+  ],
+  [
+    "customer/printer-runtime-config.spec.ts",
+    "printer runtime v2 complete route/capability validation rejects inherited/accessor inputs without evaluating getters or returning partial configuration",
+    1
+  ],
+  [
+    "customer/printer-runtime-config.spec.ts",
+    "printer runtime v2 complete route/capability validation rejects invalid root minimumReaderVersion=\"2\"",
+    1
+  ],
+  [
+    "customer/printer-runtime-config.spec.ts",
+    "printer runtime v2 complete route/capability validation rejects invalid root minimumReaderVersion=1",
+    1
+  ],
+  [
+    "customer/printer-runtime-config.spec.ts",
+    "printer runtime v2 complete route/capability validation rejects invalid root minimumReaderVersion=3",
+    1
+  ],
+  [
+    "customer/printer-runtime-config.spec.ts",
+    "printer runtime v2 complete route/capability validation rejects invalid root phase=\"READY\"",
+    1
+  ],
+  [
+    "customer/printer-runtime-config.spec.ts",
+    "printer runtime v2 complete route/capability validation rejects invalid root revision=0",
+    1
+  ],
+  [
+    "customer/printer-runtime-config.spec.ts",
+    "printer runtime v2 complete route/capability validation rejects invalid root revision=1.1",
+    1
+  ],
+  [
+    "customer/printer-runtime-config.spec.ts",
+    "printer runtime v2 complete route/capability validation rejects invalid root revision=2147483648",
+    1
+  ],
+  [
+    "customer/printer-runtime-config.spec.ts",
+    "printer runtime v2 complete route/capability validation rejects invalid root version=\"2\"",
+    1
+  ],
+  [
+    "customer/printer-runtime-config.spec.ts",
+    "printer runtime v2 complete route/capability validation rejects invalid root version=1",
+    1
+  ],
+  [
+    "customer/printer-runtime-config.spec.ts",
+    "printer runtime v2 complete route/capability validation rejects invalid/foreign route enabled=\"true\"",
+    1
+  ],
+  [
+    "customer/printer-runtime-config.spec.ts",
+    "printer runtime v2 complete route/capability validation rejects invalid/foreign route id=\"../route\"",
+    1
+  ],
+  [
+    "customer/printer-runtime-config.spec.ts",
+    "printer runtime v2 complete route/capability validation rejects invalid/foreign route id=\"with space\"",
+    1
+  ],
+  [
+    "customer/printer-runtime-config.spec.ts",
+    "printer runtime v2 complete route/capability validation rejects invalid/foreign route id=\"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\"",
+    1
+  ],
+  [
+    "customer/printer-runtime-config.spec.ts",
+    "printer runtime v2 complete route/capability validation rejects invalid/foreign route name=\" Kitchen\"",
+    1
+  ],
+  [
+    "customer/printer-runtime-config.spec.ts",
+    "printer runtime v2 complete route/capability validation rejects invalid/foreign route name=\"a\\nb\"",
+    1
+  ],
+  [
+    "customer/printer-runtime-config.spec.ts",
+    "printer runtime v2 complete route/capability validation rejects invalid/foreign route name=\"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\"",
+    1
+  ],
+  [
+    "customer/printer-runtime-config.spec.ts",
+    "printer runtime v2 complete route/capability validation rejects invalid/foreign route protocol=2",
+    1
+  ],
+  [
+    "customer/printer-runtime-config.spec.ts",
+    "printer runtime v2 complete route/capability validation rejects invalid/foreign route protocol=true",
+    1
+  ],
+  [
+    "customer/printer-runtime-config.spec.ts",
+    "printer runtime v2 complete route/capability validation rejects invalid/foreign route revision=\"1\"",
+    1
+  ],
+  [
+    "customer/printer-runtime-config.spec.ts",
+    "printer runtime v2 complete route/capability validation rejects invalid/foreign route revision=0",
+    1
+  ],
+  [
+    "customer/printer-runtime-config.spec.ts",
+    "printer runtime v2 complete route/capability validation rejects invalid/foreign route revision=null",
+    1
+  ],
+  [
+    "customer/printer-runtime-config.spec.ts",
+    "printer runtime v2 complete route/capability validation rejects invalid/foreign route role=\"unknown\"",
+    1
+  ],
+  [
+    "customer/printer-runtime-config.spec.ts",
+    "printer runtime v2 complete route/capability validation rejects invalid/foreign route venueId=\"aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa\"",
+    1
+  ],
+  [
+    "customer/printer-runtime-config.spec.ts",
+    "printer runtime v2 complete route/capability validation rejects malformed TCP/unknown destination {\"kind\":\"tcp\",\"host\":\" host\",\"port\":9100}",
+    1
+  ],
+  [
+    "customer/printer-runtime-config.spec.ts",
+    "printer runtime v2 complete route/capability validation rejects malformed TCP/unknown destination {\"kind\":\"tcp\",\"host\":\"\",\"port\":9100}",
+    1
+  ],
+  [
+    "customer/printer-runtime-config.spec.ts",
+    "printer runtime v2 complete route/capability validation rejects malformed TCP/unknown destination {\"kind\":\"tcp\",\"host\":\"a\\u0000b\",\"port\":9100}",
+    1
+  ],
+  [
+    "customer/printer-runtime-config.spec.ts",
+    "printer runtime v2 complete route/capability validation rejects malformed TCP/unknown destination {\"kind\":\"tcp\",\"host\":\"hhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh\",\"port\":9100}",
+    1
+  ],
+  [
+    "customer/printer-runtime-config.spec.ts",
+    "printer runtime v2 complete route/capability validation rejects malformed TCP/unknown destination {\"kind\":\"tcp\",\"host\":\"printer.local\",\"port\":\"9100\"}",
+    1
+  ],
+  [
+    "customer/printer-runtime-config.spec.ts",
+    "printer runtime v2 complete route/capability validation rejects malformed TCP/unknown destination {\"kind\":\"tcp\",\"host\":\"printer.local\",\"port\":0}",
+    1
+  ],
+  [
+    "customer/printer-runtime-config.spec.ts",
+    "printer runtime v2 complete route/capability validation rejects malformed TCP/unknown destination {\"kind\":\"tcp\",\"host\":\"printer.local\",\"port\":65536}",
+    1
+  ],
+  [
+    "customer/printer-runtime-config.spec.ts",
+    "printer runtime v2 complete route/capability validation rejects malformed TCP/unknown destination {\"kind\":\"tcp\",\"host\":\"printer.local\",\"port\":9100,\"queueName\":\"extra\"}",
+    1
+  ],
+  [
+    "customer/printer-runtime-config.spec.ts",
+    "printer runtime v2 complete route/capability validation rejects malformed TCP/unknown destination {\"kind\":\"usb\",\"host\":\"192.168.1.50\",\"port\":9100}",
+    1
+  ],
+  [
+    "customer/printer-runtime-config.spec.ts",
+    "printer runtime v2 complete route/capability validation rejects malformed/foreign Windows field driverName=\"a\\rb\"",
+    1
+  ],
+  [
+    "customer/printer-runtime-config.spec.ts",
+    "printer runtime v2 complete route/capability validation rejects malformed/foreign Windows field driverName=\"ddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd\"",
+    1
+  ],
+  [
+    "customer/printer-runtime-config.spec.ts",
+    "printer runtime v2 complete route/capability validation rejects malformed/foreign Windows field host=\"192.168.1.9\"",
+    1
+  ],
+  [
+    "customer/printer-runtime-config.spec.ts",
+    "printer runtime v2 complete route/capability validation rejects malformed/foreign Windows field portName=\" USB001\"",
+    1
+  ],
+  [
+    "customer/printer-runtime-config.spec.ts",
+    "printer runtime v2 complete route/capability validation rejects malformed/foreign Windows field portName=\"ppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp\"",
+    1
+  ],
+  [
+    "customer/printer-runtime-config.spec.ts",
+    "printer runtime v2 complete route/capability validation rejects malformed/foreign Windows field queueName=\"\"",
+    1
+  ],
+  [
+    "customer/printer-runtime-config.spec.ts",
+    "printer runtime v2 complete route/capability validation rejects malformed/foreign Windows field queueName=\"qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq\"",
+    1
+  ],
+  [
+    "customer/printer-runtime-config.spec.ts",
+    "printer runtime v2 complete route/capability validation requires core capability cutter",
+    1
+  ],
+  [
+    "customer/printer-runtime-config.spec.ts",
+    "printer runtime v2 complete route/capability validation requires core capability encoding",
+    1
+  ],
+  [
+    "customer/printer-runtime-config.spec.ts",
+    "printer runtime v2 complete route/capability validation requires core capability language",
+    1
+  ],
+  [
+    "customer/printer-runtime-config.spec.ts",
+    "printer runtime v2 complete route/capability validation requires core capability paperWidthMm",
+    1
+  ],
+  [
+    "customer/printer-runtime-config.spec.ts",
+    "printer runtime v2 complete route/capability validation requires core capability protocol",
+    1
+  ],
+  [
+    "customer/printer-runtime-config.spec.ts",
+    "printer runtime v2 complete route/capability validation requires core capability rasterWidthDots",
+    1
+  ],
+  [
+    "customer/printer-runtime-config.spec.ts",
+    "printer runtime v2 complete route/capability validation requires route field capabilityProfile without defaults",
+    1
+  ],
+  [
+    "customer/printer-runtime-config.spec.ts",
+    "printer runtime v2 complete route/capability validation requires route field destination without defaults",
+    1
+  ],
+  [
+    "customer/printer-runtime-config.spec.ts",
+    "printer runtime v2 complete route/capability validation requires route field enabled without defaults",
+    1
+  ],
+  [
+    "customer/printer-runtime-config.spec.ts",
+    "printer runtime v2 complete route/capability validation requires route field id without defaults",
+    1
+  ],
+  [
+    "customer/printer-runtime-config.spec.ts",
+    "printer runtime v2 complete route/capability validation requires route field name without defaults",
+    1
+  ],
+  [
+    "customer/printer-runtime-config.spec.ts",
+    "printer runtime v2 complete route/capability validation requires route field protocol without defaults",
+    1
+  ],
+  [
+    "customer/printer-runtime-config.spec.ts",
+    "printer runtime v2 complete route/capability validation requires route field revision without defaults",
+    1
+  ],
+  [
+    "customer/printer-runtime-config.spec.ts",
+    "printer runtime v2 complete route/capability validation requires route field role without defaults",
+    1
+  ],
+  [
+    "customer/printer-runtime-config.spec.ts",
+    "printer runtime v2 complete route/capability validation retains recognized unimplemented driver rendering for review, never promotes it",
+    1
+  ],
+  [
+    "customer/printer-runtime-config.spec.ts",
+    "printer runtime v2 preparation and ownership derives Device/Venue, first revision, reader floor and disabled legacy entries without activation",
+    1
+  ],
+  [
+    "customer/printer-runtime-config.spec.ts",
+    "printer runtime v2 preparation and ownership parses explicitly stored ACTIVE fixtures but exposes no default promotion",
+    1
+  ],
+  [
+    "customer/printer-runtime-config.spec.ts",
+    "printer runtime v2 preparation and ownership prepares from a trusted v1 value without mutating or activating its established authority",
+    1
+  ],
+  [
+    "customer/printer-runtime-config.spec.ts",
+    "printer runtime v2 preparation and ownership rejects client authority or server-managed draft field actor",
+    1
+  ],
+  [
+    "customer/printer-runtime-config.spec.ts",
+    "printer runtime v2 preparation and ownership rejects client authority or server-managed draft field deviceId",
+    1
+  ],
+  [
+    "customer/printer-runtime-config.spec.ts",
+    "printer runtime v2 preparation and ownership rejects client authority or server-managed draft field organizationId",
+    1
+  ],
+  [
+    "customer/printer-runtime-config.spec.ts",
+    "printer runtime v2 preparation and ownership rejects client authority or server-managed draft field ownerDeviceId",
+    1
+  ],
+  [
+    "customer/printer-runtime-config.spec.ts",
+    "printer runtime v2 preparation and ownership rejects client authority or server-managed draft field phase",
+    1
+  ],
+  [
+    "customer/printer-runtime-config.spec.ts",
+    "printer runtime v2 preparation and ownership rejects client authority or server-managed draft field printers",
+    1
+  ],
+  [
+    "customer/printer-runtime-config.spec.ts",
+    "printer runtime v2 preparation and ownership rejects client authority or server-managed draft field revision",
+    1
+  ],
+  [
+    "customer/printer-runtime-config.spec.ts",
+    "printer runtime v2 preparation and ownership rejects client authority or server-managed draft field tenantId",
+    1
+  ],
+  [
+    "customer/printer-runtime-config.spec.ts",
+    "printer runtime v2 preparation and ownership rejects client authority or server-managed draft field venueId",
+    1
+  ],
+  [
+    "customer/printer-runtime-config.spec.ts",
+    "printer runtime v2 preparation and ownership rejects malformed server/root UUID \" device-a\"",
+    1
+  ],
+  [
+    "customer/printer-runtime-config.spec.ts",
+    "printer runtime v2 preparation and ownership rejects malformed server/root UUID \"\"",
+    1
+  ],
+  [
+    "customer/printer-runtime-config.spec.ts",
+    "printer runtime v2 preparation and ownership rejects malformed server/root UUID \"../device\"",
+    1
+  ],
+  [
+    "customer/printer-runtime-config.spec.ts",
+    "printer runtime v2 preparation and ownership rejects malformed server/root UUID \"00000000-0000-0000-0000-000000000000\"",
+    1
+  ],
+  [
+    "customer/printer-runtime-config.spec.ts",
+    "printer runtime v2 preparation and ownership rejects malformed server/root UUID \"device-a\"",
+    1
+  ],
+  [
+    "customer/printer-runtime-config.spec.ts",
+    "printer runtime v2 preparation and ownership rejects wrong Device/Venue and a Windows queue bound to another Device",
+    1
+  ],
+  [
+    "customer/printer-runtime-config.spec.ts",
+    "printer runtime v2 preparation and ownership requires complete disabled kitchen/receipt entries for old lookup containment",
+    1
+  ],
+  [
+    "customer/printer-runtime-config.spec.ts",
+    "printer runtime v2 preparation and ownership returns independent frozen profiles/destinations, including Windows driver and port",
+    1
+  ],
+  [
+    "customer/printer-runtime-config.spec.ts",
+    "printer runtime v2 revision preparation and legacy write containment increments the config revision while retaining unchanged route revisions independent of input key order",
+    1
+  ],
+  [
+    "customer/printer-runtime-config.spec.ts",
+    "printer runtime v2 revision preparation and legacy write containment provides a separate v1 overwrite guard, including malformed/future versioned values",
+    1
+  ],
+  [
+    "customer/printer-runtime-config.spec.ts",
+    "printer runtime v2 revision preparation and legacy write containment rejects counter exhaustion and unrecognized/missing current state",
+    1
+  ],
+  [
+    "customer/printer-runtime-config.spec.ts",
+    "printer runtime v2 revision preparation and legacy write containment rejects stale config revision and new route revision jumps",
+    1
+  ],
+  [
+    "customer/printer-runtime-config.spec.ts",
+    "printer runtime v2 revision preparation and legacy write containment requires a route revision when the frozen Windows driver or port changes",
+    1
+  ],
+  [
+    "customer/printer-runtime-config.spec.ts",
+    "printer runtime v2 revision preparation and legacy write containment requires exactly the next revision for changes and forbids bumped unchanged records",
+    1
+  ],
+  [
+    "customer/printer-runtime-config.spec.ts",
+    "printer runtime v2 revision preparation and legacy write containment retains IDs using disabled records and admits new IDs only at revision one",
+    1
+  ],
+  [
+    "customer/printer-runtime-config.spec.ts",
+    "printer runtime v2 uniqueness and bounds accepts empty configuration and 64 distinct routes; rejects 65",
+    1
+  ],
+  [
+    "customer/printer-runtime-config.spec.ts",
+    "printer runtime v2 uniqueness and bounds enforces the canonical UTF-8 byte limit at its exact boundary with valid bounded fields",
+    1
+  ],
+  [
+    "customer/printer-runtime-config.spec.ts",
+    "printer runtime v2 uniqueness and bounds rejects a shared TCP endpoint regardless of hostname case or disabled state",
+    1
+  ],
+  [
+    "customer/printer-runtime-config.spec.ts",
+    "printer runtime v2 uniqueness and bounds rejects duplicate identities, names and singleton roles even if disabled",
+    1
+  ],
+  [
+    "customer/printer-runtime-config.spec.ts",
+    "printer runtime v2 uniqueness and bounds rejects the same Windows queue even with another role/driver/port and case spelling",
+    1
+  ],
+  [
+    "customer/printer-runtime-persistence.spec.ts",
+    "Device-authenticated runtime v2 GET compatibility \u2014 no database keeps outer response version one, Device scoping and explicitly PREPARED routes for an upgraded reader",
+    1
+  ],
+  [
+    "customer/printer-runtime-persistence.spec.ts",
+    "Device-authenticated runtime v2 GET compatibility \u2014 no database preserves v1/null reads without a reader header, while invalid v2 binding is visibly held",
+    1
+  ],
+  [
+    "customer/printer-runtime-persistence.spec.ts",
+    "Device-authenticated runtime v2 GET compatibility \u2014 no database requires exact current-request reader header: \"02\"",
+    1
+  ],
+  [
+    "customer/printer-runtime-persistence.spec.ts",
+    "Device-authenticated runtime v2 GET compatibility \u2014 no database requires exact current-request reader header: \"1\"",
+    1
+  ],
+  [
+    "customer/printer-runtime-persistence.spec.ts",
+    "Device-authenticated runtime v2 GET compatibility \u2014 no database requires exact current-request reader header: \"2, 2\"",
+    1
+  ],
+  [
+    "customer/printer-runtime-persistence.spec.ts",
+    "Device-authenticated runtime v2 GET compatibility \u2014 no database requires exact current-request reader header: \"3\"",
+    1
+  ],
+  [
+    "customer/printer-runtime-persistence.spec.ts",
+    "Device-authenticated runtime v2 GET compatibility \u2014 no database requires exact current-request reader header: [\"2\"]",
+    1
+  ],
+  [
+    "customer/printer-runtime-persistence.spec.ts",
+    "Device-authenticated runtime v2 GET compatibility \u2014 no database requires exact current-request reader header: undefined",
+    1
+  ],
+  [
+    "customer/printer-runtime-persistence.spec.ts",
+    "legacy printer writes share the lock and cannot overwrite v2 \u2014 fake transactions allows explicit v1-to-PREPARED transition without granting activation",
+    1
+  ],
+  [
+    "customer/printer-runtime-persistence.spec.ts",
+    "legacy printer writes share the lock and cannot overwrite v2 \u2014 fake transactions blocks stale v1 authorization when transaction commercial changes",
+    1
+  ],
+  [
+    "customer/printer-runtime-persistence.spec.ts",
+    "legacy printer writes share the lock and cannot overwrite v2 \u2014 fake transactions blocks stale v1 authorization when transaction membership changes",
+    1
+  ],
+  [
+    "customer/printer-runtime-persistence.spec.ts",
+    "legacy printer writes share the lock and cannot overwrite v2 \u2014 fake transactions blocks v1 overwrite after v2 preparation and keeps the original config/receipts/audit",
+    1
+  ],
+  [
+    "customer/printer-runtime-persistence.spec.ts",
+    "legacy printer writes share the lock and cannot overwrite v2 \u2014 fake transactions preserves accepted v1 behavior and audit while rechecking authority under the shared lock",
+    1
+  ],
+  [
+    "customer/printer-runtime-persistence.spec.ts",
+    "printer PREPARED persistence \u2014 fake transactions, not PostgreSQL proof atomically prepares Owner config, immutable response and Customer audit using bound Device parameters",
+    1
+  ],
+  [
+    "customer/printer-runtime-persistence.spec.ts",
+    "printer PREPARED persistence \u2014 fake transactions, not PostgreSQL proof bounds raw fingerprint complexity and rejects non-JSON misuse without invoking getters",
+    1
+  ],
+  [
+    "customer/printer-runtime-persistence.spec.ts",
+    "printer PREPARED persistence \u2014 fake transactions, not PostgreSQL proof canonicalizes object key order while preserving actual optional-beep input distinctions",
+    1
+  ],
+  [
+    "customer/printer-runtime-persistence.spec.ts",
+    "printer PREPARED persistence \u2014 fake transactions, not PostgreSQL proof fails visibly for a corrupt stored config/result rather than inventing an accepted write",
+    1
+  ],
+  [
+    "customer/printer-runtime-persistence.spec.ts",
+    "printer PREPARED persistence \u2014 fake transactions, not PostgreSQL proof journals a missed database CAS as conflict without configuration or success audit",
+    1
+  ],
+  [
+    "customer/printer-runtime-persistence.spec.ts",
+    "printer PREPARED persistence \u2014 fake transactions, not PostgreSQL proof journals immutable omitted-route conflicts without changing accepted routes",
+    1
+  ],
+  [
+    "customer/printer-runtime-persistence.spec.ts",
+    "printer PREPARED persistence \u2014 fake transactions, not PostgreSQL proof journals immutable route-revision conflicts without changing accepted routes",
+    1
+  ],
+  [
+    "customer/printer-runtime-persistence.spec.ts",
+    "printer PREPARED persistence \u2014 fake transactions, not PostgreSQL proof journals revision exhaustion without resetting identities or counters",
+    1
+  ],
+  [
+    "customer/printer-runtime-persistence.spec.ts",
+    "printer PREPARED persistence \u2014 fake transactions, not PostgreSQL proof keeps Platform identity and audit separate without claiming Customer ownership",
+    1
+  ],
+  [
+    "customer/printer-runtime-persistence.spec.ts",
+    "printer PREPARED persistence \u2014 fake transactions, not PostgreSQL proof persists a CAS conflict before throwing, and returns its exact immutable failure after later revisions",
+    1
+  ],
+  [
+    "customer/printer-runtime-persistence.spec.ts",
+    "printer PREPARED persistence \u2014 fake transactions, not PostgreSQL proof rechecks transaction ownership and commercial POS before journal lookup, including retries",
+    1
+  ],
+  [
+    "customer/printer-runtime-persistence.spec.ts",
+    "printer PREPARED persistence \u2014 fake transactions, not PostgreSQL proof rejects another Platform writer using the same requestId without replacing the result",
+    1
+  ],
+  [
+    "customer/printer-runtime-persistence.spec.ts",
+    "printer PREPARED persistence \u2014 fake transactions, not PostgreSQL proof rejects extra envelope field actor before opening a transaction",
+    1
+  ],
+  [
+    "customer/printer-runtime-persistence.spec.ts",
+    "printer PREPARED persistence \u2014 fake transactions, not PostgreSQL proof rejects extra envelope field deviceId before opening a transaction",
+    1
+  ],
+  [
+    "customer/printer-runtime-persistence.spec.ts",
+    "printer PREPARED persistence \u2014 fake transactions, not PostgreSQL proof rejects extra envelope field phase before opening a transaction",
+    1
+  ],
+  [
+    "customer/printer-runtime-persistence.spec.ts",
+    "printer PREPARED persistence \u2014 fake transactions, not PostgreSQL proof rejects extra envelope field printers before opening a transaction",
+    1
+  ],
+  [
+    "customer/printer-runtime-persistence.spec.ts",
+    "printer PREPARED persistence \u2014 fake transactions, not PostgreSQL proof rejects extra envelope field tenantId before opening a transaction",
+    1
+  ],
+  [
+    "customer/printer-runtime-persistence.spec.ts",
+    "printer PREPARED persistence \u2014 fake transactions, not PostgreSQL proof rejects extra envelope field venueId before opening a transaction",
+    1
+  ],
+  [
+    "customer/printer-runtime-persistence.spec.ts",
+    "printer PREPARED persistence \u2014 fake transactions, not PostgreSQL proof rejects requestId reuse with changed input, actor type, or actor identity while retaining the original receipt",
+    1
+  ],
+  [
+    "customer/printer-runtime-persistence.spec.ts",
+    "printer PREPARED persistence \u2014 fake transactions, not PostgreSQL proof returns exact original response on an identical retry after a later revision without new writes/audit",
+    1
+  ],
+  [
+    "customer/printer-runtime-persistence.spec.ts",
+    "printer PREPARED persistence \u2014 fake transactions, not PostgreSQL proof rolls back config, receipt and audit after injected after-audit failure",
+    1
+  ],
+  [
+    "customer/printer-runtime-persistence.spec.ts",
+    "printer PREPARED persistence \u2014 fake transactions, not PostgreSQL proof rolls back config, receipt and audit after injected after-device failure",
+    1
+  ],
+  [
+    "customer/printer-runtime-persistence.spec.ts",
+    "printer PREPARED persistence \u2014 fake transactions, not PostgreSQL proof rolls back config, receipt and audit after injected after-journal failure",
+    1
+  ],
+  [
+    "customer/printer-runtime-persistence.spec.ts",
+    "printer PREPARED persistence \u2014 fake transactions, not PostgreSQL proof scopes request identity per Device and rejects a Device outside the authorized Venue",
+    1
+  ],
+  [
+    "customer/printer-runtime-persistence.spec.ts",
+    "printer PREPARED persistence \u2014 fake transactions, not PostgreSQL proof serializes fake competing preparations and duplicate requests with one accepted change",
+    1
+  ],
+  [
+    "customer/printer-runtime-persistence.spec.ts",
+    "printer PREPARED persistence \u2014 fake transactions, not PostgreSQL proof snapshots validated input, writer and context before asynchronous lock acquisition",
+    1
+  ],
+  [
+    "customer/printer-runtime-persistence.spec.ts",
+    "printer PREPARED persistence \u2014 fake transactions, not PostgreSQL proof treats UUID case variations as the same request identity while preserving exact submitted fingerprint",
+    1
+  ],
+  [
+    "customer/printer-runtime-persistence.spec.ts",
+    "printer PREPARED persistence \u2014 fake transactions, not PostgreSQL proof validates exact first/retry input before consulting a receipt: {\"expectedRevision\":\"0\"}",
+    1
+  ],
+  [
+    "customer/printer-runtime-persistence.spec.ts",
+    "printer PREPARED persistence \u2014 fake transactions, not PostgreSQL proof validates exact first/retry input before consulting a receipt: {\"expectedRevision\":-1}",
+    1
+  ],
+  [
+    "customer/printer-runtime-persistence.spec.ts",
+    "printer PREPARED persistence \u2014 fake transactions, not PostgreSQL proof validates exact first/retry input before consulting a receipt: {\"expectedRevision\":0.1}",
+    1
+  ],
+  [
+    "customer/printer-runtime-persistence.spec.ts",
+    "printer PREPARED persistence \u2014 fake transactions, not PostgreSQL proof validates exact first/retry input before consulting a receipt: {\"minimumReaderVersion\":1}",
+    1
+  ],
+  [
+    "customer/printer-runtime-persistence.spec.ts",
+    "printer PREPARED persistence \u2014 fake transactions, not PostgreSQL proof validates exact first/retry input before consulting a receipt: {\"requestId\":\"garbage\"}",
+    1
+  ],
+  [
+    "customer/printer-runtime-persistence.spec.ts",
+    "printer PREPARED persistence \u2014 fake transactions, not PostgreSQL proof validates exact first/retry input before consulting a receipt: {\"routes\":[{\"protocol\":1,\"id\":\"../bad\",\"name\":\"Kitchen\",\"role\":\"kitchen\",\"revision\":1,\"enabled\":true,\"destination\":{\"kind\":\"tcp\",\"host\":\"192.168.1.50\",\"port\":9100},\"capabilityProfile\":{\"protocol\":1,\"paperWidthMm\":80,\"rasterWidthDots\":576,\"language\":\"escposRaster\",\"cutter\":\"partial\",\"encoding\":\"georgianViaRaster\",\"beep\":{\"capability\":\"unknown\",\"enabled\":false}}}]}",
+    1
+  ],
+  [
+    "customer/printer-runtime-persistence.spec.ts",
+    "printer PREPARED persistence \u2014 fake transactions, not PostgreSQL proof validates exact first/retry input before consulting a receipt: {\"version\":\"2\"}",
+    1
+  ],
+  [
+    "dev-origins.spec.ts",
+    "local web origins allows the development origin http://10.10.10.3:5174",
+    1
+  ],
+  [
+    "dev-origins.spec.ts",
+    "local web origins allows the development origin http://127.0.0.1:5174",
+    1
+  ],
+  [
+    "dev-origins.spec.ts",
+    "local web origins allows the development origin http://192.168.1.2:5173",
+    1
+  ],
+  [
+    "dev-origins.spec.ts",
+    "local web origins allows the development origin http://admin.localhost:4173",
+    1
+  ],
+  [
+    "dev-origins.spec.ts",
+    "local web origins allows the development origin http://admin.localhost:5173",
+    1
+  ],
+  [
+    "dev-origins.spec.ts",
+    "local web origins allows the development origin http://admin.localhost:5176",
+    1
+  ],
+  [
+    "dev-origins.spec.ts",
+    "local web origins allows the development origin http://admin.vynic.localhost:5173",
+    1
+  ],
+  [
+    "dev-origins.spec.ts",
+    "local web origins allows the development origin http://localhost:5173",
+    1
+  ],
+  [
+    "dev-origins.spec.ts",
+    "local web origins allows the development origin http://localhost:5175",
+    1
+  ],
+  [
+    "dev-origins.spec.ts",
+    "local web origins allows the development origin http://localhost:5273",
+    1
+  ],
+  [
+    "dev-origins.spec.ts",
+    "local web origins allows the development origin http://vynic.localhost:5173",
+    1
+  ],
+  [
+    "dev-origins.spec.ts",
+    "local web origins does not implicitly allow http://admin.localhost.evil.test:5173",
+    1
+  ],
+  [
+    "dev-origins.spec.ts",
+    "local web origins does not implicitly allow http://admin.localhost:5173/path",
+    1
+  ],
+  [
+    "dev-origins.spec.ts",
+    "local web origins does not implicitly allow http://admin.localhost:5173@evil.test",
+    1
+  ],
+  [
+    "dev-origins.spec.ts",
+    "local web origins does not implicitly allow http://admin.localhost:9999",
+    1
+  ],
+  [
+    "dev-origins.spec.ts",
+    "local web origins does not implicitly allow http://example.com:5174",
+    1
+  ],
+  [
+    "dev-origins.spec.ts",
+    "local web origins does not implicitly allow http://localhost:5172",
+    1
+  ],
+  [
+    "dev-origins.spec.ts",
+    "local web origins does not implicitly allow http://localhost:5274",
+    1
+  ],
+  [
+    "dev-origins.spec.ts",
+    "local web origins does not implicitly allow http://unknown.localhost:5173",
+    1
+  ],
+  [
+    "dev-origins.spec.ts",
+    "local web origins does not implicitly allow https://admin.vynic.ge",
+    1
+  ],
+  [
+    "edge/edge-device.guard.spec.ts",
+    "EdgeDeviceGuard establishes the device identity the queue routes by",
+    1
+  ],
+  [
+    "edge/edge-device.guard.spec.ts",
+    "EdgeDeviceGuard refuses a credential the device service rejects",
+    1
+  ],
+  [
+    "edge/edge-device.guard.spec.ts",
+    "EdgeDeviceGuard refuses a missing credential",
+    1
+  ],
+  [
+    "edge/edge-device.guard.spec.ts",
+    "EdgeDeviceGuard refuses the legacy shared key, which names no device",
+    1
+  ],
+  [
+    "edge/enrollment-code.spec.ts",
+    "enrollment code does not repeat itself",
+    1
+  ],
+  [
+    "edge/enrollment-code.spec.ts",
+    "enrollment code generates a twelve-character code split into selector and secret",
+    1
+  ],
+  [
+    "edge/enrollment-code.spec.ts",
+    "enrollment code maps the characters people confuse rather than refusing them",
+    1
+  ],
+  [
+    "edge/enrollment-code.spec.ts",
+    "enrollment code reads what an operator actually types",
+    1
+  ],
+  [
+    "edge/enrollment-code.spec.ts",
+    "enrollment code refuses anything that cannot be a code",
+    1
+  ],
+  [
+    "edge/enrollment-code.spec.ts",
+    "enrollment code shows a code in groups of four",
+    1
+  ],
+  [
+    "edge/enrollment-rate-limiter.spec.ts",
+    "EnrollmentRateLimiter allows a key up to its limit and then refuses it",
+    1
+  ],
+  [
+    "edge/enrollment-rate-limiter.spec.ts",
+    "EnrollmentRateLimiter keeps keys apart",
+    1
+  ],
+  [
+    "edge/enrollment-rate-limiter.spec.ts",
+    "EnrollmentRateLimiter opens the window again once it has passed",
+    1
+  ],
+  [
+    "entitlements/commercial-projection.spec.ts",
+    "Commercial projection allows explicit grace and rollout compatibility: ACTIVE",
+    1
+  ],
+  [
+    "entitlements/commercial-projection.spec.ts",
+    "Commercial projection allows explicit grace and rollout compatibility: PAST_DUE",
+    1
+  ],
+  [
+    "entitlements/commercial-projection.spec.ts",
+    "Commercial projection bounds trials and legacy compatibility explicitly",
+    1
+  ],
+  [
+    "entitlements/commercial-projection.spec.ts",
+    "Commercial projection denies inactive/unknown state: CANCELLED",
+    1
+  ],
+  [
+    "entitlements/commercial-projection.spec.ts",
+    "Commercial projection denies inactive/unknown state: NO_PLAN",
+    1
+  ],
+  [
+    "entitlements/commercial-projection.spec.ts",
+    "Commercial projection denies inactive/unknown state: SUSPENDED",
+    1
+  ],
+  [
+    "entitlements/commercial-projection.spec.ts",
+    "Commercial projection denies inactive/unknown state: TRIAL",
+    1
+  ],
+  [
+    "entitlements/commercial-projection.spec.ts",
+    "Commercial projection denies inactive/unknown state: null",
+    1
+  ],
+  [
+    "entitlements/commercial-projection.spec.ts",
+    "Commercial projection denies inactive/unknown state: unknown",
+    1
+  ],
+  [
+    "entitlements/commercial-projection.spec.ts",
+    "Commercial projection retains raw quantities and purchasing evidence while removing derived valuation",
+    1
+  ],
+  [
+    "entitlements/effective-features.spec.ts",
+    "resolveEffectiveFeatures gives a Venue exactly what its plan includes when nothing is overridden",
+    1
+  ],
+  [
+    "entitlements/effective-features.spec.ts",
+    "resolveEffectiveFeatures grants a feature the plan lacks when the override enables it",
+    1
+  ],
+  [
+    "entitlements/effective-features.spec.ts",
+    "resolveEffectiveFeatures ignores a DISABLED override for a feature the plan never granted",
+    1
+  ],
+  [
+    "entitlements/effective-features.spec.ts",
+    "resolveEffectiveFeatures leaves a Venue with no plan and no overrides entitled to nothing",
+    1
+  ],
+  [
+    "entitlements/effective-features.spec.ts",
+    "resolveEffectiveFeatures lets an override stand in for a plan entirely",
+    1
+  ],
+  [
+    "entitlements/effective-features.spec.ts",
+    "resolveEffectiveFeatures represents every package the business sells today",
+    1
+  ],
+  [
+    "entitlements/effective-features.spec.ts",
+    "resolveEffectiveFeatures resolves a feature key it has never heard of, so new features need no code change",
+    1
+  ],
+  [
+    "entitlements/effective-features.spec.ts",
+    "resolveEffectiveFeatures withholds a feature the plan includes when the override disables it",
+    1
+  ],
+  [
+    "entitlements/feature.guard.spec.ts",
+    "FeatureGuard accepts the tenant an authenticated Manager session established",
+    1
+  ],
+  [
+    "entitlements/feature.guard.spec.ts",
+    "FeatureGuard allows the route when the venue holds the required feature",
+    1
+  ],
+  [
+    "entitlements/feature.guard.spec.ts",
+    "FeatureGuard asks the one authoritative resolver rather than reading a plan itself",
+    1
+  ],
+  [
+    "entitlements/feature.guard.spec.ts",
+    "FeatureGuard denies a Manager whose venue never bought the product",
+    1
+  ],
+  [
+    "entitlements/feature.guard.spec.ts",
+    "FeatureGuard denies the route when the venue does not hold it",
+    1
+  ],
+  [
+    "entitlements/feature.guard.spec.ts",
+    "FeatureGuard fails closed when no authenticated venue established a tenant",
+    1
+  ],
+  [
+    "entitlements/feature.guard.spec.ts",
+    "FeatureGuard leaves an unannotated route exactly as it was",
+    1
+  ],
+  [
+    "entitlements/venue-entitlements.service.spec.ts",
+    "VenueEntitlementsService effectiveFeatures applies a DISABLED override over the plan default",
+    1
+  ],
+  [
+    "entitlements/venue-entitlements.service.spec.ts",
+    "VenueEntitlementsService effectiveFeatures applies an ENABLED override over the plan default",
+    1
+  ],
+  [
+    "entitlements/venue-entitlements.service.spec.ts",
+    "VenueEntitlementsService effectiveFeatures entitles an unassigned Venue to nothing",
+    1
+  ],
+  [
+    "entitlements/venue-entitlements.service.spec.ts",
+    "VenueEntitlementsService effectiveFeatures reads a Venue whole product in a single query",
+    1
+  ],
+  [
+    "entitlements/venue-entitlements.service.spec.ts",
+    "VenueEntitlementsService effectiveFeatures reports an unknown Venue instead of answering as if it were unentitled",
+    1
+  ],
+  [
+    "entitlements/venue-entitlements.service.spec.ts",
+    "VenueEntitlementsService effectiveFeatures resolves a Venue plan assignment into its features",
+    1
+  ],
+  [
+    "entitlements/venue-entitlements.service.spec.ts",
+    "VenueEntitlementsService hasFeature answers for a feature the Venue holds and one it does not",
+    1
+  ],
+  [
+    "entitlements/venue-entitlements.service.spec.ts",
+    "VenueEntitlementsService websiteAccess honours an override when deciding website entitlement",
+    1
+  ],
+  [
+    "entitlements/venue-entitlements.service.spec.ts",
+    "VenueEntitlementsService websiteAccess reports a stored mode that outlived its entitlement without erasing it",
+    1
+  ],
+  [
+    "entitlements/venue-entitlements.service.spec.ts",
+    "VenueEntitlementsService websiteAccess reports an entitled Venue that has not been configured yet",
+    1
+  ],
+  [
+    "entitlements/venue-entitlements.service.spec.ts",
+    "VenueEntitlementsService websiteAccess represents a SAAS website the same way",
+    1
+  ],
+  [
+    "entitlements/venue-entitlements.service.spec.ts",
+    "VenueEntitlementsService websiteAccess separates a CUSTOM website from the entitlement that permits it",
+    1
+  ],
+  [
+    "entitlements/venue-entitlements.service.spec.ts",
+    "VenueEntitlementsService websiteAccess treats an unentitled Venue with no configuration as consistent",
+    1
+  ],
+  [
+    "finance/finance-rules.spec.ts",
+    "exact finance rules clamps due days for short months and handles rollover and leap years",
+    1
+  ],
+  [
+    "finance/finance-rules.spec.ts",
+    "exact finance rules consumed reserves cannot cover a target twice, and rounds a daily recommendation upward to cents",
+    1
+  ],
+  [
+    "finance/finance-rules.spec.ts",
+    "exact finance rules includes today and due day: 2400 / 20 = 120, due/overdue uses one",
+    1
+  ],
+  [
+    "finance/finance-rules.spec.ts",
+    "exact finance rules keeps cents exact and refuses float truth and excess precision",
+    1
+  ],
+  [
+    "inventory/inventory-quantity.spec.ts",
+    "Receiving money accumulates a long document without drifting",
+    1
+  ],
+  [
+    "inventory/inventory-quantity.spec.ts",
+    "Receiving money divides a batch definition into per-sale-unit consumption",
+    1
+  ],
+  [
+    "inventory/inventory-quantity.spec.ts",
+    "Receiving money multiplies quantity by unit cost exactly",
+    1
+  ],
+  [
+    "inventory/inventory-quantity.spec.ts",
+    "Receiving money normalizes a recipe entry into the item base unit",
+    1
+  ],
+  [
+    "inventory/inventory-quantity.spec.ts",
+    "Receiving money offers only natural consumption units for a dimension",
+    1
+  ],
+  [
+    "inventory/inventory-quantity.spec.ts",
+    "Receiving money preserves the effective base-unit cost through packaging",
+    1
+  ],
+  [
+    "inventory/inventory-quantity.spec.ts",
+    "Receiving money refuses an incompatible dimension in a recipe",
+    1
+  ],
+  [
+    "inventory/inventory-quantity.spec.ts",
+    "Receiving money refuses purchase packaging as a consumption unit",
+    1
+  ],
+  [
+    "inventory/inventory-quantity.spec.ts",
+    "Receiving money rounds a half-cent line half up, once",
+    1
+  ],
+  [
+    "inventory/inventory-quantity.spec.ts",
+    "Receiving money settles 0.1 + 0.2 without binary drift",
+    1
+  ],
+  [
+    "inventory/inventory-quantity.spec.ts",
+    "Receiving quantities accepts fractional quantities at three decimals",
+    1
+  ],
+  [
+    "inventory/inventory-quantity.spec.ts",
+    "Receiving quantities allows a zero cost but never a negative one",
+    1
+  ],
+  [
+    "inventory/inventory-quantity.spec.ts",
+    "Receiving quantities converts global mass and volume without a configured ratio",
+    1
+  ],
+  [
+    "inventory/inventory-quantity.spec.ts",
+    "Receiving quantities keeps one item\u2019s box out of another item\u2019s box",
+    1
+  ],
+  [
+    "inventory/inventory-quantity.spec.ts",
+    "Receiving quantities prefers the item ratio over the global one",
+    1
+  ],
+  [
+    "inventory/inventory-quantity.spec.ts",
+    "Receiving quantities refuses an unconfigured count package rather than guessing",
+    1
+  ],
+  [
+    "inventory/inventory-quantity.spec.ts",
+    "Receiving quantities refuses to invent a ratio across dimensions",
+    1
+  ],
+  [
+    "inventory/inventory-quantity.spec.ts",
+    "Receiving quantities rejects a non-positive packaging multiplier",
+    1
+  ],
+  [
+    "inventory/inventory-quantity.spec.ts",
+    "Receiving quantities uses the item-specific package when one is configured",
+    1
+  ],
+  [
+    "inventory/inventory-unit.spec.ts",
+    "Inventory units accepts only canonical unit spellings",
+    1
+  ],
+  [
+    "inventory/inventory-unit.spec.ts",
+    "Inventory units converts kg/g and L/ml canonically",
+    1
+  ],
+  [
+    "inventory/inventory-unit.spec.ts",
+    "Inventory units does not invent global count-unit ratios",
+    1
+  ],
+  [
+    "inventory/inventory-unit.spec.ts",
+    "Inventory units protects incompatible dimensions",
+    1
+  ],
+  [
+    "inventory/inventory.service.spec.ts",
+    "InventoryService allows same-name Stock Items while preserving immutable generated ids",
+    1
+  ],
+  [
+    "inventory/inventory.service.spec.ts",
+    "InventoryService cannot read or mutate another Venue Stock Item",
+    1
+  ],
+  [
+    "inventory/inventory.service.spec.ts",
+    "InventoryService cannot read or mutate another Venue Supplier",
+    1
+  ],
+  [
+    "inventory/inventory.service.spec.ts",
+    "InventoryService creates, edits, and disables a Supplier without changing its id",
+    1
+  ],
+  [
+    "inventory/inventory.service.spec.ts",
+    "InventoryService disables a Stock Item and audits stable identity plus actor/source",
+    1
+  ],
+  [
+    "inventory/inventory.service.spec.ts",
+    "InventoryService leaves packaging alone when a save does not mention it",
+    1
+  ],
+  [
+    "inventory/inventory.service.spec.ts",
+    "InventoryService normalizes SKU and enforces uniqueness only inside one Venue",
+    1
+  ],
+  [
+    "inventory/inventory.service.spec.ts",
+    "InventoryService refuses a ratio for the item\u2019s own base unit or a duplicate label",
+    1
+  ],
+  [
+    "inventory/inventory.service.spec.ts",
+    "InventoryService stores item packaging as one declared set and audits the change",
+    1
+  ],
+  [
+    "local-tools/local-docker-guard.spec.ts",
+    "local maintenance guard accepts only the explicit isolated Docker connection",
+    1
+  ],
+  [
+    "local-tools/local-docker-guard.spec.ts",
+    "local maintenance guard classifies every actual model explicitly",
+    1
+  ],
+  [
+    "local-tools/local-docker-guard.spec.ts",
+    "local maintenance guard orders restrictive venue foreign keys child first (explicit cycle exceptions)",
+    1
+  ],
+  [
+    "local-tools/local-docker-guard.spec.ts",
+    "local maintenance guard preserves the complete control plane outside all delete lists",
+    1
+  ],
+  [
+    "local-tools/local-docker-guard.spec.ts",
+    "local maintenance guard refuses DATABASE_URL= before connecting",
+    1
+  ],
+  [
+    "local-tools/local-docker-guard.spec.ts",
+    "local maintenance guard refuses DATABASE_URL=postgresql://postgres:secret@postgres:5432/vynic_local_prod before connecting",
+    1
+  ],
+  [
+    "local-tools/local-docker-guard.spec.ts",
+    "local maintenance guard refuses DATABASE_URL=postgresql://vynic:secret@localhost:5432/vynic_local_prod before connecting",
+    1
+  ],
+  [
+    "local-tools/local-docker-guard.spec.ts",
+    "local maintenance guard refuses DATABASE_URL=postgresql://vynic:secret@postgres:5432/vankisi_database before connecting",
+    1
+  ],
+  [
+    "local-tools/local-docker-guard.spec.ts",
+    "local maintenance guard refuses DATABASE_URL=postgresql://vynic:secret@postgres:5432/vynic_local_prod#ignored before connecting",
+    1
+  ],
+  [
+    "local-tools/local-docker-guard.spec.ts",
+    "local maintenance guard refuses DATABASE_URL=postgresql://vynic:secret@postgres:5432/vynic_local_prod?dbname=vankisi_database before connecting",
+    1
+  ],
+  [
+    "local-tools/local-docker-guard.spec.ts",
+    "local maintenance guard refuses DATABASE_URL=postgresql://vynic:secret@postgres:5432/vynic_local_prod?host=remote.example before connecting",
+    1
+  ],
+  [
+    "local-tools/local-docker-guard.spec.ts",
+    "local maintenance guard refuses DATABASE_URL=postgresql://vynic:secret@postgres:5433/vynic_local_prod before connecting",
+    1
+  ],
+  [
+    "local-tools/local-docker-guard.spec.ts",
+    "local maintenance guard refuses DATABASE_URL=postgresql://vynic:secret@remote.example:5432/vynic_local_prod before connecting",
+    1
+  ],
+  [
+    "local-tools/local-docker-guard.spec.ts",
+    "local maintenance guard refuses VYNIC_LOCAL_DOCKER= before connecting",
+    1
+  ],
+  [
+    "local-tools/local-docker-guard.spec.ts",
+    "local maintenance guard refuses VYNIC_LOCAL_DOCKER=false before connecting",
+    1
+  ],
+  [
+    "local-tools/local-docker-guard.spec.ts",
+    "local maintenance guard rejects execution outside Docker",
+    1
+  ],
+  [
+    "menu-catalog/menu-client-policy.spec.ts",
+    "Menu capability and deployment build policy does not infer protocol support from a marketing version",
+    1
+  ],
+  [
+    "menu-catalog/menu-client-policy.spec.ts",
+    "Menu capability and deployment build policy normalizes bounded reports and rejects invalid shapes",
+    1
+  ],
+  [
+    "menu-catalog/menu-client-policy.spec.ts",
+    "Menu capability and deployment build policy rejects malformed policy rather than treating it as no minimum",
+    1
+  ],
+  [
+    "menu-catalog/menu-client-policy.spec.ts",
+    "Menu capability and deployment build policy requires an explicit integer build when a minimum is configured; legacy remains independent",
+    1
+  ],
+  [
+    "menu-catalog/menu-mutation-result.spec.ts",
+    "MENU03 immutable accepted result fingerprints normalized content including resolution and expected revision",
+    1
+  ],
+  [
+    "menu-catalog/menu-mutation-result.spec.ts",
+    "MENU03 immutable accepted result refuses a damaged stored deleted instead of reporting success",
+    1
+  ],
+  [
+    "menu-catalog/menu-mutation-result.spec.ts",
+    "MENU03 immutable accepted result refuses a damaged stored entity instead of reporting success",
+    1
+  ],
+  [
+    "menu-catalog/menu-mutation-result.spec.ts",
+    "MENU03 immutable accepted result refuses a damaged stored entityId instead of reporting success",
+    1
+  ],
+  [
+    "menu-catalog/menu-mutation-result.spec.ts",
+    "MENU03 immutable accepted result refuses a damaged stored revision instead of reporting success",
+    1
+  ],
+  [
+    "menu-catalog/menu-mutation-result.spec.ts",
+    "MENU03 immutable accepted result refuses a damaged stored sequence instead of reporting success",
+    1
+  ],
+  [
+    "menu-catalog/menu-mutation-result.spec.ts",
+    "MENU03 immutable accepted result refuses a damaged stored status instead of reporting success",
+    1
+  ],
+  [
+    "menu-catalog/menu-mutation-result.spec.ts",
+    "MENU03 immutable accepted result refuses to invent historical responses for legacy rows",
+    1
+  ],
+  [
+    "menu-catalog/menu-mutation-result.spec.ts",
+    "MENU03 immutable accepted result replays complete DELETE outcome without a catalog dependency",
+    1
+  ],
+  [
+    "menu-catalog/menu-mutation-result.spec.ts",
+    "MENU03 immutable accepted result replays complete UPSERT outcome without a catalog dependency",
+    1
+  ],
+  [
+    "menu-catalog/menu09.integration.spec.ts",
+    "MENU09 real HTTP/PostgreSQL compatibility matrix 1 canonical Venue rejects old enrollment without redeeming its invitation",
+    1
+  ],
+  [
+    "menu-catalog/menu09.integration.spec.ts",
+    "MENU09 real HTTP/PostgreSQL compatibility matrix 10 old binary reconnect after cutover is rejected despite prior stored compatible report",
+    1
+  ],
+  [
+    "menu-catalog/menu09.integration.spec.ts",
+    "MENU09 real HTTP/PostgreSQL compatibility matrix 11 current client bootstrap after cutover succeeds",
+    1
+  ],
+  [
+    "menu-catalog/menu09.integration.spec.ts",
+    "MENU09 real HTTP/PostgreSQL compatibility matrix 12 canonical mutation/retry/retirement/restore after cutover preserves existing protocols",
+    1
+  ],
+  [
+    "menu-catalog/menu09.integration.spec.ts",
+    "MENU09 real HTTP/PostgreSQL compatibility matrix 13 fake Venue selectors cannot bypass server mode and build policy",
+    1
+  ],
+  [
+    "menu-catalog/menu09.integration.spec.ts",
+    "MENU09 real HTTP/PostgreSQL compatibility matrix 14 cross-Venue owners/devices and unauthenticated metadata writes fail closed",
+    1
+  ],
+  [
+    "menu-catalog/menu09.integration.spec.ts",
+    "MENU09 real HTTP/PostgreSQL compatibility matrix 15 backend restart retains report/cutover and rollback never invents merge semantics",
+    1
+  ],
+  [
+    "menu-catalog/menu09.integration.spec.ts",
+    "MENU09 real HTTP/PostgreSQL compatibility matrix 16 invalid or cross-kind duplicate legacy identities block canonical adoption",
+    1
+  ],
+  [
+    "menu-catalog/menu09.integration.spec.ts",
+    "MENU09 real HTTP/PostgreSQL compatibility matrix 17 a changed legacy snapshot invalidates the preview token",
+    1
+  ],
+  [
+    "menu-catalog/menu09.integration.spec.ts",
+    "MENU09 real HTTP/PostgreSQL compatibility matrix 2 canonical Venue admits current enrollment and canonical bootstrap",
+    1
+  ],
+  [
+    "menu-catalog/menu09.integration.spec.ts",
+    "MENU09 real HTTP/PostgreSQL compatibility matrix 3 legacy Venue admits old client and applies its snapshot",
+    1
+  ],
+  [
+    "menu-catalog/menu09.integration.spec.ts",
+    "MENU09 real HTTP/PostgreSQL compatibility matrix 4 current client remains legacy without silently converting its Venue",
+    1
+  ],
+  [
+    "menu-catalog/menu09.integration.spec.ts",
+    "MENU09 real HTTP/PostgreSQL compatibility matrix 5 enrolled old canonical device cannot receive false full-sync success; safe recovery remains",
+    1
+  ],
+  [
+    "menu-catalog/menu09.integration.spec.ts",
+    "MENU09 real HTTP/PostgreSQL compatibility matrix 6 cutover detects every incompatible ACTIVE device, including non-primary",
+    1
+  ],
+  [
+    "menu-catalog/menu09.integration.spec.ts",
+    "MENU09 real HTTP/PostgreSQL compatibility matrix 7 stale compatibility blocks cutover even when credential lastSeen is fresh",
+    1
+  ],
+  [
+    "menu-catalog/menu09.integration.spec.ts",
+    "MENU09 real HTTP/PostgreSQL compatibility matrix 8 existing disable/revoke lifecycle excludes an incompatible device from readiness",
+    1
+  ],
+  [
+    "menu-catalog/menu09.integration.spec.ts",
+    "MENU09 real HTTP/PostgreSQL compatibility matrix 9 explicit controlled cutover preserves node identities and audit, rejecting changed readiness",
+    1
+  ],
+  [
+    "mobile/services/manager-data-freshness.spec.ts",
+    "MGR04 accepted source provenance accepted UTC source differs from server receipt and GET never freshens either",
+    1
+  ],
+  [
+    "mobile/services/manager-data-freshness.spec.ts",
+    "MGR04 accepted source provenance ambiguous/invalid/future clock 2026-10-07T10:00:00 stays unknown",
+    1
+  ],
+  [
+    "mobile/services/manager-data-freshness.spec.ts",
+    "MGR04 accepted source provenance ambiguous/invalid/future clock 2026-10-07T12:00:00Z stays unknown",
+    1
+  ],
+  [
+    "mobile/services/manager-data-freshness.spec.ts",
+    "MGR04 accepted source provenance ambiguous/invalid/future clock garbage stays unknown",
+    1
+  ],
+  [
+    "mobile/services/manager-data-freshness.spec.ts",
+    "MGR04 accepted source provenance counted menus are Cloud data and unsupported staff attribution is unavailable",
+    1
+  ],
+  [
+    "mobile/services/manager-data-freshness.spec.ts",
+    "MGR04 accepted source provenance ledger read for an uncovered date/range remains unknown",
+    1
+  ],
+  [
+    "mobile/services/manager-data-freshness.spec.ts",
+    "MGR04 accepted source provenance metadata is read before handler data so concurrent ingest cannot label old payload newer",
+    1
+  ],
+  [
+    "mobile/services/manager-data-freshness.spec.ts",
+    "MGR04 accepted source provenance primary replacement, other tenant and corrupt legacy setting invalidate source",
+    1
+  ],
+  [
+    "mobile/services/manager-data-freshness.spec.ts",
+    "MGR04 accepted source provenance realtime and omission cannot advance financial/history/reservations source",
+    1
+  ],
+  [
+    "mobile/services/manager-data-freshness.spec.ts",
+    "MGR04 accepted source provenance skipped cold table snapshot cannot advance table or dashboard source",
+    1
+  ],
+  [
+    "mobile/services/manager-data-freshness.spec.ts",
+    "MGR04 accepted source provenance skipped reservation rows are explicit partial",
+    1
+  ],
+  [
+    "mobile/services/manager-data-freshness.spec.ts",
+    "MGR04 accepted source provenance summary-only upload cannot freshen retained COMPLETE ledger totals",
+    1
+  ],
+  [
+    "mobile/services/manager-revenue-classification.spec.ts",
+    "Manager Sale-derived revenue truth builds financials from the Sale-derived summary and expenses",
+    1
+  ],
+  [
+    "mobile/services/manager-revenue-classification.spec.ts",
+    "Manager Sale-derived revenue truth does not turn an open Order into dashboard revenue without a summary",
+    1
+  ],
+  [
+    "mobile/services/manager-revenue-classification.spec.ts",
+    "Manager Sale-derived revenue truth fails closed when only raw open/cancelled/internal/restored Orders exist",
+    1
+  ],
+  [
+    "mobile/services/manager-revenue-classification.spec.ts",
+    "Manager Sale-derived revenue truth keeps open-table payable separate from dashboard revenue",
+    1
+  ],
+  [
+    "mobile/services/manager-revenue-classification.spec.ts",
+    "Manager Sale-derived revenue truth preserves gross revenue for advance plus cash",
+    1
+  ],
+  [
+    "mobile/services/manager-revenue-classification.spec.ts",
+    "Manager Sale-derived revenue truth preserves gross revenue for card",
+    1
+  ],
+  [
+    "mobile/services/manager-revenue-classification.spec.ts",
+    "Manager Sale-derived revenue truth preserves gross revenue for cash",
+    1
+  ],
+  [
+    "mobile/services/manager-revenue-classification.spec.ts",
+    "Manager Sale-derived revenue truth preserves gross revenue for split",
+    1
+  ],
+  [
+    "mobile/services/manager-revenue-classification.spec.ts",
+    "Manager Sale-derived revenue truth returns unavailable staff/top-item revenue instead of raw Order totals",
+    1
+  ],
+  [
+    "mobile/services/manager-revenue-classification.spec.ts",
+    "Manager Sale-derived revenue truth uses the Sale-derived all-time summary without an Order fallback",
+    1
+  ],
+  [
+    "mobile/services/manager-revenue-classification.spec.ts",
+    "Manager Sale-derived revenue truth uses the same Sale-derived rows for daily and monthly revenue",
+    1
+  ],
+  [
+    "mobile/services/mobile-users.service.spec.ts",
+    "MobileUsersService - staff credentials are Venue-local does not show one Venue the PIN of a same-named member in another",
+    1
+  ],
+  [
+    "mobile/services/mobile-users.service.spec.ts",
+    "MobileUsersService - staff credentials are Venue-local leaves the other Venue whole when a PIN is updated",
+    1
+  ],
+  [
+    "mobile/services/mobile-users.service.spec.ts",
+    "MobileUsersService - staff credentials are Venue-local removes a deleted member from only its own Venue vault",
+    1
+  ],
+  [
+    "mobile/services/mobile-users.service.spec.ts",
+    "MobileUsersService - staff credentials are Venue-local renames inside one Venue without disturbing the other",
+    1
+  ],
+  [
+    "mobile/services/mobile-users.service.spec.ts",
+    "MobileUsersService - staff credentials are Venue-local stores a created member under the Venue the manager authenticated into",
+    1
+  ],
+  [
+    "mobile/services/mobile-users.service.spec.ts",
+    "MobileUsersService - the bootstrap Venue reads a vault an older build left at the bootstrap Venue",
+    1
+  ],
+  [
+    "mobile/services/mobile-users.service.spec.ts",
+    "MobileUsersService - the bootstrap Venue still reads and writes the bootstrap vault when that is the tenant",
+    1
+  ],
+  [
+    "mobile/services/mobile-users.service.spec.ts",
+    "MobileUsersService - the tenant is not something a caller can send cannot reach another Venue member through the username parameter",
+    1
+  ],
+  [
+    "mobile/services/mobile-users.service.spec.ts",
+    "MobileUsersService - the tenant is not something a caller can send ignores a venueId smuggled in the request body",
+    1
+  ],
+  [
+    "payment-integrations/payment-config.crypto.spec.ts",
+    "payment encryption fails closed with malformed key",
+    1
+  ],
+  [
+    "payment-integrations/payment-config.crypto.spec.ts",
+    "payment encryption fails closed with malformed key",
+    2
+  ],
+  [
+    "payment-integrations/payment-config.crypto.spec.ts",
+    "payment encryption fails closed with malformed key",
+    3
+  ],
+  [
+    "payment-integrations/payment-config.crypto.spec.ts",
+    "payment encryption randomizes encryption, authenticates tenant and revision and detects tampering",
+    1
+  ],
+  [
+    "platform/cloud-menu-admission.spec.ts",
+    "first-use Cloud menu admission admits an empty CUSTOM Venue exactly like SAAS: the renderer never decides authority",
+    1
+  ],
+  [
+    "platform/cloud-menu-admission.spec.ts",
+    "first-use Cloud menu admission admits an empty venue and scopes every check to that venue",
+    1
+  ],
+  [
+    "platform/cloud-menu-admission.spec.ts",
+    "first-use Cloud menu admission blocks a Venue with an assigned primary POS",
+    1
+  ],
+  [
+    "platform/cloud-menu-admission.spec.ts",
+    "first-use Cloud menu admission blocks existing auditReport history, including inactive devices",
+    1
+  ],
+  [
+    "platform/cloud-menu-admission.spec.ts",
+    "first-use Cloud menu admission blocks existing cloudSale history, including inactive devices",
+    1
+  ],
+  [
+    "platform/cloud-menu-admission.spec.ts",
+    "first-use Cloud menu admission blocks existing dailySnapshot history, including inactive devices",
+    1
+  ],
+  [
+    "platform/cloud-menu-admission.spec.ts",
+    "first-use Cloud menu admission blocks existing device history, including inactive devices",
+    1
+  ],
+  [
+    "platform/cloud-menu-admission.spec.ts",
+    "first-use Cloud menu admission blocks existing deviceEnrollment history, including inactive devices",
+    1
+  ],
+  [
+    "platform/cloud-menu-admission.spec.ts",
+    "first-use Cloud menu admission blocks existing edgeFoundationInstallation history, including inactive devices",
+    1
+  ],
+  [
+    "platform/cloud-menu-admission.spec.ts",
+    "first-use Cloud menu admission blocks existing expense history, including inactive devices",
+    1
+  ],
+  [
+    "platform/cloud-menu-admission.spec.ts",
+    "first-use Cloud menu admission blocks existing menuCategory history, including inactive devices",
+    1
+  ],
+  [
+    "platform/cloud-menu-admission.spec.ts",
+    "first-use Cloud menu admission blocks existing menuItem history, including inactive devices",
+    1
+  ],
+  [
+    "platform/cloud-menu-admission.spec.ts",
+    "first-use Cloud menu admission blocks existing order history, including inactive devices",
+    1
+  ],
+  [
+    "platform/cloud-menu-admission.spec.ts",
+    "first-use Cloud menu admission blocks existing posReservation history, including inactive devices",
+    1
+  ],
+  [
+    "platform/cloud-menu-admission.spec.ts",
+    "first-use Cloud menu admission blocks existing quickOrderDraft history, including inactive devices",
+    1
+  ],
+  [
+    "platform/cloud-menu-admission.spec.ts",
+    "first-use Cloud menu admission blocks existing setting history, including inactive devices",
+    1
+  ],
+  [
+    "platform/cloud-menu-admission.spec.ts",
+    "first-use Cloud menu admission blocks existing table history, including inactive devices",
+    1
+  ],
+  [
+    "platform/cloud-menu-admission.spec.ts",
+    "first-use Cloud menu admission reports Cloud venues without offering a second transition",
+    1
+  ],
+  [
+    "platform/platform-audit.service.spec.ts",
+    "PlatformAuditService applies bounded offset pagination to the platform trail",
+    1
+  ],
+  [
+    "platform/platform-audit.service.spec.ts",
+    "PlatformAuditService includes device-targeted events for a venue through the device relationship",
+    1
+  ],
+  [
+    "platform/platform-auth.controller.spec.ts",
+    "PlatformAuthController login throttling locks one address after twenty attempts across different emails",
+    1
+  ],
+  [
+    "platform/platform-auth.controller.spec.ts",
+    "PlatformAuthController login throttling locks one email after ten attempts even when the last guess is right",
+    1
+  ],
+  [
+    "platform/platform-auth.controller.spec.ts",
+    "PlatformAuthController login throttling still rejects malformed input before consuming the window",
+    1
+  ],
+  [
+    "platform/platform-auth.controller.spec.ts",
+    "PlatformAuthController login throttling throttles before touching the account, so a locked window cannot enumerate",
+    1
+  ],
+  [
+    "platform/platform-domains.integration.spec.ts",
+    "Platform-managed domains / real HTTP and PostgreSQL adds SaaS aliases without replacing the exact assigned/public identity",
+    1
+  ],
+  [
+    "platform/platform-domains.integration.spec.ts",
+    "Platform-managed domains / real HTTP and PostgreSQL admits one Venue when two Admin registrations race for a hostname",
+    1
+  ],
+  [
+    "platform/platform-domains.integration.spec.ts",
+    "Platform-managed domains / real HTTP and PostgreSQL allows Admin restaurant labels reserved from automatic/customer assignment",
+    1
+  ],
+  [
+    "platform/platform-domains.integration.spec.ts",
+    "Platform-managed domains / real HTTP and PostgreSQL blocks owner changes and requests in both modes and Trial/Active plans",
+    1
+  ],
+  [
+    "platform/platform-domains.integration.spec.ts",
+    "Platform-managed domains / real HTTP and PostgreSQL clears a former SAAS assignment when its CUSTOM hostname changes",
+    1
+  ],
+  [
+    "platform/platform-domains.integration.spec.ts",
+    "Platform-managed domains / real HTTP and PostgreSQL denies anonymous, owner and read-only Platform writes through real guards",
+    1
+  ],
+  [
+    "platform/platform-domains.integration.spec.ts",
+    "Platform-managed domains / real HTTP and PostgreSQL keeps unpublished edits unpublished and external aliases separate from assigned SaaS identity",
+    1
+  ],
+  [
+    "platform/platform-domains.integration.spec.ts",
+    "Platform-managed domains / real HTTP and PostgreSQL moves published SaaS mirrors together, closes previous requests and fences stale owner drafts",
+    1
+  ],
+  [
+    "platform/platform-domains.integration.spec.ts",
+    "Platform-managed domains / real HTTP and PostgreSQL protects a retained assigned identity without a domain row",
+    1
+  ],
+  [
+    "platform/platform-domains.integration.spec.ts",
+    "Platform-managed domains / real HTTP and PostgreSQL protects deployment origin admin.vynic.localhost",
+    1
+  ],
+  [
+    "platform/platform-domains.integration.spec.ts",
+    "Platform-managed domains / real HTTP and PostgreSQL protects deployment origin api.vynic.localhost",
+    1
+  ],
+  [
+    "platform/platform-domains.integration.spec.ts",
+    "Platform-managed domains / real HTTP and PostgreSQL protects deployment origin preview.vynic.localhost",
+    1
+  ],
+  [
+    "platform/platform-domains.integration.spec.ts",
+    "Platform-managed domains / real HTTP and PostgreSQL protects deployment origin vynic.localhost",
+    1
+  ],
+  [
+    "platform/platform-domains.integration.spec.ts",
+    "Platform-managed domains / real HTTP and PostgreSQL protects deployment origin www.vynic.localhost",
+    1
+  ],
+  [
+    "platform/platform-domains.integration.spec.ts",
+    "Platform-managed domains / real HTTP and PostgreSQL protects disabled/retained names and cross-Venue domain identities",
+    1
+  ],
+  [
+    "platform/platform-domains.integration.spec.ts",
+    "Platform-managed domains / real HTTP and PostgreSQL registers a normalized Vynic subdomain for CUSTOM with real tenant resolution and audit",
+    1
+  ],
+  [
+    "platform/platform-domains.integration.spec.ts",
+    "Platform-managed domains / real HTTP and PostgreSQL releases the renamed identity atomically and makes the name available",
+    1
+  ],
+  [
+    "platform/platform-domains.integration.spec.ts",
+    "Platform-managed domains / real HTTP and PostgreSQL renames CUSTOM, preserves lifecycle/identity and deduplicates lost-response retry",
+    1
+  ],
+  [
+    "platform/platform-domains.integration.spec.ts",
+    "Platform-managed domains / real HTTP and PostgreSQL rolls back domain and SaaS mirrors on audit failure",
+    1
+  ],
+  [
+    "platform/platform-domains.integration.spec.ts",
+    "Platform-managed domains / real HTTP and PostgreSQL serializes competing edits against the displayed hostname",
+    1
+  ],
+  [
+    "platform/platform-local-tools.controller.spec.ts",
+    "local deletion route registration has no deletion controller in production",
+    1
+  ],
+  [
+    "platform/platform-local-tools.controller.spec.ts",
+    "local deletion route registration registers only the narrow local controller after the full guard passes",
+    1
+  ],
+  [
+    "platform/platform-password.spec.ts",
+    "Admin password length accepts and hashes a longer existing password",
+    1
+  ],
+  [
+    "platform/platform-password.spec.ts",
+    "Admin password length accepts and hashes eight123",
+    1
+  ],
+  [
+    "platform/platform-password.spec.ts",
+    "Admin password length rejects seven characters before creating an account",
+    1
+  ],
+  [
+    "pos/audit/audit-event-type.spec.ts",
+    "normalizeAuditEventType keeps a typed move as a move, not an add or delete by quantity",
+    1
+  ],
+  [
+    "pos/audit/audit-event-type.spec.ts",
+    "normalizeAuditEventType normalizes ACTIVATE_RESERVATION without conflating closure and cancellation",
+    1
+  ],
+  [
+    "pos/audit/audit-event-type.spec.ts",
+    "normalizeAuditEventType normalizes ADJUST_ORDER without conflating closure and cancellation",
+    1
+  ],
+  [
+    "pos/audit/audit-event-type.spec.ts",
+    "normalizeAuditEventType normalizes APPLY_PACKAGE without conflating closure and cancellation",
+    1
+  ],
+  [
+    "pos/audit/audit-event-type.spec.ts",
+    "normalizeAuditEventType normalizes CANCEL_TABLE without conflating closure and cancellation",
+    1
+  ],
+  [
+    "pos/audit/audit-event-type.spec.ts",
+    "normalizeAuditEventType normalizes CLOSE without conflating closure and cancellation",
+    1
+  ],
+  [
+    "pos/audit/audit-event-type.spec.ts",
+    "normalizeAuditEventType normalizes CREATE_TAKEAWAY without conflating closure and cancellation",
+    1
+  ],
+  [
+    "pos/audit/audit-event-type.spec.ts",
+    "normalizeAuditEventType normalizes CREATE_WALKIN without conflating closure and cancellation",
+    1
+  ],
+  [
+    "pos/audit/audit-event-type.spec.ts",
+    "normalizeAuditEventType normalizes INTERNAL_CLOSE without conflating closure and cancellation",
+    1
+  ],
+  [
+    "pos/audit/audit-event-type.spec.ts",
+    "normalizeAuditEventType normalizes MOVE_ITEMS without conflating closure and cancellation",
+    1
+  ],
+  [
+    "pos/audit/audit-event-type.spec.ts",
+    "normalizeAuditEventType normalizes NONFISCAL_CLOSE without conflating closure and cancellation",
+    1
+  ],
+  [
+    "pos/audit/audit-event-type.spec.ts",
+    "normalizeAuditEventType normalizes RECORD_ADVANCE without conflating closure and cancellation",
+    1
+  ],
+  [
+    "pos/audit/audit-event-type.spec.ts",
+    "normalizeAuditEventType normalizes RESTORE without conflating closure and cancellation",
+    1
+  ],
+  [
+    "pos/audit/audit-event-type.spec.ts",
+    "normalizeAuditEventType normalizes SALE_RESTORED_TO_ORDER without conflating closure and cancellation",
+    1
+  ],
+  [
+    "pos/audit/audit-event-type.spec.ts",
+    "normalizeAuditEventType normalizes TRANSFER_CLOSE without conflating closure and cancellation",
+    1
+  ],
+  [
+    "pos/audit/audit-event-type.spec.ts",
+    "normalizeAuditEventType normalizes VOID_SALE without conflating closure and cancellation",
+    1
+  ],
+  [
+    "pos/audit/audit-event-type.spec.ts",
+    "normalizeAuditEventType normalizes closed without conflating closure and cancellation",
+    1
+  ],
+  [
+    "pos/audit/audit-event-type.spec.ts",
+    "normalizeAuditEventType normalizes create_walk_in without conflating closure and cancellation",
+    1
+  ],
+  [
+    "pos/audit/audit-event-type.spec.ts",
+    "normalizeAuditEventType normalizes non fiscal close without conflating closure and cancellation",
+    1
+  ],
+  [
+    "pos/audit/audit-event-type.spec.ts",
+    "normalizeAuditEventType normalizes reopened without conflating closure and cancellation",
+    1
+  ],
+  [
+    "pos/audit/audit-event-type.spec.ts",
+    "normalizeAuditEventType stores a creation event as itself rather than CUSTOM",
+    1
+  ],
+  [
+    "pos/audit/audit-log-entity.spec.ts",
+    "actionsForEntityType lists every action that means an entity, so history is still findable",
+    1
+  ],
+  [
+    "pos/audit/audit-log-entity.spec.ts",
+    "actionsForEntityType round-trips: every listed action derives back to its entity type",
+    1
+  ],
+  [
+    "pos/audit/audit-log-entity.spec.ts",
+    "deriveAuditLogEntity classifies each domain by its action and its own identity key",
+    1
+  ],
+  [
+    "pos/audit/audit-log-entity.spec.ts",
+    "deriveAuditLogEntity classifies namespaced developer actions without inventing a subject",
+    1
+  ],
+  [
+    "pos/audit/audit-log-entity.spec.ts",
+    "deriveAuditLogEntity classifies the legacy lowercase reservation action",
+    1
+  ],
+  [
+    "pos/audit/audit-log-entity.spec.ts",
+    "deriveAuditLogEntity gives a settings policy change a fixed subject",
+    1
+  ],
+  [
+    "pos/audit/audit-log-entity.spec.ts",
+    "deriveAuditLogEntity keeps the type when the details carry no identity",
+    1
+  ],
+  [
+    "pos/audit/audit-log-entity.spec.ts",
+    "deriveAuditLogEntity prefers the sale identity over the closure and the order",
+    1
+  ],
+  [
+    "pos/audit/audit-log-entity.spec.ts",
+    "deriveAuditLogEntity reads an Order id that was stored as a number",
+    1
+  ],
+  [
+    "pos/audit/audit-log-entity.spec.ts",
+    "deriveAuditLogEntity refuses to classify an action it does not know",
+    1
+  ],
+  [
+    "pos/audit/audit-log-entity.spec.ts",
+    "deriveAuditLogEntity tolerates details that are not an object",
+    1
+  ],
+  [
+    "pos/audit/audit-log-entity.spec.ts",
+    "isAuditLogEntityType accepts a canonical name in any case and rejects anything else",
+    1
+  ],
+  [
+    "pos/audit/audit-order-kind.spec.ts",
+    "deriveOrderKind answers null when nothing durable says what was opened",
+    1
+  ],
+  [
+    "pos/audit/audit-order-kind.spec.ts",
+    "deriveOrderKind does not guess from a report that merely looks like takeaway",
+    1
+  ],
+  [
+    "pos/audit/audit-order-kind.spec.ts",
+    "deriveOrderKind falls back to the event type when details declare nothing",
+    1
+  ],
+  [
+    "pos/audit/audit-order-kind.spec.ts",
+    "deriveOrderKind ignores an unrecognised declared kind",
+    1
+  ],
+  [
+    "pos/audit/audit-order-kind.spec.ts",
+    "deriveOrderKind prefers what the carrier declares over its event type",
+    1
+  ],
+  [
+    "pos/audit/audit-order-kind.spec.ts",
+    "deriveOrderKind reads a Takeaway from its creation event",
+    1
+  ],
+  [
+    "pos/audit/audit-order-kind.spec.ts",
+    "deriveOrderKind reads a Walk-In from its creation event",
+    1
+  ],
+  [
+    "pos/audit/audit-order-kind.spec.ts",
+    "deriveOrderKind reads a seated booking from ACTIVATE_RESERVATION",
+    1
+  ],
+  [
+    "pos/audit/audit-order-kind.spec.ts",
+    "deriveOrderKind recognises a Package carrier that only has APPLY_PACKAGE",
+    1
+  ],
+  [
+    "pos/audit/audit-order-kind.spec.ts",
+    "deriveOrderKind uses the earliest creation event by sequence, not by arrival",
+    1
+  ],
+  [
+    "pos/sync/application/ingest-audit-reports.service.spec.ts",
+    "IngestAuditReportsService event ordering and tenancy derives the report Order kind from its own creation event",
+    1
+  ],
+  [
+    "pos/sync/application/ingest-audit-reports.service.spec.ts",
+    "IngestAuditReportsService event ordering and tenancy falls back to array position for a POS that sends no sequence",
+    1
+  ],
+  [
+    "pos/sync/application/ingest-audit-reports.service.spec.ts",
+    "IngestAuditReportsService event ordering and tenancy keeps a 41-event same-instant batch in the order the POS numbered",
+    1
+  ],
+  [
+    "pos/sync/application/ingest-audit-reports.service.spec.ts",
+    "IngestAuditReportsService event ordering and tenancy leaves orderKind null for a report with no creation event",
+    1
+  ],
+  [
+    "pos/sync/application/ingest-audit-reports.service.spec.ts",
+    "IngestAuditReportsService event ordering and tenancy numbers by position when only some events carry a sequence",
+    1
+  ],
+  [
+    "pos/sync/application/ingest-audit-reports.service.spec.ts",
+    "IngestAuditReportsService event ordering and tenancy stamps every event with the authenticated Venue, never the payload",
+    1
+  ],
+  [
+    "pos/sync/application/ingest-audit-reports.service.spec.ts",
+    "IngestAuditReportsService event ordering and tenancy writes the POS's own sequence into seq rather than arrival position",
+    1
+  ],
+  [
+    "pos/sync/application/ingest-audit-reports.service.spec.ts",
+    "IngestAuditReportsService incremental acknowledgment acknowledges the exact revision it was offered",
+    1
+  ],
+  [
+    "pos/sync/application/ingest-audit-reports.service.spec.ts",
+    "IngestAuditReportsService incremental acknowledgment does not acknowledge a report whose write failed",
+    1
+  ],
+  [
+    "pos/sync/application/ingest-audit-reports.service.spec.ts",
+    "IngestAuditReportsService incremental acknowledgment rewrites a report offered without a revision",
+    1
+  ],
+  [
+    "pos/sync/application/ingest-audit-reports.service.spec.ts",
+    "IngestAuditReportsService incremental acknowledgment rewrites a report whose stored revision differs",
+    1
+  ],
+  [
+    "pos/sync/application/ingest-audit-reports.service.spec.ts",
+    "IngestAuditReportsService incremental acknowledgment skips rewriting a report whose stored revision already matches",
+    1
+  ],
+  [
+    "pos/sync/application/ingest-audit-reports.service.spec.ts",
+    "IngestAuditReportsService reconciliation deletes reports absent from knownReportIds without any contents being sent",
+    1
+  ],
+  [
+    "pos/sync/application/ingest-audit-reports.service.spec.ts",
+    "IngestAuditReportsService reconciliation does not reconcile an ordinary incremental batch",
+    1
+  ],
+  [
+    "pos/sync/application/ingest-audit-reports.service.spec.ts",
+    "IngestAuditReportsService reconciliation refuses to empty a Venue when the POS reports no reports at all",
+    1
+  ],
+  [
+    "pos/sync/application/ingest-audit-reports.service.spec.ts",
+    "IngestAuditReportsService tenant scoping checks and creates immutable event logs only inside the authenticated Venue",
+    1
+  ],
+  [
+    "pos/sync/application/ingest-audit-reports.service.spec.ts",
+    "IngestAuditReportsService tenant scoping derives the entity for an older POS build that sends none",
+    1
+  ],
+  [
+    "pos/sync/application/ingest-audit-reports.service.spec.ts",
+    "IngestAuditReportsService tenant scoping scopes report identity and full reconciliation to the authenticated Venue",
+    1
+  ],
+  [
+    "pos/sync/application/ingest-audit-reports.service.spec.ts",
+    "IngestAuditReportsService tenant scoping stores the entity a POS names on the row",
+    1
+  ],
+  [
+    "pos/sync/application/ingest-pos-snapshot.characterization.spec.ts",
+    "POST /sync/manager-data \u2014 authenticated Venue authority scopes every migrated root to auth context and ignores a payload Venue claim",
+    1
+  ],
+  [
+    "pos/sync/application/ingest-pos-snapshot.characterization.spec.ts",
+    "POST /sync/manager-data \u2014 business day rollover clears every table and announces day_closed only after the table sync has run",
+    1
+  ],
+  [
+    "pos/sync/application/ingest-pos-snapshot.characterization.spec.ts",
+    "POST /sync/manager-data \u2014 business day rollover does not wipe tables on the very first business date the server sees",
+    1
+  ],
+  [
+    "pos/sync/application/ingest-pos-snapshot.characterization.spec.ts",
+    "POST /sync/manager-data \u2014 business day rollover stamps businessDayOpenedAt once and leaves it alone on later pushes",
+    1
+  ],
+  [
+    "pos/sync/application/ingest-pos-snapshot.characterization.spec.ts",
+    "POST /sync/manager-data \u2014 full snapshot side-effect order performs persistence and broadcasts in exactly the recorded order",
+    1
+  ],
+  [
+    "pos/sync/application/ingest-pos-snapshot.characterization.spec.ts",
+    "POST /sync/manager-data \u2014 full snapshot side-effect order persists the POS callback url and connection key under stable setting keys",
+    1
+  ],
+  [
+    "pos/sync/application/ingest-pos-snapshot.characterization.spec.ts",
+    "POST /sync/manager-data \u2014 full snapshot side-effect order rejects a non-private POS callback url without persisting it",
+    1
+  ],
+  [
+    "pos/sync/application/ingest-pos-snapshot.characterization.spec.ts",
+    "POST /sync/manager-data \u2014 menu sync carries payload order into sortOrder for categories and items",
+    1
+  ],
+  [
+    "pos/sync/application/ingest-pos-snapshot.characterization.spec.ts",
+    "POST /sync/manager-data \u2014 menu sync updates an existing item instead of creating a duplicate",
+    1
+  ],
+  [
+    "pos/sync/application/ingest-pos-snapshot.characterization.spec.ts",
+    "POST /sync/manager-data \u2014 menu sync upserts categories, subcategories, items and variants in place",
+    1
+  ],
+  [
+    "pos/sync/application/ingest-pos-snapshot.characterization.spec.ts",
+    "POST /sync/manager-data \u2014 order deletion reconciliation does not reconcile deletions at all when the payload carries no business date",
+    1
+  ],
+  [
+    "pos/sync/application/ingest-pos-snapshot.characterization.spec.ts",
+    "POST /sync/manager-data \u2014 order deletion reconciliation protects incoming and queued order ids, and deletes items before their orders",
+    1
+  ],
+  [
+    "pos/sync/application/ingest-pos-snapshot.characterization.spec.ts",
+    "POST /sync/manager-data \u2014 order sync and table linking applies the documented field defaults when the POS omits them",
+    1
+  ],
+  [
+    "pos/sync/application/ingest-pos-snapshot.characterization.spec.ts",
+    "POST /sync/manager-data \u2014 order sync and table linking does not broadcast table_updated when no table row was actually freed",
+    1
+  ],
+  [
+    "pos/sync/application/ingest-pos-snapshot.characterization.spec.ts",
+    "POST /sync/manager-data \u2014 order sync and table linking does not reserve tables for a takeaway order",
+    1
+  ],
+  [
+    "pos/sync/application/ingest-pos-snapshot.characterization.spec.ts",
+    "POST /sync/manager-data \u2014 order sync and table linking falls back to orderId when posOrderId is absent, and skips an order with neither",
+    1
+  ],
+  [
+    "pos/sync/application/ingest-pos-snapshot.characterization.spec.ts",
+    "POST /sync/manager-data \u2014 order sync and table linking frees linked tables when the POS reports status \"cancelled\"",
+    1
+  ],
+  [
+    "pos/sync/application/ingest-pos-snapshot.characterization.spec.ts",
+    "POST /sync/manager-data \u2014 order sync and table linking frees linked tables when the POS reports status \"closed\"",
+    1
+  ],
+  [
+    "pos/sync/application/ingest-pos-snapshot.characterization.spec.ts",
+    "POST /sync/manager-data \u2014 order sync and table linking frees linked tables when the POS reports status \"paid\"",
+    1
+  ],
+  [
+    "pos/sync/application/ingest-pos-snapshot.characterization.spec.ts",
+    "POST /sync/manager-data \u2014 order sync and table linking replaces order items through one nested write, never a bare deleteMany",
+    1
+  ],
+  [
+    "pos/sync/application/ingest-pos-snapshot.characterization.spec.ts",
+    "POST /sync/manager-data \u2014 order sync and table linking reserves the tables of an active dine-in order and strips a \"Table \" prefix",
+    1
+  ],
+  [
+    "pos/sync/application/ingest-pos-snapshot.characterization.spec.ts",
+    "POST /sync/manager-data \u2014 order sync and table linking uses aligned canonical tableIds for a transitional order payload",
+    1
+  ],
+  [
+    "pos/sync/application/ingest-pos-snapshot.characterization.spec.ts",
+    "POST /sync/manager-data \u2014 realtime hints and echo suppression broadcasts orders_bulk_touch and suppresses the plain order_updated toast",
+    1
+  ],
+  [
+    "pos/sync/application/ingest-pos-snapshot.characterization.spec.ts",
+    "POST /sync/manager-data \u2014 realtime hints and echo suppression carries canonical table identity through an additive realtime hint",
+    1
+  ],
+  [
+    "pos/sync/application/ingest-pos-snapshot.characterization.spec.ts",
+    "POST /sync/manager-data \u2014 realtime hints and echo suppression drops a reservation hint whose echo is suppressed",
+    1
+  ],
+  [
+    "pos/sync/application/ingest-pos-snapshot.characterization.spec.ts",
+    "POST /sync/manager-data \u2014 realtime hints and echo suppression drops a table hint whose echo is suppressed",
+    1
+  ],
+  [
+    "pos/sync/application/ingest-pos-snapshot.characterization.spec.ts",
+    "POST /sync/manager-data \u2014 realtime hints and echo suppression drops an order hint whose echo is suppressed",
+    1
+  ],
+  [
+    "pos/sync/application/ingest-pos-snapshot.characterization.spec.ts",
+    "POST /sync/manager-data \u2014 realtime hints and echo suppression keeps only the newest hint per order id",
+    1
+  ],
+  [
+    "pos/sync/application/ingest-pos-snapshot.characterization.spec.ts",
+    "POST /sync/manager-data \u2014 realtime hints and echo suppression reads each touched table back from the database before broadcasting it",
+    1
+  ],
+  [
+    "pos/sync/application/ingest-pos-snapshot.characterization.spec.ts",
+    "POST /sync/manager-data \u2014 realtime hints and echo suppression relays the latest reservation hint and flags a walk-in",
+    1
+  ],
+  [
+    "pos/sync/application/ingest-pos-snapshot.characterization.spec.ts",
+    "POST /sync/manager-data \u2014 realtimeOnly fast path skips menu, staff, all-time and history work but still syncs tables",
+    1
+  ],
+  [
+    "pos/sync/application/ingest-pos-snapshot.characterization.spec.ts",
+    "POST /sync/manager-data \u2014 repeat delivery produces an identical side-effect trace when the same snapshot is replayed",
+    1
+  ],
+  [
+    "pos/sync/application/ingest-pos-snapshot.characterization.spec.ts",
+    "POST /sync/manager-data \u2014 reporting values derives openTablesPayable from the occupied tables in the payload",
+    1
+  ],
+  [
+    "pos/sync/application/ingest-pos-snapshot.characterization.spec.ts",
+    "POST /sync/manager-data \u2014 reporting values stores each summary family under its documented settings key",
+    1
+  ],
+  [
+    "pos/sync/application/ingest-pos-snapshot.characterization.spec.ts",
+    "POST /sync/manager-data \u2014 response contract returns { success, syncedAt } for an empty payload and still kicks the outbox",
+    1
+  ],
+  [
+    "pos/sync/application/ingest-pos-snapshot.characterization.spec.ts",
+    "POST /sync/manager-data \u2014 response contract writes nothing and broadcasts nothing for an empty payload",
+    1
+  ],
+  [
+    "pos/sync/application/ingest-pos-snapshot.characterization.spec.ts",
+    "POST /sync/manager-data \u2014 staff sync does not issue a delete when every server member is still present",
+    1
+  ],
+  [
+    "pos/sync/application/ingest-pos-snapshot.characterization.spec.ts",
+    "POST /sync/manager-data \u2014 staff sync hashes a supplied pin, stores the plaintext in the vault, and normalizes the role",
+    1
+  ],
+  [
+    "pos/sync/application/ingest-pos-snapshot.characterization.spec.ts",
+    "POST /sync/manager-data \u2014 staff sync leaves staffNeedingPin off the response when nothing is missing",
+    1
+  ],
+  [
+    "pos/sync/application/ingest-pos-snapshot.characterization.spec.ts",
+    "POST /sync/manager-data \u2014 staff sync refuses to create an unknown member that arrives without a pin, and asks for its PIN back",
+    1
+  ],
+  [
+    "pos/sync/application/ingest-pos-snapshot.characterization.spec.ts",
+    "POST /sync/manager-data \u2014 staff sync updates role only for an existing member sent without a pin, and never writes the vault",
+    1
+  ],
+  [
+    "pos/sync/application/ingest-pos-snapshot.characterization.spec.ts",
+    "POST /sync/manager-data \u2014 table snapshot policy accepts the legacy table payload and identifies the row by floor and number",
+    1
+  ],
+  [
+    "pos/sync/application/ingest-pos-snapshot.characterization.spec.ts",
+    "POST /sync/manager-data \u2014 table snapshot policy adopts an existing legacy row when the POS first supplies its canonical UUID",
+    1
+  ],
+  [
+    "pos/sync/application/ingest-pos-snapshot.characterization.spec.ts",
+    "POST /sync/manager-data \u2014 table snapshot policy applies that same all-free snapshot when it arrives on the realtime path",
+    1
+  ],
+  [
+    "pos/sync/application/ingest-pos-snapshot.characterization.spec.ts",
+    "POST /sync/manager-data \u2014 table snapshot policy ignores an all-free cold-boot snapshot while the server still holds reserved tables",
+    1
+  ],
+  [
+    "pos/sync/application/ingest-pos-snapshot.characterization.spec.ts",
+    "POST /sync/manager-data \u2014 table snapshot policy rejects a UUID/legacy-alias collision instead of inventing a second physical table",
+    1
+  ],
+  [
+    "pos/sync/application/ingest-pos-snapshot.characterization.spec.ts",
+    "POST /sync/manager-data \u2014 table snapshot policy resolves the same canonical UUID on repeated sync instead of creating another row",
+    1
+  ],
+  [
+    "pos/sync/application/ingest-pos-snapshot.characterization.spec.ts",
+    "POST /sync/manager-data \u2014 table snapshot policy skips table sync entirely for an empty tables array",
+    1
+  ],
+  [
+    "pos/sync/application/ingest-pos-snapshot.characterization.spec.ts",
+    "POST /sync/manager-data \u2014 table snapshot policy treats a malformed tableId as an old payload and never persists it",
+    1
+  ],
+  [
+    "pos/sync/application/ingest-pos-snapshot.characterization.spec.ts",
+    "POST /sync/manager-data \u2014 table snapshot policy treats a table carrying an activeOrderId as reserved even when isReserved is false",
+    1
+  ],
+  [
+    "pos/sync/application/ingest-pos-snapshot.characterization.spec.ts",
+    "POST /sync/manager-data \u2014 table snapshot policy zeroes activeOrderId and currentBill for a free table",
+    1
+  ],
+  [
+    "pos/sync/application/ingest-pos-snapshot.service.spec.ts",
+    "IngestPosSnapshotService /sync/manager-data \u2014 order last-write-wins POS wins and the queued mobile change is superseded when the POS edit is newer",
+    1
+  ],
+  [
+    "pos/sync/application/ingest-pos-snapshot.service.spec.ts",
+    "IngestPosSnapshotService /sync/manager-data \u2014 order last-write-wins mobile wins when the POS sends no timestamp (backwards-compatible hold)",
+    1
+  ],
+  [
+    "pos/sync/application/ingest-pos-snapshot.service.spec.ts",
+    "IngestPosSnapshotService /sync/manager-data \u2014 order last-write-wins mobile wins \u2014 POS snapshot is held and nothing is superseded \u2014 when the queued change is newer",
+    1
+  ],
+  [
+    "pos/sync/application/ingest-pos-snapshot.service.spec.ts",
+    "IngestPosSnapshotService /sync/manager-data \u2014 staff reconcile protection keeps a server user that has a queued mobile create, deletes a genuinely-stale one",
+    1
+  ],
+  [
+    "pos/sync/snapshot/menu-sync.service.spec.ts",
+    "MenuSyncService stable identity reconciliation adopts only an unclaimed legacy row when identity first arrives",
+    1
+  ],
+  [
+    "pos/sync/snapshot/menu-sync.service.spec.ts",
+    "MenuSyncService stable identity reconciliation does not retire anything for a legacy snapshot without identityVersion",
+    1
+  ],
+  [
+    "pos/sync/snapshot/menu-sync.service.spec.ts",
+    "MenuSyncService stable identity reconciliation makes a repeated identical snapshot a persistence no-op",
+    1
+  ],
+  [
+    "pos/sync/snapshot/menu-sync.service.spec.ts",
+    "MenuSyncService stable identity reconciliation reconciles only Venue-scoped POS-owned rows in child-first order",
+    1
+  ],
+  [
+    "pos/sync/snapshot/menu-sync.service.spec.ts",
+    "MenuSyncService stable identity reconciliation updates the same category, subcategory, item and variant by POS identity",
+    1
+  ],
+  [
+    "pos/sync/snapshot/money-reconciliation.spec.ts",
+    "POS \u2192 Cloud expense reconciliation re-sending the same snapshot writes to the same key every time",
+    1
+  ],
+  [
+    "pos/sync/snapshot/money-reconciliation.spec.ts",
+    "POS \u2192 Cloud expense reconciliation still accepts an id-less record from an older POS build",
+    1
+  ],
+  [
+    "pos/sync/snapshot/money-reconciliation.spec.ts",
+    "POS \u2192 Cloud expense reconciliation upserts on the venue-scoped POS id rather than inserting",
+    1
+  ],
+  [
+    "pos/sync/snapshot/money-reconciliation.spec.ts",
+    "POS \u2192 Cloud order reconciliation lets the Cloud reconcile the total it was sent",
+    1
+  ],
+  [
+    "pos/sync/snapshot/money-reconciliation.spec.ts",
+    "POS \u2192 Cloud order reconciliation persists manualAdjustmentAmount on both sides of the upsert",
+    1
+  ],
+  [
+    "pos/sync/snapshot/money-reconciliation.spec.ts",
+    "POS \u2192 Cloud order reconciliation treats an old POS payload without the field as no adjustment",
+    1
+  ],
+  [
+    "pos/sync/snapshot/reservation-sync.service.spec.ts",
+    "ReservationSyncService - a narrowed snapshot cleans the mirror empties a Venue whose box holds only bookkeeping",
+    1
+  ],
+  [
+    "pos/sync/snapshot/reservation-sync.service.spec.ts",
+    "ReservationSyncService - a narrowed snapshot cleans the mirror keeps the bookings it is sent and reconciles the rest away",
+    1
+  ],
+  [
+    "pos/sync/snapshot/reservation-sync.service.spec.ts",
+    "ReservationSyncService - a narrowed snapshot cleans the mirror mirrors an activated booking as a booking, link and all",
+    1
+  ],
+  [
+    "pos/sync/snapshot/reservation-sync.service.spec.ts",
+    "ReservationSyncService - a narrowed snapshot cleans the mirror still says nothing when the snapshot omits reservations entirely",
+    1
+  ],
+  [
+    "pos/sync/snapshot/reservation-sync.service.spec.ts",
+    "ReservationSyncService - one Venue cannot reconcile another keeps a shared reservation id apart per Venue",
+    1
+  ],
+  [
+    "pos/sync/snapshot/reservation-sync.service.spec.ts",
+    "ReservationSyncService - one Venue cannot reconcile another leaves Venue B whole while Venue A is cleaned",
+    1
+  ],
+  [
+    "pos/sync/snapshot/sale-ledger-sync.service.spec.ts",
+    "Cloud Sale revenue predicate matches POS semantics for cancelled Sale",
+    1
+  ],
+  [
+    "pos/sync/snapshot/sale-ledger-sync.service.spec.ts",
+    "Cloud Sale revenue predicate matches POS semantics for internal Sale",
+    1
+  ],
+  [
+    "pos/sync/snapshot/sale-ledger-sync.service.spec.ts",
+    "Cloud Sale revenue predicate matches POS semantics for normal fiscal Sale",
+    1
+  ],
+  [
+    "pos/sync/snapshot/sale-ledger-sync.service.spec.ts",
+    "Cloud Sale revenue predicate matches POS semantics for restored Sale",
+    1
+  ],
+  [
+    "pos/sync/snapshot/staff-sync.service.spec.ts",
+    "StaffSyncService \u2014 a routine snapshot hashes nothing for an unchanged staff list",
+    1
+  ],
+  [
+    "pos/sync/snapshot/staff-sync.service.spec.ts",
+    "StaffSyncService \u2014 a routine snapshot leaves every existing credential exactly as it was, sync after sync",
+    1
+  ],
+  [
+    "pos/sync/snapshot/staff-sync.service.spec.ts",
+    "StaffSyncService \u2014 a routine snapshot reports a member it holds no credential for instead of inventing one",
+    1
+  ],
+  [
+    "pos/sync/snapshot/staff-sync.service.spec.ts",
+    "StaffSyncService \u2014 a routine snapshot still applies a role change without touching the credential",
+    1
+  ],
+  [
+    "pos/sync/snapshot/staff-sync.service.spec.ts",
+    "StaffSyncService \u2014 an older POS that sends every PIN costs no hashing when the PINs are the ones already stored",
+    1
+  ],
+  [
+    "pos/sync/snapshot/staff-sync.service.spec.ts",
+    "StaffSyncService \u2014 an older POS that sends every PIN does not perform quadratic bcrypt comparisons for a new staff snapshot",
+    1
+  ],
+  [
+    "pos/sync/snapshot/staff-sync.service.spec.ts",
+    "StaffSyncService \u2014 an older POS that sends every PIN still creates members from the PINs it carries",
+    1
+  ],
+  [
+    "pos/sync/snapshot/staff-sync.service.spec.ts",
+    "StaffSyncService \u2014 credentials that genuinely change creates a member the POS sends with a PIN",
+    1
+  ],
+  [
+    "pos/sync/snapshot/staff-sync.service.spec.ts",
+    "StaffSyncService \u2014 credentials that genuinely change hashes for a member whose PIN the vault does not know, rather than trusting the row",
+    1
+  ],
+  [
+    "pos/sync/snapshot/staff-sync.service.spec.ts",
+    "StaffSyncService \u2014 credentials that genuinely change re-hashes when the PIN actually changed, and the old one stops matching",
+    1
+  ],
+  [
+    "pos/sync/snapshot/staff-sync.service.spec.ts",
+    "StaffSyncService \u2014 reconcile deletes a member the snapshot no longer names",
+    1
+  ],
+  [
+    "pos/sync/sync-conflict.spec.ts",
+    "parseDate parses a valid ISO string",
+    1
+  ],
+  [
+    "pos/sync/sync-conflict.spec.ts",
+    "parseDate returns null for an unparseable string",
+    1
+  ],
+  [
+    "pos/sync/sync-conflict.spec.ts",
+    "parseDate returns null for missing / empty / non-string input",
+    1
+  ],
+  [
+    "pos/sync/sync-conflict.spec.ts",
+    "pendingStaffUsernames collects usernames from create/pin/role rows",
+    1
+  ],
+  [
+    "pos/sync/sync-conflict.spec.ts",
+    "pendingStaffUsernames does NOT protect a queued delete (the user should be removed)",
+    1
+  ],
+  [
+    "pos/sync/sync-conflict.spec.ts",
+    "pendingStaffUsernames ignores non-user endpoints and blank/invalid usernames",
+    1
+  ],
+  [
+    "pos/sync/sync-conflict.spec.ts",
+    "pendingStaffUsernames protects the NEW username on a rename",
+    1
+  ],
+  [
+    "pos/sync/sync-conflict.spec.ts",
+    "pendingStaffUsernames trims surrounding whitespace",
+    1
+  ],
+  [
+    "pos/sync/sync-conflict.spec.ts",
+    "posWinsOrderConflict (last-write-wins) POS wins when its edit is strictly newer than the queued mobile edit",
+    1
+  ],
+  [
+    "pos/sync/sync-conflict.spec.ts",
+    "posWinsOrderConflict (last-write-wins) mobile wins on an exact tie (POS only wins strictly-newer)",
+    1
+  ],
+  [
+    "pos/sync/sync-conflict.spec.ts",
+    "posWinsOrderConflict (last-write-wins) mobile wins when the POS sent no timestamp (legacy / backwards-compatible)",
+    1
+  ],
+  [
+    "pos/sync/sync-conflict.spec.ts",
+    "posWinsOrderConflict (last-write-wins) mobile wins when the queued edit is newer than the POS edit",
+    1
+  ],
+  [
+    "pos/sync/sync-conflict.spec.ts",
+    "posWinsOrderConflict (last-write-wins) mobile wins when there is no recorded manager edit time",
+    1
+  ],
+  [
+    "pos/sync/sync.controller.spec.ts",
+    "SyncController \u2014 delegation answers ping without touching any collaborator",
+    1
+  ],
+  [
+    "pos/sync/sync.controller.spec.ts",
+    "SyncController \u2014 delegation hands audit event logs to the audit use case and returns its result",
+    1
+  ],
+  [
+    "pos/sync/sync.controller.spec.ts",
+    "SyncController \u2014 delegation hands audit reports to the audit use case and returns its result",
+    1
+  ],
+  [
+    "pos/sync/sync.controller.spec.ts",
+    "SyncController \u2014 delegation hands the request body to the ingestion use case untouched",
+    1
+  ],
+  [
+    "pos/sync/sync.controller.spec.ts",
+    "SyncController \u2014 delegation keeps client-supplied venue identity out of the authenticated context",
+    1
+  ],
+  [
+    "pos/sync/sync.controller.spec.ts",
+    "SyncController \u2014 delegation restores the POS callback registration on module init",
+    1
+  ],
+  [
+    "pos/sync/sync.controller.spec.ts",
+    "SyncController \u2014 delegation returns aggregate result with explicit Menu disposition",
+    1
+  ],
+  [
+    "pos/sync/sync.controller.spec.ts",
+    "SyncController \u2014 route table exposes GET /sync/ping unguarded",
+    1
+  ],
+  [
+    "pos/sync/sync.controller.spec.ts",
+    "SyncController \u2014 route table exposes POST /sync/audit-logs behind the POS sync guard",
+    1
+  ],
+  [
+    "pos/sync/sync.controller.spec.ts",
+    "SyncController \u2014 route table exposes POST /sync/audit-reports behind the POS sync guard",
+    1
+  ],
+  [
+    "pos/sync/sync.controller.spec.ts",
+    "SyncController \u2014 route table exposes POST /sync/manager-data behind the POS sync guard",
+    1
+  ],
+  [
+    "pos/sync/sync.controller.spec.ts",
+    "SyncController \u2014 route table has no Flutter diff route or wrapper caller dependency",
+    1
+  ],
+  [
+    "pos/sync/sync.controller.spec.ts",
+    "SyncController \u2014 route table is still mounted at /sync",
+    1
+  ],
+  [
+    "pos/sync/sync.controller.spec.ts",
+    "SyncController \u2014 route table removes the unused Manager diff route",
+    1
+  ],
+  [
+    "pos/sync/sync.controller.spec.ts",
+    "first complete Device sync readiness does not mark realtime snapshots or failed ingestion ready",
+    1
+  ],
+  [
+    "pos/sync/sync.controller.spec.ts",
+    "first complete Device sync readiness records only the authenticated Device after full success",
+    1
+  ],
+  [
+    "realtime/venue-realtime.spec.ts",
+    "Venue realtime boundaries cannot suppress another Venue order or audit stream",
+    1
+  ],
+  [
+    "realtime/venue-realtime.spec.ts",
+    "Venue realtime boundaries coalesces repeated order IDs independently for each Venue",
+    1
+  ],
+  [
+    "realtime/venue-realtime.spec.ts",
+    "Venue realtime boundaries fails closed with no resolved notification tenant",
+    1
+  ],
+  [
+    "shared/bootstrap/bootstrap.service.spec.ts",
+    "BootstrapService keeps website mappings scoped to the existing legacy Venue",
+    1
+  ],
+  [
+    "shared/bootstrap/bootstrap.service.spec.ts",
+    "BootstrapService propagates database failures instead of treating them as a fresh install",
+    1
+  ],
+  [
+    "shared/bootstrap/bootstrap.service.spec.ts",
+    "BootstrapService starts with no legacy Venue without creating tables or accounts",
+    1
+  ],
+  [
+    "shared/deployment-config.spec.ts",
+    "deployment security configuration fails boot for absent/weak production secrets and malformed payment keys",
+    1
+  ],
+  [
+    "shared/deployment-config.spec.ts",
+    "deployment security configuration limits insecure cookies and the fixed proxy target to explicit local Docker hosts",
+    1
+  ],
+  [
+    "shared/deployment-config.spec.ts",
+    "deployment security configuration refuses local HTTP mode pointed at another DB or a public domain",
+    1
+  ],
+  [
+    "shared/deployment-config.spec.ts",
+    "deployment security configuration rejects broad client-IP trust and wildcard CORS",
+    1
+  ],
+  [
+    "subscriptions/billing-policy.spec.ts",
+    "billing calendar, classification and minor-unit proration charges half the positive difference without resetting renewal",
+    1
+  ],
+  [
+    "subscriptions/billing-policy.spec.ts",
+    "billing calendar, classification and minor-unit proration clamps month ends without drifting the anchor",
+    1
+  ],
+  [
+    "subscriptions/billing-policy.spec.ts",
+    "billing calendar, classification and minor-unit proration rejects invalid prices, dates and out-of-period calculation",
+    1
+  ],
+  [
+    "subscriptions/billing-policy.spec.ts",
+    "billing calendar, classification and minor-unit proration uses capability inclusion and sends unsafe mixed changes to review",
+    1
+  ],
+  [
+    "tenancy/manager-saas.integration.spec.ts",
+    "SaaS Manager: real PostgreSQL, HTTP and Socket.IO isolates real Manager table, order, financial and inventory HTTP reads despite forged Venue hints",
+    1
+  ],
+  [
+    "tenancy/manager-saas.integration.spec.ts",
+    "SaaS Manager: real PostgreSQL, HTTP and Socket.IO joins only the resolved room and delivers in both directions without cross-Venue leakage",
+    1
+  ],
+  [
+    "tenancy/manager-saas.integration.spec.ts",
+    "SaaS Manager: real PostgreSQL, HTTP and Socket.IO keeps Vankisi PIN-only compatibility explicitly bounded and disabled by default",
+    1
+  ],
+  [
+    "tenancy/manager-saas.integration.spec.ts",
+    "SaaS Manager: real PostgreSQL, HTTP and Socket.IO keeps public login codes unique and independent of the display name",
+    1
+  ],
+  [
+    "tenancy/manager-saas.integration.spec.ts",
+    "SaaS Manager: real PostgreSQL, HTTP and Socket.IO looks up a code without credentials and returns only safe Venue identity",
+    1
+  ],
+  [
+    "tenancy/manager-saas.integration.spec.ts",
+    "SaaS Manager: real PostgreSQL, HTTP and Socket.IO re-resolves Staff and Venue on the next HTTP request, and denies disabled login",
+    1
+  ],
+  [
+    "tenancy/manager-saas.integration.spec.ts",
+    "SaaS Manager: real PostgreSQL, HTTP and Socket.IO rejects Venue selection when disabled, commercially suspended or Manager is excluded",
+    1
+  ],
+  [
+    "tenancy/manager-saas.integration.spec.ts",
+    "SaaS Manager: real PostgreSQL, HTTP and Socket.IO rejects ambiguous PINs within one Venue",
+    1
+  ],
+  [
+    "tenancy/manager-saas.integration.spec.ts",
+    "SaaS Manager: real PostgreSQL, HTTP and Socket.IO resolves identical username/PIN credentials independently after Venue selection",
+    1
+  ],
+  [
+    "tenancy/manager-saas.integration.spec.ts",
+    "SaaS Manager: real PostgreSQL, HTTP and Socket.IO scopes notification rows, delivery rows, presence and actual FCM recipient selection",
+    1
+  ],
+  [
+    "tenancy/tenant-context.spec.ts",
+    "requestTenant has no tenant for an unauthenticated request",
+    1
+  ],
+  [
+    "tenancy/tenant-context.spec.ts",
+    "requestTenant ignores a website customer principal, which owns no venue",
+    1
+  ],
+  [
+    "tenancy/tenant-context.spec.ts",
+    "requestTenant reads the tenant a POS Device credential established",
+    1
+  ],
+  [
+    "tenancy/tenant-context.spec.ts",
+    "requestTenant reads the tenant a website host resolved",
+    1
+  ],
+  [
+    "tenancy/tenant-context.spec.ts",
+    "requestTenant reads the tenant an authenticated Manager session established",
+    1
+  ],
+  [
+    "tenancy/tenant-context.spec.ts",
+    "requestTenant refuses a half-resolved principal rather than inventing the other half",
+    1
+  ],
+  [
+    "website/auth/auth-admission.integration.spec.ts",
+    "SEC-03 real PostgreSQL / HTTP authentication admission bounds password-change guesses using the real cookie guard and retains the existing credential",
+    1
+  ],
+  [
+    "website/auth/auth-admission.integration.spec.ts",
+    "SEC-03 real PostgreSQL / HTTP authentication admission caps rotating identifiers at twenty per actual peer, even with spoofed forwarding headers",
+    1
+  ],
+  [
+    "website/auth/auth-admission.integration.spec.ts",
+    "SEC-03 real PostgreSQL / HTTP authentication admission gives unknown accounts the same normalized cross-Host throttle",
+    1
+  ],
+  [
+    "website/auth/auth-admission.integration.spec.ts",
+    "SEC-03 real PostgreSQL / HTTP authentication admission keeps Host, active Venue and CUSTOMER_ACCOUNTS capability gates ahead of authentication",
+    1
+  ],
+  [
+    "website/auth/auth-admission.integration.spec.ts",
+    "SEC-03 real PostgreSQL / HTTP authentication admission preserves a valid authenticated password change and exact secret bytes",
+    1
+  ],
+  [
+    "website/auth/auth-admission.integration.spec.ts",
+    "SEC-03 real PostgreSQL / HTTP authentication admission preserves six-character signup, encrypted HttpOnly cookies, verification and cross-Host global sign-in",
+    1
+  ],
+  [
+    "website/auth/auth-admission.integration.spec.ts",
+    "SEC-03 real PostgreSQL / HTTP authentication admission rejects missing/mismatched CSRF, malformed fields and oversized bodies without persistence/service calls",
+    1
+  ],
+  [
+    "website/auth/auth-admission.integration.spec.ts",
+    "SEC-03 real PostgreSQL / HTTP authentication admission shares successful and duplicate signup attempts with sign-in; duplicates do not create extra users",
+    1
+  ],
+  [
+    "website/auth/auth-admission.integration.spec.ts",
+    "SEC-03 real PostgreSQL / HTTP authentication admission stops the eleventh known-account guess before service/hash work without changing credentials",
+    1
+  ],
+  [
+    "website/auth/auth-admission.spec.ts",
+    "SEC-03 bounded website authentication input rejects a non-object body: \"password\"",
+    1
+  ],
+  [
+    "website/auth/auth-admission.spec.ts",
+    "SEC-03 bounded website authentication input rejects a non-object body: 42",
+    1
+  ],
+  [
+    "website/auth/auth-admission.spec.ts",
+    "SEC-03 bounded website authentication input rejects a non-object body: []",
+    1
+  ],
+  [
+    "website/auth/auth-admission.spec.ts",
+    "SEC-03 bounded website authentication input rejects a non-object body: null",
+    1
+  ],
+  [
+    "website/auth/auth-admission.spec.ts",
+    "SEC-03 bounded website authentication input rejects invalid password change case 0 before lookup/hash work",
+    1
+  ],
+  [
+    "website/auth/auth-admission.spec.ts",
+    "SEC-03 bounded website authentication input rejects invalid password change case 1 before lookup/hash work",
+    1
+  ],
+  [
+    "website/auth/auth-admission.spec.ts",
+    "SEC-03 bounded website authentication input rejects invalid password change case 2 before lookup/hash work",
+    1
+  ],
+  [
+    "website/auth/auth-admission.spec.ts",
+    "SEC-03 bounded website authentication input rejects invalid password change case 3 before lookup/hash work",
+    1
+  ],
+  [
+    "website/auth/auth-admission.spec.ts",
+    "SEC-03 bounded website authentication input rejects invalid registration case 0 before hashing or persistence",
+    1
+  ],
+  [
+    "website/auth/auth-admission.spec.ts",
+    "SEC-03 bounded website authentication input rejects invalid registration case 1 before hashing or persistence",
+    1
+  ],
+  [
+    "website/auth/auth-admission.spec.ts",
+    "SEC-03 bounded website authentication input rejects invalid registration case 2 before hashing or persistence",
+    1
+  ],
+  [
+    "website/auth/auth-admission.spec.ts",
+    "SEC-03 bounded website authentication input rejects invalid registration case 3 before hashing or persistence",
+    1
+  ],
+  [
+    "website/auth/auth-admission.spec.ts",
+    "SEC-03 bounded website authentication input rejects invalid registration case 4 before hashing or persistence",
+    1
+  ],
+  [
+    "website/auth/auth-admission.spec.ts",
+    "SEC-03 bounded website authentication input rejects invalid registration case 5 before hashing or persistence",
+    1
+  ],
+  [
+    "website/auth/auth-admission.spec.ts",
+    "SEC-03 bounded website authentication input rejects invalid registration case 6 before hashing or persistence",
+    1
+  ],
+  [
+    "website/auth/auth-admission.spec.ts",
+    "SEC-03 bounded website authentication input rejects invalid sign-in case 0 before lookup/hash work",
+    1
+  ],
+  [
+    "website/auth/auth-admission.spec.ts",
+    "SEC-03 bounded website authentication input rejects invalid sign-in case 1 before lookup/hash work",
+    1
+  ],
+  [
+    "website/auth/auth-admission.spec.ts",
+    "SEC-03 bounded website authentication input rejects invalid sign-in case 2 before lookup/hash work",
+    1
+  ],
+  [
+    "website/auth/auth-admission.spec.ts",
+    "SEC-03 bounded website authentication input rejects invalid sign-in case 3 before lookup/hash work",
+    1
+  ],
+  [
+    "website/auth/auth-admission.spec.ts",
+    "SEC-03 bounded website authentication input rejects invalid sign-in case 4 before lookup/hash work",
+    1
+  ],
+  [
+    "website/auth/auth-admission.spec.ts",
+    "SEC-03 bounded website authentication input rejects invalid sign-in case 5 before lookup/hash work",
+    1
+  ],
+  [
+    "website/auth/auth-admission.spec.ts",
+    "SEC-03 bounded website authentication input rejects invalid sign-in case 6 before lookup/hash work",
+    1
+  ],
+  [
+    "website/auth/auth-admission.spec.ts",
+    "SEC-03 bounded website authentication input retains existing minimums, exact passwords and valid boundary lengths",
+    1
+  ],
+  [
+    "website/auth/auth-admission.spec.ts",
+    "SEC-03 website authentication HTTP admission accepts bounded form requests through the same validation/admission boundary",
+    1
+  ],
+  [
+    "website/auth/auth-admission.spec.ts",
+    "SEC-03 website authentication HTTP admission admits only ten simultaneous requests for the same identifier",
+    1
+  ],
+  [
+    "website/auth/auth-admission.spec.ts",
+    "SEC-03 website authentication HTTP admission caps one peer at twenty attempts and ignores spoofed forwarding headers",
+    1
+  ],
+  [
+    "website/auth/auth-admission.spec.ts",
+    "SEC-03 website authentication HTTP admission caps password verification attempts for the authenticated account",
+    1
+  ],
+  [
+    "website/auth/auth-admission.spec.ts",
+    "SEC-03 website authentication HTTP admission leaves larger non-auth bodies and exact webhook bytes to the general parser",
+    1
+  ],
+  [
+    "website/auth/auth-admission.spec.ts",
+    "SEC-03 website authentication HTTP admission opens the fixed window after fifteen minutes",
+    1
+  ],
+  [
+    "website/auth/auth-admission.spec.ts",
+    "SEC-03 website authentication HTTP admission rejects absent CSRF on change-password before service work",
+    1
+  ],
+  [
+    "website/auth/auth-admission.spec.ts",
+    "SEC-03 website authentication HTTP admission rejects absent CSRF on signin before service work",
+    1
+  ],
+  [
+    "website/auth/auth-admission.spec.ts",
+    "SEC-03 website authentication HTTP admission rejects absent CSRF on signup before service work",
+    1
+  ],
+  [
+    "website/auth/auth-admission.spec.ts",
+    "SEC-03 website authentication HTTP admission rejects excessive form parameters before DTO/service work",
+    1
+  ],
+  [
+    "website/auth/auth-admission.spec.ts",
+    "SEC-03 website authentication HTTP admission rejects malformed/extra fields before admission and does not disclose their values",
+    1
+  ],
+  [
+    "website/auth/auth-admission.spec.ts",
+    "SEC-03 website authentication HTTP admission rejects malformed/mismatched CSRF without consuming authentication attempts",
+    1
+  ],
+  [
+    "website/auth/auth-admission.spec.ts",
+    "SEC-03 website authentication HTTP admission rejects malformed/mismatched CSRF without consuming authentication attempts",
+    2
+  ],
+  [
+    "website/auth/auth-admission.spec.ts",
+    "SEC-03 website authentication HTTP admission rejects malformed/mismatched CSRF without consuming authentication attempts",
+    3
+  ],
+  [
+    "website/auth/auth-admission.spec.ts",
+    "SEC-03 website authentication HTTP admission rejects oversized JSON and forms with 413 before DTO/service work",
+    1
+  ],
+  [
+    "website/auth/auth-admission.spec.ts",
+    "SEC-03 website authentication HTTP admission returns the same throttle for known and unknown failures before further service calls",
+    1
+  ],
+  [
+    "website/auth/auth-admission.spec.ts",
+    "SEC-03 website authentication HTTP admission shares normalized global email windows across Hosts and endpoints; success counts",
+    1
+  ],
+  [
+    "website/auth/auth-admission.spec.ts",
+    "SEC-03 website authentication HTTP admission shares phone windows between registration and sign-in",
+    1
+  ],
+  [
+    "website/auth/auth-admission.spec.ts",
+    "SEC-03 website authentication HTTP admission uses forwarded peer identities only under explicit proxy trust and keeps global account windows",
+    1
+  ],
+  [
+    "website/core/public-info-review.spec.ts",
+    "WEB-02 public information provenance compares values structurally, ignoring object key order",
+    1
+  ],
+  [
+    "website/core/public-info-review.spec.ts",
+    "WEB-02 public information provenance never treats an audited owner edit as a migration artifact",
+    1
+  ],
+  [
+    "website/core/public-info-review.spec.ts",
+    "WEB-02 public information provenance proves an unpublished draft when nothing was ever published",
+    1
+  ],
+  [
+    "website/core/public-info-review.spec.ts",
+    "WEB-02 public information provenance proves published only while draft and published were the same revision and nothing changed since",
+    1
+  ],
+  [
+    "website/core/public-info-review.spec.ts",
+    "WEB-02 public information provenance refuses to guess when unpublished changes existed or settings changed afterwards",
+    1
+  ],
+  [
+    "website/core/website-address.spec.ts",
+    "Website address availability refuses a name another Venue retains as its assigned identity",
+    1
+  ],
+  [
+    "website/core/website-address.spec.ts",
+    "Website address availability refuses an address held elsewhere or disabled ({ venueId: 'venue-a', status: 'DISABLED' })",
+    1
+  ],
+  [
+    "website/core/website-address.spec.ts",
+    "Website address availability refuses an address held elsewhere or disabled ({ venueId: 'venue-b', status: 'ACTIVE' })",
+    1
+  ],
+  [
+    "website/core/website-address.spec.ts",
+    "Website address availability rejects -tabla without querying domains",
+    1
+  ],
+  [
+    "website/core/website-address.spec.ts",
+    "Website address availability rejects Tabla without querying domains",
+    1
+  ],
+  [
+    "website/core/website-address.spec.ts",
+    "Website address availability rejects aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa without querying domains",
+    1
+  ],
+  [
+    "website/core/website-address.spec.ts",
+    "Website address availability rejects admin without querying domains",
+    1
+  ],
+  [
+    "website/core/website-address.spec.ts",
+    "Website address availability rejects dashboard without querying domains",
+    1
+  ],
+  [
+    "website/core/website-address.spec.ts",
+    "Website address availability rejects vynic without querying domains",
+    1
+  ],
+  [
+    "website/core/website-address.spec.ts",
+    "Website address availability rejects \u10e2\u10d0\u10d1\u10da\u10d0 without querying domains",
+    1
+  ],
+  [
+    "website/core/website-address.spec.ts",
+    "Website address availability reports a free address under the configured base domain",
+    1
+  ],
+  [
+    "website/core/website-address.spec.ts",
+    "Website address availability treats the Venue's own active address as available",
+    1
+  ],
+  [
+    "website/core/website-content.spec.ts",
+    "Page document and Venue public information refuses Venue-level fields in a page save and drops them from stored pages",
+    1
+  ],
+  [
+    "website/core/website-content.spec.ts",
+    "Page document and Venue public information validates opening hours once, for every renderer",
+    1
+  ],
+  [
+    "website/core/website-content.spec.ts",
+    "Website map visibility compatibility defaults old drafts and published snapshots to the profile location",
+    1
+  ],
+  [
+    "website/core/website-content.spec.ts",
+    "Website map visibility compatibility keeps map visibility in the page and rejects non-boolean visibility",
+    1
+  ],
+  [
+    "website/core/website-logo.service.spec.ts",
+    "Website logo storage decodes and resizes real images, returning immutable media references",
+    1
+  ],
+  [
+    "website/core/website-logo.service.spec.ts",
+    "Website logo storage keeps main photos large enough for desktop and preserves their proportions",
+    1
+  ],
+  [
+    "website/core/website-logo.service.spec.ts",
+    "Website logo storage rejects fake images, active SVG, oversized files and traversal",
+    1
+  ],
+  [
+    "website/core/website-logo.service.spec.ts",
+    "Website logo storage requires explicit persistent storage in production",
+    1
+  ],
+  [
+    "website/custom/custom-website-local.spec.ts",
+    "CUSTOM website local frontends builds the local URL from the Venue domain and the mapped port",
+    1
+  ],
+  [
+    "website/custom/custom-website-local.spec.ts",
+    "CUSTOM website local frontends drops and reports malformed, out-of-range, duplicated and clashing entries",
+    1
+  ],
+  [
+    "website/custom/custom-website-local.spec.ts",
+    "CUSTOM website local frontends has no default: nothing configured means no ports",
+    1
+  ],
+  [
+    "website/custom/custom-website-local.spec.ts",
+    "CUSTOM website local frontends maps each frontend identity to its own port",
+    1
+  ],
+  [
+    "website/custom/custom-website-local.spec.ts",
+    "CUSTOM website local frontends reports what is missing instead of producing a URL",
+    1
+  ],
+  [
+    "website/custom/custom-website-local.spec.ts",
+    "CUSTOM website local frontends treats only .localhost names as local",
+    1
+  ],
+  [
+    "website/custom/custom-website-runtime.spec.ts",
+    "CUSTOM website runtime check against a local dev server SAAS renderer cannot confuse reachability with verified deployment identity",
+    1
+  ],
+  [
+    "website/custom/custom-website-runtime.spec.ts",
+    "CUSTOM website runtime check against a local dev server does not follow redirects",
+    1
+  ],
+  [
+    "website/custom/custom-website-runtime.spec.ts",
+    "CUSTOM website runtime check against a local dev server invalid manifest hash cannot confuse reachability with verified deployment identity",
+    1
+  ],
+  [
+    "website/custom/custom-website-runtime.spec.ts",
+    "CUSTOM website runtime check against a local dev server legacy bootstrap cannot confuse reachability with verified deployment identity",
+    1
+  ],
+  [
+    "website/custom/custom-website-runtime.spec.ts",
+    "CUSTOM website runtime check against a local dev server missing manifest cannot confuse reachability with verified deployment identity",
+    1
+  ],
+  [
+    "website/custom/custom-website-runtime.spec.ts",
+    "CUSTOM website runtime check against a local dev server oversized manifest never passes verification",
+    1
+  ],
+  [
+    "website/custom/custom-website-runtime.spec.ts",
+    "CUSTOM website runtime check against a local dev server redirected frontend cannot confuse reachability with verified deployment identity",
+    1
+  ],
+  [
+    "website/custom/custom-website-runtime.spec.ts",
+    "CUSTOM website runtime check against a local dev server renamed same Venue cannot confuse reachability with verified deployment identity",
+    1
+  ],
+  [
+    "website/custom/custom-website-runtime.spec.ts",
+    "CUSTOM website runtime check against a local dev server reports a reachable frontend and the backend answering for this Venue",
+    1
+  ],
+  [
+    "website/custom/custom-website-runtime.spec.ts",
+    "CUSTOM website runtime check against a local dev server reports a stopped frontend as unreachable",
+    1
+  ],
+  [
+    "website/custom/custom-website-runtime.spec.ts",
+    "CUSTOM website runtime check against a local dev server same-name other Venue cannot confuse reachability with verified deployment identity",
+    1
+  ],
+  [
+    "website/custom/custom-website-runtime.spec.ts",
+    "CUSTOM website runtime check against a local dev server separates a reachable frontend from an API that is not proxied or serves another restaurant",
+    1
+  ],
+  [
+    "website/custom/custom-website-runtime.spec.ts",
+    "CUSTOM website runtime check against a local dev server truncated manifest never passes verification",
+    1
+  ],
+  [
+    "website/custom/custom-website-runtime.spec.ts",
+    "CUSTOM website runtime check against a local dev server unrecorded build cannot confuse reachability with verified deployment identity",
+    1
+  ],
+  [
+    "website/custom/custom-website-runtime.spec.ts",
+    "CUSTOM website runtime check against a local dev server wrong app key cannot confuse reachability with verified deployment identity",
+    1
+  ],
+  [
+    "website/custom/custom-website-runtime.spec.ts",
+    "CUSTOM website runtime check against a local dev server wrong recorded build cannot confuse reachability with verified deployment identity",
+    1
+  ],
+  [
+    "website/custom/custom-website-runtime.spec.ts",
+    "CUSTOM website runtime check against a local dev server wrong served HTML cannot confuse reachability with verified deployment identity",
+    1
+  ],
+  [
+    "website/custom/custom-website-runtime.spec.ts",
+    "CUSTOM website runtime check builds public and local targets without any default port",
+    1
+  ],
+  [
+    "website/custom/custom-website-runtime.spec.ts",
+    "CUSTOM website runtime check never contacts an IP-address domain",
+    1
+  ],
+  [
+    "website/custom/custom-website-runtime.spec.ts",
+    "CUSTOM website runtime check refuses a domain that resolves anywhere non-public, before connecting",
+    1
+  ],
+  [
+    "website/custom/custom-website-runtime.spec.ts",
+    "CUSTOM website runtime check treats only routable public unicast addresses as public",
+    1
+  ],
+  [
+    "website/custom/custom-website.integration.spec.ts",
+    "CUSTOM website binding / disposable PostgreSQL WEB05 HTTP observation distinguishes same-name Venues, recorded builds and tracking statuses without mutating them",
+    1
+  ],
+  [
+    "website/custom/custom-website.integration.spec.ts",
+    "CUSTOM website binding / disposable PostgreSQL WEB05 records only public build fingerprints with operator authorization, exact retry and immutable audit",
+    1
+  ],
+  [
+    "website/custom/custom-website.integration.spec.ts",
+    "CUSTOM website binding / disposable PostgreSQL applies one set of capability rules to SAAS and CUSTOM hosts",
+    1
+  ],
+  [
+    "website/custom/custom-website.integration.spec.ts",
+    "CUSTOM website binding / disposable PostgreSQL books and pays through each Venue\u2019s own integration and session",
+    1
+  ],
+  [
+    "website/custom/custom-website.integration.spec.ts",
+    "CUSTOM website binding / disposable PostgreSQL checks runtime availability on demand, separately from setup status",
+    1
+  ],
+  [
+    "website/custom/custom-website.integration.spec.ts",
+    "CUSTOM website binding / disposable PostgreSQL gives a Website-only CUSTOM Venue the same canonical Cloud catalog as SAAS",
+    1
+  ],
+  [
+    "website/custom/custom-website.integration.spec.ts",
+    "CUSTOM website binding / disposable PostgreSQL ignores forged Venue identity in query, headers and body",
+    1
+  ],
+  [
+    "website/custom/custom-website.integration.spec.ts",
+    "CUSTOM website binding / disposable PostgreSQL keeps POS authority for a CUSTOM Venue whose package includes POS",
+    1
+  ],
+  [
+    "website/custom/custom-website.integration.spec.ts",
+    "CUSTOM website binding / disposable PostgreSQL keeps domains port-free and local development out of production",
+    1
+  ],
+  [
+    "website/custom/custom-website.integration.spec.ts",
+    "CUSTOM website binding / disposable PostgreSQL keeps hours, contact and gallery as Venue data both renderers read live",
+    1
+  ],
+  [
+    "website/custom/custom-website.integration.spec.ts",
+    "CUSTOM website binding / disposable PostgreSQL keeps mode, frontend and domains out of owner hands",
+    1
+  ],
+  [
+    "website/custom/custom-website.integration.spec.ts",
+    "CUSTOM website binding / disposable PostgreSQL limits a website administrator to the Venue it administers",
+    1
+  ],
+  [
+    "website/custom/custom-website.integration.spec.ts",
+    "CUSTOM website binding / disposable PostgreSQL offers website sign-in only where customer accounts are available",
+    1
+  ],
+  [
+    "website/custom/custom-website.integration.spec.ts",
+    "CUSTOM website binding / disposable PostgreSQL provisions CUSTOM through the operator workflow only",
+    1
+  ],
+  [
+    "website/custom/custom-website.integration.spec.ts",
+    "CUSTOM website binding / disposable PostgreSQL reports and repairs a Website-only CUSTOM Venue left on POS authority",
+    1
+  ],
+  [
+    "website/custom/custom-website.integration.spec.ts",
+    "CUSTOM website binding / disposable PostgreSQL resolves each Host to only its own Venue",
+    1
+  ],
+  [
+    "website/custom/custom-website.integration.spec.ts",
+    "CUSTOM website binding / disposable PostgreSQL stops serving when the commercial Trial ends, without a fallback renderer",
+    1
+  ],
+  [
+    "website/payment/booking-payment.spec.ts",
+    "SEC-01 bog creation boundary (mock persistence/provider) bounds duplicate quantities and cart size",
+    1
+  ],
+  [
+    "website/payment/booking-payment.spec.ts",
+    "SEC-01 bog creation boundary (mock persistence/provider) declares payment capability on the actual creation handler",
+    1
+  ],
+  [
+    "website/payment/booking-payment.spec.ts",
+    "SEC-01 bog creation boundary (mock persistence/provider) fails closed before persistence when the integration/entitlement is unavailable",
+    1
+  ],
+  [
+    "website/payment/booking-payment.spec.ts",
+    "SEC-01 bog creation boundary (mock persistence/provider) legacy client money cannot change the payable amount: \"1\"",
+    1
+  ],
+  [
+    "website/payment/booking-payment.spec.ts",
+    "SEC-01 bog creation boundary (mock persistence/provider) legacy client money cannot change the payable amount: -50",
+    1
+  ],
+  [
+    "website/payment/booking-payment.spec.ts",
+    "SEC-01 bog creation boundary (mock persistence/provider) legacy client money cannot change the payable amount: 0",
+    1
+  ],
+  [
+    "website/payment/booking-payment.spec.ts",
+    "SEC-01 bog creation boundary (mock persistence/provider) legacy client money cannot change the payable amount: 1",
+    1
+  ],
+  [
+    "website/payment/booking-payment.spec.ts",
+    "SEC-01 bog creation boundary (mock persistence/provider) legacy client money cannot change the payable amount: 99999",
+    1
+  ],
+  [
+    "website/payment/booking-payment.spec.ts",
+    "SEC-01 bog creation boundary (mock persistence/provider) legacy client money cannot change the payable amount: null",
+    1
+  ],
+  [
+    "website/payment/booking-payment.spec.ts",
+    "SEC-01 bog creation boundary (mock persistence/provider) legacy client money cannot change the payable amount: {\"amount\": 1}",
+    1
+  ],
+  [
+    "website/payment/booking-payment.spec.ts",
+    "SEC-01 bog creation boundary (mock persistence/provider) preserves the table-only 1 GEL minimum",
+    1
+  ],
+  [
+    "website/payment/booking-payment.spec.ts",
+    "SEC-01 bog creation boundary (mock persistence/provider) prices a normal cart once and persists exactly the provider amount",
+    1
+  ],
+  [
+    "website/payment/booking-payment.spec.ts",
+    "SEC-01 bog creation boundary (mock persistence/provider) prices the exact selected variant, including Vankisi legacy IDs: {\"id\":\"drink\",\"variantId\":\"large\",\"quantity\":2}",
+    1
+  ],
+  [
+    "website/payment/booking-payment.spec.ts",
+    "SEC-01 bog creation boundary (mock persistence/provider) prices the exact selected variant, including Vankisi legacy IDs: {\"id\":\"large\",\"quantity\":2}",
+    1
+  ],
+  [
+    "website/payment/booking-payment.spec.ts",
+    "SEC-01 bog creation boundary (mock persistence/provider) rejects invalid quantity \"2\" without a write/provider call",
+    1
+  ],
+  [
+    "website/payment/booking-payment.spec.ts",
+    "SEC-01 bog creation boundary (mock persistence/provider) rejects invalid quantity -1 without a write/provider call",
+    1
+  ],
+  [
+    "website/payment/booking-payment.spec.ts",
+    "SEC-01 bog creation boundary (mock persistence/provider) rejects invalid quantity 0 without a write/provider call",
+    1
+  ],
+  [
+    "website/payment/booking-payment.spec.ts",
+    "SEC-01 bog creation boundary (mock persistence/provider) rejects invalid quantity 1.5 without a write/provider call",
+    1
+  ],
+  [
+    "website/payment/booking-payment.spec.ts",
+    "SEC-01 bog creation boundary (mock persistence/provider) rejects invalid quantity 1001 without a write/provider call",
+    1
+  ],
+  [
+    "website/payment/booking-payment.spec.ts",
+    "SEC-01 bog creation boundary (mock persistence/provider) rejects invalid quantity 9007199254740991 without a write/provider call",
+    1
+  ],
+  [
+    "website/payment/booking-payment.spec.ts",
+    "SEC-01 bog creation boundary (mock persistence/provider) rejects invalid quantity Infinity without a write/provider call",
+    1
+  ],
+  [
+    "website/payment/booking-payment.spec.ts",
+    "SEC-01 bog creation boundary (mock persistence/provider) rejects invalid quantity NaN without a write/provider call",
+    1
+  ],
+  [
+    "website/payment/booking-payment.spec.ts",
+    "SEC-01 bog creation boundary (mock persistence/provider) rejects invalid quantity null without a write/provider call",
+    1
+  ],
+  [
+    "website/payment/booking-payment.spec.ts",
+    "SEC-01 bog creation boundary (mock persistence/provider) rejects invalid quantity undefined without a write/provider call",
+    1
+  ],
+  [
+    "website/payment/booking-payment.spec.ts",
+    "SEC-01 bog creation boundary (mock persistence/provider) rejects malformed runtime DTO []",
+    1
+  ],
+  [
+    "website/payment/booking-payment.spec.ts",
+    "SEC-01 bog creation boundary (mock persistence/provider) rejects malformed runtime DTO null",
+    1
+  ],
+  [
+    "website/payment/booking-payment.spec.ts",
+    "SEC-01 bog creation boundary (mock persistence/provider) rejects malformed runtime DTO {\"selectedTables\":\"table1\",\"selectedDate\":\"2026-12-10\",\"selectedTime\":\"18:00\",\"menuItems\":[{\"id\":\"meal\",\"quantity\":1}]}",
+    1
+  ],
+  [
+    "website/payment/booking-payment.spec.ts",
+    "SEC-01 bog creation boundary (mock persistence/provider) rejects malformed runtime DTO {\"selectedTables\":[\"table1\"],\"selectedDate\":\"2026-12-10\",\"selectedTime\":\"18:00\",\"menuItems\":null}",
+    1
+  ],
+  [
+    "website/payment/booking-payment.spec.ts",
+    "SEC-01 bog creation boundary (mock persistence/provider) rejects malformed runtime DTO {\"selectedTables\":[\"table1\"],\"selectedDate\":\"2026-12-10\",\"selectedTime\":\"18:00\",\"menuItems\":{}}",
+    1
+  ],
+  [
+    "website/payment/booking-payment.spec.ts",
+    "SEC-01 bog creation boundary (mock persistence/provider) rejects malformed runtime DTO {}",
+    1
+  ],
+  [
+    "website/payment/booking-payment.spec.ts",
+    "SEC-01 bog creation boundary (mock persistence/provider) rejects missing, foreign, unavailable or ambiguous selections {\"id\":\"disabled\",\"quantity\":1}",
+    1
+  ],
+  [
+    "website/payment/booking-payment.spec.ts",
+    "SEC-01 bog creation boundary (mock persistence/provider) rejects missing, foreign, unavailable or ambiguous selections {\"id\":\"drink\",\"quantity\":1}",
+    1
+  ],
+  [
+    "website/payment/booking-payment.spec.ts",
+    "SEC-01 bog creation boundary (mock persistence/provider) rejects missing, foreign, unavailable or ambiguous selections {\"id\":\"drink\",\"variantId\":\"foreign-v\",\"quantity\":1}",
+    1
+  ],
+  [
+    "website/payment/booking-payment.spec.ts",
+    "SEC-01 bog creation boundary (mock persistence/provider) rejects missing, foreign, unavailable or ambiguous selections {\"id\":\"foreign\",\"quantity\":1}",
+    1
+  ],
+  [
+    "website/payment/booking-payment.spec.ts",
+    "SEC-01 bog creation boundary (mock persistence/provider) rejects missing, foreign, unavailable or ambiguous selections {\"id\":\"foreign-v\",\"quantity\":1}",
+    1
+  ],
+  [
+    "website/payment/booking-payment.spec.ts",
+    "SEC-01 bog creation boundary (mock persistence/provider) rejects missing, foreign, unavailable or ambiguous selections {\"id\":\"hidden\",\"quantity\":1}",
+    1
+  ],
+  [
+    "website/payment/booking-payment.spec.ts",
+    "SEC-01 bog creation boundary (mock persistence/provider) rejects missing, foreign, unavailable or ambiguous selections {\"id\":\"meal\",\"variantId\":\"small\",\"quantity\":1}",
+    1
+  ],
+  [
+    "website/payment/booking-payment.spec.ts",
+    "SEC-01 bog creation boundary (mock persistence/provider) rejects missing, foreign, unavailable or ambiguous selections {\"id\":\"missing\",\"quantity\":1}",
+    1
+  ],
+  [
+    "website/payment/booking-payment.spec.ts",
+    "SEC-01 bog creation boundary (mock persistence/provider) rejects missing, foreign, unavailable or ambiguous selections {\"id\":\"small\",\"variantId\":\"large\",\"quantity\":1}",
+    1
+  ],
+  [
+    "website/payment/booking-payment.spec.ts",
+    "SEC-01 bog creation boundary (mock persistence/provider) uses exact minor-unit subtotal and half-up service rounding",
+    1
+  ],
+  [
+    "website/payment/booking-payment.spec.ts",
+    "SEC-01 tables creation boundary (mock persistence/provider) bounds duplicate quantities and cart size",
+    1
+  ],
+  [
+    "website/payment/booking-payment.spec.ts",
+    "SEC-01 tables creation boundary (mock persistence/provider) declares payment capability on the actual creation handler",
+    1
+  ],
+  [
+    "website/payment/booking-payment.spec.ts",
+    "SEC-01 tables creation boundary (mock persistence/provider) fails closed before persistence when the integration/entitlement is unavailable",
+    1
+  ],
+  [
+    "website/payment/booking-payment.spec.ts",
+    "SEC-01 tables creation boundary (mock persistence/provider) legacy client money cannot change the payable amount: \"1\"",
+    1
+  ],
+  [
+    "website/payment/booking-payment.spec.ts",
+    "SEC-01 tables creation boundary (mock persistence/provider) legacy client money cannot change the payable amount: -50",
+    1
+  ],
+  [
+    "website/payment/booking-payment.spec.ts",
+    "SEC-01 tables creation boundary (mock persistence/provider) legacy client money cannot change the payable amount: 0",
+    1
+  ],
+  [
+    "website/payment/booking-payment.spec.ts",
+    "SEC-01 tables creation boundary (mock persistence/provider) legacy client money cannot change the payable amount: 1",
+    1
+  ],
+  [
+    "website/payment/booking-payment.spec.ts",
+    "SEC-01 tables creation boundary (mock persistence/provider) legacy client money cannot change the payable amount: 99999",
+    1
+  ],
+  [
+    "website/payment/booking-payment.spec.ts",
+    "SEC-01 tables creation boundary (mock persistence/provider) legacy client money cannot change the payable amount: null",
+    1
+  ],
+  [
+    "website/payment/booking-payment.spec.ts",
+    "SEC-01 tables creation boundary (mock persistence/provider) legacy client money cannot change the payable amount: {\"amount\": 1}",
+    1
+  ],
+  [
+    "website/payment/booking-payment.spec.ts",
+    "SEC-01 tables creation boundary (mock persistence/provider) preserves the table-only 1 GEL minimum",
+    1
+  ],
+  [
+    "website/payment/booking-payment.spec.ts",
+    "SEC-01 tables creation boundary (mock persistence/provider) prices a normal cart once and persists exactly the provider amount",
+    1
+  ],
+  [
+    "website/payment/booking-payment.spec.ts",
+    "SEC-01 tables creation boundary (mock persistence/provider) prices the exact selected variant, including Vankisi legacy IDs: {\"id\":\"drink\",\"variantId\":\"large\",\"quantity\":2}",
+    1
+  ],
+  [
+    "website/payment/booking-payment.spec.ts",
+    "SEC-01 tables creation boundary (mock persistence/provider) prices the exact selected variant, including Vankisi legacy IDs: {\"id\":\"large\",\"quantity\":2}",
+    1
+  ],
+  [
+    "website/payment/booking-payment.spec.ts",
+    "SEC-01 tables creation boundary (mock persistence/provider) rejects invalid quantity \"2\" without a write/provider call",
+    1
+  ],
+  [
+    "website/payment/booking-payment.spec.ts",
+    "SEC-01 tables creation boundary (mock persistence/provider) rejects invalid quantity -1 without a write/provider call",
+    1
+  ],
+  [
+    "website/payment/booking-payment.spec.ts",
+    "SEC-01 tables creation boundary (mock persistence/provider) rejects invalid quantity 0 without a write/provider call",
+    1
+  ],
+  [
+    "website/payment/booking-payment.spec.ts",
+    "SEC-01 tables creation boundary (mock persistence/provider) rejects invalid quantity 1.5 without a write/provider call",
+    1
+  ],
+  [
+    "website/payment/booking-payment.spec.ts",
+    "SEC-01 tables creation boundary (mock persistence/provider) rejects invalid quantity 1001 without a write/provider call",
+    1
+  ],
+  [
+    "website/payment/booking-payment.spec.ts",
+    "SEC-01 tables creation boundary (mock persistence/provider) rejects invalid quantity 9007199254740991 without a write/provider call",
+    1
+  ],
+  [
+    "website/payment/booking-payment.spec.ts",
+    "SEC-01 tables creation boundary (mock persistence/provider) rejects invalid quantity Infinity without a write/provider call",
+    1
+  ],
+  [
+    "website/payment/booking-payment.spec.ts",
+    "SEC-01 tables creation boundary (mock persistence/provider) rejects invalid quantity NaN without a write/provider call",
+    1
+  ],
+  [
+    "website/payment/booking-payment.spec.ts",
+    "SEC-01 tables creation boundary (mock persistence/provider) rejects invalid quantity null without a write/provider call",
+    1
+  ],
+  [
+    "website/payment/booking-payment.spec.ts",
+    "SEC-01 tables creation boundary (mock persistence/provider) rejects invalid quantity undefined without a write/provider call",
+    1
+  ],
+  [
+    "website/payment/booking-payment.spec.ts",
+    "SEC-01 tables creation boundary (mock persistence/provider) rejects malformed runtime DTO []",
+    1
+  ],
+  [
+    "website/payment/booking-payment.spec.ts",
+    "SEC-01 tables creation boundary (mock persistence/provider) rejects malformed runtime DTO null",
+    1
+  ],
+  [
+    "website/payment/booking-payment.spec.ts",
+    "SEC-01 tables creation boundary (mock persistence/provider) rejects malformed runtime DTO {\"selectedTables\":\"table1\",\"selectedDate\":\"2026-12-10\",\"selectedTime\":\"18:00\",\"menuItems\":[{\"id\":\"meal\",\"quantity\":1}]}",
+    1
+  ],
+  [
+    "website/payment/booking-payment.spec.ts",
+    "SEC-01 tables creation boundary (mock persistence/provider) rejects malformed runtime DTO {\"selectedTables\":[\"table1\"],\"selectedDate\":\"2026-12-10\",\"selectedTime\":\"18:00\",\"menuItems\":null}",
+    1
+  ],
+  [
+    "website/payment/booking-payment.spec.ts",
+    "SEC-01 tables creation boundary (mock persistence/provider) rejects malformed runtime DTO {\"selectedTables\":[\"table1\"],\"selectedDate\":\"2026-12-10\",\"selectedTime\":\"18:00\",\"menuItems\":{}}",
+    1
+  ],
+  [
+    "website/payment/booking-payment.spec.ts",
+    "SEC-01 tables creation boundary (mock persistence/provider) rejects malformed runtime DTO {}",
+    1
+  ],
+  [
+    "website/payment/booking-payment.spec.ts",
+    "SEC-01 tables creation boundary (mock persistence/provider) rejects missing, foreign, unavailable or ambiguous selections {\"id\":\"disabled\",\"quantity\":1}",
+    1
+  ],
+  [
+    "website/payment/booking-payment.spec.ts",
+    "SEC-01 tables creation boundary (mock persistence/provider) rejects missing, foreign, unavailable or ambiguous selections {\"id\":\"drink\",\"quantity\":1}",
+    1
+  ],
+  [
+    "website/payment/booking-payment.spec.ts",
+    "SEC-01 tables creation boundary (mock persistence/provider) rejects missing, foreign, unavailable or ambiguous selections {\"id\":\"drink\",\"variantId\":\"foreign-v\",\"quantity\":1}",
+    1
+  ],
+  [
+    "website/payment/booking-payment.spec.ts",
+    "SEC-01 tables creation boundary (mock persistence/provider) rejects missing, foreign, unavailable or ambiguous selections {\"id\":\"foreign\",\"quantity\":1}",
+    1
+  ],
+  [
+    "website/payment/booking-payment.spec.ts",
+    "SEC-01 tables creation boundary (mock persistence/provider) rejects missing, foreign, unavailable or ambiguous selections {\"id\":\"foreign-v\",\"quantity\":1}",
+    1
+  ],
+  [
+    "website/payment/booking-payment.spec.ts",
+    "SEC-01 tables creation boundary (mock persistence/provider) rejects missing, foreign, unavailable or ambiguous selections {\"id\":\"hidden\",\"quantity\":1}",
+    1
+  ],
+  [
+    "website/payment/booking-payment.spec.ts",
+    "SEC-01 tables creation boundary (mock persistence/provider) rejects missing, foreign, unavailable or ambiguous selections {\"id\":\"meal\",\"variantId\":\"small\",\"quantity\":1}",
+    1
+  ],
+  [
+    "website/payment/booking-payment.spec.ts",
+    "SEC-01 tables creation boundary (mock persistence/provider) rejects missing, foreign, unavailable or ambiguous selections {\"id\":\"missing\",\"quantity\":1}",
+    1
+  ],
+  [
+    "website/payment/booking-payment.spec.ts",
+    "SEC-01 tables creation boundary (mock persistence/provider) rejects missing, foreign, unavailable or ambiguous selections {\"id\":\"small\",\"variantId\":\"large\",\"quantity\":1}",
+    1
+  ],
+  [
+    "website/payment/booking-payment.spec.ts",
+    "SEC-01 tables creation boundary (mock persistence/provider) uses exact minor-unit subtotal and half-up service rounding",
+    1
+  ],
+  [
+    "website/payment/booking-payment.spec.ts",
+    "both entrypoints return the same trusted amount and corrected variant carts remain valid",
+    1
+  ],
+  [
+    "website/payment/booking-payment.spec.ts",
+    "refuses money that cannot survive the existing numeric wire contract exactly",
+    1
+  ],
+  [
+    "website/payment/booking-payment.spec.ts",
+    "rejects invalid provider intents and changed integration revisions before bank calls",
+    1
+  ],
+  [
+    "website/provisioning/hostname.spec.ts",
+    "generated server hostname \t A  B\nC -> abc",
+    1
+  ],
+  [
+    "website/provisioning/hostname.spec.ts",
+    "generated server hostname   Dashboard   -> restaurant-dashboard",
+    1
+  ],
+  [
+    "website/provisioning/hostname.spec.ts",
+    "generated server hostname ---\ud83d\udca5--- -> restaurant",
+    1
+  ],
+  [
+    "website/provisioning/hostname.spec.ts",
+    "generated server hostname AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA -> aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    1
+  ],
+  [
+    "website/provisioning/hostname.spec.ts",
+    "generated server hostname Admin -> restaurant-admin",
+    1
+  ],
+  [
+    "website/provisioning/hostname.spec.ts",
+    "generated server hostname Caf\u00e9 Shavi Lomi! -> cafeshavilomi",
+    1
+  ],
+  [
+    "website/provisioning/hostname.spec.ts",
+    "generated server hostname Restaurant Vankisi -> restaurantvankisi",
+    1
+  ],
+  [
+    "website/provisioning/hostname.spec.ts",
+    "generated server hostname Vynic -> restaurant-vynic",
+    1
+  ],
+  [
+    "website/provisioning/hostname.spec.ts",
+    "generated server hostname Wine-Bar 7 -> wine-bar7",
+    1
+  ],
+  [
+    "website/provisioning/hostname.spec.ts",
+    "generated server hostname \u10ee\u10d0\u10ed\u10d0\u10de\u10e3\u10e0\u10d8 & \u10e6\u10d5\u10d8\u10dc\u10dd -> khachapurighvino",
+    1
+  ],
+  [
+    "website/provisioning/hostname.spec.ts",
+    "requestable hostname accepts a valid free-form label",
+    1
+  ],
+  [
+    "website/provisioning/hostname.spec.ts",
+    "requestable hostname refuses \"\"",
+    1
+  ],
+  [
+    "website/provisioning/hostname.spec.ts",
+    "requestable hostname refuses \"-x\"",
+    1
+  ],
+  [
+    "website/provisioning/hostname.spec.ts",
+    "requestable hostname refuses \"Vankisi\"",
+    1
+  ],
+  [
+    "website/provisioning/hostname.spec.ts",
+    "requestable hostname refuses \"dashboard\"",
+    1
+  ],
+  [
+    "website/provisioning/hostname.spec.ts",
+    "requestable hostname refuses \"van kisi\"",
+    1
+  ],
+  [
+    "website/provisioning/hostname.spec.ts",
+    "requestable hostname refuses \"vynic\"",
+    1
+  ],
+  [
+    "website/provisioning/hostname.spec.ts",
+    "requestable hostname refuses \"www\"",
+    1
+  ],
+  [
+    "website/reservation/table-identity-contract.spec.ts",
+    "table identity contract accepts only UUID-shaped canonical table ids",
+    1
+  ],
+  [
+    "website/reservation/table-identity-contract.spec.ts",
+    "table identity contract canEncodeTableCode agrees with encodeTableCode on every canEncode vector",
+    1
+  ],
+  [
+    "website/reservation/table-identity-contract.spec.ts",
+    "table identity contract canEncodeTableCode decides bookability exactly as recorded",
+    1
+  ],
+  [
+    "website/reservation/table-identity-contract.spec.ts",
+    "table identity contract decodeTableCode decodes every vector to its recorded floor and table",
+    1
+  ],
+  [
+    "website/reservation/table-identity-contract.spec.ts",
+    "table identity contract decodeTableCode round-trips every valid encode vector",
+    1
+  ],
+  [
+    "website/reservation/table-identity-contract.spec.ts",
+    "table identity contract encodeTableCode encodes every valid vector to its recorded code",
+    1
+  ],
+  [
+    "website/reservation/table-identity-contract.spec.ts",
+    "table identity contract encodeTableCode rejects every invalid vector rather than mis-encoding it",
+    1
+  ],
+  [
+    "website/reservation/table-identity-contract.spec.ts",
+    "table identity contract is the contract version this build expects",
+    1
+  ],
+  [
+    "website/reservation/table-identity-contract.spec.ts",
+    "table identity contract legacy divergence no longer accepts the inputs the hand-written version mis-encoded",
+    1
+  ],
+  [
+    "website/reservation/table-identity-contract.spec.ts",
+    "table identity contract the real seeded table set is unaffected encodes all 14 seeded tables to the codes they have always had",
+    1
+  ],
+  [
+    "website/reservation/table-identity-contract.spec.ts",
+    "table identity contract the real seeded table set is unaffected round-trips every seeded table back to itself",
+    1
+  ],
+  [
+    "website/tenancy/same-origin.spec.ts",
+    "isSameOriginRequest accepts a page posting to its own host through a host-preserving proxy",
+    1
+  ],
+  [
+    "website/tenancy/same-origin.spec.ts",
+    "isSameOriginRequest reads the forwarded host only behind a trusted proxy",
+    1
+  ],
+  [
+    "website/tenancy/same-origin.spec.ts",
+    "isSameOriginRequest refuses a different host, port or scheme default",
+    1
+  ],
+  [
+    "website/tenancy/same-origin.spec.ts",
+    "isSameOriginRequest refuses opaque, malformed and path-carrying origins",
+    1
+  ],
+  [
+    "website/tenancy/website-capabilities.spec.ts",
+    "shared website capabilities describes a Website-only Venue: menu, hours, gallery and accounts live; payments impossible",
+    1
+  ],
+  [
+    "website/tenancy/website-capabilities.spec.ts",
+    "shared website capabilities gives SAAS and CUSTOM the same backend answer; only the renderer column differs",
+    1
+  ],
+  [
+    "website/tenancy/website-capabilities.spec.ts",
+    "shared website capabilities makes reservations live once payments are included, configured and enabled",
+    1
+  ],
+  [
+    "website/tenancy/website-capabilities.spec.ts",
+    "shared website capabilities offers no switch for capabilities that are not built",
+    1
+  ],
+  [
+    "website/tenancy/website-capabilities.spec.ts",
+    "shared website capabilities publishes only what a frontend can use",
+    1
+  ],
+  [
+    "website/tenancy/website-capabilities.spec.ts",
+    "shared website capabilities turns an operator-disabled capability off without touching the others",
+    1
+  ],
+  [
+    "website/tenancy/website-host.spec.ts",
+    "isLocalDevelopmentHost does not treat a public name as local",
+    1
+  ],
+  [
+    "website/tenancy/website-host.spec.ts",
+    "isLocalDevelopmentHost recognises loopback, LAN and reserved development names",
+    1
+  ],
+  [
+    "website/tenancy/website-host.spec.ts",
+    "normalizeHostname keeps an IPv6 literal without its port",
+    1
+  ],
+  [
+    "website/tenancy/website-host.spec.ts",
+    "normalizeHostname lowercases and strips the port",
+    1
+  ],
+  [
+    "website/tenancy/website-host.spec.ts",
+    "normalizeHostname refuses an over-long host",
+    1
+  ],
+  [
+    "website/tenancy/website-host.spec.ts",
+    "normalizeHostname refuses anything that is not a bare host",
+    1
+  ],
+  [
+    "website/tenancy/website-host.spec.ts",
+    "normalizeHostname strips the root dot",
+    1
+  ],
+  [
+    "website/tenancy/website-host.spec.ts",
+    "requestHostnames drops malformed candidates instead of guessing",
+    1
+  ],
+  [
+    "website/tenancy/website-host.spec.ts",
+    "requestHostnames ignores X-Forwarded-Host unless a proxy is trusted",
+    1
+  ],
+  [
+    "website/tenancy/website-host.spec.ts",
+    "requestHostnames reads the Host header",
+    1
+  ],
+  [
+    "website/tenancy/website-host.spec.ts",
+    "requestHostnames takes only the first entry of a forwarded chain",
+    1
+  ],
+  [
+    "website/tenancy/website-tenant.guard.spec.ts",
+    "WebsiteTenantGuard never lets a request name its own venue",
+    1
+  ],
+  [
+    "website/tenancy/website-tenant.guard.spec.ts",
+    "WebsiteTenantGuard puts the resolved venue on the request for the entitlement check",
+    1
+  ],
+  [
+    "website/tenancy/website-tenant.guard.spec.ts",
+    "WebsiteTenantGuard refuses a host that belongs to no venue",
+    1
+  ],
+  [
+    "website/tenancy/website-tenant.service.spec.ts",
+    "WebsiteTenantService.resolveByHostname never queries for a malformed host",
+    1
+  ],
+  [
+    "website/tenancy/website-tenant.service.spec.ts",
+    "WebsiteTenantService.resolveByHostname reports NONE when the venue has no website configuration",
+    1
+  ],
+  [
+    "website/tenancy/website-tenant.service.spec.ts",
+    "WebsiteTenantService.resolveByHostname resolves a registered host to its venue and organization",
+    1
+  ],
+  [
+    "website/tenancy/website-tenant.service.spec.ts",
+    "WebsiteTenantService.resolveByHostname resolves nothing for an unregistered host",
+    1
+  ],
+  [
+    "website/tenancy/website-tenant.service.spec.ts",
+    "WebsiteTenantService.resolveByHostname stops serving a disabled domain while keeping the name reserved",
+    1
+  ],
+  [
+    "website/tenancy/website-tenant.service.spec.ts",
+    "WebsiteTenantService.resolveByHostname stops serving a disabled venue",
+    1
+  ],
+  [
+    "website/tenancy/website-tenant.service.spec.ts",
+    "WebsiteTenantService.resolveRequest does not apply the development fallback to a public host",
+    1
+  ],
+  [
+    "website/tenancy/website-tenant.service.spec.ts",
+    "WebsiteTenantService.resolveRequest fails closed on an unknown host in production, localhost included",
+    1
+  ],
+  [
+    "website/tenancy/website-tenant.service.spec.ts",
+    "WebsiteTenantService.resolveRequest falls back to the bootstrap host for local development only",
+    1
+  ],
+  [
+    "website/tenancy/website-tenant.service.spec.ts",
+    "WebsiteTenantService.resolveRequest ignores X-Forwarded-Host unless a proxy is trusted",
+    1
+  ],
+  [
+    "website/tenancy/website-tenant.service.spec.ts",
+    "WebsiteTenantService.resolveRequest lets the development fallback host be configured",
+    1
+  ],
+  [
+    "website/tenancy/website-tenant.service.spec.ts",
+    "WebsiteTenantService.resolveRequest never serves an unregistered named *.localhost site as the bootstrap Venue",
+    1
+  ],
+  [
+    "website/tenancy/website-tenant.service.spec.ts",
+    "WebsiteTenantService.resolveRequest resolves the venue that owns the Host header",
+    1
+  ],
+  [
+    "website/tenancy/website-tenant.service.spec.ts",
+    "WebsiteTenantService.resolveRequest treats a present trusted forwarded host as the only authority",
+    1
+  ],
+  [
+    "website/user/guest-booking-ownership.integration.spec.ts",
+    "SEC-02 real PostgreSQL / Nest HTTP Venue 0 (CUSTOM / SAAS) /api/bog/create-order binds only the session user and Host; owner alone sees the confirmed booking",
+    1
+  ],
+  [
+    "website/user/guest-booking-ownership.integration.spec.ts",
+    "SEC-02 real PostgreSQL / Nest HTTP Venue 0 (CUSTOM / SAAS) /api/bog/create-order keeps anonymous creation operational and discards forged body ownership",
+    1
+  ],
+  [
+    "website/user/guest-booking-ownership.integration.spec.ts",
+    "SEC-02 real PostgreSQL / Nest HTTP Venue 0 (CUSTOM / SAAS) /api/tables/reservations binds only the session user and Host; owner alone sees the confirmed booking",
+    1
+  ],
+  [
+    "website/user/guest-booking-ownership.integration.spec.ts",
+    "SEC-02 real PostgreSQL / Nest HTTP Venue 0 (CUSTOM / SAAS) /api/tables/reservations keeps anonymous creation operational and discards forged body ownership",
+    1
+  ],
+  [
+    "website/user/guest-booking-ownership.integration.spec.ts",
+    "SEC-02 real PostgreSQL / Nest HTTP Venue 0 (CUSTOM / SAAS) anonymous and ordinary-user maps keep the public occupancy projection without private data",
+    1
+  ],
+  [
+    "website/user/guest-booking-ownership.integration.spec.ts",
+    "SEC-02 real PostgreSQL / Nest HTTP Venue 0 (CUSTOM / SAAS) denies anonymous, tampered and unrelated principal cookies on my reservations",
+    1
+  ],
+  [
+    "website/user/guest-booking-ownership.integration.spec.ts",
+    "SEC-02 real PostgreSQL / Nest HTTP Venue 0 (CUSTOM / SAAS) ignores forged query identities and reservation ID; no guest claim endpoint exists",
+    1
+  ],
+  [
+    "website/user/guest-booking-ownership.integration.spec.ts",
+    "SEC-02 real PostgreSQL / Nest HTTP Venue 0 (CUSTOM / SAAS) rechecks the live WebsiteUser and rejects a valid cookie after that identity is removed",
+    1
+  ],
+  [
+    "website/user/guest-booking-ownership.integration.spec.ts",
+    "SEC-02 real PostgreSQL / Nest HTTP Venue 1 (CUSTOM / SAAS) /api/bog/create-order binds only the session user and Host; owner alone sees the confirmed booking",
+    1
+  ],
+  [
+    "website/user/guest-booking-ownership.integration.spec.ts",
+    "SEC-02 real PostgreSQL / Nest HTTP Venue 1 (CUSTOM / SAAS) /api/bog/create-order keeps anonymous creation operational and discards forged body ownership",
+    1
+  ],
+  [
+    "website/user/guest-booking-ownership.integration.spec.ts",
+    "SEC-02 real PostgreSQL / Nest HTTP Venue 1 (CUSTOM / SAAS) /api/tables/reservations binds only the session user and Host; owner alone sees the confirmed booking",
+    1
+  ],
+  [
+    "website/user/guest-booking-ownership.integration.spec.ts",
+    "SEC-02 real PostgreSQL / Nest HTTP Venue 1 (CUSTOM / SAAS) /api/tables/reservations keeps anonymous creation operational and discards forged body ownership",
+    1
+  ],
+  [
+    "website/user/guest-booking-ownership.integration.spec.ts",
+    "SEC-02 real PostgreSQL / Nest HTTP Venue 1 (CUSTOM / SAAS) anonymous and ordinary-user maps keep the public occupancy projection without private data",
+    1
+  ],
+  [
+    "website/user/guest-booking-ownership.integration.spec.ts",
+    "SEC-02 real PostgreSQL / Nest HTTP Venue 1 (CUSTOM / SAAS) denies anonymous, tampered and unrelated principal cookies on my reservations",
+    1
+  ],
+  [
+    "website/user/guest-booking-ownership.integration.spec.ts",
+    "SEC-02 real PostgreSQL / Nest HTTP Venue 1 (CUSTOM / SAAS) ignores forged query identities and reservation ID; no guest claim endpoint exists",
+    1
+  ],
+  [
+    "website/user/guest-booking-ownership.integration.spec.ts",
+    "SEC-02 real PostgreSQL / Nest HTTP Venue 1 (CUSTOM / SAAS) rechecks the live WebsiteUser and rejects a valid cookie after that identity is removed",
+    1
+  ],
+  [
+    "website/user/guest-booking-ownership.integration.spec.ts",
+    "SEC-02 real PostgreSQL / Nest HTTP fails closed for disabled-host despite forged browser Venue identity",
+    1
+  ],
+  [
+    "website/user/guest-booking-ownership.integration.spec.ts",
+    "SEC-02 real PostgreSQL / Nest HTTP fails closed for disabled-venue despite forged browser Venue identity",
+    1
+  ],
+  [
+    "website/user/guest-booking-ownership.integration.spec.ts",
+    "SEC-02 real PostgreSQL / Nest HTTP fails closed for unknown despite forged browser Venue identity",
+    1
+  ],
+  [
+    "website/user/guest-booking-ownership.integration.spec.ts",
+    "SEC-02 real PostgreSQL / Nest HTTP keeps commercial and CUSTOMER_ACCOUNTS guards authoritative on ownership reads",
+    1
+  ],
+  [
+    "website/user/guest-booking-ownership.integration.spec.ts",
+    "SEC-02 real PostgreSQL / Nest HTTP limits the restaurant administrator to its explicit adminVenueId",
+    1
+  ],
+  [
+    "website/user/guest-booking-ownership.integration.spec.ts",
+    "SEC-02 real PostgreSQL / Nest HTTP payment status for Venue 0 never grants private booking access from an identifier",
+    1
+  ],
+  [
+    "website/user/guest-booking-ownership.integration.spec.ts",
+    "SEC-02 real PostgreSQL / Nest HTTP payment status for Venue 1 never grants private booking access from an identifier",
+    1
+  ],
+  [
+    "website/user/guest-booking-ownership.integration.spec.ts",
+    "SEC-02 real PostgreSQL / Nest HTTP preserves historical authenticated ownership and does not require matching contact email",
+    1
+  ],
+  [
+    "website/user/guest-booking-ownership.integration.spec.ts",
+    "SEC-02 real PostgreSQL / Nest HTTP unverified victim-email signup returns zero guest bookings and zero private fields at either Venue",
+    1
+  ],
+  [
+    "website/user/guest-booking-ownership.spec.ts",
+    "SEC-02 guest booking ownership constrains ownership in the database query before projecting any rows",
+    1
+  ],
+  [
+    "website/user/guest-booking-ownership.spec.ts",
+    "SEC-02 guest booking ownership does not return a foreign-Venue booking bound to attacker",
+    1
+  ],
+  [
+    "website/user/guest-booking-ownership.spec.ts",
+    "SEC-02 guest booking ownership does not return a foreign-Venue booking bound to null",
+    1
+  ],
+  [
+    "website/user/guest-booking-ownership.spec.ts",
+    "SEC-02 guest booking ownership does not return another user-bound booking with the same contact email",
+    1
+  ],
+  [
+    "website/user/guest-booking-ownership.spec.ts",
+    "SEC-02 guest booking ownership preserves an existing user-bound COMPLETED booking even when contact email differs",
+    1
+  ],
+  [
+    "website/user/guest-booking-ownership.spec.ts",
+    "SEC-02 guest booking ownership preserves an existing user-bound CONFIRMED booking even when contact email differs",
+    1
+  ],
+  [
+    "website/user/guest-booking-ownership.spec.ts",
+    "SEC-02 guest booking ownership preserves the existing list status policy for CANCELLED",
+    1
+  ],
+  [
+    "website/user/guest-booking-ownership.spec.ts",
+    "SEC-02 guest booking ownership preserves the existing list status policy for FAILED",
+    1
+  ],
+  [
+    "website/user/guest-booking-ownership.spec.ts",
+    "SEC-02 guest booking ownership preserves the existing list status policy for PENDING",
+    1
+  ],
+  [
+    "website/user/guest-booking-ownership.spec.ts",
+    "SEC-02 guest booking ownership unverified victim-email signup cannot read the guest booking or its private fields",
+    1
+  ],
+  [
+    "website/user/guest-booking-ownership.spec.ts",
+    "SEC-02 guest booking ownership uses the authenticated request ID, ignoring body and email identity claims",
+    1
+  ],
+  [
+    "website/user/guest-booking-ownership.spec.ts",
+    "SEC-02 payment status is not reservation ownership returns only a status for provider outcome completed, never the private booking row",
+    1
+  ],
+  [
+    "website/user/guest-booking-ownership.spec.ts",
+    "SEC-02 payment status is not reservation ownership returns only a status for provider outcome pending, never the private booking row",
+    1
+  ],
+  [
+    "website/user/guest-booking-ownership.spec.ts",
+    "SEC-02 payment status is not reservation ownership returns only a status for provider outcome rejected, never the private booking row",
+    1
+  ]
+]

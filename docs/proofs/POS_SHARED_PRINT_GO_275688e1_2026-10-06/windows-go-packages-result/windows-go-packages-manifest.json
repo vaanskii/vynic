@@ -1,0 +1,138 @@
+{
+  "schema": 1,
+  "createdAtUtc": "2026-10-06T16:35:49.250435+00:00",
+  "scope": "Frozen V2 exact source163 and seven native Windows package qualifications only",
+  "artifactCount": 32,
+  "artifacts": {
+    "windows-go-packages-stage/binary-manifest.json": {
+      "bytes": 1835,
+      "sha256": "892ef428f0db71132d6ab42d55c73678e1f8977139fd4765c2b6ffd2acc6ebd7"
+    },
+    "windows-go-packages-stage/go-final-source-snapshot.json": {
+      "bytes": 27289,
+      "sha256": "d694adbe1410f005d6285396f81a7126cdc7b9fb9f44b08a01f7f3c5e523330a"
+    },
+    "windows-go-packages-stage/go-final-windows-package-tests.json": {
+      "bytes": 9931,
+      "sha256": "57441bd7550ab4e0056ce34b36579ca56222ee5e58588bce9a7552963c79a404"
+    },
+    "windows-go-packages-stage/packages7.zip": {
+      "bytes": 71374136,
+      "sha256": "83dfe5f095d8fb2dc449e303a146af5a5ce62a0d01729cc514aaf526d67d99f1"
+    },
+    "windows-go-packages-stage/run.ps.txt": {
+      "bytes": 8332,
+      "sha256": "432ad76e87cdc30f5a5d1970c144c9b135b6eb727cb0770e8fdd1fd3f9879fd5"
+    },
+    "windows-go-packages-stage/source-manifest.json": {
+      "bytes": 26916,
+      "sha256": "d53020e8af7b46e3cb4dc86f3d25edc1eece27f463dde91b0f264908aa577d27"
+    },
+    "windows-go-packages-stage/source163.zip": {
+      "bytes": 383910,
+      "sha256": "88c65e4717e896698ebeb612fb9b3963061baf5ba12e106001345ebf56611aae"
+    },
+    "windows-go-packages-stage/stage-receipt.json": {
+      "bytes": 2476,
+      "sha256": "6df33960c0f019889995f69bcd327e5288e73c662cf59e98db81c91a55680f3f"
+    },
+    "windows-go-packages-stage/vynic_print_helper.exe": {
+      "bytes": 316416,
+      "sha256": "b720e1eedc77ab574d769865e39f71506a5f3ebc9d93ab5166bc3f112203019d"
+    },
+    "windows-go-packages-result/acceptance-matrix-v8-baseline.json": {
+      "bytes": 146369,
+      "sha256": "42e98fcead35c11171c9389dd31b7614b4788a7c8c096e4fe3a8841a876842d5"
+    },
+    "windows-go-packages-result/counter-evidence-classes.json": {
+      "bytes": 1242,
+      "sha256": "0fb35fd343ba77e3f3e6cf7a42a0c0627b9e18853ce62487a26ef1b71f3bd3b0"
+    },
+    "windows-go-packages-result/host-launch.json": {
+      "bytes": 994,
+      "sha256": "ef6ad04b194b995bc798e505aa527a72acdc3b68619c8634f8b6f9a74da5f5a8"
+    },
+    "windows-go-packages-result/host-prlctl.log": {
+      "bytes": 70788,
+      "sha256": "5e721e1038d1d4275f1c3fb90fbab93dbf8fa3a8ca0164cd2c75e6c4982acdc3"
+    },
+    "windows-go-packages-result/host-reference-locations.json": {
+      "bytes": 2037,
+      "sha256": "1acc8e7e6b755746b4c3ab06c9f7368fb337991ce285729c4ef39638bdf1e1b9"
+    },
+    "windows-go-packages-result/printcluster.stderr.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "windows-go-packages-result/printcluster.stdout.log": {
+      "bytes": 14162,
+      "sha256": "dec6c98e8d18e9be636528ff9c056e36669d264efbf5a01b35c91e982ce13209"
+    },
+    "windows-go-packages-result/printeligibility.stderr.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "windows-go-packages-result/printeligibility.stdout.log": {
+      "bytes": 721,
+      "sha256": "22ca3cca6f6c90da26fbb4555f3e791855cdcc982ca34de14c3d879957ffdb57"
+    },
+    "windows-go-packages-result/printhost.stderr.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "windows-go-packages-result/printhost.stdout.log": {
+      "bytes": 4567,
+      "sha256": "19e813adea0ee613d6704e6d047b1ed12f7da2428f21af174e602f17f0c45be7"
+    },
+    "windows-go-packages-result/printqueue.stderr.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "windows-go-packages-result/printqueue.stdout.log": {
+      "bytes": 8437,
+      "sha256": "b90650ae4f8cf40e53666709c1db449eb0bddac4e9ce3bf5a6425b5a79647756"
+    },
+    "windows-go-packages-result/printtransport.stderr.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "windows-go-packages-result/printtransport.stdout.log": {
+      "bytes": 5061,
+      "sha256": "34c58c9e3ea1c91947aa86c6d86d5fa357b895125284c4243e1d1e9d4631dd35"
+    },
+    "windows-go-packages-result/server.stderr.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "windows-go-packages-result/server.stdout.log": {
+      "bytes": 6752,
+      "sha256": "2dc0f96273081aebe1fa380ca59ab1f5f4a36852e81dab0aa9ad9a1e243c02a8"
+    },
+    "windows-go-packages-result/stage_windows_go_packages.py": {
+      "bytes": 13428,
+      "sha256": "1e64f7d7084d954c363820e9fa182026a25c82d6bf40274a70eeded534bda2e4"
+    },
+    "windows-go-packages-result/store.stderr.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "windows-go-packages-result/store.stdout.log": {
+      "bytes": 19188,
+      "sha256": "a1c8215ce8338a6d8bd437426d074f468bc42bc12add26a2581e3895ca779a55"
+    },
+    "windows-go-packages-result/verified-windows-go-packages.json": {
+      "bytes": 189639,
+      "sha256": "3f770fdeea21482d1069a2fb40fc520b44f3bdffc29817cee67a0020f0768454"
+    },
+    "windows-go-packages-result/verify_windows_go_packages.py": {
+      "bytes": 8412,
+      "sha256": "1cf50755cb0f0c202140a7bada267ed8d8a801fcdc180d0a7609d69f6800c7d9"
+    },
+    "windows-go-packages-result/windows-go-packages.json": {
+      "bytes": 9418,
+      "sha256": "a0278f15814e55d1f86926d5c4bea7ef629aea4ed005f8095efecf5edc72d922"
+    }
+  },
+  "selfExcluded": "This manifest is hashed separately by the final report; it does not contain its own digest.",
+  "priorProofs": "No earlier packet or original runtime/source file changed."
+}

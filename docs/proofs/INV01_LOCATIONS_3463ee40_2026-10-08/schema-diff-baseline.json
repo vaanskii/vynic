@@ -1,0 +1,8 @@
+{
+  "currentExitCode": 2,
+  "baselineExitCode": 2,
+  "baselineSchemaHashMatchesStart": true,
+  "currentDiffEqualsBaseline": true,
+  "newInventoryDrift": false,
+  "preexistingDrift": "Two DevicePrinterRuntimeRequest foreign-key names differ from their Prisma defaults; unrelated source preserved."
+}

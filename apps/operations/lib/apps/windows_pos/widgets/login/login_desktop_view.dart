@@ -524,13 +524,6 @@ class _LoginPanelSurface extends StatelessWidget {
         color: VynicFloorTokens.panel,
         borderRadius: BorderRadius.circular(VynicFloorTokens.panelRadius),
         border: Border.all(color: VynicFloorTokens.panelBorder),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x0A1C1A19),
-            blurRadius: 18,
-            offset: Offset(0, 8),
-          ),
-        ],
       ),
       child: child,
     );

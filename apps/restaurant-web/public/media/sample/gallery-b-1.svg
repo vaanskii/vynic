@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 900" role="img" aria-label="Harbour">
+  <rect width="1200" height="900" fill="#0f2933"/>
+  <g fill="#dfeef2" opacity="0.35">
+    <circle cx="300" cy="300" r="150"/>
+    <rect x="600" y="225" width="400" height="450"/>
+  </g>
+  <text x="50%" y="92%" text-anchor="middle" font-family="serif" font-size="64" fill="#dfeef2">Harbour</text>
+</svg>

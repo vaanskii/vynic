@@ -19,7 +19,9 @@ export function resolveEffectiveFeatures(
   planFeatureKeys: readonly string[],
   overrides: readonly VenueFeatureOverrideInput[],
 ): string[] {
-  const effective = new Set(planFeatureKeys);
+  const effective = new Set(
+    planFeatureKeys.filter((key) => key !== 'NON_FISCAL_CLOSE'),
+  );
 
   for (const override of overrides) {
     if (override.effect === FeatureOverrideEffect.ENABLED) {

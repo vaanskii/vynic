@@ -1,4 +1,8 @@
-import 'package:vynic/core/services/pos/pos_input_settings.dart';
+import 'package:vynic/apps/windows_pos/widgets/shared/pos_amount_form.dart';
+import 'package:vynic/core/ui/widgets/pos_dialog.dart';
+import 'package:vynic/core/database/local_data_admission.dart';
+import 'package:vynic/core/services/pos/order_confirmation_print.dart';
+import 'package:vynic/core/database/repositories/order_table_mutation_repository.dart';
 import 'package:vynic/core/services/pos/update/update_readiness.dart';
 import 'package:vynic/core/database/repositories/inventory_repository.dart';
 import 'package:vynic/core/models/feature_keys.dart';
@@ -6,6 +10,7 @@ import 'dart:async';
 import 'dart:developer' as developer;
 
 import 'package:flutter/material.dart';
+import '../widgets/shared/print_jobs.dart';
 import 'package:vynic/core/models/user.dart';
 import 'package:vynic/core/models/order.dart';
 import 'package:vynic/core/models/pos_permission.dart';
@@ -25,8 +30,6 @@ import 'package:vynic/core/widgets/pin_button.dart';
 import 'package:vynic/core/widgets/pos_keyboard/pos_keyboard_sheet.dart';
 import 'package:vynic/core/services/pos/table_payment_service.dart';
 import 'package:vynic/core/services/pos/order_item_transfer.dart';
-import 'package:vynic/core/services/edge/orders_tables/shadow.dart';
-import 'package:vynic/core/services/edge/orders_tables/pos_shadow_projection.dart';
 import 'package:vynic/core/utils/pos_feedback.dart';
 import 'package:vynic/core/utils/table_naming.dart';
 import 'package:vynic/apps/windows_pos/widgets/order/order_detail_content_section.dart';
@@ -59,9 +62,11 @@ class OrderDetailScreen extends StatefulWidget {
 
 class _OrderDetailScreenState extends State<OrderDetailScreen> {
   Order? _order;
+  String? _loadFailure;
   Reservation? _linkedReservation;
   late bool _serviceFeeAvailable;
   bool _autoConfirmTriggered = false;
+  bool _kitchenCopyPending = false;
   Set<String>? _mobileHighlightItemKeys;
   StreamSubscription<SyncEvent>? _syncEventsSub;
 
@@ -196,20 +201,8 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     return ownerId == widget.user.username;
   }
 
-  bool _canCurrentUserModifyOrder(Order order) {
-    // Admin can always modify orders
-    if (widget.user.isAdmin) {
-      return true;
-    }
-
-    final restrictToOwner = DatabaseService.isTableCloseRestrictedToOwner();
-    if (!restrictToOwner) {
-      return true;
-    }
-
-    final ownerId = order.openedByUserId ?? order.createdBy;
-    return ownerId == widget.user.username;
-  }
+  bool _canCurrentUserModifyOrder(Order order) =>
+      OrderDetailCommonHelpers.canModifyOrder(widget.user, order);
 
   bool get _isTakeAwayOrder => _order != null && _isTakeAway(_order!);
 
@@ -261,53 +254,18 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     TimeOfDay? initialTime,
     int? initialGuests,
   }) {
-    return showGeneralDialog<Map<String, dynamic>>(
-      context: context,
-      barrierLabel: title,
-      barrierColor: Colors.black.withValues(alpha: 0.85),
-      barrierDismissible: true,
-      transitionDuration: const Duration(milliseconds: 220),
-      pageBuilder: (dialogContext, animation, secondaryAnimation) {
-        final mediaQuery = MediaQuery.of(dialogContext);
-        return SafeArea(
-          child: Center(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-              child: ConstrainedBox(
-                constraints: BoxConstraints(
-                  maxWidth: mediaQuery.size.width * 0.9,
-                  maxHeight: mediaQuery.size.height * 0.95,
-                ),
-                child: ReservationCreationSheet(
-                  onCancel: () => Navigator.of(dialogContext).pop(),
-                  title: title,
-                  confirmLabel: confirmLabel,
-                  initialName: initialName,
-                  initialPhone: initialPhone,
-                  initialNotes: initialNotes,
-                  initialDate: initialDate,
-                  initialTime: initialTime,
-                  initialGuests: initialGuests,
-                ),
-              ),
-            ),
-          ),
-        );
-      },
-      transitionBuilder: (context, animation, secondaryAnimation, child) {
-        final curved = CurvedAnimation(
-          parent: animation,
-          curve: Curves.easeOutCubic,
-          reverseCurve: Curves.easeInCubic,
-        );
-        return FadeTransition(
-          opacity: curved,
-          child: ScaleTransition(
-            scale: Tween<double>(begin: 0.95, end: 1).animate(curved),
-            child: child,
-          ),
-        );
-      },
+    return ReservationCreationSheet.show(
+      context,
+      form: ReservationCreationSheet(
+        title: title,
+        confirmLabel: confirmLabel,
+        initialName: initialName,
+        initialPhone: initialPhone,
+        initialNotes: initialNotes,
+        initialDate: initialDate,
+        initialTime: initialTime,
+        initialGuests: initialGuests,
+      ),
     );
   }
 
@@ -319,7 +277,9 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
   /// keeps it out of table-availability checks, since the table is plainly not
   /// bookable by anyone else while this order is open.
   Future<void> _createReservationForTable() async {
-    final order = _order;
+    final order = _order == null
+        ? null
+        : OrderTableMutationRepository.capture(_order!);
     if (order == null || _isTakeAwayOrder) {
       return;
     }
@@ -454,35 +414,74 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
   }
 
   void _loadOrder() {
-    final fetchedOrder = DatabaseService.getOrder(widget.orderId);
-    final serviceFeeAvailable = DatabaseService.isServiceFeeAvailable();
-    Reservation? linkedReservation;
+    unawaited(
+      UpdateReadiness.track('loadOrder', () async {
+        if (mounted) await _admittedloadOrder();
+      }).catchError((Object error, StackTrace stack) {
+        developer.log(
+          'POS mutation could not be admitted',
+          error: error,
+          stackTrace: stack,
+        );
+        if (!mounted) return;
+        Order? readable;
+        try {
+          readable = DatabaseService.getOrder(widget.orderId);
+        } catch (readError, readStack) {
+          developer.log(
+            'Order view requires repair',
+            error: readError,
+            stackTrace: readStack,
+            name: 'order_detail',
+          );
+        }
+        final message = error is OrderMutationConflict
+            ? error.userMessage
+            : LocalDataAdmission.failure != null
+            ? 'ოპერაცია აღსადგენია — გადატვირთეთ POS'
+            : 'მოქმედება ვერ შესრულდა — განაახლეთ შეკვეთა';
+        final changed = _loadFailure != message;
+        setState(() {
+          _order = readable;
+          _loadFailure = message;
+        });
+        if (changed)
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) unawaited(showErrorToast(context, message));
+          });
+      }),
+    );
+  }
 
-    if (fetchedOrder != null) {
-      final isTakeAway = _isTakeAway(fetchedOrder);
-      if (!serviceFeeAvailable &&
+  Future<void> _admittedloadOrder() async {
+    final view = await UpdateReadiness.mutate('normalizeOrderView', () async {
+      final fetchedOrder = DatabaseService.getOrder(widget.orderId);
+      final serviceFeeAvailable = DatabaseService.isServiceFeeAvailable();
+      if (fetchedOrder != null &&
+          (!serviceFeeAvailable || _isTakeAway(fetchedOrder)) &&
           fetchedOrder.includeServiceFee &&
           !_isFinalizedStatus(fetchedOrder.status)) {
+        OrderTableMutationRepository.requireFresh(fetchedOrder);
         fetchedOrder.includeServiceFee = false;
         fetchedOrder.recalculateTotal();
         fetchedOrder.updatedAt = DatabaseService.getCurrentDateTime();
-        fetchedOrder.save();
+        await fetchedOrder.save();
       }
-      if (isTakeAway &&
-          fetchedOrder.includeServiceFee &&
-          !_isFinalizedStatus(fetchedOrder.status)) {
-        fetchedOrder.includeServiceFee = false;
-        fetchedOrder.recalculateTotal();
-        fetchedOrder.updatedAt = DatabaseService.getCurrentDateTime();
-        fetchedOrder.save();
-      }
-      linkedReservation = DatabaseService.findReservationForOrder(fetchedOrder);
-    }
-
+      return (
+        fetchedOrder,
+        serviceFeeAvailable,
+        fetchedOrder == null
+            ? null
+            : DatabaseService.findReservationForOrder(fetchedOrder),
+      );
+    });
+    if (!mounted) return;
+    final (fetchedOrder, serviceFeeAvailable, linkedReservation) = view;
     setState(() {
       _order = fetchedOrder;
       _linkedReservation = linkedReservation;
       _serviceFeeAvailable = serviceFeeAvailable;
+      _loadFailure = null;
     });
 
     if (widget.autoConfirmOnLoad &&
@@ -611,7 +610,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
         ? null
         : _order!.tableNumbers.join(', ');
 
-    PrinterService.printReceiptInBackground(
+    await PrinterService.printReceiptInBackground(
       items: itemsWithWaiter,
       total: _order!.totalAmount,
       subtotal: _order!.getItemsSubtotal(),
@@ -628,9 +627,19 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
       onComplete: (success) {
         if (!mounted) return;
         if (success) {
-          unawaited(showSuccessToast(context, 'ქვითარი დაიბეჭდა'));
+          unawaited(
+            showSuccessToast(
+              context,
+              'გაიგზავნა პრინტერზე — შეამოწმეთ ქაღალდი',
+            ),
+          );
         } else {
-          unawaited(showErrorToast(context, 'პრინტერი მიუწვდომელია'));
+          unawaited(
+            showErrorToast(
+              context,
+              'ბეჭდვა ვერ დადასტურდა — შეამოწმეთ ბეჭდვის სია',
+            ),
+          );
         }
       },
     );
@@ -763,45 +772,63 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
   }
 
   void _toggleServiceFee() {
-    final order = _order;
-    if (order == null || _isTakeAwayOrder) {
+    final order = _order == null
+        ? null
+        : OrderTableMutationRepository.capture(_order!);
+    if (order == null ||
+        _isTakeAwayOrder ||
+        !_serviceFeeAvailable ||
+        _isFinalizedStatus(order.status))
       return;
-    }
-    if (!_serviceFeeAvailable) {
-      return;
-    }
-    if (_isFinalizedStatus(order.status)) {
-      return;
-    }
-
-    final defaultPercent = DatabaseService.getServiceFeePercentage();
-    final effectivePercent = order.getEffectiveServiceFeePercentage(
-      globalDefaultPercentage: defaultPercent,
-    );
-
-    final prevInclude = order.includeServiceFee;
-    final prevTotal = order.totalAmount;
-    setState(() {
-      order.includeServiceFee = !prevInclude;
-      order.recalculateTotal(serviceFeeRate: effectivePercent / 100);
-      order.updatedAt = DatabaseService.getCurrentDateTime();
-      unawaited(
-        DatabaseService.updateOrder(
-          order,
-          previousIncludeServiceFee: prevInclude,
-        ),
-      );
-    });
     unawaited(
-      MoneyAudit.orderServiceFeeChanged(
-        actorId: widget.user.username,
-        orderId: order.orderId,
-        previousIncluded: prevInclude,
-        newIncluded: order.includeServiceFee,
-        previousPercent: effectivePercent,
-        newPercent: effectivePercent,
-        previousTotal: prevTotal,
-        newTotal: order.totalAmount,
+      UpdateReadiness.mutate('toggleServiceFee', () async {
+            OrderTableMutationRepository.requireFresh(order);
+            final percent = order.getEffectiveServiceFeePercentage(
+              globalDefaultPercentage:
+                  DatabaseService.getServiceFeePercentage(),
+            );
+            final before = order.includeServiceFee;
+            final beforeTotal = order.totalAmount;
+            order.includeServiceFee = !before;
+            order.recalculateTotal(serviceFeeRate: percent / 100);
+            order.updatedAt = DatabaseService.getCurrentDateTime();
+            await DatabaseService.updateOrder(
+              order,
+              previousIncludeServiceFee: before,
+            );
+            await MoneyAudit.orderServiceFeeChanged(
+              actorId: widget.user.username,
+              orderId: order.orderId,
+              previousIncluded: before,
+              newIncluded: order.includeServiceFee,
+              previousPercent: percent,
+              newPercent: percent,
+              previousTotal: beforeTotal,
+              newTotal: order.totalAmount,
+            );
+          })
+          .then<void>((_) {
+            if (mounted) _loadOrder();
+          })
+          .catchError(_mutationFailed),
+    );
+  }
+
+  void _mutationFailed(Object error, StackTrace stack) {
+    developer.log(
+      'Order mutation refused',
+      error: error,
+      stackTrace: stack,
+      name: 'order_detail',
+    );
+    if (!mounted) return;
+    _loadOrder();
+    unawaited(
+      showErrorToast(
+        context,
+        error is OrderMutationConflict
+            ? error.userMessage
+            : 'მოქმედება ვერ შესრულდა — განაახლეთ შეკვეთა',
       ),
     );
   }
@@ -815,8 +842,15 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     unawaited(_showServiceFeeAdjustDialog());
   }
 
-  Future<void> _showServiceFeeAdjustDialog() async {
-    final order = _order;
+  Future<void> _showServiceFeeAdjustDialog() => UpdateReadiness.track(
+    'showServiceFeeAdjustDialog',
+    () => _admittedshowServiceFeeAdjustDialog(),
+  );
+
+  Future<void> _admittedshowServiceFeeAdjustDialog() async {
+    final order = _order == null
+        ? null
+        : OrderTableMutationRepository.capture(_order!);
     if (order == null || _isTakeAwayOrder) {
       return;
     }
@@ -832,10 +866,11 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
       globalDefaultPercentage: defaultPercent,
     );
 
-    final result = await showDialog<ServiceFeeAdjustResult>(
+    final result = await showPosModal<ServiceFeeAdjustResult>(
       context: context,
       barrierDismissible: false,
       builder: (dialogContext) => ServiceFeeAdjustDialog(
+        usePosLayout: true,
         initialIncludeServiceFee: order.includeServiceFee,
         initialPercentage: initialPercent,
         defaultPercentage: defaultPercent,
@@ -853,40 +888,47 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     );
     final useGlobalDefault = (normalizedPercent - defaultPercent).abs() < 0.01;
 
-    final prevInclude = order.includeServiceFee;
-    final prevTotal = order.totalAmount;
-    setState(() {
-      order
-        ..includeServiceFee = result.includeServiceFee
-        ..customServiceFeePercentage = useGlobalDefault
-            ? null
-            : normalizedPercent;
-
-      order.recalculateTotal(serviceFeeRate: normalizedPercent / 100);
-      order.updatedAt = DatabaseService.getCurrentDateTime();
-    });
-    unawaited(
-      DatabaseService.updateOrder(
-        order,
-        previousIncludeServiceFee: prevInclude,
-      ),
-    );
-    unawaited(
-      MoneyAudit.orderServiceFeeChanged(
-        actorId: widget.user.username,
-        orderId: order.orderId,
-        previousIncluded: prevInclude,
-        newIncluded: order.includeServiceFee,
-        previousPercent: initialPercent,
-        newPercent: normalizedPercent,
-        previousTotal: prevTotal,
-        newTotal: order.totalAmount,
-      ),
-    );
+    try {
+      await UpdateReadiness.mutate('adjustServiceFee', () async {
+        OrderTableMutationRepository.requireFresh(order);
+        final prevInclude = order.includeServiceFee;
+        final prevTotal = order.totalAmount;
+        order
+          ..includeServiceFee = result.includeServiceFee
+          ..customServiceFeePercentage = useGlobalDefault
+              ? null
+              : normalizedPercent;
+        order.recalculateTotal(serviceFeeRate: normalizedPercent / 100);
+        order.updatedAt = DatabaseService.getCurrentDateTime();
+        await DatabaseService.updateOrder(
+          order,
+          previousIncludeServiceFee: prevInclude,
+        );
+        await MoneyAudit.orderServiceFeeChanged(
+          actorId: widget.user.username,
+          orderId: order.orderId,
+          previousIncluded: prevInclude,
+          newIncluded: order.includeServiceFee,
+          previousPercent: initialPercent,
+          newPercent: normalizedPercent,
+          previousTotal: prevTotal,
+          newTotal: order.totalAmount,
+        );
+      });
+      if (mounted) _loadOrder();
+    } catch (error, stack) {
+      _mutationFailed(error, stack);
+    }
   }
 
-  Future<void> _showDiscountDialog() async {
+  Future<void> _showDiscountDialog() => UpdateReadiness.track(
+    'showDiscountDialog',
+    () => _admittedshowDiscountDialog(),
+  );
+
+  Future<void> _admittedshowDiscountDialog() async {
     if (_order == null) return;
+    final captured = OrderTableMutationRepository.capture(_order!);
     if (!PosPermissions.has(widget.user, PosPermission.applyDiscount)) {
       unawaited(
         showErrorToast(
@@ -916,217 +958,95 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
           : '',
     );
 
-    final discount = await showDialog<double>(
+    final discount = await showPosModal<double>(
       context: context,
       barrierDismissible: false,
-      builder: (dialogContext) {
-        return Dialog(
-          backgroundColor: Colors.white,
-          insetPadding: const EdgeInsets.symmetric(
-            horizontal: 24,
-            vertical: 24,
-          ),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 520),
-            child: SingleChildScrollView(
-              child: Padding(
-                padding: const EdgeInsets.all(18),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Container(
-                          width: 40,
-                          height: 40,
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFEFF6FF),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: const Icon(
-                            Icons.discount,
-                            color: Color(0xFF2563EB),
-                            size: 22,
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        const Expanded(
-                          child: Text(
-                            'ფასდაკლება',
-                            style: TextStyle(
-                              color: Color(0xFF0F172A),
-                              fontSize: 20,
-                              fontWeight: FontWeight.w800,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 10),
-                    Text(
-                      'მაქსიმალური: ${maxDiscount.toStringAsFixed(2)} GEL',
-                      style: const TextStyle(
-                        color: Color(0xFF475569),
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    TextField(
-                      controller: controller,
-                      readOnly: PosInputSettings.useOnScreen(context),
-                      style: const TextStyle(
-                        color: Color(0xFF0F172A),
-                        fontSize: 26,
-                        fontWeight: FontWeight.w800,
-                      ),
-                      textAlign: TextAlign.center,
-                      decoration: InputDecoration(
-                        hintText: '0.00',
-                        hintStyle: const TextStyle(color: Color(0xFF94A3B8)),
-                        suffixText: 'GEL',
-                        suffixStyle: const TextStyle(
-                          color: Color(0xFF475569),
-                          fontWeight: FontWeight.w600,
-                        ),
-                        filled: true,
-                        fillColor: const Color(0xFFF8FAFC),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(
-                            color: Color(0xFFE2E8F0),
-                          ),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(
-                            color: Color(0xFFE2E8F0),
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    _buildNumericKeyboard(controller),
-                    const SizedBox(height: 12),
-                    Row(
-                      children: [
-                        if (_order!.effectiveAdvanceAmount > 0)
-                          TextButton(
-                            onPressed: () => Navigator.pop(dialogContext, 0.0),
-                            style: TextButton.styleFrom(
-                              foregroundColor: const Color(0xFFDC2626),
-                            ),
-                            child: const Text(
-                              'წაშლა',
-                              style: TextStyle(fontWeight: FontWeight.w700),
-                            ),
-                          ),
-                        const Spacer(),
-                        TextButton(
-                          onPressed: () => Navigator.pop(dialogContext),
-                          style: TextButton.styleFrom(
-                            foregroundColor: const Color(0xFF475569),
-                          ),
-                          child: const Text('გაუქმება'),
-                        ),
-                        const SizedBox(width: 8),
-                        ElevatedButton(
-                          onPressed: () {
-                            final value =
-                                double.tryParse(controller.text) ?? 0.0;
-                            const double epsilon = 0.01;
-                            if (value - maxDiscount > epsilon) {
-                              unawaited(
-                                showErrorToast(
-                                  dialogContext,
-                                  'ფასდაკლება არ უნდა აღემატებოდეს ${maxDiscount.toStringAsFixed(2)} GEL',
-                                ),
-                              );
-                              return;
-                            }
-                            Navigator.pop(dialogContext, value);
-                          },
-                          style: ElevatedButton.styleFrom(
-                            elevation: 0,
-                            backgroundColor: const Color(0xFF2563EB),
-                            foregroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                          ),
-                          child: const Text('შენახვა'),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        );
-      },
+      builder: (dialogContext) => PosAmountForm(
+        title: 'ფასდაკლება',
+        description: 'მაქსიმალური: ${maxDiscount.toStringAsFixed(2)} GEL',
+        controller: controller,
+        keypad: _buildNumericKeyboard(controller),
+        clearLabel: _order!.effectiveAdvanceAmount > 0 ? 'წაშლა' : null,
+        parse: (raw) => double.tryParse(raw) ?? 0.0,
+        validate: (raw) {
+          final value = double.tryParse(raw) ?? 0.0;
+          const double epsilon = 0.01;
+          return value - maxDiscount > epsilon
+              ? 'ფასდაკლება არ უნდა აღემატებოდეს ${maxDiscount.toStringAsFixed(2)} GEL'
+              : null;
+        },
+      ),
     );
 
     if (discount != null) {
-      final order = _order!;
-      final previousAdvance = order.effectiveAdvanceAmount;
-      final previousTotal = order.totalAmount;
-      final collectedOn = DatabaseService.getCurrentDate()
-          .toIso8601String()
-          .split('T')[0];
+      try {
+        await UpdateReadiness.mutate('adjustOrderMoney', () async {
+          OrderTableMutationRepository.requireFresh(captured);
+          final order = captured;
+          final previousAdvance = order.effectiveAdvanceAmount;
+          final previousTotal = order.totalAmount;
+          final collectedOn = DatabaseService.getCurrentDate()
+              .toIso8601String()
+              .split('T')[0];
 
-      // The receipt is written when the money is taken, dated today — not at
-      // close, dated the closing day. A deposit collected on Monday and spent
-      // on Friday belongs to Monday's cash, and the closure only applies it.
-      final receiptId = await DatabaseService.recordAdvanceReceipt(
-        orderId: order.orderId,
-        amount: discount,
-        collectedBy: widget.user.username,
-        receiptId: order.advanceReceiptId,
-        businessDate: order.advanceCollectedOn ?? collectedOn,
-      );
+          // The receipt is written when the money is taken, dated today — not at
+          // close, dated the closing day. A deposit collected on Monday and spent
+          // on Friday belongs to Monday's cash, and the closure only applies it.
+          final receiptId = await DatabaseService.recordAdvanceReceipt(
+            orderId: order.orderId,
+            amount: discount,
+            collectedBy: widget.user.username,
+            receiptId: order.advanceReceiptId,
+            businessDate: order.advanceCollectedOn ?? collectedOn,
+          );
 
-      if (!mounted) {
-        controller.dispose();
-        return;
+          if (!mounted) {
+            controller.dispose();
+            return;
+          }
+          await order.setAdvance(
+            discount,
+            collectedOn: order.advanceCollectedOn ?? collectedOn,
+            receiptId: receiptId,
+          );
+          if (mounted) setState(() {});
+          await DatabaseService.refreshDailySalesTotalForDate(
+            DatabaseService.getCurrentDate(),
+          );
+          unawaited(
+            MoneyAudit.advanceRecorded(
+              actorId: widget.user.username,
+              orderId: order.orderId,
+              previousAmount: previousAdvance,
+              newAmount: order.effectiveAdvanceAmount,
+              businessDate: order.advanceCollectedOn ?? collectedOn,
+              receiptId: receiptId,
+            ),
+          );
+          developer.log(
+            'Advance on order #${order.orderId}: '
+            '$previousAdvance → ${order.effectiveAdvanceAmount}, '
+            'balance was $previousTotal now ${order.totalAmount}',
+            name: 'order_advance',
+          );
+        });
+        if (mounted) _loadOrder();
+      } catch (error, stack) {
+        _mutationFailed(error, stack);
       }
-      setState(() {
-        order.setAdvance(
-          discount,
-          collectedOn: order.advanceCollectedOn ?? collectedOn,
-          receiptId: receiptId,
-        );
-      });
-      await DatabaseService.refreshDailySalesTotalForDate(
-        DatabaseService.getCurrentDate(),
-      );
-      unawaited(
-        MoneyAudit.advanceRecorded(
-          actorId: widget.user.username,
-          orderId: order.orderId,
-          previousAmount: previousAdvance,
-          newAmount: order.effectiveAdvanceAmount,
-          businessDate: order.advanceCollectedOn ?? collectedOn,
-          receiptId: receiptId,
-        ),
-      );
-      developer.log(
-        'Advance on order #${order.orderId}: '
-        '$previousAdvance → ${order.effectiveAdvanceAmount}, '
-        'balance was $previousTotal now ${order.totalAmount}',
-        name: 'order_advance',
-      );
     }
 
     controller.dispose();
   }
 
-  Future<void> _showManualAdjustmentDialog() async {
+  Future<void> _showManualAdjustmentDialog() => UpdateReadiness.track(
+    'showManualAdjustmentDialog',
+    () => _admittedshowManualAdjustmentDialog(),
+  );
+
+  Future<void> _admittedshowManualAdjustmentDialog() async {
     if (_order == null) return;
+    final captured = OrderTableMutationRepository.capture(_order!);
     if (!PosPermissions.has(widget.user, PosPermission.applyDiscount)) {
       unawaited(
         showErrorToast(
@@ -1155,168 +1075,45 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
       return double.parse(parsed.toStringAsFixed(2));
     }
 
-    final adjustment = await showDialog<double>(
+    final adjustment = await showPosModal<double>(
       context: context,
       barrierDismissible: false,
-      builder: (dialogContext) {
-        return Dialog(
-          backgroundColor: Colors.white,
-          insetPadding: const EdgeInsets.symmetric(
-            horizontal: 24,
-            vertical: 24,
-          ),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 520),
-            child: SingleChildScrollView(
-              child: Padding(
-                padding: const EdgeInsets.all(18),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Container(
-                          width: 40,
-                          height: 40,
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFEFF6FF),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: const Icon(
-                            Icons.price_change,
-                            color: Color(0xFF2563EB),
-                            size: 22,
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        const Expanded(
-                          child: Text(
-                            'ფასის კორექცია',
-                            style: TextStyle(
-                              color: Color(0xFF0F172A),
-                              fontSize: 20,
-                              fontWeight: FontWeight.w800,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 10),
-                    const Text(
-                      'დადებითი ზრდის ჯამს, უარყოფითი ამცირებს.',
-                      style: TextStyle(
-                        color: Color(0xFF475569),
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    TextField(
-                      controller: controller,
-                      readOnly: PosInputSettings.useOnScreen(context),
-                      style: const TextStyle(
-                        color: Color(0xFF0F172A),
-                        fontSize: 26,
-                        fontWeight: FontWeight.w800,
-                      ),
-                      textAlign: TextAlign.center,
-                      decoration: InputDecoration(
-                        hintText: '0.00',
-                        hintStyle: const TextStyle(color: Color(0xFF94A3B8)),
-                        suffixText: 'GEL',
-                        suffixStyle: const TextStyle(
-                          color: Color(0xFF475569),
-                          fontWeight: FontWeight.w600,
-                        ),
-                        filled: true,
-                        fillColor: const Color(0xFFF8FAFC),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(
-                            color: Color(0xFFE2E8F0),
-                          ),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(
-                            color: Color(0xFFE2E8F0),
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    _buildNumericKeyboard(controller, allowNegative: true),
-                    const SizedBox(height: 12),
-                    Row(
-                      children: [
-                        if (_order!.manualAdjustmentAmount.abs() >= 0.01)
-                          TextButton(
-                            onPressed: () => Navigator.pop(dialogContext, 0.0),
-                            style: TextButton.styleFrom(
-                              foregroundColor: const Color(0xFFDC2626),
-                            ),
-                            child: const Text(
-                              'განულება',
-                              style: TextStyle(fontWeight: FontWeight.w700),
-                            ),
-                          ),
-                        const Spacer(),
-                        TextButton(
-                          onPressed: () => Navigator.pop(dialogContext),
-                          style: TextButton.styleFrom(
-                            foregroundColor: const Color(0xFF475569),
-                          ),
-                          child: const Text('გაუქმება'),
-                        ),
-                        const SizedBox(width: 8),
-                        ElevatedButton(
-                          onPressed: () {
-                            final raw = controller.text;
-                            final value = parseAdjustment(raw);
-                            Navigator.pop(dialogContext, value);
-                          },
-                          style: ElevatedButton.styleFrom(
-                            elevation: 0,
-                            backgroundColor: const Color(0xFF2563EB),
-                            foregroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                          ),
-                          child: const Text('შენახვა'),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        );
-      },
+      builder: (dialogContext) => PosAmountForm(
+        title: 'ფასის კორექცია',
+        description: 'დადებითი ზრდის ჯამს, უარყოფითი ამცირებს.',
+        controller: controller,
+        keypad: _buildNumericKeyboard(controller, allowNegative: true),
+        clearLabel: _order!.manualAdjustmentAmount.abs() >= 0.01
+            ? 'განულება'
+            : null,
+        parse: parseAdjustment,
+      ),
     );
 
     if (adjustment != null) {
-      final order = _order!;
-      final previousAdjustment = order.manualAdjustmentAmount;
-      final previousTotal = order.totalAmount;
-      setState(() {
-        order.setManualAdjustment(adjustment);
-      });
-      unawaited(
-        MoneyAudit.orderManualAdjustmentChanged(
-          actorId: widget.user.username,
-          orderId: order.orderId,
-          previousAdjustment: previousAdjustment,
-          newAdjustment: order.manualAdjustmentAmount,
-          previousTotal: previousTotal,
-          newTotal: order.totalAmount,
-        ),
-      );
+      try {
+        await UpdateReadiness.mutate('adjustOrderMoney', () async {
+          OrderTableMutationRepository.requireFresh(captured);
+          final order = captured;
+          final previousAdjustment = order.manualAdjustmentAmount;
+          final previousTotal = order.totalAmount;
+          await order.setManualAdjustment(adjustment);
+          if (mounted) setState(() {});
+          unawaited(
+            MoneyAudit.orderManualAdjustmentChanged(
+              actorId: widget.user.username,
+              orderId: order.orderId,
+              previousAdjustment: previousAdjustment,
+              newAdjustment: order.manualAdjustmentAmount,
+              previousTotal: previousTotal,
+              newTotal: order.totalAmount,
+            ),
+          );
+        });
+        if (mounted) _loadOrder();
+      } catch (error, stack) {
+        _mutationFailed(error, stack);
+      }
     }
 
     controller.dispose();
@@ -1371,8 +1168,11 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
   /// it existed the only route was cancelling and re-keying, which loses the
   /// audit trail and, on a booked table, the reservation with it.
   Future<void> _showMoveItemsDialog() async {
-    final order = _order;
+    final order = _order?.clone();
     if (order == null) return;
+    final expectedBusinessDate = DatabaseService.getCurrentDate()
+        .toIso8601String()
+        .split('T')[0];
 
     if (order.items.isEmpty) {
       unawaited(
@@ -1397,7 +1197,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
       return;
     }
 
-    final request = await showDialog<OrderMoveRequest>(
+    final request = await showPosModal<OrderMoveRequest>(
       context: context,
       builder: (_) => OrderMoveItemsDialog(
         source: order,
@@ -1423,6 +1223,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
       user: widget.user,
       sourceLabel: sourceLabel,
       destinationLabel: destinationLabel,
+      expectedBusinessDate: expectedBusinessDate,
     );
 
     if (!mounted) return;
@@ -1438,19 +1239,8 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
       return;
     }
 
-    // Everything went. The table it went from is now open with an empty bill
-    // on it, which reads as occupied on the floor and holds its booking against
-    // the day close — so it is released. Deliberately without a sale record:
-    // see `OrderItemTransfer.releaseEmptiedOrder`.
-    var released = false;
-    if (result.sourceLeftEmpty) {
-      await OrderItemTransfer.releaseEmptiedOrder(
-        order,
-        user: widget.user,
-        destination: destination,
-      );
-      released = true;
-    }
+    // The durable transfer has already finished empty-source cleanup/audits.
+    final released = result.sourceLeftEmpty;
 
     if (!mounted) return;
 
@@ -1726,11 +1516,29 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
         return 'პროდუქტი არ არის არჩეული';
       case OrderTransferError.quantityOutOfRange:
         return 'არჩეული რაოდენობა შეკვეთაზე არ არის — გვერდი განახლდა';
+      case OrderTransferError.staleSource:
+      case OrderTransferError.staleDestination:
+      case OrderTransferError.identityConflict:
+      case OrderTransferError.businessDateChanged:
+        return 'შეკვეთა შეიცვალა — განაახლეთ გვერდი და აირჩიეთ თავიდან';
+      case OrderTransferError.auditLocked:
+        return 'შეკვეთის ისტორია დაბლოკილია — გადატანა ვერ შესრულდა';
+      case OrderTransferError.tableOwnership:
+        return 'მაგიდა სხვა შეკვეთას ეკუთვნის — გადატანა ვერ შესრულდა';
+      case OrderTransferError.transferIdConflict:
+        return 'გადატანის მოთხოვნა შეიცვალა — აირჩიეთ თავიდან';
+      case OrderTransferError.busy:
+        return 'მიმდინარეობს სხვა ოპერაცია — სცადეთ ხელახლა';
+      case OrderTransferError.recoveryRequired:
+        return 'გადატანა შეწყდა — გადატვირთეთ პროგრამა აღდგენისათვის';
+      case OrderTransferError.persistenceFailure:
+        return 'გადატანა ვერ შეინახა — სცადეთ ხელახლა';
     }
   }
 
   Future<void> _showChangeTableDialog() async {
     if (_order == null) return;
+    final expected = OrderTableMutationRepository.capture(_order!);
 
     final allTables = DatabaseService.getAllTables();
     final freeTables = allTables
@@ -1760,7 +1568,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
       _order!,
     );
 
-    await showDialog<void>(
+    await showPosModal<void>(
       context: context,
       builder: (ctx) {
         return StatefulBuilder(
@@ -1866,50 +1674,53 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                           final tableId = '${t.tableNumber}|${t.floor}';
                           final isSelected = selectedTableIds.contains(tableId);
 
-                          return CheckboxListTile(
-                            contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 20,
-                              vertical: 4,
-                            ),
-                            value: isSelected,
-                            onChanged: (val) {
-                              setDialogState(() {
-                                if (val == true) {
-                                  selectedTableIds.add(tableId);
-                                } else {
-                                  selectedTableIds.remove(tableId);
-                                }
-                              });
-                            },
-                            title: Text(
-                              OrderDetailCommonHelpers.tableDisplayName(
-                                tableNumber: t.tableNumber,
-                                floor: t.floor,
+                          return Material(
+                            type: MaterialType.transparency,
+                            child: CheckboxListTile(
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 20,
+                                vertical: 4,
                               ),
-                              style: TextStyle(
-                                color: const Color(0xFF374151),
-                                fontSize: 15,
-                                fontWeight: isSelected
-                                    ? FontWeight.w700
-                                    : FontWeight.w500,
+                              value: isSelected,
+                              onChanged: (val) {
+                                setDialogState(() {
+                                  if (val == true) {
+                                    selectedTableIds.add(tableId);
+                                  } else {
+                                    selectedTableIds.remove(tableId);
+                                  }
+                                });
+                              },
+                              title: Text(
+                                OrderDetailCommonHelpers.tableDisplayName(
+                                  tableNumber: t.tableNumber,
+                                  floor: t.floor,
+                                ),
+                                style: TextStyle(
+                                  color: const Color(0xFF374151),
+                                  fontSize: 15,
+                                  fontWeight: isSelected
+                                      ? FontWeight.w700
+                                      : FontWeight.w500,
+                                ),
                               ),
-                            ),
-                            subtitle: Text(
-                              t.floor == 'first'
-                                  ? 'პირველი სართული'
-                                  : 'მეორე სართული',
-                              style: const TextStyle(
-                                fontSize: 12,
-                                color: Colors.grey,
+                              subtitle: Text(
+                                t.floor == 'first'
+                                    ? 'პირველი სართული'
+                                    : 'მეორე სართული',
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.grey,
+                                ),
                               ),
-                            ),
-                            activeColor: const Color(0xFFC0AD7B),
-                            checkColor: Colors.white,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            checkboxShape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(4),
+                              activeColor: const Color(0xFFC0AD7B),
+                              checkColor: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              checkboxShape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(4),
+                              ),
                             ),
                           );
                         },
@@ -1944,7 +1755,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                                 : () async {
                                     final ids = selectedTableIds.toList();
                                     Navigator.of(ctx).pop();
-                                    await _changeTables(ids);
+                                    await _changeTables(ids, expected);
                                   },
                             style: ElevatedButton.styleFrom(
                               backgroundColor: const Color(0xFFC0AD7B),
@@ -1977,125 +1788,43 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     );
   }
 
-  Future<void> _changeTables(List<String> selectedTableIds) async {
-    if (_order == null || selectedTableIds.isEmpty) return;
-
-    final fromTables = List<String>.from(_order!.tableNumbers);
-    final fromFloor = _order!.floor;
-
-    final List<String> toTableNumbers = [];
-    String? toFloor;
-
+  Future<void> _changeTables(
+    List<String> selectedTableIds,
+    Order expected,
+  ) async {
+    if (selectedTableIds.isEmpty) return;
+    final numbers = <String>[];
+    String? floor;
     for (final id in selectedTableIds) {
       final parts = id.split('|');
-      toTableNumbers.add(parts[0]);
-      toFloor ??= parts[1];
+      if (parts.length != 2 || floor != null && floor != parts[1]) {
+        if (mounted)
+          unawaited(showErrorToast(context, 'აირჩიეთ ერთი სართულის მაგიდები'));
+        return;
+      }
+      numbers.add(parts[0]);
+      floor ??= parts[1];
     }
-
-    final targetFloor = toFloor;
-    if (targetFloor == null) return;
-
-    // Apply the change in memory
-    _order!.tableNumbers = toTableNumbers;
-    _order!.floor = targetFloor;
-    _order!.updatedAt = DatabaseService.getCurrentDateTime();
-
     try {
-      await OrderTableShadow.observe(
-        proposed: () => PosShadowProjection.moved(
-          _order!,
-          fromTables,
-          fromFloor,
-          proposed: true,
-        ),
-        actual: () => PosShadowProjection.moved(
-          _order!,
-          fromTables,
-          fromFloor,
-          proposed: false,
-        ),
-        operation: () async {
-          // Save order changes
-          await DatabaseService.updateOrder(_order!);
-
-          // Free all previously occupied tables
-          for (final oldNum in fromTables) {
-            await DatabaseService.freeTable(
-              tableNumber: oldNum,
-              floor: fromFloor,
-            );
-          }
-
-          // Reserve all new tables
-          for (final newNum in toTableNumbers) {
-            await DatabaseService.reserveTable(
-              tableNumber: newNum,
-              floor: targetFloor,
-              username: _order!.createdBy,
-              orderId: _order!.orderId,
-            );
-          }
-        },
+      await OrderTableMutationRepository.move(
+        expected: expected,
+        tableNumbers: numbers,
+        floor: floor!,
+        actor: widget.user.username,
       );
-
-      // Also update any linked reservation if it exists
-      if (_linkedReservation != null) {
-        try {
-          final tableRefs = [
-            for (final n in toTableNumbers)
-              if (int.tryParse(n) != null)
-                TableRef(floor: targetFloor, tableNumber: n),
-          ];
-
-          await DatabaseService.updateReservationTables(
-            _linkedReservation!.id,
-            const [],
-            tableRefs: tableRefs,
-            actorId: widget.user.username,
-          );
-        } catch (e) {
-          debugPrint('Note: Linked reservation table update failed: $e');
-        }
-      }
-
-      // Refresh UI
+      if (!mounted) return;
       _loadOrder();
-
-      if (mounted) {
-        unawaited(
-          showSuccessToast(
-            context,
-            'მაგიდა შეიცვალა: ${toTableNumbers.join(", ")}',
-          ),
-        );
-      }
-    } catch (error, stackTrace) {
-      debugPrint('Error changing tables: $error');
-      if (!mounted) {
-        return;
-      }
-      await DatabaseService.logError(
-        title: 'Order table change failed',
-        error: error,
-        stackTrace: stackTrace,
-        context: 'change_tables',
-        performedBy: widget.user.username,
-        metadata: {
-          'orderId': _order?.orderId,
-          'fromTables': fromTables,
-          'toTables': toTableNumbers,
-        },
+      unawaited(
+        showSuccessToast(context, 'მაგიდა შეიცვალა: ${numbers.join(", ")}'),
       );
-      if (!mounted) {
-        return;
-      }
-      unawaited(showErrorToast(context, 'მაგიდის შეცვლა ვერ მოხერხდა'));
+    } catch (error, stack) {
+      _mutationFailed(error, stack);
     }
   }
 
   Future<bool> _promptCancellationPassword() async {
     if (!DatabaseService.hasDestructiveActionPassword()) {
-      await showDialog<void>(
+      await showPosModal<void>(
         context: context,
         builder: (context) => AlertDialog(
           backgroundColor: const Color(0xFF2B2B2B),
@@ -2121,7 +1850,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
       return false;
     }
 
-    final result = await showDialog<bool>(
+    final result = await showPosModal<bool>(
       context: context,
       barrierDismissible: false,
       builder: (context) {
@@ -2282,6 +2011,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
       return;
     }
 
+    final expectedCancellation = OrderTableMutationRepository.capture(_order!);
     final canOverrideApproval = PosPermissions.has(
       widget.user,
       PosPermission.overrideManagerApproval,
@@ -2298,7 +2028,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
 
     String? comment;
     if (!canOverrideApproval) {
-      comment = await showDialog<String>(
+      comment = await showPosModal<String>(
         context: context,
         builder: (context) => const CommentInputDialog(
           title: 'გაუქმების მიზეზი',
@@ -2325,155 +2055,52 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
         ? widget.user.username
         : 'Cancellation PIN';
 
-    final confirmed = await showDialog<bool>(
+    final confirmed = await showPosModal<bool>(
       context: context,
-      builder: (dialogContext) => Dialog(
-        backgroundColor: Colors.transparent,
-        child: Container(
-          width: 580,
-          padding: const EdgeInsets.all(24),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: const Color(0xFFE2E8F0)),
-            boxShadow: const [
-              BoxShadow(
-                color: Color(0x1F0F172A),
-                blurRadius: 28,
-                offset: Offset(0, 12),
-              ),
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('შეკვეთის გაუქმება'),
+        constraints: const BoxConstraints(maxWidth: 580),
+        scrollable: true,
+        content: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'შეკვეთა #${_order!.orderId}',
+              style: const TextStyle(fontWeight: FontWeight.w700),
+            ),
+            const SizedBox(height: 8),
+            Text('მაგიდა: $tablesLabel'),
+            const SizedBox(height: 8),
+            Text(
+              'მოითხოვა: $waiterName • ${requestTime.year.toString().padLeft(4, '0')}-${requestTime.month.toString().padLeft(2, '0')}-${requestTime.day.toString().padLeft(2, '0')} ${requestTime.hour.toString().padLeft(2, '0')}:${requestTime.minute.toString().padLeft(2, '0')}',
+            ),
+            const SizedBox(height: 8),
+            Text('დადასტურება: $approvalDescriptor'),
+            if (commentText.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              const Text('მიზეზი:'),
+              Text(commentText),
             ],
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Container(
-                    width: 42,
-                    height: 42,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFFEF2F2),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: const Icon(
-                      Icons.warning_amber_rounded,
-                      color: Color(0xFFDC2626),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  const Expanded(
-                    child: Text(
-                      'შეკვეთის გაუქმება',
-                      style: TextStyle(
-                        color: Color(0xFF0F172A),
-                        fontSize: 22,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 14),
-              Text(
-                'შეკვეთა #${_order!.orderId}',
-                style: const TextStyle(
-                  color: Color(0xFF334155),
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'მაგიდა: $tablesLabel',
-                style: const TextStyle(color: Color(0xFF475569), fontSize: 14),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'მოითხოვა: $waiterName • ${requestTime.year.toString().padLeft(4, '0')}-${requestTime.month.toString().padLeft(2, '0')}-${requestTime.day.toString().padLeft(2, '0')} ${requestTime.hour.toString().padLeft(2, '0')}:${requestTime.minute.toString().padLeft(2, '0')}',
-                style: const TextStyle(color: Color(0xFF64748B), fontSize: 13),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'დადასტურება: $approvalDescriptor',
-                style: const TextStyle(
-                  color: Color(0xFF0F766E),
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              if (commentText.isNotEmpty) ...[
-                const SizedBox(height: 12),
-                const Text(
-                  'მიზეზი:',
-                  style: TextStyle(
-                    color: Color(0xFF334155),
-                    fontWeight: FontWeight.w700,
-                    fontSize: 14,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  commentText,
-                  style: const TextStyle(
-                    color: Color(0xFF64748B),
-                    fontSize: 13,
-                  ),
-                ),
-              ],
-              const SizedBox(height: 16),
-              const Text(
-                'დარწმუნებული ხართ, რომ გსურთ შეკვეთის სრულად გაუქმება?',
-                style: TextStyle(
-                  color: Color(0xFFDC2626),
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              const SizedBox(height: 20),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  TextButton(
-                    onPressed: () => Navigator.of(dialogContext).pop(false),
-                    style: TextButton.styleFrom(
-                      foregroundColor: const Color(0xFF64748B),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 12,
-                      ),
-                    ),
-                    child: const Text(
-                      'არა',
-                      style: TextStyle(fontWeight: FontWeight.w600),
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  ElevatedButton(
-                    onPressed: () => Navigator.of(dialogContext).pop(true),
-                    style: ElevatedButton.styleFrom(
-                      elevation: 0,
-                      backgroundColor: const Color(0xFFDC2626),
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 18,
-                        vertical: 12,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    child: const Text(
-                      'დიახ, გაუქმება',
-                      style: TextStyle(fontWeight: FontWeight.w700),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
+            const SizedBox(height: 16),
+            const Text(
+              'დარწმუნებული ხართ, რომ გსურთ შეკვეთის სრულად გაუქმება?',
+              style: TextStyle(color: VynicFloorTokens.dangerText),
+            ),
+          ],
         ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('არა'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            style: FilledButton.styleFrom(
+              backgroundColor: VynicFloorTokens.dangerText,
+            ),
+            child: const Text('დიახ, გაუქმება'),
+          ),
+        ],
       ),
     );
     if (!mounted || _order == null) {
@@ -2488,14 +2115,21 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
       // The cancellation itself — audit event, locked report, non-revenue
       // record, reservation, Order status and table — is one routine shared
       // with the Takeaway panel and the Manager commands.
-      final outcome = await DatabaseService.cancelOrder(
-        orderId: _order!.orderId,
-        actorId: waiterName,
-        actorName: waiterName,
-        source: AuditSource.pos,
-        reason: logComment,
-        approvedBy: approvedBy,
-      );
+      late CancelOrderOutcome outcome;
+      try {
+        outcome = await DatabaseService.cancelOrder(
+          orderId: expectedCancellation.orderId,
+          expectedOrder: expectedCancellation,
+          actorId: waiterName,
+          actorName: waiterName,
+          source: AuditSource.pos,
+          reason: logComment,
+          approvedBy: approvedBy,
+        );
+      } catch (error, stack) {
+        _mutationFailed(error, stack);
+        return;
+      }
       if (!mounted) return;
 
       switch (outcome) {
@@ -2512,7 +2146,12 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
           );
           return;
         case CancelOrderOutcome.failed:
-          await showErrorToast(context, 'შეკვეთის გაუქმება ვერ მოხერხდა');
+          await showErrorToast(
+            context,
+            LocalDataAdmission.failure != null
+                ? 'ოპერაცია აღსადგენია — გადატვირთეთ POS'
+                : 'შეკვეთის გაუქმება ვერ მოხერხდა',
+          );
           return;
       }
 
@@ -2560,7 +2199,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
       _order!.recalculateTotal(serviceFeeRate: serviceRate);
     }
 
-    final currentOrder = _order!;
+    final currentOrder = OrderTableMutationRepository.capture(_order!);
     if (currentOrder.items.isEmpty && currentOrder.packageItems.isEmpty) {
       await showErrorToast(context, 'შეკვეთაში დამატებული პოზიციები არ არის');
       return;
@@ -2616,118 +2255,33 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
       _order!.recalculateTotal(serviceFeeRate: serviceRate);
     }
 
-    final currentOrder = _order!;
+    final currentOrder = OrderTableMutationRepository.capture(_order!);
     if (currentOrder.items.isEmpty && currentOrder.packageItems.isEmpty) {
       await showErrorToast(context, 'შეკვეთაში დამატებული პოზიციები არ არის');
       return;
     }
 
-    final confirmed = await showDialog<bool>(
+    final confirmed = await showPosModal<bool>(
       context: context,
       barrierDismissible: false,
-      builder: (dialogContext) {
-        return Dialog(
-          backgroundColor: Colors.transparent,
-          child: Container(
-            width: 560,
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: const Color(0xFFE2E8F0)),
-              boxShadow: const [
-                BoxShadow(
-                  color: Color(0x1F0F172A),
-                  blurRadius: 28,
-                  offset: Offset(0, 12),
-                ),
-              ],
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Container(
-                      width: 42,
-                      height: 42,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFFFF7ED),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: const Icon(
-                        Icons.shield_outlined,
-                        color: Color(0xFFEA580C),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    const Expanded(
-                      child: Text(
-                        'არაფისკალური დახურვა',
-                        style: TextStyle(
-                          color: Color(0xFF0F172A),
-                          fontSize: 22,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 14),
-                const Text(
-                  'დახურეთ მაგიდა არაფისკალურად. ეს ოპერაცია არ გამოჩნდება Z რეპორტში, მაგრამ ჩაიწერება გაყიდვების ისტორიაში.',
-                  style: TextStyle(
-                    color: Color(0xFF475569),
-                    fontSize: 15,
-                    height: 1.45,
-                  ),
-                ),
-                const SizedBox(height: 20),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    TextButton(
-                      onPressed: () => Navigator.of(dialogContext).pop(false),
-                      style: TextButton.styleFrom(
-                        foregroundColor: const Color(0xFF64748B),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 12,
-                        ),
-                      ),
-                      child: const Text(
-                        'გაუქმება',
-                        style: TextStyle(fontWeight: FontWeight.w600),
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    ElevatedButton(
-                      onPressed: () => Navigator.of(dialogContext).pop(true),
-                      style: ElevatedButton.styleFrom(
-                        elevation: 0,
-                        backgroundColor: const Color(0xFFEA580C),
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 18,
-                          vertical: 12,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                      child: const Text(
-                        'დახურვა და დაფიქსირება',
-                        style: TextStyle(fontWeight: FontWeight.w700),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('არაფისკალური დახურვა'),
+        constraints: const BoxConstraints(maxWidth: 560),
+        scrollable: true,
+        content: const Text(
+          'დახურეთ მაგიდა არაფისკალურად. ეს ოპერაცია არ გამოჩნდება Z რეპორტში, მაგრამ ჩაიწერება გაყიდვების ისტორიაში.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('გაუქმება'),
           ),
-        );
-      },
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text('დახურვა და დაფიქსირება'),
+          ),
+        ],
+      ),
     );
     if (!mounted) {
       return;
@@ -2777,6 +2331,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
       saleItems: saleItems,
       subtotalAmount: subtotal,
       finalTransaction: finalTransaction,
+      expectedOrder: order,
     );
 
     if (!result.isSuccess) {
@@ -2785,9 +2340,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
       }
       await showErrorToast(
         context,
-        result.outcome == ClosureOutcome.moneyMismatch
-            ? 'გადახდის ჯამი არ ემთხვევა შეკვეთის თანხას — დახურვა შეჩერდა'
-            : 'არაფისკალური დახურვა ვერ შესრულდა',
+        result.detail ?? 'არაფისკალური დახურვა ვერ შესრულდა',
       );
       return;
     }
@@ -2849,9 +2402,11 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
       saleItems: <OrderItem>[...order.packageItems, ...order.items],
       subtotalAmount: subtotal,
       finalTransaction: finalTransaction,
+      expectedOrder: order,
     );
 
     if (!result.isSuccess) {
+      _loadOrder();
       developer.log(
         'Table closure refused for order #${order.orderId}: '
         '${result.detail ?? result.outcome.name}',
@@ -2862,9 +2417,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
       }
       await showErrorToast(
         context,
-        result.outcome == ClosureOutcome.moneyMismatch
-            ? 'გადახდის ჯამი არ ემთხვევა შეკვეთის თანხას — დახურვა შეჩერდა'
-            : 'შეკვეთის დახურვა ვერ მოხერხდა',
+        result.detail ?? 'შეკვეთის დახურვა ვერ მოხერხდა',
       );
       return;
     }
@@ -2877,7 +2430,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
         ? null
         : order.tableNumbers.join(', ');
 
-    PrinterService.printReceiptInBackground(
+    await PrinterService.printReceiptInBackground(
       items: receiptLines,
       total: remainingFiscalTotal,
       subtotal: null,
@@ -3040,68 +2593,98 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
   }
 
   Future<void> _printKitchenCheck() async {
-    if (_order == null) {
+    if (_order == null || _kitchenCopyPending) {
       return;
     }
 
-    final kitchenItems = _buildKitchenCheckLines(_order!);
-    if (kitchenItems.isEmpty) {
-      unawaited(
-        showPosToast(
-          context: context,
-          message: 'სამზარეულოს ჩეკისთვის პროდუქტები არ არის დამატებული.',
-          style: PosToastStyle.info,
-        ),
+    _kitchenCopyPending = true;
+    try {
+      final order = _order!.clone();
+      final kitchenItems = _buildKitchenCheckLines(order);
+      if (kitchenItems.isEmpty) {
+        unawaited(
+          showPosToast(
+            context: context,
+            message: 'სამზარეულოს ჩეკისთვის პროდუქტები არ არის დამატებული.',
+            style: PosToastStyle.info,
+          ),
+        );
+        return;
+      }
+
+      final request = await requestKitchenPrintCopy(context);
+      if (request == null || !mounted) return;
+      await PrinterService.printKitchenCheckInBackground(
+        jobId: request.id,
+        copyOf: 'order/${order.orderId}',
+        copyReason: request.reason,
+        items: kitchenItems,
+        tableNumber: OrderDetailCommonHelpers.kitchenTableLabel(order),
+        orderNumber: order.orderId.toString(),
+        waiterName: order.createdBy,
+        createdAt: order.createdAt,
+        onComplete: (success) {
+          if (!mounted) return;
+          if (success) {
+            unawaited(
+              showSuccessToast(
+                context,
+                'გაიგზავნა პრინტერზე — შეამოწმეთ ქაღალდი',
+              ),
+            );
+          } else {
+            unawaited(
+              showErrorToast(
+                context,
+                'ბეჭდვა ვერ დადასტურდა — შეამოწმეთ ბეჭდვის სია',
+              ),
+            );
+          }
+        },
       );
-      return;
+    } finally {
+      _kitchenCopyPending = false;
     }
-
-    PrinterService.printKitchenCheckInBackground(
-      items: kitchenItems,
-      tableNumber: OrderDetailCommonHelpers.kitchenTableLabel(_order!),
-      orderNumber: _order!.orderId.toString(),
-      waiterName: _order!.createdBy,
-      createdAt: _order!.createdAt,
-      onComplete: (success) {
-        if (!mounted) return;
-        if (success) {
-          unawaited(
-            showSuccessToast(context, 'სამზარეულოს სრული ჩეკი დაიბეჭდა'),
-          );
-        } else {
-          unawaited(showErrorToast(context, 'პრინტერი მიუწვდომელია'));
-        }
-      },
-    );
   }
 
   Future<void> _updateStatus(String newStatus) async {
-    // Update order status in database
-    await DatabaseService.updateOrderStatus(
-      orderId: widget.orderId,
-      status: newStatus,
-    );
-
     // If confirming order, print kitchen check (instant, non-blocking)
     if (newStatus == 'confirmed' && _order != null) {
       final kitchenItems = _buildKitchenCheckLines(_order!);
       if (kitchenItems.isNotEmpty) {
-        PrinterService.printKitchenCheckInBackground(
-          items: kitchenItems,
-          tableNumber: OrderDetailCommonHelpers.kitchenTableLabel(_order!),
-          orderNumber: _order!.orderId.toString(),
-          waiterName: _order!.createdBy,
-          createdAt: _order!.createdAt,
+        final accepted = await OrderConfirmationPrint.confirm(
+          order: _order!,
+          lines: kitchenItems,
+          tableLabel: OrderDetailCommonHelpers.kitchenTableLabel(_order!),
           onComplete: (success) {
             if (!mounted) return;
             if (success) {
-              unawaited(showSuccessToast(context, 'სამზარეულოს ჩეკი დაიბეჭდა'));
+              unawaited(
+                showSuccessToast(
+                  context,
+                  'გაიგზავნა პრინტერზე — შეამოწმეთ ქაღალდი',
+                ),
+              );
             } else {
-              unawaited(showErrorToast(context, 'პრინტერი მიუწვდომელია'));
+              unawaited(
+                showErrorToast(
+                  context,
+                  'ბეჭდვა ვერ დადასტურდა — შეამოწმეთ ბეჭდვის სია',
+                ),
+              );
             }
           },
         );
+        if (!accepted) return;
       }
+    }
+    if (newStatus != 'confirmed' ||
+        _order == null ||
+        _buildKitchenCheckLines(_order!).isEmpty) {
+      await DatabaseService.updateOrderStatus(
+        orderId: widget.orderId,
+        status: newStatus,
+      );
     }
 
     _loadOrder();
@@ -3206,8 +2789,11 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
           elevation: 0,
           title: const Text('Order Not Found'),
         ),
-        body: const Center(
-          child: Text('Order not found', style: TextStyle(fontSize: 18)),
+        body: Center(
+          child: Text(
+            _loadFailure ?? 'Order not found',
+            style: const TextStyle(fontSize: 18),
+          ),
         ),
       );
     }

@@ -122,7 +122,7 @@ class CartSummarySection extends StatelessWidget {
                 children: [
                   Expanded(
                     child: Text(
-                      e.key,
+                      e.value.itemName ?? e.key,
                       style: TextStyle(
                         fontSize: 13,
                         color: MobileGlassTheme.textPrimary,

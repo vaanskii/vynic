@@ -8,6 +8,7 @@ import * as argon from 'argon2';
 import { PrismaService } from '../../shared/prisma/prisma.service';
 import { CryptoService } from '../common/crypto.service';
 import { AuthDto, ChangePasswordDto, RegisterDto } from './dto';
+import { validateWebsiteAuthInput } from './auth-input';
 
 export type WebsiteAuthUser = {
   id: string;
@@ -16,6 +17,8 @@ export type WebsiteAuthUser = {
   lastName: string | null;
   email: string | null;
   role: WebsiteUserRole;
+  /** The Venue a SUPER_ADMIN administers; null for customers. */
+  adminVenueId: string | null;
 };
 
 @Injectable()
@@ -47,6 +50,7 @@ export class WebsiteAuthService {
     access_token: string;
     refresh_token: string;
   }> {
+    validateWebsiteAuthInput(RegisterDto, dto);
     const password = await argon.hash(dto.password);
     const email = this.normalizeEmail(dto.email);
 
@@ -80,6 +84,7 @@ export class WebsiteAuthService {
     access_token: string;
     refresh_token: string;
   }> {
+    validateWebsiteAuthInput(AuthDto, dto);
     const user = await this.findUserByIdentifier(dto.identifier);
     if (!user) throw new ForbiddenException('Credentials incorrect');
 
@@ -138,6 +143,7 @@ export class WebsiteAuthService {
           lastName: true,
           email: true,
           role: true,
+          adminVenueId: true,
         },
       });
 
@@ -152,7 +158,7 @@ export class WebsiteAuthService {
   async tryGetUserFromRequest(
     request: Request,
   ): Promise<WebsiteAuthUser | null> {
-    const encryptedAccessToken = request.cookies?.access_token;
+    const encryptedAccessToken: unknown = request.cookies?.access_token;
     if (
       typeof encryptedAccessToken !== 'string' ||
       encryptedAccessToken.length === 0
@@ -168,6 +174,7 @@ export class WebsiteAuthService {
   }
 
   async changePassword(userId: string, dto: ChangePasswordDto) {
+    validateWebsiteAuthInput(ChangePasswordDto, dto);
     const user = await this.prisma.websiteUser.findUnique({
       where: { id: userId },
     });

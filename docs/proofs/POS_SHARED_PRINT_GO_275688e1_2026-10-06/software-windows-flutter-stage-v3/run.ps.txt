@@ -1,0 +1,72 @@
+$ErrorActionPreference='Stop'; $ProgressPreference='SilentlyContinue'
+[Console]::OutputEncoding=New-Object System.Text.UTF8Encoding($false)
+$OutputEncoding=[Console]::OutputEncoding
+Set-StrictMode -Version Latest
+$sid=[Security.Principal.WindowsIdentity]::GetCurrent().User.Value
+if ($sid -eq 'S-1-5-18') { throw 'SYSTEM context refused; current-user task only' }
+$share='\\Mac\Home\Developer\vynic\docs\proofs\POS_SHARED_PRINT_GO_275688e1_2026-10-06'
+$stage=Join-Path $share 'software-windows-flutter-stage-v3'
+$results=Join-Path $share 'software-windows-flutter-result-v3'
+$receipt=Get-Content -Raw (Join-Path $stage 'stage-receipt.json') | ConvertFrom-Json
+$job=Join-Path $env:LOCALAPPDATA $receipt.guestJobSuffix
+if ((Test-Path -LiteralPath $job) -or (Test-Path -LiteralPath $results)) { throw 'Fresh qualification paths occupied' }
+New-Item -ItemType Directory -Path $job | Out-Null
+New-Item -ItemType Directory -Path $results | Out-Null
+$source=Join-Path $job 'source'
+$binary=Join-Path $job 'fixtures'
+New-Item -ItemType Directory -Path $binary | Out-Null
+$manifest=Get-Content -Raw (Join-Path $stage 'source-manifest.json') | ConvertFrom-Json
+[string[]]$tests=Get-Content -Raw (Join-Path $stage 'test-selection.json') | ConvertFrom-Json
+[string[]]$analysis=Get-Content -Raw (Join-Path $stage 'analysis-selection.json') | ConvertFrom-Json
+if ($tests.Count -ne $receipt.testSuites -or $analysis.Count -ne $receipt.analysisFiles) { throw 'Selector count differs from frozen cohort' }
+foreach($name in $tests+$analysis) { if ($name.StartsWith('/') -or $name.Contains('..') -or $name.Contains('\')) { throw 'Selector path refused' } }
+function Assert-Source {
+  if (@($manifest.PSObject.Properties).Count -ne $receipt.files) { throw 'Source manifest count mismatch' }
+  foreach($entry in $manifest.PSObject.Properties) {
+    $p=Join-Path $source $entry.Name
+    $f=Get-Item -LiteralPath $p
+    if (($f.Attributes -band [IO.FileAttributes]::ReparsePoint) -ne 0 -or $f.Length -ne $entry.Value.bytes -or (Get-FileHash -LiteralPath $p -Algorithm SHA256).Hash.ToLowerInvariant() -ne $entry.Value.sha256) { throw ('Frozen source mismatch: '+$entry.Name) }
+  }
+}
+function Assert-Fixtures {
+  foreach($entry in $receipt.fixtures.PSObject.Properties) {
+    $p=Join-Path $binary $entry.Name
+    if ((Get-Item -LiteralPath $p).Length -ne $entry.Value.bytes -or (Get-FileHash -LiteralPath $p -Algorithm SHA256).Hash.ToLowerInvariant() -ne $entry.Value.sha256) { throw 'Compiled fixture mismatch' }
+  }
+}
+$status='FAILED';$failure=$null;$testExit=$null;$analysisExit=$null;$before=$false;$after=$false
+$started=[DateTime]::UtcNow.ToString('o')
+$jobsBefore=@(Get-CimInstance Win32_PrintJob).Count
+try {
+  if ($jobsBefore -ne 0) { throw 'Nonzero existing print jobs; qualification refused' }
+  $zip=Join-Path $stage 'source.zip'
+  if ((Get-FileHash -LiteralPath $zip -Algorithm SHA256).Hash.ToLowerInvariant() -ne $receipt.sourceZipSHA256 -or (Get-FileHash -LiteralPath (Join-Path $stage 'source-manifest.json') -Algorithm SHA256).Hash.ToLowerInvariant() -ne $receipt.sourceManifestSHA256) { throw 'Staged source pin mismatch' }
+  Expand-Archive -LiteralPath $zip -DestinationPath $source
+  foreach($entry in $receipt.fixtures.PSObject.Properties) { Copy-Item -LiteralPath (Join-Path $stage $entry.Name) -Destination $binary }
+  Assert-Source;Assert-Fixtures;$before=$true
+  $sdk=Join-Path $env:USERPROFILE 'develop\flutter'
+  $flutter=Join-Path $sdk 'bin\flutter.bat'
+  $dart=Join-Path $sdk 'bin\cache\dart-sdk\bin\dart.exe'
+  $env:FLUTTER_SUPPRESS_ANALYTICS='true';$env:DART_SUPPRESS_ANALYTICS='true';$env:CI='true'
+  $env:HTTP_PROXY='http://127.0.0.1:9';$env:HTTPS_PROXY='http://127.0.0.1:9';$env:NO_PROXY='127.0.0.1,localhost,::1'
+  $env:VYNIC_OPERATIONAL_PROOF_GO_FIXTURE=Join-Path $binary 'operational-proof-server-windows.test.exe'
+  $env:VYNIC_PRINTER_AGENT_GO_FIXTURE=Join-Path $binary 'printer-agent-server-windows.test.exe'
+  Set-Location -LiteralPath (Join-Path $source 'apps\operations')
+  & $flutter --suppress-analytics pub get --offline --enforce-lockfile *> (Join-Path $results 'offline-pub-get.log')
+  if ($LASTEXITCODE -ne 0) { throw 'Cached offline package metadata resolution failed' }
+  Assert-Source
+  & $flutter --suppress-analytics test --no-pub --machine @tests *> (Join-Path $results 'flutter-tests.jsonl')
+  $testExit=$LASTEXITCODE
+  if ($testExit -ne 0) { throw ('Selected Flutter tests failed: '+$testExit) }
+  & $dart --suppress-analytics analyze @analysis *> (Join-Path $results 'analysis.log')
+  $analysisExit=$LASTEXITCODE
+  if ($analysisExit -ne 0) { throw ('Native Dart analysis failed: '+$analysisExit) }
+  Assert-Source;Assert-Fixtures;$after=$true
+  $status='PASS'
+} catch { $failure=$_.ToString() } finally {
+  $jobsAfter=@(Get-CimInstance Win32_PrintJob).Count
+  if ($jobsAfter -ne 0) {$status='FAILED';$failure='Nonzero final print jobs: '+$failure}
+  [ordered]@{schema=1;status=$status;failure=$failure;startedUtc=$started;finishedUtc=[DateTime]::UtcNow.ToString('o');SID=$sid;currentUser=[Security.Principal.WindowsIdentity]::GetCurrent().Name;job=$job;sourceReceiptSHA256=$receipt.finalSourceReceiptSHA256;sourceFiles=$receipt.files;sourceBefore=$before;sourceAfter=$after;testSuites=$tests.Count;analysisFiles=$analysis.Count;testExitCode=$testExit;analysisExitCode=$analysisExit;fixtures=$receipt.fixtures;guestArchitecture=$env:PROCESSOR_ARCHITECTURE;fixtureArchitecture='amd64';printJobsBefore=$jobsBefore;printJobsAfter=$jobsAfter;physicalJobs=0;productStarted=$false;installed=$false;published=$false;serviceOperations=$false;driverOperations=$false;VMSettingsChanged=$false;persistentCredentialsChanged=$false} | ConvertTo-Json -Depth 8 | Set-Content -Encoding UTF8 (Join-Path $results 'windows-software-flutter.json')
+}
+if ($status -ne 'PASS') { throw $failure }
+Write-Output 'SOFTWARE_FLUTTER_PASS_EXACT_FROZEN_COHORT_NO_PRODUCT_START'

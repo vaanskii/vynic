@@ -1,0 +1,29 @@
+[
+  {
+    "name": "backend",
+    "imageId": "sha256:ecd48efb88d6b95d9ee3acc03513ca22cc8d99701e8b2fb6bd5c8c56d09beb9d",
+    "exitCode": 0,
+    "seconds": 4.1,
+    "noRegistryLookup": true,
+    "runs": 1,
+    "resultCount": 122
+  },
+  {
+    "name": "reverse-proxy",
+    "imageId": "sha256:31267173a15b4944e797a76ffd9c419707c8d8b32fe5b610f80cd0cfa05f372d",
+    "exitCode": 0,
+    "seconds": 7.6,
+    "noRegistryLookup": true,
+    "runs": 1,
+    "resultCount": 63
+  },
+  {
+    "name": "postgres",
+    "imageId": "sha256:639ab7ceb90e13123085b741fb31ef493fba25463002f6da665352e7b534b652",
+    "exitCode": 0,
+    "seconds": 10.3,
+    "noRegistryLookup": true,
+    "runs": 1,
+    "resultCount": 157
+  }
+]

@@ -1,0 +1,31 @@
+{
+  "schema": 1,
+  "mapping": {
+    "/tmp/vynic-readiness-resume-20261006-uv9ayewl/printer-validation/windows-go-packages-prlctl.log": {
+      "proofPath": "/Users/vaanskii/Developer/vynic/docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/windows-go-packages-result/host-prlctl.log",
+      "sha256": "5e721e1038d1d4275f1c3fb90fbab93dbf8fa3a8ca0164cd2c75e6c4982acdc3",
+      "bytes": 70788
+    },
+    "/tmp/vynic-readiness-resume-20261006-uv9ayewl/printer-validation/windows-go-packages-launch.json": {
+      "proofPath": "/Users/vaanskii/Developer/vynic/docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/windows-go-packages-result/host-launch.json",
+      "sha256": "ef6ad04b194b995bc798e505aa527a72acdc3b68619c8634f8b6f9a74da5f5a8",
+      "bytes": 994
+    },
+    "/tmp/vynic-readiness-resume-20261006-uv9ayewl/printer-validation/verify_windows_go_packages.py": {
+      "proofPath": "/Users/vaanskii/Developer/vynic/docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/windows-go-packages-result/verify_windows_go_packages.py",
+      "sha256": "1cf50755cb0f0c202140a7bada267ed8d8a801fcdc180d0a7609d69f6800c7d9",
+      "bytes": 8412
+    },
+    "/tmp/vynic-readiness-resume-20261006-uv9ayewl/printer-validation/stage_windows_go_packages.py": {
+      "proofPath": "/Users/vaanskii/Developer/vynic/docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/windows-go-packages-result/stage_windows_go_packages.py",
+      "sha256": "1e64f7d7084d954c363820e9fa182026a25c82d6bf40274a70eeded534bda2e4",
+      "bytes": 13428
+    },
+    "/tmp/vynic-readiness-resume-20261006-uv9ayewl/printer-validation/acceptance-matrix-v8-baseline.json": {
+      "proofPath": "/Users/vaanskii/Developer/vynic/docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/windows-go-packages-result/acceptance-matrix-v8-baseline.json",
+      "sha256": "42e98fcead35c11171c9389dd31b7614b4788a7c8c096e4fe3a8841a876842d5",
+      "bytes": 146369
+    }
+  },
+  "purpose": "Stable proof-local copies of exact host artifacts; original verification receipt paths retained unchanged."
+}

@@ -1,171 +1,151 @@
 import 'dart:developer' as developer;
 import 'dart:io';
 import 'dart:typed_data';
-
+import 'package:flutter/foundation.dart';
+import 'print_job.dart';
 import 'printer_connection.dart';
 
-/// Low-level TCP transport for ESC/POS printer bytes.
+/// Narrow seam for deterministic partial-write tests. Production wraps only
+/// a Dart TCP socket; no printer status protocol is claimed without qualification.
+abstract interface class PrinterWriteSocket {
+  void add(List<int> bytes);
+  Future<void> flush();
+  Future<void> close();
+  void destroy();
+}
+
+class _TcpPrinterSocket implements PrinterWriteSocket {
+  _TcpPrinterSocket(this.socket);
+  final Socket socket;
+  @override
+  void add(List<int> bytes) => socket.add(bytes);
+  @override
+  Future<void> flush() => socket.flush();
+  @override
+  Future<void> close() async {
+    await socket.close();
+  }
+
+  @override
+  void destroy() => socket.destroy();
+}
+
 class PrinterTransport {
-  const PrinterTransport._();
+  PrinterTransport._();
+  static const _connectionTimeout = Duration(seconds: 5);
+  static const _writeTimeout = Duration(seconds: 8);
+  @visibleForTesting
+  static Future<PrinterWriteSocket> Function(String host, int port)?
+  connectOverride;
+  @visibleForTesting
+  static Future<void> Function(Duration)? delayOverride;
 
-  static const int _maxRetries = 2;
-  static const Duration _connectionTimeout = Duration(seconds: 5);
-
-  /// Send byte data to printer via persistent connection or fallback to raw TCP.
-  static Future<bool> sendToPrinter({
+  static Future<PrintTransmissionResult> sendToPrinter({
     required String printerIp,
     required int port,
     required List<int> bytes,
     required String printerName,
     required bool usePersistentConnection,
+    bool Function()? mayWrite,
   }) async {
-    // Try persistent connection first (instant, no handshake delay)
-    if (usePersistentConnection) {
-      final manager = PrinterConnectionManager.instance;
-      PrinterConnection? connection;
-
-      // Get the appropriate printer connection
-      if (printerName == 'Kitchen') {
-        connection = manager.kitchenPrinter;
-      } else if (printerName == 'Receipt') {
-        connection = manager.receiptPrinter;
-      }
-
-      // Attempt to send via persistent connection
-      if (connection != null) {
-        developer.log(
-          '[$printerName Printer] Using persistent connection to $printerIp:$port',
-        );
-        final success = await connection.send(Uint8List.fromList(bytes));
-        if (success) {
-          return true;
-        }
-        developer.log(
-          '⚠️ [$printerName Printer] Persistent connection failed, falling back to traditional method',
-        );
-      }
-    }
-
-    // Fallback: Traditional connection method with retry logic
-    developer.log('[$printerName Printer] Using fallback connection method');
-    int attempt = 0;
-
-    // Retry loop - attempt up to maxRetries + 1 times
-    while (attempt <= _maxRetries) {
-      Socket? socket;
-
-      try {
-        // Establish raw TCP socket connection to printer
-        socket = await Socket.connect(
-          printerIp,
-          port,
-          timeout: _connectionTimeout,
-        );
-
-        developer.log('[$printerName Printer] Connected successfully');
-
-        // Send ESC/POS command bytes to printer
-        socket.add(bytes);
-
-        // Ensure all data is sent before closing
-        await socket.flush();
-
-        developer.log(
-          '[$printerName Printer] Data sent successfully (${bytes.length} bytes)',
-        );
-
-        // Close the socket connection
-        await socket.close();
-
-        // Print successful
-        return true;
-      } on SocketException catch (e) {
-        // Network-related errors (connection refused, timeout, etc.)
-        developer.log(
-          '[$printerName Printer] Socket error on attempt ${attempt + 1}: ${e.message}',
-        );
-
-        // Close socket if it was opened
-        try {
-          await socket?.close();
-        } catch (_) {}
-      } catch (e) {
-        // Any other unexpected errors (including timeouts)
-        developer.log(
-          '[$printerName Printer] Error on attempt ${attempt + 1}: $e',
-        );
-
-        // Close socket if it was opened
-        try {
-          await socket?.close();
-        } catch (_) {}
-      }
-
-      // Increment attempt counter
-      attempt++;
-
-      // Wait before retrying (exponential backoff)
-      if (attempt <= _maxRetries) {
-        final waitTime = Duration(milliseconds: 500 * attempt);
-        developer.log(
-          '[$printerName Printer] Waiting ${waitTime.inMilliseconds}ms before retry...',
-        );
-        await Future.delayed(waitTime);
-      }
-    }
-
-    // All retry attempts failed
-    developer.log(
-      '[$printerName Printer] Failed after ${_maxRetries + 1} attempts',
+    const held = PrintTransmissionResult(
+      PrintTransmissionState.uncertain,
+      'Venue or confirmed Order changed; delivery held without writing bytes',
     );
-    return false;
+    if (mayWrite != null && !mayWrite()) return held;
+    if (usePersistentConnection && connectOverride == null) {
+      final manager = PrinterConnectionManager.instance;
+      final connection = printerName == 'Kitchen'
+          ? manager.kitchenPrinter
+          : printerName == 'Receipt'
+          ? manager.receiptPrinter
+          : null;
+      if (connection != null &&
+          connection.ip == printerIp &&
+          connection.port == port) {
+        if (mayWrite != null && !mayWrite()) return held;
+        final result = await connection.send(
+          Uint8List.fromList(bytes),
+          mayWrite: mayWrite,
+        );
+        if (result.state != PrintTransmissionState.notSent) return result;
+        // Fallback is allowed only when no write was attempted.
+      }
+    }
+    String lastError = 'Connection unavailable';
+    for (var attempt = 0; attempt < 3; attempt++) {
+      PrinterWriteSocket? socket;
+      var writeAttempted = false;
+      try {
+        socket = connectOverride == null
+            ? _TcpPrinterSocket(
+                await Socket.connect(
+                  printerIp,
+                  port,
+                  timeout: _connectionTimeout,
+                ),
+              )
+            : await connectOverride!(
+                printerIp,
+                port,
+              ).timeout(_connectionTimeout);
+        if (mayWrite != null && !mayWrite()) {
+          socket.destroy();
+          return held;
+        }
+        writeAttempted =
+            true; // Set BEFORE add: an exception can follow a partial write.
+        socket.add(bytes);
+        await socket.flush().timeout(_writeTimeout);
+        await socket.close().timeout(_writeTimeout);
+        return const PrintTransmissionResult(
+          PrintTransmissionState.sent,
+          'TCP bytes sent; physical paper output is not confirmed',
+        );
+      } catch (error) {
+        lastError = error.toString();
+        socket?.destroy();
+        if (writeAttempted)
+          return PrintTransmissionResult(
+            PrintTransmissionState.uncertain,
+            'Transmission was attempted; check paper before a labeled reprint. $lastError',
+          );
+        if (attempt < 2) {
+          final delay = Duration(milliseconds: 500 * (attempt + 1));
+          await (delayOverride?.call(delay) ?? Future<void>.delayed(delay));
+        }
+      }
+    }
+    return PrintTransmissionResult(
+      PrintTransmissionState.notSent,
+      'Connection failed before any bytes were written. $lastError',
+    );
   }
 
-  /// Test direct temporary socket connections to both printers.
+  /// Reachability only. Opening a TCP connection is not a paper/printing test.
   static Future<Map<String, bool>> testConnections({
     required String kitchenIp,
     required String receiptIp,
     required int kitchenPort,
     required int receiptPort,
   }) async {
-    final results = <String, bool>{};
-
-    if (kitchenIp.isEmpty) {
-      results['kitchen'] = false;
-    } else {
-      Socket? kitchenSocket;
+    Future<bool> probe(String host, int port) async {
+      if (host.isEmpty) return false;
+      Socket? socket;
       try {
-        kitchenSocket = await Socket.connect(
-          kitchenIp,
-          kitchenPort,
-          timeout: _connectionTimeout,
-        );
-        results['kitchen'] = true;
-        await kitchenSocket.close();
-      } catch (e) {
-        developer.log('Kitchen printer connection test failed: $e');
-        results['kitchen'] = false;
+        socket = await Socket.connect(host, port, timeout: _connectionTimeout);
+        return true;
+      } catch (error) {
+        developer.log('Printer TCP reachability failed: $error');
+        return false;
+      } finally {
+        socket?.destroy();
       }
     }
 
-    if (receiptIp.isEmpty) {
-      results['receipt'] = false;
-    } else {
-      Socket? receiptSocket;
-      try {
-        receiptSocket = await Socket.connect(
-          receiptIp,
-          receiptPort,
-          timeout: _connectionTimeout,
-        );
-        results['receipt'] = true;
-        await receiptSocket.close();
-      } catch (e) {
-        developer.log('Receipt printer connection test failed: $e');
-        results['receipt'] = false;
-      }
-    }
-
-    return results;
+    return {
+      'kitchen': await probe(kitchenIp, kitchenPort),
+      'receipt': await probe(receiptIp, receiptPort),
+    };
   }
 }

@@ -1,0 +1,4 @@
+{
+  "paymentVerificationAndCartRuntimeUnchanged": true,
+  "onlyDiff": "One component import and replacement of confirmed-page static email markup"
+}

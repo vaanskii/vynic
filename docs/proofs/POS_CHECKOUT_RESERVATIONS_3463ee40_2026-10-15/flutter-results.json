@@ -1,0 +1,13 @@
+{
+  "exitCode": 0,
+  "counts": {
+    "passed": 2251,
+    "failed": 0,
+    "skipped": 3
+  },
+  "selectedFileCount": 188,
+  "excludedFileCount": 41,
+  "failureMessages": [],
+  "excludedCase": "actual Dart\u2192Go mutual TLS loses ACK, flushes before send, reopens and retains other-origin receipts",
+  "excludedCaseReason": "No Go executable or precompiled VYNIC_OPERATIONAL_PROOF_GO_FIXTURE available on this executor; prior unfiltered run failed only this prerequisite"
+}

@@ -67,7 +67,7 @@ void main() {
   test('the developer half is exactly the plumbing and the danger tools', () {
     expect(
       AdminScreen.developerSections,
-      containsAll(const ['errors', 'printers', 'connection', 'developer']),
+      unorderedEquals(const ['errors', 'printers', 'connection', 'developer']),
     );
   });
 

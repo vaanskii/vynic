@@ -1,3 +1,4 @@
+import 'package:vynic/core/ui/widgets/pos_dialog.dart';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -1017,7 +1018,7 @@ class ReservationsManagementSection extends StatelessWidget {
     BuildContext context,
     Reservation reservation,
   ) async {
-    final confirmed = await showDialog<bool>(
+    final confirmed = await showPosModal<bool>(
       context: context,
       barrierColor: Colors.black54,
       builder: (dialogContext) => AlertDialog(
@@ -1070,7 +1071,7 @@ class ReservationsManagementSection extends StatelessWidget {
     BuildContext context,
     Reservation reservation,
   ) async {
-    final confirmed = await showDialog<bool>(
+    final confirmed = await showPosModal<bool>(
       context: context,
       barrierColor: Colors.black54,
       builder: (dialogContext) => AlertDialog(

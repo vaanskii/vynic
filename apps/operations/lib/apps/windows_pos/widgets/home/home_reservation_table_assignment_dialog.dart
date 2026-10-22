@@ -1,3 +1,4 @@
+import 'package:vynic/core/ui/widgets/pos_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:vynic/core/models/reservation.dart';
 import 'package:vynic/core/models/table.dart';
@@ -62,7 +63,7 @@ class HomeReservationTableAssignmentDialog {
 
     if (selectableCount == 0) {
       if (context.mounted) {
-        await showDialog<void>(
+        await showPosModal<void>(
           context: context,
           builder: (ctx) => AlertDialog(
             backgroundColor: Colors.white,
@@ -92,7 +93,7 @@ class HomeReservationTableAssignmentDialog {
       selectedFloor = selectedRefs.first.floor;
     }
 
-    return showDialog<List<TableRef>>(
+    return showPosModal<List<TableRef>>(
       context: context,
       builder: (dialogContext) => StatefulBuilder(
         builder: (context, setDialogState) {

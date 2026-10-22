@@ -1,0 +1,24 @@
+{
+  "schema": 1,
+  "createdAtUtc": "2026-10-06T18:28:33.804547+00:00",
+  "status": "PASS_BOUNDED_WINDOWS_SOFTWARE_COMPLETION_INDEPENDENTLY_REVIEWED",
+  "finalAggregate": {
+    "path": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/windows-software-v2/windows-software-completion-final-receipt-v2.json",
+    "sha256": "1db6cb1aae401001abab906324a8fffa1179974ec61fd04b76ca79b3c783fefa"
+  },
+  "independentReview": {
+    "path": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/windows-software-v2/pos-and-windows-aggregate-independent-review.json",
+    "sha256": "7916e6272828f1aceb2783db23fb98369c0d485218225da84fad2c85587fd3cb"
+  },
+  "sourceSHA256": "faaaec2f1ece4f8259353666000eb4c0d3aee6143e73ae7fdf90772a937b581b",
+  "WindowsFlutterVisiblePassed": 623,
+  "WindowsFlutterHiddenPassed": 51,
+  "WindowsAnalysisFiles": 68,
+  "WindowsGoPassRecords": 514,
+  "GoFixtureEntrySkips": 2,
+  "GoCapabilitySkips": 0,
+  "officialPreparedPOSArtifacts": 23,
+  "physicalDocuments": 0,
+  "productionAuthoritySCMAndWriterCutoverRemainHeld": true,
+  "noFurtherVMOrSourceActions": true
+}

@@ -1,0 +1,36 @@
+# Vendored third-party agent skills. Canonical copies live in .agents/skills/;
+# .claude/skills/<name> is a relative symlink to the same folder.
+# Refresh with scripts/sync-agent-skills.sh (see docs/agent-state/VYNIC_SKILL_ROUTING.md).
+# Do not hand-edit vendored skills; put Vynic guidance in the routing doc instead.
+#
+# name                                      github-repo               commit                                    path-in-repo                                   extra-file (repo path, or -)
+frontend-design                             anthropics/skills         33375500bcea98d610eb30ce10ac4e59b89c390d  skills/frontend-design                         -
+design-taste-frontend                       Leonxlnx/taste-skill      ce26fc25c0e5e8cab638f883de62d9a86ee5e45b  skills/taste-skill                             LICENSE
+image-to-code                               Leonxlnx/taste-skill      ce26fc25c0e5e8cab638f883de62d9a86ee5e45b  skills/image-to-code-skill                     LICENSE
+web-design-guidelines                       vercel-labs/agent-skills  063bee94c3f4df8453406c830b0a7df0f2860278  skills/web-design-guidelines                   -
+flutter-add-integration-test                flutter/skills            3f58a5512a03c854b6c8b1128d6711e5e2d5055b  skills/flutter-add-integration-test           -
+flutter-add-widget-preview                  flutter/skills            3f58a5512a03c854b6c8b1128d6711e5e2d5055b  skills/flutter-add-widget-preview             -
+flutter-add-widget-test                     flutter/skills            3f58a5512a03c854b6c8b1128d6711e5e2d5055b  skills/flutter-add-widget-test                -
+flutter-apply-architecture-best-practices   flutter/skills            3f58a5512a03c854b6c8b1128d6711e5e2d5055b  skills/flutter-apply-architecture-best-practices -
+flutter-build-responsive-layout             flutter/skills            3f58a5512a03c854b6c8b1128d6711e5e2d5055b  skills/flutter-build-responsive-layout        -
+flutter-fix-layout-issues                   flutter/skills            3f58a5512a03c854b6c8b1128d6711e5e2d5055b  skills/flutter-fix-layout-issues              -
+flutter-implement-json-serialization        flutter/skills            3f58a5512a03c854b6c8b1128d6711e5e2d5055b  skills/flutter-implement-json-serialization   -
+flutter-setup-declarative-routing           flutter/skills            3f58a5512a03c854b6c8b1128d6711e5e2d5055b  skills/flutter-setup-declarative-routing      -
+flutter-setup-localization                  flutter/skills            3f58a5512a03c854b6c8b1128d6711e5e2d5055b  skills/flutter-setup-localization             -
+flutter-use-http-package                    flutter/skills            3f58a5512a03c854b6c8b1128d6711e5e2d5055b  skills/flutter-use-http-package               -
+dart-add-unit-test                          flutter/skills            3f58a5512a03c854b6c8b1128d6711e5e2d5055b  skills/dart-add-unit-test                     -
+dart-build-cli-app                          flutter/skills            3f58a5512a03c854b6c8b1128d6711e5e2d5055b  skills/dart-build-cli-app                     -
+dart-collect-coverage                       flutter/skills            3f58a5512a03c854b6c8b1128d6711e5e2d5055b  skills/dart-collect-coverage                  -
+dart-fix-runtime-errors                     flutter/skills            3f58a5512a03c854b6c8b1128d6711e5e2d5055b  skills/dart-fix-runtime-errors                -
+dart-generate-test-mocks                    flutter/skills            3f58a5512a03c854b6c8b1128d6711e5e2d5055b  skills/dart-generate-test-mocks               -
+dart-migrate-to-checks-package              flutter/skills            3f58a5512a03c854b6c8b1128d6711e5e2d5055b  skills/dart-migrate-to-checks-package         -
+dart-resolve-package-conflicts              flutter/skills            3f58a5512a03c854b6c8b1128d6711e5e2d5055b  skills/dart-resolve-package-conflicts         -
+dart-run-static-analysis                    flutter/skills            3f58a5512a03c854b6c8b1128d6711e5e2d5055b  skills/dart-run-static-analysis               -
+dart-setup-ffi-assets                       flutter/skills            3f58a5512a03c854b6c8b1128d6711e5e2d5055b  skills/dart-setup-ffi-assets                  -
+dart-use-doc-examples                       flutter/skills            3f58a5512a03c854b6c8b1128d6711e5e2d5055b  skills/dart-use-doc-examples                  -
+dart-use-ffigen                             flutter/skills            3f58a5512a03c854b6c8b1128d6711e5e2d5055b  skills/dart-use-ffigen                        -
+dart-use-path-package                       flutter/skills            3f58a5512a03c854b6c8b1128d6711e5e2d5055b  skills/dart-use-path-package                  -
+dart-use-pattern-matching                   flutter/skills            3f58a5512a03c854b6c8b1128d6711e5e2d5055b  skills/dart-use-pattern-matching              -
+dart-use-primary-constructors               flutter/skills            3f58a5512a03c854b6c8b1128d6711e5e2d5055b  skills/dart-use-primary-constructors          -
+dart-write-documentation                    flutter/skills            3f58a5512a03c854b6c8b1128d6711e5e2d5055b  skills/dart-write-documentation               -
+flutter-ui-design                           thienqo/flutter-skills    5b89c05fcd817d284a97e970e410a9b806a29d40  skills/flutter-ui-design                       LICENSE

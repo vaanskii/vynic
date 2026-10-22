@@ -1,0 +1,32 @@
+﻿[
+    {
+        "path":  "core\\CMakeFiles\\3.31.6-msvc6\\CompilerIdCXX\\CompilerIdCXX.exe",
+        "bytes":  13824,
+        "sha256":  "1c17a41c4c57072d008ea4bdba2b355242a167caf5c33676262e48a6211a52ea",
+        "machine":  43620
+    },
+    {
+        "path":  "core\\Release\\windows_spooler_test.exe",
+        "bytes":  54272,
+        "sha256":  "9769e7778ff06ba23d921362b0dd06a802801cd74af1944587e47346f4b9236b",
+        "machine":  43620
+    },
+    {
+        "path":  "helper\\CMakeFiles\\3.31.6-msvc6\\CompilerIdCXX\\CompilerIdCXX.exe",
+        "bytes":  13824,
+        "sha256":  "4c87b3c91c0e41210454a9645eb5b8a3ff25422c49bdbb8e5d8f104f82516e4b",
+        "machine":  43620
+    },
+    {
+        "path":  "helper\\Release\\print_helper_protocol_test.exe",
+        "bytes":  300544,
+        "sha256":  "b12e8bde194835e1cf4398f33702ed2e12dad7c7ad88c90508b363194479d076",
+        "machine":  43620
+    },
+    {
+        "path":  "helper\\Release\\vynic_print_helper.exe",
+        "bytes":  291328,
+        "sha256":  "99869fe8761ee48f1c66d30359dc837327dd3cc054ba60a1d80089916a6981f5",
+        "machine":  43620
+    }
+]

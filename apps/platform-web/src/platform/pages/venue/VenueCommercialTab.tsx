@@ -1,25 +1,18 @@
-import { useEffect, useState } from "react";
+import { SubscriptionPanel } from "./SubscriptionPanel";
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { platformApi } from "../../api";
 import { useAuth } from "../../auth";
-import type { ManagerAccess, SubscriptionStatus } from "../../types";
+import type { ManagerAccess } from "../../types";
 import { errorMessage, formatDateTime, formatRelativeTime } from "../../format";
 import { Button } from "../../components/Button";
 import { Field, Input, Select, FormError } from "../../components/Form";
 import { Panel } from "../../components/Page";
 import { Dialog } from "../../components/Dialog";
-import { ConfirmDialog } from "../../components/ConfirmDialog";
 import { ErrorState, LoadingState } from "../../components/State";
 import { StatusBadge } from "../../components/StatusBadge";
 
-const actions: [SubscriptionStatus, string][] = [
-  ["TRIAL", "Start trial"],
-  ["ACTIVE", "Activate / Reactivate"],
-  ["PAST_DUE", "Mark past due"],
-  ["SUSPENDED", "Suspend"],
-  ["CANCELLED", "Cancel subscription"],
-];
 export function VenueCommercialTab({
   venueId,
   accessOnly = false,
@@ -32,20 +25,18 @@ export function VenueCommercialTab({
   const { actor } = useAuth();
   const canEdit = actor?.role === "SUPER_ADMIN";
   const client = useQueryClient();
-  const subscription = useQuery({
-    queryKey: ["subscription", venueId],
-    queryFn: () => platformApi.subscription(venueId),
-    enabled: !accessOnly,
-  });
   const managers = useQuery({
     queryKey: ["managers", venueId],
     queryFn: () => platformApi.managers(venueId),
     refetchInterval: 15000,
     enabled: showAccess,
   });
-  const awaitingDelivery = managers.data?.some((staff) =>
-    staff.delivery && ["PENDING", "CLAIMED"].includes(staff.delivery.status),
-  ) ?? false;
+  const awaitingDelivery =
+    managers.data?.some(
+      (staff) =>
+        staff.delivery &&
+        ["PENDING", "CLAIMED"].includes(staff.delivery.status),
+    ) ?? false;
   const devices = useQuery({
     queryKey: ["devices", venueId],
     queryFn: () => platformApi.devices(venueId),
@@ -53,17 +44,6 @@ export function VenueCommercialTab({
     refetchInterval: 15000,
   });
   const primary = devices.data?.find((device) => device.isOperationalPrimary);
-  const [nextStatus, setNextStatus] = useState<SubscriptionStatus | null>(null);
-  const [note, setNote] = useState("");
-  const [trialEndsAt, setTrialEndsAt] = useState("");
-  const [currentPeriodEndsAt, setCurrentPeriodEndsAt] = useState("");
-  useEffect(() => {
-    setNote(subscription.data?.note ?? "");
-    setTrialEndsAt(subscription.data?.trialEndsAt?.slice(0, 10) ?? "");
-    setCurrentPeriodEndsAt(
-      subscription.data?.currentPeriodEndsAt?.slice(0, 10) ?? "",
-    );
-  }, [subscription.data]);
   const [access, setAccess] = useState<{
     action: "create" | "reset" | "disable";
     staff?: ManagerAccess;
@@ -76,21 +56,13 @@ export function VenueCommercialTab({
     pin: "",
   });
   const [feedback, setFeedback] = useState("");
-  const changeSubscription = useMutation({
-    mutationFn: () =>
-      platformApi.setSubscription(venueId, {
-        status: nextStatus!,
-        note,
-        trialEndsAt: trialEndsAt || null,
-        currentPeriodEndsAt: currentPeriodEndsAt || null,
-      }),
-    onSuccess: async () => {
-      setNextStatus(null);
-      await client.invalidateQueries({ queryKey: ["subscription", venueId] });
-      await client.invalidateQueries({ queryKey: ["product", venueId] });
-      setFeedback("Subscription updated.");
-    },
-  });
+  const links = useQuery({ queryKey: ["manager-links", venueId], queryFn: () => platformApi.managerLinks(venueId), enabled: showAccess, refetchInterval: (query) => query.state.data?.some((row) => row.status === "PENDING") ? 4000 : false });
+  const [issuedLink, setIssuedLink] = useState<{ id: string; code: string; expiresAt: string } | null>(null);
+  const closeLink = () => { setIssuedLink(null); issueLink.reset(); };
+  const issueLink = useMutation({ gcTime: 0, mutationFn: () => platformApi.issueManagerLink(venueId), onSuccess: async (result) => {
+    setIssuedLink(result); await client.invalidateQueries({ queryKey: ["manager-links", venueId] });
+  }});
+  const cancelLink = useMutation({ mutationFn: (id: string) => platformApi.cancelManagerLink(venueId, id), onSuccess: () => client.invalidateQueries({ queryKey: ["manager-links", venueId] }) });
   const changeAccess = useMutation({
     mutationFn: () =>
       platformApi.managerAccess(
@@ -116,24 +88,15 @@ export function VenueCommercialTab({
     setForm({ displayName: "", username: "", role: "MANAGER", pin: "" });
     setAccess({ action, staff, requestId: crypto.randomUUID() });
   };
-  if (
-    (!accessOnly && subscription.isPending) ||
-    (showAccess && managers.isPending)
-  )
-    return <LoadingState label="Loading commercial access" />;
-  if ((!accessOnly && subscription.error) || (showAccess && managers.error))
+  if (showAccess && managers.isPending)
+    return <LoadingState label="Loading Manager access" />;
+  if (showAccess && managers.error)
     return (
       <ErrorState
-        error={errorMessage(
-          (!accessOnly && subscription.error) || managers.error,
-        )}
-        retry={() => {
-          void subscription.refetch();
-          void managers.refetch();
-        }}
+        error={errorMessage(managers.error)}
+        retry={() => void managers.refetch()}
       />
     );
-  const current = subscription.data;
   return (
     <>
       {feedback && (
@@ -144,98 +107,71 @@ export function VenueCommercialTab({
           {feedback}
         </p>
       )}
-      {!accessOnly && (
-        <Panel
-          title="Subscription"
-          description="Controls Manager and Website access. Past due retains access during a manually managed grace period."
-        >
-          <StatusBadge value={current?.status ?? "ACTIVE"} />
-          <dl>
-            <dt>Started</dt>
-            <dd>
-              {current?.startedAt ? formatDateTime(current.startedAt) : "—"}
-            </dd>
-            <dt>Trial ends</dt>
-            <dd>
-              {current?.trialEndsAt ? formatDateTime(current.trialEndsAt) : "—"}
-            </dd>
-            <dt>Current period ends</dt>
-            <dd>
-              {current?.currentPeriodEndsAt
-                ? formatDateTime(current.currentPeriodEndsAt)
-                : "—"}
-            </dd>
-            <dt>Note</dt>
-            <dd>{current?.note || "—"}</dd>
-          </dl>
-          {canEdit && (
-            <div className="platform-form">
-              <Field label="Operator note">
-                <Input
-                  value={note}
-                  onChange={(e) => setNote(e.target.value)}
-                  maxLength={1000}
-                />
-              </Field>
-              <div className="platform-form-grid">
-                <Field label="Trial end date">
-                  <Input
-                    type="date"
-                    value={trialEndsAt}
-                    onChange={(e) => setTrialEndsAt(e.target.value)}
-                  />
-                </Field>
-                <Field label="Current period end date">
-                  <Input
-                    type="date"
-                    value={currentPeriodEndsAt}
-                    onChange={(e) => setCurrentPeriodEndsAt(e.target.value)}
-                  />
-                </Field>
-              </div>
-              <div className="platform-feature-actions">
-                {actions.map(([status, label]) => (
-                  <Button
-                    key={status}
-                    tone={
-                      status === "SUSPENDED" || status === "CANCELLED"
-                        ? "danger"
-                        : "secondary"
-                    }
-                    onClick={() => {
-                      changeSubscription.reset();
-                      setNextStatus(status);
-                    }}
-                  >
-                    {label}
-                  </Button>
-                ))}
-              </div>
-            </div>
-          )}
-        </Panel>
-      )}
+      {!accessOnly && <SubscriptionPanel venueId={venueId} canEdit={canEdit} />}
       {showAccess && (
         <Panel
           title="Manager access"
-          description="რესტორნის კოდი შეიყვანეთ ერთხელ, შემდეგ გამოიყენეთ პირადი PIN. POS-ზე PIN განახლდება მთავარ ტერმინალთან სინქრონიზაციის შემდეგ."
+          description="ახალი Manager აპი დააკავშირეთ ერთჯერადი კოდით, შემდეგ გამოიყენეთ პირადი PIN. POS-ზე PIN განახლდება მთავარ ტერმინალთან სინქრონიზაციის შემდეგ."
         >
-          {canEdit && (
+          {canEdit && !!managers.data?.length && (
             <Button tone="primary" onClick={() => openAccess("create")}>
               Create Manager
             </Button>
+          )}
+          {canEdit && !managers.data?.length && (
+            <>
+              <p>
+                პირველი რეგისტრაცია სრულდება მხოლოდ დაკავშირებულ POS
+                აპლიკაციაში: მომხმარებელი შეიყვანს სახელს და აირჩევს პირად
+                PIN-ს. შემდეგ ამავე PIN-ით შედის Manager აპში.
+              </p>
+              <Link className="platform-button platform-button--primary"
+                to={`/venues/${venueId}/devices`}>
+                პირველი POS-ის დაკავშირების კოდის შექმნა
+              </Link>
+              <p>მოწყობილობებში შექმენით დაკავშირების კოდი პირველი Manager-ის რეგისტრაციის უფლებით. მომხმარებელს POS-ში მეორე კოდის შეყვანა აღარ დასჭირდება.</p>
+            </>
           )}
           {awaitingDelivery && (
             <div className="platform-callout" role="status">
               <div>
                 <strong>POS access is waiting for the Primary POS.</strong>
-                <p>Connecting another terminal does not make it Primary. If this is a replacement, select it explicitly under Devices after stopping the previous POS and checking the restaurant data.</p>
-                {devices.isPending ? <LoadingState label="Checking Primary POS" />
-                  : devices.error ? <ErrorState error={errorMessage(devices.error)} retry={() => void devices.refetch()} />
-                  : <p>{primary ? `Primary: ${primary.displayName} (${primary.id.slice(0, 8)}). ${primary.lastSeenAt ? formatRelativeTime(primary.lastSeenAt) : "Never connected"}.` : "No Primary POS is selected."}</p>}
+                <p>
+                  Connecting another terminal does not make it Primary. If this
+                  is a replacement, select it explicitly under Devices after
+                  stopping the previous POS and checking the restaurant data.
+                </p>
+                {devices.isPending ? (
+                  <LoadingState label="Checking Primary POS" />
+                ) : devices.error ? (
+                  <ErrorState
+                    error={errorMessage(devices.error)}
+                    retry={() => void devices.refetch()}
+                  />
+                ) : (
+                  <p>
+                    {primary
+                      ? `Primary: ${primary.displayName} (${primary.id.slice(0, 8)}). ${primary.lastSeenAt ? formatRelativeTime(primary.lastSeenAt) : "Never connected"}.`
+                      : "No Primary POS is selected."}
+                  </p>
+                )}
                 <div className="platform-page-header__actions">
-                  <Link className="platform-button platform-button--quiet" to={`/admin/venues/${venueId}/devices`}>Review POS devices</Link>
-                  <Button loading={managers.isFetching || devices.isFetching} loadingLabel="Checking delivery…" onClick={() => { void managers.refetch(); void devices.refetch(); }}>Check delivery</Button>
+                  <Link
+                    className="platform-button platform-button--quiet"
+                    to={`/venues/${venueId}/devices`}
+                  >
+                    Review POS devices
+                  </Link>
+                  <Button
+                    loading={managers.isFetching || devices.isFetching}
+                    loadingLabel="Checking delivery…"
+                    onClick={() => {
+                      void managers.refetch();
+                      void devices.refetch();
+                    }}
+                  >
+                    Check delivery
+                  </Button>
                 </div>
               </div>
             </div>
@@ -282,23 +218,18 @@ export function VenueCommercialTab({
           </div>
         </Panel>
       )}
-      <ConfirmDialog
-        open={nextStatus !== null}
-        onOpenChange={(open) => {
-          if (!open) setNextStatus(null);
-        }}
-        title={`Set subscription to ${nextStatus}?`}
-        description="Suspended and cancelled subscriptions deny Manager and Website access. Local POS checkout, printing and day close continue."
-        confirmLabel="Update subscription"
-        danger={nextStatus === "SUSPENDED" || nextStatus === "CANCELLED"}
-        pending={changeSubscription.isPending}
-        error={
-          changeSubscription.error
-            ? errorMessage(changeSubscription.error)
-            : undefined
-        }
-        onConfirm={() => changeSubscription.mutate()}
-      />
+      {showAccess && <Panel title="Manager app connection" description="One expiring code links one Manager installation to this restaurant. It does not create a Manager or replace PIN login.">
+        {canEdit && <Button disabled={!managers.data?.some((m) => m.isActive)} loading={issueLink.isPending} onClick={() => issueLink.mutate()}>Create Manager linking code</Button>}
+        {!managers.data?.some((m) => m.isActive) && <p>Complete the first Manager registration on the Primary POS first.</p>}
+        <FormError>{issueLink.error ? errorMessage(issueLink.error) : cancelLink.error ? errorMessage(cancelLink.error) : undefined}</FormError>
+        {links.isPending ? <LoadingState label="Loading Manager links" /> : links.error ? <ErrorState error={errorMessage(links.error)} retry={() => void links.refetch()} /> : links.data?.map((link) => <div className="platform-feature-row" key={link.id}>
+          <span>{link.status === "CANCELLED" ? "Cancelled" : link.status === "LINKED" ? "Linked" : link.status === "EXPIRED" ? "Expired" : "Waiting for linking"} · {formatDateTime(link.expiresAt)}</span>
+          {canEdit && link.status === "PENDING" && <Button disabled={cancelLink.isPending} onClick={() => cancelLink.mutate(link.id)}>Cancel linking code</Button>}
+        </div>)}
+      </Panel>}
+      <Dialog open={issuedLink !== null} onOpenChange={(open) => { if (!open) closeLink(); }} title="Manager linking code" description="Shown once. Creating a new code cancels earlier unused linking codes. Existing linked apps keep their selection and still require PIN." footer={<Button onClick={closeLink}>Done</Button>}>
+        {issuedLink && <div className="platform-secret"><code>{issuedLink.code}</code><p>Expires {formatDateTime(issuedLink.expiresAt)}</p><p>Enter this code in Vynic Manager once. Then sign in with the personal PIN chosen on the POS.</p></div>}
+      </Dialog>
       <Dialog
         open={access !== null}
         onOpenChange={(open) => {

@@ -1,0 +1,54 @@
+00:00 +0: loading /Users/vaanskii/Developer/vynic/apps/operations/test/widget/pos_input_test.dart
+00:00 +0: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/pos_input_test.dart: defaults on, persists off across restart, leaves Manager preference alone
+00:00 +1: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/pos_input_test.dart: settings toggle persists and ordinary fields react immediately
+00:00 +2: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/pos_modal_regression_test.dart: dirty reservation protects Escape, system back, repeated close and cancel
+00:00 +3: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/pos_modal_regression_test.dart: dirty reservation protects Escape, system back, repeated close and cancel
+00:00 +4: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/pos_modal_regression_test.dart: dirty reservation protects Escape, system back, repeated close and cancel
+00:00 +5: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/pos_modal_regression_test.dart: dirty reservation protects Escape, system back, repeated close and cancel
+00:00 +6: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/pos_modal_regression_test.dart: dirty reservation protects Escape, system back, repeated close and cancel
+00:00 +7: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/pos_modal_regression_test.dart: dirty reservation protects Escape, system back, repeated close and cancel
+00:00 +8: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/pos_input_test.dart: numeric sheet preserves decimal constraints with physical input
+00:00 +9: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/pos_modal_regression_test.dart: reservation validation remains inline and invalid submit keeps draft
+00:00 +10: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/pos_modal_regression_test.dart: reservation validation remains inline and invalid submit keeps draft
+00:00 +11: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/pos_modal_regression_test.dart: reservation validation remains inline and invalid submit keeps draft
+00:00 +12: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/pos_modal_regression_test.dart: reservation validation remains inline and invalid submit keeps draft
+00:01 +13: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/pos_modal_regression_test.dart: confirmation centers in the usable viewport without double keyboard insets
+00:01 +14: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/pos_modal_regression_test.dart: long Georgian form and actions fit 1024 at 150 percent text size
+00:01 +15: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/pos_modal_regression_test.dart: reservation Size(800.0, 600.0) keyboard keeps title fixed, caret visible, then restores layout
+00:01 +16: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/pos_modal_regression_test.dart: reservation Size(1024.0, 768.0) keyboard keeps title fixed, caret visible, then restores layout
+00:01 +17: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/pos_interaction_pass_test.dart: home work date remains visible at Size(800.0, 600.0)
+00:01 +18: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/pos_modal_regression_test.dart: reservation Size(1366.0, 768.0) keyboard keeps title fixed, caret visible, then restores layout
+00:02 +19: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/pos_interaction_pass_test.dart: Vynic quit modal fits and refreshes language at Size(800.0, 600.0)
+00:02 +20: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/pos_modal_regression_test.dart: reservation Size(1920.0, 1080.0) keyboard keeps title fixed, caret visible, then restores layout
+00:02 +21: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/pos_modal_regression_test.dart: reservation Size(1920.0, 1080.0) keyboard keeps title fixed, caret visible, then restores layout
+00:02 +22: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/pos_modal_regression_test.dart: reservation Size(1920.0, 1080.0) keyboard keeps title fixed, caret visible, then restores layout
+00:02 +23: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/pos_modal_regression_test.dart: reservation Size(1920.0, 1080.0) keyboard keeps title fixed, caret visible, then restores layout
+00:02 +24: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/pos_modal_regression_test.dart: reservation Size(1920.0, 1080.0) keyboard keeps title fixed, caret visible, then restores layout
+00:02 +25: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/pos_interaction_pass_test.dart: lock PIN stays visible with optional input off; live digits and runtime labels
+00:02 +26: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/pos_modal_regression_test.dart: numeric dock keeps the real field focus and leading zero; Escape restores form
+00:02 +27: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/pos_interaction_pass_test.dart: Reservations Size(800.0, 600.0) edits the actual field live without Enter or duplicate preview
+00:02 +28: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/pos_modal_regression_test.dart: PIN repeated cancel and bad attempts never authorize; hardware Enter validates
+00:02 +29: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/pos_interaction_pass_test.dart: Menu Size(800.0, 600.0) edits the actual field live without Enter or duplicate preview
+00:02 +30: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/pos_interaction_pass_test.dart: Menu Size(800.0, 600.0) edits the actual field live without Enter or duplicate preview
+00:02 +31: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/pos_modal_regression_test.dart: comment required input stays inline; tab reaches field and cancel returns null
+00:02 +32: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/pos_interaction_pass_test.dart: Inventory Size(800.0, 600.0) edits the actual field live without Enter or duplicate preview
+00:03 +33: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/pos_interaction_pass_test.dart: Inventory Size(800.0, 600.0) edits the actual field live without Enter or duplicate preview
+00:03 +34: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/pos_interaction_pass_test.dart: Reservations Size(1024.0, 768.0) edits the actual field live without Enter or duplicate preview
+00:03 +35: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/pos_interaction_pass_test.dart: Menu Size(1024.0, 768.0) edits the actual field live without Enter or duplicate preview
+00:03 +36: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/pos_interaction_pass_test.dart: Inventory Size(1024.0, 768.0) edits the actual field live without Enter or duplicate preview
+00:03 +37: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/pos_login_layout_test.dart: Login version and right-aligned date at 390.0 / 1.0
+00:03 +38: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/pos_login_layout_test.dart: Login version and right-aligned date at 390.0 / 1.0
+00:03 +39: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/pos_login_layout_test.dart: Login version and right-aligned date at 390.0 / 1.0
+00:03 +40: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/pos_interaction_pass_test.dart: Inventory Size(1440.0, 900.0) edits the actual field live without Enter or duplicate preview
+00:03 +41: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/pos_interaction_pass_test.dart: Inventory Size(1440.0, 900.0) edits the actual field live without Enter or duplicate preview
+00:03 +42: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/pos_login_layout_test.dart: Login version and right-aligned date at 800.0 / 1.0
+00:03 +43: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/pos_interaction_pass_test.dart: login keeps a matching PIN visible until explicit confirmation
+00:03 +44: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/pos_interaction_pass_test.dart: login keeps a matching PIN visible until explicit confirmation
+00:04 +45: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/pos_login_layout_test.dart: Login version and right-aligned date at 1024.0 / 1.0
+00:04 +46: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/pos_interaction_pass_test.dart: decimal and PIN modes update the real controller and preserve leading PIN zero
+00:04 +47: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/pos_interaction_pass_test.dart: decimal and PIN modes update the real controller and preserve leading PIN zero
+00:04 +48: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/pos_interaction_pass_test.dart: decimal and PIN modes update the real controller and preserve leading PIN zero
+00:04 +49: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/pos_interaction_pass_test.dart: decimal and PIN modes update the real controller and preserve leading PIN zero
+00:04 +50: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/pos_interaction_pass_test.dart: staff PIN uses the same pad and immediate masked draft with keyboard off
+00:04 +51: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/pos_interaction_pass_test.dart: (tearDownAll)
+00:04 +51: All tests passed!

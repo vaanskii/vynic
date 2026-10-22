@@ -1,0 +1,182 @@
+{"Time":"2026-10-09T19:56:39.123227+04:00","Action":"start","Package":"vynic.local/edge/internal/printstation"}
+{"Time":"2026-10-09T19:56:39.596125+04:00","Action":"run","Package":"vynic.local/edge/internal/printstation","Test":"TestRoutingAllSourcesAndMultipleDestinations"}
+{"Time":"2026-10-09T19:56:39.596188+04:00","Action":"output","Package":"vynic.local/edge/internal/printstation","Test":"TestRoutingAllSourcesAndMultipleDestinations","Output":"=== RUN   TestRoutingAllSourcesAndMultipleDestinations\n"}
+{"Time":"2026-10-09T19:56:39.600336+04:00","Action":"output","Package":"vynic.local/edge/internal/printstation","Test":"TestRoutingAllSourcesAndMultipleDestinations","Output":"--- PASS: TestRoutingAllSourcesAndMultipleDestinations (0.00s)\n"}
+{"Time":"2026-10-09T19:56:39.600355+04:00","Action":"pass","Package":"vynic.local/edge/internal/printstation","Test":"TestRoutingAllSourcesAndMultipleDestinations","Elapsed":0}
+{"Time":"2026-10-09T19:56:39.600371+04:00","Action":"run","Package":"vynic.local/edge/internal/printstation","Test":"TestTopologyMatrix"}
+{"Time":"2026-10-09T19:56:39.600376+04:00","Action":"output","Package":"vynic.local/edge/internal/printstation","Test":"TestTopologyMatrix","Output":"=== RUN   TestTopologyMatrix\n"}
+{"Time":"2026-10-09T19:56:39.600403+04:00","Action":"run","Package":"vynic.local/edge/internal/printstation","Test":"TestTopologyMatrix/1"}
+{"Time":"2026-10-09T19:56:39.600408+04:00","Action":"output","Package":"vynic.local/edge/internal/printstation","Test":"TestTopologyMatrix/1","Output":"=== RUN   TestTopologyMatrix/1\n"}
+{"Time":"2026-10-09T19:56:39.600477+04:00","Action":"output","Package":"vynic.local/edge/internal/printstation","Test":"TestTopologyMatrix/1","Output":"--- PASS: TestTopologyMatrix/1 (0.00s)\n"}
+{"Time":"2026-10-09T19:56:39.600483+04:00","Action":"pass","Package":"vynic.local/edge/internal/printstation","Test":"TestTopologyMatrix/1","Elapsed":0}
+{"Time":"2026-10-09T19:56:39.600501+04:00","Action":"run","Package":"vynic.local/edge/internal/printstation","Test":"TestTopologyMatrix/2"}
+{"Time":"2026-10-09T19:56:39.600505+04:00","Action":"output","Package":"vynic.local/edge/internal/printstation","Test":"TestTopologyMatrix/2","Output":"=== RUN   TestTopologyMatrix/2\n"}
+{"Time":"2026-10-09T19:56:39.600529+04:00","Action":"output","Package":"vynic.local/edge/internal/printstation","Test":"TestTopologyMatrix/2","Output":"--- PASS: TestTopologyMatrix/2 (0.00s)\n"}
+{"Time":"2026-10-09T19:56:39.600537+04:00","Action":"pass","Package":"vynic.local/edge/internal/printstation","Test":"TestTopologyMatrix/2","Elapsed":0}
+{"Time":"2026-10-09T19:56:39.60055+04:00","Action":"run","Package":"vynic.local/edge/internal/printstation","Test":"TestTopologyMatrix/3"}
+{"Time":"2026-10-09T19:56:39.600555+04:00","Action":"output","Package":"vynic.local/edge/internal/printstation","Test":"TestTopologyMatrix/3","Output":"=== RUN   TestTopologyMatrix/3\n"}
+{"Time":"2026-10-09T19:56:39.600576+04:00","Action":"output","Package":"vynic.local/edge/internal/printstation","Test":"TestTopologyMatrix/3","Output":"--- PASS: TestTopologyMatrix/3 (0.00s)\n"}
+{"Time":"2026-10-09T19:56:39.600581+04:00","Action":"pass","Package":"vynic.local/edge/internal/printstation","Test":"TestTopologyMatrix/3","Elapsed":0}
+{"Time":"2026-10-09T19:56:39.600622+04:00","Action":"run","Package":"vynic.local/edge/internal/printstation","Test":"TestTopologyMatrix/4"}
+{"Time":"2026-10-09T19:56:39.600626+04:00","Action":"output","Package":"vynic.local/edge/internal/printstation","Test":"TestTopologyMatrix/4","Output":"=== RUN   TestTopologyMatrix/4\n"}
+{"Time":"2026-10-09T19:56:39.60065+04:00","Action":"output","Package":"vynic.local/edge/internal/printstation","Test":"TestTopologyMatrix/4","Output":"--- PASS: TestTopologyMatrix/4 (0.00s)\n"}
+{"Time":"2026-10-09T19:56:39.600662+04:00","Action":"pass","Package":"vynic.local/edge/internal/printstation","Test":"TestTopologyMatrix/4","Elapsed":0}
+{"Time":"2026-10-09T19:56:39.600686+04:00","Action":"run","Package":"vynic.local/edge/internal/printstation","Test":"TestTopologyMatrix/6"}
+{"Time":"2026-10-09T19:56:39.600689+04:00","Action":"output","Package":"vynic.local/edge/internal/printstation","Test":"TestTopologyMatrix/6","Output":"=== RUN   TestTopologyMatrix/6\n"}
+{"Time":"2026-10-09T19:56:39.600721+04:00","Action":"output","Package":"vynic.local/edge/internal/printstation","Test":"TestTopologyMatrix/6","Output":"--- PASS: TestTopologyMatrix/6 (0.00s)\n"}
+{"Time":"2026-10-09T19:56:39.600726+04:00","Action":"pass","Package":"vynic.local/edge/internal/printstation","Test":"TestTopologyMatrix/6","Elapsed":0}
+{"Time":"2026-10-09T19:56:39.600742+04:00","Action":"run","Package":"vynic.local/edge/internal/printstation","Test":"TestTopologyMatrix/10"}
+{"Time":"2026-10-09T19:56:39.600752+04:00","Action":"output","Package":"vynic.local/edge/internal/printstation","Test":"TestTopologyMatrix/10","Output":"=== RUN   TestTopologyMatrix/10\n"}
+{"Time":"2026-10-09T19:56:39.60078+04:00","Action":"output","Package":"vynic.local/edge/internal/printstation","Test":"TestTopologyMatrix/10","Output":"--- PASS: TestTopologyMatrix/10 (0.00s)\n"}
+{"Time":"2026-10-09T19:56:39.600786+04:00","Action":"pass","Package":"vynic.local/edge/internal/printstation","Test":"TestTopologyMatrix/10","Elapsed":0}
+{"Time":"2026-10-09T19:56:39.600798+04:00","Action":"run","Package":"vynic.local/edge/internal/printstation","Test":"TestTopologyMatrix/100"}
+{"Time":"2026-10-09T19:56:39.600802+04:00","Action":"output","Package":"vynic.local/edge/internal/printstation","Test":"TestTopologyMatrix/100","Output":"=== RUN   TestTopologyMatrix/100\n"}
+{"Time":"2026-10-09T19:56:39.601021+04:00","Action":"output","Package":"vynic.local/edge/internal/printstation","Test":"TestTopologyMatrix/100","Output":"--- PASS: TestTopologyMatrix/100 (0.00s)\n"}
+{"Time":"2026-10-09T19:56:39.601026+04:00","Action":"pass","Package":"vynic.local/edge/internal/printstation","Test":"TestTopologyMatrix/100","Elapsed":0}
+{"Time":"2026-10-09T19:56:39.601039+04:00","Action":"output","Package":"vynic.local/edge/internal/printstation","Test":"TestTopologyMatrix","Output":"--- PASS: TestTopologyMatrix (0.00s)\n"}
+{"Time":"2026-10-09T19:56:39.601043+04:00","Action":"pass","Package":"vynic.local/edge/internal/printstation","Test":"TestTopologyMatrix","Elapsed":0}
+{"Time":"2026-10-09T19:56:39.601065+04:00","Action":"run","Package":"vynic.local/edge/internal/printstation","Test":"TestDefinitiveFallbackFIFOAndIndependentBar"}
+{"Time":"2026-10-09T19:56:39.601069+04:00","Action":"output","Package":"vynic.local/edge/internal/printstation","Test":"TestDefinitiveFallbackFIFOAndIndependentBar","Output":"=== RUN   TestDefinitiveFallbackFIFOAndIndependentBar\n"}
+{"Time":"2026-10-09T19:56:39.603894+04:00","Action":"output","Package":"vynic.local/edge/internal/printstation","Test":"TestDefinitiveFallbackFIFOAndIndependentBar","Output":"--- PASS: TestDefinitiveFallbackFIFOAndIndependentBar (0.00s)\n"}
+{"Time":"2026-10-09T19:56:39.60391+04:00","Action":"pass","Package":"vynic.local/edge/internal/printstation","Test":"TestDefinitiveFallbackFIFOAndIndependentBar","Elapsed":0}
+{"Time":"2026-10-09T19:56:39.603924+04:00","Action":"run","Package":"vynic.local/edge/internal/printstation","Test":"TestUncertainNeverFallsBackOrRetries"}
+{"Time":"2026-10-09T19:56:39.603927+04:00","Action":"output","Package":"vynic.local/edge/internal/printstation","Test":"TestUncertainNeverFallsBackOrRetries","Output":"=== RUN   TestUncertainNeverFallsBackOrRetries\n"}
+{"Time":"2026-10-09T19:56:39.603961+04:00","Action":"run","Package":"vynic.local/edge/internal/printstation","Test":"TestUncertainNeverFallsBackOrRetries/{uncertain___0_0_0_false}"}
+{"Time":"2026-10-09T19:56:39.603966+04:00","Action":"output","Package":"vynic.local/edge/internal/printstation","Test":"TestUncertainNeverFallsBackOrRetries/{uncertain___0_0_0_false}","Output":"=== RUN   TestUncertainNeverFallsBackOrRetries/{uncertain___0_0_0_false}\n"}
+{"Time":"2026-10-09T19:56:39.605518+04:00","Action":"output","Package":"vynic.local/edge/internal/printstation","Test":"TestUncertainNeverFallsBackOrRetries/{uncertain___0_0_0_false}","Output":"--- PASS: TestUncertainNeverFallsBackOrRetries/{uncertain___0_0_0_false} (0.00s)\n"}
+{"Time":"2026-10-09T19:56:39.60553+04:00","Action":"pass","Package":"vynic.local/edge/internal/printstation","Test":"TestUncertainNeverFallsBackOrRetries/{uncertain___0_0_0_false}","Elapsed":0}
+{"Time":"2026-10-09T19:56:39.605547+04:00","Action":"run","Package":"vynic.local/edge/internal/printstation","Test":"TestUncertainNeverFallsBackOrRetries/{notSent___0_0_0_true}"}
+{"Time":"2026-10-09T19:56:39.60555+04:00","Action":"output","Package":"vynic.local/edge/internal/printstation","Test":"TestUncertainNeverFallsBackOrRetries/{notSent___0_0_0_true}","Output":"=== RUN   TestUncertainNeverFallsBackOrRetries/{notSent___0_0_0_true}\n"}
+{"Time":"2026-10-09T19:56:39.60713+04:00","Action":"output","Package":"vynic.local/edge/internal/printstation","Test":"TestUncertainNeverFallsBackOrRetries/{notSent___0_0_0_true}","Output":"--- PASS: TestUncertainNeverFallsBackOrRetries/{notSent___0_0_0_true} (0.00s)\n"}
+{"Time":"2026-10-09T19:56:39.607136+04:00","Action":"pass","Package":"vynic.local/edge/internal/printstation","Test":"TestUncertainNeverFallsBackOrRetries/{notSent___0_0_0_true}","Elapsed":0}
+{"Time":"2026-10-09T19:56:39.607159+04:00","Action":"run","Package":"vynic.local/edge/internal/printstation","Test":"TestUncertainNeverFallsBackOrRetries/{notSent___1_0_0_false}"}
+{"Time":"2026-10-09T19:56:39.607162+04:00","Action":"output","Package":"vynic.local/edge/internal/printstation","Test":"TestUncertainNeverFallsBackOrRetries/{notSent___1_0_0_false}","Output":"=== RUN   TestUncertainNeverFallsBackOrRetries/{notSent___1_0_0_false}\n"}
+{"Time":"2026-10-09T19:56:39.60872+04:00","Action":"output","Package":"vynic.local/edge/internal/printstation","Test":"TestUncertainNeverFallsBackOrRetries/{notSent___1_0_0_false}","Output":"--- PASS: TestUncertainNeverFallsBackOrRetries/{notSent___1_0_0_false} (0.00s)\n"}
+{"Time":"2026-10-09T19:56:39.608729+04:00","Action":"pass","Package":"vynic.local/edge/internal/printstation","Test":"TestUncertainNeverFallsBackOrRetries/{notSent___1_0_0_false}","Elapsed":0}
+{"Time":"2026-10-09T19:56:39.608752+04:00","Action":"run","Package":"vynic.local/edge/internal/printstation","Test":"TestUncertainNeverFallsBackOrRetries/{notSent___0_42_0_false}"}
+{"Time":"2026-10-09T19:56:39.608755+04:00","Action":"output","Package":"vynic.local/edge/internal/printstation","Test":"TestUncertainNeverFallsBackOrRetries/{notSent___0_42_0_false}","Output":"=== RUN   TestUncertainNeverFallsBackOrRetries/{notSent___0_42_0_false}\n"}
+{"Time":"2026-10-09T19:56:39.610476+04:00","Action":"output","Package":"vynic.local/edge/internal/printstation","Test":"TestUncertainNeverFallsBackOrRetries/{notSent___0_42_0_false}","Output":"--- PASS: TestUncertainNeverFallsBackOrRetries/{notSent___0_42_0_false} (0.00s)\n"}
+{"Time":"2026-10-09T19:56:39.610536+04:00","Action":"pass","Package":"vynic.local/edge/internal/printstation","Test":"TestUncertainNeverFallsBackOrRetries/{notSent___0_42_0_false}","Elapsed":0}
+{"Time":"2026-10-09T19:56:39.610548+04:00","Action":"run","Package":"vynic.local/edge/internal/printstation","Test":"TestUncertainNeverFallsBackOrRetries/{submitted___1_0_0_true}"}
+{"Time":"2026-10-09T19:56:39.610564+04:00","Action":"output","Package":"vynic.local/edge/internal/printstation","Test":"TestUncertainNeverFallsBackOrRetries/{submitted___1_0_0_true}","Output":"=== RUN   TestUncertainNeverFallsBackOrRetries/{submitted___1_0_0_true}\n"}
+{"Time":"2026-10-09T19:56:39.611988+04:00","Action":"output","Package":"vynic.local/edge/internal/printstation","Test":"TestUncertainNeverFallsBackOrRetries/{submitted___1_0_0_true}","Output":"--- PASS: TestUncertainNeverFallsBackOrRetries/{submitted___1_0_0_true} (0.00s)\n"}
+{"Time":"2026-10-09T19:56:39.612011+04:00","Action":"pass","Package":"vynic.local/edge/internal/printstation","Test":"TestUncertainNeverFallsBackOrRetries/{submitted___1_0_0_true}","Elapsed":0}
+{"Time":"2026-10-09T19:56:39.612033+04:00","Action":"run","Package":"vynic.local/edge/internal/printstation","Test":"TestUncertainNeverFallsBackOrRetries/{___0_0_0_false}"}
+{"Time":"2026-10-09T19:56:39.612036+04:00","Action":"output","Package":"vynic.local/edge/internal/printstation","Test":"TestUncertainNeverFallsBackOrRetries/{___0_0_0_false}","Output":"=== RUN   TestUncertainNeverFallsBackOrRetries/{___0_0_0_false}\n"}
+{"Time":"2026-10-09T19:56:39.613451+04:00","Action":"output","Package":"vynic.local/edge/internal/printstation","Test":"TestUncertainNeverFallsBackOrRetries/{___0_0_0_false}","Output":"--- PASS: TestUncertainNeverFallsBackOrRetries/{___0_0_0_false} (0.00s)\n"}
+{"Time":"2026-10-09T19:56:39.613457+04:00","Action":"pass","Package":"vynic.local/edge/internal/printstation","Test":"TestUncertainNeverFallsBackOrRetries/{___0_0_0_false}","Elapsed":0}
+{"Time":"2026-10-09T19:56:39.613463+04:00","Action":"output","Package":"vynic.local/edge/internal/printstation","Test":"TestUncertainNeverFallsBackOrRetries","Output":"--- PASS: TestUncertainNeverFallsBackOrRetries (0.01s)\n"}
+{"Time":"2026-10-09T19:56:39.613479+04:00","Action":"pass","Package":"vynic.local/edge/internal/printstation","Test":"TestUncertainNeverFallsBackOrRetries","Elapsed":0.01}
+{"Time":"2026-10-09T19:56:39.613631+04:00","Action":"run","Package":"vynic.local/edge/internal/printstation","Test":"TestRestartAndLostACKRetainImmutableIdentity"}
+{"Time":"2026-10-09T19:56:39.613633+04:00","Action":"output","Package":"vynic.local/edge/internal/printstation","Test":"TestRestartAndLostACKRetainImmutableIdentity","Output":"=== RUN   TestRestartAndLostACKRetainImmutableIdentity\n"}
+{"Time":"2026-10-09T19:56:39.615614+04:00","Action":"output","Package":"vynic.local/edge/internal/printstation","Test":"TestRestartAndLostACKRetainImmutableIdentity","Output":"--- PASS: TestRestartAndLostACKRetainImmutableIdentity (0.00s)\n"}
+{"Time":"2026-10-09T19:56:39.615626+04:00","Action":"pass","Package":"vynic.local/edge/internal/printstation","Test":"TestRestartAndLostACKRetainImmutableIdentity","Elapsed":0}
+{"Time":"2026-10-09T19:56:39.615652+04:00","Action":"run","Package":"vynic.local/edge/internal/printstation","Test":"TestConfigurationAndAuthorityFailClosed"}
+{"Time":"2026-10-09T19:56:39.615664+04:00","Action":"output","Package":"vynic.local/edge/internal/printstation","Test":"TestConfigurationAndAuthorityFailClosed","Output":"=== RUN   TestConfigurationAndAuthorityFailClosed\n"}
+{"Time":"2026-10-09T19:56:39.620029+04:00","Action":"output","Package":"vynic.local/edge/internal/printstation","Test":"TestConfigurationAndAuthorityFailClosed","Output":"--- PASS: TestConfigurationAndAuthorityFailClosed (0.00s)\n"}
+{"Time":"2026-10-09T19:56:39.62004+04:00","Action":"pass","Package":"vynic.local/edge/internal/printstation","Test":"TestConfigurationAndAuthorityFailClosed","Elapsed":0}
+{"Time":"2026-10-09T19:56:39.620059+04:00","Action":"run","Package":"vynic.local/edge/internal/printstation","Test":"TestLocalScopeAndAllLocal"}
+{"Time":"2026-10-09T19:56:39.620064+04:00","Action":"output","Package":"vynic.local/edge/internal/printstation","Test":"TestLocalScopeAndAllLocal","Output":"=== RUN   TestLocalScopeAndAllLocal\n"}
+{"Time":"2026-10-09T19:56:39.621732+04:00","Action":"output","Package":"vynic.local/edge/internal/printstation","Test":"TestLocalScopeAndAllLocal","Output":"--- PASS: TestLocalScopeAndAllLocal (0.00s)\n"}
+{"Time":"2026-10-09T19:56:39.621738+04:00","Action":"pass","Package":"vynic.local/edge/internal/printstation","Test":"TestLocalScopeAndAllLocal","Elapsed":0}
+{"Time":"2026-10-09T19:56:39.621756+04:00","Action":"run","Package":"vynic.local/edge/internal/printstation","Test":"TestManualReprintAuditAndOriginalUnchanged"}
+{"Time":"2026-10-09T19:56:39.62176+04:00","Action":"output","Package":"vynic.local/edge/internal/printstation","Test":"TestManualReprintAuditAndOriginalUnchanged","Output":"=== RUN   TestManualReprintAuditAndOriginalUnchanged\n"}
+{"Time":"2026-10-09T19:56:39.623528+04:00","Action":"output","Package":"vynic.local/edge/internal/printstation","Test":"TestManualReprintAuditAndOriginalUnchanged","Output":"--- PASS: TestManualReprintAuditAndOriginalUnchanged (0.00s)\n"}
+{"Time":"2026-10-09T19:56:39.623535+04:00","Action":"pass","Package":"vynic.local/edge/internal/printstation","Test":"TestManualReprintAuditAndOriginalUnchanged","Elapsed":0}
+{"Time":"2026-10-09T19:56:39.623547+04:00","Action":"run","Package":"vynic.local/edge/internal/printstation","Test":"TestDisabledPrimaryRecordsDefinitiveFailure"}
+{"Time":"2026-10-09T19:56:39.62355+04:00","Action":"output","Package":"vynic.local/edge/internal/printstation","Test":"TestDisabledPrimaryRecordsDefinitiveFailure","Output":"=== RUN   TestDisabledPrimaryRecordsDefinitiveFailure\n"}
+{"Time":"2026-10-09T19:56:39.625027+04:00","Action":"output","Package":"vynic.local/edge/internal/printstation","Test":"TestDisabledPrimaryRecordsDefinitiveFailure","Output":"--- PASS: TestDisabledPrimaryRecordsDefinitiveFailure (0.00s)\n"}
+{"Time":"2026-10-09T19:56:39.62504+04:00","Action":"pass","Package":"vynic.local/edge/internal/printstation","Test":"TestDisabledPrimaryRecordsDefinitiveFailure","Elapsed":0}
+{"Time":"2026-10-09T19:56:39.625047+04:00","Action":"run","Package":"vynic.local/edge/internal/printstation","Test":"TestSharedPhysicalPrinterCannotOverlapStations"}
+{"Time":"2026-10-09T19:56:39.625051+04:00","Action":"output","Package":"vynic.local/edge/internal/printstation","Test":"TestSharedPhysicalPrinterCannotOverlapStations","Output":"=== RUN   TestSharedPhysicalPrinterCannotOverlapStations\n"}
+{"Time":"2026-10-09T19:56:39.628015+04:00","Action":"output","Package":"vynic.local/edge/internal/printstation","Test":"TestSharedPhysicalPrinterCannotOverlapStations","Output":"--- PASS: TestSharedPhysicalPrinterCannotOverlapStations (0.00s)\n"}
+{"Time":"2026-10-09T19:56:39.628024+04:00","Action":"pass","Package":"vynic.local/edge/internal/printstation","Test":"TestSharedPhysicalPrinterCannotOverlapStations","Elapsed":0}
+{"Time":"2026-10-09T19:56:39.628039+04:00","Action":"run","Package":"vynic.local/edge/internal/printstation","Test":"TestUnavailableControllerSkipRequiresNoDispatchReservation"}
+{"Time":"2026-10-09T19:56:39.628044+04:00","Action":"output","Package":"vynic.local/edge/internal/printstation","Test":"TestUnavailableControllerSkipRequiresNoDispatchReservation","Output":"=== RUN   TestUnavailableControllerSkipRequiresNoDispatchReservation\n"}
+{"Time":"2026-10-09T19:56:39.629825+04:00","Action":"output","Package":"vynic.local/edge/internal/printstation","Test":"TestUnavailableControllerSkipRequiresNoDispatchReservation","Output":"--- PASS: TestUnavailableControllerSkipRequiresNoDispatchReservation (0.00s)\n"}
+{"Time":"2026-10-09T19:56:39.629848+04:00","Action":"pass","Package":"vynic.local/edge/internal/printstation","Test":"TestUnavailableControllerSkipRequiresNoDispatchReservation","Elapsed":0}
+{"Time":"2026-10-09T19:56:39.629851+04:00","Action":"run","Package":"vynic.local/edge/internal/printstation","Test":"TestMixedSharedProductionAndIndependentLocalReceipts"}
+{"Time":"2026-10-09T19:56:39.629862+04:00","Action":"output","Package":"vynic.local/edge/internal/printstation","Test":"TestMixedSharedProductionAndIndependentLocalReceipts","Output":"=== RUN   TestMixedSharedProductionAndIndependentLocalReceipts\n"}
+{"Time":"2026-10-09T19:56:39.633839+04:00","Action":"output","Package":"vynic.local/edge/internal/printstation","Test":"TestMixedSharedProductionAndIndependentLocalReceipts","Output":"--- PASS: TestMixedSharedProductionAndIndependentLocalReceipts (0.00s)\n"}
+{"Time":"2026-10-09T19:56:39.633846+04:00","Action":"pass","Package":"vynic.local/edge/internal/printstation","Test":"TestMixedSharedProductionAndIndependentLocalReceipts","Elapsed":0}
+{"Time":"2026-10-09T19:56:39.633888+04:00","Action":"output","Package":"vynic.local/edge/internal/printstation","Output":"PASS\n"}
+{"Time":"2026-10-09T19:56:39.831586+04:00","Action":"start","Package":"vynic.local/edge/internal/printcluster"}
+{"Time":"2026-10-09T19:56:40.244949+04:00","Action":"run","Package":"vynic.local/edge/internal/printcluster","Test":"TestStationControllersDispatchFallbackInFIFOOrder"}
+{"Time":"2026-10-09T19:56:40.244992+04:00","Action":"output","Package":"vynic.local/edge/internal/printcluster","Test":"TestStationControllersDispatchFallbackInFIFOOrder","Output":"=== RUN   TestStationControllersDispatchFallbackInFIFOOrder\n"}
+{"Time":"2026-10-09T19:56:40.641942+04:00","Action":"output","Package":"vynic.local/edge/internal/printstation","Output":"ok  \tvynic.local/edge/internal/printstation\t1.518s\n"}
+{"Time":"2026-10-09T19:56:40.642029+04:00","Action":"pass","Package":"vynic.local/edge/internal/printstation","Elapsed":1.5190000000000001}
+{"Time":"2026-10-09T19:56:43.215673+04:00","Action":"output","Package":"vynic.local/edge/internal/printcluster","Test":"TestStationControllersDispatchFallbackInFIFOOrder","Output":"--- PASS: TestStationControllersDispatchFallbackInFIFOOrder (2.97s)\n"}
+{"Time":"2026-10-09T19:56:43.215694+04:00","Action":"pass","Package":"vynic.local/edge/internal/printcluster","Test":"TestStationControllersDispatchFallbackInFIFOOrder","Elapsed":2.97}
+{"Time":"2026-10-09T19:56:43.215764+04:00","Action":"run","Package":"vynic.local/edge/internal/printcluster","Test":"TestStationBlockedKitchenControllerDoesNotBlockBar"}
+{"Time":"2026-10-09T19:56:43.215777+04:00","Action":"output","Package":"vynic.local/edge/internal/printcluster","Test":"TestStationBlockedKitchenControllerDoesNotBlockBar","Output":"=== RUN   TestStationBlockedKitchenControllerDoesNotBlockBar\n"}
+{"Time":"2026-10-09T19:56:45.98235+04:00","Action":"output","Package":"vynic.local/edge/internal/printcluster","Test":"TestStationBlockedKitchenControllerDoesNotBlockBar","Output":"--- PASS: TestStationBlockedKitchenControllerDoesNotBlockBar (2.77s)\n"}
+{"Time":"2026-10-09T19:56:45.982372+04:00","Action":"pass","Package":"vynic.local/edge/internal/printcluster","Test":"TestStationBlockedKitchenControllerDoesNotBlockBar","Elapsed":2.77}
+{"Time":"2026-10-09T19:56:45.982381+04:00","Action":"run","Package":"vynic.local/edge/internal/printcluster","Test":"TestStationProofControllerRefusesPhysicalTransport"}
+{"Time":"2026-10-09T19:56:45.982386+04:00","Action":"output","Package":"vynic.local/edge/internal/printcluster","Test":"TestStationProofControllerRefusesPhysicalTransport","Output":"=== RUN   TestStationProofControllerRefusesPhysicalTransport\n"}
+{"Time":"2026-10-09T19:56:45.982453+04:00","Action":"output","Package":"vynic.local/edge/internal/printcluster","Test":"TestStationProofControllerRefusesPhysicalTransport","Output":"--- PASS: TestStationProofControllerRefusesPhysicalTransport (0.00s)\n"}
+{"Time":"2026-10-09T19:56:45.98246+04:00","Action":"pass","Package":"vynic.local/edge/internal/printcluster","Test":"TestStationProofControllerRefusesPhysicalTransport","Elapsed":0}
+{"Time":"2026-10-09T19:56:45.982476+04:00","Action":"run","Package":"vynic.local/edge/internal/printcluster","Test":"TestStationSoftwarePerformance"}
+{"Time":"2026-10-09T19:56:45.982483+04:00","Action":"output","Package":"vynic.local/edge/internal/printcluster","Test":"TestStationSoftwarePerformance","Output":"=== RUN   TestStationSoftwarePerformance\n"}
+{"Time":"2026-10-09T19:56:45.982504+04:00","Action":"output","Package":"vynic.local/edge/internal/printcluster","Test":"TestStationSoftwarePerformance","Output":"    station_performance_test.go:21: opt-in software measurement\n"}
+{"Time":"2026-10-09T19:56:45.982521+04:00","Action":"output","Package":"vynic.local/edge/internal/printcluster","Test":"TestStationSoftwarePerformance","Output":"--- SKIP: TestStationSoftwarePerformance (0.00s)\n"}
+{"Time":"2026-10-09T19:56:45.982531+04:00","Action":"skip","Package":"vynic.local/edge/internal/printcluster","Test":"TestStationSoftwarePerformance","Elapsed":0}
+{"Time":"2026-10-09T19:56:45.982541+04:00","Action":"run","Package":"vynic.local/edge/internal/printcluster","Test":"TestStationSpoolProcessChild"}
+{"Time":"2026-10-09T19:56:45.982545+04:00","Action":"output","Package":"vynic.local/edge/internal/printcluster","Test":"TestStationSpoolProcessChild","Output":"=== RUN   TestStationSpoolProcessChild\n"}
+{"Time":"2026-10-09T19:56:45.982563+04:00","Action":"output","Package":"vynic.local/edge/internal/printcluster","Test":"TestStationSpoolProcessChild","Output":"    station_process_test.go:19: child fixture exercised by parent\n"}
+{"Time":"2026-10-09T19:56:45.982578+04:00","Action":"output","Package":"vynic.local/edge/internal/printcluster","Test":"TestStationSpoolProcessChild","Output":"--- SKIP: TestStationSpoolProcessChild (0.00s)\n"}
+{"Time":"2026-10-09T19:56:45.982588+04:00","Action":"skip","Package":"vynic.local/edge/internal/printcluster","Test":"TestStationSpoolProcessChild","Elapsed":0}
+{"Time":"2026-10-09T19:56:45.982602+04:00","Action":"run","Package":"vynic.local/edge/internal/printcluster","Test":"TestStationSpoolProcessKillAndIndependentRestart"}
+{"Time":"2026-10-09T19:56:45.982606+04:00","Action":"output","Package":"vynic.local/edge/internal/printcluster","Test":"TestStationSpoolProcessKillAndIndependentRestart","Output":"=== RUN   TestStationSpoolProcessKillAndIndependentRestart\n"}
+{"Time":"2026-10-09T19:56:46.047885+04:00","Action":"output","Package":"vynic.local/edge/internal/printcluster","Test":"TestStationSpoolProcessKillAndIndependentRestart","Output":"--- PASS: TestStationSpoolProcessKillAndIndependentRestart (0.07s)\n"}
+{"Time":"2026-10-09T19:56:46.047907+04:00","Action":"pass","Package":"vynic.local/edge/internal/printcluster","Test":"TestStationSpoolProcessKillAndIndependentRestart","Elapsed":0.07}
+{"Time":"2026-10-09T19:56:46.047966+04:00","Action":"run","Package":"vynic.local/edge/internal/printcluster","Test":"TestStationReplicatedTopologyMatrix"}
+{"Time":"2026-10-09T19:56:46.047976+04:00","Action":"output","Package":"vynic.local/edge/internal/printcluster","Test":"TestStationReplicatedTopologyMatrix","Output":"=== RUN   TestStationReplicatedTopologyMatrix\n"}
+{"Time":"2026-10-09T19:56:46.047993+04:00","Action":"run","Package":"vynic.local/edge/internal/printcluster","Test":"TestStationReplicatedTopologyMatrix/1"}
+{"Time":"2026-10-09T19:56:46.047997+04:00","Action":"output","Package":"vynic.local/edge/internal/printcluster","Test":"TestStationReplicatedTopologyMatrix/1","Output":"=== RUN   TestStationReplicatedTopologyMatrix/1\n"}
+{"Time":"2026-10-09T19:56:47.810527+04:00","Action":"output","Package":"vynic.local/edge/internal/printcluster","Test":"TestStationReplicatedTopologyMatrix/1","Output":"--- PASS: TestStationReplicatedTopologyMatrix/1 (1.76s)\n"}
+{"Time":"2026-10-09T19:56:47.810551+04:00","Action":"pass","Package":"vynic.local/edge/internal/printcluster","Test":"TestStationReplicatedTopologyMatrix/1","Elapsed":1.76}
+{"Time":"2026-10-09T19:56:47.810635+04:00","Action":"run","Package":"vynic.local/edge/internal/printcluster","Test":"TestStationReplicatedTopologyMatrix/2"}
+{"Time":"2026-10-09T19:56:47.810646+04:00","Action":"output","Package":"vynic.local/edge/internal/printcluster","Test":"TestStationReplicatedTopologyMatrix/2","Output":"=== RUN   TestStationReplicatedTopologyMatrix/2\n"}
+{"Time":"2026-10-09T19:56:50.079275+04:00","Action":"output","Package":"vynic.local/edge/internal/printcluster","Test":"TestStationReplicatedTopologyMatrix/2","Output":"--- PASS: TestStationReplicatedTopologyMatrix/2 (2.27s)\n"}
+{"Time":"2026-10-09T19:56:50.079301+04:00","Action":"pass","Package":"vynic.local/edge/internal/printcluster","Test":"TestStationReplicatedTopologyMatrix/2","Elapsed":2.27}
+{"Time":"2026-10-09T19:56:50.079311+04:00","Action":"run","Package":"vynic.local/edge/internal/printcluster","Test":"TestStationReplicatedTopologyMatrix/3"}
+{"Time":"2026-10-09T19:56:50.079316+04:00","Action":"output","Package":"vynic.local/edge/internal/printcluster","Test":"TestStationReplicatedTopologyMatrix/3","Output":"=== RUN   TestStationReplicatedTopologyMatrix/3\n"}
+{"Time":"2026-10-09T19:56:52.822544+04:00","Action":"output","Package":"vynic.local/edge/internal/printcluster","Test":"TestStationReplicatedTopologyMatrix/3","Output":"--- PASS: TestStationReplicatedTopologyMatrix/3 (2.74s)\n"}
+{"Time":"2026-10-09T19:56:52.822563+04:00","Action":"pass","Package":"vynic.local/edge/internal/printcluster","Test":"TestStationReplicatedTopologyMatrix/3","Elapsed":2.74}
+{"Time":"2026-10-09T19:56:52.82257+04:00","Action":"run","Package":"vynic.local/edge/internal/printcluster","Test":"TestStationReplicatedTopologyMatrix/4"}
+{"Time":"2026-10-09T19:56:52.822574+04:00","Action":"output","Package":"vynic.local/edge/internal/printcluster","Test":"TestStationReplicatedTopologyMatrix/4","Output":"=== RUN   TestStationReplicatedTopologyMatrix/4\n"}
+{"Time":"2026-10-09T19:56:56.322865+04:00","Action":"output","Package":"vynic.local/edge/internal/printcluster","Test":"TestStationReplicatedTopologyMatrix/4","Output":"--- PASS: TestStationReplicatedTopologyMatrix/4 (3.50s)\n"}
+{"Time":"2026-10-09T19:56:56.322884+04:00","Action":"pass","Package":"vynic.local/edge/internal/printcluster","Test":"TestStationReplicatedTopologyMatrix/4","Elapsed":3.5}
+{"Time":"2026-10-09T19:56:56.322894+04:00","Action":"run","Package":"vynic.local/edge/internal/printcluster","Test":"TestStationReplicatedTopologyMatrix/6"}
+{"Time":"2026-10-09T19:56:56.322898+04:00","Action":"output","Package":"vynic.local/edge/internal/printcluster","Test":"TestStationReplicatedTopologyMatrix/6","Output":"=== RUN   TestStationReplicatedTopologyMatrix/6\n"}
+{"Time":"2026-10-09T19:57:00.879738+04:00","Action":"output","Package":"vynic.local/edge/internal/printcluster","Test":"TestStationReplicatedTopologyMatrix/6","Output":"--- PASS: TestStationReplicatedTopologyMatrix/6 (4.56s)\n"}
+{"Time":"2026-10-09T19:57:00.87976+04:00","Action":"pass","Package":"vynic.local/edge/internal/printcluster","Test":"TestStationReplicatedTopologyMatrix/6","Elapsed":4.56}
+{"Time":"2026-10-09T19:57:00.879768+04:00","Action":"run","Package":"vynic.local/edge/internal/printcluster","Test":"TestStationReplicatedTopologyMatrix/10"}
+{"Time":"2026-10-09T19:57:00.879772+04:00","Action":"output","Package":"vynic.local/edge/internal/printcluster","Test":"TestStationReplicatedTopologyMatrix/10","Output":"=== RUN   TestStationReplicatedTopologyMatrix/10\n"}
+{"Time":"2026-10-09T19:57:06.595257+04:00","Action":"output","Package":"vynic.local/edge/internal/printcluster","Test":"TestStationReplicatedTopologyMatrix/10","Output":"--- PASS: TestStationReplicatedTopologyMatrix/10 (5.72s)\n"}
+{"Time":"2026-10-09T19:57:06.595284+04:00","Action":"pass","Package":"vynic.local/edge/internal/printcluster","Test":"TestStationReplicatedTopologyMatrix/10","Elapsed":5.72}
+{"Time":"2026-10-09T19:57:06.595293+04:00","Action":"output","Package":"vynic.local/edge/internal/printcluster","Test":"TestStationReplicatedTopologyMatrix","Output":"--- PASS: TestStationReplicatedTopologyMatrix (20.55s)\n"}
+{"Time":"2026-10-09T19:57:06.595298+04:00","Action":"pass","Package":"vynic.local/edge/internal/printcluster","Test":"TestStationReplicatedTopologyMatrix","Elapsed":20.55}
+{"Time":"2026-10-09T19:57:06.595305+04:00","Action":"run","Package":"vynic.local/edge/internal/printcluster","Test":"TestStationControllerIsIndependentOfLeaderAndFallback"}
+{"Time":"2026-10-09T19:57:06.595309+04:00","Action":"output","Package":"vynic.local/edge/internal/printcluster","Test":"TestStationControllerIsIndependentOfLeaderAndFallback","Output":"=== RUN   TestStationControllerIsIndependentOfLeaderAndFallback\n"}
+{"Time":"2026-10-09T19:57:08.917961+04:00","Action":"output","Package":"vynic.local/edge/internal/printcluster","Test":"TestStationControllerIsIndependentOfLeaderAndFallback","Output":"--- PASS: TestStationControllerIsIndependentOfLeaderAndFallback (2.32s)\n"}
+{"Time":"2026-10-09T19:57:08.917983+04:00","Action":"pass","Package":"vynic.local/edge/internal/printcluster","Test":"TestStationControllerIsIndependentOfLeaderAndFallback","Elapsed":2.32}
+{"Time":"2026-10-09T19:57:08.917993+04:00","Action":"run","Package":"vynic.local/edge/internal/printcluster","Test":"TestStationReplicaLossLeaderLossRejoinAndMinority"}
+{"Time":"2026-10-09T19:57:08.918004+04:00","Action":"output","Package":"vynic.local/edge/internal/printcluster","Test":"TestStationReplicaLossLeaderLossRejoinAndMinority","Output":"=== RUN   TestStationReplicaLossLeaderLossRejoinAndMinority\n"}
+{"Time":"2026-10-09T19:57:16.048572+04:00","Action":"output","Package":"vynic.local/edge/internal/printcluster","Test":"TestStationReplicaLossLeaderLossRejoinAndMinority","Output":"--- PASS: TestStationReplicaLossLeaderLossRejoinAndMinority (7.13s)\n"}
+{"Time":"2026-10-09T19:57:16.048645+04:00","Action":"pass","Package":"vynic.local/edge/internal/printcluster","Test":"TestStationReplicaLossLeaderLossRejoinAndMinority","Elapsed":7.13}
+{"Time":"2026-10-09T19:57:16.048664+04:00","Action":"run","Package":"vynic.local/edge/internal/printcluster","Test":"TestLocalStationSpoolReopensWithoutRaft"}
+{"Time":"2026-10-09T19:57:16.048674+04:00","Action":"output","Package":"vynic.local/edge/internal/printcluster","Test":"TestLocalStationSpoolReopensWithoutRaft","Output":"=== RUN   TestLocalStationSpoolReopensWithoutRaft\n"}
+{"Time":"2026-10-09T19:57:16.094911+04:00","Action":"output","Package":"vynic.local/edge/internal/printcluster","Test":"TestLocalStationSpoolReopensWithoutRaft","Output":"--- PASS: TestLocalStationSpoolReopensWithoutRaft (0.05s)\n"}
+{"Time":"2026-10-09T19:57:16.094938+04:00","Action":"pass","Package":"vynic.local/edge/internal/printcluster","Test":"TestLocalStationSpoolReopensWithoutRaft","Elapsed":0.05}
+{"Time":"2026-10-09T19:57:16.094945+04:00","Action":"run","Package":"vynic.local/edge/internal/printcluster","Test":"TestStationMalformedOversizedAndWrongVenue"}
+{"Time":"2026-10-09T19:57:16.094948+04:00","Action":"output","Package":"vynic.local/edge/internal/printcluster","Test":"TestStationMalformedOversizedAndWrongVenue","Output":"=== RUN   TestStationMalformedOversizedAndWrongVenue\n"}
+{"Time":"2026-10-09T19:57:17.409392+04:00","Action":"output","Package":"vynic.local/edge/internal/printcluster","Test":"TestStationMalformedOversizedAndWrongVenue","Output":"--- PASS: TestStationMalformedOversizedAndWrongVenue (1.31s)\n"}
+{"Time":"2026-10-09T19:57:17.409419+04:00","Action":"pass","Package":"vynic.local/edge/internal/printcluster","Test":"TestStationMalformedOversizedAndWrongVenue","Elapsed":1.31}
+{"Time":"2026-10-09T19:57:17.409437+04:00","Action":"run","Package":"vynic.local/edge/internal/printcluster","Test":"TestStationSnapshotRejectsCorruption"}
+{"Time":"2026-10-09T19:57:17.409444+04:00","Action":"output","Package":"vynic.local/edge/internal/printcluster","Test":"TestStationSnapshotRejectsCorruption","Output":"=== RUN   TestStationSnapshotRejectsCorruption\n"}
+{"Time":"2026-10-09T19:57:17.415427+04:00","Action":"output","Package":"vynic.local/edge/internal/printcluster","Test":"TestStationSnapshotRejectsCorruption","Output":"--- PASS: TestStationSnapshotRejectsCorruption (0.01s)\n"}
+{"Time":"2026-10-09T19:57:17.415438+04:00","Action":"pass","Package":"vynic.local/edge/internal/printcluster","Test":"TestStationSnapshotRejectsCorruption","Elapsed":0.01}
+{"Time":"2026-10-09T19:57:17.415518+04:00","Action":"output","Package":"vynic.local/edge/internal/printcluster","Output":"PASS\n"}
+{"Time":"2026-10-09T19:57:18.443105+04:00","Action":"output","Package":"vynic.local/edge/internal/printcluster","Output":"ok  \tvynic.local/edge/internal/printcluster\t38.612s\n"}
+{"Time":"2026-10-09T19:57:18.443191+04:00","Action":"pass","Package":"vynic.local/edge/internal/printcluster","Elapsed":38.612}

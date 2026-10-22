@@ -5,10 +5,12 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { procurementSummary } from './procurement-summary';
+import { StockLocations, type StockLocationInput } from './stock-locations';
 import { InventoryCostService } from './inventory-cost.service';
 import { SupplierPayments } from './supplier-payments';
 import { Prisma, StockItemClassification } from '@prisma/client';
 import { PrismaService } from '../prisma.service';
+import { activeMenuItem } from '../menu-catalog/menu-active';
 import type { TenantContext } from '../tenancy/tenant-context';
 import {
   INVENTORY_UNIT_DEFINITIONS,
@@ -28,7 +30,9 @@ import {
   type InventoryActor,
 } from './inventory-audit';
 import { presentMovement } from './receiving.service';
+import { historyPage, type HistoryQuery } from './history-page';
 import { RecipeService, menuGroup } from './recipe.service';
+import { lockStockItems } from './stock-item-lock';
 
 export { InventoryAuditAction };
 
@@ -76,6 +80,63 @@ export class InventoryService {
     private readonly prisma: PrismaService,
     private readonly recipes: RecipeService,
   ) {}
+
+  locations(tenant: TenantContext) {
+    return new StockLocations(this.prisma).list(tenant);
+  }
+
+  createLocation(actor: InventoryActor, input: StockLocationInput) {
+    return new StockLocations(this.prisma).create(actor, input);
+  }
+
+  renameLocation(actor: InventoryActor, id: string, input: StockLocationInput) {
+    return new StockLocations(this.prisma).rename(actor, id, input);
+  }
+
+  locationBalances(tenant: TenantContext, id: string) {
+    return new StockLocations(this.prisma).itemBalances(tenant, id);
+  }
+
+  async movementPage(
+    tenant: TenantContext,
+    id: string,
+    query: HistoryQuery = {},
+  ) {
+    if (
+      !(await this.prisma.stockItem.findFirst({
+        where: { id, venueId: tenant.venueId },
+        select: { id: true },
+      }))
+    )
+      throw new NotFoundException('Stock item not found');
+    const page = historyPage('movements:' + tenant.venueId + ':' + id, query);
+    const rows = await this.prisma.stockMovement.findMany({
+      where: {
+        venueId: tenant.venueId,
+        stockItemId: id,
+        createdAt: { lt: page.createdBefore },
+        businessDate: {
+          gte: page.from ?? undefined,
+          lte: page.to ?? undefined,
+        },
+        ...(page.cursor
+          ? {
+              OR: [
+                { createdAt: { lt: new Date(page.cursor.at) } },
+                {
+                  createdAt: new Date(page.cursor.at),
+                  id: { lt: page.cursor.id },
+                },
+              ],
+            }
+          : {}),
+      },
+      orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+      take: page.limit + 1,
+    });
+    const result = page.envelope(rows, (row) => row.createdAt);
+    return { ...result, items: result.items.map(presentMovement) };
+  }
 
   getUnits() {
     return INVENTORY_UNIT_DEFINITIONS;
@@ -150,7 +211,10 @@ export class InventoryService {
           tenant,
           rows.map((r) => r.id),
         )
-      : new Map();
+      : new Map<
+          string,
+          { cost: Prisma.Decimal | null; provisional: boolean }
+        >();
     return rows.map((row) => ({
       ...this.presentStockItem(row, balances.get(row.id)),
       ...(withPrices
@@ -160,7 +224,9 @@ export class InventoryService {
               costs.get(row.id + ':' + row.baseUnit)?.cost?.toFixed(6) ?? null,
             costStatus: costs.get(row.id + ':' + row.baseUnit)?.provisional
               ? 'PROVISIONAL'
-              : 'AVAILABLE',
+              : costs.get(row.id + ':' + row.baseUnit)?.cost != null
+                ? 'AVAILABLE'
+                : 'NO_PURCHASE_HISTORY',
             lastPurchaseUnitCost:
               prices.get(row.id + ':' + row.baseUnit) ?? null,
           }
@@ -388,7 +454,11 @@ export class InventoryService {
           {
             unitCost: g.cost?.toFixed(6) ?? null,
             inventoryValue: g.value.toFixed(12),
-            status: g.provisional ? 'PROVISIONAL' : 'AVAILABLE',
+            status: g.provisional
+              ? 'PROVISIONAL'
+              : g.cost != null
+                ? 'AVAILABLE'
+                : 'NO_PURCHASE_HISTORY',
           },
         ]),
       ),
@@ -545,6 +615,7 @@ export class InventoryService {
     const cleanId = requiredText(id, 'id');
     try {
       return await this.prisma.$transaction(async (tx) => {
+        await lockStockItems(tx, actor.venueId, [cleanId]);
         const existing = await tx.stockItem.findFirst({
           where: { id: cleanId, venueId: actor.venueId },
         });
@@ -578,7 +649,7 @@ export class InventoryService {
           stockBaseUnit,
         );
         if (data.baseUnit != null && data.baseUnit !== existing.baseUnit) {
-          const [receiving, recipe] = await Promise.all([
+          const [receiving, recipe, movement] = await Promise.all([
             tx.receivingLine.findFirst({
               where: {
                 stockItemId: existing.id,
@@ -591,8 +662,11 @@ export class InventoryService {
             tx.menuConsumptionComponent.findFirst({
               where: { venueId: actor.venueId, stockItemId: existing.id },
             }),
+            tx.stockMovement.findFirst({
+              where: { venueId: actor.venueId, stockItemId: existing.id },
+            }),
           ]);
-          if (receiving || recipe)
+          if (receiving || recipe || movement)
             throw new ConflictException(
               'A used stock item must keep its base unit',
             );
@@ -823,8 +897,12 @@ export class InventoryService {
         await tx.$queryRaw`SELECT id FROM pos."MenuItem" WHERE id=${menuId} AND "venueId"=${actor.venueId} FOR UPDATE`;
       const menu = menuId
         ? await tx.menuItem.findFirst({
-            where: { id: menuId, venueId: actor.venueId },
-            include: { variants: true, category: true, subcategory: true },
+            where: { id: menuId, venueId: actor.venueId, ...activeMenuItem },
+            include: {
+              variants: { where: { retiredAt: null } },
+              category: true,
+              subcategory: true,
+            },
           })
         : null;
       if (menuId && !menu) throw new NotFoundException('Menu item not found');
@@ -883,6 +961,7 @@ export class InventoryService {
         (input.stockItemId
           ? requiredText(input.stockItemId, 'stockItemId')
           : null);
+      if (stockId) await lockStockItems(tx, actor.venueId, [stockId]);
       let item = stockId
         ? await tx.stockItem.findFirst({
             where: { id: stockId, venueId: actor.venueId, isActive: true },

@@ -43,8 +43,12 @@ void main() {
       var authenticated = false;
       final client = MockClient((request) async {
         requests.add(request);
-        if (request.url.path == '/auth/manager-venue') {
-          expect(jsonDecode(request.body), {'venueCode': 'venue-b'});
+        if (request.url.path == '/auth/manager-link') {
+          final payload = jsonDecode(request.body) as Map;
+          expect(payload['code'], '7K2Q-M4XB-9TFR-ABCD-EFGH');
+          expect(payload['installationId'], isA<String>());
+          expect(payload.containsKey('venueId'), isFalse);
+          expect(payload.containsKey('pin'), isFalse);
           return http.Response(
             jsonEncode({
               'id': 'b',
@@ -91,7 +95,8 @@ void main() {
       final field = find.byKey(const Key('manager-venue-code'));
       expect(field, findsOneWidget);
       expect(find.text('შესვლა'), findsNothing);
-      await tester.enterText(field, ' VENUE-B ');
+      expect(find.text('პირველი აქტივაცია'), findsNothing);
+      await tester.enterText(field, ' 7K2Q-M4XB-9TFR-ABCD-EFGH ');
       tester.testTextInput.hide();
       await tester.ensureVisible(find.text('გაგრძელება'));
       await tester.runAsync(() => tester.tap(find.text('გაგრძელება')));
@@ -102,6 +107,7 @@ void main() {
       await tester.pump();
       expect(field, findsNothing);
       expect(find.text('Vankisi'), findsOneWidget);
+      expect(find.text('პირველი აქტივაცია'), findsNothing);
       expect(find.text('ბათუმი — ცენტრი'), findsOneWidget);
       expect(find.text('ბათუმი, რუსთაველის 1'), findsOneWidget);
       expect(AuthTokenService.token, isNull);
@@ -178,7 +184,10 @@ void main() {
       });
       await tester.pump();
       expect(ManagerAppPreferences.selectedVenue(ApiConfig.baseUrl), isNull);
-      expect(find.textContaining('რესტორანი ვერ მოიძებნა'), findsOneWidget);
+      expect(
+        find.textContaining('ერთჯერადი კოდი მიუწვდომელია'),
+        findsOneWidget,
+      );
       if (!ApiConfig.allowDeveloperOverride) {
         expect(find.textContaining('Backend'), findsNothing);
         expect(find.textContaining('http'), findsNothing);

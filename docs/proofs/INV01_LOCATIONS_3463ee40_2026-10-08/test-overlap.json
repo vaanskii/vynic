@@ -1,0 +1,8 @@
+{
+  "backendAggregate": 870,
+  "inventoryRegression": 89,
+  "intersection": 19,
+  "distinctBackendCases": 940,
+  "newLocationsCases": 12,
+  "identity": "repository path + assertion ordinal + full test name"
+}

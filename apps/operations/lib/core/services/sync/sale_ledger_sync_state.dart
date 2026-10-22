@@ -63,14 +63,32 @@ class SaleLedgerSyncState {
   static Future<bool> acknowledgeResponse(String responseBody) async {
     try {
       final decoded = jsonDecode(responseBody);
-      if (decoded is! Map || decoded['saleLedgerAck'] is! List) return false;
+      if (decoded is! Map ||
+          (decoded['saleLedgerAck'] is! List &&
+              decoded['saleLedgerRetryDates'] is! List))
+        return false;
       final acknowledgements = _acks();
-      for (final raw in decoded['saleLedgerAck'] as List) {
+      for (final raw in (decoded['saleLedgerAck'] as List? ?? const [])) {
         if (raw is! Map) continue;
         final id = raw['posSaleId']?.toString().trim() ?? '';
         final revision = (raw['revision'] as num?)?.toInt() ?? 0;
         if (id.isNotEmpty && revision > (acknowledgements[id] ?? 0)) {
           acknowledgements[id] = revision;
+        }
+      }
+      // A restored Cloud may have lost rows this POS already uploaded. Replay
+      // only genuine retained Sales for the requested dates, with their same
+      // immutable identities/revisions. Never create history from a summary.
+      final retryDates = (decoded['saleLedgerRetryDates'] as List? ?? const [])
+          .whereType<String>()
+          .toSet();
+      if (retryDates.isNotEmpty) {
+        for (final raw in DatabaseCore.salesBox?.values ?? const []) {
+          if (raw is! Map) continue;
+          final sale = Map<String, dynamic>.from(raw);
+          if (_isSaleRecord(sale) && retryDates.contains(sale['date'])) {
+            acknowledgements.remove(sale['posSaleId']);
+          }
         }
       }
       await DatabaseCore.settingsBox?.put(_ackKey, acknowledgements);

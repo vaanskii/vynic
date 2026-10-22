@@ -1,5 +1,6 @@
 import 'package:vynic/core/services/pos/pos_locale.dart';
 import 'package:vynic/core/ui/vynic_floor_tokens.dart';
+import 'package:vynic/core/ui/vynic_touch_targets.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:vynic/core/services/pos/pos_input_settings.dart';
@@ -19,6 +20,7 @@ class PinPad extends StatefulWidget {
     this.enabled = true,
     this.dense = false,
     this.authentication = false,
+    this.retainInputFocus = false,
   });
   final ValueChanged<String> onDigitPressed;
   final VoidCallback onClearPressed;
@@ -30,6 +32,7 @@ class PinPad extends StatefulWidget {
   final bool enabled;
   final bool dense;
   final bool authentication;
+  final bool retainInputFocus;
   @override
   State<PinPad> createState() => _PinPadState();
 }
@@ -78,11 +81,13 @@ class _PinPadState extends State<PinPad> {
         child: Padding(
           padding: const EdgeInsets.all(3),
           child: SizedBox(
-            height: widget.dense ? 44 : 52,
+            height: widget.dense || MediaQuery.sizeOf(context).height < 700
+                ? VynicTouchTargets.minPos
+                : VynicTouchTargets.posDesktop,
             child: OutlinedButton(
               onPressed: widget.enabled
                   ? () {
-                      _focus.requestFocus();
+                      if (!widget.retainInputFocus) _focus.requestFocus();
                       action();
                     }
                   : null,
@@ -112,7 +117,9 @@ class _PinPadState extends State<PinPad> {
   @override
   Widget build(BuildContext context) => Focus(
     focusNode: _focus,
-    autofocus: true,
+    autofocus: !widget.retainInputFocus,
+    canRequestFocus: !widget.retainInputFocus,
+    descendantsAreFocusable: !widget.retainInputFocus,
     onKeyEvent: _key,
     child: ValueListenableBuilder<bool>(
       valueListenable: PosInputSettings.enabled,

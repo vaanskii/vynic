@@ -20,6 +20,13 @@
 /// each type, applied at the boundary that needs it.
 library;
 
+import 'package:vynic/core/database/repositories/order_edit_repository.dart';
+
+import 'package:vynic/core/database/repositories/table_repair_repository.dart';
+
+import 'package:vynic/core/database/repositories/order_table_mutation_repository.dart';
+import 'package:vynic/core/database/repositories/order_transfer_journal_repository.dart';
+
 import 'package:vynic/core/database/database_core.dart';
 import 'package:vynic/core/database/repositories/user_repository.dart';
 
@@ -37,11 +44,30 @@ abstract class _AppliedEdgeCommandHandler implements EdgeCommandHandler {
   Future<EdgeCommandResult> execute(EdgeCommandEnvelope command) async {
     final raw = command.payload;
     final payload = raw is Map
-        ? Map<String, dynamic>.from(raw)
+        ? OrderTransferIntent.cloneMap(raw)
         : <String, dynamic>{};
-    final outcome = await apply(payload);
+    payload['_mutationRequestId'] = command.commandId;
+    final PosCommandOutcome outcome;
+    try {
+      outcome = await apply(payload);
+    } on OrderMutationConflict catch (error) {
+      if (command.type == EdgeCommandTypes.managerOperation &&
+          error.code == 'recovery_required')
+        rethrow;
+      return EdgeCommandResult.failed(
+        command.commandId,
+        code: error.code,
+        detail: error.userMessage,
+      );
+    }
     if (outcome.ok) {
-      return EdgeCommandResult.succeeded(command.commandId, code: outcome.code);
+      return EdgeCommandResult.succeeded(
+        command.commandId,
+        code: outcome.code,
+        resultProjection: command.type == EdgeCommandTypes.orderEdit
+            ? outcome.data
+            : null,
+      );
     }
     return EdgeCommandResult.failed(
       command.commandId,
@@ -52,6 +78,79 @@ abstract class _AppliedEdgeCommandHandler implements EdgeCommandHandler {
 }
 
 // ── Orders ───────────────────────────────────────────────────────────────────
+
+class ManagerOperationEdgeHandler extends _AppliedEdgeCommandHandler {
+  const ManagerOperationEdgeHandler();
+  @override
+  String get type => EdgeCommandTypes.managerOperation;
+  @override
+  Future<PosCommandOutcome> apply(Map<String, dynamic> p) async {
+    const expected = {
+      'order_cancel': 'ORDER_STATUS_UPDATE',
+      'takeaway_cancel': 'ORDER_CANCEL',
+      'takeaway_create': 'TAKEAWAY_ORDER_UPSERT',
+      'dine_in_create': 'DINE_IN_ORDER_UPSERT',
+      'reservation_create': 'RESERVATION_CREATE',
+      'reservation_status': 'RESERVATION_STATUS_UPDATE',
+      'reservation_delete': 'RESERVATION_DELETE',
+    };
+    final m = p['managerOperation'];
+    if (m is! Map ||
+        m['requestId'] is! String ||
+        !RegExp(
+          r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$',
+        ).hasMatch(m['requestId']) ||
+        m['body'] is! Map ||
+        m['reply'] is! Map ||
+        expected[m['kind']] != p['operationType'] ||
+        p['actorStaffId'] is! String ||
+        p['actorUsername'] is! String ||
+        (p['actorUsername'] as String).trim().isEmpty)
+      return const PosCommandOutcome.invalid('invalid_manager_operation');
+    if (['takeaway_create', 'dine_in_create'].contains(m['kind']) &&
+        (p['businessDate'] is! String ||
+            !RegExp(r'^\d{4}-\d{2}-\d{2}$').hasMatch(p['businessDate'])))
+      return const PosCommandOutcome.invalid('business_date_required');
+    if (['order_cancel', 'takeaway_cancel'].contains(m['kind']) &&
+        (p['status'] != 'cancelled' ||
+            p['orderUuid'] is! String ||
+            p['businessDate'] is! String))
+      return const PosCommandOutcome.invalid('order_identity_required');
+    if (m['kind'] == 'reservation_status' &&
+        !['pending', 'confirmed', 'cancelled'].contains(p['status']))
+      return const PosCommandOutcome.invalid('invalid_reservation_status');
+    return switch (p['operationType']) {
+      'ORDER_STATUS_UPDATE' => PosCommandApplier.updateOrderStatus(p),
+      'ORDER_CANCEL' => PosCommandApplier.cancelOrder(p),
+      'TAKEAWAY_ORDER_UPSERT' => PosCommandApplier.upsertTakeawayOrder(p),
+      'DINE_IN_ORDER_UPSERT' => PosCommandApplier.upsertDineInOrder(p),
+      'RESERVATION_CREATE' => PosCommandApplier.createReservation(p),
+      'RESERVATION_STATUS_UPDATE' => PosCommandApplier.updateReservationStatus(
+        p,
+      ),
+      'RESERVATION_DELETE' => PosCommandApplier.deleteReservation(p),
+      _ => const PosCommandOutcome.invalid('invalid_manager_operation'),
+    };
+  }
+}
+
+class OrderEditEdgeHandler extends _AppliedEdgeCommandHandler {
+  const OrderEditEdgeHandler();
+  @override
+  String get type => EdgeCommandTypes.orderEdit;
+  @override
+  Future<PosCommandOutcome> apply(Map<String, dynamic> p) =>
+      OrderEditRepository.apply(p);
+}
+
+class TableRepairEdgeHandler extends _AppliedEdgeCommandHandler {
+  const TableRepairEdgeHandler();
+  @override
+  String get type => EdgeCommandTypes.tableRepair;
+  @override
+  Future<PosCommandOutcome> apply(Map<String, dynamic> p) =>
+      TableRepairRepository.repair(p);
+}
 
 class OrderUpdateEdgeHandler extends _AppliedEdgeCommandHandler {
   const OrderUpdateEdgeHandler();
@@ -226,6 +325,9 @@ class StaffDeleteEdgeHandler extends _AppliedEdgeCommandHandler {
 /// contract declares and this build cannot run would sit in the queue being
 /// claimed, refused and redelivered until its attempts ran out.
 const List<EdgeCommandHandler> posEdgeCommandHandlers = <EdgeCommandHandler>[
+  OrderEditEdgeHandler(),
+  ManagerOperationEdgeHandler(),
+  TableRepairEdgeHandler(),
   OrderUpdateEdgeHandler(),
   OrderCancelEdgeHandler(),
   OrderStatusUpdateEdgeHandler(),

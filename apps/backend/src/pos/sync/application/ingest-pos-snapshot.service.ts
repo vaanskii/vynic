@@ -1,3 +1,4 @@
+import { recordManagerSource } from '../../../mobile/services/manager-data-freshness';
 import { PrismaService } from '../../../prisma.service';
 import { forwardRef, Inject, Injectable, Optional } from '@nestjs/common';
 import { PosOutboxService } from '../../pos-outbox.service';
@@ -26,6 +27,7 @@ export interface SnapshotIngestResult {
   staffNeedingPin?: string[];
   /** Revisions durably accepted by the Cloud ledger. */
   saleLedgerAck?: Array<{ posSaleId: string; revision: number }>;
+  saleLedgerRetryDates?: string[];
 }
 
 /**
@@ -118,6 +120,8 @@ export class IngestPosSnapshotService {
     // asynchronous full snapshot runs. Realtime snapshots intentionally skip
     // financial history work.
     let saleLedgerAck: Array<{ posSaleId: string; revision: number }> = [];
+    let saleLedgerRetryDates: string[] = [];
+    let ledgerApplied = false;
     const saleLedgerService = ledgerSync;
     if (
       saleLedgerService &&
@@ -128,6 +132,8 @@ export class IngestPosSnapshotService {
         saleLedgerService.sync(tenant, data.saleLedger, data.saleLedgerDays),
       );
       saleLedgerAck = result.acknowledgements;
+      saleLedgerRetryDates = result.retryBusinessDates;
+      ledgerApplied = true;
     }
 
     console.log(
@@ -143,14 +149,21 @@ export class IngestPosSnapshotService {
     // Sync Tables — the POS is the source of truth, except for the cold-boot
     // all-free snapshot the service guards against.
     let didSyncTables = await timing.phase('tables', () =>
-      tableSync.sync(tenant, tables, realtimeOnly),
+      data.tableLayout === undefined
+        ? tableSync.sync(tenant, tables, realtimeOnly)
+        : tableSync.sync(tenant, tables, realtimeOnly, data.tableLayout),
     );
 
+    const completeTablesApplied = didSyncTables;
+    let completeReservationsApplied = false;
     // Sync Orders — last-write-wins against the outbox, table linking, and
     // reconciliation of orders the snapshot no longer carries.
+    const appliedTableLayout = didSyncTables && data.tableLayout !== undefined;
     const orderResult = await timing.phase('orders', () =>
-      orderSync.sync(tenant, orders, data.businessDate),
+      orderSync.sync(authContext, orders, data.businessDate),
     );
+    if (appliedTableLayout)
+      await tableSync.reconcileLayout(tenant, data.tableLayout!);
     didSyncTables = didSyncTables || orderResult.didSyncTables;
     const releasedTablesFromClosedOrders = orderResult.releasedTables;
 
@@ -179,9 +192,10 @@ export class IngestPosSnapshotService {
     // realtime fast path: that one exists to move tables and orders quickly,
     // and a reservation change already brings a full snapshot with it.
     if (!realtimeOnly) {
-      await timing.phase('reservations', () =>
+      const result = await timing.phase('reservations', () =>
         reservationSync.sync(tenant, reservations, Boolean(database)),
       );
+      completeReservationsApplied = result?.complete === true;
     }
 
     // Business-day tracking, then the reporting values the POS computed.
@@ -193,6 +207,16 @@ export class IngestPosSnapshotService {
     await timing.phase('reporting', () =>
       businessDaySync.persistReportingSnapshot(tenant, data, realtimeOnly),
     );
+
+    if (database)
+      await recordManagerSource(
+        database,
+        authContext,
+        data,
+        completeTablesApplied,
+        completeReservationsApplied,
+        ledgerApplied,
+      );
 
     const announce = async () => {
       // Realtime side effects. Per-record hints first, then the coarse
@@ -246,6 +270,7 @@ export class IngestPosSnapshotService {
       syncedAt: new Date().toISOString(),
       ...(staffNeedingPin.length > 0 ? { staffNeedingPin } : {}),
       ...(saleLedgerAck.length > 0 ? { saleLedgerAck } : {}),
+      ...(saleLedgerRetryDates?.length > 0 ? { saleLedgerRetryDates } : {}),
     };
   }
 }

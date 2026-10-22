@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'manager_data_read.dart';
 import 'package:flutter/foundation.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:vynic/core/models/monitoring.dart';
@@ -29,6 +30,37 @@ class _Keys {
 class MobileCacheService {
   static const _boxName = 'mobile_manager_cache';
   static Box? _box;
+  static final Set<String> _invalidReads = {};
+
+  static Future<void> saveRead(
+    String scope,
+    String key,
+    Object data,
+    ManagerReadStatus status,
+  ) async {
+    final box = _box;
+    if (box == null) throw StateError('Manager cache is not initialized');
+    final cacheKey = 'read_v2:$scope:$key';
+    try {
+      await box.put(
+        cacheKey,
+        jsonEncode({'data': data, 'status': status.toJson()}),
+      );
+      await box.flush();
+      _invalidReads.remove(cacheKey);
+    } catch (_) {
+      _invalidReads.add(cacheKey);
+      rethrow;
+    }
+  }
+
+  static Map<String, dynamic>? cachedRead(String scope, String key) =>
+      _invalidReads.contains('read_v2:$scope:$key')
+      ? null
+      : _read(
+          'read_v2:$scope:$key',
+          (json) => Map<String, dynamic>.from(json as Map),
+        );
 
   static Future<void> init() async {
     _box = await Hive.openBox(_boxName);
@@ -46,9 +78,9 @@ class MobileCacheService {
   static T? _read<T>(String key, T Function(dynamic json) fromJson) {
     final box = _box;
     if (box == null) return null;
-    final raw = box.get(key);
-    if (raw == null) return null;
     try {
+      final raw = box.get(key);
+      if (raw == null) return null;
       return fromJson(jsonDecode(raw as String));
     } catch (e) {
       debugPrint('[Cache] Decode error for $key: $e');
@@ -153,7 +185,13 @@ class MobileCacheService {
       final key = '${dt['tableNumber']}_${dt['floor']}';
       map[key] = TableModel.fromJson(dt);
     }
-    await saveTables(map.values.toList());
+    // A diff does not prove the age/completeness of the whole table snapshot.
+    final box = _box;
+    if (box != null)
+      await box.put(
+        _Keys.tables,
+        jsonEncode(map.values.map((t) => t.toJson()).toList()),
+      );
   }
 
   // ── Counted Menus ─────────────────────────────────────────────────────────
@@ -166,5 +204,9 @@ class MobileCacheService {
 
   // ── Clear ──────────────────────────────────────────────────────────────────
 
-  static Future<void> clear() async => _box?.clear();
+  static Future<void> clear() async {
+    _invalidReads.clear();
+    ManagerDataReads.clear();
+    await _box?.clear();
+  }
 }

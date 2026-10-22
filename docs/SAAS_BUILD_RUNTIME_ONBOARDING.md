@@ -1,5 +1,10 @@
 # SaaS Phase 3 — Build identity, runtime configuration and onboarding
 
+> Current acquisition and commercial policy: see [Commercial Access Hardening](COMMERCIAL_ACCESS_HARDENING.md).
+> Public signup now collects requests; approval/invitation acceptance creates NO_PLAN
+> access. Older pilot signup/trial walkthroughs below are historical validation,
+> not the current activation flow. Password-policy WIP is separate from this milestone.
+
 This is the canonical build/configuration/onboarding guide. Phase 1 tenant auth,
 Phase 2 entitlements/subscriptions and offline POS authority remain in place.
 No billing processor, deployment, public release or production database change
@@ -37,10 +42,20 @@ Unfinished POS setup persists across restart, including after Staff delivery.
 Only a restaurant name is required; logos are optional and edited later in Settings.
 Startup never copies Vankisi identity, logo, menu or tables into missing fields.
 Existing stored restaurant data is preserved.
-Fresh release POS has no universal bootstrap PIN; first Manager credentials arrive
-through Edge. Existing Staff are untouched. Debug bootstrap accounts remain for
-existing developer tests only. After a deliberate release data wipe, use portal
-Manager reset to queue that identity again; there is no universal recovery PIN.
+Fresh release POS has no universal bootstrap PIN. First Manager registration takes
+place only in an enrolled Primary POS. Its one-use enrollment code explicitly
+includes initial Manager permission, so the person chooses a name and personal
+PIN without entering another activation code. Edge delivers the resulting
+identity. Ordinary/additional POS codes grant no Manager registration permission;
+legacy invitation codes remain compatible. See `SINGLE_POS_ONBOARDING.md`. New Manager installations use an expiring, one-use Platform Admin linking code
+to remember the Venue, then ordinary PIN login. Existing remembered selections
+and Staff sessions remain compatible; linking grants no Staff authentication.
+Existing Staff are
+untouched. Debug bootstrap accounts remain for existing developer tests only.
+After a deliberate local data wipe with an existing Cloud Manager, only Vynic
+Platform Admin can reset its PIN and queue that same identity again; the owner
+cabinet cannot recover existing access. See the current
+[Admin/user walkthrough](SAAS_PHASE2_CONTROL_PLANE.md#რეგისტრაცია-და-შემოწმება--admin-და-მომხმარებელი).
 
 | Product | Targets | Windows executable / native application identity |
 | --- | --- | --- |
@@ -93,7 +108,9 @@ backend DEVICE_API_BASE_URL consistently if it uses that optional response field
 ## Environment key classification and retirement
 
 Only key names were reported during the local `.env` audit; secret values were
-not logged or copied into documentation. The existing developer file is untouched.
+not logged or copied into documentation. Original developer-file bytes are
+preserved; a separate additions block supplies public `VYNIC_ENV`/`VYNIC_API_URL`.
+Build helpers read only these two keys. No legacy secret is passed to Flutter.
 
 | Existing key | Classification | New-build treatment |
 | --- | --- | --- |
@@ -122,12 +139,16 @@ POS remains Windows-only for production. These shortcuts use debug development,
 separate macOS bundle IDs/names and cached workspaces under
 `apps/operations/.dart_tool/vynic-dev/`. Their `lib` directories link to the
 shared source, so Flutter `r`/`R` hot reload/restart uses your actual edits.
-They do not read APP_ROLE or `.env`.
+They read only public `VYNIC_ENV`/`VYNIC_API_URL` from the source `.env`, never
+APP_ROLE or legacy private keys. The file is not an application asset.
 
-Default API is `http://127.0.0.1:3000`. Override per invocation with
+Default same-Mac Docker API is `http://api.vynic.localhost`. Override per invocation with
 `VYNIC_DEV_API_URL=http://HOST:3000 vynic-pos` (or `vynic-manager`).
 Additional Flutter run arguments pass through, e.g. `vynic-pos --verbose`.
 Quit with `q`; launch the same command again to refresh native configuration/assets.
+Changes to `.env` or Dart defines require this full relaunch; hot restart alone
+keeps the old compiled endpoint. Saved developer overrides still take precedence;
+clear them in the developer connection controls to use the compiled default.
 The shortcuts preserve build caches and never delete the POS operational database.
 
 ## Developer and release commands
@@ -191,9 +212,7 @@ separate identities and JWT audiences/types. Tokens are re-resolved against acti
 CustomerAccount on every request.
 
 Public `/customer/auth/signup` and `/customer/auth/login` use normalized email,
-15–128 character signup passwords and per-IP/per-email throttling. This follows
-[OWASP authentication guidance](https://cheatsheetseries.owasp.org/cheatsheets/Authentication_Cheat_Sheet.html)
-on password length and throttling. Limits use the existing in-process limiter:
+8–128 character signup passwords and per-IP/per-email throttling. Limits use the existing in-process limiter:
 20 attempts/IP and 10/email per 15 minutes. A distributed deployment needs shared
 rate limiting or an equivalent trusted edge limit. Configure trusted proxies
 explicitly; arbitrary forwarded headers are not authority.

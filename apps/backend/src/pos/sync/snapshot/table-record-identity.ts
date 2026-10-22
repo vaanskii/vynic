@@ -12,6 +12,11 @@ export interface TableOccupancyState {
   isReserved: boolean;
   activeOrderId: number | null;
   currentBill: number;
+  tableKind?: 'PHYSICAL' | 'VIRTUAL';
+  tableLabel?: string;
+  floorLabel?: string;
+  tableSortOrder?: number;
+  floorSortOrder?: number;
 }
 
 function canonicalIdOf(identity: TableRecordIdentity): string | null {
@@ -108,12 +113,13 @@ export async function upsertTableRecord(
   });
 }
 
-/** Updates a linked table without creating one when a terminal order closes. */
+/** Releases only the closing order's table, with ownership checked in the write. */
 export async function updateExistingTableRecord(
   prisma: PrismaService,
   tenant: TenantContext,
   identity: TableRecordIdentity,
   state: TableOccupancyState,
+  expectedActiveOrderId: number,
 ): Promise<number> {
   const tableId = canonicalIdOf(identity);
   if (!tableId) {
@@ -122,6 +128,7 @@ export async function updateExistingTableRecord(
         venueId: tenant.venueId,
         tableNumber: identity.tableNumber,
         floor: identity.floor,
+        activeOrderId: expectedActiveOrderId,
       },
       data: state,
     });
@@ -137,9 +144,13 @@ export async function updateExistingTableRecord(
   if (!existing) {
     return 0;
   }
-  await prisma.table.update({
-    where: { id: existing.id },
+  const result = await prisma.table.updateMany({
+    where: {
+      id: existing.id,
+      venueId: tenant.venueId,
+      activeOrderId: expectedActiveOrderId,
+    },
     data: { id: tableId, ...state },
   });
-  return 1;
+  return result.count;
 }

@@ -1,0 +1,29 @@
+{
+  "schema": 1,
+  "status": "NOT_RUN_APPROVAL_BLOCKED",
+  "sourceReceiptSHA256": "193e4800e5d0733a30bc6c8d4ac993590219363941e69a787bba5ac3681c8f68",
+  "requiredApproval": "Parent must obtain accepted current scoped authorization before any guest command; no alternate VM invocation",
+  "preferredArchitecture": "arm64 native test executables plus actual foreground CLI; amd64 compile/bundle retained separately",
+  "packageWorkingDirectories": {
+    "printeragent.test.exe": "source/apps/edge/internal/printeragent",
+    "printerdaemon.test.exe": "source/apps/edge/internal/printerdaemon",
+    "printerprovisioning.test.exe": "source/apps/edge/internal/printerprovisioning",
+    "printer-agent-command.test.exe": "source/apps/edge/cmd/printer-agent"
+  },
+  "arguments": [
+    "-test.v",
+    "-test.timeout=10m"
+  ],
+  "requiredProcessEnvironment": {
+    "VYNIC_PRINTER_AGENT_BINARY": "Matching architecture extracted printer-agent.exe (verify SHA before execution)",
+    "GOPROXY": "off",
+    "GOTOOLCHAIN": "local"
+  },
+  "fixtureRequirements": "No guest Go SDK/build needed. Tests create their own task-only temporary SQLite/certs; supplied real CLI mandatory on Windows, never skip. Foreground shutdown-file marker triggers retained ordinary drain. Installer tests inject fake backend, no real SCM create/start/install.",
+  "freshness": "New task-only current-user LOCALAPPDATA directory; verify exact1109 files/five architecture-specific PE images before/after and zero spooler jobs before/after each package.",
+  "limits": [
+    "Do not install/register/start SCM service, change VM/settings/credentials/driver, start POS, send physical or valid real RAW jobs.",
+    "Foreground executable lifecycle in synthetic test roots is not registered service or OS restart.",
+    "Architecture/build/source hashes are separate from runtime qualification."
+  ]
+}

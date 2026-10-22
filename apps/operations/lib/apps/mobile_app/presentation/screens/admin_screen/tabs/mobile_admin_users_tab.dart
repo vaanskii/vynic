@@ -76,88 +76,28 @@ class _UsersTabState extends State<_UsersTab>
         ),
         padding: _adminScrollPadding(context),
         children: [
-          _AdminKpiGrid(
-            items: [
-              _AdminKpiItem(
-                label: 'სულ',
-                value: '${_users.length}',
-                icon: Icons.people_rounded,
-                color: AdminTheme.primary,
-              ),
-              _AdminKpiItem(
-                label: 'აქტიური',
-                value: '$activeCount',
-                icon: Icons.verified_user_rounded,
-                color: AdminTheme.good,
-              ),
-            ],
+          ManagerPanel(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                ManagerSectionHeading(
+                  'გუნდი',
+                  subtitle:
+                      '${_users.length} თანამშრომელი · $activeCount აქტიური',
+                  action: 'თანამშრომლის დამატება',
+                  onAction: _showCreateUserDialog,
+                ),
+                for (final u in [...managers, ...supervisors, ...waiters])
+                  _UserCard(
+                    user: u,
+                    onEditName: () => _showEditNameDialog(u),
+                    onChangePin: () => _showChangePinDialog(u),
+                    onChangeRole: () => _showChangeRoleDialog(u),
+                    onDelete: () => _confirmDeleteUser(u),
+                  ),
+              ],
+            ),
           ),
-          SizedBox(height: 14),
-          _AdminPrimaryButton(
-            label: 'მომხმარებლის დამატება',
-            icon: Icons.person_add_alt_1_rounded,
-            onPressed: _showCreateUserDialog,
-          ),
-          if (managers.isNotEmpty) ...[
-            SizedBox(height: 20),
-            _AdminSection(
-              title: 'მენეჯერები',
-              trailing: '${managers.length}',
-              child: Column(
-                children: managers
-                    .map(
-                      (u) => _UserCard(
-                        user: u,
-                        onEditName: () => _showEditNameDialog(u),
-                        onChangePin: () => _showChangePinDialog(u),
-                        onChangeRole: () => _showChangeRoleDialog(u),
-                        onDelete: () => _confirmDeleteUser(u),
-                      ),
-                    )
-                    .toList(),
-              ),
-            ),
-          ],
-          if (supervisors.isNotEmpty) ...[
-            SizedBox(height: 20),
-            _AdminSection(
-              title: 'ზედამხედველები',
-              trailing: '${supervisors.length}',
-              child: Column(
-                children: supervisors
-                    .map(
-                      (u) => _UserCard(
-                        user: u,
-                        onEditName: () => _showEditNameDialog(u),
-                        onChangePin: () => _showChangePinDialog(u),
-                        onChangeRole: () => _showChangeRoleDialog(u),
-                        onDelete: () => _confirmDeleteUser(u),
-                      ),
-                    )
-                    .toList(),
-              ),
-            ),
-          ],
-          if (waiters.isNotEmpty) ...[
-            SizedBox(height: 20),
-            _AdminSection(
-              title: 'ოფიციანტები',
-              trailing: '${waiters.length}',
-              child: Column(
-                children: waiters
-                    .map(
-                      (u) => _UserCard(
-                        user: u,
-                        onEditName: () => _showEditNameDialog(u),
-                        onChangePin: () => _showChangePinDialog(u),
-                        onChangeRole: () => _showChangeRoleDialog(u),
-                        onDelete: () => _confirmDeleteUser(u),
-                      ),
-                    )
-                    .toList(),
-              ),
-            ),
-          ],
           if (_users.isEmpty)
             Padding(
               padding: const EdgeInsets.all(32),
@@ -180,7 +120,7 @@ class _UsersTabState extends State<_UsersTab>
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setLocal) => AlertDialog(
+        builder: (ctx, setLocal) => ManagerFormDialog(
           backgroundColor: AdminTheme.surface,
           title: Text(
             'ახალი მომხმარებელი',
@@ -227,9 +167,9 @@ class _UsersTabState extends State<_UsersTab>
               style: FilledButton.styleFrom(
                 backgroundColor: AdminTheme.primary,
               ),
-              child: const Text(
+              child: Text(
                 'დამატება',
-                style: TextStyle(color: Colors.white),
+                style: TextStyle(color: AdminTheme.onPrimary),
               ),
             ),
           ],
@@ -331,7 +271,7 @@ class _UsersTabState extends State<_UsersTab>
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setLocal) => AlertDialog(
+        builder: (ctx, setLocal) => ManagerFormDialog(
           backgroundColor: AdminTheme.surface,
           title: Text(
             'როლის შეცვლა • $username',
@@ -368,9 +308,9 @@ class _UsersTabState extends State<_UsersTab>
               style: FilledButton.styleFrom(
                 backgroundColor: AdminTheme.primary,
               ),
-              child: const Text(
+              child: Text(
                 'შენახვა',
-                style: TextStyle(color: Colors.white),
+                style: TextStyle(color: AdminTheme.onPrimary),
               ),
             ),
           ],
@@ -425,105 +365,85 @@ class _UserCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final role = user['role'] as String? ?? 'WAITER';
-    final normalized = StaffRole.fromApi(role);
-    final isManager = normalized == StaffRole.manager;
-    final isSupervisor = normalized == StaffRole.supervisor;
-    final accent = isManager
-        ? const Color(0xFF1D4ED8)
-        : isSupervisor
-        ? const Color(0xFF0EA5E9)
-        : AdminTheme.accent;
-
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
-      child: _AdminPanel(
-        padding: const EdgeInsets.all(14),
-        accentBorder: accent.withValues(alpha: 0.35),
-        child: Row(
-          children: [
-            Container(
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(
-                color: accent.withValues(alpha: 0.18),
-                borderRadius: BorderRadius.circular(14),
+    final accent = AdminTheme.primary;
+    final name = user['username'] as String? ?? '';
+    return ListTile(
+      contentPadding: EdgeInsets.zero,
+      leading: CircleAvatar(
+        backgroundColor: accent.withValues(alpha: 0.12),
+        child: Text(
+          name
+              .split(' ')
+              .where((part) => part.isNotEmpty)
+              .take(2)
+              .map((part) => part.characters.first)
+              .join(),
+          style: managerDesignText(context, 12).copyWith(color: accent),
+        ),
+      ),
+      title: Text(
+        name,
+        style: managerDesignText(context, 14, weight: FontWeight.w500),
+      ),
+      subtitle: Text(
+        _roleName(role),
+        style: managerDesignText(context, 11, muted: true),
+      ),
+      onTap: () => showDialog<void>(
+        context: context,
+        builder: (context) => ManagerFormDialog(
+          title: Text(name),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ManagerKeyValue('როლი', _roleName(role)),
+              ManagerKeyValue(
+                'წვდომა',
+                user['platformManaged'] == true
+                    ? 'წვდომას მართავს პლატფორმა'
+                    : 'PIN: ${user['pinCode'] ?? ''}',
               ),
-              child: Icon(
-                isManager
-                    ? Icons.admin_panel_settings_rounded
-                    : isSupervisor
-                    ? Icons.supervisor_account_rounded
-                    : Icons.person_rounded,
-                color: accent,
-                size: 22,
-              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('დახურვა'),
             ),
-            SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    user['username'] as String? ?? '',
-                    style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.bold,
-                      color: AdminTheme.text,
-                    ),
-                  ),
-                  Text(
-                    _roleName(role),
-                    style: TextStyle(fontSize: 12, color: accent),
-                  ),
-                  SizedBox(height: 4),
-                  Text(
-                    user['platformManaged'] == true
-                        ? 'წვდომას მართავს პლატფორმა'
-                        : 'PIN: ${(user['pinCode'] ?? '').toString()}',
-                    style: TextStyle(fontSize: 12, color: AdminTheme.textDim),
-                  ),
-                ],
-              ),
-            ),
-            if (user['platformManaged'] != true)
-              PopupMenuButton<String>(
-                tooltip: 'მოქმედებები',
-                icon: Icon(Icons.more_vert, color: AdminTheme.textMuted),
-                onSelected: (value) {
-                  switch (value) {
-                    case 'name':
-                      onEditName();
-                      return;
-                    case 'pin':
-                      onChangePin();
-                      return;
-                    case 'role':
-                      onChangeRole();
-                      return;
-                    case 'delete':
-                      onDelete();
-                      return;
-                  }
-                },
-                itemBuilder: (context) => [
-                  const PopupMenuItem(
-                    value: 'name',
-                    child: Text('სახელის შეცვლა'),
-                  ),
-                  const PopupMenuItem(
-                    value: 'pin',
-                    child: Text('PIN-ის შეცვლა'),
-                  ),
-                  const PopupMenuItem(
-                    value: 'role',
-                    child: Text('როლის შეცვლა'),
-                  ),
-                  const PopupMenuItem(value: 'delete', child: Text('წაშლა')),
-                ],
-              ),
           ],
         ),
       ),
+      trailing: user['platformManaged'] == true
+          ? const Icon(Icons.chevron_right, size: 20)
+          : PopupMenuButton<String>(
+              tooltip: 'მოქმედებები',
+              icon: Icon(Icons.more_vert, color: AdminTheme.textMuted),
+              onSelected: (value) {
+                switch (value) {
+                  case 'name':
+                    onEditName();
+                    return;
+                  case 'pin':
+                    onChangePin();
+                    return;
+                  case 'role':
+                    onChangeRole();
+                    return;
+                  case 'delete':
+                    onDelete();
+                    return;
+                }
+              },
+              itemBuilder: (context) => [
+                const PopupMenuItem(
+                  value: 'name',
+                  child: Text('სახელის შეცვლა'),
+                ),
+                const PopupMenuItem(value: 'pin', child: Text('PIN-ის შეცვლა')),
+                const PopupMenuItem(value: 'role', child: Text('როლის შეცვლა')),
+                const PopupMenuItem(value: 'delete', child: Text('წაშლა')),
+              ],
+            ),
     );
   }
 

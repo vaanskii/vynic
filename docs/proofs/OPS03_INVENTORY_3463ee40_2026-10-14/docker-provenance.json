@@ -1,0 +1,69 @@
+{
+  "capturedAt": "2026-10-14T17:53:30.792521+00:00",
+  "images": [
+    {
+      "container": "vynic-local-prod-backend-1",
+      "imageId": "sha256:ecd48efb88d6b95d9ee3acc03513ca22cc8d99701e8b2fb6bd5c8c56d09beb9d",
+      "imageObjectInspectable": true,
+      "repoDigests": [
+        "vynic/backend@sha256:ecd48efb88d6b95d9ee3acc03513ca22cc8d99701e8b2fb6bd5c8c56d09beb9d"
+      ],
+      "os": "linux",
+      "architecture": "arm64"
+    },
+    {
+      "container": "vynic-local-prod-platform-web-1",
+      "imageId": "sha256:5f4c4354d49ac7a7186c6eacd76b239e4f7ed95f2c7f5036d8f03060ba41da92",
+      "imageObjectInspectable": false,
+      "reason": "Running container references an image ID unavailable to image inspect"
+    },
+    {
+      "container": "vynic-local-prod-restaurant-web-1",
+      "imageId": "sha256:e48d1076d2bddaf1f5207e967ffd01e34f0e66e0d97edd9474ba232d7660258c",
+      "imageObjectInspectable": false,
+      "reason": "Running container references an image ID unavailable to image inspect"
+    },
+    {
+      "container": "vynic-local-prod-vankisi-custom-web-1",
+      "imageId": "sha256:ae901734ac58be3c2e10f7f62c836e69c2799e22220a120be7ffb9771ef0b11a",
+      "imageObjectInspectable": false,
+      "reason": "Running container references an image ID unavailable to image inspect"
+    },
+    {
+      "container": "vynic-local-prod-postgres-1",
+      "imageId": "sha256:639ab7ceb90e13123085b741fb31ef493fba25463002f6da665352e7b534b652",
+      "imageObjectInspectable": true,
+      "repoDigests": [
+        "postgres@sha256:639ab7ceb90e13123085b741fb31ef493fba25463002f6da665352e7b534b652"
+      ],
+      "os": "linux",
+      "architecture": "arm64"
+    },
+    {
+      "container": "vynic-local-prod-reverse-proxy-1",
+      "imageId": "sha256:31267173a15b4944e797a76ffd9c419707c8d8b32fe5b610f80cd0cfa05f372d",
+      "imageObjectInspectable": true,
+      "repoDigests": [
+        "traefik@sha256:31267173a15b4944e797a76ffd9c419707c8d8b32fe5b610f80cd0cfa05f372d"
+      ],
+      "os": "linux",
+      "architecture": "arm64"
+    }
+  ],
+  "backendLockfileMatchesSource": false,
+  "backendRuntimeLockfileSha256": "119b490c360106dc065f9d8833d4ce9b2da0095adb59bdae37b9e0d4ae599d26",
+  "sourceLockfileSha256": "a473f6f0332845314368960f34e5d55f125d5898e3ca7672ad82cdd98369ff1f",
+  "runtimeLockedPublicNameVersionSetMatchesSource": true,
+  "runtimeNameVersionsNotInSource": [],
+  "sourceNameVersionsAbsentFromRuntimeLock": [],
+  "runtimeLockComponents": 935,
+  "sourceLockComponents": 935,
+  "readOnly": true,
+  "containerEnvironmentInspected": false,
+  "sourceCodeOrBinaryAttested": false,
+  "OSVulnerabilitiesScanned": false,
+  "limits": [
+    "Dockerfile npm prune may rewrite lockfile metadata; differing whole-file hash is not by itself a version drift finding",
+    "Unavailable image objects prevent layer/OS metadata qualification; no images pulled or containers restarted"
+  ]
+}

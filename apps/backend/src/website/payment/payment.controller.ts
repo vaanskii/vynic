@@ -1,3 +1,5 @@
+import { createHash } from 'node:crypto';
+import { bogPaymentFacts } from './bog-payment-facts';
 import {
   Controller,
   Post,
@@ -6,6 +8,7 @@ import {
   Get,
   Param,
   Req,
+  HttpCode,
   HttpException,
   HttpStatus,
   UnauthorizedException,
@@ -18,127 +21,94 @@ import { FeatureGuard } from '../../entitlements/feature.guard';
 import { RequiresFeature } from '../../entitlements/requires-feature.decorator';
 import type { TenantContext } from '../../tenancy/tenant-context';
 import { WebsiteTenant } from '../tenancy/website-tenant-context';
+import {
+  RequiresWebsiteCapability,
+  WebsiteCapabilityGuard,
+} from '../tenancy/website-capability.guard';
 import { WebsiteTenantGuard } from '../tenancy/website-tenant.guard';
+import { WebsiteAuthService } from '../auth/auth.service';
 import { ReservationService } from '../reservation/reservation.service';
 
 /**
  * Payment entry points.
  *
- * Only order creation comes from a browser on a restaurant's site, so only it
- * resolves a Venue from the host. The status checks and the bank's callback
- * arrive without one — a payment provider has no reason to know the website
- * hostname — so they take their tenant from the server-owned reservation the
- * provider reference names. Guarding them on a host would break payments
- * without adding any authority the reservation row does not already carry.
+ * Browser requests resolve their Venue from the registered website host.
+ * Receipt requests additionally require a payment stored for that Venue.
+ * Bank callbacks use signed server-owned reservation/payment references, without
+ * website entitlement checks, so in-flight payments settle after access changes.
  */
 @Controller('api/bog')
 export class BogController {
   constructor(
     private readonly bogService: BogService,
     private readonly reservationService: ReservationService,
+    private readonly authService: WebsiteAuthService,
   ) {}
 
   @Post('create-order')
-  @UseGuards(WebsiteTenantGuard, FeatureGuard)
+  @UseGuards(WebsiteTenantGuard, FeatureGuard, WebsiteCapabilityGuard)
   @RequiresFeature(FeatureKeys.WEBSITE)
+  @RequiresWebsiteCapability('RESERVATIONS', 'ONLINE_PAYMENTS')
   async createOrder(
     @WebsiteTenant() tenant: TenantContext,
-    @Body()
-    body: {
-      selectedTables: string[];
-      selectedDate: string;
-      selectedTime: string;
-      menuItems?: Array<{ id: string; quantity: number; price?: number }>;
-      totalAmount?: number;
-      customerName?: string;
-      customerEmail?: string;
-      customerPhone?: string;
-      userId?: string;
-      notes?: string;
-      language?: string;
-      numberOfGuests?: number;
-    },
+    @Req() request: Request,
+    @Body() body: unknown,
   ) {
-    const validatedData = await this.bogService.validateAndCalculateOrder(
+    const user = await this.authService.tryGetUserFromRequest(request);
+    const result = await this.reservationService.createReservation(
       tenant,
-      {
-        menuItems: body.menuItems || [],
-        selectedTables: body.selectedTables,
-      },
+      body,
+      user?.id,
     );
-
-    const result = await this.reservationService.createReservation(tenant, {
-      selectedTables: body.selectedTables,
-      selectedDate: body.selectedDate,
-      selectedTime: body.selectedTime,
-      menuItems: validatedData.menuItems as Array<{
-        id: string;
-        quantity: number;
-        price: number;
-      }>,
-      totalAmount: validatedData.totalAmount,
-      customerName: body.customerName,
-      customerEmail: body.customerEmail,
-      customerPhone: body.customerPhone,
-      userId: body.userId,
-      notes: body.notes,
-      language: body.language || 'en',
-      numberOfGuests: body.numberOfGuests,
-    });
-
     return {
       success: true,
       redirect_url: result.paymentUrl,
       reservation_id: result.reservation.id,
       message: 'Reservation created, redirect to payment',
       validation: {
-        serverCalculatedTotal: validatedData.totalAmount,
-        subtotal: validatedData.subtotal,
-        serviceFee: validatedData.serviceFee,
-        validatedItems: validatedData.menuItems,
-        priceManipulationDetected:
-          body.totalAmount !== validatedData.totalAmount,
-        correctedCartItems: validatedData.menuItems,
+        ...result.validation,
+        // Existing Vankisi carts identify variant selections by the variant ID.
+        // Preserve that request shape when the client replaces a corrected cart.
+        correctedCartItems: result.validation.validatedItems.map((item) => ({
+          ...item,
+          id: item.variantId ?? item.id,
+        })),
       },
     };
   }
 
   @Get('check-status/:orderId')
-  async checkOrderStatus(@Param('orderId') orderId: string) {
+  @UseGuards(WebsiteTenantGuard)
+  async checkOrderStatus(
+    @WebsiteTenant() tenant: TenantContext,
+    @Param('orderId') orderId: string,
+  ) {
     try {
-      const paymentDetails = await this.bogService.getPaymentDetails(orderId);
-      const externalOrderId = paymentDetails.external_order_id;
-      const status = paymentDetails.status || paymentDetails.order_status?.key;
-      if (!externalOrderId) throw new Error('External order ID not found');
-
-      const confirmedStatuses = [
-        'completed',
-        'partial_completed',
-        'auth_requested',
-      ];
-      const failedStatuses = ['rejected', 'refunded', 'refunded_partially'];
-      const statusKey = status?.toLowerCase() || 'unknown';
-      const isSuccess = confirmedStatuses.includes(statusKey);
-      const isFailed = failedStatuses.includes(statusKey);
-
-      const reservation =
-        await this.reservationService.updateReservationPaymentStatus(
-          externalOrderId,
-          status,
-          isSuccess
-            ? 'Payment confirmed via status check'
-            : isFailed
-              ? 'Payment failed (checked via status check)'
-              : `Status check: ${status}`,
-          orderId,
+      const receipt: unknown = await this.bogService.getPaymentDetails(
+        orderId,
+        tenant.venueId,
+      );
+      const facts = bogPaymentFacts(receipt);
+      if (!facts.reservationId || facts.orderId !== orderId)
+        throw new HttpException(
+          'Payment reference mismatch',
+          HttpStatus.BAD_REQUEST,
         );
-
+      const updated =
+        await this.reservationService.updateReservationPaymentStatus(
+          facts.reservationId,
+          facts.status,
+          '',
+          orderId,
+          { source: 'POLL', observedAt: new Date(), receipt },
+        );
+      // Anonymous return routes expose only current booking outcome, never the row.
       return {
         success: true,
-        status: isSuccess ? 'CONFIRMED' : isFailed ? 'FAILED' : 'PENDING',
-        reservation,
+        status: updated.paymentReviewReason ? 'REVIEW' : updated.status,
       };
-    } catch {
+    } catch (error) {
+      if (error instanceof HttpException) throw error;
       throw new HttpException(
         'Failed to check order status',
         HttpStatus.INTERNAL_SERVER_ERROR,
@@ -147,19 +117,26 @@ export class BogController {
   }
 
   @Get('check-reservation-status/:reservationId')
-  async checkReservationStatus(@Param('reservationId') reservationId: string) {
-    const paymentId =
-      await this.reservationService.getPaymentIdByReservationId(reservationId);
+  @UseGuards(WebsiteTenantGuard)
+  async checkReservationStatus(
+    @WebsiteTenant() tenant: TenantContext,
+    @Param('reservationId') reservationId: string,
+  ) {
+    const paymentId = await this.reservationService.getPaymentIdByReservationId(
+      reservationId,
+      tenant.venueId,
+    );
     if (!paymentId) {
       return {
         success: false,
         message: 'Payment ID not found for this reservation',
       };
     }
-    return this.checkOrderStatus(paymentId);
+    return this.checkOrderStatus(tenant, paymentId);
   }
 
   @Post('payment-callback')
+  @HttpCode(HttpStatus.OK)
   async handlePaymentCallback(
     @Req() req: Request & { rawBody?: Buffer },
     @Body()
@@ -207,40 +184,45 @@ export class BogController {
       return { status: 'error', message: 'Missing order_status' };
     }
 
-    const confirmedStatuses = [
-      'completed',
-      'partial_completed',
-      'auth_requested',
-    ];
-    const failedStatuses = ['rejected', 'refunded', 'refunded_partially'];
-    const statusKey = orderStatus.key.toLowerCase();
-    const isSuccess = confirmedStatuses.includes(statusKey);
-    const isFailed = failedStatuses.includes(statusKey);
-
-    await this.reservationService.updateReservationPaymentStatus(
-      externalOrderId,
-      orderStatus.key,
-      paymentDetail?.code_description ||
-        (isSuccess
-          ? 'Payment processed'
-          : isFailed
-            ? 'Payment Failed'
-            : `Unknown status: ${statusKey}`),
-      orderId || '',
-    );
-
+    if (!orderId) return { status: 'error', message: 'Missing order_id' };
+    let receipt: unknown = null;
+    try {
+      receipt = await this.bogService.getPaymentDetailsForReservation(
+        externalOrderId,
+        orderId,
+      );
+    } catch (error) {
+      // Reference/ownership failures never become a financial observation.
+      if (error instanceof HttpException && error.getStatus() < 500)
+        throw error;
+      // A signed notification survives provider read failure as durable review;
+      // its pinned reference is retried by the reconciliation worker.
+    }
+    const updated =
+      await this.reservationService.updateReservationPaymentStatus(
+        externalOrderId,
+        orderStatus.key,
+        paymentDetail?.code_description ?? '',
+        orderId,
+        {
+          source: 'CALLBACK',
+          observedAt: new Date(),
+          receipt,
+          signedCallback: {
+            fingerprint: createHash('sha256').update(rawBody).digest('hex'),
+            sentAt: body.zoned_request_time,
+            receipt: paymentData,
+          },
+        },
+      );
     return {
       status: 'success',
-      message: isSuccess
-        ? 'Payment confirmed and reservation created'
-        : isFailed
-          ? 'Payment failed'
-          : `Payment status ${statusKey} recorded`,
-      reservation_status: isSuccess
-        ? 'CONFIRMED'
-        : isFailed
-          ? 'FAILED'
-          : 'PENDING',
+      message: updated.paymentReviewReason
+        ? 'Payment requires restaurant review'
+        : 'Payment outcome recorded',
+      reservation_status: updated.paymentReviewReason
+        ? 'REVIEW'
+        : updated.status,
     };
   }
 }

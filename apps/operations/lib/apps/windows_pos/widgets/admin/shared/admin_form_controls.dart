@@ -2,6 +2,7 @@ import 'package:vynic/core/widgets/pos_on_screen_text_field.dart';
 import 'package:flutter/material.dart';
 import 'package:vynic/apps/windows_pos/widgets/admin/shared/admin_design.dart';
 import 'package:vynic/core/ui/vynic_floor_tokens.dart';
+import 'package:vynic/core/ui/pos_theme.dart';
 
 /// Text field used by the admin forms. Tapping it opens the POS on-screen
 /// keyboard (alphanumeric or numeric) rather than the platform keyboard.
@@ -121,7 +122,11 @@ abstract final class AdminFormButtons {
       disabledBackgroundColor: VynicFloorTokens.badgeFill,
       disabledForegroundColor: VynicFloorTokens.textFaint,
       padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 15),
-      textStyle: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700),
+      textStyle: const TextStyle(
+        fontFamily: PosTheme.fontFamily,
+        fontSize: 13.5,
+        fontWeight: FontWeight.w700,
+      ),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(AdminDesign.radius),
       ),
@@ -137,7 +142,11 @@ abstract final class AdminFormButtons {
       foregroundColor: AdminDesign.text,
       disabledForegroundColor: VynicFloorTokens.textFaint,
       backgroundColor: VynicFloorTokens.panel,
-      textStyle: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600),
+      textStyle: const TextStyle(
+        fontFamily: PosTheme.fontFamily,
+        fontSize: 13.5,
+        fontWeight: FontWeight.w600,
+      ),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(AdminDesign.radius),
       ),

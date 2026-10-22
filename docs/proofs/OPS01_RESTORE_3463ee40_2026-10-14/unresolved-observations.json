@@ -1,0 +1,15 @@
+{
+  "web06Intermediate403": {
+    "status": "UNRESOLVED",
+    "priorEvidence": "../WEB06_CUSTOM_STATUS_3463ee40_2026-10-14/validation-notes.json",
+    "observation": "One prior reused-disposable-database run returned HTTP 403 after synthetic ONLINE_PAYMENTS entitlement removal. Original response message not captured.",
+    "currentEvidence": "Existing WEB06 10-case suite passes against the new OPS01 source database. This is no root-cause proof; authorization policy is untouched.",
+    "productionScope": "No live authorization probes or changes."
+  },
+  "harnessFirstAttempt": {
+    "status": "HARNESS_CORRECTED",
+    "observation": "Good fresh restore and application comparison passed; truncated artifact rejected. Verifier assumed a migration table existed in an intentionally incomplete target and stopped.",
+    "correction": "Inventory now explicitly distinguishes absent/empty migration history. A new final fresh target was created.",
+    "productionChange": false
+  }
+}

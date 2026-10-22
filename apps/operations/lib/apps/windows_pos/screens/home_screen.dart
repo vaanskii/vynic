@@ -1,6 +1,10 @@
+import 'package:vynic/core/models/reservation_status.dart';
+import 'package:vynic/core/database/repositories/order_table_mutation_repository.dart';
+import 'package:vynic/core/services/pos/update/update_readiness.dart';
 import 'package:vynic/core/services/pos/pos_locale.dart';
 import 'package:vynic/core/widgets/pos_text.dart';
 import 'dart:async';
+import 'dart:developer' as developer;
 import 'dart:math' show min;
 
 import 'package:flutter/material.dart';
@@ -18,6 +22,7 @@ import 'package:vynic/core/services/notifications/app_notification_history_store
 import 'package:vynic/core/services/pos/pos_change_highlight_service.dart';
 import 'package:vynic/core/services/pos/pos_display_settings_controller.dart';
 import 'package:vynic/core/services/printing/printer_service.dart';
+import 'package:vynic/apps/windows_pos/widgets/shared/print_jobs.dart';
 import 'package:vynic/core/services/auth/pos_session.dart';
 import 'package:vynic/core/services/auth/session_lock.dart';
 import 'package:vynic/core/widgets/notification_history_panel.dart';
@@ -82,6 +87,8 @@ class _HomeScreenState extends State<HomeScreen> {
   final FocusNode _shortcutFocusNode = FocusNode(debugLabel: 'home-shortcuts');
   String? _lastToastNotificationId;
   bool _notificationsPanelOpen = false;
+  bool _kitchenCopyPending = false;
+  bool _openingQuickCheckout = false;
   Timer? _syncRefreshDebounce;
   Timer? _syncRefreshFollowUp;
   Timer? _syncRefreshFinalFollowUp;
@@ -350,6 +357,25 @@ class _HomeScreenState extends State<HomeScreen> {
           currentFloor: _currentFloor,
           onSwitchFloor: _switchFloor,
           onOpenReservations: () => _selectDestination('newReservation'),
+          onQuickCheckout: () async {
+            if (_openingQuickCheckout) return;
+            _openingQuickCheckout = true;
+            try {
+              await Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => MenuScreen(
+                    user: _user,
+                    selectedTables: const [],
+                    isQuickCheckout: true,
+                  ),
+                ),
+              );
+            } finally {
+              _openingQuickCheckout = false;
+              if (mounted) setState(() {});
+            }
+          },
           displaySettings: PosDisplaySettingsController.settings.value,
         ),
       ),
@@ -477,6 +503,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final activeDestinationKey = _destinations[activeIndex].key;
     final currentDate = DatabaseService.getCurrentDate();
     final takeAwayCount = _countActiveTakeAways(currentDate);
+    final ownershipIssues = DatabaseService.getOrderTableIntegrityReport();
 
     // Lazily build feature pages: only pages the user has actually opened are
     // constructed (and then kept alive by IndexedStack to preserve their
@@ -515,6 +542,18 @@ class _HomeScreenState extends State<HomeScreen> {
                 children: [
                   Column(
                     children: [
+                      if (ownershipIssues.isNotEmpty)
+                        Material(
+                          color: VynicFloorTokens.panel,
+                          child: Padding(
+                            key: const ValueKey('order-table-repair-report'),
+                            padding: const EdgeInsets.all(12),
+                            child: Text(
+                              'მაგიდის კავშირი არათანმიმდევრულია (${ownershipIssues.length}) — საჭიროა შემოწმება; ჩანაწერების ნახვა ხელმისაწვდომია',
+                              style: const TextStyle(fontSize: 14),
+                            ),
+                          ),
+                        ),
                       PosHomeUtilityBar(
                         businessDate: currentDate,
                         activeLabel: _destinations[activeIndex].label,
@@ -618,9 +657,11 @@ class _HomeScreenState extends State<HomeScreen> {
 
     final reservations = HomeReservationsHelper.getAdminPanelReservations()
         .where(
-          (reservation) => HomeReservationsHelper.normalizeStatus(
-            reservation.status,
-          ).startsWith('confirmed'),
+          (reservation) =>
+              HomeReservationsHelper.normalizeStatus(
+                reservation.status,
+              ).startsWith('confirmed') ||
+              reservation.statusEnum == ReservationStatus.hold,
         )
         .toList();
 
@@ -630,6 +671,25 @@ class _HomeScreenState extends State<HomeScreen> {
         reservations: reservations,
         onRefreshRequested: _refreshTables,
         canAssignTable: canManageReservations,
+        onConfirmHold: canManageReservations
+            ? (reservation) async {
+                if (!_user.canManageReservationsOnHome) return;
+                try {
+                  await DatabaseService.updateReservationStatus(
+                    reservation.id,
+                    'confirmed',
+                    actorId: _user.username,
+                    requireDurability: true,
+                  );
+                  if (mounted) setState(() {});
+                } catch (error) {
+                  if (mounted)
+                    unawaited(
+                      showErrorToast(context, 'ჯავშანი ვერ დადასტურდა: $error'),
+                    );
+                }
+              }
+            : null,
         onEditReservation: canManageReservations
             ? _editReservationDetails
             : null,
@@ -654,46 +714,62 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _sendReservationKitchenCheck(Reservation reservation) async {
-    final kitchenItems = HomeReservationsHelper.buildKitchenCheckLines(
-      reservation,
-    );
-    if (kitchenItems.isEmpty) {
-      unawaited(
-        showPosToast(
-          context: context,
-          message: 'სამზარეულოს ჩეკისთვის პროდუქტები არ არის დამატებული.',
-          style: PosToastStyle.info,
-        ),
+    if (_kitchenCopyPending) return;
+    _kitchenCopyPending = true;
+    try {
+      final kitchenItems = HomeReservationsHelper.buildKitchenCheckLines(
+        reservation,
       );
-      return;
+      if (kitchenItems.isEmpty) {
+        unawaited(
+          showPosToast(
+            context: context,
+            message: 'სამზარეულოს ჩეკისთვის პროდუქტები არ არის დამატებული.',
+            style: PosToastStyle.info,
+          ),
+        );
+        return;
+      }
+
+      final reservationTables = ReservationTableAvailability.tableRefsOf(
+        reservation,
+      );
+      final tableLabel = reservationTables.isNotEmpty
+          ? reservationTables.map((ref) => ref.tableNumber).join(', ')
+          : null;
+      final orderLabel = HomeReservationsHelper.buildKitchenOrderLabel(
+        reservation,
+      );
+      final kitchenTime = HomeReservationsHelper.buildKitchenTime(reservation);
+
+      final request = await requestKitchenPrintCopy(context);
+      if (request == null || !mounted) return;
+      await PrinterService.printKitchenCheckInBackground(
+        jobId: request.id,
+        copyOf: 'reservation/${reservation.id}',
+        copyReason: request.reason,
+        items: kitchenItems,
+        tableNumber: tableLabel,
+        orderNumber: orderLabel,
+        waiterName: _user.username,
+        createdAt: kitchenTime,
+        onComplete: (success) {
+          if (!mounted) return;
+          if (success) {
+            unawaited(showSuccessToast(context, 'ჩეკი გაიგზავნა სამზარეულოში'));
+          } else {
+            unawaited(
+              showErrorToast(
+                context,
+                'ბეჭდვა ვერ დადასტურდა — შეამოწმეთ ბეჭდვის სია',
+              ),
+            );
+          }
+        },
+      );
+    } finally {
+      _kitchenCopyPending = false;
     }
-
-    final reservationTables = ReservationTableAvailability.tableRefsOf(
-      reservation,
-    );
-    final tableLabel = reservationTables.isNotEmpty
-        ? reservationTables.map((ref) => ref.tableNumber).join(', ')
-        : null;
-    final orderLabel = HomeReservationsHelper.buildKitchenOrderLabel(
-      reservation,
-    );
-    final kitchenTime = HomeReservationsHelper.buildKitchenTime(reservation);
-
-    PrinterService.printKitchenCheckInBackground(
-      items: kitchenItems,
-      tableNumber: tableLabel,
-      orderNumber: orderLabel,
-      waiterName: _user.username,
-      createdAt: kitchenTime,
-      onComplete: (success) {
-        if (!mounted) return;
-        if (success) {
-          unawaited(showSuccessToast(context, 'ჩეკი გაიგზავნა სამზარეულოში'));
-        } else {
-          unawaited(showErrorToast(context, 'პრინტერი მიუწვდომელია'));
-        }
-      },
-    );
   }
 
   Future<void> _editReservationMenu(Reservation reservation) async {
@@ -772,17 +848,24 @@ class _HomeScreenState extends State<HomeScreen> {
         '${selectedTime.minute.toString().padLeft(2, '0')}';
 
     final notes = (result['notes'] as String?)?.trim();
-    await DatabaseService.updateReservationDetails(
-      reservation.id,
-      customerName: (result['customerName'] as String? ?? '').trim(),
-      customerPhone: (result['customerPhone'] as String? ?? '').trim(),
-      notes: notes,
-      clearNotes: notes == null || notes.isEmpty,
-      reservationDate: selectedDate,
-      reservationTime: timeString,
-      numberOfGuests: HomeReservationsHelper.extractGuestCount(result),
-      actorId: _user.username,
-    );
+    try {
+      final updated = await DatabaseService.updateReservationDetails(
+        reservation.id,
+        customerName: (result['customerName'] as String? ?? '').trim(),
+        customerPhone: (result['customerPhone'] as String? ?? '').trim(),
+        notes: notes,
+        clearNotes: notes == null || notes.isEmpty,
+        reservationDate: selectedDate,
+        reservationTime: timeString,
+        numberOfGuests: HomeReservationsHelper.extractGuestCount(result),
+        actorId: _user.username,
+      );
+      if (!updated) throw StateError('რეზერვაცია ვერ განახლდა');
+    } catch (error) {
+      if (mounted)
+        unawaited(showErrorToast(context, 'რეზერვაცია ვერ განახლდა: $error'));
+      return;
+    }
 
     if (!mounted) {
       return;
@@ -918,7 +1001,13 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
-  void _handleReservedTableTap(TableModel table) async {
+  Future<void> _handleReservedTableTap(TableModel table) =>
+      UpdateReadiness.track(
+        'handleReservedTableTap',
+        () => _admittedhandleReservedTableTap(table),
+      );
+
+  Future<void> _admittedhandleReservedTableTap(TableModel table) async {
     if (table.activeOrderId != null) {
       _openOrderDetail(table.activeOrderId!);
       return;
@@ -939,6 +1028,7 @@ class _HomeScreenState extends State<HomeScreen> {
       if (!mounted) {
         return;
       }
+      _tableSelectionKey.currentState?.clearSelection();
       await DatabaseService.logError(
         title: 'Reserved table activation failed',
         error: error,
@@ -947,11 +1037,22 @@ class _HomeScreenState extends State<HomeScreen> {
         performedBy: _user.username,
         metadata: {'reservationId': reservationId},
       );
-      await _refreshTables();
+      try {
+        await _refreshTables();
+      } catch (refreshError, refreshStack) {
+        developer.log(
+          'Recovery refusal prevented table refresh',
+          name: 'HomeScreen',
+          error: refreshError,
+          stackTrace: refreshStack,
+        );
+      }
       unawaited(
         showPosToast(
           context: context,
-          message: 'შეკვეთის გახსნა ვერ მოხერხდა: $error',
+          message: error is OrderMutationConflict
+              ? error.userMessage
+              : 'შეკვეთის გახსნა ვერ მოხერხდა — განაახლეთ და გაიმეორეთ',
           style: PosToastStyle.error,
         ),
       );
@@ -964,6 +1065,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
     if (!result.isSuccess) {
       final reason = result.failureReason ?? 'Unknown reason';
+      _tableSelectionKey.currentState?.clearSelection();
       await DatabaseService.logError(
         title: 'Reserved table activation failed',
         error: StateError(reason),
@@ -980,9 +1082,11 @@ class _HomeScreenState extends State<HomeScreen> {
             (r) => r.id == reservationId,
           );
       if (!resExists) {
-        table.reservationId = null;
-        table.isReserved = false;
-        await table.save();
+        await DatabaseService.freeTable(
+          tableNumber: table.tableNumber,
+          floor: table.floor,
+          expectedReservationId: reservationId,
+        );
       }
 
       if (!mounted) {
@@ -1054,53 +1158,19 @@ class _HomeScreenState extends State<HomeScreen> {
     TimeOfDay? initialTime,
     int? initialGuests,
   }) {
-    return showGeneralDialog<Map<String, dynamic>>(
-      context: context,
-      barrierLabel: title,
-      barrierColor: Colors.black.withOpacity(0.85),
-      barrierDismissible: true,
-      transitionDuration: const Duration(milliseconds: 220),
-      pageBuilder: (dialogContext, animation, secondaryAnimation) {
-        final mediaQuery = MediaQuery.of(dialogContext);
-        return SafeArea(
-          child: Center(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-              child: ConstrainedBox(
-                constraints: BoxConstraints(
-                  maxWidth: mediaQuery.size.width * 0.9,
-                  maxHeight: mediaQuery.size.height * 0.95,
-                ),
-                child: ReservationCreationSheet(
-                  onCancel: () => Navigator.of(dialogContext).pop(),
-                  title: title,
-                  confirmLabel: confirmLabel,
-                  initialName: initialName,
-                  initialPhone: initialPhone,
-                  initialNotes: initialNotes,
-                  initialDate: initialDate,
-                  initialTime: initialTime,
-                  initialGuests: initialGuests,
-                ),
-              ),
-            ),
-          ),
-        );
-      },
-      transitionBuilder: (context, animation, secondaryAnimation, child) {
-        final curved = CurvedAnimation(
-          parent: animation,
-          curve: Curves.easeOutCubic,
-          reverseCurve: Curves.easeInCubic,
-        );
-        return FadeTransition(
-          opacity: curved,
-          child: ScaleTransition(
-            scale: Tween<double>(begin: 0.95, end: 1).animate(curved),
-            child: child,
-          ),
-        );
-      },
+    return ReservationCreationSheet.show(
+      context,
+      form: ReservationCreationSheet(
+        showFinancialFields: false,
+        title: title,
+        confirmLabel: confirmLabel,
+        initialName: initialName,
+        initialPhone: initialPhone,
+        initialNotes: initialNotes,
+        initialDate: initialDate,
+        initialTime: initialTime,
+        initialGuests: initialGuests,
+      ),
     );
   }
 
@@ -1166,7 +1236,7 @@ class _HomeNavigationTabs extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: compact ? 56 : 64,
+      height: 64,
       padding: EdgeInsets.symmetric(horizontal: narrow ? 12 : 20),
       decoration: const BoxDecoration(
         color: Colors.white,
@@ -1233,7 +1303,7 @@ class _HomeNavigationTab extends StatelessWidget {
       borderRadius: VynicRadius.smAll,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 140),
-        height: compact ? 38 : 42,
+        height: 56,
         padding: EdgeInsets.symmetric(horizontal: compact ? 13 : 16),
         decoration: BoxDecoration(
           color: active ? VynicColors.accentSoft : Colors.transparent,
@@ -1250,7 +1320,7 @@ class _HomeNavigationTab extends StatelessWidget {
                 color: active
                     ? VynicFloorTokens.accentText
                     : VynicFloorTokens.textMuted,
-                fontSize: compact ? 13 : 13.5,
+                fontSize: 15,
                 fontWeight: active ? FontWeight.w600 : FontWeight.w500,
               ),
             ),
@@ -1310,7 +1380,7 @@ class _TopAdminButton extends StatelessWidget {
       style: FilledButton.styleFrom(
         backgroundColor: VynicFloorTokens.accentText,
         foregroundColor: VynicFloorTokens.panel,
-        minimumSize: Size(narrow ? 40 : 0, compact ? 32 : 34),
+        minimumSize: const Size(56, 56),
         padding: EdgeInsets.symmetric(horizontal: narrow ? 0 : 14),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(9)),
       ),
@@ -1528,7 +1598,7 @@ class _LanguageButton extends StatelessWidget {
         onTap: onTap,
         borderRadius: VynicRadius.smAll,
         child: Container(
-          height: 34,
+          height: 56,
           padding: const EdgeInsets.symmetric(horizontal: 10),
           decoration: BoxDecoration(
             color: Colors.white,
@@ -1576,8 +1646,8 @@ class _NotificationUtilityButton extends StatelessWidget {
         onTap: onTap,
         borderRadius: VynicRadius.smAll,
         child: Container(
-          width: 38,
-          height: 34,
+          width: 56,
+          height: 56,
           alignment: Alignment.center,
           decoration: BoxDecoration(
             color: Colors.white,
@@ -1635,7 +1705,7 @@ class _EmployeeChip extends StatelessWidget {
         onTap: onTap,
         borderRadius: VynicRadius.smAll,
         child: Container(
-          height: 38,
+          height: 56,
           padding: EdgeInsets.only(left: 4, right: compact ? 4 : 10),
           decoration: BoxDecoration(
             color: VynicColors.cardSoft,

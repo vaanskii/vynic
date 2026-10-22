@@ -63,6 +63,10 @@ Future<String?> showPosKeyboardInputSheet({
 
   return showModalBottomSheet<String>(
     context: context,
+    requestFocus: !PosInputSettings.active || standalone,
+    sheetAnimationStyle: PosInputSettings.active
+        ? AnimationStyle.noAnimation
+        : null,
     isScrollControlled: true,
     useSafeArea: false,
     barrierColor: Colors.transparent,
@@ -140,6 +144,10 @@ Future<String?> showPosNumberKeyboardInputSheet({
 
   return showModalBottomSheet<String>(
     context: context,
+    requestFocus: !PosInputSettings.active || controller == null,
+    sheetAnimationStyle: PosInputSettings.active
+        ? AnimationStyle.noAnimation
+        : null,
     isScrollControlled: true,
     useSafeArea: false,
     barrierColor: Colors.transparent,
@@ -190,11 +198,11 @@ class _PosNumberKeyboardSheet extends StatelessWidget {
     required this.onSave,
   });
 
-  static const Color _panel = Colors.white;
-  static const Color _surface = Color(0xFFF6F7F9);
-  static const Color _border = Color(0xFFE5E7EB);
-  static const Color _text = Color(0xFF111827);
-  static const Color _muted = Color(0xFF6B7280);
+  static const Color _panel = VynicFloorTokens.panel;
+  static const Color _surface = VynicFloorTokens.canvas;
+  static const Color _border = VynicFloorTokens.panelBorder;
+  static const Color _text = VynicFloorTokens.text;
+  static const Color _muted = VynicFloorTokens.textMuted;
   static const Color _accent = VynicFloorTokens.accentStrong;
   static const Color _accentDark = VynicFloorTokens.accentStrong;
 
@@ -264,7 +272,8 @@ class _PosNumberKeyboardSheet extends StatelessWidget {
                       label: const PosText('შენახვა'),
                       style: TextButton.styleFrom(
                         foregroundColor: _accentDark,
-                        textStyle: const TextStyle(fontWeight: FontWeight.w800),
+                        textStyle: Theme.of(context).textTheme.labelLarge
+                            ?.copyWith(fontWeight: FontWeight.w800),
                       ),
                     ),
                     IconButton(
@@ -307,6 +316,7 @@ class _PosNumberKeyboardSheet extends StatelessWidget {
                   ),
                 const SizedBox(height: 10),
                 PinPad(
+                  retainInputFocus: PosInputSettings.active && !showValue,
                   authentication: pin,
                   onDigitPressed: onDigit,
                   onDeletePressed: onDelete,

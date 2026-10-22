@@ -1,3 +1,4 @@
+import 'package:vynic/core/database/repositories/order_table_mutation_repository.dart';
 import 'package:vynic/core/services/edge/edge_command_journal.dart';
 import 'dart:async';
 import 'dart:convert';
@@ -249,6 +250,14 @@ class PosUpdater extends ChangeNotifier {
             : null,
       );
       UpdateReadiness.recoveryChecks.add(OrderTableCoordinator.updateBlocker);
+      UpdateReadiness.recoveryChecks.add(() {
+        try {
+          OrderTableMutationRepository.assertRollbackSafe();
+          return null;
+        } catch (_) {
+          return 'შეკვეთისა და მაგიდის კავშირი აღსადგენია ან შესამოწმებელია';
+        }
+      });
       UpdateReadiness.recoveryChecks.add(
         () => EdgeCommandJournal.hasUnresolvedExecution
             ? 'მიმდინარე ოპერაციის შედეგი გაურკვეველია'

@@ -1,0 +1,7 @@
+{
+  "database": "disposable_web03_upgrade_6f636636",
+  "historicalRowsByteIdentical": true,
+  "rows": 2,
+  "automaticallyCreatedIntents": 0,
+  "migrationReplay": "PASS"
+}

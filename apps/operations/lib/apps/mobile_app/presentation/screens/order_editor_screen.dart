@@ -1,6 +1,11 @@
+import '../widgets/manager_modal.dart';
+import '../widgets/manager_design_components.dart';
+import 'package:vynic/apps/mobile_app/presentation/widgets/manager_operations_panel.dart';
 import 'package:vynic/apps/mobile_app/presentation/widgets/mobile_glass_ui.dart';
 import 'package:vynic/apps/mobile_app/presentation/widgets/mobile_menu_pin_sheet.dart';
 import 'package:flutter/material.dart';
+import 'package:vynic/core/services/manager_app/order_edit_request.dart';
+import 'package:vynic/core/services/manager_app/pos_command_delivery.dart';
 import 'package:vynic/core/models/user.dart';
 import 'package:vynic/core/models/order.dart';
 import 'package:vynic/core/models/menu_item_db.dart';
@@ -36,8 +41,18 @@ class OrderEditorScreen extends StatefulWidget {
 
 class _OrderEditorScreenState extends State<OrderEditorScreen> {
   Order? _order;
+  String? _editScope;
+  OrderEditResult? _editResult;
+  bool _saving = false;
+  bool get _locked =>
+      _saving ||
+      _editScope == null ||
+      !MobileApiService.isCurrentTableRepairScope(_editScope!) ||
+      _order?.managerEditProjection == null ||
+      _editResult != null && !_editResult!.isDone;
   List<MenuCategoryDB> _categories = [];
   String? _selectedCategorySlug;
+  String _menuSearch = '';
   String? _selectedSubcategorySlug;
   bool _isLoading = true;
   bool _hasChanges = false;
@@ -58,6 +73,11 @@ class _OrderEditorScreenState extends State<OrderEditorScreen> {
       _isOrderPanelOpen = true;
     }
     MonitoringSocketService.updateCounter.addListener(_onRemoteOrderChange);
+    try {
+      _editScope = MobileApiService.tableRepairScope;
+    } catch (_) {
+      _editScope = null;
+    }
     _loadData();
   }
 
@@ -114,7 +134,12 @@ class _OrderEditorScreenState extends State<OrderEditorScreen> {
   }
 
   void _onRemoteOrderChange() {
-    if (!mounted) return;
+    if (!mounted ||
+        _hasChanges ||
+        _saving ||
+        _editScope == null ||
+        !MobileApiService.isCurrentTableRepairScope(_editScope!))
+      return;
     _loadData();
   }
 
@@ -125,7 +150,40 @@ class _OrderEditorScreenState extends State<OrderEditorScreen> {
         MobileApiService.getMenu(),
       ]);
 
-      final order = results[0] as Order;
+      if (!mounted) return;
+      if (_editScope == null ||
+          !MobileApiService.isCurrentTableRepairScope(_editScope!)) {
+        setState(() {
+          _editResult = const OrderEditResult(
+            PosCommandDelivery.failed,
+            code: 'session_changed',
+          );
+          _isLoading = false;
+        });
+        return;
+      }
+      var order = results[0] as Order;
+      await OrderEditRequests.init();
+      if (_editScope != null &&
+          MobileApiService.isCurrentTableRepairScope(_editScope!)) {
+        order = OrderEditRequests.draft(_editScope!, widget.orderId) ?? order;
+        final retained = OrderEditRequests.read(_editScope!, widget.orderId);
+        if (retained != null)
+          _editResult = OrderEditResult.fromMap(retained['result']);
+      }
+      if (!mounted) return;
+      if (_editScope == null ||
+          !MobileApiService.isCurrentTableRepairScope(_editScope!)) {
+        setState(() {
+          _editResult = const OrderEditResult(
+            PosCommandDelivery.failed,
+            code: 'session_changed',
+          );
+          _order = null;
+          _isLoading = false;
+        });
+        return;
+      }
       final rawMenu = results[1] as List<dynamic>;
 
       final categories = rawMenu.map((cat) {
@@ -214,13 +272,14 @@ class _OrderEditorScreenState extends State<OrderEditorScreen> {
   }
 
   void _updateQuantity(int index, int delta) {
-    if (_order == null) return;
+    if (_order == null || _locked) return;
     setState(() {
       _hasChanges = true;
       final item = _order!.items[index];
       final newQty = item.quantity + delta;
       if (newQty > 0) {
         _order!.items[index] = OrderItem(
+          lineUuid: item.lineUuid,
           itemKey: item.itemKey,
           itemName: item.itemName,
           unitPrice: item.unitPrice,
@@ -238,7 +297,7 @@ class _OrderEditorScreenState extends State<OrderEditorScreen> {
   }
 
   void _addItem(MenuItemDB menuItem, int quantity, {MenuVariantDB? variant}) {
-    if (_order == null || quantity <= 0) return;
+    if (_order == null || quantity <= 0 || _locked) return;
     setState(() {
       _hasChanges = true;
       String itemName =
@@ -257,7 +316,11 @@ class _OrderEditorScreenState extends State<OrderEditorScreen> {
           : (menuItem.translationsEn['name'] ?? itemName);
 
       final existingIndex = _order!.items.indexWhere(
-        (it) => it.itemKey == itemKey,
+        (it) =>
+            it.itemKey == itemKey &&
+            it.menuItemId == menuItem.id &&
+            it.variantId == variant?.id &&
+            (it.comment ?? '').trim().isEmpty,
       );
 
       if (existingIndex >= 0) {
@@ -266,6 +329,7 @@ class _OrderEditorScreenState extends State<OrderEditorScreen> {
         _order!.items.insert(
           0,
           OrderItem(
+            lineUuid: existing.lineUuid,
             itemKey: existing.itemKey,
             itemName: existing.itemName,
             unitPrice: existing.unitPrice,
@@ -328,7 +392,7 @@ class _OrderEditorScreenState extends State<OrderEditorScreen> {
   }
 
   Future<void> _viewCheckPdf() async {
-    if (_order == null) return;
+    if (_order == null || _locked) return;
 
     // Show loading
     showDialog(
@@ -381,26 +445,101 @@ class _OrderEditorScreenState extends State<OrderEditorScreen> {
   }
 
   Future<void> _saveChanges() async {
-    if (_order == null) return;
-
+    final order = _order;
+    if (order == null || _saving) return;
+    setState(() => _saving = true);
+    final OrderEditResult result;
     try {
-      await MobileApiService.updateOrder(
-        _order!,
-        updatedBy: widget.user.username,
+      result = await MobileApiService.updateOrder(
+        order,
+        expectedScope: _editScope,
       );
-      _hasChanges = false;
-      if (mounted) {
-        ManagerToast.show(context, 'შეკვეთა წარმატებით შეინახა');
-        Navigator.pop(context);
-      }
-    } catch (e, stack) {
-      debugPrint('[OrderEditor] _saveChanges error: $e');
-      debugPrint('[OrderEditor] stack: $stack');
-      if (mounted) {
-        ManagerToast.show(context, 'შეცდომა განახლებისას: $e', isError: true);
-      }
+    } catch (_) {
+      if (mounted)
+        setState(() {
+          _saving = false;
+          _editResult = const OrderEditResult(
+            PosCommandDelivery.unknown,
+            code: 'local_request_error',
+          );
+        });
+      return;
+    }
+    if (!mounted) return;
+    setState(() {
+      _saving = false;
+      _editResult = result;
+      if (result.isDone) _hasChanges = false;
+    });
+    if (result.isDone) {
+      ManagerToast.show(context, result.message);
+      Navigator.pop(context);
     }
   }
+
+  Future<void> _discardEdit() async {
+    if (_editScope == null || _editResult?.needsCheck == true) return;
+    if (!MobileApiService.isCurrentTableRepairScope(_editScope!)) {
+      if (mounted)
+        setState(
+          () => _editResult = const OrderEditResult(
+            PosCommandDelivery.failed,
+            code: 'session_changed',
+          ),
+        );
+      return;
+    }
+    try {
+      await OrderEditRequests.discard(_editScope!, widget.orderId);
+    } catch (e) {
+      debugPrint('Manager draft discard failed: ${e.runtimeType}');
+      if (mounted)
+        ManagerToast.show(
+          context,
+          'მონახაზის გაუქმება ვერ მოხერხდა — სცადეთ ხელახლა',
+          isError: true,
+        );
+      return;
+    }
+    if (!mounted) return;
+    setState(() {
+      _editResult = null;
+      _hasChanges = false;
+    });
+    await _loadData();
+  }
+
+  Widget _editStatus() => Padding(
+    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          _editResult?.message ??
+              (_order?.managerEditProjection == null
+                  ? 'რედაქტირებისთვის საჭიროა POS-ის ახალი მონაცემები'
+                  : ''),
+          key: const ValueKey('manager-order-edit-status'),
+        ),
+        if (_editResult != null && !_editResult!.isDone)
+          Wrap(
+            spacing: 12,
+            children: [
+              if (_editResult!.delivery != PosCommandDelivery.failed)
+                TextButton(
+                  onPressed: _saving ? null : _saveChanges,
+                  child: Text('შედეგის გადამოწმება'),
+                ),
+              if (!_editResult!.needsCheck)
+                TextButton(
+                  onPressed: _discardEdit,
+                  child: Text('განახლება და მონახაზის გაუქმება'),
+                ),
+            ],
+          ),
+      ],
+    ),
+  );
 
   bool get _isTakeaway => widget.floor == 'takeaway';
 
@@ -449,7 +588,7 @@ class _OrderEditorScreenState extends State<OrderEditorScreen> {
             onPressed: () => Navigator.pop(ctx, true),
             style: ElevatedButton.styleFrom(
               backgroundColor: MobileGlassTheme.bad,
-              foregroundColor: Colors.white,
+              foregroundColor: MobileGlassTheme.onPrimary,
               elevation: 0,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
@@ -464,13 +603,24 @@ class _OrderEditorScreenState extends State<OrderEditorScreen> {
     if (confirmed != true || !mounted) return;
 
     try {
-      await MobileApiService.cancelOrder(widget.orderId);
-      if (mounted) {
-        ManagerToast.show(context, 'მაგიდა გაუქმებულია');
-        Navigator.pop(context, 'cancelled');
+      final result = await MobileApiService.cancelOrder(
+        widget.orderId,
+        expectedScope: _editScope,
+      );
+      if (mounted &&
+          _editScope != null &&
+          MobileApiService.isCurrentTableRepairScope(_editScope!)) {
+        ManagerToast.show(
+          context,
+          result.message,
+          isError: result.delivery.name == 'failed',
+        );
+        if (result.isDone) Navigator.pop(context, 'cancelled');
       }
     } catch (e) {
-      if (mounted) {
+      if (mounted &&
+          _editScope != null &&
+          MobileApiService.isCurrentTableRepairScope(_editScope!)) {
         ManagerToast.show(context, 'გაუქმება ვერ მოხერხდა: $e', isError: true);
       }
     }
@@ -478,298 +628,380 @@ class _OrderEditorScreenState extends State<OrderEditorScreen> {
 
   @override
   Widget build(BuildContext context) {
-    if (_isLoading) {
-      return MobileGlassScreen(
-        orbs: [
-          Positioned(
-            top: -80,
-            right: -50,
-            child: MobileGlowOrb(color: MobileGlassTheme.primary, size: 220),
-          ),
-        ],
-        body: Column(
-          children: [
-            MobileGlassHeader(
-              title: 'რედაქტირება',
-              subtitle: _orderSubtitle(),
-              onBack: () => Navigator.pop(context),
-            ),
-            Expanded(
-              child: Center(
-                child: CircularProgressIndicator(
-                  color: MobileGlassTheme.primary,
+    final displayedRepairScope = _editScope ?? '';
+    if (_editScope == null ||
+        !MobileApiService.isCurrentTableRepairScope(_editScope!)) {
+      return ManagerOperationBoundary(
+        scope: _editScope,
+        slot: 'order_cancel:${widget.orderId}',
+        child: MobileGlassScreen(
+          body: Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text('სესია შეიცვალა — გახსენით შეკვეთა თავიდან'),
+                TextButton(
+                  onPressed: () => Navigator.of(context).maybePop(),
+                  child: Text('უკან'),
                 ),
-              ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+    if (_isLoading) {
+      return ManagerOperationBoundary(
+        scope: _editScope,
+        slot: 'order_cancel:${widget.orderId}',
+        child: MobileGlassScreen(
+          orbs: [
+            Positioned(
+              top: -80,
+              right: -50,
+              child: MobileGlowOrb(color: MobileGlassTheme.primary, size: 220),
             ),
           ],
+          body: Column(
+            children: [
+              MobileGlassHeader(
+                title: 'რედაქტირება',
+                subtitle: _orderSubtitle(),
+                onBack: () => Navigator.pop(context),
+              ),
+              Expanded(
+                child: Center(
+                  child: CircularProgressIndicator(
+                    color: MobileGlassTheme.primary,
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       );
     }
 
     if (_order == null) {
-      return MobileGlassScreen(
-        orbs: [
-          Positioned(
-            top: -80,
-            right: -60,
-            child: MobileGlowOrb(color: MobileGlassTheme.warn, size: 220),
-          ),
-        ],
-        body: Column(
-          children: [
-            MobileGlassHeader(
-              title: _orderTitle(),
-              subtitle: _orderSubtitle(),
-              onBack: () => Navigator.pop(context),
+      return ManagerOperationBoundary(
+        scope: _editScope,
+        slot: 'order_cancel:${widget.orderId}',
+        child: MobileGlassScreen(
+          orbs: [
+            Positioned(
+              top: -80,
+              right: -60,
+              child: MobileGlowOrb(color: MobileGlassTheme.warn, size: 220),
             ),
-            Expanded(
-              child: Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(24),
-                  child: MobileGlassCard(
+          ],
+          body: Column(
+            children: [
+              MobileGlassHeader(
+                title: _orderTitle(),
+                subtitle: _orderSubtitle(),
+                onBack: () => Navigator.pop(context),
+              ),
+              Expanded(
+                child: Center(
+                  child: Padding(
                     padding: const EdgeInsets.all(24),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.warning_amber_rounded,
-                          size: 48,
-                          color: MobileGlassTheme.warn,
-                        ),
-                        SizedBox(height: 16),
-                        Text(
-                          'შეკვეთა #${widget.orderId} ვერ მოიძებნა',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: MobileGlassTheme.textPrimary,
+                    child: MobileGlassCard(
+                      padding: const EdgeInsets.all(24),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.warning_amber_rounded,
+                            size: 48,
+                            color: MobileGlassTheme.warn,
                           ),
-                          textAlign: TextAlign.center,
-                        ),
-                        SizedBox(height: 8),
-                        Text(
-                          'მაგიდა ${widget.tableNumber} (${widget.floor}) ბაზაში დაკავებულად არის მონიშნული, '
-                          'მაგრამ შეკვეთა ვერ მოიძებნა. '
-                          'შეგიძლიათ მაგიდა გაათავისუფლოთ ან სცადოთ ხელახლა.',
-                          style: TextStyle(
-                            color: MobileGlassTheme.muted(0.65),
-                            fontSize: 13,
-                            height: 1.5,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                        SizedBox(height: 24),
-                        MobileGlassPrimaryButton(
-                          label: 'მაგიდის გათავისუფლება',
-                          icon: Icons.lock_open_rounded,
-                          onPressed: () async {
-                            final ok = await MobileApiService.freeTable(
-                              widget.tableNumber,
-                              widget.floor,
-                            );
-                            if (!context.mounted) return;
-                            if (ok) {
-                              ManagerToast.show(context, 'მაგიდა გათავისუფლდა');
-                              Navigator.pop(context, 'freed');
-                            } else {
-                              ManagerToast.show(
-                                context,
-                                'გათავისუფლება ვერ მოხერხდა',
-                                isError: true,
-                              );
-                            }
-                          },
-                        ),
-                        SizedBox(height: 12),
-                        MobileGlassPrimaryButton(
-                          label: 'შეკვეთის გაუქმება DB-ში',
-                          icon: Icons.delete_outline_rounded,
-                          color: MobileGlassTheme.bad,
-                          onPressed: () async {
-                            final confirmed = await showDialog<bool>(
-                              context: context,
-                              builder: (ctx) => AlertDialog(
-                                backgroundColor: MobileGlassTheme.surfaceCard,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(20),
-                                ),
-                                title: Text(
-                                  'შეკვეთის გაუქმება',
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    color: MobileGlassTheme.textPrimary,
-                                  ),
-                                ),
-                                content: Text(
-                                  'შეკვეთა #${widget.orderId} გაუქმდება '
-                                  'და მაგიდა ${widget.tableNumber} გათავისუფლდება.',
-                                  style: TextStyle(
-                                    color: MobileGlassTheme.muted(0.7),
-                                  ),
-                                ),
-                                actions: [
-                                  TextButton(
-                                    onPressed: () => Navigator.pop(ctx, false),
-                                    child: Text(
-                                      'გაუქმება',
-                                      style: TextStyle(
-                                        color: MobileGlassTheme.muted(),
-                                      ),
-                                    ),
-                                  ),
-                                  ElevatedButton(
-                                    onPressed: () => Navigator.pop(ctx, true),
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: MobileGlassTheme.bad,
-                                      foregroundColor: Colors.white,
-                                      elevation: 0,
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(12),
-                                      ),
-                                    ),
-                                    child: Text('დადასტურება'),
-                                  ),
-                                ],
-                              ),
-                            );
-                            if (confirmed != true || !context.mounted) return;
-                            try {
-                              await MobileApiService.cancelOrder(
-                                widget.orderId,
-                              );
-                              if (!context.mounted) return;
-                              ManagerToast.show(context, 'შეკვეთა გაუქმებულია');
-                              Navigator.pop(context, 'cancelled');
-                            } catch (_) {
-                              final ok = await MobileApiService.freeTable(
-                                widget.tableNumber,
-                                widget.floor,
-                              );
-                              if (!context.mounted) return;
-                              ManagerToast.show(
-                                context,
-                                ok ? 'მაგიდა გათავისუფლდა' : 'შეცდომა',
-                                isError: !ok,
-                              );
-                              if (ok) Navigator.pop(context, 'freed');
-                            }
-                          },
-                        ),
-                        SizedBox(height: 12),
-                        TextButton.icon(
-                          icon: Icon(
-                            Icons.refresh_rounded,
-                            color: MobileGlassTheme.muted(0.75),
-                          ),
-                          label: Text(
-                            'თავიდან ცდა',
+                          SizedBox(height: 16),
+                          Text(
+                            'შეკვეთა #${widget.orderId} ვერ მოიძებნა',
                             style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: MobileGlassTheme.textPrimary,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                          SizedBox(height: 8),
+                          Text(
+                            'მაგიდა ${widget.tableNumber} (${widget.floor}) ბაზაში დაკავებულად არის მონიშნული, '
+                            'მაგრამ შეკვეთა ვერ მოიძებნა. '
+                            'შეგიძლიათ მაგიდა გაათავისუფლოთ ან სცადოთ ხელახლა.',
+                            style: TextStyle(
+                              color: MobileGlassTheme.muted(0.65),
+                              fontSize: 13,
+                              height: 1.5,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                          SizedBox(height: 24),
+                          MobileGlassPrimaryButton(
+                            label: 'მაგიდის გათავისუფლება',
+                            icon: Icons.lock_open_rounded,
+                            onPressed: () async {
+                              try {
+                                final ok = await MobileApiService.freeTable(
+                                  widget.tableNumber,
+                                  widget.floor,
+                                  expectedScope: displayedRepairScope,
+                                );
+                                if (context.mounted &&
+                                    ok.code == 'session_changed') {
+                                  ManagerToast.show(
+                                    context,
+                                    ok.message,
+                                    isError: true,
+                                  );
+                                  return;
+                                }
+                                if (!context.mounted ||
+                                    !MobileApiService.isCurrentTableRepairScope(
+                                      displayedRepairScope,
+                                    ))
+                                  return;
+                                if (ok.isDone) {
+                                  ManagerToast.show(context, ok.message);
+                                  Navigator.pop(context, 'freed');
+                                } else {
+                                  ManagerToast.show(
+                                    context,
+                                    ok.message,
+                                    isError: ok.isError,
+                                  );
+                                }
+                              } catch (error) {
+                                debugPrint(
+                                  'Table repair request failed: $error',
+                                );
+                                if (context.mounted)
+                                  ManagerToast.show(
+                                    context,
+                                    'მოთხოვნა ვერ გაიგზავნა — განაახლეთ სესია და სცადეთ ხელახლა',
+                                    isError: true,
+                                  );
+                              }
+                            },
+                          ),
+                          SizedBox(height: 12),
+                          MobileGlassPrimaryButton(
+                            label: 'გაუქმების მოთხოვნა POS-ზე',
+                            icon: Icons.delete_outline_rounded,
+                            color: MobileGlassTheme.bad,
+                            onPressed: () async {
+                              final confirmed = await showDialog<bool>(
+                                context: context,
+                                builder: (ctx) => AlertDialog(
+                                  backgroundColor: MobileGlassTheme.surfaceCard,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  title: Text(
+                                    'შეკვეთის გაუქმება',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      color: MobileGlassTheme.textPrimary,
+                                    ),
+                                  ),
+                                  content: Text(
+                                    'შეკვეთა #${widget.orderId} გაუქმდება '
+                                    'და მაგიდა ${widget.tableNumber} გათავისუფლდება.',
+                                    style: TextStyle(
+                                      color: MobileGlassTheme.muted(0.7),
+                                    ),
+                                  ),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () =>
+                                          Navigator.pop(ctx, false),
+                                      child: Text(
+                                        'გაუქმება',
+                                        style: TextStyle(
+                                          color: MobileGlassTheme.muted(),
+                                        ),
+                                      ),
+                                    ),
+                                    ElevatedButton(
+                                      onPressed: () => Navigator.pop(ctx, true),
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: MobileGlassTheme.bad,
+                                        foregroundColor:
+                                            MobileGlassTheme.onPrimary,
+                                        elevation: 0,
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            12,
+                                          ),
+                                        ),
+                                      ),
+                                      child: Text('დადასტურება'),
+                                    ),
+                                  ],
+                                ),
+                              );
+                              if (confirmed != true || !context.mounted) return;
+                              try {
+                                final result =
+                                    await MobileApiService.cancelOrder(
+                                      widget.orderId,
+                                      expectedScope: displayedRepairScope,
+                                    );
+                                if (!context.mounted ||
+                                    !MobileApiService.isCurrentTableRepairScope(
+                                      displayedRepairScope,
+                                    ))
+                                  return;
+                                ManagerToast.show(
+                                  context,
+                                  result.message,
+                                  isError: result.delivery.name == 'failed',
+                                );
+                                if (result.isDone)
+                                  Navigator.pop(context, 'cancelled');
+                              } catch (_) {
+                                if (context.mounted)
+                                  ManagerToast.show(
+                                    context,
+                                    'მოთხოვნა ვერ დადასტურდა — შეამოწმეთ შენარჩუნებული მოთხოვნა',
+                                    isError: true,
+                                  );
+                              }
+                            },
+                          ),
+                          SizedBox(height: 12),
+                          TextButton.icon(
+                            icon: Icon(
+                              Icons.refresh_rounded,
                               color: MobileGlassTheme.muted(0.75),
                             ),
+                            label: Text(
+                              'თავიდან ცდა',
+                              style: TextStyle(
+                                color: MobileGlassTheme.muted(0.75),
+                              ),
+                            ),
+                            onPressed: () {
+                              setState(() => _isLoading = true);
+                              try {
+                                _editScope = MobileApiService.tableRepairScope;
+                              } catch (_) {
+                                _editScope = null;
+                              }
+                              _loadData();
+                            },
                           ),
-                          onPressed: () {
-                            setState(() => _isLoading = true);
-                            _loadData();
-                          },
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       );
     }
 
-    return PopScope(
-      canPop: !_hasChanges && !_isOrderPanelOpen,
-      onPopInvokedWithResult: (didPop, result) async {
-        if (didPop) return;
-        if (_isOrderPanelOpen) {
-          setState(() => _isOrderPanelOpen = false);
-          return;
-        }
-        final shouldPop = await _showExitConfirmation();
-        if (shouldPop && mounted) {
-          Navigator.of(context).pop();
-        }
-      },
-      child: MobileGlassScreen(
-        orbs: [
-          Positioned(
-            top: -90,
-            right: -70,
-            child: MobileGlowOrb(color: MobileGlassTheme.primary, size: 240),
-          ),
-          Positioned(
-            bottom: 80,
-            left: -80,
-            child: MobileGlowOrb(color: MobileGlassTheme.good, size: 220),
-          ),
-        ],
-        body: Column(
-          children: [
-            if (!_isOrderPanelOpen)
-              MobileGlassHeader(
-                title: _orderTitle(),
-                subtitle: _orderSubtitle(),
-                onBack: () async {
-                  if (_hasChanges) {
-                    final shouldPop = await _showExitConfirmation();
-                    if (shouldPop && mounted) Navigator.pop(context);
-                  } else if (mounted) {
-                    Navigator.pop(context);
-                  }
-                },
-                actions: [
-                  IconButton(
-                    onPressed: () => setState(() => _isOrderPanelOpen = true),
-                    icon: Badge(
-                      isLabelVisible: _order!.items.isNotEmpty,
-                      backgroundColor: MobileGlassTheme.primary,
-                      label: Text('${_order!.items.length}'),
-                      child: Icon(
-                        Icons.shopping_cart_outlined,
-                        color: MobileGlassTheme.muted(0.85),
-                      ),
-                    ),
-                  ),
-                  IconButton(
-                    onPressed: _viewCheckPdf,
-                    icon: Icon(
-                      Icons.receipt_long_rounded,
-                      color: MobileGlassTheme.muted(0.85),
-                    ),
-                  ),
-                  IconButton(
-                    onPressed: _cancelOrder,
-                    icon: Icon(
-                      Icons.delete_outline_rounded,
-                      color: MobileGlassTheme.bad.withValues(alpha: 0.9),
-                    ),
-                  ),
-                  if (_hasChanges)
-                    TextButton.icon(
-                      onPressed: _saveChanges,
-                      icon: Icon(
-                        Icons.check_circle_rounded,
-                        size: 18,
-                        color: MobileGlassTheme.good,
-                      ),
-                      label: Text(
-                        'შენახვა',
-                        style: TextStyle(
-                          color: MobileGlassTheme.good,
-                          fontWeight: FontWeight.bold,
+    return ManagerOperationBoundary(
+      scope: _editScope,
+      slot: 'order_cancel:${widget.orderId}',
+      child: PopScope(
+        canPop: !_hasChanges && !_isOrderPanelOpen,
+        onPopInvokedWithResult: (didPop, result) async {
+          if (didPop) return;
+          if (_isOrderPanelOpen) {
+            setState(() => _isOrderPanelOpen = false);
+            return;
+          }
+          final shouldPop = await _showExitConfirmation();
+          if (shouldPop && mounted) {
+            Navigator.of(context).pop();
+          }
+        },
+        child: MobileGlassScreen(
+          orbs: [
+            Positioned(
+              top: -90,
+              right: -70,
+              child: MobileGlowOrb(color: MobileGlassTheme.primary, size: 240),
+            ),
+            Positioned(
+              bottom: 80,
+              left: -80,
+              child: MobileGlowOrb(color: MobileGlassTheme.good, size: 220),
+            ),
+          ],
+          body: ManagerContentWidth(
+            maxWidth: 760,
+            child: Column(
+              children: [
+                if (!_isOrderPanelOpen)
+                  MobileGlassHeader(
+                    title: _orderTitle(),
+                    subtitle: _orderSubtitle(),
+                    onBack: () async {
+                      if (_hasChanges) {
+                        final shouldPop = await _showExitConfirmation();
+                        if (shouldPop && mounted) Navigator.pop(context);
+                      } else if (mounted) {
+                        Navigator.pop(context);
+                      }
+                    },
+                    actions: [
+                      IconButton(
+                        onPressed: () =>
+                            setState(() => _isOrderPanelOpen = true),
+                        icon: Badge(
+                          isLabelVisible: _order!.items.isNotEmpty,
+                          backgroundColor: MobileGlassTheme.primary,
+                          label: Text('${_order!.items.length}'),
+                          child: Icon(
+                            Icons.shopping_cart_outlined,
+                            color: MobileGlassTheme.muted(0.85),
+                          ),
                         ),
                       ),
-                    ),
-                ],
-              ),
-            Expanded(child: _buildMainStack()),
-          ],
+                      IconButton(
+                        onPressed: _viewCheckPdf,
+                        icon: Icon(
+                          Icons.receipt_long_rounded,
+                          color: MobileGlassTheme.muted(0.85),
+                        ),
+                      ),
+                      IconButton(
+                        onPressed: _cancelOrder,
+                        icon: Icon(
+                          Icons.delete_outline_rounded,
+                          color: MobileGlassTheme.bad.withValues(alpha: 0.9),
+                        ),
+                      ),
+                      if (_hasChanges)
+                        TextButton.icon(
+                          onPressed: _saving ? null : _saveChanges,
+                          icon: Icon(
+                            Icons.check_circle_rounded,
+                            size: 18,
+                            color: MobileGlassTheme.good,
+                          ),
+                          label: Text(
+                            'შენახვა',
+                            style: TextStyle(
+                              color: MobileGlassTheme.good,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                if (_editResult != null ||
+                    _order?.managerEditProjection == null)
+                  _editStatus(),
+                Expanded(child: _buildMainStack()),
+              ],
+            ),
+          ),
         ),
       ),
     );
@@ -798,15 +1030,30 @@ class _OrderEditorScreenState extends State<OrderEditorScreen> {
           }
         },
         onToggleServiceFee: _toggleServiceFee,
-        onSave: _hasChanges ? _saveChanges : null,
+        onSave: _hasChanges && !_saving ? _saveChanges : null,
       );
     }
 
-    return Column(
-      children: [
-        Expanded(child: _buildMenuSelection()),
-        _buildOrderSummaryBar(),
-      ],
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+      child: ManagerPanel(
+        padding: 20,
+        child: Column(
+          children: [
+            TextField(
+              key: const Key('order-menu-search'),
+              onChanged: (value) => setState(() => _menuSearch = value),
+              decoration: const InputDecoration(
+                hintText: 'მენიუში ძებნა',
+                prefixIcon: Icon(Icons.search, size: 20),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Expanded(child: _buildMenuSelection()),
+            _buildOrderSummaryBar(),
+          ],
+        ),
+      ),
     );
   }
 
@@ -814,64 +1061,23 @@ class _OrderEditorScreenState extends State<OrderEditorScreen> {
     if (_order == null) return const SizedBox.shrink();
     final totalItems = _order!.items.fold(0, (sum, it) => sum + it.quantity);
 
-    return Container(
-      decoration: BoxDecoration(
-        color: MobileGlassTheme.surface(0.1),
-        border: Border(top: BorderSide(color: MobileGlassTheme.border(0.08))),
-      ),
-      padding: const EdgeInsets.fromLTRB(20, 14, 20, 20),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          GestureDetector(
-            onTap: () => setState(() => _isOrderPanelOpen = true),
-            child: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: MobileGlassTheme.primary.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Icon(
-                    Icons.menu_rounded,
-                    color: MobileGlassTheme.primary,
-                  ),
-                ),
-                SizedBox(width: 12),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      '$totalItems პროდუქტი',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: MobileGlassTheme.muted(),
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    Text(
-                      '${_order!.totalAmount.toStringAsFixed(2)} ₾',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w800,
-                        color: MobileGlassTheme.textPrimary,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          MobileGlassPrimaryButton(
-            label: 'ნახვა',
-            icon: Icons.shopping_cart_outlined,
-            expand: false,
-            onPressed: () => setState(() => _isOrderPanelOpen = true),
-          ),
-        ],
-      ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const Divider(height: 24),
+        ManagerKeyValue('პროდუქტები', '$totalItems'),
+        ManagerKeyValue(
+          'ჯამი',
+          '${_order!.totalAmount.toStringAsFixed(2)} ₾',
+          emphasis: true,
+        ),
+        const SizedBox(height: 12),
+        FilledButton.icon(
+          onPressed: () => setState(() => _isOrderPanelOpen = true),
+          icon: const Icon(Icons.shopping_cart_outlined, size: 18),
+          label: const Text('ნახვა'),
+        ),
+      ],
     );
   }
 
@@ -916,7 +1122,13 @@ class _OrderEditorScreenState extends State<OrderEditorScreen> {
       (MenuCategoryDB cat) => cat.slug == _selectedCategorySlug,
       orElse: () => _categories.first,
     );
-    final displayItems = _getDisplayItems();
+    final query = _menuSearch.trim().toLowerCase();
+    final displayItems = _getDisplayItems()
+        .where(
+          (item) =>
+              query.isEmpty || item.getName('ka').toLowerCase().contains(query),
+        )
+        .toList();
     final hasSubs =
         selectedCategory.subcategories != null &&
         selectedCategory.subcategories!.isNotEmpty;
@@ -952,126 +1164,30 @@ class _OrderEditorScreenState extends State<OrderEditorScreen> {
                         0.0;
                     final active = inCart > 0;
 
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 8),
-                      child: GestureDetector(
-                        onTap: () => _showQuantityPicker(item),
-                        behavior: HitTestBehavior.opaque,
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 180),
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 14,
-                            vertical: 12,
-                          ),
-                          decoration: BoxDecoration(
-                            color: active
-                                ? MobileGlassTheme.primary.withValues(
-                                    alpha: 0.12,
-                                  )
-                                : MobileGlassTheme.surfaceCard,
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(
-                              color: active
-                                  ? MobileGlassTheme.primary.withValues(
-                                      alpha: 0.6,
-                                    )
-                                  : MobileGlassTheme.border(0.08),
-                              width: active ? 1.5 : 1,
-                            ),
-                          ),
-                          child: Row(
-                            children: [
-                              if (active) ...[
-                                Container(
-                                  width: 30,
-                                  height: 30,
-                                  alignment: Alignment.center,
-                                  decoration: BoxDecoration(
-                                    color: MobileGlassTheme.primary,
-                                    borderRadius: BorderRadius.circular(9),
-                                  ),
-                                  child: Text(
-                                    '$inCart',
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 13,
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                              ],
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      item.getName('ka'),
-                                      style: TextStyle(
-                                        fontSize: 15,
-                                        fontWeight: FontWeight.w600,
-                                        color: MobileGlassTheme.textPrimary,
-                                      ),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                    const SizedBox(height: 3),
-                                    Row(
-                                      children: [
-                                        Text(
-                                          '${item.price?.toStringAsFixed(1) ?? "0"} ₾',
-                                          style: TextStyle(
-                                            color: MobileGlassTheme.accentText,
-                                            fontSize: 13,
-                                            fontWeight: FontWeight.w600,
-                                          ),
-                                        ),
-                                        if (active && lineTotal > 0) ...[
-                                          Text(
-                                            '  •  ',
-                                            style: TextStyle(
-                                              color: MobileGlassTheme.muted(
-                                                0.25,
-                                              ),
-                                              fontSize: 13,
-                                            ),
-                                          ),
-                                          Text(
-                                            '= ${lineTotal.toStringAsFixed(1)} ₾',
-                                            style: TextStyle(
-                                              fontSize: 13,
-                                              color: MobileGlassTheme.muted(
-                                                0.6,
-                                              ),
-                                              fontWeight: FontWeight.w600,
-                                            ),
-                                          ),
-                                        ],
-                                      ],
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              const SizedBox(width: 10),
-                              Container(
-                                width: 36,
-                                height: 36,
-                                alignment: Alignment.center,
-                                decoration: BoxDecoration(
-                                  color: MobileGlassTheme.primary,
-                                  borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(
-                                    color: MobileGlassTheme.primary,
-                                  ),
-                                ),
-                                child: const Icon(
-                                  Icons.add_rounded,
-                                  size: 20,
-                                  color: Colors.white,
-                                ),
-                              ),
-                            ],
-                          ),
+                    return ListTile(
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
+                      onTap: () => _showQuantityPicker(item),
+                      title: Text(
+                        item.getName('ka'),
+                        style: managerDesignText(
+                          context,
+                          13,
+                          weight: FontWeight.w500,
+                        ),
+                      ),
+                      subtitle: Text(
+                        '${item.price?.toStringAsFixed(2) ?? "0.00"} ₾${active ? ' · არჩეული $inCart · ${lineTotal.toStringAsFixed(2)} ₾' : ''}',
+                        style: managerDesignText(context, 11, muted: true),
+                      ),
+                      trailing: IconButton(
+                        tooltip: 'დამატება',
+                        onPressed: () => _showQuantityPicker(item),
+                        icon: Icon(
+                          Icons.add_circle_outline,
+                          color: MobileGlassTheme.primary,
                         ),
                       ),
                     );
@@ -1109,7 +1225,7 @@ class _OrderEditorScreenState extends State<OrderEditorScreen> {
                   padding: const EdgeInsets.symmetric(horizontal: 4),
                   child: Material(
                     color: isSelected
-                        ? MobileGlassTheme.primary
+                        ? MobileGlassTheme.surfaceCard
                         : MobileGlassTheme.surface(0.08),
                     borderRadius: BorderRadius.circular(10),
                     child: InkWell(
@@ -1290,7 +1406,7 @@ class _OrderEditorScreenState extends State<OrderEditorScreen> {
             onPressed: () => Navigator.pop(context, true),
             style: ElevatedButton.styleFrom(
               backgroundColor: MobileGlassTheme.bad,
-              foregroundColor: Colors.white,
+              foregroundColor: MobileGlassTheme.onPrimary,
               elevation: 0,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),

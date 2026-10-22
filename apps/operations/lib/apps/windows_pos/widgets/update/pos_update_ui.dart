@@ -1,3 +1,4 @@
+import 'package:vynic/core/ui/widgets/pos_dialog.dart';
 import 'package:vynic/core/widgets/pos_text.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
@@ -21,7 +22,7 @@ Future<void> showPosUpdateDialog(
   BuildContext context, {
   PosUpdater? updater,
   bool offer = false,
-}) => showDialog<void>(
+}) => showPosModal<void>(
   context: context,
   barrierDismissible: !offer,
   builder: (context) => Dialog(

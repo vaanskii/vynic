@@ -1,4 +1,11 @@
 import {
+  requestManagerOperation,
+  managerOperationStatus,
+} from './manager-operation';
+import { requestOrderEdit } from './manager-order-edit';
+import { readEditProjection } from '../../shared/contracts/order-edit-projection';
+import type { ManagerAuthContext } from '../../auth/manager-auth-context';
+import {
   BadRequestException,
   Injectable,
   NotFoundException,
@@ -8,11 +15,6 @@ import { PrismaService } from '../../prisma.service';
 import { MonitoringGateway } from '../../realtime/monitoring.gateway';
 import { PosCommandDispatcher } from '../../pos/pos-command-dispatcher.service';
 import { EdgeCommandTypes } from '../../shared/contracts/edge-command';
-import {
-  buildAuditEventsForOrderDiff,
-  AuditEventInput,
-} from '../../pos/audit/audit-order-diff';
-import { normalizeAuditEventType } from '../../pos/audit/audit-event-type';
 import { MobileMutationSupport } from './mobile-mutation-support.service';
 import {
   businessDateWhere,
@@ -38,14 +40,6 @@ export interface PaginatedOrders {
   pageSize: number;
   hasMore: boolean;
 }
-
-type MobileOrderLine = {
-  itemName: string;
-  unitPrice: number;
-  quantity: number;
-  menuItemId?: string | null;
-  variantId?: string | null;
-};
 
 /**
  * Order endpoints for the mobile manager app: dine-in order list/detail/edit/
@@ -162,6 +156,17 @@ export class MobileOrdersService {
     const totalAmount =
       Math.round((itemsSubtotal + serviceFee - discount) * 100) / 100;
 
+    if (order.managerEditProjection) {
+      const { projection, order: exact } = readEditProjection(
+        order.managerEditProjection,
+        order.posOrderId,
+      );
+      return {
+        ...exact,
+        posOrderId: order.posOrderId,
+        editProjection: projection,
+      };
+    }
     return {
       ...order,
       posOrderId: order.posOrderId,
@@ -175,360 +180,32 @@ export class MobileOrdersService {
   }
 
   async updateOrder(
-    tenant: TenantContext,
+    actor: ManagerAuthContext,
     id: string,
-    monitoringSocketId: string | undefined,
+    _socket: string | undefined,
     body: any,
   ) {
-    const order = await this.prisma.order.findUnique({
-      where: orderIdentity(tenant, Number(id)),
-    });
-    if (!order) return { success: false };
-
-    const previousItems = await this.prisma.orderItem.findMany({
-      where: { orderId: order.id },
-    });
-
-    await (this.prisma as any).orderItem.deleteMany({
-      where: { orderId: order.id },
-    });
-    for (const item of body.items ?? []) {
-      await (this.prisma as any).orderItem.create({
-        data: {
-          orderId: order.id,
-          name: item.itemName ?? item.name ?? '',
-          quantity: item.quantity ?? 1,
-          price: item.unitPrice ?? item.price ?? 0,
-          menuItemId: item.menuItemId ?? null,
-          variantId: item.variantId ?? null,
-        },
-      });
-    }
-
-    // Mobile can toggle service fee; fall back to stored value if not sent
-    const feeSettings = await readRestaurantServiceFeeSettings(
-      this.prisma,
-      tenant,
-    );
-    const requestedInclude =
-      typeof body.includeServiceFee === 'boolean'
-        ? body.includeServiceFee
-        : order.includeServiceFee;
-    const includeServiceFee =
-      feeSettings.serviceFeeAvailable && requestedInclude === true;
-
-    // Recalculate total server-side
-    const itemsSubtotal = (body.items ?? []).reduce(
-      (sum: number, it: any) =>
-        sum + (it.unitPrice ?? it.price ?? 0) * (it.quantity ?? 1),
-      0,
-    );
-    const feeRate = includeServiceFee
-      ? Number(order.serviceFeePercent ?? feeSettings.serviceFeePercent) / 100
-      : 0;
-    const serviceFee = includeServiceFee ? itemsSubtotal * feeRate : 0;
-    const discount = Number(order.discountAmount ?? 0);
-    const newTotal =
-      Math.round((itemsSubtotal + serviceFee - discount) * 100) / 100;
-
-    const prevIncludeServiceFee = order.includeServiceFee === true;
-    const prevTotal = Number(order.totalAmount ?? 0);
-
-    await this.prisma.order.update({
-      where: { id: order.id },
-      data: {
-        totalAmount: newTotal > 0 ? newTotal : 0,
-        includeServiceFee,
-      },
-    });
-
-    const tableNumbers = Array.isArray(body.tableNumbers)
-      ? body.tableNumbers.map((t: unknown) => String(t))
-      : [];
-    const floor =
-      typeof body.floor === 'string' && body.floor.trim().length > 0
-        ? body.floor
-        : (order.floor ?? 'first');
-    if (tableNumbers.length > 0 && newTotal >= 0) {
-      for (const rawNum of tableNumbers) {
-        const tableNumber = String(rawNum)
-          .replace(/^table\s*/i, '')
-          .trim();
-        if (!tableNumber) continue;
-        await (this.prisma as any).table.updateMany({
-          where: {
-            venueId: tenant.venueId,
-            tableNumber,
-            floor,
-          },
-          data: { currentBill: newTotal > 0 ? newTotal : 0 },
-        });
-      }
-    }
-
-    const performer = String(
-      body.updatedBy ?? body.waiterName ?? 'მობილური მენეჯერი',
-    ).trim();
-    const performerName =
-      performer.length > 0 ? performer : 'მობილური მენეჯერი';
-    const posOrderId = Number(id);
-    this.mutationSupport.registerMobileMutationEchoGuard(tenant, posOrderId);
-
-    const auditEvents = buildAuditEventsForOrderDiff({
-      previousItems: previousItems.map((it) => ({
-        name: it.name,
-        quantity: it.quantity,
-        price: it.price,
-      })),
-      updatedItems: body.items ?? [],
-      performerId: performerName,
-      performerName,
-    });
-    if (auditEvents.length > 0) {
-      await this.appendAuditEventsForPosOrder(tenant, {
-        posOrderId,
-        tableNumbers: Array.isArray(body.tableNumbers)
-          ? body.tableNumbers.map((t: unknown) => String(t))
-          : [],
-        floor: typeof body.floor === 'string' ? body.floor : order.floor,
-        openedByName: order.waiterName || performerName,
-        events: auditEvents,
-      });
-      this.gateway.broadcastUpdate(
-        tenant,
-        'audit_updated',
-        { count: auditEvents.length, source: 'mobile', posOrderId },
-        this.mutationSupport.wsExcludeOpts(monitoringSocketId),
-      );
-    }
-
-    this.gateway.broadcastUpdate(
-      tenant,
-      'order_updated',
-      { posOrderId, source: 'mobile_manager' },
-      this.mutationSupport.wsExcludeOpts(monitoringSocketId),
-    );
-
-    const feeChanged = prevIncludeServiceFee !== includeServiceFee;
-    const totalChanged = Math.abs(prevTotal - newTotal) > 0.009;
-    if (feeChanged || totalChanged) {
-      const tableLabel = tableNumbers
-        .map((t) =>
-          String(t)
-            .replace(/^table\s*/i, '')
-            .trim(),
-        )
-        .filter((t) => t.length > 0)
-        .join(', ');
-      const changeSummary = feeChanged
-        ? includeServiceFee
-          ? 'სერვისის საფასური ჩართულია'
-          : 'სერვისის საფასური გამორთულია'
-        : 'თანხა განახლდა';
-      this.gateway.broadcastUpdate(
-        tenant,
-        'orders_bulk_touch',
-        {
-          touches: [
-            {
-              posOrderId,
-              tableLabel,
-              floor,
-              changeSummary,
-              changeKind: feeChanged ? 'service_fee' : 'total',
-              occurredAt: new Date().toISOString(),
-            },
-          ],
-          posOrderIds: [posOrderId],
-          source: 'mobile_manager',
-        },
-        this.mutationSupport.wsExcludeOpts(monitoringSocketId),
-      );
-      this.gateway.broadcastUpdate(
-        tenant,
-        'table_updated',
-        { source: 'mobile_manager' },
-        this.mutationSupport.wsExcludeOpts(monitoringSocketId),
-      );
-    }
-
-    // Record the change for the POS to claim. Cloud does not deliver it: a
-    // hosted Vynic has no route to a restaurant LAN, so the work waits here
-    // until the terminal asks for it.
-    const posDelivery = await this.posCommands.dispatch(tenant, {
-      type: EdgeCommandTypes.ORDER_UPDATE,
-      payload: {
-        posOrderId,
-        updatedBy: performerName,
-        items: (body.items ?? []).map((it: any) => ({
-          name: it.itemName ?? it.name ?? '',
-          quantity: it.quantity ?? 1,
-          unitPrice: it.unitPrice ?? it.price ?? 0,
-          price: it.unitPrice ?? it.price ?? 0,
-          total: (it.unitPrice ?? it.price ?? 0) * (it.quantity ?? 1),
-          itemKey: it.itemKey ?? it.itemName ?? it.name ?? '',
-          itemName: it.itemName ?? it.name ?? '',
-          menuItemId: it.menuItemId ?? null,
-          variantId: it.variantId ?? null,
-        })),
-        totalAmount: newTotal > 0 ? newTotal : 0,
-        includeServiceFee,
-      },
-    });
-
-    // `success` is about the Cloud record, which is written. Whether the POS
-    // has applied it is a separate fact and is reported as one: a queued
-    // command has not run yet, and saying otherwise would be a lie the manager
-    // acts on.
-    return { success: true, posDelivery };
+    return requestOrderEdit(this.prisma, actor, id, body);
   }
 
-  /** Append audit line events for a POS order (mobile manager edits). */
-  private async appendAuditEventsForPosOrder(
-    tenant: TenantContext,
-    params: {
-      posOrderId: number;
-      tableNumbers: string[];
-      floor: string;
-      openedByName: string;
-      events: AuditEventInput[];
-    },
-  ) {
-    const { posOrderId, tableNumbers, floor, openedByName, events } = params;
-    if (events.length === 0) return;
-
-    const reportId = `audit_report_order_${posOrderId}`;
-    const now = new Date();
-    const prisma = this.prisma as any;
-
-    let dbReport = await prisma.auditReport.findUnique({
-      where: {
-        venueId_reportId: {
-          venueId: tenant.venueId,
-          reportId,
-        },
-      },
-    });
-    if (!dbReport) {
-      dbReport = await prisma.auditReport.create({
-        data: {
-          venueId: tenant.venueId,
-          reportId,
-          posOrderId,
-          tableNumbers,
-          floor: floor || 'first',
-          openedById: openedByName,
-          openedByName,
-          openedAt: now,
-          status: 'OPEN',
-          locked: false,
-        },
-      });
-    }
-
-    // Continue from the highest ordinal in use, not from the row count. `seq`
-    // is the POS's own sequence now, so counting rows would collide with it the
-    // moment a report's numbering is not a gapless 0..n-1.
-    const highest = await prisma.auditEvent.findFirst({
-      where: { reportId: dbReport.id },
-      orderBy: { seq: 'desc' },
-      select: { seq: true },
-    });
-    const startSeq = highest ? (highest.seq as number) + 1 : 0;
-
-    await prisma.auditEvent.createMany({
-      data: events.map((ev, seq) => ({
-        reportId: dbReport.id,
-        // From the authenticated Staff's Venue, the same context the report
-        // above was resolved with. Never from the request body.
-        venueId: tenant.venueId,
-        type: normalizeAuditEventType(ev.type, ev.previousQty, ev.newQty),
-        itemName: ev.itemName,
-        previousQty: ev.previousQty,
-        newQty: ev.newQty,
-        waiterId: ev.waiterId,
-        waiterName: ev.waiterName,
-        eventTime: now,
-        note: ev.note ?? null,
-        details: ev.details ?? undefined,
-        seq: startSeq + seq,
-      })),
-    });
-
-    await prisma.auditReport.update({
-      where: { id: dbReport.id },
-      data: { updatedAt: now },
-    });
+  requestOperation(actor: ManagerAuthContext, kind: string, body: unknown) {
+    return requestManagerOperation(this.prisma, actor, kind, body);
   }
-
-  async cancelOrder(
-    tenant: TenantContext,
+  operationStatus(actor: ManagerAuthContext, requestId: string) {
+    return managerOperationStatus(this.prisma, actor, requestId);
+  }
+  cancelOrder(
+    actor: ManagerAuthContext,
     id: string,
-    monitoringSocketId?: string,
+    _socket?: string,
+    body?: any,
   ) {
-    const posOrderId = Number(id);
-    const order = await this.prisma.order.findUnique({
-      where: orderIdentity(tenant, posOrderId),
+    return this.requestOperation(actor, 'order_cancel', {
+      requestId: body?.requestId,
+      body: { posOrderId: Number(id) },
     });
-    if (!order) return { success: false, error: 'order_not_found' };
-
-    this.mutationSupport.registerMobileMutationEchoGuard(tenant, posOrderId);
-
-    // Capture which tables this order held before we release them, so the
-    // cancellation notification can say which table was freed.
-    const heldTables = await (this.prisma as any).table.findMany({
-      where: {
-        venueId: tenant.venueId,
-        activeOrderId: posOrderId,
-      },
-      select: { tableNumber: true },
-    });
-    const tableLabel = heldTables
-      .map((t: any) => String(t.tableNumber).trim())
-      .filter((t: string) => t.length > 0)
-      .join(', ');
-
-    await this.prisma.order.update({
-      where: { id: order.id },
-      data: { status: 'cancelled' },
-    });
-
-    // Free the table that was holding this order so it no longer shows as occupied
-    await (this.prisma as any).table.updateMany({
-      where: {
-        venueId: tenant.venueId,
-        activeOrderId: posOrderId,
-      },
-      data: { isReserved: false, activeOrderId: null, currentBill: 0 },
-    });
-
-    this.gateway.broadcastUpdate(
-      tenant,
-      'order_cancelled',
-      {
-        posOrderId,
-        floor: order.floor,
-        ...(tableLabel.length > 0 ? { tableLabel } : {}),
-      },
-      this.mutationSupport.wsExcludeOpts(monitoringSocketId),
-    );
-
-    // Cancel on the POS shows on both sides, so this is a status change rather
-    // than a delete.
-    const posDelivery = await this.posCommands.dispatch(tenant, {
-      type: EdgeCommandTypes.ORDER_STATUS_UPDATE,
-      payload: { posOrderId, status: 'cancelled' },
-    });
-
-    return { success: true, posDelivery };
   }
 
-  /**
-   * Relay an order/table check (customer pre-bill) print request to the Windows
-   * POS — the only print host — via the direct POS callback path. No realtime
-   * broadcast: printing is not a data mutation. POS-side failures (unreachable
-   * POS, order missing in Hive) surface as clean HTTP errors instead of a 500.
-   */
   async printOrderCheck(tenant: TenantContext, id: string) {
     const posOrderId = Number(id);
     if (!Number.isFinite(posOrderId)) {
@@ -559,321 +236,37 @@ export class MobileOrdersService {
   }
 
   async createTakeawayOrder(
-    tenant: TenantContext,
-    monitoringSocketId: string | undefined,
-    body: {
-      customerName: string;
-      pickupTime: string;
-      waiterName: string;
-      items: MobileOrderLine[];
-    },
+    actor: ManagerAuthContext,
+    _socket: string | undefined,
+    body: any,
   ) {
-    // Resolve current business date
-    const bdSetting = await (this.prisma as any).setting.findUnique({
-      where: settingIdentity(tenant, 'currentBusinessDate'),
+    return this.requestOperation(actor, 'takeaway_create', {
+      requestId: body?.requestId,
+      body: body,
     });
-    const businessDate: string =
-      bdSetting?.value ?? new Date().toISOString().slice(0, 10);
-
-    const totalAmount = body.items.reduce(
-      (s, it) => s + it.unitPrice * it.quantity,
-      0,
-    );
-
-    // Allocate a posOrderId and create the order, retrying on the (rare) race
-    // where two mobile requests grabbed the same id.
-    let order: any;
-    for (let attempt = 0; ; attempt++) {
-      const candidateId = await this.allocateMobileOrderId(tenant);
-      this.mutationSupport.registerMobileMutationEchoGuard(tenant, candidateId);
-      try {
-        order = await this.prisma.order.create({
-          data: {
-            venueId: tenant.venueId,
-            posOrderId: candidateId,
-            status: 'pending',
-            totalAmount: Math.round(totalAmount * 100) / 100,
-            guestCount: 1,
-            waiterName: body.waiterName,
-            floor: 'takeaway',
-            businessDate,
-            customerName: body.customerName,
-            customerPhone: '-',
-            pickupTime: body.pickupTime,
-            items: {
-              create: body.items.map((it) => ({
-                name: it.itemName,
-                quantity: it.quantity,
-                price: it.unitPrice,
-                menuItemId: it.menuItemId ?? null,
-                variantId: it.variantId ?? null,
-              })),
-            },
-          },
-          include: { items: true },
-        });
-        break;
-      } catch (e) {
-        if (this.isPosOrderIdConflict(e) && attempt < 5) continue;
-        throw e;
-      }
-    }
-    const nextId = order.posOrderId;
-
-    this.gateway.broadcastUpdate(
-      tenant,
-      'takeaway_created',
-      {
-        posOrderId: nextId,
-        customerName: body.customerName,
-        pickupTime: body.pickupTime,
-      },
-      this.mutationSupport.wsExcludeOpts(monitoringSocketId),
-    );
-
-    // `posOrderId` is allocated here, which is what makes the command safe to
-    // deliver twice: the POS upserts on it rather than creating a second order.
-    const posDelivery = await this.posCommands.dispatch(tenant, {
-      type: EdgeCommandTypes.TAKEAWAY_ORDER_UPSERT,
-      payload: {
-        posOrderId: nextId,
-        customerName: body.customerName,
-        pickupTime: body.pickupTime,
-        waiterName: body.waiterName,
-        businessDate,
-        items: body.items,
-        totalAmount: order.totalAmount,
-      },
-    });
-
-    return {
-      posDelivery,
-      posOrderId: order.posOrderId,
-      status: order.status,
-      totalAmount: order.totalAmount,
-      customerName: order.customerName,
-      pickupTime: order.pickupTime,
-      waiterName: order.waiterName,
-      businessDate: order.businessDate,
-      items: order.items.map((it: any) => ({
-        itemName: it.name,
-        unitPrice: it.price,
-        quantity: it.quantity,
-        menuItemId: it.menuItemId,
-        variantId: it.variantId,
-      })),
-    };
   }
 
   async createWalkInOrder(
-    tenant: TenantContext,
-    monitoringSocketId: string | undefined,
-    body: {
-      tableNumbers: (string | number)[];
-      floor: string;
-      waiterName: string;
-      guestCount?: number;
-      items: MobileOrderLine[];
-    },
+    actor: ManagerAuthContext,
+    _socket: string | undefined,
+    body: any,
   ) {
-    const floor = (body.floor ?? 'first').toString().trim() || 'first';
-    const tableNumbers = Array.isArray(body.tableNumbers)
-      ? body.tableNumbers
-          .map((t) =>
-            String(t)
-              .replace(/^table\s*/i, '')
-              .trim(),
-          )
-          .filter((t) => t.length > 0)
-      : [];
-    if (tableNumbers.length === 0) {
-      throw new BadRequestException('Select at least one table');
-    }
-    if (!Array.isArray(body.items) || body.items.length === 0) {
-      throw new BadRequestException('Add at least one item');
-    }
-
-    const bdSetting = await (this.prisma as any).setting.findUnique({
-      where: settingIdentity(tenant, 'currentBusinessDate'),
+    return this.requestOperation(actor, 'dine_in_create', {
+      requestId: body?.requestId,
+      body: body,
     });
-    const businessDate: string =
-      bdSetting?.value ?? new Date().toISOString().slice(0, 10);
-
-    const totalAmount =
-      Math.round(
-        body.items.reduce((s, it) => s + it.unitPrice * it.quantity, 0) * 100,
-      ) / 100;
-    const guestCount = Number(body.guestCount ?? 0);
-
-    // Allocate a posOrderId and create the order, retrying on the (rare) race
-    // where two mobile requests grabbed the same id.
-    let order: any;
-    for (let attempt = 0; ; attempt++) {
-      const candidateId = await this.allocateMobileOrderId(tenant);
-      // Suppress echo for the order and every reserved table.
-      this.mutationSupport.registerMobileMutationEchoGuard(tenant, candidateId);
-      for (const tableNumber of tableNumbers) {
-        this.mutationSupport.registerMobileMutationEchoGuard(
-          tenant,
-          candidateId,
-          {
-            tableNumber,
-            floor,
-          },
-        );
-      }
-      try {
-        order = await this.prisma.order.create({
-          data: {
-            venueId: tenant.venueId,
-            posOrderId: candidateId,
-            status: 'pending',
-            totalAmount,
-            guestCount: guestCount > 0 ? guestCount : 1,
-            waiterName: body.waiterName,
-            floor,
-            businessDate,
-            customerName: 'Walk-in',
-            customerPhone: '-',
-            items: {
-              create: body.items.map((it) => ({
-                name: it.itemName,
-                quantity: it.quantity,
-                price: it.unitPrice,
-                menuItemId: it.menuItemId ?? null,
-                variantId: it.variantId ?? null,
-              })),
-            },
-          },
-          include: { items: true },
-        });
-        break;
-      } catch (e) {
-        if (this.isPosOrderIdConflict(e) && attempt < 5) continue;
-        throw e;
-      }
-    }
-    const nextId = order.posOrderId;
-
-    // Reserve the tables in the server DB so mobile live-status reflects it.
-    for (const tableNumber of tableNumbers) {
-      await (this.prisma as any).table.upsert({
-        where: {
-          tableIdentifier: {
-            venueId: tenant.venueId,
-            tableNumber,
-            floor,
-          },
-        },
-        update: {
-          isReserved: true,
-          activeOrderId: nextId,
-          currentBill: totalAmount,
-        },
-        create: {
-          venueId: tenant.venueId,
-          tableNumber,
-          floor,
-          isReserved: true,
-          activeOrderId: nextId,
-          currentBill: totalAmount,
-        },
-      });
-    }
-
-    this.gateway.broadcastUpdate(
-      tenant,
-      'order_created',
-      {
-        posOrderId: nextId,
-        floor,
-        tableNumbers,
-        tableLabel: tableNumbers.join(', '),
-        walkIn: true,
-      },
-      this.mutationSupport.wsExcludeOpts(monitoringSocketId),
-    );
-    this.gateway.broadcastUpdate(
-      tenant,
-      'table_updated',
-      { source: 'mobile' },
-      this.mutationSupport.wsExcludeOpts(monitoringSocketId),
-    );
-
-    // Same identity story as takeaway: Cloud allocates `posOrderId` so the POS
-    // can upsert on it instead of creating a second walk-in.
-    const posDelivery = await this.posCommands.dispatch(tenant, {
-      type: EdgeCommandTypes.DINE_IN_ORDER_UPSERT,
-      payload: {
-        posOrderId: nextId,
-        tableNumbers,
-        floor,
-        waiterName: body.waiterName,
-        guestCount,
-        businessDate,
-        items: body.items,
-        totalAmount,
-      },
-    });
-
-    return {
-      posDelivery,
-      posOrderId: order.posOrderId,
-      status: order.status,
-      totalAmount: order.totalAmount,
-      floor: order.floor,
-      tableNumbers,
-      waiterName: order.waiterName,
-      businessDate: order.businessDate,
-      items: order.items.map((it: any) => ({
-        itemName: it.name,
-        unitPrice: it.price,
-        quantity: it.quantity,
-        menuItemId: it.menuItemId,
-        variantId: it.variantId,
-      })),
-    };
   }
 
   async deleteTakeawayOrder(
-    tenant: TenantContext,
+    actor: ManagerAuthContext,
     id: string,
-    monitoringSocketId?: string,
+    _socket?: string,
+    body?: any,
   ) {
-    const posOrderId = Number(id);
-    const order = await this.prisma.order.findUnique({
-      where: orderIdentity(tenant, posOrderId),
+    return this.requestOperation(actor, 'takeaway_cancel', {
+      requestId: body?.requestId,
+      body: { posOrderId: Number(id) },
     });
-    if (!order) return { success: false, error: 'order_not_found' };
-
-    this.mutationSupport.registerMobileMutationEchoGuard(tenant, posOrderId);
-
-    // The Cloud row is the mirror of a POS Order that is about to be
-    // cancelled, not erased: the POS keeps the Order and its audit report and
-    // the next snapshot would re-mirror it as cancelled anyway. Deleting the
-    // row here only made it vanish until then.
-    if (order.status !== 'cancelled') {
-      await this.prisma.order.update({
-        where: { id: order.id },
-        data: { status: 'cancelled' },
-      });
-    }
-
-    this.gateway.broadcastUpdate(
-      tenant,
-      'takeaway_deleted',
-      { posOrderId },
-      this.mutationSupport.wsExcludeOpts(monitoringSocketId),
-    );
-
-    // ORDER_CANCEL is a cancellation on the POS: typed CANCEL_TABLE event,
-    // locked report, non-fiscal cancelled Sale, Order kept.
-    const posDelivery = await this.posCommands.dispatch(tenant, {
-      type: EdgeCommandTypes.ORDER_CANCEL,
-      payload: { posOrderId },
-    });
-
-    return { success: true, posDelivery };
   }
 
   async getTakeawayOrders(tenant: TenantContext) {

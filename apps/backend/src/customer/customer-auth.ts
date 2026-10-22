@@ -16,7 +16,6 @@ import { EnrollmentRateLimiter } from '../edge/enrollment-rate-limiter';
 
 export interface CustomerPrincipal {
   customerAccountId: string;
-  organizationId: string;
 }
 export const CustomerActor = createParamDecorator(
   (_: unknown, context: ExecutionContext): CustomerPrincipal =>
@@ -30,6 +29,16 @@ const fields = {
   emailVerifiedAt: true,
   isActive: true,
 } as const;
+export function customerPassword(value: unknown, signup: boolean): string {
+  if (
+    typeof value !== 'string' ||
+    value.length > 128 ||
+    value.length < (signup ? 8 : 1)
+  )
+    throw new BadRequestException('Password must be 8–128 characters');
+  return value;
+}
+
 @Injectable()
 export class CustomerAuth {
   constructor(
@@ -50,50 +59,13 @@ export class CustomerAuth {
       throw new HttpException('Too many attempts. Try again later.', 429);
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
       throw new BadRequestException('Invalid email');
-    const password = body.password;
-    if (
-      typeof password !== 'string' ||
-      password.length > 128 ||
-      password.length < (signup ? 15 : 1)
-    )
-      throw new BadRequestException('Password must be 15–128 characters');
+    const password = customerPassword(body.password, signup);
     let user;
     if (signup) {
-      const policy = await this.db.onboardingPolicy.findUnique({
-        where: { id: 'default' },
-      });
-      if (!policy?.enabled || !policy.trialPlanId)
-        throw new HttpException('Pilot registration is not open yet.', 503);
-      const displayName = requireText(body.displayName, 'name', { max: 100 });
-      const passwordHash = await argon2.hash(password, {
-        type: argon2.argon2id,
-      });
-      try {
-        user = await this.db.$transaction(async (tx) => {
-          const org = await tx.organization.create({
-            data: { name: displayName },
-          });
-          const account = await tx.customerAccount.create({
-            data: { organizationId: org.id, email, displayName, passwordHash },
-            select: fields,
-          });
-          await tx.customerAuditEvent.create({
-            data: {
-              customerAccountId: account.id,
-              action: 'account.created',
-              targetType: 'Organization',
-              targetId: org.id,
-            },
-          });
-          return account;
-        });
-      } catch (error) {
-        if ((error as { code?: string }).code === 'P2002')
-          throw new BadRequestException(
-            'Registration could not be completed. Try signing in.',
-          );
-        throw error;
-      }
+      throw new HttpException(
+        'Request access first. Approved owners join by invitation.',
+        403,
+      );
     } else {
       const row = await this.db.customerAccount.findUnique({
         where: { email },
@@ -105,6 +77,9 @@ export class CustomerAuth {
         select: fields,
       });
     }
+    return this.session(user);
+  }
+  async session(user: { id: string }) {
     const access_token = await this.jwt.signAsync(
       { sub: user.id, typ: 'CUSTOMER' },
       {
@@ -131,7 +106,6 @@ export class CustomerAuth {
       if (!user?.isActive) throw new Error('Inactive account');
       return {
         customerAccountId: user.id,
-        organizationId: user.organizationId,
       };
     } catch {
       throw new UnauthorizedException('Customer login required');

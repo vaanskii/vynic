@@ -47,7 +47,7 @@ class OrderDetailHeaderSection extends StatelessWidget {
               overflow: TextOverflow.ellipsis,
               style: const TextStyle(
                 color: VynicFloorTokens.text,
-                fontSize: 25,
+                fontSize: 30,
                 fontWeight: FontWeight.w800,
                 height: 1.1,
               ),
@@ -279,11 +279,7 @@ class _MetricCard extends StatelessWidget {
     final current = int.tryParse(value) ?? 0;
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 12, 12, 12),
-      decoration: BoxDecoration(
-        color: VynicFloorTokens.panel,
-        borderRadius: BorderRadius.circular(VynicFloorTokens.metricRadius),
-        border: Border.all(color: VynicFloorTokens.panelBorder),
-      ),
+
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
@@ -299,7 +295,7 @@ class _MetricCard extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           SizedBox(
-            height: 26,
+            height: 56,
             child: Row(
               children: [
                 Expanded(
@@ -356,8 +352,8 @@ class _StepButton extends StatelessWidget {
         onTap: onTap,
         borderRadius: BorderRadius.circular(7),
         child: SizedBox(
-          width: 26,
-          height: 26,
+          width: 56,
+          height: 56,
           child: Icon(
             icon,
             size: 15,
@@ -385,6 +381,7 @@ class _BackButton extends StatelessWidget {
         onTap: onTap,
         borderRadius: BorderRadius.circular(10),
         child: Container(
+          constraints: const BoxConstraints(minHeight: 56),
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(10),

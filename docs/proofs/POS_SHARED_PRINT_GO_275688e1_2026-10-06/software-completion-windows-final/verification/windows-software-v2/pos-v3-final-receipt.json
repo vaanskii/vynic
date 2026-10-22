@@ -1,0 +1,237 @@
+{
+  "schema": 1,
+  "createdAtUtc": "2026-10-06T18:13:44.958852+00:00",
+  "status": "PASS_OFFICIAL_PREPARED_POS_WINDOWS_RELEASE_SOFTWARE_ONLY",
+  "sourceReceiptSHA256": "faaaec2f1ece4f8259353666000eb4c0d3aee6143e73ae7fdf90772a937b581b",
+  "runnerResult": {
+    "schema": 1,
+    "SID": "S-1-5-21-611125631-3759947118-1641436196-1000",
+    "currentUser": "VANSKI\\vaanskii",
+    "sourceReceiptSHA256": "faaaec2f1ece4f8259353666000eb4c0d3aee6143e73ae7fdf90772a937b581b",
+    "status": "PASS",
+    "failure": null,
+    "job": "C:\\Users\\vaanskii\\AppData\\Local\\VynicReadinessNative\\software-1a63ebf3cde4-pos",
+    "sourceFiles": 1109,
+    "sourceZipSHA256": "c34f868986cb6015d43639a2cb20276660801ea8e16282eb5ce37060e5f96463",
+    "sourceUnchanged": true,
+    "firebaseSdk": "C:\\Users\\vaanskii\\AppData\\Local\\VynicLocalReleaseBuild\\e7a0ffd0bb571781\\apps\\operations\\build\\windows\\x64\\extracted\\firebase_cpp_sdk_windows",
+    "firebaseVersion": "13.5.0",
+    "target": "windows-amd64",
+    "guestArchitecture": "ARM64",
+    "artifactFiles": 23,
+    "archiveSha256": "f5eb22bfe2ca70f9b9e0434336da548eeb0613ed7d10d1ae43ebe252f1b9b785",
+    "portableZipEntries": true,
+    "productStarted": false,
+    "installed": false,
+    "published": false,
+    "signedRelease": false,
+    "serviceOperations": false,
+    "driverOperations": false,
+    "printJobsBefore": 0,
+    "printJobsAfter": 0,
+    "physicalJobs": 0
+  },
+  "officialPreparation": {
+    "path": "/Users/vaanskii/Developer/vynic/docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/software-windows-pos-stage-v3/product-preparation.json",
+    "sha256": "618794b28299e53b9a2c6910f9cfb262ec9fd1244f2901e03f1879c9b0754c9b",
+    "bytes": 2829
+  },
+  "officialPreparationDeltas": [
+    {
+      "path": "apps/operations/data/menu.json",
+      "before": {
+        "sha256": "dade96639d13912828f0aa4b70efd77467b6258703fd495e0e53059ccf9ee749",
+        "bytes": 40823
+      },
+      "after": null
+    },
+    {
+      "path": "apps/operations/lib/main.dart",
+      "before": {
+        "sha256": "27d8a77f93b4238888e6bc89cfc52800951dd24f4bb066f5c7cd4a2a209d7633",
+        "bytes": 104
+      },
+      "after": {
+        "sha256": "8537094b7276d49d07264d4631b07db82666593917e5f44f3c105e1ce95c7ae5",
+        "bytes": 24
+      }
+    },
+    {
+      "path": "apps/operations/macos/Runner/Configs/AppInfo.xcconfig",
+      "before": {
+        "sha256": "59d71facd75ed185d5e965a346a9064e9b24fa836e4d07f7ec697e97497ca723",
+        "bytes": 604
+      },
+      "after": {
+        "sha256": "588d89081065abad791741cc650990c23abc6e01ae8b03c2f790a30bea082aa1",
+        "bytes": 596
+      }
+    },
+    {
+      "path": "apps/operations/product-identity.json",
+      "before": null,
+      "after": {
+        "sha256": "a9d6e2b469231a659a4fb5484528e99c0b3ce53e6061bdd175126c721674dbe0",
+        "bytes": 128
+      }
+    },
+    {
+      "path": "apps/operations/pubspec.yaml",
+      "before": {
+        "sha256": "e56661e303516d54194d90510ad10c078a6ac5835162cf3e937874942deefb0c",
+        "bytes": 5014
+      },
+      "after": {
+        "sha256": "9af6f4aef6cab2606a5f73ff592b9f1b11546498d7937fc72683e7e6d3a99b93",
+        "bytes": 4993
+      }
+    },
+    {
+      "path": "apps/operations/windows/CMakeLists.txt",
+      "before": {
+        "sha256": "33075e456c7a3be19869506a5664fe5f2fa0ebb009332608285734783b8c2f87",
+        "bytes": 4346
+      },
+      "after": {
+        "sha256": "68045352e4a3c87f3f0b4cbbe3beefd455b08a8ea402b2aeb820ad9aede9c54c",
+        "bytes": 4342
+      }
+    },
+    {
+      "path": "apps/operations/windows/runner/Runner.rc",
+      "before": {
+        "sha256": "0d4177a2b2b214fd2c8cc5813e49a38359858b4f44226762964b21ee041e72fb",
+        "bytes": 3039
+      },
+      "after": {
+        "sha256": "eae79543301c722eed7ca725648ce184e02c2e03835a97925bf8f76bf9d8560a",
+        "bytes": 3021
+      }
+    },
+    {
+      "path": "apps/operations/windows/runner/main.cpp",
+      "before": {
+        "sha256": "41085bf49acd0d53105fb54de669861dfb84fa9a0237f16a57cf55ac7515deb3",
+        "bytes": 1352
+      },
+      "after": {
+        "sha256": "fb8f7f9f4b9ed738d50ac6ce112a48b0c14763710bb41bbdc8b5c7c7c9f38590",
+        "bytes": 1344
+      }
+    }
+  ],
+  "buildEntry": "lib/main_pos.dart",
+  "localLabDefines": {
+    "VYNIC_ENV": "development",
+    "VYNIC_LOCAL_WINDOWS_LAB": true,
+    "VYNIC_API_URL": "http://127.0.0.1:9"
+  },
+  "explicitPrinterAgentProfileEnabled": false,
+  "buildLog": {
+    "path": "/Users/vaanskii/Developer/vynic/docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/software-windows-pos-result-v3/windows-pos-build.log",
+    "sha256": "684935a292ad50c2207db60d9a2ae775ed76090262170f73ee5538fe5a3f9ac0",
+    "bytes": 262
+  },
+  "cachedFirebaseSDK": {
+    "version": "13.5.0",
+    "files": 182,
+    "beforeAfterAndHistoricalMapsEqual": true,
+    "before": {
+      "path": "/Users/vaanskii/Developer/vynic/docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/software-windows-pos-result-v3/firebase-sdk-sha256-before.json",
+      "sha256": "8e68de1c1568c80a71e090073382b5d93b5d51a3fbfaf4e55fc406fad7b8c0a3",
+      "bytes": 22631
+    },
+    "after": {
+      "path": "/Users/vaanskii/Developer/vynic/docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/software-windows-pos-result-v3/firebase-sdk-sha256-after.json",
+      "sha256": "8e68de1c1568c80a71e090073382b5d93b5d51a3fbfaf4e55fc406fad7b8c0a3",
+      "bytes": 22631
+    },
+    "historical": {
+      "path": "/Users/vaanskii/Developer/vynic/docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/windows-pos-prepared-result/firebase-sdk-sha256-after.json",
+      "sha256": "8e68de1c1568c80a71e090073382b5d93b5d51a3fbfaf4e55fc406fad7b8c0a3",
+      "bytes": 22631
+    }
+  },
+  "artifacts": {
+    "data/flutter_assets/packages/flutter_esc_pos_utils/resources/capabilities.json": "445e5e0139afc14d557a16801b74256738e51f1f21c4d13f43f4a660e3df4941",
+    "data/flutter_assets/packages/cupertino_icons/assets/CupertinoIcons.ttf": "67c44fe9183b002e79dde7f6977e2988661c9a3e4a3c5fce968787efdbed823c",
+    "vynic_pos.lib": "8dbe9347048481f08c0a34c7f552e1386b47761a126e5083b5245f06d9101033",
+    "url_launcher_windows_plugin.dll": "9095aac4d9403ff42a63dc5b0a18665492cc73f9ef18bd4607d0555dbb4ce3da",
+    "firebase_core_plugin.lib": "45704e969ada9870fa9285ede2fde31625bdd36d566bdd5a80f48abe54c7c7f8",
+    "data/app.so": "3b804ba01fb9e031d4c04a26e087ea445be5458ee8649c00706758a7eb4acb88",
+    "share_plus_plugin.dll": "41cfe929698b75bc770535f265d5391a62c5a13e1f9d2215ad964141a46f0b04",
+    "flutter_local_notifications_windows.dll": "d691956891978a6938ccb80276d59d4a1ea1b748479a3742709fb16b4db57a3d",
+    "data/flutter_assets/NativeAssetsManifest.json": "9548a31e4a048135c1d94f919328bfb62ae2c7bb3cab96557c7941daa97776cb",
+    "data/flutter_assets/assets/fonts/NotoSansGeorgian.ttf": "d96c44584566c7106f7fdea7c07ad09f63e481bf9066e89b1d14195a967d4ca2",
+    "data/flutter_assets/fonts/MaterialIcons-Regular.otf": "d9865b671a09d683d13a863089d8825e0f61a37696ce5d7d448bc8023aa62453",
+    "vynic_pos.exe": "7314018d0b083a95b2abcc9af7c42aa7aac03014a560afc1816013791c0f7d04",
+    "file_selector_windows_plugin.dll": "b96feaafb7b07a56b42b075cace1aab46559c959c5d309c0eabe3c6282caa7f9",
+    "data/flutter_assets/shaders/stretch_effect.frag": "62a899ff4e168ac6ca888ce7c2f40e5d3fbf8ca20a1c3ded781a116a6d7907e2",
+    "data/flutter_assets/NOTICES.Z": "f3f7cfd213d5e2cf269af02085254b9be9651ee4f2ea9dac7857a12548363a45",
+    "data/flutter_assets/shaders/ink_sparkle.frag": "1fe8436a743884cb65078fe8c7b38e18f5365f2a2961270916f426fd13c604af",
+    "data/flutter_assets/assets/logo/vynic-logo.png": "ed454fd692b4aa820ae29bbfe4b4b182e50c8100f640ed7f2eb0fcc77062c91f",
+    "data/flutter_assets/FontManifest.json": "d952dc8bad7fb84e26d8db976376625a780ca850a5e352fa8e3a9ba9cb09d6bf",
+    "flutter_windows.dll": "011e87e890b7bfbac89f63c763341ffb8393d2b4a617dd836c471a0cdaa1346f",
+    "data/flutter_assets/AssetManifest.bin": "ad229529733fbc08b0af8df38dd78845433909880c7c3c47a4025f37671d0d83",
+    "data/icudtl.dat": "998367809a821d595928089c197b3f7959f0420f81f79d4d0daee53378492ed5",
+    "data/flutter_assets/assets/black-logo.png": "1decee3afbc5bc80a34398bf93e031a766dedfe572cb323a0b30a90a12d3ccf0",
+    "vynic_pos.exp": "f3d1ced5840104267ce1481b72d6478ffcf2ac7b805115d4b4ef4deba1bb4b3e"
+  },
+  "artifactCount": 23,
+  "portableZIP": {
+    "path": "/Users/vaanskii/Developer/vynic/docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/software-windows-pos-result-v3/native-pos-build.zip",
+    "sha256": "f5eb22bfe2ca70f9b9e0434336da548eeb0613ed7d10d1ae43ebe252f1b9b785",
+    "bytes": 19265604
+  },
+  "portableZIPExactEntriesAndBytesVerified": true,
+  "executable": {
+    "name": "vynic_pos.exe",
+    "sha256": "7314018d0b083a95b2abcc9af7c42aa7aac03014a560afc1816013791c0f7d04",
+    "bytes": 848896,
+    "machine": "AMD64",
+    "UTF16ResourceBrandingVynicPOSPresent": true
+  },
+  "allResultFiles": {
+    "firebase-sdk-sha256-before.json": {
+      "path": "/Users/vaanskii/Developer/vynic/docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/software-windows-pos-result-v3/firebase-sdk-sha256-before.json",
+      "sha256": "8e68de1c1568c80a71e090073382b5d93b5d51a3fbfaf4e55fc406fad7b8c0a3",
+      "bytes": 22631
+    },
+    "built-artifact-sha256.json": {
+      "path": "/Users/vaanskii/Developer/vynic/docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/software-windows-pos-result-v3/built-artifact-sha256.json",
+      "sha256": "49d2d74e6d1addb13f16388eb2791722007b95bd1ce06130e24f46abfecb6529",
+      "bytes": 2611
+    },
+    "windows-pos-build.log": {
+      "path": "/Users/vaanskii/Developer/vynic/docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/software-windows-pos-result-v3/windows-pos-build.log",
+      "sha256": "684935a292ad50c2207db60d9a2ae775ed76090262170f73ee5538fe5a3f9ac0",
+      "bytes": 262
+    },
+    "offline-pub-get.log": {
+      "path": "/Users/vaanskii/Developer/vynic/docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/software-windows-pos-result-v3/offline-pub-get.log",
+      "sha256": "30229f9d0b6e8f121372205ec994858e2208d3f237440ee516b1058e6ad20a97",
+      "bytes": 3380
+    },
+    "native-pos-build.zip": {
+      "path": "/Users/vaanskii/Developer/vynic/docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/software-windows-pos-result-v3/native-pos-build.zip",
+      "sha256": "f5eb22bfe2ca70f9b9e0434336da548eeb0613ed7d10d1ae43ebe252f1b9b785",
+      "bytes": 19265604
+    },
+    "windows-pos-build.json": {
+      "path": "/Users/vaanskii/Developer/vynic/docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/software-windows-pos-result-v3/windows-pos-build.json",
+      "sha256": "7cfa157934ce1e629e683a149d5cc56aef45462d7ff8aae3548502b6fbe92e64",
+      "bytes": 1220
+    },
+    "firebase-sdk-sha256-after.json": {
+      "path": "/Users/vaanskii/Developer/vynic/docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/software-windows-pos-result-v3/firebase-sdk-sha256-after.json",
+      "sha256": "8e68de1c1568c80a71e090073382b5d93b5d51a3fbfaf4e55fc406fad7b8c0a3",
+      "bytes": 22631
+    }
+  },
+  "productLaunched": false,
+  "SCMOperations": false,
+  "physicalJobs": 0,
+  "WindowsReboot": false,
+  "signedOrProductionReleaseQualified": false,
+  "previousSourcesStagesAndReceiptsUnchanged": true
+}

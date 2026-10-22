@@ -1,3 +1,4 @@
+import 'package:vynic/core/ui/widgets/pos_dialog.dart';
 import 'package:vynic/core/widgets/pos_text.dart';
 import 'package:vynic/core/widgets/pos_on_screen_text_field.dart';
 import 'package:vynic/core/models/feature_keys.dart';
@@ -144,7 +145,7 @@ class _AdminInventoryState extends State<AdminInventorySection> {
                 '${item.currentStock} ${item.baseUnit.label} · ${_statusLabel(item)}',
               ),
               trailing: const Icon(Icons.chevron_right),
-              onTap: () => showDialog<void>(
+              onTap: () => showPosModal<void>(
                 context: context,
                 builder: (_) => AlertDialog(
                   title: Text(item.name),

@@ -1,0 +1,5 @@
+# Review renders, snapshots and tool caches stay local (large, regenerable).
+renders/
+snapshots/
+.hyperframes/
+stems/

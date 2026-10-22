@@ -123,6 +123,14 @@ const AUTH_CONTEXT = {
 };
 
 function makeHarness(overrides: Record<string, Override> = {}): Harness {
+  overrides = {
+    'venue.findUniqueOrThrow': () => ({
+      id: AUTH_CONTEXT.venueId,
+      menuAuthority: 'POS',
+      catalogRevision: 0,
+    }),
+    ...overrides,
+  };
   const calls: Call[] = [];
   const trace: string[] = [];
   const broadcasts: Broadcast[] = [];
@@ -813,6 +821,7 @@ describe('POST /sync/manager-data — order sync and table linking', () => {
         venueId: 'venue-a',
         tableNumber: '6',
         floor: 'first',
+        activeOrderId: 9,
       });
       expect(at(free?.arg, 'data')).toEqual({
         isReserved: false,
@@ -988,6 +997,7 @@ describe('POST /sync/manager-data — menu sync', () => {
     });
 
     expect(h.trace).toEqual([
+      'db:venue.findUniqueOrThrow',
       'db:menuCategory.findFirst',
       'db:menuCategory.create',
       'db:menuSubcategory.findFirst',
@@ -1072,7 +1082,11 @@ describe('POST /sync/manager-data — staff sync', () => {
 
   it('updates role only for an existing member sent without a pin, and never writes the vault', async () => {
     const h = makeHarness({
-      'staff.findUnique': () => ({ username: 'mary' }),
+      'staff.findUnique': () => ({
+        username: 'mary',
+        role: 'MANAGER',
+        isActive: true,
+      }),
       'staff.findMany': () => [{ username: 'mary' }],
     });
 
@@ -1107,7 +1121,11 @@ describe('POST /sync/manager-data — staff sync', () => {
 
   it('leaves staffNeedingPin off the response when nothing is missing', async () => {
     const h = makeHarness({
-      'staff.findUnique': () => ({ username: 'mary' }),
+      'staff.findUnique': () => ({
+        username: 'mary',
+        role: 'MANAGER',
+        isActive: true,
+      }),
       'staff.findMany': () => [{ username: 'mary' }],
     });
 
@@ -1120,7 +1138,11 @@ describe('POST /sync/manager-data — staff sync', () => {
 
   it('does not issue a delete when every server member is still present', async () => {
     const h = makeHarness({
-      'staff.findUnique': () => ({ username: 'mary' }),
+      'staff.findUnique': () => ({
+        username: 'mary',
+        role: 'MANAGER',
+        isActive: true,
+      }),
       'staff.findMany': () => [{ username: 'mary' }],
     });
 

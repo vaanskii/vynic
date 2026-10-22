@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:vynic/core/services/edge/edge_device_credential_store.dart';
 
@@ -86,28 +87,34 @@ void main() {
     expect(drop.existsSync(), isFalse);
   });
 
-  test('removes an unusable drop file rather than retrying it forever', () async {
-    final drop = File('${directory.path}/edge_device_provision.txt');
-    await drop.writeAsString('not-a-credential');
+  test(
+    'removes an unusable drop file rather than retrying it forever',
+    () async {
+      final drop = File('${directory.path}/edge_device_provision.txt');
+      await drop.writeAsString('not-a-credential');
 
-    await EdgeDeviceCredentialStore.load();
+      await EdgeDeviceCredentialStore.load();
 
-    expect(EdgeDeviceCredentialStore.hasCredential, isFalse);
-    expect(drop.existsSync(), isFalse);
-  });
+      expect(EdgeDeviceCredentialStore.hasCredential, isFalse);
+      expect(drop.existsSync(), isFalse);
+    },
+  );
 
-  test('keeps the credential out of the hive boxes a backup serializes', () async {
-    // BackupRepository exports the settings box wholesale. The identity file is
-    // a separate file precisely so a device secret never lands in a backup.
-    await EdgeDeviceCredentialStore.load();
-    await EdgeDeviceCredentialStore.save(credential());
+  test(
+    'keeps the credential out of the hive boxes a backup serializes',
+    () async {
+      // BackupRepository exports the settings box wholesale. The identity file is
+      // a separate file precisely so a device secret never lands in a backup.
+      await EdgeDeviceCredentialStore.load();
+      await EdgeDeviceCredentialStore.save(credential());
 
-    final stored = json.decode(
-      File('${directory.path}/edge_device.json').readAsStringSync(),
-    );
-    expect(stored, isA<Map<String, dynamic>>());
-    expect((stored as Map)['credential'], credential());
-  });
+      final stored = json.decode(
+        File('${directory.path}/edge_device.json').readAsStringSync(),
+      );
+      expect(stored, isA<Map<String, dynamic>>());
+      expect((stored as Map)['credential'], credential());
+    },
+  );
 
   test('never fails a boot when the identity file is unreadable', () async {
     await File('${directory.path}/edge_device.json').writeAsString('{ broken');
@@ -117,4 +124,83 @@ void main() {
     expect(EdgeDeviceCredentialStore.isLoaded, isTrue);
     expect(EdgeDeviceCredentialStore.hasCredential, isFalse);
   });
+
+  test(
+    'reloading a cleared file cannot resurrect a cached credential',
+    () async {
+      await EdgeDeviceCredentialStore.load();
+      await EdgeDeviceCredentialStore.save(credential());
+      final installationId = EdgeDeviceCredentialStore.installationId;
+      await File('${directory.path}/edge_device.json').writeAsString(
+        jsonEncode({'installationId': installationId}),
+        flush: true,
+      );
+
+      await EdgeDeviceCredentialStore.load();
+
+      expect(EdgeDeviceCredentialStore.hasCredential, isFalse);
+      expect(EdgeDeviceCredentialStore.deviceId, isNull);
+      expect(EdgeDeviceCredentialStore.venueId, isNull);
+      expect(EdgeDeviceCredentialStore.installationId, installationId);
+    },
+  );
+
+  test(
+    'a different data directory cannot inherit the cached identity',
+    () async {
+      await EdgeDeviceCredentialStore.load();
+      await EdgeDeviceCredentialStore.save(credential());
+      final previousInstallation = EdgeDeviceCredentialStore.installationId;
+      final originalBytes = await File(
+        '${directory.path}/edge_device.json',
+      ).readAsBytes();
+      final other = await Directory.systemTemp.createTemp('edge-other-data-');
+      addTearDown(() => other.delete(recursive: true));
+      EdgeDeviceCredentialStore.directoryOverride = other.path;
+
+      await EdgeDeviceCredentialStore.load();
+
+      expect(EdgeDeviceCredentialStore.hasCredential, isFalse);
+      expect(EdgeDeviceCredentialStore.deviceId, isNull);
+      expect(EdgeDeviceCredentialStore.venueId, isNull);
+      expect(
+        EdgeDeviceCredentialStore.installationId,
+        isNot(previousInstallation),
+      );
+      expect(
+        await File('${directory.path}/edge_device.json').readAsBytes(),
+        originalBytes,
+      );
+      final stored =
+          jsonDecode(
+                await File('${other.path}/edge_device.json').readAsString(),
+              )
+              as Map;
+      expect(stored.containsKey('credential'), isFalse);
+    },
+  );
+
+  test(
+    'malformed reload neither retains a cached secret nor logs file contents',
+    () async {
+      await EdgeDeviceCredentialStore.load();
+      await EdgeDeviceCredentialStore.save(credential());
+      final file = File('${directory.path}/edge_device.json');
+      final malformed = '{"credential":"${credential()}';
+      await file.writeAsString(malformed, flush: true);
+      final messages = <String>[];
+      final originalDebugPrint = debugPrint;
+      debugPrint = (String? message, {int? wrapWidth}) {
+        if (message != null) messages.add(message);
+      };
+      addTearDown(() => debugPrint = originalDebugPrint);
+
+      await EdgeDeviceCredentialStore.load();
+
+      expect(EdgeDeviceCredentialStore.hasCredential, isFalse);
+      expect(EdgeDeviceCredentialStore.deviceId, isNull);
+      expect(messages.join('\n'), isNot(contains(credential())));
+      expect(await file.readAsString(), malformed);
+    },
+  );
 }

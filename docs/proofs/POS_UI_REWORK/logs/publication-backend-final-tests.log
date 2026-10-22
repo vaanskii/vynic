@@ -1,0 +1,2526 @@
+PASS src/menu-catalog/menu09.integration.spec.ts
+  ● Console
+
+    console.warn
+      [Sync] manager-data received without posCallbackUrl — start Windows POS (ingest on :8081) so mobile edits reach Hive.
+
+    [0m [90m 104 |[39m     )[33m;[39m
+     [90m 105 |[39m     [36mif[39m ([33m![39m[36mthis[39m[33m.[39mposConnection[33m.[39mhasCallbackUrl()) {
+    [31m[1m>[22m[39m[90m 106 |[39m       console[33m.[39mwarn(
+     [90m     |[39m               [31m[1m^[22m[39m
+     [90m 107 |[39m         [32m'[Sync] manager-data received without posCallbackUrl — start Windows POS (ingest on :8081) so mobile edits reach Hive.'[39m[33m,[39m
+     [90m 108 |[39m       )[33m;[39m
+     [90m 109 |[39m     }[0m
+
+      at IngestPosSnapshotService.execute (pos/sync/application/ingest-pos-snapshot.service.ts:106:15)
+      at pos/sync/sync.controller.ts:91:24
+      at Proxy._transactionWithCallback (../node_modules/@prisma/client/src/runtime/getPrismaClient.ts:722:18)
+      at SyncController.syncManagerData (pos/sync/sync.controller.ts:68:20)
+      at ../node_modules/@nestjs/core/router/router-execution-context.js:47:62
+      at ../node_modules/@nestjs/core/router/router-proxy.js:9:17
+
+    console.log
+      [SYNC] Syncing 1 categories...
+
+      at MenuSyncService.sync (pos/sync/snapshot/menu-sync.service.ts:450:13)
+
+    console.log
+      [Sync][MoneyDebug][IN] businessDate= dailySalesTotal=null openTablesPayable=null salesSummary.totalRevenue=null orders=0 tables=0
+
+      at IngestPosSnapshotService.execute (pos/sync/application/ingest-pos-snapshot.service.ts:136:13)
+
+    console.log
+      [SyncTiming][Backend] menu=7ms tables=0ms orders=0ms reservations=0ms businessDay=0ms reporting=0ms total=33ms rows=0t/0o/1c/0r/0e
+
+      at SyncTimer.log (pos/sync/sync-timing.ts:52:13)
+
+    console.log
+      [SYNC] Realtime snapshot: 0 tables, 0 orders
+
+      at IngestPosSnapshotService.execute (pos/sync/application/ingest-pos-snapshot.service.ts:93:15)
+
+    console.warn
+      [Sync] manager-data received without posCallbackUrl — start Windows POS (ingest on :8081) so mobile edits reach Hive.
+
+    [0m [90m 104 |[39m     )[33m;[39m
+     [90m 105 |[39m     [36mif[39m ([33m![39m[36mthis[39m[33m.[39mposConnection[33m.[39mhasCallbackUrl()) {
+    [31m[1m>[22m[39m[90m 106 |[39m       console[33m.[39mwarn(
+     [90m     |[39m               [31m[1m^[22m[39m
+     [90m 107 |[39m         [32m'[Sync] manager-data received without posCallbackUrl — start Windows POS (ingest on :8081) so mobile edits reach Hive.'[39m[33m,[39m
+     [90m 108 |[39m       )[33m;[39m
+     [90m 109 |[39m     }[0m
+
+      at IngestPosSnapshotService.execute (pos/sync/application/ingest-pos-snapshot.service.ts:106:15)
+      at pos/sync/sync.controller.ts:91:24
+
+    console.log
+      [Sync][MoneyDebug][IN] businessDate= dailySalesTotal=null openTablesPayable=null salesSummary.totalRevenue=null orders=0 tables=0
+
+      at IngestPosSnapshotService.execute (pos/sync/application/ingest-pos-snapshot.service.ts:136:13)
+
+    console.log
+      Skipping table sync: empty tables array received (POS may be initializing)
+
+      at TableSyncService.sync (pos/sync/snapshot/table-sync.service.ts:97:15)
+
+    console.log
+      [SyncTiming][Backend/realtime] tables=0ms orders=0ms businessDay=0ms reporting=0ms total=2ms rows=0t/0o/0c/0r/0e
+
+      at SyncTimer.log (pos/sync/sync-timing.ts:52:13)
+
+    console.warn
+      [Sync] manager-data received without posCallbackUrl — start Windows POS (ingest on :8081) so mobile edits reach Hive.
+
+    [0m [90m 104 |[39m     )[33m;[39m
+     [90m 105 |[39m     [36mif[39m ([33m![39m[36mthis[39m[33m.[39mposConnection[33m.[39mhasCallbackUrl()) {
+    [31m[1m>[22m[39m[90m 106 |[39m       console[33m.[39mwarn(
+     [90m     |[39m               [31m[1m^[22m[39m
+     [90m 107 |[39m         [32m'[Sync] manager-data received without posCallbackUrl — start Windows POS (ingest on :8081) so mobile edits reach Hive.'[39m[33m,[39m
+     [90m 108 |[39m       )[33m;[39m
+     [90m 109 |[39m     }[0m
+
+      at IngestPosSnapshotService.execute (pos/sync/application/ingest-pos-snapshot.service.ts:106:15)
+      at pos/sync/sync.controller.ts:91:24
+      at Proxy._transactionWithCallback (../node_modules/@prisma/client/src/runtime/getPrismaClient.ts:722:18)
+      at SyncController.syncManagerData (pos/sync/sync.controller.ts:68:20)
+      at ../node_modules/@nestjs/core/router/router-execution-context.js:47:62
+      at ../node_modules/@nestjs/core/router/router-proxy.js:9:17
+
+    console.log
+      [SYNC] Syncing 1 categories...
+
+      at MenuSyncService.sync (pos/sync/snapshot/menu-sync.service.ts:450:13)
+
+    console.log
+      [Sync][MoneyDebug][IN] businessDate= dailySalesTotal=null openTablesPayable=null salesSummary.totalRevenue=null orders=0 tables=0
+
+      at IngestPosSnapshotService.execute (pos/sync/application/ingest-pos-snapshot.service.ts:136:13)
+
+    console.log
+      [SyncTiming][Backend] menu=4ms tables=0ms orders=0ms reservations=0ms businessDay=0ms reporting=0ms total=5ms rows=0t/0o/1c/0r/0e
+
+      at SyncTimer.log (pos/sync/sync-timing.ts:52:13)
+
+    console.warn
+      [Sync] manager-data received without posCallbackUrl — start Windows POS (ingest on :8081) so mobile edits reach Hive.
+
+    [0m [90m 104 |[39m     )[33m;[39m
+     [90m 105 |[39m     [36mif[39m ([33m![39m[36mthis[39m[33m.[39mposConnection[33m.[39mhasCallbackUrl()) {
+    [31m[1m>[22m[39m[90m 106 |[39m       console[33m.[39mwarn(
+     [90m     |[39m               [31m[1m^[22m[39m
+     [90m 107 |[39m         [32m'[Sync] manager-data received without posCallbackUrl — start Windows POS (ingest on :8081) so mobile edits reach Hive.'[39m[33m,[39m
+     [90m 108 |[39m       )[33m;[39m
+     [90m 109 |[39m     }[0m
+
+      at IngestPosSnapshotService.execute (pos/sync/application/ingest-pos-snapshot.service.ts:106:15)
+      at pos/sync/sync.controller.ts:91:24
+      at Proxy._transactionWithCallback (../node_modules/@prisma/client/src/runtime/getPrismaClient.ts:722:18)
+      at SyncController.syncManagerData (pos/sync/sync.controller.ts:68:20)
+      at ../node_modules/@nestjs/core/router/router-execution-context.js:47:62
+      at ../node_modules/@nestjs/core/router/router-proxy.js:9:17
+
+    console.log
+      [SYNC] Syncing 1 categories...
+
+      at MenuSyncService.sync (pos/sync/snapshot/menu-sync.service.ts:450:13)
+
+    console.log
+      [Sync][MoneyDebug][IN] businessDate= dailySalesTotal=null openTablesPayable=null salesSummary.totalRevenue=null orders=0 tables=0
+
+      at IngestPosSnapshotService.execute (pos/sync/application/ingest-pos-snapshot.service.ts:136:13)
+
+    console.log
+      [SyncTiming][Backend] menu=4ms tables=0ms orders=0ms reservations=0ms businessDay=0ms reporting=0ms total=4ms rows=0t/0o/1c/0r/0e
+
+      at SyncTimer.log (pos/sync/sync-timing.ts:52:13)
+
+    console.warn
+      [Sync] manager-data received without posCallbackUrl — start Windows POS (ingest on :8081) so mobile edits reach Hive.
+
+    [0m [90m 104 |[39m     )[33m;[39m
+     [90m 105 |[39m     [36mif[39m ([33m![39m[36mthis[39m[33m.[39mposConnection[33m.[39mhasCallbackUrl()) {
+    [31m[1m>[22m[39m[90m 106 |[39m       console[33m.[39mwarn(
+     [90m     |[39m               [31m[1m^[22m[39m
+     [90m 107 |[39m         [32m'[Sync] manager-data received without posCallbackUrl — start Windows POS (ingest on :8081) so mobile edits reach Hive.'[39m[33m,[39m
+     [90m 108 |[39m       )[33m;[39m
+     [90m 109 |[39m     }[0m
+
+      at IngestPosSnapshotService.execute (pos/sync/application/ingest-pos-snapshot.service.ts:106:15)
+      at pos/sync/sync.controller.ts:91:24
+      at Proxy._transactionWithCallback (../node_modules/@prisma/client/src/runtime/getPrismaClient.ts:722:18)
+      at SyncController.syncManagerData (pos/sync/sync.controller.ts:68:20)
+      at ../node_modules/@nestjs/core/router/router-execution-context.js:47:62
+      at ../node_modules/@nestjs/core/router/router-proxy.js:9:17
+
+    console.log
+      [SYNC] Syncing 1 categories...
+
+      at MenuSyncService.sync (pos/sync/snapshot/menu-sync.service.ts:450:13)
+
+    console.log
+      [Sync][MoneyDebug][IN] businessDate= dailySalesTotal=null openTablesPayable=null salesSummary.totalRevenue=null orders=0 tables=0
+
+      at IngestPosSnapshotService.execute (pos/sync/application/ingest-pos-snapshot.service.ts:136:13)
+
+    console.log
+      [SyncTiming][Backend] menu=4ms tables=0ms orders=0ms reservations=0ms businessDay=0ms reporting=0ms total=4ms rows=0t/0o/1c/0r/0e
+
+      at SyncTimer.log (pos/sync/sync-timing.ts:52:13)
+
+    console.warn
+      [Sync] manager-data received without posCallbackUrl — start Windows POS (ingest on :8081) so mobile edits reach Hive.
+
+    [0m [90m 104 |[39m     )[33m;[39m
+     [90m 105 |[39m     [36mif[39m ([33m![39m[36mthis[39m[33m.[39mposConnection[33m.[39mhasCallbackUrl()) {
+    [31m[1m>[22m[39m[90m 106 |[39m       console[33m.[39mwarn(
+     [90m     |[39m               [31m[1m^[22m[39m
+     [90m 107 |[39m         [32m'[Sync] manager-data received without posCallbackUrl — start Windows POS (ingest on :8081) so mobile edits reach Hive.'[39m[33m,[39m
+     [90m 108 |[39m       )[33m;[39m
+     [90m 109 |[39m     }[0m
+
+      at IngestPosSnapshotService.execute (pos/sync/application/ingest-pos-snapshot.service.ts:106:15)
+      at pos/sync/sync.controller.ts:91:24
+      at Proxy._transactionWithCallback (../node_modules/@prisma/client/src/runtime/getPrismaClient.ts:722:18)
+      at SyncController.syncManagerData (pos/sync/sync.controller.ts:68:20)
+      at ../node_modules/@nestjs/core/router/router-execution-context.js:47:62
+      at ../node_modules/@nestjs/core/router/router-proxy.js:9:17
+
+    console.log
+      [SYNC] Syncing 1 categories...
+
+      at MenuSyncService.sync (pos/sync/snapshot/menu-sync.service.ts:450:13)
+
+    console.log
+      [Sync][MoneyDebug][IN] businessDate= dailySalesTotal=null openTablesPayable=null salesSummary.totalRevenue=null orders=0 tables=0
+
+      at IngestPosSnapshotService.execute (pos/sync/application/ingest-pos-snapshot.service.ts:136:13)
+
+    console.log
+      [SyncTiming][Backend] menu=4ms tables=0ms orders=0ms reservations=0ms businessDay=0ms reporting=0ms total=4ms rows=0t/0o/1c/0r/0e
+
+      at SyncTimer.log (pos/sync/sync-timing.ts:52:13)
+
+    console.warn
+      [Sync] manager-data received without posCallbackUrl — start Windows POS (ingest on :8081) so mobile edits reach Hive.
+
+    [0m [90m 104 |[39m     )[33m;[39m
+     [90m 105 |[39m     [36mif[39m ([33m![39m[36mthis[39m[33m.[39mposConnection[33m.[39mhasCallbackUrl()) {
+    [31m[1m>[22m[39m[90m 106 |[39m       console[33m.[39mwarn(
+     [90m     |[39m               [31m[1m^[22m[39m
+     [90m 107 |[39m         [32m'[Sync] manager-data received without posCallbackUrl — start Windows POS (ingest on :8081) so mobile edits reach Hive.'[39m[33m,[39m
+     [90m 108 |[39m       )[33m;[39m
+     [90m 109 |[39m     }[0m
+
+      at IngestPosSnapshotService.execute (pos/sync/application/ingest-pos-snapshot.service.ts:106:15)
+      at pos/sync/sync.controller.ts:91:24
+      at Proxy._transactionWithCallback (../node_modules/@prisma/client/src/runtime/getPrismaClient.ts:722:18)
+      at SyncController.syncManagerData (pos/sync/sync.controller.ts:68:20)
+      at ../node_modules/@nestjs/core/router/router-execution-context.js:47:62
+      at ../node_modules/@nestjs/core/router/router-proxy.js:9:17
+
+    console.log
+      [SYNC] Syncing 1 categories...
+
+      at MenuSyncService.sync (pos/sync/snapshot/menu-sync.service.ts:450:13)
+
+    console.log
+      [Sync][MoneyDebug][IN] businessDate= dailySalesTotal=null openTablesPayable=null salesSummary.totalRevenue=null orders=0 tables=0
+
+      at IngestPosSnapshotService.execute (pos/sync/application/ingest-pos-snapshot.service.ts:136:13)
+
+    console.log
+      [SyncTiming][Backend] menu=4ms tables=0ms orders=0ms reservations=0ms businessDay=0ms reporting=0ms total=4ms rows=0t/0o/1c/0r/0e
+
+      at SyncTimer.log (pos/sync/sync-timing.ts:52:13)
+
+    console.warn
+      [Sync] manager-data received without posCallbackUrl — start Windows POS (ingest on :8081) so mobile edits reach Hive.
+
+    [0m [90m 104 |[39m     )[33m;[39m
+     [90m 105 |[39m     [36mif[39m ([33m![39m[36mthis[39m[33m.[39mposConnection[33m.[39mhasCallbackUrl()) {
+    [31m[1m>[22m[39m[90m 106 |[39m       console[33m.[39mwarn(
+     [90m     |[39m               [31m[1m^[22m[39m
+     [90m 107 |[39m         [32m'[Sync] manager-data received without posCallbackUrl — start Windows POS (ingest on :8081) so mobile edits reach Hive.'[39m[33m,[39m
+     [90m 108 |[39m       )[33m;[39m
+     [90m 109 |[39m     }[0m
+
+      at IngestPosSnapshotService.execute (pos/sync/application/ingest-pos-snapshot.service.ts:106:15)
+      at pos/sync/sync.controller.ts:91:24
+      at Proxy._transactionWithCallback (../node_modules/@prisma/client/src/runtime/getPrismaClient.ts:722:18)
+      at SyncController.syncManagerData (pos/sync/sync.controller.ts:68:20)
+      at ../node_modules/@nestjs/core/router/router-execution-context.js:47:62
+      at ../node_modules/@nestjs/core/router/router-proxy.js:9:17
+
+    console.log
+      [SYNC] Syncing 1 categories...
+
+      at MenuSyncService.sync (pos/sync/snapshot/menu-sync.service.ts:450:13)
+
+    console.log
+      [Sync][MoneyDebug][IN] businessDate= dailySalesTotal=null openTablesPayable=null salesSummary.totalRevenue=null orders=0 tables=0
+
+      at IngestPosSnapshotService.execute (pos/sync/application/ingest-pos-snapshot.service.ts:136:13)
+
+    console.log
+      [SyncTiming][Backend] menu=3ms tables=0ms orders=0ms reservations=0ms businessDay=0ms reporting=0ms total=4ms rows=0t/0o/1c/0r/0e
+
+      at SyncTimer.log (pos/sync/sync-timing.ts:52:13)
+
+    console.warn
+      [Sync] manager-data received without posCallbackUrl — start Windows POS (ingest on :8081) so mobile edits reach Hive.
+
+    [0m [90m 104 |[39m     )[33m;[39m
+     [90m 105 |[39m     [36mif[39m ([33m![39m[36mthis[39m[33m.[39mposConnection[33m.[39mhasCallbackUrl()) {
+    [31m[1m>[22m[39m[90m 106 |[39m       console[33m.[39mwarn(
+     [90m     |[39m               [31m[1m^[22m[39m
+     [90m 107 |[39m         [32m'[Sync] manager-data received without posCallbackUrl — start Windows POS (ingest on :8081) so mobile edits reach Hive.'[39m[33m,[39m
+     [90m 108 |[39m       )[33m;[39m
+     [90m 109 |[39m     }[0m
+
+      at IngestPosSnapshotService.execute (pos/sync/application/ingest-pos-snapshot.service.ts:106:15)
+      at pos/sync/sync.controller.ts:91:24
+      at Proxy._transactionWithCallback (../node_modules/@prisma/client/src/runtime/getPrismaClient.ts:722:18)
+      at SyncController.syncManagerData (pos/sync/sync.controller.ts:68:20)
+      at ../node_modules/@nestjs/core/router/router-execution-context.js:47:62
+      at ../node_modules/@nestjs/core/router/router-proxy.js:9:17
+
+    console.log
+      [SYNC] Syncing 1 categories...
+
+      at MenuSyncService.sync (pos/sync/snapshot/menu-sync.service.ts:450:13)
+
+    console.log
+      [Sync][MoneyDebug][IN] businessDate= dailySalesTotal=null openTablesPayable=null salesSummary.totalRevenue=null orders=0 tables=0
+
+      at IngestPosSnapshotService.execute (pos/sync/application/ingest-pos-snapshot.service.ts:136:13)
+
+    console.log
+      [SyncTiming][Backend] menu=3ms tables=0ms orders=0ms reservations=0ms businessDay=0ms reporting=0ms total=4ms rows=0t/0o/1c/0r/0e
+
+      at SyncTimer.log (pos/sync/sync-timing.ts:52:13)
+
+    console.warn
+      [Sync] manager-data received without posCallbackUrl — start Windows POS (ingest on :8081) so mobile edits reach Hive.
+
+    [0m [90m 104 |[39m     )[33m;[39m
+     [90m 105 |[39m     [36mif[39m ([33m![39m[36mthis[39m[33m.[39mposConnection[33m.[39mhasCallbackUrl()) {
+    [31m[1m>[22m[39m[90m 106 |[39m       console[33m.[39mwarn(
+     [90m     |[39m               [31m[1m^[22m[39m
+     [90m 107 |[39m         [32m'[Sync] manager-data received without posCallbackUrl — start Windows POS (ingest on :8081) so mobile edits reach Hive.'[39m[33m,[39m
+     [90m 108 |[39m       )[33m;[39m
+     [90m 109 |[39m     }[0m
+
+      at IngestPosSnapshotService.execute (pos/sync/application/ingest-pos-snapshot.service.ts:106:15)
+      at pos/sync/sync.controller.ts:91:24
+      at Proxy._transactionWithCallback (../node_modules/@prisma/client/src/runtime/getPrismaClient.ts:722:18)
+      at SyncController.syncManagerData (pos/sync/sync.controller.ts:68:20)
+      at ../node_modules/@nestjs/core/router/router-execution-context.js:47:62
+      at ../node_modules/@nestjs/core/router/router-proxy.js:9:17
+
+    console.log
+      [SYNC] Syncing 1 categories...
+
+      at MenuSyncService.sync (pos/sync/snapshot/menu-sync.service.ts:450:13)
+
+    console.log
+      [Sync][MoneyDebug][IN] businessDate= dailySalesTotal=null openTablesPayable=null salesSummary.totalRevenue=null orders=0 tables=0
+
+      at IngestPosSnapshotService.execute (pos/sync/application/ingest-pos-snapshot.service.ts:136:13)
+
+    console.log
+      [SyncTiming][Backend] menu=3ms tables=0ms orders=0ms reservations=0ms businessDay=0ms reporting=0ms total=4ms rows=0t/0o/1c/0r/0e
+
+      at SyncTimer.log (pos/sync/sync-timing.ts:52:13)
+
+    console.warn
+      [Sync] manager-data received without posCallbackUrl — start Windows POS (ingest on :8081) so mobile edits reach Hive.
+
+    [0m [90m 104 |[39m     )[33m;[39m
+     [90m 105 |[39m     [36mif[39m ([33m![39m[36mthis[39m[33m.[39mposConnection[33m.[39mhasCallbackUrl()) {
+    [31m[1m>[22m[39m[90m 106 |[39m       console[33m.[39mwarn(
+     [90m     |[39m               [31m[1m^[22m[39m
+     [90m 107 |[39m         [32m'[Sync] manager-data received without posCallbackUrl — start Windows POS (ingest on :8081) so mobile edits reach Hive.'[39m[33m,[39m
+     [90m 108 |[39m       )[33m;[39m
+     [90m 109 |[39m     }[0m
+
+      at IngestPosSnapshotService.execute (pos/sync/application/ingest-pos-snapshot.service.ts:106:15)
+      at pos/sync/sync.controller.ts:91:24
+      at Proxy._transactionWithCallback (../node_modules/@prisma/client/src/runtime/getPrismaClient.ts:722:18)
+      at SyncController.syncManagerData (pos/sync/sync.controller.ts:68:20)
+      at ../node_modules/@nestjs/core/router/router-execution-context.js:47:62
+      at ../node_modules/@nestjs/core/router/router-proxy.js:9:17
+
+    console.log
+      [SYNC] Syncing 1 categories...
+
+      at MenuSyncService.sync (pos/sync/snapshot/menu-sync.service.ts:450:13)
+
+    console.log
+      [Sync][MoneyDebug][IN] businessDate= dailySalesTotal=null openTablesPayable=null salesSummary.totalRevenue=null orders=0 tables=0
+
+      at IngestPosSnapshotService.execute (pos/sync/application/ingest-pos-snapshot.service.ts:136:13)
+
+    console.log
+      [SyncTiming][Backend] menu=4ms tables=0ms orders=0ms reservations=0ms businessDay=0ms reporting=0ms total=4ms rows=0t/0o/1c/0r/0e
+
+      at SyncTimer.log (pos/sync/sync-timing.ts:52:13)
+
+    console.warn
+      [Sync] manager-data received without posCallbackUrl — start Windows POS (ingest on :8081) so mobile edits reach Hive.
+
+    [0m [90m 104 |[39m     )[33m;[39m
+     [90m 105 |[39m     [36mif[39m ([33m![39m[36mthis[39m[33m.[39mposConnection[33m.[39mhasCallbackUrl()) {
+    [31m[1m>[22m[39m[90m 106 |[39m       console[33m.[39mwarn(
+     [90m     |[39m               [31m[1m^[22m[39m
+     [90m 107 |[39m         [32m'[Sync] manager-data received without posCallbackUrl — start Windows POS (ingest on :8081) so mobile edits reach Hive.'[39m[33m,[39m
+     [90m 108 |[39m       )[33m;[39m
+     [90m 109 |[39m     }[0m
+
+      at IngestPosSnapshotService.execute (pos/sync/application/ingest-pos-snapshot.service.ts:106:15)
+      at pos/sync/sync.controller.ts:91:24
+      at Proxy._transactionWithCallback (../node_modules/@prisma/client/src/runtime/getPrismaClient.ts:722:18)
+      at SyncController.syncManagerData (pos/sync/sync.controller.ts:68:20)
+      at ../node_modules/@nestjs/core/router/router-execution-context.js:47:62
+      at ../node_modules/@nestjs/core/router/router-proxy.js:9:17
+
+    console.log
+      [SYNC] Syncing 1 categories...
+
+      at MenuSyncService.sync (pos/sync/snapshot/menu-sync.service.ts:450:13)
+
+    console.log
+      [Sync][MoneyDebug][IN] businessDate= dailySalesTotal=null openTablesPayable=null salesSummary.totalRevenue=null orders=0 tables=0
+
+      at IngestPosSnapshotService.execute (pos/sync/application/ingest-pos-snapshot.service.ts:136:13)
+
+    console.log
+      [SyncTiming][Backend] menu=3ms tables=0ms orders=0ms reservations=0ms businessDay=0ms reporting=0ms total=4ms rows=0t/0o/1c/0r/0e
+
+      at SyncTimer.log (pos/sync/sync-timing.ts:52:13)
+
+PASS src/auth/manager-activation.integration.spec.ts
+PASS src/mobile/services/mobile-users.service.spec.ts
+PASS src/pos/sync/application/ingest-pos-snapshot.characterization.spec.ts
+  ● Console
+
+    console.warn
+      [Sync] manager-data received without posCallbackUrl — start Windows POS (ingest on :8081) so mobile edits reach Hive.
+
+    [0m [90m 104 |[39m     )[33m;[39m
+     [90m 105 |[39m     [36mif[39m ([33m![39m[36mthis[39m[33m.[39mposConnection[33m.[39mhasCallbackUrl()) {
+    [31m[1m>[22m[39m[90m 106 |[39m       console[33m.[39mwarn(
+     [90m     |[39m               [31m[1m^[22m[39m
+     [90m 107 |[39m         [32m'[Sync] manager-data received without posCallbackUrl — start Windows POS (ingest on :8081) so mobile edits reach Hive.'[39m[33m,[39m
+     [90m 108 |[39m       )[33m;[39m
+     [90m 109 |[39m     }[0m
+
+      at IngestPosSnapshotService.execute (pos/sync/application/ingest-pos-snapshot.service.ts:106:15)
+      at Object.<anonymous> (pos/sync/application/ingest-pos-snapshot.characterization.spec.ts:250:20)
+
+    console.log
+      [Sync][MoneyDebug][IN] businessDate= dailySalesTotal=null openTablesPayable=null salesSummary.totalRevenue=null orders=0 tables=0
+
+      at IngestPosSnapshotService.execute (pos/sync/application/ingest-pos-snapshot.service.ts:136:13)
+
+    console.log
+      [SyncTiming][Backend] tables=0ms orders=0ms reservations=0ms businessDay=0ms reporting=0ms hints=0ms total=3ms rows=0t/0o/0c/0r/0e
+
+      at SyncTimer.log (pos/sync/sync-timing.ts:52:13)
+
+    console.warn
+      [Sync] manager-data received without posCallbackUrl — start Windows POS (ingest on :8081) so mobile edits reach Hive.
+
+    [0m [90m 104 |[39m     )[33m;[39m
+     [90m 105 |[39m     [36mif[39m ([33m![39m[36mthis[39m[33m.[39mposConnection[33m.[39mhasCallbackUrl()) {
+    [31m[1m>[22m[39m[90m 106 |[39m       console[33m.[39mwarn(
+     [90m     |[39m               [31m[1m^[22m[39m
+     [90m 107 |[39m         [32m'[Sync] manager-data received without posCallbackUrl — start Windows POS (ingest on :8081) so mobile edits reach Hive.'[39m[33m,[39m
+     [90m 108 |[39m       )[33m;[39m
+     [90m 109 |[39m     }[0m
+
+      at IngestPosSnapshotService.execute (pos/sync/application/ingest-pos-snapshot.service.ts:106:15)
+      at Object.<anonymous> (pos/sync/application/ingest-pos-snapshot.characterization.spec.ts:261:5)
+
+    console.log
+      [Sync][MoneyDebug][IN] businessDate= dailySalesTotal=null openTablesPayable=null salesSummary.totalRevenue=null orders=0 tables=0
+
+      at IngestPosSnapshotService.execute (pos/sync/application/ingest-pos-snapshot.service.ts:136:13)
+
+    console.log
+      [SyncTiming][Backend] tables=0ms orders=0ms reservations=0ms businessDay=0ms reporting=0ms hints=0ms total=0ms rows=0t/0o/0c/0r/0e
+
+      at SyncTimer.log (pos/sync/sync-timing.ts:52:13)
+
+    console.warn
+      [Sync] manager-data received without posCallbackUrl — start Windows POS (ingest on :8081) so mobile edits reach Hive.
+
+    [0m [90m 104 |[39m     )[33m;[39m
+     [90m 105 |[39m     [36mif[39m ([33m![39m[36mthis[39m[33m.[39mposConnection[33m.[39mhasCallbackUrl()) {
+    [31m[1m>[22m[39m[90m 106 |[39m       console[33m.[39mwarn(
+     [90m     |[39m               [31m[1m^[22m[39m
+     [90m 107 |[39m         [32m'[Sync] manager-data received without posCallbackUrl — start Windows POS (ingest on :8081) so mobile edits reach Hive.'[39m[33m,[39m
+     [90m 108 |[39m       )[33m;[39m
+     [90m 109 |[39m     }[0m
+
+      at IngestPosSnapshotService.execute (pos/sync/application/ingest-pos-snapshot.service.ts:106:15)
+      at Object.<anonymous> (pos/sync/application/ingest-pos-snapshot.characterization.spec.ts:273:5)
+
+    console.log
+      [SYNC] Syncing 1 categories...
+
+      at MenuSyncService.sync (pos/sync/snapshot/menu-sync.service.ts:450:13)
+
+    console.log
+      [Sync][MoneyDebug][IN] businessDate=2026-06-27 dailySalesTotal=null openTablesPayable=null salesSummary.totalRevenue=null orders=1 tables=1
+
+      at IngestPosSnapshotService.execute (pos/sync/application/ingest-pos-snapshot.service.ts:136:13)
+
+    console.log
+      Syncing 1 tables (hasAnyReserved=true, realtimeOnly=false)...
+
+      at TableSyncService.sync (pos/sync/snapshot/table-sync.service.ts:63:17)
+
+    console.log
+        Table 1/first → reserved (orderId=undefined)
+
+      at TableSyncService.sync (pos/sync/snapshot/table-sync.service.ts:72:21)
+
+    console.log
+      [Sync][MoneyDebug][STORE] key=openTablesPayable:2026-06-27 value=0
+
+      at BusinessDaySyncService.persistReportingSnapshot (pos/sync/snapshot/business-day-sync.service.ts:244:15)
+
+    console.log
+      [SyncTiming][Backend] menu=0ms tables=0ms orders=0ms expenses=0ms staff=193ms reservations=0ms businessDay=0ms reporting=2ms hints=0ms total=197ms rows=1t/1o/1c/0r/1e staff=1/1hashed
+
+      at SyncTimer.log (pos/sync/sync-timing.ts:52:13)
+
+    console.log
+      [Sync] POS callback URL registered: http://10.10.10.4:8081
+
+      at PosConnectionRegistry.register (pos/sync/pos-connection.registry.ts:95:17)
+
+    console.log
+      [Sync][MoneyDebug][IN] businessDate=2026-06-27 dailySalesTotal=400 openTablesPayable=null salesSummary.totalRevenue=400 orders=1 tables=1
+
+      at IngestPosSnapshotService.execute (pos/sync/application/ingest-pos-snapshot.service.ts:136:13)
+
+    console.log
+      Syncing 1 tables (hasAnyReserved=true, realtimeOnly=false)...
+
+      at TableSyncService.sync (pos/sync/snapshot/table-sync.service.ts:63:17)
+
+    console.log
+        Table 3/first → reserved (orderId=7)
+
+      at TableSyncService.sync (pos/sync/snapshot/table-sync.service.ts:72:21)
+
+    console.log
+      [Sync] Linked table 3/first → order #7 (open)
+
+      at OrderSyncService.sync (pos/sync/snapshot/order-sync.service.ts:238:21)
+
+    console.log
+      [Sync][MoneyDebug][STORE] key=openTablesPayable:2026-06-27 value=25
+
+      at BusinessDaySyncService.persistReportingSnapshot (pos/sync/snapshot/business-day-sync.service.ts:244:15)
+
+    console.log
+      [Sync][MoneyDebug][STORE] key=dailySalesTotal:2026-06-27 value=400
+
+      at BusinessDaySyncService.persistReportingSnapshot (pos/sync/snapshot/business-day-sync.service.ts:252:15)
+
+    console.log
+      [SyncTiming][Backend] tables=0ms orders=1ms expenses=0ms reservations=0ms businessDay=0ms reporting=0ms hints=0ms total=2ms rows=1t/1o/0c/0r/1e
+
+      at SyncTimer.log (pos/sync/sync-timing.ts:52:13)
+
+    console.log
+      [Sync] POS callback URL registered: http://10.10.10.4:8081
+
+      at PosConnectionRegistry.register (pos/sync/pos-connection.registry.ts:95:17)
+
+    console.log
+      [Sync][MoneyDebug][IN] businessDate= dailySalesTotal=null openTablesPayable=null salesSummary.totalRevenue=null orders=0 tables=0
+
+      at IngestPosSnapshotService.execute (pos/sync/application/ingest-pos-snapshot.service.ts:136:13)
+
+    console.log
+      [SyncTiming][Backend] tables=0ms orders=0ms reservations=0ms businessDay=0ms reporting=0ms hints=0ms total=0ms rows=0t/0o/0c/0r/0e
+
+      at SyncTimer.log (pos/sync/sync-timing.ts:52:13)
+
+    console.warn
+      [Sync] Ignoring POS callback URL (not a private/LAN address): http://evil.example.com/hook
+
+    [0m [90m 74 |[39m       [90m// SSRF guard: only accept a private/LAN POS address; never persist others.[39m
+     [90m 75 |[39m       [36mif[39m ([33m![39misAllowedPosCallbackUrl(trimmedUrl)) {
+    [31m[1m>[22m[39m[90m 76 |[39m         console[33m.[39mwarn(
+     [90m    |[39m                 [31m[1m^[22m[39m
+     [90m 77 |[39m           [32m`[Sync] Ignoring POS callback URL (not a private/LAN address): ${trimmedUrl}`[39m[33m,[39m
+     [90m 78 |[39m         )[33m;[39m
+     [90m 79 |[39m       } [36melse[39m {[0m
+
+      at PosConnectionRegistry.register (pos/sync/pos-connection.registry.ts:76:17)
+      at IngestPosSnapshotService.execute (pos/sync/application/ingest-pos-snapshot.service.ts:99:30)
+      at Object.sync (pos/sync/application/ingest-pos-snapshot.characterization.spec.ts:220:42)
+      at Object.<anonymous> (pos/sync/application/ingest-pos-snapshot.characterization.spec.ts:438:13)
+
+    console.warn
+      [Sync] manager-data received without posCallbackUrl — start Windows POS (ingest on :8081) so mobile edits reach Hive.
+
+    [0m [90m 104 |[39m     )[33m;[39m
+     [90m 105 |[39m     [36mif[39m ([33m![39m[36mthis[39m[33m.[39mposConnection[33m.[39mhasCallbackUrl()) {
+    [31m[1m>[22m[39m[90m 106 |[39m       console[33m.[39mwarn(
+     [90m     |[39m               [31m[1m^[22m[39m
+     [90m 107 |[39m         [32m'[Sync] manager-data received without posCallbackUrl — start Windows POS (ingest on :8081) so mobile edits reach Hive.'[39m[33m,[39m
+     [90m 108 |[39m       )[33m;[39m
+     [90m 109 |[39m     }[0m
+
+      at IngestPosSnapshotService.execute (pos/sync/application/ingest-pos-snapshot.service.ts:106:15)
+      at Object.<anonymous> (pos/sync/application/ingest-pos-snapshot.characterization.spec.ts:438:5)
+
+    console.log
+      [Sync][MoneyDebug][IN] businessDate= dailySalesTotal=null openTablesPayable=null salesSummary.totalRevenue=null orders=0 tables=0
+
+      at IngestPosSnapshotService.execute (pos/sync/application/ingest-pos-snapshot.service.ts:136:13)
+
+    console.log
+      [SyncTiming][Backend] tables=0ms orders=0ms reservations=0ms businessDay=0ms reporting=0ms hints=0ms total=0ms rows=0t/0o/0c/0r/0e
+
+      at SyncTimer.log (pos/sync/sync-timing.ts:52:13)
+
+    console.log
+      [SYNC] Realtime snapshot: 1 tables, 0 orders
+
+      at IngestPosSnapshotService.execute (pos/sync/application/ingest-pos-snapshot.service.ts:93:15)
+
+    console.warn
+      [Sync] manager-data received without posCallbackUrl — start Windows POS (ingest on :8081) so mobile edits reach Hive.
+
+    [0m [90m 104 |[39m     )[33m;[39m
+     [90m 105 |[39m     [36mif[39m ([33m![39m[36mthis[39m[33m.[39mposConnection[33m.[39mhasCallbackUrl()) {
+    [31m[1m>[22m[39m[90m 106 |[39m       console[33m.[39mwarn(
+     [90m     |[39m               [31m[1m^[22m[39m
+     [90m 107 |[39m         [32m'[Sync] manager-data received without posCallbackUrl — start Windows POS (ingest on :8081) so mobile edits reach Hive.'[39m[33m,[39m
+     [90m 108 |[39m       )[33m;[39m
+     [90m 109 |[39m     }[0m
+
+      at IngestPosSnapshotService.execute (pos/sync/application/ingest-pos-snapshot.service.ts:106:15)
+      at Object.<anonymous> (pos/sync/application/ingest-pos-snapshot.characterization.spec.ts:450:5)
+
+    console.log
+      [Sync][MoneyDebug][IN] businessDate=2026-06-27 dailySalesTotal=null openTablesPayable=null salesSummary.totalRevenue=null orders=0 tables=1
+
+      at IngestPosSnapshotService.execute (pos/sync/application/ingest-pos-snapshot.service.ts:136:13)
+
+    console.log
+      Syncing 1 tables (hasAnyReserved=false, realtimeOnly=true)...
+
+      at TableSyncService.sync (pos/sync/snapshot/table-sync.service.ts:63:17)
+
+    console.log
+      [Sync][MoneyDebug][STORE] key=openTablesPayable:2026-06-27 value=0
+
+      at BusinessDaySyncService.persistReportingSnapshot (pos/sync/snapshot/business-day-sync.service.ts:244:15)
+
+    console.log
+      [SyncTiming][Backend/realtime] tables=0ms orders=0ms businessDay=0ms reporting=0ms hints=0ms total=0ms rows=1t/0o/1c/0r/0e
+
+      at SyncTimer.log (pos/sync/sync-timing.ts:52:13)
+
+    console.warn
+      [Sync] manager-data received without posCallbackUrl — start Windows POS (ingest on :8081) so mobile edits reach Hive.
+
+    [0m [90m 104 |[39m     )[33m;[39m
+     [90m 105 |[39m     [36mif[39m ([33m![39m[36mthis[39m[33m.[39mposConnection[33m.[39mhasCallbackUrl()) {
+    [31m[1m>[22m[39m[90m 106 |[39m       console[33m.[39mwarn(
+     [90m     |[39m               [31m[1m^[22m[39m
+     [90m 107 |[39m         [32m'[Sync] manager-data received without posCallbackUrl — start Windows POS (ingest on :8081) so mobile edits reach Hive.'[39m[33m,[39m
+     [90m 108 |[39m       )[33m;[39m
+     [90m 109 |[39m     }[0m
+
+      at IngestPosSnapshotService.execute (pos/sync/application/ingest-pos-snapshot.service.ts:106:15)
+      at Object.<anonymous> (pos/sync/application/ingest-pos-snapshot.characterization.spec.ts:492:5)
+
+    console.log
+      [Sync][MoneyDebug][IN] businessDate= dailySalesTotal=null openTablesPayable=null salesSummary.totalRevenue=null orders=0 tables=1
+
+      at IngestPosSnapshotService.execute (pos/sync/application/ingest-pos-snapshot.service.ts:136:13)
+
+    console.log
+      Syncing 1 tables (hasAnyReserved=true, realtimeOnly=false)...
+
+      at TableSyncService.sync (pos/sync/snapshot/table-sync.service.ts:63:17)
+
+    console.log
+        Table 3/first → reserved (orderId=undefined)
+
+      at TableSyncService.sync (pos/sync/snapshot/table-sync.service.ts:72:21)
+
+    console.log
+      [SyncTiming][Backend] tables=0ms orders=0ms reservations=0ms businessDay=0ms reporting=0ms hints=0ms total=0ms rows=1t/0o/0c/0r/0e
+
+      at SyncTimer.log (pos/sync/sync-timing.ts:52:13)
+
+    console.warn
+      [Sync] manager-data received without posCallbackUrl — start Windows POS (ingest on :8081) so mobile edits reach Hive.
+
+    [0m [90m 104 |[39m     )[33m;[39m
+     [90m 105 |[39m     [36mif[39m ([33m![39m[36mthis[39m[33m.[39mposConnection[33m.[39mhasCallbackUrl()) {
+    [31m[1m>[22m[39m[90m 106 |[39m       console[33m.[39mwarn(
+     [90m     |[39m               [31m[1m^[22m[39m
+     [90m 107 |[39m         [32m'[Sync] manager-data received without posCallbackUrl — start Windows POS (ingest on :8081) so mobile edits reach Hive.'[39m[33m,[39m
+     [90m 108 |[39m       )[33m;[39m
+     [90m 109 |[39m     }[0m
+
+      at IngestPosSnapshotService.execute (pos/sync/application/ingest-pos-snapshot.service.ts:106:15)
+      at Object.<anonymous> (pos/sync/application/ingest-pos-snapshot.characterization.spec.ts:514:5)
+
+    console.log
+      [Sync][MoneyDebug][IN] businessDate= dailySalesTotal=null openTablesPayable=null salesSummary.totalRevenue=null orders=0 tables=1
+
+      at IngestPosSnapshotService.execute (pos/sync/application/ingest-pos-snapshot.service.ts:136:13)
+
+    console.log
+      Syncing 1 tables (hasAnyReserved=true, realtimeOnly=false)...
+
+      at TableSyncService.sync (pos/sync/snapshot/table-sync.service.ts:63:17)
+
+    console.log
+        Table 3/first → reserved (orderId=undefined)
+
+      at TableSyncService.sync (pos/sync/snapshot/table-sync.service.ts:72:21)
+
+    console.log
+      [SyncTiming][Backend] tables=0ms orders=0ms reservations=0ms businessDay=0ms reporting=0ms hints=0ms total=0ms rows=1t/0o/0c/0r/0e
+
+      at SyncTimer.log (pos/sync/sync-timing.ts:52:13)
+
+    console.warn
+      [Sync] manager-data received without posCallbackUrl — start Windows POS (ingest on :8081) so mobile edits reach Hive.
+
+    [0m [90m 104 |[39m     )[33m;[39m
+     [90m 105 |[39m     [36mif[39m ([33m![39m[36mthis[39m[33m.[39mposConnection[33m.[39mhasCallbackUrl()) {
+    [31m[1m>[22m[39m[90m 106 |[39m       console[33m.[39mwarn(
+     [90m     |[39m               [31m[1m^[22m[39m
+     [90m 107 |[39m         [32m'[Sync] manager-data received without posCallbackUrl — start Windows POS (ingest on :8081) so mobile edits reach Hive.'[39m[33m,[39m
+     [90m 108 |[39m       )[33m;[39m
+     [90m 109 |[39m     }[0m
+
+      at IngestPosSnapshotService.execute (pos/sync/application/ingest-pos-snapshot.service.ts:106:15)
+      at Object.<anonymous> (pos/sync/application/ingest-pos-snapshot.characterization.spec.ts:543:5)
+
+    console.log
+      [Sync][MoneyDebug][IN] businessDate= dailySalesTotal=null openTablesPayable=null salesSummary.totalRevenue=null orders=0 tables=1
+
+      at IngestPosSnapshotService.execute (pos/sync/application/ingest-pos-snapshot.service.ts:136:13)
+
+    console.log
+      Syncing 1 tables (hasAnyReserved=false, realtimeOnly=false)...
+
+      at TableSyncService.sync (pos/sync/snapshot/table-sync.service.ts:63:17)
+
+    console.log
+      [SyncTiming][Backend] tables=0ms orders=0ms reservations=0ms businessDay=0ms reporting=0ms hints=0ms total=0ms rows=1t/0o/0c/0r/0e
+
+      at SyncTimer.log (pos/sync/sync-timing.ts:52:13)
+
+    console.warn
+      [Sync] manager-data received without posCallbackUrl — start Windows POS (ingest on :8081) so mobile edits reach Hive.
+
+    [0m [90m 104 |[39m     )[33m;[39m
+     [90m 105 |[39m     [36mif[39m ([33m![39m[36mthis[39m[33m.[39mposConnection[33m.[39mhasCallbackUrl()) {
+    [31m[1m>[22m[39m[90m 106 |[39m       console[33m.[39mwarn(
+     [90m     |[39m               [31m[1m^[22m[39m
+     [90m 107 |[39m         [32m'[Sync] manager-data received without posCallbackUrl — start Windows POS (ingest on :8081) so mobile edits reach Hive.'[39m[33m,[39m
+     [90m 108 |[39m       )[33m;[39m
+     [90m 109 |[39m     }[0m
+
+      at IngestPosSnapshotService.execute (pos/sync/application/ingest-pos-snapshot.service.ts:106:15)
+      at Object.<anonymous> (pos/sync/application/ingest-pos-snapshot.characterization.spec.ts:562:5)
+
+    console.log
+      [Sync][MoneyDebug][IN] businessDate= dailySalesTotal=null openTablesPayable=null salesSummary.totalRevenue=null orders=0 tables=1
+
+      at IngestPosSnapshotService.execute (pos/sync/application/ingest-pos-snapshot.service.ts:136:13)
+
+    console.log
+      Syncing 1 tables (hasAnyReserved=true, realtimeOnly=false)...
+
+      at TableSyncService.sync (pos/sync/snapshot/table-sync.service.ts:63:17)
+
+    console.log
+        Table 3/first → reserved (orderId=undefined)
+
+      at TableSyncService.sync (pos/sync/snapshot/table-sync.service.ts:72:21)
+
+    console.log
+      [SyncTiming][Backend] tables=0ms orders=0ms reservations=0ms businessDay=0ms reporting=0ms hints=0ms total=0ms rows=1t/0o/0c/0r/0e
+
+      at SyncTimer.log (pos/sync/sync-timing.ts:52:13)
+
+    console.warn
+      [Sync] manager-data received without posCallbackUrl — start Windows POS (ingest on :8081) so mobile edits reach Hive.
+
+    [0m [90m 104 |[39m     )[33m;[39m
+     [90m 105 |[39m     [36mif[39m ([33m![39m[36mthis[39m[33m.[39mposConnection[33m.[39mhasCallbackUrl()) {
+    [31m[1m>[22m[39m[90m 106 |[39m       console[33m.[39mwarn(
+     [90m     |[39m               [31m[1m^[22m[39m
+     [90m 107 |[39m         [32m'[Sync] manager-data received without posCallbackUrl — start Windows POS (ingest on :8081) so mobile edits reach Hive.'[39m[33m,[39m
+     [90m 108 |[39m       )[33m;[39m
+     [90m 109 |[39m     }[0m
+
+      at IngestPosSnapshotService.execute (pos/sync/application/ingest-pos-snapshot.service.ts:106:15)
+      at Object.<anonymous> (pos/sync/application/ingest-pos-snapshot.characterization.spec.ts:586:5)
+
+    console.log
+      [Sync][MoneyDebug][IN] businessDate= dailySalesTotal=null openTablesPayable=null salesSummary.totalRevenue=null orders=0 tables=1
+
+      at IngestPosSnapshotService.execute (pos/sync/application/ingest-pos-snapshot.service.ts:136:13)
+
+    console.log
+      Syncing 1 tables (hasAnyReserved=true, realtimeOnly=false)...
+
+      at TableSyncService.sync (pos/sync/snapshot/table-sync.service.ts:63:17)
+
+    console.log
+        Table 3/first → reserved (orderId=undefined)
+
+      at TableSyncService.sync (pos/sync/snapshot/table-sync.service.ts:72:21)
+
+    console.warn
+      [Sync] manager-data received without posCallbackUrl — start Windows POS (ingest on :8081) so mobile edits reach Hive.
+
+    [0m [90m 104 |[39m     )[33m;[39m
+     [90m 105 |[39m     [36mif[39m ([33m![39m[36mthis[39m[33m.[39mposConnection[33m.[39mhasCallbackUrl()) {
+    [31m[1m>[22m[39m[90m 106 |[39m       console[33m.[39mwarn(
+     [90m     |[39m               [31m[1m^[22m[39m
+     [90m 107 |[39m         [32m'[Sync] manager-data received without posCallbackUrl — start Windows POS (ingest on :8081) so mobile edits reach Hive.'[39m[33m,[39m
+     [90m 108 |[39m       )[33m;[39m
+     [90m 109 |[39m     }[0m
+
+      at IngestPosSnapshotService.execute (pos/sync/application/ingest-pos-snapshot.service.ts:106:15)
+      at Object.<anonymous> (pos/sync/application/ingest-pos-snapshot.characterization.spec.ts:605:5)
+
+    console.log
+      [Sync][MoneyDebug][IN] businessDate= dailySalesTotal=null openTablesPayable=null salesSummary.totalRevenue=null orders=0 tables=1
+
+      at IngestPosSnapshotService.execute (pos/sync/application/ingest-pos-snapshot.service.ts:136:13)
+
+    console.log
+      Skipping table sync: DB has 2 reserved tables but POS sent 0. POS may be initializing.
+
+      at TableSyncService.sync (pos/sync/snapshot/table-sync.service.ts:58:17)
+
+    console.log
+      [SyncTiming][Backend] tables=0ms orders=0ms reservations=0ms businessDay=0ms reporting=0ms hints=0ms total=0ms rows=1t/0o/0c/0r/0e
+
+      at SyncTimer.log (pos/sync/sync-timing.ts:52:13)
+
+    console.log
+      [SYNC] Realtime snapshot: 1 tables, 0 orders
+
+      at IngestPosSnapshotService.execute (pos/sync/application/ingest-pos-snapshot.service.ts:93:15)
+
+    console.warn
+      [Sync] manager-data received without posCallbackUrl — start Windows POS (ingest on :8081) so mobile edits reach Hive.
+
+    [0m [90m 104 |[39m     )[33m;[39m
+     [90m 105 |[39m     [36mif[39m ([33m![39m[36mthis[39m[33m.[39mposConnection[33m.[39mhasCallbackUrl()) {
+    [31m[1m>[22m[39m[90m 106 |[39m       console[33m.[39mwarn(
+     [90m     |[39m               [31m[1m^[22m[39m
+     [90m 107 |[39m         [32m'[Sync] manager-data received without posCallbackUrl — start Windows POS (ingest on :8081) so mobile edits reach Hive.'[39m[33m,[39m
+     [90m 108 |[39m       )[33m;[39m
+     [90m 109 |[39m     }[0m
+
+      at IngestPosSnapshotService.execute (pos/sync/application/ingest-pos-snapshot.service.ts:106:15)
+      at Object.<anonymous> (pos/sync/application/ingest-pos-snapshot.characterization.spec.ts:616:5)
+
+    console.log
+      [Sync][MoneyDebug][IN] businessDate= dailySalesTotal=null openTablesPayable=null salesSummary.totalRevenue=null orders=0 tables=1
+
+      at IngestPosSnapshotService.execute (pos/sync/application/ingest-pos-snapshot.service.ts:136:13)
+
+    console.log
+      Syncing 1 tables (hasAnyReserved=false, realtimeOnly=true)...
+
+      at TableSyncService.sync (pos/sync/snapshot/table-sync.service.ts:63:17)
+
+    console.log
+      [SyncTiming][Backend/realtime] tables=0ms orders=0ms businessDay=0ms reporting=0ms hints=0ms total=0ms rows=1t/0o/0c/0r/0e
+
+      at SyncTimer.log (pos/sync/sync-timing.ts:52:13)
+
+    console.warn
+      [Sync] manager-data received without posCallbackUrl — start Windows POS (ingest on :8081) so mobile edits reach Hive.
+
+    [0m [90m 104 |[39m     )[33m;[39m
+     [90m 105 |[39m     [36mif[39m ([33m![39m[36mthis[39m[33m.[39mposConnection[33m.[39mhasCallbackUrl()) {
+    [31m[1m>[22m[39m[90m 106 |[39m       console[33m.[39mwarn(
+     [90m     |[39m               [31m[1m^[22m[39m
+     [90m 107 |[39m         [32m'[Sync] manager-data received without posCallbackUrl — start Windows POS (ingest on :8081) so mobile edits reach Hive.'[39m[33m,[39m
+     [90m 108 |[39m       )[33m;[39m
+     [90m 109 |[39m     }[0m
+
+      at IngestPosSnapshotService.execute (pos/sync/application/ingest-pos-snapshot.service.ts:106:15)
+      at Object.<anonymous> (pos/sync/application/ingest-pos-snapshot.characterization.spec.ts:628:5)
+
+    console.log
+      [Sync][MoneyDebug][IN] businessDate= dailySalesTotal=null openTablesPayable=null salesSummary.totalRevenue=null orders=0 tables=1
+
+      at IngestPosSnapshotService.execute (pos/sync/application/ingest-pos-snapshot.service.ts:136:13)
+
+    console.log
+      Syncing 1 tables (hasAnyReserved=true, realtimeOnly=false)...
+
+      at TableSyncService.sync (pos/sync/snapshot/table-sync.service.ts:63:17)
+
+    console.log
+        Table 4/second → reserved (orderId=12)
+
+      at TableSyncService.sync (pos/sync/snapshot/table-sync.service.ts:72:21)
+
+    console.log
+      [SyncTiming][Backend] tables=0ms orders=0ms reservations=0ms businessDay=0ms reporting=0ms hints=0ms total=0ms rows=1t/0o/0c/0r/0e
+
+      at SyncTimer.log (pos/sync/sync-timing.ts:52:13)
+
+    console.warn
+      [Sync] manager-data received without posCallbackUrl — start Windows POS (ingest on :8081) so mobile edits reach Hive.
+
+    [0m [90m 104 |[39m     )[33m;[39m
+     [90m 105 |[39m     [36mif[39m ([33m![39m[36mthis[39m[33m.[39mposConnection[33m.[39mhasCallbackUrl()) {
+    [31m[1m>[22m[39m[90m 106 |[39m       console[33m.[39mwarn(
+     [90m     |[39m               [31m[1m^[22m[39m
+     [90m 107 |[39m         [32m'[Sync] manager-data received without posCallbackUrl — start Windows POS (ingest on :8081) so mobile edits reach Hive.'[39m[33m,[39m
+     [90m 108 |[39m       )[33m;[39m
+     [90m 109 |[39m     }[0m
+
+      at IngestPosSnapshotService.execute (pos/sync/application/ingest-pos-snapshot.service.ts:106:15)
+      at Object.<anonymous> (pos/sync/application/ingest-pos-snapshot.characterization.spec.ts:651:5)
+
+    console.log
+      [Sync][MoneyDebug][IN] businessDate= dailySalesTotal=null openTablesPayable=null salesSummary.totalRevenue=null orders=0 tables=2
+
+      at IngestPosSnapshotService.execute (pos/sync/application/ingest-pos-snapshot.service.ts:136:13)
+
+    console.log
+      Syncing 2 tables (hasAnyReserved=true, realtimeOnly=false)...
+
+      at TableSyncService.sync (pos/sync/snapshot/table-sync.service.ts:63:17)
+
+    console.log
+        Table 4/second → reserved (orderId=undefined)
+
+      at TableSyncService.sync (pos/sync/snapshot/table-sync.service.ts:72:21)
+
+    console.log
+      [SyncTiming][Backend] tables=0ms orders=0ms reservations=0ms businessDay=0ms reporting=0ms hints=0ms total=0ms rows=2t/0o/0c/0r/0e
+
+      at SyncTimer.log (pos/sync/sync-timing.ts:52:13)
+
+    console.warn
+      [Sync] manager-data received without posCallbackUrl — start Windows POS (ingest on :8081) so mobile edits reach Hive.
+
+    [0m [90m 104 |[39m     )[33m;[39m
+     [90m 105 |[39m     [36mif[39m ([33m![39m[36mthis[39m[33m.[39mposConnection[33m.[39mhasCallbackUrl()) {
+    [31m[1m>[22m[39m[90m 106 |[39m       console[33m.[39mwarn(
+     [90m     |[39m               [31m[1m^[22m[39m
+     [90m 107 |[39m         [32m'[Sync] manager-data received without posCallbackUrl — start Windows POS (ingest on :8081) so mobile edits reach Hive.'[39m[33m,[39m
+     [90m 108 |[39m       )[33m;[39m
+     [90m 109 |[39m     }[0m
+
+      at IngestPosSnapshotService.execute (pos/sync/application/ingest-pos-snapshot.service.ts:106:15)
+      at Object.<anonymous> (pos/sync/application/ingest-pos-snapshot.characterization.spec.ts:679:5)
+
+    console.log
+      [Sync][MoneyDebug][IN] businessDate= dailySalesTotal=null openTablesPayable=null salesSummary.totalRevenue=null orders=0 tables=0
+
+      at IngestPosSnapshotService.execute (pos/sync/application/ingest-pos-snapshot.service.ts:136:13)
+
+    console.log
+      Skipping table sync: empty tables array received (POS may be initializing)
+
+      at TableSyncService.sync (pos/sync/snapshot/table-sync.service.ts:97:15)
+
+    console.log
+      [SyncTiming][Backend] tables=0ms orders=0ms reservations=0ms businessDay=0ms reporting=0ms hints=0ms total=0ms rows=0t/0o/0c/0r/0e
+
+      at SyncTimer.log (pos/sync/sync-timing.ts:52:13)
+
+    console.warn
+      [Sync] manager-data received without posCallbackUrl — start Windows POS (ingest on :8081) so mobile edits reach Hive.
+
+    [0m [90m 104 |[39m     )[33m;[39m
+     [90m 105 |[39m     [36mif[39m ([33m![39m[36mthis[39m[33m.[39mposConnection[33m.[39mhasCallbackUrl()) {
+    [31m[1m>[22m[39m[90m 106 |[39m       console[33m.[39mwarn(
+     [90m     |[39m               [31m[1m^[22m[39m
+     [90m 107 |[39m         [32m'[Sync] manager-data received without posCallbackUrl — start Windows POS (ingest on :8081) so mobile edits reach Hive.'[39m[33m,[39m
+     [90m 108 |[39m       )[33m;[39m
+     [90m 109 |[39m     }[0m
+
+      at IngestPosSnapshotService.execute (pos/sync/application/ingest-pos-snapshot.service.ts:106:15)
+      at Object.<anonymous> (pos/sync/application/ingest-pos-snapshot.characterization.spec.ts:691:5)
+
+    console.log
+      [Sync][MoneyDebug][IN] businessDate= dailySalesTotal=null openTablesPayable=null salesSummary.totalRevenue=null orders=1 tables=0
+
+      at IngestPosSnapshotService.execute (pos/sync/application/ingest-pos-snapshot.service.ts:136:13)
+
+    console.log
+      [SyncTiming][Backend] tables=0ms orders=0ms reservations=0ms businessDay=0ms reporting=0ms hints=0ms total=0ms rows=0t/1o/0c/0r/0e
+
+      at SyncTimer.log (pos/sync/sync-timing.ts:52:13)
+
+    console.warn
+      [Sync] manager-data received without posCallbackUrl — start Windows POS (ingest on :8081) so mobile edits reach Hive.
+
+    [0m [90m 104 |[39m     )[33m;[39m
+     [90m 105 |[39m     [36mif[39m ([33m![39m[36mthis[39m[33m.[39mposConnection[33m.[39mhasCallbackUrl()) {
+    [31m[1m>[22m[39m[90m 106 |[39m       console[33m.[39mwarn(
+     [90m     |[39m               [31m[1m^[22m[39m
+     [90m 107 |[39m         [32m'[Sync] manager-data received without posCallbackUrl — start Windows POS (ingest on :8081) so mobile edits reach Hive.'[39m[33m,[39m
+     [90m 108 |[39m       )[33m;[39m
+     [90m 109 |[39m     }[0m
+
+      at IngestPosSnapshotService.execute (pos/sync/application/ingest-pos-snapshot.service.ts:106:15)
+      at Object.<anonymous> (pos/sync/application/ingest-pos-snapshot.characterization.spec.ts:723:5)
+
+    console.log
+      [Sync][MoneyDebug][IN] businessDate= dailySalesTotal=null openTablesPayable=null salesSummary.totalRevenue=null orders=1 tables=0
+
+      at IngestPosSnapshotService.execute (pos/sync/application/ingest-pos-snapshot.service.ts:136:13)
+
+    console.log
+      [Sync] Linked table 6/first → order #9 (open)
+
+      at OrderSyncService.sync (pos/sync/snapshot/order-sync.service.ts:238:21)
+
+    console.log
+      [SyncTiming][Backend] tables=0ms orders=0ms reservations=0ms businessDay=0ms reporting=0ms hints=0ms total=0ms rows=0t/1o/0c/0r/0e
+
+      at SyncTimer.log (pos/sync/sync-timing.ts:52:13)
+
+    console.warn
+      [Sync] manager-data received without posCallbackUrl — start Windows POS (ingest on :8081) so mobile edits reach Hive.
+
+    [0m [90m 104 |[39m     )[33m;[39m
+     [90m 105 |[39m     [36mif[39m ([33m![39m[36mthis[39m[33m.[39mposConnection[33m.[39mhasCallbackUrl()) {
+    [31m[1m>[22m[39m[90m 106 |[39m       console[33m.[39mwarn(
+     [90m     |[39m               [31m[1m^[22m[39m
+     [90m 107 |[39m         [32m'[Sync] manager-data received without posCallbackUrl — start Windows POS (ingest on :8081) so mobile edits reach Hive.'[39m[33m,[39m
+     [90m 108 |[39m       )[33m;[39m
+     [90m 109 |[39m     }[0m
+
+      at IngestPosSnapshotService.execute (pos/sync/application/ingest-pos-snapshot.service.ts:106:15)
+      at Object.<anonymous> (pos/sync/application/ingest-pos-snapshot.characterization.spec.ts:758:5)
+
+    console.log
+      [Sync][MoneyDebug][IN] businessDate= dailySalesTotal=null openTablesPayable=null salesSummary.totalRevenue=null orders=1 tables=0
+
+      at IngestPosSnapshotService.execute (pos/sync/application/ingest-pos-snapshot.service.ts:136:13)
+
+    console.log
+      [Sync] Linked table 6/first → order #9 (open)
+
+      at OrderSyncService.sync (pos/sync/snapshot/order-sync.service.ts:238:21)
+
+    console.log
+      [SyncTiming][Backend] tables=0ms orders=0ms reservations=0ms businessDay=0ms reporting=0ms hints=0ms total=0ms rows=0t/1o/0c/0r/0e
+
+      at SyncTimer.log (pos/sync/sync-timing.ts:52:13)
+
+    console.warn
+      [Sync] manager-data received without posCallbackUrl — start Windows POS (ingest on :8081) so mobile edits reach Hive.
+
+    [0m [90m 104 |[39m     )[33m;[39m
+     [90m 105 |[39m     [36mif[39m ([33m![39m[36mthis[39m[33m.[39mposConnection[33m.[39mhasCallbackUrl()) {
+    [31m[1m>[22m[39m[90m 106 |[39m       console[33m.[39mwarn(
+     [90m     |[39m               [31m[1m^[22m[39m
+     [90m 107 |[39m         [32m'[Sync] manager-data received without posCallbackUrl — start Windows POS (ingest on :8081) so mobile edits reach Hive.'[39m[33m,[39m
+     [90m 108 |[39m       )[33m;[39m
+     [90m 109 |[39m     }[0m
+
+      at IngestPosSnapshotService.execute (pos/sync/application/ingest-pos-snapshot.service.ts:106:15)
+      at Object.<anonymous> (pos/sync/application/ingest-pos-snapshot.characterization.spec.ts:784:5)
+
+    console.log
+      [Sync][MoneyDebug][IN] businessDate= dailySalesTotal=null openTablesPayable=null salesSummary.totalRevenue=null orders=1 tables=0
+
+      at IngestPosSnapshotService.execute (pos/sync/application/ingest-pos-snapshot.service.ts:136:13)
+
+    console.log
+      [SyncTiming][Backend] tables=0ms orders=0ms reservations=0ms businessDay=0ms reporting=0ms hints=0ms total=0ms rows=0t/1o/0c/0r/0e
+
+      at SyncTimer.log (pos/sync/sync-timing.ts:52:13)
+
+    console.warn
+      [Sync] manager-data received without posCallbackUrl — start Windows POS (ingest on :8081) so mobile edits reach Hive.
+
+    [0m [90m 104 |[39m     )[33m;[39m
+     [90m 105 |[39m     [36mif[39m ([33m![39m[36mthis[39m[33m.[39mposConnection[33m.[39mhasCallbackUrl()) {
+    [31m[1m>[22m[39m[90m 106 |[39m       console[33m.[39mwarn(
+     [90m     |[39m               [31m[1m^[22m[39m
+     [90m 107 |[39m         [32m'[Sync] manager-data received without posCallbackUrl — start Windows POS (ingest on :8081) so mobile edits reach Hive.'[39m[33m,[39m
+     [90m 108 |[39m       )[33m;[39m
+     [90m 109 |[39m     }[0m
+
+      at IngestPosSnapshotService.execute (pos/sync/application/ingest-pos-snapshot.service.ts:106:15)
+      at pos/sync/application/ingest-pos-snapshot.characterization.spec.ts:807:7
+
+    console.log
+      [Sync][MoneyDebug][IN] businessDate= dailySalesTotal=null openTablesPayable=null salesSummary.totalRevenue=null orders=1 tables=0
+
+      at IngestPosSnapshotService.execute (pos/sync/application/ingest-pos-snapshot.service.ts:136:13)
+
+    console.log
+      [Sync] Freed table 6/first (order #9 paid)
+
+      at OrderSyncService.sync (pos/sync/snapshot/order-sync.service.ts:267:23)
+
+    console.log
+      [SyncTiming][Backend] tables=0ms orders=0ms reservations=0ms businessDay=0ms reporting=0ms hints=0ms total=0ms rows=0t/1o/0c/0r/0e
+
+      at SyncTimer.log (pos/sync/sync-timing.ts:52:13)
+
+    console.warn
+      [Sync] manager-data received without posCallbackUrl — start Windows POS (ingest on :8081) so mobile edits reach Hive.
+
+    [0m [90m 104 |[39m     )[33m;[39m
+     [90m 105 |[39m     [36mif[39m ([33m![39m[36mthis[39m[33m.[39mposConnection[33m.[39mhasCallbackUrl()) {
+    [31m[1m>[22m[39m[90m 106 |[39m       console[33m.[39mwarn(
+     [90m     |[39m               [31m[1m^[22m[39m
+     [90m 107 |[39m         [32m'[Sync] manager-data received without posCallbackUrl — start Windows POS (ingest on :8081) so mobile edits reach Hive.'[39m[33m,[39m
+     [90m 108 |[39m       )[33m;[39m
+     [90m 109 |[39m     }[0m
+
+      at IngestPosSnapshotService.execute (pos/sync/application/ingest-pos-snapshot.service.ts:106:15)
+      at pos/sync/application/ingest-pos-snapshot.characterization.spec.ts:807:7
+
+    console.log
+      [Sync][MoneyDebug][IN] businessDate= dailySalesTotal=null openTablesPayable=null salesSummary.totalRevenue=null orders=1 tables=0
+
+      at IngestPosSnapshotService.execute (pos/sync/application/ingest-pos-snapshot.service.ts:136:13)
+
+    console.log
+      [Sync] Freed table 6/first (order #9 closed)
+
+      at OrderSyncService.sync (pos/sync/snapshot/order-sync.service.ts:267:23)
+
+    console.log
+      [SyncTiming][Backend] tables=0ms orders=0ms reservations=0ms businessDay=0ms reporting=0ms hints=0ms total=0ms rows=0t/1o/0c/0r/0e
+
+      at SyncTimer.log (pos/sync/sync-timing.ts:52:13)
+
+    console.warn
+      [Sync] manager-data received without posCallbackUrl — start Windows POS (ingest on :8081) so mobile edits reach Hive.
+
+    [0m [90m 104 |[39m     )[33m;[39m
+     [90m 105 |[39m     [36mif[39m ([33m![39m[36mthis[39m[33m.[39mposConnection[33m.[39mhasCallbackUrl()) {
+    [31m[1m>[22m[39m[90m 106 |[39m       console[33m.[39mwarn(
+     [90m     |[39m               [31m[1m^[22m[39m
+     [90m 107 |[39m         [32m'[Sync] manager-data received without posCallbackUrl — start Windows POS (ingest on :8081) so mobile edits reach Hive.'[39m[33m,[39m
+     [90m 108 |[39m       )[33m;[39m
+     [90m 109 |[39m     }[0m
+
+      at IngestPosSnapshotService.execute (pos/sync/application/ingest-pos-snapshot.service.ts:106:15)
+      at pos/sync/application/ingest-pos-snapshot.characterization.spec.ts:807:7
+
+    console.log
+      [Sync][MoneyDebug][IN] businessDate= dailySalesTotal=null openTablesPayable=null salesSummary.totalRevenue=null orders=1 tables=0
+
+      at IngestPosSnapshotService.execute (pos/sync/application/ingest-pos-snapshot.service.ts:136:13)
+
+    console.log
+      [Sync] Freed table 6/first (order #9 cancelled)
+
+      at OrderSyncService.sync (pos/sync/snapshot/order-sync.service.ts:267:23)
+
+    console.log
+      [SyncTiming][Backend] tables=0ms orders=0ms reservations=0ms businessDay=0ms reporting=0ms hints=0ms total=0ms rows=0t/1o/0c/0r/0e
+
+      at SyncTimer.log (pos/sync/sync-timing.ts:52:13)
+
+    console.warn
+      [Sync] manager-data received without posCallbackUrl — start Windows POS (ingest on :8081) so mobile edits reach Hive.
+
+    [0m [90m 104 |[39m     )[33m;[39m
+     [90m 105 |[39m     [36mif[39m ([33m![39m[36mthis[39m[33m.[39mposConnection[33m.[39mhasCallbackUrl()) {
+    [31m[1m>[22m[39m[90m 106 |[39m       console[33m.[39mwarn(
+     [90m     |[39m               [31m[1m^[22m[39m
+     [90m 107 |[39m         [32m'[Sync] manager-data received without posCallbackUrl — start Windows POS (ingest on :8081) so mobile edits reach Hive.'[39m[33m,[39m
+     [90m 108 |[39m       )[33m;[39m
+     [90m 109 |[39m     }[0m
+
+      at IngestPosSnapshotService.execute (pos/sync/application/ingest-pos-snapshot.service.ts:106:15)
+      at Object.<anonymous> (pos/sync/application/ingest-pos-snapshot.characterization.spec.ts:841:5)
+
+    console.log
+      [Sync][MoneyDebug][IN] businessDate= dailySalesTotal=null openTablesPayable=null salesSummary.totalRevenue=null orders=1 tables=0
+
+      at IngestPosSnapshotService.execute (pos/sync/application/ingest-pos-snapshot.service.ts:136:13)
+
+    console.log
+      [SyncTiming][Backend] tables=0ms orders=0ms reservations=0ms businessDay=0ms reporting=0ms hints=0ms total=0ms rows=0t/1o/0c/0r/0e
+
+      at SyncTimer.log (pos/sync/sync-timing.ts:52:13)
+
+    console.warn
+      [Sync] manager-data received without posCallbackUrl — start Windows POS (ingest on :8081) so mobile edits reach Hive.
+
+    [0m [90m 104 |[39m     )[33m;[39m
+     [90m 105 |[39m     [36mif[39m ([33m![39m[36mthis[39m[33m.[39mposConnection[33m.[39mhasCallbackUrl()) {
+    [31m[1m>[22m[39m[90m 106 |[39m       console[33m.[39mwarn(
+     [90m     |[39m               [31m[1m^[22m[39m
+     [90m 107 |[39m         [32m'[Sync] manager-data received without posCallbackUrl — start Windows POS (ingest on :8081) so mobile edits reach Hive.'[39m[33m,[39m
+     [90m 108 |[39m       )[33m;[39m
+     [90m 109 |[39m     }[0m
+
+      at IngestPosSnapshotService.execute (pos/sync/application/ingest-pos-snapshot.service.ts:106:15)
+      at Object.<anonymous> (pos/sync/application/ingest-pos-snapshot.characterization.spec.ts:861:5)
+
+    console.log
+      [Sync][MoneyDebug][IN] businessDate= dailySalesTotal=null openTablesPayable=null salesSummary.totalRevenue=null orders=2 tables=0
+
+      at IngestPosSnapshotService.execute (pos/sync/application/ingest-pos-snapshot.service.ts:136:13)
+
+    console.log
+      [SyncTiming][Backend] tables=0ms orders=0ms reservations=0ms businessDay=0ms reporting=0ms hints=0ms total=0ms rows=0t/2o/0c/0r/0e
+
+      at SyncTimer.log (pos/sync/sync-timing.ts:52:13)
+
+    console.warn
+      [Sync] manager-data received without posCallbackUrl — start Windows POS (ingest on :8081) so mobile edits reach Hive.
+
+    [0m [90m 104 |[39m     )[33m;[39m
+     [90m 105 |[39m     [36mif[39m ([33m![39m[36mthis[39m[33m.[39mposConnection[33m.[39mhasCallbackUrl()) {
+    [31m[1m>[22m[39m[90m 106 |[39m       console[33m.[39mwarn(
+     [90m     |[39m               [31m[1m^[22m[39m
+     [90m 107 |[39m         [32m'[Sync] manager-data received without posCallbackUrl — start Windows POS (ingest on :8081) so mobile edits reach Hive.'[39m[33m,[39m
+     [90m 108 |[39m       )[33m;[39m
+     [90m 109 |[39m     }[0m
+
+      at IngestPosSnapshotService.execute (pos/sync/application/ingest-pos-snapshot.service.ts:106:15)
+      at Object.<anonymous> (pos/sync/application/ingest-pos-snapshot.characterization.spec.ts:886:5)
+
+    console.log
+      [Sync][MoneyDebug][IN] businessDate=2026-06-27 dailySalesTotal=null openTablesPayable=null salesSummary.totalRevenue=null orders=1 tables=0
+
+      at IngestPosSnapshotService.execute (pos/sync/application/ingest-pos-snapshot.service.ts:136:13)
+
+    console.log
+      [Sync][MoneyDebug][STORE] key=openTablesPayable:2026-06-27 value=0
+
+      at BusinessDaySyncService.persistReportingSnapshot (pos/sync/snapshot/business-day-sync.service.ts:244:15)
+
+    console.log
+      [SyncTiming][Backend] tables=0ms orders=0ms reservations=0ms businessDay=0ms reporting=0ms hints=0ms total=0ms rows=0t/1o/0c/0r/0e
+
+      at SyncTimer.log (pos/sync/sync-timing.ts:52:13)
+
+    console.warn
+      [Sync] manager-data received without posCallbackUrl — start Windows POS (ingest on :8081) so mobile edits reach Hive.
+
+    [0m [90m 104 |[39m     )[33m;[39m
+     [90m 105 |[39m     [36mif[39m ([33m![39m[36mthis[39m[33m.[39mposConnection[33m.[39mhasCallbackUrl()) {
+    [31m[1m>[22m[39m[90m 106 |[39m       console[33m.[39mwarn(
+     [90m     |[39m               [31m[1m^[22m[39m
+     [90m 107 |[39m         [32m'[Sync] manager-data received without posCallbackUrl — start Windows POS (ingest on :8081) so mobile edits reach Hive.'[39m[33m,[39m
+     [90m 108 |[39m       )[33m;[39m
+     [90m 109 |[39m     }[0m
+
+      at IngestPosSnapshotService.execute (pos/sync/application/ingest-pos-snapshot.service.ts:106:15)
+      at Object.<anonymous> (pos/sync/application/ingest-pos-snapshot.characterization.spec.ts:916:5)
+
+    console.log
+      [Sync][MoneyDebug][IN] businessDate=2026-06-27 dailySalesTotal=null openTablesPayable=null salesSummary.totalRevenue=null orders=1 tables=0
+
+      at IngestPosSnapshotService.execute (pos/sync/application/ingest-pos-snapshot.service.ts:136:13)
+
+    console.log
+      [Sync][MoneyDebug][STORE] key=openTablesPayable:2026-06-27 value=0
+
+      at BusinessDaySyncService.persistReportingSnapshot (pos/sync/snapshot/business-day-sync.service.ts:244:15)
+
+    console.log
+      [SyncTiming][Backend] tables=0ms orders=0ms reservations=0ms businessDay=0ms reporting=0ms hints=0ms total=0ms rows=0t/1o/0c/0r/0e
+
+      at SyncTimer.log (pos/sync/sync-timing.ts:52:13)
+
+    console.warn
+      [Sync] manager-data received without posCallbackUrl — start Windows POS (ingest on :8081) so mobile edits reach Hive.
+
+    [0m [90m 104 |[39m     )[33m;[39m
+     [90m 105 |[39m     [36mif[39m ([33m![39m[36mthis[39m[33m.[39mposConnection[33m.[39mhasCallbackUrl()) {
+    [31m[1m>[22m[39m[90m 106 |[39m       console[33m.[39mwarn(
+     [90m     |[39m               [31m[1m^[22m[39m
+     [90m 107 |[39m         [32m'[Sync] manager-data received without posCallbackUrl — start Windows POS (ingest on :8081) so mobile edits reach Hive.'[39m[33m,[39m
+     [90m 108 |[39m       )[33m;[39m
+     [90m 109 |[39m     }[0m
+
+      at IngestPosSnapshotService.execute (pos/sync/application/ingest-pos-snapshot.service.ts:106:15)
+      at Object.<anonymous> (pos/sync/application/ingest-pos-snapshot.characterization.spec.ts:949:5)
+
+    console.log
+      [Sync][MoneyDebug][IN] businessDate= dailySalesTotal=null openTablesPayable=null salesSummary.totalRevenue=null orders=1 tables=0
+
+      at IngestPosSnapshotService.execute (pos/sync/application/ingest-pos-snapshot.service.ts:136:13)
+
+    console.log
+      [SyncTiming][Backend] tables=0ms orders=0ms reservations=0ms businessDay=0ms reporting=0ms hints=0ms total=0ms rows=0t/1o/0c/0r/0e
+
+      at SyncTimer.log (pos/sync/sync-timing.ts:52:13)
+
+    console.warn
+      [Sync] manager-data received without posCallbackUrl — start Windows POS (ingest on :8081) so mobile edits reach Hive.
+
+    [0m [90m 104 |[39m     )[33m;[39m
+     [90m 105 |[39m     [36mif[39m ([33m![39m[36mthis[39m[33m.[39mposConnection[33m.[39mhasCallbackUrl()) {
+    [31m[1m>[22m[39m[90m 106 |[39m       console[33m.[39mwarn(
+     [90m     |[39m               [31m[1m^[22m[39m
+     [90m 107 |[39m         [32m'[Sync] manager-data received without posCallbackUrl — start Windows POS (ingest on :8081) so mobile edits reach Hive.'[39m[33m,[39m
+     [90m 108 |[39m       )[33m;[39m
+     [90m 109 |[39m     }[0m
+
+      at IngestPosSnapshotService.execute (pos/sync/application/ingest-pos-snapshot.service.ts:106:15)
+      at Object.<anonymous> (pos/sync/application/ingest-pos-snapshot.characterization.spec.ts:971:5)
+
+    console.log
+      [SYNC] Syncing 1 categories...
+
+      at MenuSyncService.sync (pos/sync/snapshot/menu-sync.service.ts:450:13)
+
+    console.log
+      [Sync][MoneyDebug][IN] businessDate= dailySalesTotal=null openTablesPayable=null salesSummary.totalRevenue=null orders=0 tables=0
+
+      at IngestPosSnapshotService.execute (pos/sync/application/ingest-pos-snapshot.service.ts:136:13)
+
+    console.log
+      [SyncTiming][Backend] menu=0ms tables=0ms orders=0ms reservations=0ms businessDay=0ms reporting=0ms hints=0ms total=0ms rows=0t/0o/1c/0r/0e
+
+      at SyncTimer.log (pos/sync/sync-timing.ts:52:13)
+
+    console.warn
+      [Sync] manager-data received without posCallbackUrl — start Windows POS (ingest on :8081) so mobile edits reach Hive.
+
+    [0m [90m 104 |[39m     )[33m;[39m
+     [90m 105 |[39m     [36mif[39m ([33m![39m[36mthis[39m[33m.[39mposConnection[33m.[39mhasCallbackUrl()) {
+    [31m[1m>[22m[39m[90m 106 |[39m       console[33m.[39mwarn(
+     [90m     |[39m               [31m[1m^[22m[39m
+     [90m 107 |[39m         [32m'[Sync] manager-data received without posCallbackUrl — start Windows POS (ingest on :8081) so mobile edits reach Hive.'[39m[33m,[39m
+     [90m 108 |[39m       )[33m;[39m
+     [90m 109 |[39m     }[0m
+
+      at IngestPosSnapshotService.execute (pos/sync/application/ingest-pos-snapshot.service.ts:106:15)
+      at Object.<anonymous> (pos/sync/application/ingest-pos-snapshot.characterization.spec.ts:1017:5)
+
+    console.log
+      [SYNC] Syncing 1 categories...
+
+      at MenuSyncService.sync (pos/sync/snapshot/menu-sync.service.ts:450:13)
+
+    console.log
+      [Sync][MoneyDebug][IN] businessDate= dailySalesTotal=null openTablesPayable=null salesSummary.totalRevenue=null orders=0 tables=0
+
+      at IngestPosSnapshotService.execute (pos/sync/application/ingest-pos-snapshot.service.ts:136:13)
+
+    console.log
+      [SyncTiming][Backend] menu=0ms tables=0ms orders=0ms reservations=0ms businessDay=0ms reporting=0ms hints=0ms total=0ms rows=0t/0o/1c/0r/0e
+
+      at SyncTimer.log (pos/sync/sync-timing.ts:52:13)
+
+    console.warn
+      [Sync] manager-data received without posCallbackUrl — start Windows POS (ingest on :8081) so mobile edits reach Hive.
+
+    [0m [90m 104 |[39m     )[33m;[39m
+     [90m 105 |[39m     [36mif[39m ([33m![39m[36mthis[39m[33m.[39mposConnection[33m.[39mhasCallbackUrl()) {
+    [31m[1m>[22m[39m[90m 106 |[39m       console[33m.[39mwarn(
+     [90m     |[39m               [31m[1m^[22m[39m
+     [90m 107 |[39m         [32m'[Sync] manager-data received without posCallbackUrl — start Windows POS (ingest on :8081) so mobile edits reach Hive.'[39m[33m,[39m
+     [90m 108 |[39m       )[33m;[39m
+     [90m 109 |[39m     }[0m
+
+      at IngestPosSnapshotService.execute (pos/sync/application/ingest-pos-snapshot.service.ts:106:15)
+      at Object.<anonymous> (pos/sync/application/ingest-pos-snapshot.characterization.spec.ts:1036:5)
+
+    console.log
+      [SYNC] Syncing 2 categories...
+
+      at MenuSyncService.sync (pos/sync/snapshot/menu-sync.service.ts:450:13)
+
+    console.log
+      [Sync][MoneyDebug][IN] businessDate= dailySalesTotal=null openTablesPayable=null salesSummary.totalRevenue=null orders=0 tables=0
+
+      at IngestPosSnapshotService.execute (pos/sync/application/ingest-pos-snapshot.service.ts:136:13)
+
+    console.log
+      [SyncTiming][Backend] menu=0ms tables=0ms orders=0ms reservations=0ms businessDay=0ms reporting=0ms hints=0ms total=0ms rows=0t/0o/2c/0r/0e
+
+      at SyncTimer.log (pos/sync/sync-timing.ts:52:13)
+
+    console.warn
+      [Sync] manager-data received without posCallbackUrl — start Windows POS (ingest on :8081) so mobile edits reach Hive.
+
+    [0m [90m 104 |[39m     )[33m;[39m
+     [90m 105 |[39m     [36mif[39m ([33m![39m[36mthis[39m[33m.[39mposConnection[33m.[39mhasCallbackUrl()) {
+    [31m[1m>[22m[39m[90m 106 |[39m       console[33m.[39mwarn(
+     [90m     |[39m               [31m[1m^[22m[39m
+     [90m 107 |[39m         [32m'[Sync] manager-data received without posCallbackUrl — start Windows POS (ingest on :8081) so mobile edits reach Hive.'[39m[33m,[39m
+     [90m 108 |[39m       )[33m;[39m
+     [90m 109 |[39m     }[0m
+
+      at IngestPosSnapshotService.execute (pos/sync/application/ingest-pos-snapshot.service.ts:106:15)
+      at Object.<anonymous> (pos/sync/application/ingest-pos-snapshot.characterization.spec.ts:1066:5)
+
+    console.log
+      [Sync][MoneyDebug][IN] businessDate= dailySalesTotal=null openTablesPayable=null salesSummary.totalRevenue=null orders=0 tables=0
+
+      at IngestPosSnapshotService.execute (pos/sync/application/ingest-pos-snapshot.service.ts:136:13)
+
+    console.log
+      [SyncTiming][Backend] tables=0ms orders=0ms staff=192ms reservations=0ms businessDay=0ms reporting=0ms hints=0ms total=192ms rows=0t/0o/0c/0r/0e staff=1/1hashed
+
+      at SyncTimer.log (pos/sync/sync-timing.ts:52:13)
+
+    console.warn
+      [Sync] manager-data received without posCallbackUrl — start Windows POS (ingest on :8081) so mobile edits reach Hive.
+
+    [0m [90m 104 |[39m     )[33m;[39m
+     [90m 105 |[39m     [36mif[39m ([33m![39m[36mthis[39m[33m.[39mposConnection[33m.[39mhasCallbackUrl()) {
+    [31m[1m>[22m[39m[90m 106 |[39m       console[33m.[39mwarn(
+     [90m     |[39m               [31m[1m^[22m[39m
+     [90m 107 |[39m         [32m'[Sync] manager-data received without posCallbackUrl — start Windows POS (ingest on :8081) so mobile edits reach Hive.'[39m[33m,[39m
+     [90m 108 |[39m       )[33m;[39m
+     [90m 109 |[39m     }[0m
+
+      at IngestPosSnapshotService.execute (pos/sync/application/ingest-pos-snapshot.service.ts:106:15)
+      at Object.<anonymous> (pos/sync/application/ingest-pos-snapshot.characterization.spec.ts:1092:5)
+
+    console.log
+      [Sync][MoneyDebug][IN] businessDate= dailySalesTotal=null openTablesPayable=null salesSummary.totalRevenue=null orders=0 tables=0
+
+      at IngestPosSnapshotService.execute (pos/sync/application/ingest-pos-snapshot.service.ts:136:13)
+
+    console.log
+      [SyncTiming][Backend] tables=0ms orders=0ms staff=0ms reservations=0ms businessDay=0ms reporting=0ms hints=0ms total=0ms rows=0t/0o/0c/0r/0e staff=1/0hashed
+
+      at SyncTimer.log (pos/sync/sync-timing.ts:52:13)
+
+    console.warn
+      [Sync] manager-data received without posCallbackUrl — start Windows POS (ingest on :8081) so mobile edits reach Hive.
+
+    [0m [90m 104 |[39m     )[33m;[39m
+     [90m 105 |[39m     [36mif[39m ([33m![39m[36mthis[39m[33m.[39mposConnection[33m.[39mhasCallbackUrl()) {
+    [31m[1m>[22m[39m[90m 106 |[39m       console[33m.[39mwarn(
+     [90m     |[39m               [31m[1m^[22m[39m
+     [90m 107 |[39m         [32m'[Sync] manager-data received without posCallbackUrl — start Windows POS (ingest on :8081) so mobile edits reach Hive.'[39m[33m,[39m
+     [90m 108 |[39m       )[33m;[39m
+     [90m 109 |[39m     }[0m
+
+      at IngestPosSnapshotService.execute (pos/sync/application/ingest-pos-snapshot.service.ts:106:15)
+      at Object.<anonymous> (pos/sync/application/ingest-pos-snapshot.characterization.spec.ts:1109:20)
+
+    console.log
+      [Sync][MoneyDebug][IN] businessDate= dailySalesTotal=null openTablesPayable=null salesSummary.totalRevenue=null orders=0 tables=0
+
+      at IngestPosSnapshotService.execute (pos/sync/application/ingest-pos-snapshot.service.ts:136:13)
+
+    console.warn
+      [SYNC] Skipping new staff "ghost" without PIN (the POS re-sends it next snapshot).
+
+    [0m [90m 161 |[39m       } [36melse[39m {
+     [90m 162 |[39m         needsPin[33m.[39mpush(member[33m.[39musername)[33m;[39m
+    [31m[1m>[22m[39m[90m 163 |[39m         console[33m.[39mwarn(
+     [90m     |[39m                 [31m[1m^[22m[39m
+     [90m 164 |[39m           [32m`[SYNC] Skipping new staff "${member.username}" without PIN (the POS re-sends it next snapshot).`[39m[33m,[39m
+     [90m 165 |[39m         )[33m;[39m
+     [90m 166 |[39m       }[0m
+
+      at StaffSyncService.syncLocked (pos/sync/snapshot/staff-sync.service.ts:163:17)
+      at SyncTimer.phase (pos/sync/sync-timing.ts:24:14)
+      at IngestPosSnapshotService.execute (pos/sync/application/ingest-pos-snapshot.service.ts:180:27)
+      at Object.<anonymous> (pos/sync/application/ingest-pos-snapshot.characterization.spec.ts:1109:20)
+
+    console.log
+      [SyncTiming][Backend] tables=0ms orders=0ms staff=1ms reservations=0ms businessDay=0ms reporting=0ms hints=0ms total=1ms rows=0t/0o/0c/0r/0e staff=1/0hashed
+
+      at SyncTimer.log (pos/sync/sync-timing.ts:52:13)
+
+    console.warn
+      [Sync] manager-data received without posCallbackUrl — start Windows POS (ingest on :8081) so mobile edits reach Hive.
+
+    [0m [90m 104 |[39m     )[33m;[39m
+     [90m 105 |[39m     [36mif[39m ([33m![39m[36mthis[39m[33m.[39mposConnection[33m.[39mhasCallbackUrl()) {
+    [31m[1m>[22m[39m[90m 106 |[39m       console[33m.[39mwarn(
+     [90m     |[39m               [31m[1m^[22m[39m
+     [90m 107 |[39m         [32m'[Sync] manager-data received without posCallbackUrl — start Windows POS (ingest on :8081) so mobile edits reach Hive.'[39m[33m,[39m
+     [90m 108 |[39m       )[33m;[39m
+     [90m 109 |[39m     }[0m
+
+      at IngestPosSnapshotService.execute (pos/sync/application/ingest-pos-snapshot.service.ts:106:15)
+      at Object.<anonymous> (pos/sync/application/ingest-pos-snapshot.characterization.spec.ts:1131:20)
+
+    console.log
+      [Sync][MoneyDebug][IN] businessDate= dailySalesTotal=null openTablesPayable=null salesSummary.totalRevenue=null orders=0 tables=0
+
+      at IngestPosSnapshotService.execute (pos/sync/application/ingest-pos-snapshot.service.ts:136:13)
+
+    console.log
+      [SyncTiming][Backend] tables=0ms orders=0ms staff=0ms reservations=0ms businessDay=0ms reporting=0ms hints=0ms total=0ms rows=0t/0o/0c/0r/0e staff=1/0hashed
+
+      at SyncTimer.log (pos/sync/sync-timing.ts:52:13)
+
+    console.warn
+      [Sync] manager-data received without posCallbackUrl — start Windows POS (ingest on :8081) so mobile edits reach Hive.
+
+    [0m [90m 104 |[39m     )[33m;[39m
+     [90m 105 |[39m     [36mif[39m ([33m![39m[36mthis[39m[33m.[39mposConnection[33m.[39mhasCallbackUrl()) {
+    [31m[1m>[22m[39m[90m 106 |[39m       console[33m.[39mwarn(
+     [90m     |[39m               [31m[1m^[22m[39m
+     [90m 107 |[39m         [32m'[Sync] manager-data received without posCallbackUrl — start Windows POS (ingest on :8081) so mobile edits reach Hive.'[39m[33m,[39m
+     [90m 108 |[39m       )[33m;[39m
+     [90m 109 |[39m     }[0m
+
+      at IngestPosSnapshotService.execute (pos/sync/application/ingest-pos-snapshot.service.ts:106:15)
+      at Object.<anonymous> (pos/sync/application/ingest-pos-snapshot.characterization.spec.ts:1148:5)
+
+    console.log
+      [Sync][MoneyDebug][IN] businessDate= dailySalesTotal=null openTablesPayable=null salesSummary.totalRevenue=null orders=0 tables=0
+
+      at IngestPosSnapshotService.execute (pos/sync/application/ingest-pos-snapshot.service.ts:136:13)
+
+    console.log
+      [SyncTiming][Backend] tables=0ms orders=0ms staff=0ms reservations=0ms businessDay=0ms reporting=0ms hints=0ms total=0ms rows=0t/0o/0c/0r/0e staff=1/0hashed
+
+      at SyncTimer.log (pos/sync/sync-timing.ts:52:13)
+
+    console.warn
+      [Sync] manager-data received without posCallbackUrl — start Windows POS (ingest on :8081) so mobile edits reach Hive.
+
+    [0m [90m 104 |[39m     )[33m;[39m
+     [90m 105 |[39m     [36mif[39m ([33m![39m[36mthis[39m[33m.[39mposConnection[33m.[39mhasCallbackUrl()) {
+    [31m[1m>[22m[39m[90m 106 |[39m       console[33m.[39mwarn(
+     [90m     |[39m               [31m[1m^[22m[39m
+     [90m 107 |[39m         [32m'[Sync] manager-data received without posCallbackUrl — start Windows POS (ingest on :8081) so mobile edits reach Hive.'[39m[33m,[39m
+     [90m 108 |[39m       )[33m;[39m
+     [90m 109 |[39m     }[0m
+
+      at IngestPosSnapshotService.execute (pos/sync/application/ingest-pos-snapshot.service.ts:106:15)
+      at Object.<anonymous> (pos/sync/application/ingest-pos-snapshot.characterization.spec.ts:1160:5)
+
+    console.log
+      [Sync][MoneyDebug][IN] businessDate= dailySalesTotal=null openTablesPayable=null salesSummary.totalRevenue=null orders=1 tables=0
+
+      at IngestPosSnapshotService.execute (pos/sync/application/ingest-pos-snapshot.service.ts:136:13)
+
+    console.log
+      [SyncTiming][Backend] tables=0ms orders=0ms reservations=0ms businessDay=0ms reporting=0ms hints=0ms total=0ms rows=0t/1o/0c/0r/0e
+
+      at SyncTimer.log (pos/sync/sync-timing.ts:52:13)
+
+    console.warn
+      [Sync] manager-data received without posCallbackUrl — start Windows POS (ingest on :8081) so mobile edits reach Hive.
+
+    [0m [90m 104 |[39m     )[33m;[39m
+     [90m 105 |[39m     [36mif[39m ([33m![39m[36mthis[39m[33m.[39mposConnection[33m.[39mhasCallbackUrl()) {
+    [31m[1m>[22m[39m[90m 106 |[39m       console[33m.[39mwarn(
+     [90m     |[39m               [31m[1m^[22m[39m
+     [90m 107 |[39m         [32m'[Sync] manager-data received without posCallbackUrl — start Windows POS (ingest on :8081) so mobile edits reach Hive.'[39m[33m,[39m
+     [90m 108 |[39m       )[33m;[39m
+     [90m 109 |[39m     }[0m
+
+      at IngestPosSnapshotService.execute (pos/sync/application/ingest-pos-snapshot.service.ts:106:15)
+      at Object.<anonymous> (pos/sync/application/ingest-pos-snapshot.characterization.spec.ts:1180:5)
+
+    console.log
+      [Sync][MoneyDebug][IN] businessDate= dailySalesTotal=null openTablesPayable=null salesSummary.totalRevenue=null orders=0 tables=0
+
+      at IngestPosSnapshotService.execute (pos/sync/application/ingest-pos-snapshot.service.ts:136:13)
+
+    console.log
+      [SyncTiming][Backend] tables=0ms orders=0ms reservations=0ms businessDay=0ms reporting=0ms hints=0ms total=0ms rows=0t/0o/0c/0r/0e
+
+      at SyncTimer.log (pos/sync/sync-timing.ts:52:13)
+
+    console.warn
+      [Sync] manager-data received without posCallbackUrl — start Windows POS (ingest on :8081) so mobile edits reach Hive.
+
+    [0m [90m 104 |[39m     )[33m;[39m
+     [90m 105 |[39m     [36mif[39m ([33m![39m[36mthis[39m[33m.[39mposConnection[33m.[39mhasCallbackUrl()) {
+    [31m[1m>[22m[39m[90m 106 |[39m       console[33m.[39mwarn(
+     [90m     |[39m               [31m[1m^[22m[39m
+     [90m 107 |[39m         [32m'[Sync] manager-data received without posCallbackUrl — start Windows POS (ingest on :8081) so mobile edits reach Hive.'[39m[33m,[39m
+     [90m 108 |[39m       )[33m;[39m
+     [90m 109 |[39m     }[0m
+
+      at IngestPosSnapshotService.execute (pos/sync/application/ingest-pos-snapshot.service.ts:106:15)
+      at Object.<anonymous> (pos/sync/application/ingest-pos-snapshot.characterization.spec.ts:1197:5)
+
+    console.log
+      [Sync][MoneyDebug][IN] businessDate= dailySalesTotal=null openTablesPayable=null salesSummary.totalRevenue=null orders=0 tables=0
+
+      at IngestPosSnapshotService.execute (pos/sync/application/ingest-pos-snapshot.service.ts:136:13)
+
+    console.log
+      [SyncTiming][Backend] tables=0ms orders=0ms reservations=0ms businessDay=0ms reporting=0ms hints=0ms total=0ms rows=0t/0o/0c/0r/0e
+
+      at SyncTimer.log (pos/sync/sync-timing.ts:52:13)
+
+    console.warn
+      [Sync] manager-data received without posCallbackUrl — start Windows POS (ingest on :8081) so mobile edits reach Hive.
+
+    [0m [90m 104 |[39m     )[33m;[39m
+     [90m 105 |[39m     [36mif[39m ([33m![39m[36mthis[39m[33m.[39mposConnection[33m.[39mhasCallbackUrl()) {
+    [31m[1m>[22m[39m[90m 106 |[39m       console[33m.[39mwarn(
+     [90m     |[39m               [31m[1m^[22m[39m
+     [90m 107 |[39m         [32m'[Sync] manager-data received without posCallbackUrl — start Windows POS (ingest on :8081) so mobile edits reach Hive.'[39m[33m,[39m
+     [90m 108 |[39m       )[33m;[39m
+     [90m 109 |[39m     }[0m
+
+      at IngestPosSnapshotService.execute (pos/sync/application/ingest-pos-snapshot.service.ts:106:15)
+      at Object.<anonymous> (pos/sync/application/ingest-pos-snapshot.characterization.spec.ts:1213:5)
+
+    console.log
+      [Sync][MoneyDebug][IN] businessDate= dailySalesTotal=null openTablesPayable=null salesSummary.totalRevenue=null orders=0 tables=0
+
+      at IngestPosSnapshotService.execute (pos/sync/application/ingest-pos-snapshot.service.ts:136:13)
+
+    console.log
+      [SyncTiming][Backend] tables=0ms orders=0ms reservations=0ms businessDay=0ms reporting=0ms hints=0ms total=0ms rows=0t/0o/0c/0r/0e
+
+      at SyncTimer.log (pos/sync/sync-timing.ts:52:13)
+
+    console.warn
+      [Sync] manager-data received without posCallbackUrl — start Windows POS (ingest on :8081) so mobile edits reach Hive.
+
+    [0m [90m 104 |[39m     )[33m;[39m
+     [90m 105 |[39m     [36mif[39m ([33m![39m[36mthis[39m[33m.[39mposConnection[33m.[39mhasCallbackUrl()) {
+    [31m[1m>[22m[39m[90m 106 |[39m       console[33m.[39mwarn(
+     [90m     |[39m               [31m[1m^[22m[39m
+     [90m 107 |[39m         [32m'[Sync] manager-data received without posCallbackUrl — start Windows POS (ingest on :8081) so mobile edits reach Hive.'[39m[33m,[39m
+     [90m 108 |[39m       )[33m;[39m
+     [90m 109 |[39m     }[0m
+
+      at IngestPosSnapshotService.execute (pos/sync/application/ingest-pos-snapshot.service.ts:106:15)
+      at Object.<anonymous> (pos/sync/application/ingest-pos-snapshot.characterization.spec.ts:1246:5)
+
+    console.log
+      [Sync][MoneyDebug][IN] businessDate= dailySalesTotal=null openTablesPayable=null salesSummary.totalRevenue=null orders=0 tables=0
+
+      at IngestPosSnapshotService.execute (pos/sync/application/ingest-pos-snapshot.service.ts:136:13)
+
+    console.log
+      [SyncTiming][Backend] tables=0ms orders=0ms reservations=0ms businessDay=0ms reporting=0ms hints=0ms total=0ms rows=0t/0o/0c/0r/0e
+
+      at SyncTimer.log (pos/sync/sync-timing.ts:52:13)
+
+    console.warn
+      [Sync] manager-data received without posCallbackUrl — start Windows POS (ingest on :8081) so mobile edits reach Hive.
+
+    [0m [90m 104 |[39m     )[33m;[39m
+     [90m 105 |[39m     [36mif[39m ([33m![39m[36mthis[39m[33m.[39mposConnection[33m.[39mhasCallbackUrl()) {
+    [31m[1m>[22m[39m[90m 106 |[39m       console[33m.[39mwarn(
+     [90m     |[39m               [31m[1m^[22m[39m
+     [90m 107 |[39m         [32m'[Sync] manager-data received without posCallbackUrl — start Windows POS (ingest on :8081) so mobile edits reach Hive.'[39m[33m,[39m
+     [90m 108 |[39m       )[33m;[39m
+     [90m 109 |[39m     }[0m
+
+      at IngestPosSnapshotService.execute (pos/sync/application/ingest-pos-snapshot.service.ts:106:15)
+      at Object.<anonymous> (pos/sync/application/ingest-pos-snapshot.characterization.spec.ts:1273:5)
+
+    console.log
+      [Sync][MoneyDebug][IN] businessDate= dailySalesTotal=null openTablesPayable=null salesSummary.totalRevenue=null orders=0 tables=0
+
+      at IngestPosSnapshotService.execute (pos/sync/application/ingest-pos-snapshot.service.ts:136:13)
+
+    console.log
+      [SyncTiming][Backend] tables=0ms orders=0ms reservations=0ms businessDay=0ms reporting=0ms hints=0ms total=0ms rows=0t/0o/0c/0r/0e
+
+      at SyncTimer.log (pos/sync/sync-timing.ts:52:13)
+
+    console.warn
+      [Sync] manager-data received without posCallbackUrl — start Windows POS (ingest on :8081) so mobile edits reach Hive.
+
+    [0m [90m 104 |[39m     )[33m;[39m
+     [90m 105 |[39m     [36mif[39m ([33m![39m[36mthis[39m[33m.[39mposConnection[33m.[39mhasCallbackUrl()) {
+    [31m[1m>[22m[39m[90m 106 |[39m       console[33m.[39mwarn(
+     [90m     |[39m               [31m[1m^[22m[39m
+     [90m 107 |[39m         [32m'[Sync] manager-data received without posCallbackUrl — start Windows POS (ingest on :8081) so mobile edits reach Hive.'[39m[33m,[39m
+     [90m 108 |[39m       )[33m;[39m
+     [90m 109 |[39m     }[0m
+
+      at IngestPosSnapshotService.execute (pos/sync/application/ingest-pos-snapshot.service.ts:106:15)
+      at Object.<anonymous> (pos/sync/application/ingest-pos-snapshot.characterization.spec.ts:1285:5)
+
+    console.log
+      [Sync][MoneyDebug][IN] businessDate= dailySalesTotal=null openTablesPayable=null salesSummary.totalRevenue=null orders=0 tables=0
+
+      at IngestPosSnapshotService.execute (pos/sync/application/ingest-pos-snapshot.service.ts:136:13)
+
+    console.log
+      [SyncTiming][Backend] tables=0ms orders=0ms reservations=0ms businessDay=0ms reporting=0ms hints=0ms total=0ms rows=0t/0o/0c/0r/0e
+
+      at SyncTimer.log (pos/sync/sync-timing.ts:52:13)
+
+    console.warn
+      [Sync] manager-data received without posCallbackUrl — start Windows POS (ingest on :8081) so mobile edits reach Hive.
+
+    [0m [90m 104 |[39m     )[33m;[39m
+     [90m 105 |[39m     [36mif[39m ([33m![39m[36mthis[39m[33m.[39mposConnection[33m.[39mhasCallbackUrl()) {
+    [31m[1m>[22m[39m[90m 106 |[39m       console[33m.[39mwarn(
+     [90m     |[39m               [31m[1m^[22m[39m
+     [90m 107 |[39m         [32m'[Sync] manager-data received without posCallbackUrl — start Windows POS (ingest on :8081) so mobile edits reach Hive.'[39m[33m,[39m
+     [90m 108 |[39m       )[33m;[39m
+     [90m 109 |[39m     }[0m
+
+      at IngestPosSnapshotService.execute (pos/sync/application/ingest-pos-snapshot.service.ts:106:15)
+      at Object.<anonymous> (pos/sync/application/ingest-pos-snapshot.characterization.spec.ts:1309:5)
+
+    console.log
+      [Sync][MoneyDebug][IN] businessDate= dailySalesTotal=null openTablesPayable=null salesSummary.totalRevenue=null orders=0 tables=0
+
+      at IngestPosSnapshotService.execute (pos/sync/application/ingest-pos-snapshot.service.ts:136:13)
+
+    console.log
+      [SyncTiming][Backend] tables=0ms orders=0ms reservations=0ms businessDay=0ms reporting=0ms hints=0ms total=0ms rows=0t/0o/0c/0r/0e
+
+      at SyncTimer.log (pos/sync/sync-timing.ts:52:13)
+
+    console.warn
+      [Sync] manager-data received without posCallbackUrl — start Windows POS (ingest on :8081) so mobile edits reach Hive.
+
+    [0m [90m 104 |[39m     )[33m;[39m
+     [90m 105 |[39m     [36mif[39m ([33m![39m[36mthis[39m[33m.[39mposConnection[33m.[39mhasCallbackUrl()) {
+    [31m[1m>[22m[39m[90m 106 |[39m       console[33m.[39mwarn(
+     [90m     |[39m               [31m[1m^[22m[39m
+     [90m 107 |[39m         [32m'[Sync] manager-data received without posCallbackUrl — start Windows POS (ingest on :8081) so mobile edits reach Hive.'[39m[33m,[39m
+     [90m 108 |[39m       )[33m;[39m
+     [90m 109 |[39m     }[0m
+
+      at IngestPosSnapshotService.execute (pos/sync/application/ingest-pos-snapshot.service.ts:106:15)
+      at Object.<anonymous> (pos/sync/application/ingest-pos-snapshot.characterization.spec.ts:1324:5)
+
+    console.log
+      [Sync][MoneyDebug][IN] businessDate=2026-06-27 dailySalesTotal=null openTablesPayable=null salesSummary.totalRevenue=null orders=0 tables=1
+
+      at IngestPosSnapshotService.execute (pos/sync/application/ingest-pos-snapshot.service.ts:136:13)
+
+    console.log
+      Syncing 1 tables (hasAnyReserved=true, realtimeOnly=false)...
+
+      at TableSyncService.sync (pos/sync/snapshot/table-sync.service.ts:63:17)
+
+    console.log
+        Table 1/first → reserved (orderId=undefined)
+
+      at TableSyncService.sync (pos/sync/snapshot/table-sync.service.ts:72:21)
+
+    console.log
+      [Sync] Business date advanced: 2026-06-26 → 2026-06-27. Clearing all table reservations.
+
+      at BusinessDaySyncService.trackBusinessDate (pos/sync/snapshot/business-day-sync.service.ts:117:15)
+
+    console.log
+      [Sync][MoneyDebug][STORE] key=openTablesPayable:2026-06-27 value=10
+
+      at BusinessDaySyncService.persistReportingSnapshot (pos/sync/snapshot/business-day-sync.service.ts:244:15)
+
+    console.log
+      [SyncTiming][Backend] tables=0ms orders=0ms reservations=0ms businessDay=0ms reporting=0ms hints=0ms total=0ms rows=1t/0o/0c/0r/0e
+
+      at SyncTimer.log (pos/sync/sync-timing.ts:52:13)
+
+    console.warn
+      [Sync] manager-data received without posCallbackUrl — start Windows POS (ingest on :8081) so mobile edits reach Hive.
+
+    [0m [90m 104 |[39m     )[33m;[39m
+     [90m 105 |[39m     [36mif[39m ([33m![39m[36mthis[39m[33m.[39mposConnection[33m.[39mhasCallbackUrl()) {
+    [31m[1m>[22m[39m[90m 106 |[39m       console[33m.[39mwarn(
+     [90m     |[39m               [31m[1m^[22m[39m
+     [90m 107 |[39m         [32m'[Sync] manager-data received without posCallbackUrl — start Windows POS (ingest on :8081) so mobile edits reach Hive.'[39m[33m,[39m
+     [90m 108 |[39m       )[33m;[39m
+     [90m 109 |[39m     }[0m
+
+      at IngestPosSnapshotService.execute (pos/sync/application/ingest-pos-snapshot.service.ts:106:15)
+      at Object.<anonymous> (pos/sync/application/ingest-pos-snapshot.characterization.spec.ts:1355:5)
+
+    console.log
+      [Sync][MoneyDebug][IN] businessDate=2026-06-27 dailySalesTotal=null openTablesPayable=null salesSummary.totalRevenue=null orders=0 tables=0
+
+      at IngestPosSnapshotService.execute (pos/sync/application/ingest-pos-snapshot.service.ts:136:13)
+
+    console.log
+      [Sync][MoneyDebug][STORE] key=openTablesPayable:2026-06-27 value=0
+
+      at BusinessDaySyncService.persistReportingSnapshot (pos/sync/snapshot/business-day-sync.service.ts:244:15)
+
+    console.log
+      [SyncTiming][Backend] tables=0ms orders=0ms reservations=0ms businessDay=0ms reporting=0ms hints=0ms total=0ms rows=0t/0o/0c/0r/0e
+
+      at SyncTimer.log (pos/sync/sync-timing.ts:52:13)
+
+    console.warn
+      [Sync] manager-data received without posCallbackUrl — start Windows POS (ingest on :8081) so mobile edits reach Hive.
+
+    [0m [90m 104 |[39m     )[33m;[39m
+     [90m 105 |[39m     [36mif[39m ([33m![39m[36mthis[39m[33m.[39mposConnection[33m.[39mhasCallbackUrl()) {
+    [31m[1m>[22m[39m[90m 106 |[39m       console[33m.[39mwarn(
+     [90m     |[39m               [31m[1m^[22m[39m
+     [90m 107 |[39m         [32m'[Sync] manager-data received without posCallbackUrl — start Windows POS (ingest on :8081) so mobile edits reach Hive.'[39m[33m,[39m
+     [90m 108 |[39m       )[33m;[39m
+     [90m 109 |[39m     }[0m
+
+      at IngestPosSnapshotService.execute (pos/sync/application/ingest-pos-snapshot.service.ts:106:15)
+      at Object.<anonymous> (pos/sync/application/ingest-pos-snapshot.characterization.spec.ts:1369:5)
+
+    console.log
+      [Sync][MoneyDebug][IN] businessDate=2026-06-27 dailySalesTotal=null openTablesPayable=null salesSummary.totalRevenue=null orders=0 tables=0
+
+      at IngestPosSnapshotService.execute (pos/sync/application/ingest-pos-snapshot.service.ts:136:13)
+
+    console.log
+      [Sync][MoneyDebug][STORE] key=openTablesPayable:2026-06-27 value=0
+
+      at BusinessDaySyncService.persistReportingSnapshot (pos/sync/snapshot/business-day-sync.service.ts:244:15)
+
+    console.log
+      [SyncTiming][Backend] tables=0ms orders=0ms reservations=0ms businessDay=0ms reporting=0ms hints=0ms total=0ms rows=0t/0o/0c/0r/0e
+
+      at SyncTimer.log (pos/sync/sync-timing.ts:52:13)
+
+    console.warn
+      [Sync] manager-data received without posCallbackUrl — start Windows POS (ingest on :8081) so mobile edits reach Hive.
+
+    [0m [90m 104 |[39m     )[33m;[39m
+     [90m 105 |[39m     [36mif[39m ([33m![39m[36mthis[39m[33m.[39mposConnection[33m.[39mhasCallbackUrl()) {
+    [31m[1m>[22m[39m[90m 106 |[39m       console[33m.[39mwarn(
+     [90m     |[39m               [31m[1m^[22m[39m
+     [90m 107 |[39m         [32m'[Sync] manager-data received without posCallbackUrl — start Windows POS (ingest on :8081) so mobile edits reach Hive.'[39m[33m,[39m
+     [90m 108 |[39m       )[33m;[39m
+     [90m 109 |[39m     }[0m
+
+      at IngestPosSnapshotService.execute (pos/sync/application/ingest-pos-snapshot.service.ts:106:15)
+      at Object.<anonymous> (pos/sync/application/ingest-pos-snapshot.characterization.spec.ts:1381:5)
+
+    console.log
+      [Sync][MoneyDebug][IN] businessDate=2026-06-27 dailySalesTotal=950 openTablesPayable=null salesSummary.totalRevenue=950 orders=0 tables=0
+
+      at IngestPosSnapshotService.execute (pos/sync/application/ingest-pos-snapshot.service.ts:136:13)
+
+    console.log
+      [Sync][MoneyDebug][STORE] key=openTablesPayable:2026-06-27 value=0
+
+      at BusinessDaySyncService.persistReportingSnapshot (pos/sync/snapshot/business-day-sync.service.ts:244:15)
+
+    console.log
+      [Sync][MoneyDebug][STORE] key=dailySalesTotal:2026-06-27 value=950
+
+      at BusinessDaySyncService.persistReportingSnapshot (pos/sync/snapshot/business-day-sync.service.ts:252:15)
+
+    console.log
+      [SyncTiming][Backend] tables=0ms orders=0ms reservations=0ms businessDay=0ms reporting=0ms hints=0ms total=0ms rows=0t/0o/0c/0r/0e
+
+      at SyncTimer.log (pos/sync/sync-timing.ts:52:13)
+
+    console.warn
+      [Sync] manager-data received without posCallbackUrl — start Windows POS (ingest on :8081) so mobile edits reach Hive.
+
+    [0m [90m 104 |[39m     )[33m;[39m
+     [90m 105 |[39m     [36mif[39m ([33m![39m[36mthis[39m[33m.[39mposConnection[33m.[39mhasCallbackUrl()) {
+    [31m[1m>[22m[39m[90m 106 |[39m       console[33m.[39mwarn(
+     [90m     |[39m               [31m[1m^[22m[39m
+     [90m 107 |[39m         [32m'[Sync] manager-data received without posCallbackUrl — start Windows POS (ingest on :8081) so mobile edits reach Hive.'[39m[33m,[39m
+     [90m 108 |[39m       )[33m;[39m
+     [90m 109 |[39m     }[0m
+
+      at IngestPosSnapshotService.execute (pos/sync/application/ingest-pos-snapshot.service.ts:106:15)
+      at Object.<anonymous> (pos/sync/application/ingest-pos-snapshot.characterization.spec.ts:1447:5)
+
+    console.log
+      [Sync][MoneyDebug][IN] businessDate=2026-06-27 dailySalesTotal=null openTablesPayable=null salesSummary.totalRevenue=null orders=0 tables=3
+
+      at IngestPosSnapshotService.execute (pos/sync/application/ingest-pos-snapshot.service.ts:136:13)
+
+    console.log
+      Syncing 3 tables (hasAnyReserved=true, realtimeOnly=false)...
+
+      at TableSyncService.sync (pos/sync/snapshot/table-sync.service.ts:63:17)
+
+    console.log
+        Table 1/first → reserved (orderId=undefined)
+
+      at TableSyncService.sync (pos/sync/snapshot/table-sync.service.ts:72:21)
+
+    console.log
+        Table 2/first → reserved (orderId=8)
+
+      at TableSyncService.sync (pos/sync/snapshot/table-sync.service.ts:72:21)
+
+    console.log
+      [Sync][MoneyDebug][STORE] key=openTablesPayable:2026-06-27 value=42
+
+      at BusinessDaySyncService.persistReportingSnapshot (pos/sync/snapshot/business-day-sync.service.ts:244:15)
+
+    console.log
+      [SyncTiming][Backend] tables=0ms orders=0ms reservations=0ms businessDay=0ms reporting=0ms hints=0ms total=0ms rows=3t/0o/0c/0r/0e
+
+      at SyncTimer.log (pos/sync/sync-timing.ts:52:13)
+
+    console.warn
+      [Sync] manager-data received without posCallbackUrl — start Windows POS (ingest on :8081) so mobile edits reach Hive.
+
+    [0m [90m 104 |[39m     )[33m;[39m
+     [90m 105 |[39m     [36mif[39m ([33m![39m[36mthis[39m[33m.[39mposConnection[33m.[39mhasCallbackUrl()) {
+    [31m[1m>[22m[39m[90m 106 |[39m       console[33m.[39mwarn(
+     [90m     |[39m               [31m[1m^[22m[39m
+     [90m 107 |[39m         [32m'[Sync] manager-data received without posCallbackUrl — start Windows POS (ingest on :8081) so mobile edits reach Hive.'[39m[33m,[39m
+     [90m 108 |[39m       )[33m;[39m
+     [90m 109 |[39m     }[0m
+
+      at IngestPosSnapshotService.execute (pos/sync/application/ingest-pos-snapshot.service.ts:106:15)
+      at Object.<anonymous> (pos/sync/application/ingest-pos-snapshot.characterization.spec.ts:1505:5)
+
+    console.log
+      [Sync][MoneyDebug][IN] businessDate=2026-06-27 dailySalesTotal=null openTablesPayable=null salesSummary.totalRevenue=null orders=1 tables=1
+
+      at IngestPosSnapshotService.execute (pos/sync/application/ingest-pos-snapshot.service.ts:136:13)
+
+    console.log
+      Syncing 1 tables (hasAnyReserved=true, realtimeOnly=false)...
+
+      at TableSyncService.sync (pos/sync/snapshot/table-sync.service.ts:63:17)
+
+    console.log
+        Table 1/first → reserved (orderId=3)
+
+      at TableSyncService.sync (pos/sync/snapshot/table-sync.service.ts:72:21)
+
+    console.log
+      [Sync] Linked table 1/first → order #3 (open)
+
+      at OrderSyncService.sync (pos/sync/snapshot/order-sync.service.ts:238:21)
+
+    console.log
+      [Sync][MoneyDebug][STORE] key=openTablesPayable:2026-06-27 value=20
+
+      at BusinessDaySyncService.persistReportingSnapshot (pos/sync/snapshot/business-day-sync.service.ts:244:15)
+
+    console.log
+      [SyncTiming][Backend] tables=0ms orders=0ms reservations=0ms businessDay=0ms reporting=0ms hints=0ms total=0ms rows=1t/1o/0c/0r/0e
+
+      at SyncTimer.log (pos/sync/sync-timing.ts:52:13)
+
+    console.warn
+      [Sync] manager-data received without posCallbackUrl — start Windows POS (ingest on :8081) so mobile edits reach Hive.
+
+    [0m [90m 104 |[39m     )[33m;[39m
+     [90m 105 |[39m     [36mif[39m ([33m![39m[36mthis[39m[33m.[39mposConnection[33m.[39mhasCallbackUrl()) {
+    [31m[1m>[22m[39m[90m 106 |[39m       console[33m.[39mwarn(
+     [90m     |[39m               [31m[1m^[22m[39m
+     [90m 107 |[39m         [32m'[Sync] manager-data received without posCallbackUrl — start Windows POS (ingest on :8081) so mobile edits reach Hive.'[39m[33m,[39m
+     [90m 108 |[39m       )[33m;[39m
+     [90m 109 |[39m     }[0m
+
+      at IngestPosSnapshotService.execute (pos/sync/application/ingest-pos-snapshot.service.ts:106:15)
+      at Object.<anonymous> (pos/sync/application/ingest-pos-snapshot.characterization.spec.ts:1510:5)
+
+    console.log
+      [Sync][MoneyDebug][IN] businessDate=2026-06-27 dailySalesTotal=null openTablesPayable=null salesSummary.totalRevenue=null orders=1 tables=1
+
+      at IngestPosSnapshotService.execute (pos/sync/application/ingest-pos-snapshot.service.ts:136:13)
+
+    console.log
+      Syncing 1 tables (hasAnyReserved=true, realtimeOnly=false)...
+
+      at TableSyncService.sync (pos/sync/snapshot/table-sync.service.ts:63:17)
+
+    console.log
+        Table 1/first → reserved (orderId=3)
+
+      at TableSyncService.sync (pos/sync/snapshot/table-sync.service.ts:72:21)
+
+    console.log
+      [Sync] Linked table 1/first → order #3 (open)
+
+      at OrderSyncService.sync (pos/sync/snapshot/order-sync.service.ts:238:21)
+
+    console.log
+      [Sync][MoneyDebug][STORE] key=openTablesPayable:2026-06-27 value=20
+
+      at BusinessDaySyncService.persistReportingSnapshot (pos/sync/snapshot/business-day-sync.service.ts:244:15)
+
+    console.log
+      [SyncTiming][Backend] tables=0ms orders=0ms reservations=0ms businessDay=0ms reporting=0ms hints=0ms total=0ms rows=1t/1o/0c/0r/0e
+
+      at SyncTimer.log (pos/sync/sync-timing.ts:52:13)
+
+PASS src/website/user/guest-booking-ownership.spec.ts
+PASS src/auth/device-credential.service.spec.ts
+[31m[Nest] 34541  - [39m10/16/2026, 8:36:26 PM [31m  ERROR[39m [38;5;3m[ExceptionsHandler] [39mPayloadTooLargeError: request entity too large
+    at readStream [90m(/private/tmp/vynic-publication-check/apps/backend/[39mnode_modules/[4mraw-body[24m/index.js:163:17[90m)[39m
+    at getRawBody [90m(/private/tmp/vynic-publication-check/apps/backend/[39mnode_modules/[4mraw-body[24m/index.js:116:12[90m)[39m
+    at read [90m(/private/tmp/vynic-publication-check/apps/backend/[39mnode_modules/[4mbody-parser[24m/lib/read.js:113:3[90m)[39m
+    at jsonParser [90m(/private/tmp/vynic-publication-check/apps/backend/[39mnode_modules/[4mbody-parser[24m/lib/types/json.js:60:5[90m)[39m
+    at Layer.handleRequest [90m(/private/tmp/vynic-publication-check/apps/backend/[39mnode_modules/[4mrouter[24m/lib/layer.js:152:17[90m)[39m
+    at trimPrefix [90m(/private/tmp/vynic-publication-check/apps/backend/[39mnode_modules/[4mrouter[24m/index.js:342:13[90m)[39m
+    at [90m/private/tmp/vynic-publication-check/apps/backend/[39mnode_modules/[4mrouter[24m/index.js:297:9
+    at processParams [90m(/private/tmp/vynic-publication-check/apps/backend/[39mnode_modules/[4mrouter[24m/index.js:582:12[90m)[39m
+    at next [90m(/private/tmp/vynic-publication-check/apps/backend/[39mnode_modules/[4mrouter[24m/index.js:291:5[90m)[39m
+    at [90m/private/tmp/vynic-publication-check/apps/backend/[39mnode_modules/[4m@nestjs/platform-express[24m/adapters/express-adapter.js:34:17
+    at Layer.handleRequest [90m(/private/tmp/vynic-publication-check/apps/backend/[39mnode_modules/[4mrouter[24m/lib/layer.js:152:17[90m)[39m
+    at trimPrefix [90m(/private/tmp/vynic-publication-check/apps/backend/[39mnode_modules/[4mrouter[24m/index.js:342:13[90m)[39m
+    at [90m/private/tmp/vynic-publication-check/apps/backend/[39mnode_modules/[4mrouter[24m/index.js:297:9
+    at processParams [90m(/private/tmp/vynic-publication-check/apps/backend/[39mnode_modules/[4mrouter[24m/index.js:582:12[90m)[39m
+    at next [90m(/private/tmp/vynic-publication-check/apps/backend/[39mnode_modules/[4mrouter[24m/index.js:291:5[90m)[39m
+    at router.handle [90m(/private/tmp/vynic-publication-check/apps/backend/[39mnode_modules/[4mrouter[24m/index.js:186:3[90m)[39m
+    at app.handle [90m(/private/tmp/vynic-publication-check/apps/backend/[39mnode_modules/[4mexpress[24m/lib/application.js:177:15[90m)[39m
+    at Server.app [90m(/private/tmp/vynic-publication-check/apps/backend/[39mnode_modules/[4mexpress[24m/lib/express.js:38:9[90m)[39m
+[90m    at Server.emit (node:events:509:28)[39m
+[90m    at parserOnIncoming (node:_http_server:1226:12)[39m
+[90m    at HTTPParser.parserOnHeadersComplete (node:_http_common:125:17)[39m {
+  expected: [33m9035[39m,
+  length: [33m9035[39m,
+  limit: [33m8192[39m,
+  type: [32m'entity.too.large'[39m
+}
+[31m[Nest] 34541  - [39m10/16/2026, 8:36:26 PM [31m  ERROR[39m [38;5;3m[ExceptionsHandler] [39mPayloadTooLargeError: request entity too large
+    at readStream [90m(/private/tmp/vynic-publication-check/apps/backend/[39mnode_modules/[4mraw-body[24m/index.js:163:17[90m)[39m
+    at getRawBody [90m(/private/tmp/vynic-publication-check/apps/backend/[39mnode_modules/[4mraw-body[24m/index.js:116:12[90m)[39m
+    at read [90m(/private/tmp/vynic-publication-check/apps/backend/[39mnode_modules/[4mbody-parser[24m/lib/read.js:113:3[90m)[39m
+    at urlencodedParser [90m(/private/tmp/vynic-publication-check/apps/backend/[39mnode_modules/[4mbody-parser[24m/lib/types/urlencoded.js:51:5[90m)[39m
+    at Layer.handleRequest [90m(/private/tmp/vynic-publication-check/apps/backend/[39mnode_modules/[4mrouter[24m/lib/layer.js:152:17[90m)[39m
+    at trimPrefix [90m(/private/tmp/vynic-publication-check/apps/backend/[39mnode_modules/[4mrouter[24m/index.js:342:13[90m)[39m
+    at [90m/private/tmp/vynic-publication-check/apps/backend/[39mnode_modules/[4mrouter[24m/index.js:297:9
+    at processParams [90m(/private/tmp/vynic-publication-check/apps/backend/[39mnode_modules/[4mrouter[24m/index.js:582:12[90m)[39m
+    at next [90m(/private/tmp/vynic-publication-check/apps/backend/[39mnode_modules/[4mrouter[24m/index.js:291:5[90m)[39m
+    at read [90m(/private/tmp/vynic-publication-check/apps/backend/[39mnode_modules/[4mbody-parser[24m/lib/read.js:62:5[90m)[39m
+    at jsonParser [90m(/private/tmp/vynic-publication-check/apps/backend/[39mnode_modules/[4mbody-parser[24m/lib/types/json.js:60:5[90m)[39m
+    at Layer.handleRequest [90m(/private/tmp/vynic-publication-check/apps/backend/[39mnode_modules/[4mrouter[24m/lib/layer.js:152:17[90m)[39m
+    at trimPrefix [90m(/private/tmp/vynic-publication-check/apps/backend/[39mnode_modules/[4mrouter[24m/index.js:342:13[90m)[39m
+    at [90m/private/tmp/vynic-publication-check/apps/backend/[39mnode_modules/[4mrouter[24m/index.js:297:9
+    at processParams [90m(/private/tmp/vynic-publication-check/apps/backend/[39mnode_modules/[4mrouter[24m/index.js:582:12[90m)[39m
+    at next [90m(/private/tmp/vynic-publication-check/apps/backend/[39mnode_modules/[4mrouter[24m/index.js:291:5[90m)[39m
+    at [90m/private/tmp/vynic-publication-check/apps/backend/[39mnode_modules/[4m@nestjs/platform-express[24m/adapters/express-adapter.js:34:17
+    at Layer.handleRequest [90m(/private/tmp/vynic-publication-check/apps/backend/[39mnode_modules/[4mrouter[24m/lib/layer.js:152:17[90m)[39m
+    at trimPrefix [90m(/private/tmp/vynic-publication-check/apps/backend/[39mnode_modules/[4mrouter[24m/index.js:342:13[90m)[39m
+    at [90m/private/tmp/vynic-publication-check/apps/backend/[39mnode_modules/[4mrouter[24m/index.js:297:9
+    at processParams [90m(/private/tmp/vynic-publication-check/apps/backend/[39mnode_modules/[4mrouter[24m/index.js:582:12[90m)[39m
+    at next [90m(/private/tmp/vynic-publication-check/apps/backend/[39mnode_modules/[4mrouter[24m/index.js:291:5[90m)[39m
+    at router.handle [90m(/private/tmp/vynic-publication-check/apps/backend/[39mnode_modules/[4mrouter[24m/index.js:186:3[90m)[39m
+    at app.handle [90m(/private/tmp/vynic-publication-check/apps/backend/[39mnode_modules/[4mexpress[24m/lib/application.js:177:15[90m)[39m
+    at Server.app [90m(/private/tmp/vynic-publication-check/apps/backend/[39mnode_modules/[4mexpress[24m/lib/express.js:38:9[90m)[39m
+[90m    at Server.emit (node:events:509:28)[39m
+[90m    at parserOnIncoming (node:_http_server:1226:12)[39m
+[90m    at HTTPParser.parserOnHeadersComplete (node:_http_common:125:17)[39m {
+  expected: [33m9082[39m,
+  length: [33m9082[39m,
+  limit: [33m8192[39m,
+  type: [32m'entity.too.large'[39m
+}
+[31m[Nest] 34541  - [39m10/16/2026, 8:36:26 PM [31m  ERROR[39m [38;5;3m[ExceptionsHandler] [39mPayloadTooLargeError: too many parameters
+    at parse [90m(/private/tmp/vynic-publication-check/apps/backend/[39mnode_modules/[4mbody-parser[24m/lib/types/urlencoded.js:90:13[90m)[39m
+    at [90m/private/tmp/vynic-publication-check/apps/backend/[39mnode_modules/[4mbody-parser[24m/lib/read.js:162:18
+[90m    at AsyncResource.runInAsyncScope (node:async_hooks:227:14)[39m
+    at invokeCallback [90m(/private/tmp/vynic-publication-check/apps/backend/[39mnode_modules/[4mraw-body[24m/index.js:238:16[90m)[39m
+    at done [90m(/private/tmp/vynic-publication-check/apps/backend/[39mnode_modules/[4mraw-body[24m/index.js:227:7[90m)[39m
+    at IncomingMessage.onEnd [90m(/private/tmp/vynic-publication-check/apps/backend/[39mnode_modules/[4mraw-body[24m/index.js:287:7[90m)[39m
+[90m    at IncomingMessage.emit (node:events:509:28)[39m
+[90m    at endReadableNT (node:internal/streams/readable:1735:12)[39m
+[90m    at processTicksAndRejections (node:internal/process/task_queues:90:21)[39m {
+  type: [32m'parameters.too.many'[39m,
+  body: [32m'field0=synthetic&field1=synthetic&field2=synthetic&field3=synthetic&field4=synthetic&field5=synthetic&field6=synthetic&field7=synthetic&field8=synthetic&field9=synthetic&field10=synthetic&field11=synthetic&field12=synthetic'[39m
+}
+PASS src/website/auth/auth-admission.spec.ts
+PASS src/pos/sync/application/ingest-pos-snapshot.service.spec.ts
+  ● Console
+
+    console.warn
+      [Sync] manager-data received without posCallbackUrl — start Windows POS (ingest on :8081) so mobile edits reach Hive.
+
+    [0m [90m 104 |[39m     )[33m;[39m
+     [90m 105 |[39m     [36mif[39m ([33m![39m[36mthis[39m[33m.[39mposConnection[33m.[39mhasCallbackUrl()) {
+    [31m[1m>[22m[39m[90m 106 |[39m       console[33m.[39mwarn(
+     [90m     |[39m               [31m[1m^[22m[39m
+     [90m 107 |[39m         [32m'[Sync] manager-data received without posCallbackUrl — start Windows POS (ingest on :8081) so mobile edits reach Hive.'[39m[33m,[39m
+     [90m 108 |[39m       )[33m;[39m
+     [90m 109 |[39m     }[0m
+
+      at IngestPosSnapshotService.execute (pos/sync/application/ingest-pos-snapshot.service.ts:106:15)
+      at Object.<anonymous> (pos/sync/application/ingest-pos-snapshot.service.spec.ts:168:5)
+
+    console.log
+      [Sync][MoneyDebug][IN] businessDate=2026-06-27 dailySalesTotal=null openTablesPayable=null salesSummary.totalRevenue=null orders=1 tables=0
+
+      at IngestPosSnapshotService.execute (pos/sync/application/ingest-pos-snapshot.service.ts:136:13)
+
+    console.log
+      [Sync] Order #5: POS edit newer than queued mobile change — POS wins, discarding queued change.
+
+      at OrderSyncService.sync (pos/sync/snapshot/order-sync.service.ts:124:19)
+
+    console.log
+      [Sync][MoneyDebug][STORE] key=openTablesPayable:2026-06-27 value=0
+
+      at BusinessDaySyncService.persistReportingSnapshot (pos/sync/snapshot/business-day-sync.service.ts:244:15)
+
+    console.log
+      [SyncTiming][Backend] tables=0ms orders=0ms reservations=0ms businessDay=0ms reporting=0ms hints=0ms total=1ms rows=0t/1o/0c/0r/0e
+
+      at SyncTimer.log (pos/sync/sync-timing.ts:52:13)
+
+    console.warn
+      [Sync] manager-data received without posCallbackUrl — start Windows POS (ingest on :8081) so mobile edits reach Hive.
+
+    [0m [90m 104 |[39m     )[33m;[39m
+     [90m 105 |[39m     [36mif[39m ([33m![39m[36mthis[39m[33m.[39mposConnection[33m.[39mhasCallbackUrl()) {
+    [31m[1m>[22m[39m[90m 106 |[39m       console[33m.[39mwarn(
+     [90m     |[39m               [31m[1m^[22m[39m
+     [90m 107 |[39m         [32m'[Sync] manager-data received without posCallbackUrl — start Windows POS (ingest on :8081) so mobile edits reach Hive.'[39m[33m,[39m
+     [90m 108 |[39m       )[33m;[39m
+     [90m 109 |[39m     }[0m
+
+      at IngestPosSnapshotService.execute (pos/sync/application/ingest-pos-snapshot.service.ts:106:15)
+      at Object.<anonymous> (pos/sync/application/ingest-pos-snapshot.service.spec.ts:207:5)
+
+    console.log
+      [Sync][MoneyDebug][IN] businessDate=2026-06-27 dailySalesTotal=null openTablesPayable=null salesSummary.totalRevenue=null orders=1 tables=0
+
+      at IngestPosSnapshotService.execute (pos/sync/application/ingest-pos-snapshot.service.ts:136:13)
+
+    console.log
+      [Sync] Holding order #5: queued mobile edit is newer (or POS sent no timestamp) — ignoring POS snapshot.
+
+      at OrderSyncService.sync (pos/sync/snapshot/order-sync.service.ts:116:21)
+
+    console.log
+      [Sync][MoneyDebug][STORE] key=openTablesPayable:2026-06-27 value=0
+
+      at BusinessDaySyncService.persistReportingSnapshot (pos/sync/snapshot/business-day-sync.service.ts:244:15)
+
+    console.log
+      [SyncTiming][Backend] tables=0ms orders=0ms reservations=0ms businessDay=0ms reporting=0ms hints=0ms total=0ms rows=0t/1o/0c/0r/0e
+
+      at SyncTimer.log (pos/sync/sync-timing.ts:52:13)
+
+    console.warn
+      [Sync] manager-data received without posCallbackUrl — start Windows POS (ingest on :8081) so mobile edits reach Hive.
+
+    [0m [90m 104 |[39m     )[33m;[39m
+     [90m 105 |[39m     [36mif[39m ([33m![39m[36mthis[39m[33m.[39mposConnection[33m.[39mhasCallbackUrl()) {
+    [31m[1m>[22m[39m[90m 106 |[39m       console[33m.[39mwarn(
+     [90m     |[39m               [31m[1m^[22m[39m
+     [90m 107 |[39m         [32m'[Sync] manager-data received without posCallbackUrl — start Windows POS (ingest on :8081) so mobile edits reach Hive.'[39m[33m,[39m
+     [90m 108 |[39m       )[33m;[39m
+     [90m 109 |[39m     }[0m
+
+      at IngestPosSnapshotService.execute (pos/sync/application/ingest-pos-snapshot.service.ts:106:15)
+      at Object.<anonymous> (pos/sync/application/ingest-pos-snapshot.service.spec.ts:245:5)
+
+    console.log
+      [Sync][MoneyDebug][IN] businessDate=2026-06-27 dailySalesTotal=null openTablesPayable=null salesSummary.totalRevenue=null orders=1 tables=0
+
+      at IngestPosSnapshotService.execute (pos/sync/application/ingest-pos-snapshot.service.ts:136:13)
+
+    console.log
+      [Sync] Holding order #5: queued mobile edit is newer (or POS sent no timestamp) — ignoring POS snapshot.
+
+      at OrderSyncService.sync (pos/sync/snapshot/order-sync.service.ts:116:21)
+
+    console.log
+      [Sync][MoneyDebug][STORE] key=openTablesPayable:2026-06-27 value=0
+
+      at BusinessDaySyncService.persistReportingSnapshot (pos/sync/snapshot/business-day-sync.service.ts:244:15)
+
+    console.log
+      [SyncTiming][Backend] tables=0ms orders=0ms reservations=0ms businessDay=0ms reporting=0ms hints=0ms total=0ms rows=0t/1o/0c/0r/0e
+
+      at SyncTimer.log (pos/sync/sync-timing.ts:52:13)
+
+    console.warn
+      [Sync] manager-data received without posCallbackUrl — start Windows POS (ingest on :8081) so mobile edits reach Hive.
+
+    [0m [90m 104 |[39m     )[33m;[39m
+     [90m 105 |[39m     [36mif[39m ([33m![39m[36mthis[39m[33m.[39mposConnection[33m.[39mhasCallbackUrl()) {
+    [31m[1m>[22m[39m[90m 106 |[39m       console[33m.[39mwarn(
+     [90m     |[39m               [31m[1m^[22m[39m
+     [90m 107 |[39m         [32m'[Sync] manager-data received without posCallbackUrl — start Windows POS (ingest on :8081) so mobile edits reach Hive.'[39m[33m,[39m
+     [90m 108 |[39m       )[33m;[39m
+     [90m 109 |[39m     }[0m
+
+      at IngestPosSnapshotService.execute (pos/sync/application/ingest-pos-snapshot.service.ts:106:15)
+      at Object.<anonymous> (pos/sync/application/ingest-pos-snapshot.service.spec.ts:290:5)
+
+    console.log
+      [Sync][MoneyDebug][IN] businessDate=2026-06-27 dailySalesTotal=null openTablesPayable=null salesSummary.totalRevenue=null orders=0 tables=0
+
+      at IngestPosSnapshotService.execute (pos/sync/application/ingest-pos-snapshot.service.ts:136:13)
+
+    console.log
+      [Sync][MoneyDebug][STORE] key=openTablesPayable:2026-06-27 value=0
+
+      at BusinessDaySyncService.persistReportingSnapshot (pos/sync/snapshot/business-day-sync.service.ts:244:15)
+
+    console.log
+      [SyncTiming][Backend] tables=0ms orders=0ms staff=194ms reservations=0ms businessDay=0ms reporting=0ms hints=0ms total=194ms rows=0t/0o/0c/0r/0e staff=1/1hashed
+
+      at SyncTimer.log (pos/sync/sync-timing.ts:52:13)
+
+PASS src/auth/staff-pin-vault.service.spec.ts
+PASS src/website/core/website-logo.service.spec.ts
+PASS src/platform/platform-password.spec.ts
+PASS src/pos/sync/sync.controller.spec.ts
+PASS src/website/custom/custom-website-runtime.spec.ts
+PASS src/website/payment/booking-payment.spec.ts
+PASS src/customer/printer-runtime-persistence.spec.ts
+PASS src/customer/customer-website-logo.http.spec.ts
+PASS src/customer/owner-invitations-name.spec.ts
+PASS src/customer/customer-website-logo.spec.ts
+PASS src/mobile/services/manager-revenue-classification.spec.ts
+  ● Console
+
+    console.log
+      [MobileDashboard][MoneyDebug] businessDate=2026-09-04 todayRevenue=100 closedTablesRevenue=100 openTablesPayable=900 sourceDaily=unavailable computedOpen=900 occupiedTables=1 openOrderCandidates=1
+
+      at MobileDashboardService.getDashboard (mobile/services/mobile-dashboard.service.ts:358:13)
+
+    console.log
+      [MobileDashboard][MoneyDebug] businessDate=2026-09-04 todayRevenue=0 closedTablesRevenue=0 openTablesPayable=900 sourceDaily=unavailable computedOpen=900 occupiedTables=1 openOrderCandidates=1
+
+      at MobileDashboardService.getDashboard (mobile/services/mobile-dashboard.service.ts:358:13)
+
+PASS src/inventory/inventory.service.spec.ts
+PASS src/realtime/venue-realtime.spec.ts
+PASS src/customer/printer-runtime-config.spec.ts
+PASS src/pos/sync/application/ingest-audit-reports.service.spec.ts
+  ● Console
+
+    console.log
+      [SyncAudit] Venue venue-a: batch of 1 report(s)
+
+      at IngestAuditReportsService.ingestReports (pos/sync/application/ingest-audit-reports.service.ts:143:15)
+
+    console.log
+      [SyncTiming][Backend/audit] persist=0ms reconcile=0ms total=2ms written=1 unchanged=0
+
+      at SyncTimer.log (pos/sync/sync-timing.ts:52:13)
+
+    console.log
+      [SyncAudit] Venue venue-a: batch of 1 report(s)
+
+      at IngestAuditReportsService.ingestReports (pos/sync/application/ingest-audit-reports.service.ts:143:15)
+
+    console.log
+      [SyncTiming][Backend/audit] persist=0ms reconcile=0ms total=0ms written=1 unchanged=0
+
+      at SyncTimer.log (pos/sync/sync-timing.ts:52:13)
+
+    console.log
+      [SyncAudit] Venue venue-a: batch of 1 report(s)
+
+      at IngestAuditReportsService.ingestReports (pos/sync/application/ingest-audit-reports.service.ts:143:15)
+
+    console.log
+      [SyncTiming][Backend/audit] persist=0ms reconcile=0ms total=0ms written=1 unchanged=0
+
+      at SyncTimer.log (pos/sync/sync-timing.ts:52:13)
+
+    console.log
+      [SyncAudit] Venue venue-a: batch of 1 report(s)
+
+      at IngestAuditReportsService.ingestReports (pos/sync/application/ingest-audit-reports.service.ts:143:15)
+
+    console.log
+      [SyncTiming][Backend/audit] persist=0ms reconcile=0ms total=0ms written=1 unchanged=0
+
+      at SyncTimer.log (pos/sync/sync-timing.ts:52:13)
+
+    console.log
+      [SyncAudit] Venue venue-a: batch of 1 report(s)
+
+      at IngestAuditReportsService.ingestReports (pos/sync/application/ingest-audit-reports.service.ts:143:15)
+
+    console.log
+      [SyncTiming][Backend/audit] persist=0ms reconcile=0ms total=0ms written=1 unchanged=0
+
+      at SyncTimer.log (pos/sync/sync-timing.ts:52:13)
+
+    console.log
+      [SyncAudit] Venue venue-a: batch of 1 report(s)
+
+      at IngestAuditReportsService.ingestReports (pos/sync/application/ingest-audit-reports.service.ts:143:15)
+
+    console.log
+      [SyncTiming][Backend/audit] persist=0ms reconcile=0ms total=0ms written=1 unchanged=0
+
+      at SyncTimer.log (pos/sync/sync-timing.ts:52:13)
+
+    console.log
+      [SyncAudit] Venue venue-a: batch of 1 report(s)
+
+      at IngestAuditReportsService.ingestReports (pos/sync/application/ingest-audit-reports.service.ts:143:15)
+
+    console.log
+      [SyncTiming][Backend/audit] persist=0ms reconcile=0ms total=0ms written=1 unchanged=0
+
+      at SyncTimer.log (pos/sync/sync-timing.ts:52:13)
+
+    console.log
+      [SyncAudit] Venue venue-a: batch of 1 report(s)
+
+      at IngestAuditReportsService.ingestReports (pos/sync/application/ingest-audit-reports.service.ts:143:15)
+
+    console.log
+      [SyncTiming][Backend/audit] persist=0ms reconcile=0ms total=0ms written=1 unchanged=0
+
+      at SyncTimer.log (pos/sync/sync-timing.ts:52:13)
+
+    console.log
+      [SyncAudit] Venue venue-a: batch of 2 report(s)
+
+      at IngestAuditReportsService.ingestReports (pos/sync/application/ingest-audit-reports.service.ts:143:15)
+
+    console.log
+      [SyncTiming][Backend/audit] persist=0ms reconcile=0ms total=0ms written=2 unchanged=0
+
+      at SyncTimer.log (pos/sync/sync-timing.ts:52:13)
+
+    console.log
+      [SyncAudit] Venue venue-a: batch of 2 report(s)
+
+      at IngestAuditReportsService.ingestReports (pos/sync/application/ingest-audit-reports.service.ts:143:15)
+
+    console.warn
+      [SyncAudit] Report broken failed: constraint
+
+    [0m [90m 176 |[39m         } [36mcatch[39m (error) {
+     [90m 177 |[39m           [36mif[39m ([36mthis[39m[33m.[39matomic) [36mthrow[39m error[33m;[39m
+    [31m[1m>[22m[39m[90m 178 |[39m           console[33m.[39mwarn(
+     [90m     |[39m                   [31m[1m^[22m[39m
+     [90m 179 |[39m             [32m`[SyncAudit] Report ${reportId} failed: ${(error as Error).message}`[39m[33m,[39m
+     [90m 180 |[39m           )[33m;[39m
+     [90m 181 |[39m         }[0m
+
+      at pos/sync/application/ingest-audit-reports.service.ts:178:19
+      at SyncTimer.phase (pos/sync/sync-timing.ts:24:14)
+      at IngestAuditReportsService.ingestReports (pos/sync/application/ingest-audit-reports.service.ts:150:5)
+      at Object.<anonymous> (pos/sync/application/ingest-audit-reports.service.spec.ts:400:20)
+
+    console.log
+      [SyncTiming][Backend/audit] persist=0ms reconcile=0ms total=0ms written=1 unchanged=0
+
+      at SyncTimer.log (pos/sync/sync-timing.ts:52:13)
+
+    console.log
+      [SyncAudit] Venue venue-a: batch of 1 report(s)
+
+      at IngestAuditReportsService.ingestReports (pos/sync/application/ingest-audit-reports.service.ts:143:15)
+
+    console.log
+      [SyncTiming][Backend/audit] persist=0ms reconcile=0ms total=0ms written=0 unchanged=1
+
+      at SyncTimer.log (pos/sync/sync-timing.ts:52:13)
+
+    console.log
+      [SyncAudit] Venue venue-a: batch of 1 report(s)
+
+      at IngestAuditReportsService.ingestReports (pos/sync/application/ingest-audit-reports.service.ts:143:15)
+
+    console.log
+      [SyncTiming][Backend/audit] persist=0ms reconcile=0ms total=0ms written=1 unchanged=0
+
+      at SyncTimer.log (pos/sync/sync-timing.ts:52:13)
+
+    console.log
+      [SyncAudit] Venue venue-a: batch of 1 report(s)
+
+      at IngestAuditReportsService.ingestReports (pos/sync/application/ingest-audit-reports.service.ts:143:15)
+
+    console.log
+      [SyncTiming][Backend/audit] persist=0ms reconcile=0ms total=0ms written=1 unchanged=0
+
+      at SyncTimer.log (pos/sync/sync-timing.ts:52:13)
+
+    console.log
+      [SyncAudit] Venue venue-a: removed 1 report(s) the POS no longer has
+
+      at IngestAuditReportsService.reconcile (pos/sync/application/ingest-audit-reports.service.ts:351:13)
+
+    console.log
+      [SyncTiming][Backend/audit] persist=0ms reconcile=0ms total=0ms written=0 unchanged=0
+
+      at SyncTimer.log (pos/sync/sync-timing.ts:52:13)
+
+    console.warn
+      [SyncAudit] Venue venue-a reconciled with an empty report set — ignored.
+
+    [0m [90m 330 |[39m     [90m// the server's copy of a restaurant's audit history on a local fault.[39m
+     [90m 331 |[39m     [36mif[39m (keep[33m.[39mlength [33m===[39m [35m0[39m) {
+    [31m[1m>[22m[39m[90m 332 |[39m       console[33m.[39mwarn(
+     [90m     |[39m               [31m[1m^[22m[39m
+     [90m 333 |[39m         [32m`[SyncAudit] Venue ${tenant.venueId} reconciled with an empty report set — ignored.`[39m[33m,[39m
+     [90m 334 |[39m       )[33m;[39m
+     [90m 335 |[39m       [36mreturn[39m[33m;[39m[0m
+
+      at IngestAuditReportsService.reconcile (pos/sync/application/ingest-audit-reports.service.ts:332:15)
+      at pos/sync/application/ingest-audit-reports.service.ts:186:12
+      at SyncTimer.phase (pos/sync/sync-timing.ts:24:20)
+      at IngestAuditReportsService.ingestReports (pos/sync/application/ingest-audit-reports.service.ts:185:18)
+      at Object.<anonymous> (pos/sync/application/ingest-audit-reports.service.spec.ts:525:5)
+
+    console.log
+      [SyncTiming][Backend/audit] persist=0ms reconcile=0ms total=0ms written=0 unchanged=0
+
+      at SyncTimer.log (pos/sync/sync-timing.ts:52:13)
+
+    console.warn
+      [SyncAudit] Venue venue-a reconciled with an empty report set — ignored.
+
+    [0m [90m 330 |[39m     [90m// the server's copy of a restaurant's audit history on a local fault.[39m
+     [90m 331 |[39m     [36mif[39m (keep[33m.[39mlength [33m===[39m [35m0[39m) {
+    [31m[1m>[22m[39m[90m 332 |[39m       console[33m.[39mwarn(
+     [90m     |[39m               [31m[1m^[22m[39m
+     [90m 333 |[39m         [32m`[SyncAudit] Venue ${tenant.venueId} reconciled with an empty report set — ignored.`[39m[33m,[39m
+     [90m 334 |[39m       )[33m;[39m
+     [90m 335 |[39m       [36mreturn[39m[33m;[39m[0m
+
+      at IngestAuditReportsService.reconcile (pos/sync/application/ingest-audit-reports.service.ts:332:15)
+      at pos/sync/application/ingest-audit-reports.service.ts:186:12
+      at SyncTimer.phase (pos/sync/sync-timing.ts:24:20)
+      at IngestAuditReportsService.ingestReports (pos/sync/application/ingest-audit-reports.service.ts:185:18)
+      at Object.<anonymous> (pos/sync/application/ingest-audit-reports.service.spec.ts:526:5)
+
+    console.log
+      [SyncTiming][Backend/audit] persist=0ms reconcile=0ms total=0ms written=0 unchanged=0
+
+      at SyncTimer.log (pos/sync/sync-timing.ts:52:13)
+
+    console.log
+      [SyncAudit] Venue venue-a: batch of 1 report(s)
+
+      at IngestAuditReportsService.ingestReports (pos/sync/application/ingest-audit-reports.service.ts:143:15)
+
+    console.log
+      [SyncTiming][Backend/audit] persist=0ms reconcile=0ms total=0ms written=1 unchanged=0
+
+      at SyncTimer.log (pos/sync/sync-timing.ts:52:13)
+
+[32m[Nest] 34541  - [39m10/16/2026, 8:36:30 PM [32m    LOG[39m [38;5;3m[HybridNotificationService] [39m[32mFirebase Admin Messaging initialized.[39m
+PASS src/website/core/website-address.spec.ts
+PASS src/platform/platform-local-tools.controller.spec.ts
+PASS src/shared/bootstrap/bootstrap.service.spec.ts
+PASS src/inventory/inventory-quantity.spec.ts
+PASS src/pos/sync/snapshot/money-reconciliation.spec.ts
+[32m[Nest] 34541  - [39m10/16/2026, 8:36:28 PM [32m    LOG[39m [38;5;3m[BootstrapService] [39m[32mLegacy Venue absent — skipping legacy website setup.[39m
+[33m[Nest] 34541  - [39m10/16/2026, 8:36:28 PM [33m   WARN[39m [38;5;3m[BootstrapService] [39m[33mWebsite features incomplete — missing: JWT_REFRESH_SECRET, COOKIE_ENCRYPTION_KEY, PAYMENT_INTEGRATION_MASTER_KEY, FRONTEND_URL, API_URL[39m
+[32m[Nest] 34541  - [39m10/16/2026, 8:36:28 PM [32m    LOG[39m [38;5;3m[BootstrapService] [39m[32mWebsite tables ready (14 mappings)[39m
+[33m[Nest] 34541  - [39m10/16/2026, 8:36:28 PM [33m   WARN[39m [38;5;3m[BootstrapService] [39m[33mNo website SUPER_ADMIN — set SUPER_ADMIN_PHONE + SUPER_ADMIN_PASSWORD in .env[39m
+[33m[Nest] 34541  - [39m10/16/2026, 8:36:28 PM [33m   WARN[39m [38;5;3m[BootstrapService] [39m[33mMenu is empty — sync from Windows POS (/sync/manager-data). Website /api/menu stays empty until then.[39m
+[33m[Nest] 34541  - [39m10/16/2026, 8:36:28 PM [33m   WARN[39m [38;5;3m[BootstrapService] [39m[33mWebsite features incomplete — missing: JWT_REFRESH_SECRET, COOKIE_ENCRYPTION_KEY, PAYMENT_INTEGRATION_MASTER_KEY, FRONTEND_URL, API_URL[39m
+PASS src/entitlements/feature.guard.spec.ts
+PASS src/auth/jwt.strategy.spec.ts
+PASS src/entitlements/venue-entitlements.service.spec.ts
+PASS src/auth/manager-venue.spec.ts
+PASS src/menu-catalog/menu-client-policy.spec.ts
+PASS src/auth/manager-tenant.service.spec.ts
+PASS src/app.controller.spec.ts
+[33m[Nest] 34541  - [39m10/16/2026, 8:36:28 PM [33m   WARN[39m [38;5;3m[LoginThrottleService] [39m[33mLogin locked for client for 15m after 5 failed attempts[39m
+[33m[Nest] 34541  - [39m10/16/2026, 8:36:28 PM [33m   WARN[39m [38;5;3m[LoginThrottleService] [39m[33mLogin locked for venue-lookup:client for 15m after 5 failed attempts[39m
+PASS src/pos/sync/snapshot/staff-sync.service.spec.ts
+  ● Console
+
+    console.warn
+      [SYNC] Skipping new staff "ghost" without PIN (the POS re-sends it next snapshot).
+
+    [0m [90m 161 |[39m       } [36melse[39m {
+     [90m 162 |[39m         needsPin[33m.[39mpush(member[33m.[39musername)[33m;[39m
+    [31m[1m>[22m[39m[90m 163 |[39m         console[33m.[39mwarn(
+     [90m     |[39m                 [31m[1m^[22m[39m
+     [90m 164 |[39m           [32m`[SYNC] Skipping new staff "${member.username}" without PIN (the POS re-sends it next snapshot).`[39m[33m,[39m
+     [90m 165 |[39m         )[33m;[39m
+     [90m 166 |[39m       }[0m
+
+      at StaffSyncService.syncLocked (pos/sync/snapshot/staff-sync.service.ts:163:17)
+      at Object.<anonymous> (pos/sync/snapshot/staff-sync.service.spec.ts:214:20)
+
+PASS src/website/tenancy/website-tenant.guard.spec.ts
+PASS src/website/core/website-content.spec.ts
+PASS src/mobile/services/manager-data-freshness.spec.ts
+PASS src/edge/edge-device.guard.spec.ts
+PASS src/website/tenancy/website-tenant.service.spec.ts
+PASS src/platform/platform-auth.controller.spec.ts
+PASS src/customer/customer-password.spec.ts
+PASS src/edge/enrollment-code.spec.ts
+[95m[Nest] 34541  - [39m10/16/2026, 8:36:28 PM [95m  DEBUG[39m [38;5;3m[WebsiteTenantService] [39m[95mDevelopment host localhost resolved via vankisi.localhost[39m
+[95m[Nest] 34541  - [39m10/16/2026, 8:36:28 PM [95m  DEBUG[39m [38;5;3m[WebsiteTenantService] [39m[95mDevelopment host 192.168.1.20 resolved via vankisi.localhost[39m
+[95m[Nest] 34541  - [39m10/16/2026, 8:36:28 PM [95m  DEBUG[39m [38;5;3m[WebsiteTenantService] [39m[95mDevelopment host localhost resolved via a.test[39m
+PASS src/auth/pos-sync.guard.spec.ts
+PASS src/website/provisioning/hostname.spec.ts
+PASS src/pos/sync/snapshot/menu-sync.service.spec.ts
+  ● Console
+
+    console.log
+      [SYNC] Syncing 1 categories...
+
+      at MenuSyncService.sync (pos/sync/snapshot/menu-sync.service.ts:450:13)
+
+    console.log
+      [SYNC] Syncing 1 categories...
+
+      at MenuSyncService.sync (pos/sync/snapshot/menu-sync.service.ts:450:13)
+
+    console.log
+      [SYNC] Syncing 0 categories...
+
+      at MenuSyncService.sync (pos/sync/snapshot/menu-sync.service.ts:450:13)
+
+    console.log
+      [SYNC] Syncing 0 categories...
+
+      at MenuSyncService.sync (pos/sync/snapshot/menu-sync.service.ts:450:13)
+
+    console.log
+      [SYNC] Syncing 1 categories...
+
+      at MenuSyncService.sync (pos/sync/snapshot/menu-sync.service.ts:450:13)
+
+PASS src/payment-integrations/payment-config.crypto.spec.ts
+PASS src/finance/finance-rules.spec.ts
+PASS src/auth/manager-activation.controller.spec.ts
+PASS src/pos/sync/snapshot/reservation-sync.service.spec.ts
+PASS src/subscriptions/billing-policy.spec.ts
+PASS src/menu-catalog/menu-mutation-result.spec.ts
+PASS src/edge/enrollment-rate-limiter.spec.ts
+[33m[Nest] 34541  - [39m10/16/2026, 8:36:29 PM [33m   WARN[39m [38;5;3m[LoginThrottleService] [39m[33mLogin locked for manager-activation:device:client for 15m after 5 failed attempts[39m
+[33m[Nest] 34541  - [39m10/16/2026, 8:36:29 PM [33m   WARN[39m [38;5;3m[LoginThrottleService] [39m[33mLogin locked for client for 15m after 5 failed attempts[39m
+[32m[Nest] 34541  - [39m10/16/2026, 8:36:29 PM [32m    LOG[39m [38;5;3m[ReservationSyncService] [39m[32mVenue venue-aaaa: removed 3 reservation(s) the POS no longer holds[39m
+[32m[Nest] 34541  - [39m10/16/2026, 8:36:29 PM [32m    LOG[39m [38;5;3m[ReservationSyncService] [39m[32mVenue venue-aaaa: removed 2 reservation(s) the POS no longer holds[39m
+[32m[Nest] 34541  - [39m10/16/2026, 8:36:29 PM [32m    LOG[39m [38;5;3m[ReservationSyncService] [39m[32mVenue venue-aaaa: removed 1 reservation(s) the POS no longer holds[39m
+PASS src/website/core/public-info-review.spec.ts
+PASS src/platform/platform-audit.service.spec.ts
+PASS src/inventory/inventory-unit.spec.ts
+PASS src/auth/legacy-pos-tenant.service.spec.ts
+PASS src/pos/sync/snapshot/sale-ledger-sync.service.spec.ts
+PASS src/website/custom/custom-website-local.spec.ts
+PASS src/local-tools/local-docker-guard.spec.ts
+PASS src/website/reservation/table-identity-contract.spec.ts
+PASS src/entitlements/effective-features.spec.ts
+PASS src/website/tenancy/same-origin.spec.ts
+PASS src/shared/deployment-config.spec.ts
+PASS src/website/tenancy/website-host.spec.ts
+PASS src/entitlements/commercial-projection.spec.ts
+PASS src/website/tenancy/website-capabilities.spec.ts
+PASS src/pos/audit/audit-log-entity.spec.ts
+PASS src/tenancy/tenant-context.spec.ts
+PASS src/platform/cloud-menu-admission.spec.ts
+PASS src/dev-origins.spec.ts
+PASS src/pos/sync/sync-conflict.spec.ts
+PASS src/pos/audit/audit-order-kind.spec.ts
+PASS src/pos/audit/audit-event-type.spec.ts
+
+Test Suites: 66 skipped, 75 passed, 75 of 141 total
+Tests:       892 skipped, 921 passed, 1813 total
+Snapshots:   0 total
+Time:        20.123 s
+Ran all test suites.
+Test results written to: ../../../../../tmp/vynic-publication-validation/backend-final-tests.json

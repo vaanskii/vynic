@@ -1,9 +1,13 @@
+import { requireCommercialFeature } from '../entitlements/commercial-state';
 import {
   BadRequestException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
+  Optional,
   ServiceUnavailableException,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../prisma.service';
 import { VenueEntitlementsService } from '../entitlements/venue-entitlements.service';
 import { PlatformCommercialService } from '../platform/platform-commercial.service';
@@ -13,6 +17,13 @@ import type { CustomerPrincipal } from './customer-auth';
 import type { ControlActor } from '../platform/control-actor';
 import { profileInput, saveProfile } from '../venue-profile/venue-profile';
 import { Prisma } from '@prisma/client';
+import { websiteState } from '../website/provisioning/website-provisioning';
+import { assertLegacyPrinterWriteAllowed } from './printer-runtime-config';
+import {
+  lockPrinterRuntimeDevice,
+  persistPreparedPrinterRuntimeConfig,
+  throwPrinterRuntimeHttpError,
+} from './printer-runtime-persistence';
 
 @Injectable()
 export class CustomerService {
@@ -21,10 +32,21 @@ export class CustomerService {
     private readonly entitlements: VenueEntitlementsService,
     private readonly commercial: PlatformCommercialService,
     private readonly enrollments: DeviceEnrollmentService,
+    @Optional() private readonly config?: ConfigService,
   ) {}
+  async requireFeature(id: string, feature: string) {
+    return requireCommercialFeature(this.db, id, feature);
+  }
   async venue(actor: CustomerPrincipal, id: string) {
     const venue = await this.db.venue.findFirst({
-      where: { id, organizationId: actor.organizationId },
+      where: {
+        id,
+        organization: {
+          memberships: {
+            some: { customerAccountId: actor.customerAccountId, role: 'OWNER' },
+          },
+        },
+      },
     });
     if (!venue) throw new NotFoundException('Restaurant not found');
     return venue;
@@ -46,34 +68,67 @@ export class CustomerService {
       select: { email: true, displayName: true, emailVerifiedAt: true },
     });
     const venues = await this.db.venue.findMany({
-      where: { organizationId: actor.organizationId },
+      where: {
+        organization: {
+          memberships: {
+            some: { customerAccountId: actor.customerAccountId, role: 'OWNER' },
+          },
+        },
+      },
       select: { id: true },
     });
     const policy = await this.db.onboardingPolicy.findUnique({
       where: { id: 'default' },
     });
+    const statuses = await Promise.all(venues.map((v) => this.status(v.id)));
+    const enabled = new Set(statuses.flatMap((v) => v.features));
     return {
       account,
-      venues: await Promise.all(venues.map((v) => this.status(v.id))),
-      releaseLinks: policy?.releaseLinks ?? {},
+      organizations: await this.db.organization.findMany({
+        where: {
+          memberships: {
+            some: { customerAccountId: actor.customerAccountId, role: 'OWNER' },
+          },
+        },
+        select: { id: true, name: true },
+        orderBy: { createdAt: 'asc' },
+      }),
+      venues: statuses,
+      releaseLinks: Object.fromEntries(
+        Object.entries(
+          (policy?.releaseLinks ?? {}) as Record<string, string>,
+        ).filter(([key]) =>
+          enabled.has(key.startsWith('pos') ? 'POS' : 'MANAGER_APP'),
+        ),
+      ),
+      // Lets first-run show the full website address before a Venue exists.
+      websiteBaseDomain:
+        this.config?.get<string>('SAAS_WEBSITE_BASE_DOMAIN') ?? null,
     };
   }
   async status(id: string) {
+    const features = await this.entitlements.effectiveFeatures(id);
     const venue = await this.db.venue.findUniqueOrThrow({
       where: { id },
       include: {
         subscription: true,
+        planAssignment: { select: { plan: { select: { name: true } } } },
+        websiteConfig: { select: { mode: true, status: true } },
         organization: {
           select: {
             id: true,
             name: true,
-            accounts: {
+            memberships: {
               select: {
-                id: true,
-                email: true,
-                displayName: true,
-                emailVerifiedAt: true,
-                isActive: true,
+                account: {
+                  select: {
+                    id: true,
+                    email: true,
+                    displayName: true,
+                    emailVerifiedAt: true,
+                    isActive: true,
+                  },
+                },
               },
             },
           },
@@ -100,6 +155,7 @@ export class CustomerService {
     const enrollment = await this.enrollments.list(id);
     return {
       venue: {
+        menuAuthority: venue.menuAuthority,
         id: venue.id,
         name: venue.name,
         branchName: venue.branchName,
@@ -109,23 +165,59 @@ export class CustomerService {
         profileUpdatedAt: venue.profileUpdatedAt,
         status: venue.status,
         activeOperationalDeviceId: venue.activeOperationalDeviceId,
-        loginCode: venue.loginCode,
+        loginCode: features.includes('MANAGER_APP') ? venue.loginCode : null,
         timezone: venue.timezone,
         currency: venue.currency,
       },
-      organization: venue.organization,
-      subscription: venue.subscription && {
-        status: venue.subscription.status,
-        trialEndsAt: venue.subscription.trialEndsAt,
+      organization: {
+        id: venue.organization.id,
+        name: venue.organization.name,
+        accounts: venue.organization.memberships.map((m) => m.account),
       },
-      features: await this.entitlements.effectiveFeatures(id),
-      managers,
-      devices: devices.map((device) => ({ ...device, isOperationalPrimary: device.id === venue.activeOperationalDeviceId })),
-      enrollments: enrollment,
+      website: venue.websiteConfig,
+      // The only website status the dashboard may branch on.
+      websiteState: websiteState(features, venue.websiteConfig),
+      plan: venue.planAssignment && { name: venue.planAssignment.plan.name },
+      subscription: venue.subscription
+        ? {
+            status: venue.subscription.status,
+            trialEndsAt: venue.subscription.trialEndsAt,
+            currentPeriodStart: venue.subscription.currentPeriodStart,
+            currentPeriodEndsAt: venue.subscription.currentPeriodEndsAt,
+            cancelAtPeriodEnd: venue.subscription.cancelAtPeriodEnd,
+          }
+        : {
+            status: venue.legacyCommercialAccess ? 'LEGACY' : 'NO_PLAN',
+            trialEndsAt: null,
+          },
+      features,
+      initialManagerSetupEligible:
+        features.includes('POS') &&
+        features.includes('MANAGER_APP') &&
+        managers.length === 0 &&
+        !(
+          await this.db.managerActivation.findUnique({
+            where: { venueId: id },
+            select: { consumedAt: true },
+          })
+        )?.consumedAt,
+      managers: features.includes('MANAGER_APP') ? managers : [],
+      devices: (features.includes('POS') ? devices : []).map((device) => ({
+        ...device,
+        isOperationalPrimary: device.id === venue.activeOperationalDeviceId,
+      })),
+      enrollments: features.includes('POS') ? enrollment : [],
       ready:
         venue.status === 'ACTIVE' &&
-        managers.some((m) => m.isActive) &&
-        devices.some((d) => d.id === venue.activeOperationalDeviceId && d.status === 'ACTIVE' && d.firstSyncAt),
+        (!features.includes('MANAGER_APP') ||
+          managers.some((m) => m.isActive)) &&
+        (!features.includes('POS') ||
+          devices.some(
+            (d) =>
+              d.id === venue.activeOperationalDeviceId &&
+              d.status === 'ACTIVE' &&
+              d.firstSyncAt,
+          )),
       checklist: {
         restaurant: true,
         manager: managers.some((m) => m.isActive),
@@ -160,36 +252,38 @@ export class CustomerService {
     if (!/^[A-Z]{3}$/.test(currency))
       throw new BadRequestException('Currency must be an ISO code');
     return this.db.$transaction(async (tx) => {
-      await tx.$queryRaw`SELECT "id" FROM "pos"."Organization" WHERE "id"=${actor.organizationId} FOR UPDATE`;
+      const memberships = await tx.organizationMembership.findMany({
+        where: {
+          customerAccountId: actor.customerAccountId,
+          role: 'OWNER',
+          ...(body.organizationId
+            ? {
+                organizationId: requireText(
+                  body.organizationId,
+                  'organizationId',
+                ),
+              }
+            : {}),
+        },
+      });
+      if (memberships.length !== 1)
+        throw new BadRequestException('Choose an Organization you own');
+      const organizationId = memberships[0].organizationId;
+      await tx.$queryRaw`SELECT "id" FROM "pos"."Organization" WHERE "id"=${organizationId} FOR UPDATE`;
       const existing = await tx.venue.findFirst({
-        where: { organizationId: actor.organizationId },
+        where: { organizationId },
       });
-      if (existing) return existing; // One restaurant per pilot owner; request retry is convergent.
-      const policy = await tx.onboardingPolicy.findUnique({
-        where: { id: 'default' },
-      });
-      const plan =
-        policy?.trialPlanId &&
-        (await tx.plan.findFirst({
-          where: { id: policy.trialPlanId, status: 'ACTIVE' },
-        }));
-      if (!policy?.enabled || !plan)
-        throw new ServiceUnavailableException('Trial plan is not configured');
+      if (existing) return existing; // One restaurant per pilot Organization; request retry is convergent.
       const venue = await tx.venue.create({
         data: {
-          organizationId: actor.organizationId,
+          organizationId,
           ...profileInput({ ...body, name }),
           profileUpdatedAt: new Date(),
           timezone,
           currency,
-          subscription: {
-            create: {
-              status: 'TRIAL',
-              startedAt: new Date(),
-              trialEndsAt: new Date(Date.now() + policy.trialDays * 86400000),
-            },
-          },
-          planAssignment: { create: { planId: plan.id } },
+          subscription: { create: { status: 'NO_PLAN' } },
+          // New Venues use the canonical Cloud Menu (D030); POS is legacy only.
+          menuAuthority: 'CLOUD',
         },
       });
       await tx.customerAuditEvent.create({
@@ -203,21 +297,32 @@ export class CustomerService {
       return venue;
     });
   }
-  async manager(
+  async manager(actor: CustomerPrincipal, venueId: string) {
+    await this.venue(actor, venueId);
+    throw new ForbiddenException(
+      'Manager access is managed in the application or by Vynic Platform Admin',
+    );
+  }
+  async managerActivation(actor: CustomerPrincipal, venueId: string) {
+    await this.venue(actor, venueId);
+    return this.commercial.activation(actor, venueId);
+  }
+  async setupEligibility(actor: CustomerPrincipal, venueId: string) {
+    await this.venue(actor, venueId);
+    return this.enrollments.setupEligibility(actor, venueId);
+  }
+  async enrollment(
     actor: CustomerPrincipal,
     venueId: string,
-    action: 'create' | 'reset' | 'disable',
-    body: Record<string, unknown>,
-    staffId?: string,
+    initialManagerSetup = false,
   ) {
     await this.venue(actor, venueId);
-    return this.commercial.managerAccess(actor, venueId, action, body, staffId);
-  }
-  async enrollment(actor: CustomerPrincipal, venueId: string) {
-    await this.venue(actor, venueId);
+    if (!(await this.entitlements.hasFeature(venueId, 'POS')))
+      throw new ForbiddenException('POS is not included in this plan');
     return this.enrollments.create(actor, venueId, {
       displayName: 'Main POS',
       platform: 'WINDOWS',
+      initialManagerSetup,
     });
   }
   async cancel(actor: CustomerPrincipal, venueId: string, id: string) {
@@ -230,6 +335,18 @@ export class CustomerService {
     deviceId: string,
     body: Record<string, unknown>,
   ) {
+    if (!body || typeof body !== 'object' || Array.isArray(body))
+      throw new BadRequestException('Printer configuration is required');
+    if (body.version === 2)
+      return persistPreparedPrinterRuntimeConfig(
+        this.db,
+        actor,
+        { deviceId, venueId },
+        body,
+      );
+    if (actor.customerAccountId)
+      await this.venue({ customerAccountId: actor.customerAccountId }, venueId);
+    await requireCommercialFeature(this.db, venueId, 'POS');
     const printers = Object.fromEntries(
       ['kitchen', 'receipt'].map((key) => {
         const row = body[key] as Record<string, unknown> | undefined;
@@ -249,10 +366,16 @@ export class CustomerService {
       }),
     );
     return this.db.$transaction(async (tx) => {
-      const device = await tx.device.findFirst({
-        where: { id: deviceId, venueId },
-      });
-      if (!device) throw new NotFoundException('Device not found');
+      const device = await lockPrinterRuntimeDevice(
+        tx,
+        { deviceId, venueId },
+        actor,
+      );
+      try {
+        assertLegacyPrinterWriteAllowed(device.runtimeConfig);
+      } catch (error) {
+        throwPrinterRuntimeHttpError(error);
+      }
       const runtimeConfig = { version: 1, printers };
       await tx.device.update({
         where: { id: deviceId },

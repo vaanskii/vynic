@@ -1,0 +1,76 @@
+{
+  "schema": 1,
+  "sourceReceiptSHA256": "193e4800e5d0733a30bc6c8d4ac993590219363941e69a787bba5ac3681c8f68",
+  "artifacts": {
+    "arm64/printeragent": {
+      "filename": "printeragent.test.exe",
+      "architecture": "arm64",
+      "sha256": "819805381857dcd326f309ceba894b2bf43b62b0db037e5da7c347925ab5acb3",
+      "bytes": 24239104,
+      "PEMachine": "0xaa64"
+    },
+    "arm64/printerdaemon": {
+      "filename": "printerdaemon.test.exe",
+      "architecture": "arm64",
+      "sha256": "c6f897daba8b4bea905b53c79d98e9a22547a37c8afe477d6260c0e9bcfc3067",
+      "bytes": 24839168,
+      "PEMachine": "0xaa64"
+    },
+    "arm64/printerprovisioning": {
+      "filename": "printerprovisioning.test.exe",
+      "architecture": "arm64",
+      "sha256": "17e46e4f457f476969508c529a0856810c187104fc4b56c80c31935e6dcd3693",
+      "bytes": 22199808,
+      "PEMachine": "0xaa64"
+    },
+    "arm64/printer-agent-command": {
+      "filename": "printer-agent-command.test.exe",
+      "architecture": "arm64",
+      "sha256": "7e94116cea1e326d3a77a7fce976e9a9ed93c2288850d0495f13a729bdf9d1cf",
+      "bytes": 24657408,
+      "PEMachine": "0xaa64"
+    },
+    "arm64/printer-agent": {
+      "filename": "printer-agent.exe",
+      "architecture": "arm64",
+      "sha256": "3b2fec42f5ebb56321825537e8aa3efe951f1071f7b40e22c2bc7185d1f68fcd",
+      "bytes": 23383552,
+      "PEMachine": "0xaa64"
+    },
+    "amd64/printeragent": {
+      "filename": "printeragent.test.exe",
+      "architecture": "amd64",
+      "sha256": "f335745e38be573f5ec031478eab4b524a8069c811324ac2a5d39876b676e894",
+      "bytes": 25833472,
+      "PEMachine": "0x8664"
+    },
+    "amd64/printerdaemon": {
+      "filename": "printerdaemon.test.exe",
+      "architecture": "amd64",
+      "sha256": "6a0e7f245115c6a6324094498db679eccd17f97e91bcb50772c3bc74d4fad8d3",
+      "bytes": 26499584,
+      "PEMachine": "0x8664"
+    },
+    "amd64/printerprovisioning": {
+      "filename": "printerprovisioning.test.exe",
+      "architecture": "amd64",
+      "sha256": "e1794bc75a77288fd4aa0e93b432faefd0f81ae55e9c1208a09763fd04f55aa2",
+      "bytes": 23554048,
+      "PEMachine": "0x8664"
+    },
+    "amd64/printer-agent-command": {
+      "filename": "printer-agent-command.test.exe",
+      "architecture": "amd64",
+      "sha256": "53ec669a58ff50860ca79d3cf77716787fcf172656b7e9e2e40ff16eb504336b",
+      "bytes": 26290688,
+      "PEMachine": "0x8664"
+    },
+    "amd64/printer-agent": {
+      "filename": "printer-agent.exe",
+      "architecture": "amd64",
+      "sha256": "313dc380a02603cb57e667eb33eee6884717c3cb68e0d7a74081d2c660f8702a",
+      "bytes": 24911360,
+      "PEMachine": "0x8664"
+    }
+  }
+}

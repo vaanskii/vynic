@@ -1,9 +1,12 @@
+import { MenuClientGuard } from '../menu-catalog/menu-client.guard';
+import { SubscriptionService } from '../subscriptions/subscription.service';
 import { profileSelect } from '../venue-profile/venue-profile';
 import { FeatureKeys } from '../entitlements/feature-keys';
 import {
   Body,
   Controller,
   Get,
+  Headers,
   Param,
   Post,
   Put,
@@ -22,6 +25,7 @@ import { EdgeDeviceGuard } from '../edge/edge-device.guard';
 import { EdgeDevice } from '../edge/edge-device-context';
 import type { EdgeDeviceContext } from '../edge/edge-device-context';
 import { VenueEntitlementsService } from '../entitlements/venue-entitlements.service';
+import { printerRuntimeConfigForReader } from './printer-runtime-persistence';
 
 @Controller('customer/auth')
 export class CustomerAuthController {
@@ -42,7 +46,33 @@ export class CustomerAuthController {
 @Controller('customer')
 @UseGuards(CustomerGuard)
 export class CustomerController {
-  constructor(private readonly service: CustomerService) {}
+  constructor(
+    private readonly service: CustomerService,
+    private readonly db: PrismaService,
+  ) {}
+  @Get('venues/:venueId/subscription') async subscription(
+    @CustomerActor() actor: CustomerPrincipal,
+    @Param('venueId') id: string,
+  ) {
+    await this.service.venue(actor, id);
+    return new SubscriptionService(this.db).snapshot(id, actor);
+  }
+  @Post('venues/:venueId/subscription/actions') async subscriptionAction(
+    @CustomerActor() actor: CustomerPrincipal,
+    @Param('venueId') id: string,
+    @Body() body: Record<string, unknown>,
+  ) {
+    await this.service.venue(actor, id);
+    return new SubscriptionService(this.db).action(actor, id, body);
+  }
+  @Post('venues/:venueId/subscription/quote') async subscriptionQuote(
+    @CustomerActor() actor: CustomerPrincipal,
+    @Param('venueId') id: string,
+    @Body() body: Record<string, unknown>,
+  ) {
+    await this.service.venue(actor, id);
+    return new SubscriptionService(this.db).quote(actor, id, body);
+  }
   @Get('portal') portal(@CustomerActor() actor: CustomerPrincipal) {
     return this.service.portal(actor);
   }
@@ -69,31 +99,44 @@ export class CustomerController {
   @Post('venues/:venueId/managers') manager(
     @CustomerActor() actor: CustomerPrincipal,
     @Param('venueId') id: string,
-    @Body() body: Record<string, unknown>,
   ) {
-    return this.service.manager(actor, id, 'create', body);
+    return this.service.manager(actor, id);
+  }
+  @Post('venues/:venueId/manager-activation') managerActivation(
+    @CustomerActor() actor: CustomerPrincipal,
+    @Param('venueId') id: string,
+  ) {
+    return this.service.managerActivation(actor, id);
   }
   @Post('venues/:venueId/managers/:staffId/reset') reset(
     @CustomerActor() actor: CustomerPrincipal,
     @Param('venueId') id: string,
-    @Param('staffId') staffId: string,
-    @Body() body: Record<string, unknown>,
   ) {
-    return this.service.manager(actor, id, 'reset', body, staffId);
+    return this.service.manager(actor, id);
   }
   @Post('venues/:venueId/managers/:staffId/disable') disable(
     @CustomerActor() actor: CustomerPrincipal,
     @Param('venueId') id: string,
-    @Param('staffId') staffId: string,
-    @Body() body: Record<string, unknown>,
   ) {
-    return this.service.manager(actor, id, 'disable', body, staffId);
+    return this.service.manager(actor, id);
+  }
+  @Get('venues/:venueId/initial-manager-setup') setupEligibility(
+    @CustomerActor() actor: CustomerPrincipal,
+    @Param('venueId') id: string,
+  ) {
+    return this.service.setupEligibility(actor, id);
   }
   @Post('venues/:venueId/enrollments') enrollment(
     @CustomerActor() actor: CustomerPrincipal,
     @Param('venueId') id: string,
+    @Body() body?: { initialManagerSetup?: unknown },
   ) {
-    return this.service.enrollment(actor, id);
+    if (
+      body?.initialManagerSetup !== undefined &&
+      typeof body.initialManagerSetup !== 'boolean'
+    )
+      throw new BadRequestException('initialManagerSetup must be boolean');
+    return this.service.enrollment(actor, id, body?.initialManagerSetup);
   }
   @Post('venues/:venueId/enrollments/:enrollmentId/cancel') cancel(
     @CustomerActor() actor: CustomerPrincipal,
@@ -133,6 +176,13 @@ export class PlatformOnboardingController {
       Number(body.trialDays) > 90
     )
       throw new BadRequestException('Invalid trial policy');
+    if (
+      body.defaultWebsiteMode !== undefined &&
+      !['NONE', 'SAAS'].includes(String(body.defaultWebsiteMode))
+    )
+      throw new BadRequestException(
+        'Default website mode must be NONE or SAAS',
+      );
     const trialPlanId =
       typeof body.trialPlanId === 'string' ? body.trialPlanId : null;
     if (body.enabled && !trialPlanId)
@@ -151,11 +201,11 @@ export class PlatformOnboardingController {
       });
       const keys = features.map((f) => f.feature.key);
       if (
-        !keys.includes(FeatureKeys.POS) ||
-        !keys.includes(FeatureKeys.MANAGER_APP)
+        !keys.includes(FeatureKeys.POS) &&
+        !keys.includes(FeatureKeys.WEBSITE)
       )
         throw new BadRequestException(
-          'Onboarding trial must include POS and Manager',
+          'Onboarding trial must include POS or Website',
         );
     }
     const releaseLinks: Record<string, string> = {};
@@ -192,6 +242,9 @@ export class PlatformOnboardingController {
         trialDays: Number(body.trialDays),
         trialPlanId,
         releaseLinks,
+        defaultWebsiteMode: (body.defaultWebsiteMode ??
+          before?.defaultWebsiteMode ??
+          'NONE') as 'NONE' | 'SAAS',
       };
       const after = await tx.onboardingPolicy.upsert({
         where: { id: 'default' },
@@ -226,13 +279,16 @@ export class PlatformOnboardingController {
   }
 }
 @Controller('edge/runtime-config')
-@UseGuards(EdgeDeviceGuard)
+@UseGuards(EdgeDeviceGuard, MenuClientGuard)
 export class DeviceRuntimeConfigController {
   constructor(
     private readonly db: PrismaService,
     private readonly entitlements: VenueEntitlementsService,
   ) {}
-  @Get() async config(@EdgeDevice() actor: EdgeDeviceContext) {
+  @Get() async config(
+    @EdgeDevice() actor: EdgeDeviceContext,
+    @Headers('x-vynic-printer-reader-version') readerVersion?: string,
+  ) {
     const device = await this.db.device.findFirstOrThrow({
       where: { id: actor.deviceId, venueId: actor.venueId },
       include: {
@@ -241,6 +297,11 @@ export class DeviceRuntimeConfigController {
         },
       },
     });
+    const runtimeConfig = printerRuntimeConfigForReader(
+      device.runtimeConfig,
+      { deviceId: device.id, venueId: device.venueId },
+      readerVersion,
+    );
     return {
       version: 1,
       venue: device.venue,
@@ -248,7 +309,7 @@ export class DeviceRuntimeConfigController {
       device: {
         id: device.id,
         displayName: device.displayName,
-        runtimeConfig: device.runtimeConfig,
+        runtimeConfig,
       },
     };
   }

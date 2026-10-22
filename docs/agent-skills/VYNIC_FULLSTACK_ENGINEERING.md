@@ -255,7 +255,7 @@ authoritative website-access result when those concepts must be combined.
 
 ## 9. Website architecture
 
-`apps/venue-web/` is the current custom Vankisi website. Its bespoke branding,
+`apps/vankisi-custom-web/` is the current custom Vankisi website. Its bespoke branding,
 layout, floor plans, and booking UX are not scaffolding for a generic product.
 Do not silently convert it into the future multi-Venue SaaS website.
 

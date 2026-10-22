@@ -1,8 +1,56 @@
 import 'package:flutter/material.dart';
+import 'dart:io';
+import 'package:hive/hive.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:vynic/core/widgets/connection_feedback.dart';
+import 'package:vynic/core/services/auth/auth_token_service.dart';
+import 'package:vynic/core/services/sync/monitoring_socket_service.dart';
 
 void main() {
+  testWidgets('retained Manager token on PIN screen is not a server outage', (
+    tester,
+  ) async {
+    final dir = await tester.runAsync(() async {
+      final dir = await Directory.systemTemp.createTemp(
+        'manager-login-feedback-',
+      );
+      Hive.init(dir.path);
+      await AuthTokenService.init();
+      await AuthTokenService.saveToken(
+        token: 'synthetic-retained-token',
+        role: 'MANAGER',
+        username: 'fixture',
+        expiresInSeconds: 3600,
+      );
+      return dir;
+    });
+    MonitoringSocketService.dispose();
+    try {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: ConnectionFeedback.manager(
+            child: const Scaffold(body: Text('PIN')),
+          ),
+        ),
+      );
+      await tester.pump(const Duration(seconds: 4));
+      expect(find.text('სერვერთან კავშირი დაკარგულია'), findsNothing);
+      // Once an authenticated monitoring session exists, a real outage still reports.
+      MonitoringSocketService.isSessionActive.value = true;
+      await tester.pump(const Duration(seconds: 3));
+      expect(find.text('სერვერთან კავშირი დაკარგულია'), findsOneWidget);
+      MonitoringSocketService.dispose();
+      await tester.pump();
+      expect(find.text('სერვერთან კავშირი დაკარგულია'), findsNothing);
+    } finally {
+      await tester.pumpWidget(const SizedBox());
+      await tester.runAsync(() async {
+        await AuthTokenService.clearToken();
+        await Hive.close();
+        await dir!.delete(recursive: true);
+      });
+    }
+  });
   for (final width in [360.0, 768.0, 1280.0]) {
     testWidgets('connection transitions are transient at $width', (
       tester,

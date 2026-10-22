@@ -1,0 +1,34 @@
+{
+  "schema": 1,
+  "reviewedAtUtc": "2026-10-06T17:01:33.609191+00:00",
+  "verdict": "PASS_BOUNDED_VALIDATION_ONLY_SOURCE",
+  "openP1": [],
+  "openP2": [],
+  "sourceRoot": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/source",
+  "manifest": {
+    "path": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/printerprovisioning-owned-source-hashes.json",
+    "sha256": "9080f12d87eab43ef601192efb11b89543ff5f3c2887b8b11ba808cfa62d06d5",
+    "filesVerified": 7
+  },
+  "independentTest": {
+    "path": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/provisioning-independent-tests.jsonl",
+    "sha256": "47575dca22e60ec345e3f24a387efddf747a95ab1bc63fc95ac58059e055e0ec",
+    "command": "GOPROXY=off GOSUMDB=off go test -mod=readonly ./internal/printerprovisioning -count=1 -json",
+    "packagePass": true,
+    "topLevelPass": 12,
+    "passRecords": 112,
+    "fail": 0
+  },
+  "reviewedBoundaries": [
+    "Externally pinned Ed25519 issuer and domain-separated raw-body digest; strict bounded duplicate/case/null/unknown-field parsing.",
+    "Exact independently supplied current grant, registration, highwater generation, revocation, trusted clock/lifetime, peer certificate DER/purpose and complete route/job identity.",
+    "Raw immutable inputs are cloned; exported frozen-job mutations cannot bypass adapter raw/digest parity; reads fresh trusted state on every adapter call.",
+    "No issuer, registration, queue acceptance, receipt, persistent highwater or physical transport; successful candidate validation remains HELD_PROVISIONING."
+  ],
+  "limitations": [
+    "TrustedState provider must independently establish server-owned current registration and durable rollback resistance; this package does neither.",
+    "AuthenticatedPeer requires upstream fresh mutual TLS chain verification; package purpose/DER checks alone are not that chain verification.",
+    "VENUE_SHARED candidate scope binds supplied registration/membership but is not replicated queue admission or downstream physical fencing.",
+    "No production authority/activation, physical printer or service-account qualification approved; actual held-RPC integration is separate pending source receipt."
+  ]
+}

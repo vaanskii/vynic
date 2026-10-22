@@ -1,0 +1,144 @@
+{
+  "status": "PASS",
+  "scope": "Windows source-only nonphysical Go transport/helper and extracted legacy channel qualification",
+  "revision": 2,
+  "sourceManifest": {
+    "path": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/printtransport-source-manifest.v2.json",
+    "sha256": "638458ddc270fa3638c52f2a7bc491e6327bebbf2a46caba9fb451f64bae680f",
+    "bytes": 7137
+  },
+  "sourceZip": {
+    "path": "/Users/vaanskii/Developer/vynic/docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/windows-stage-v2/source.zip",
+    "sha256": "1f318eab633481898c1c88f43dfbcda432ffdf7c3ec56ded69c4359195b8377f",
+    "bytes": 64181
+  },
+  "sourceCount": 34,
+  "ownedSourceCount": 27,
+  "stageZipCurrentSourceHashesEqual": true,
+  "testExecutable": {
+    "path": "/Users/vaanskii/Developer/vynic/docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/windows-stage-v2/printtransport-windows.test.exe",
+    "sha256": "5ea12d153ce2ed408d0661595bd3c3afa41d7c969d81c1b87bdd956897f7d125",
+    "bytes": 5940224
+  },
+  "sdkManifest": {
+    "path": "/Users/vaanskii/Developer/vynic/docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/windows-stage-v2/print-helper-sdk-sha256.json",
+    "sha256": "774b989ac815f9029a02e01c309b20153d6a850d8d03d34e09cbf687ed6b673a",
+    "bytes": 4492
+  },
+  "cachedSdkPinCount": 43,
+  "guestBeforeAndAfterVerification": {
+    "sourceInputs": 34,
+    "cachedSdkPins": 43,
+    "receipt": {
+      "path": "/Users/vaanskii/Developer/vynic/docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/windows-result-v2/receipt.json",
+      "sha256": "b43d105938213f0de63025f5c94908d8cd6f2fba3d6b955ac04a4e18f2b726de",
+      "bytes": 526
+    },
+    "sourceHashesUnchanged": true,
+    "cachedSdkHashesUnchanged": true,
+    "verifierSourceSha256": "1b1c47f22fc768743a94d1eff9e0d970b7a0c5e0face062fe90ebe65e6a75c78"
+  },
+  "guestArchitecture": "ARM64",
+  "testedExecutableMachine": "0x8664 amd64 on ARM64 Windows guest",
+  "helper": {
+    "path": "/Users/vaanskii/Developer/vynic/docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/windows-result-v2/vynic_print_helper.exe",
+    "sha256": "b720e1eedc77ab574d769865e39f71506a5f3ebc9d93ab5166bc3f112203019d",
+    "bytes": 316416,
+    "protocolVersion": 1,
+    "imports": [
+      "WINSPOOL.DRV",
+      "KERNEL32.dll"
+    ],
+    "flutterDependency": false,
+    "dynamicVCRuntimeDependency": false
+  },
+  "tests": {
+    "goTopLevelPassed": 12,
+    "goSubtestsPassed": 26,
+    "goSkipped": 0,
+    "helperFakeAssertions": 254,
+    "coreFakeAssertions": 110,
+    "realReadOnlyChannelAssertions": 204,
+    "queuesEnumerated": 1,
+    "windowsLifecycleTests": [
+      "TestWindowsJobContainsChildAndStdinHasNoInheritedWriter",
+      "TestWindowsUnsupportedJobListFailsBeforeProcessCreation",
+      "TestWindowsParentDeathTerminatesChildAndFreshGuardAcquires",
+      "TestWindowsActualHelperReadOnlyAndInvalidRequests"
+    ],
+    "invalidRealHelperCases": [
+      "missing",
+      "empty",
+      "extra_inventory_field",
+      "partial_prefix",
+      "partial_body",
+      "zero"
+    ]
+  },
+  "coverage": {
+    "noInheritedStdinWriter": "Closing parent writer delivers EOF and exact fixture process exits.",
+    "unsupportedJobList": "Injected ERROR_NOT_SUPPORTED rejects before CreateProcess; running Windows JOB_LIST succeeds in the other lifecycle tests.",
+    "parentDeath": "Fixture exposes child PID; test opens exact child HANDLE before killing parent, waits that HANDLE signaled, then fresh semaphore acquisition succeeds after three refused acquisitions.",
+    "submissionAdmission": "Real helper missing/empty/incomplete requests return validate/notSent/attempted=false before guard/COMMIT/native Open or StartDoc.",
+    "primaryFailure": "Positive writes and post-COMMIT failure/timeout/no retry checks use fake API/processes only."
+  },
+  "nonphysical": {
+    "printJobsBefore": 0,
+    "printJobsAfter": 0,
+    "documentsSubmitted": 0,
+    "realPositivePayloadSubmitted": false,
+    "productStarted": false,
+    "flutterEngineStarted": false,
+    "serviceOperations": false,
+    "driverOperations": false,
+    "machineRestarted": false
+  },
+  "logs": {
+    "go-transport-tests.log": {
+      "path": "/Users/vaanskii/Developer/vynic/docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/windows-result-v2/go-transport-tests.log",
+      "sha256": "0ca3f907c594baf5b18d13af43b0cebca0375ad1bc16ddc5d02387716d3ab4e0",
+      "bytes": 10282
+    },
+    "helper-fake-tests.log": {
+      "path": "/Users/vaanskii/Developer/vynic/docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/windows-result-v2/helper-fake-tests.log",
+      "sha256": "2ed08798a108a990bd61d1ecc39b0d43368ad936ef18f71c81427bb85da844ec",
+      "bytes": 2714
+    },
+    "channel-tests.log": {
+      "path": "/Users/vaanskii/Developer/vynic/docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/windows-result-v2/channel-tests.log",
+      "sha256": "be34fb2ad6bd217a376f70cd8ce74431f88d768cfc38f0a0e5d8b4c626eb2f0c",
+      "bytes": 3798
+    },
+    "helper-build.log": {
+      "path": "/Users/vaanskii/Developer/vynic/docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/windows-result-v2/helper-build.log",
+      "sha256": "7562043ccd943d5abfc3958ccc09d5c0709634a7480d59ae66f374767566164c",
+      "bytes": 2886
+    },
+    "channel-build.log": {
+      "path": "/Users/vaanskii/Developer/vynic/docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/windows-result-v2/channel-build.log",
+      "sha256": "2db37c7e45319cc20a0142ac09fa2fe980066eddf7e1d03ce39e3f45dd890b6f",
+      "bytes": 3058
+    }
+  },
+  "runResult": {
+    "path": "/Users/vaanskii/Developer/vynic/docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/windows-result-v2/run-result.json",
+    "sha256": "ed8041ad08c963a585b305ffaac0ed281d4bb5d6ea6fc24d7ae341790ee931f9",
+    "bytes": 536
+  },
+  "builtArtifactHashes": {
+    "path": "/Users/vaanskii/Developer/vynic/docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/windows-result-v2/built-artifact-hashes.json",
+    "sha256": "f4fe6d6435da16c06c61b1bfe06380d748f0a248606d05f6f98a42e8db0179ec",
+    "bytes": 1412
+  },
+  "retainedFailedV1": {
+    "path": "/Users/vaanskii/Developer/vynic/docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/windows-result/run-result.json",
+    "sha256": "80983b628b1909fc69e6b55552dc69503b2052855cfe8a0281458f30bb2ca0df",
+    "bytes": 564
+  },
+  "qualificationLimits": [
+    "No physical paper/USB/ESC-POS/profile qualification.",
+    "No service-account/SCM installation or activation qualification.",
+    "Machine-local guard is not cross-computer HA fencing.",
+    "Channel assertion count varies with bounded message-pump polling; actual v2 result is204, previous run208."
+  ]
+}

@@ -102,12 +102,15 @@ export class BootstrapService implements OnModuleInit {
         email: credentials.email,
         password: hash,
         role: WebsiteUserRole.SUPER_ADMIN,
+        adminVenueId: LEGACY_MANAGER_TENANT.venueId,
         firstName: 'Admin',
       },
       update: {
         email: credentials.email,
         password: hash,
         role: WebsiteUserRole.SUPER_ADMIN,
+        // The seeded administrator administers the bootstrap Venue's site only.
+        adminVenueId: LEGACY_MANAGER_TENANT.venueId,
       },
     });
     this.logger.log(`Website SUPER_ADMIN ready (${credentials.phone})`);
@@ -130,8 +133,7 @@ export class BootstrapService implements OnModuleInit {
     const optionalWebsite = [
       'JWT_REFRESH_SECRET',
       'COOKIE_ENCRYPTION_KEY',
-      'BOG_CLIENT_ID',
-      'BOG_CLIENT_SECRET',
+      'PAYMENT_INTEGRATION_MASTER_KEY',
       'FRONTEND_URL',
       'API_URL',
     ];

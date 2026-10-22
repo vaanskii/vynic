@@ -1,0 +1,9 @@
+{
+  "path": "apps/operations/test/unit/pos02_acceptance_runner_test.dart",
+  "beforeSha256": "d67e568689b27309d3c96d17d9f0595c22461d83a7d2fddb9c2628dda018bb6b",
+  "afterSha256": "e2731028006dd8bbc2a0d7e3fe4f8c374eeeda310bec1181681de9c898ef3209",
+  "baseline": "/tmp/vynic-windows-native-20261006-zgovo5qh/original-baseline/apps/operations/test/unit/pos02_acceptance_runner_test.dart",
+  "runtimeSourceChanged": false,
+  "windowsTests": "483_PASS_32_SELECTED_SUITES",
+  "windowsAnalysis": "48_ITEMS_NO_ISSUES"
+}

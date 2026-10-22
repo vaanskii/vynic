@@ -1,0 +1,105 @@
+{
+  "sourceRoot": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/source",
+  "generatorCommand": "source tools/tool-env.sh; packages/contracts/scripts/generate-edge.sh --check",
+  "generationReproducibility": "PASS; official generators recreated all protobuf outputs in a temporary directory; byte-for-byte diffs empty",
+  "generationCheckLog": {
+    "path": "operational-wire-generation-check.log",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "exitCode": 0
+  },
+  "generatorScript": {
+    "path": "packages/contracts/scripts/generate-edge.sh",
+    "sha256": "e2479138c96368f4be96861e5b8ce0ecdf74e7ea95fd30910c99ab23e5ce1a6f",
+    "unchangedFromBaseline": true
+  },
+  "generatorVersions": [
+    {
+      "command": [
+        "go",
+        "version"
+      ],
+      "stdout": "go version go1.26.8 darwin/arm64",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "protoc",
+        "--version"
+      ],
+      "stdout": "libprotoc 36.2",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "protoc-gen-go",
+        "--version"
+      ],
+      "stdout": "protoc-gen-go v1.36.11",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "protoc-gen-go-grpc",
+        "--version"
+      ],
+      "stdout": "protoc-gen-go-grpc 1.6.2",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "dart",
+        "--version"
+      ],
+      "stdout": "Dart SDK version: 3.12.1 (stable) (Tue May 26 01:02:21 2026 -0700) on \"macos_arm64\"",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "dart",
+        "pub",
+        "global",
+        "list"
+      ],
+      "stdout": "protoc_plugin 25.0.0",
+      "stderr": ""
+    }
+  ],
+  "toolchainOfficialAcquisitionEvidence": "tools/toolchain-receipt.json and tools/metadata/archive-verification.json; acquisition owned by dependency_reachability",
+  "canonicalProto": {
+    "path": "packages/contracts/proto/vynic/edge/v1/operational_proof.proto",
+    "sha256": "c9a085483a22bc6d57c67a21496b733894f32c928c99615f296bbcf01a5adf4b"
+  },
+  "newGeneratorProducedOutputs": {
+    "packages/contracts/generated/edge_dart/lib/src/generated/vynic/edge/v1/operational_proof.pb.dart": "0274eab8694022843b0d990df7db33925b9a8bca5b6e8ece055e2a2375b5d0f3",
+    "packages/contracts/generated/edge_dart/lib/src/generated/vynic/edge/v1/operational_proof.pbenum.dart": "6a470825430c1de72d2228c6fc3c4abe1a3d42621be91a397331a754df7635f6",
+    "packages/contracts/generated/edge_dart/lib/src/generated/vynic/edge/v1/operational_proof.pbgrpc.dart": "947c399c105bc65596a10eabb30039afd0c28f9f5fc0c08e0d67f69f9d65f682",
+    "packages/contracts/generated/edge_dart/lib/src/generated/vynic/edge/v1/operational_proof.pbjson.dart": "c728dc57e1e43fc4a76b120cafe123408187b4c161236be311d9ccf1e00a4760",
+    "packages/contracts/generated/go/vynic/edge/v1/operational_proof.pb.go": "1f4c43c39f821c429a55956c41598ed2e8762a6198382a32fe464bb34674f506",
+    "packages/contracts/generated/go/vynic/edge/v1/operational_proof_grpc.pb.go": "a50e4ed1c10672ab1fc43bae0ed306c95f4cc2e7b48d8b8e47ffe67beecfa63d"
+  },
+  "olderFoundationOrdersOutputs": {
+    "count": 12,
+    "allByteIdentical": true,
+    "beforeAndAfterHashes": {
+      "packages/contracts/generated/go/vynic/edge/v1/foundation.pb.go": "2fe19a44f91538bc3f8b378bc74ffc95871cb343fc45b2617bb6df2660e27509",
+      "packages/contracts/generated/go/vynic/edge/v1/foundation_grpc.pb.go": "26ca4f43c6eaf3e18b869acd7b7380cb89d8a24d14ebba14f15fd1c4186f852e",
+      "packages/contracts/generated/go/vynic/edge/v1/orders_tables.pb.go": "da15396ea8eed4135f2ea5eedad32815b03292b7951d342a278ed11dd4e3de86",
+      "packages/contracts/generated/go/vynic/edge/v1/orders_tables_grpc.pb.go": "70f935d086e4bedf117e0fb781c09caaa71ffd33ef7551f3e527dcc5735f6d14",
+      "packages/contracts/generated/edge_dart/lib/src/generated/vynic/edge/v1/foundation.pb.dart": "04d6fa0f5ffc1a70cb9da91e8abd05c56547a57f7bc5cd36f6e720324a5b2015",
+      "packages/contracts/generated/edge_dart/lib/src/generated/vynic/edge/v1/foundation.pbenum.dart": "a50642c7ec66e039290a4868fcc04998059de9b32b3a9f82d9a8804344543df1",
+      "packages/contracts/generated/edge_dart/lib/src/generated/vynic/edge/v1/foundation.pbgrpc.dart": "af755615b629cae5bf8db58be73a35ec4097145cc0f6de0e0ffa6c550132937a",
+      "packages/contracts/generated/edge_dart/lib/src/generated/vynic/edge/v1/foundation.pbjson.dart": "f3afca0f7861e32495375274715a45ce2ca9b5bace982a7a9d0c34d0d2dee84f",
+      "packages/contracts/generated/edge_dart/lib/src/generated/vynic/edge/v1/orders_tables.pb.dart": "93711c7e4a7065ec5338b80621eb04eaa96979267e6eef510ae684b8b8788134",
+      "packages/contracts/generated/edge_dart/lib/src/generated/vynic/edge/v1/orders_tables.pbenum.dart": "39e32b93b1997f03d3161884d8c42f7c6ddee3f065e7bc17799244069b6c27bc",
+      "packages/contracts/generated/edge_dart/lib/src/generated/vynic/edge/v1/orders_tables.pbgrpc.dart": "0094f4cd6cffd1d35aebdb0d55cc3983e4a14512128e440b93d2cb70d03b3a4c",
+      "packages/contracts/generated/edge_dart/lib/src/generated/vynic/edge/v1/orders_tables.pbjson.dart": "825b2b39d55212bef9633b730e56b606b421193f9cab74d4ea45a0fa24a3b69d"
+    }
+  },
+  "handEditedGeneratedContracts": false,
+  "initialToolWrapperFailure": "operational-wire-first-generate.log retained; dependency owner corrected wrapper to add analytics flags only to Dart CLI commands, not direct snapshot/VM execution; subsequent canonical generation and final --check passed",
+  "ownedSourceHashesUnchangedAfterCheck": true,
+  "ownedHashesFile": {
+    "path": "operational-wire-owned-hashes.json",
+    "sha256": "c8e9bc4cd6dc9de7f7261769024c937e347e99bc46fabe99fde45e7108d739b8"
+  }
+}

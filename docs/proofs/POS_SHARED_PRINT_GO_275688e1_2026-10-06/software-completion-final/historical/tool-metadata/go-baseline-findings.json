@@ -1,0 +1,2823 @@
+{
+  "edge-baseline-govulncheck-module": {
+    "config": {
+      "protocol_version": "v1.0.0",
+      "scanner_name": "govulncheck",
+      "scanner_version": "v1.8.0",
+      "db": "https://vuln.go.dev",
+      "db_last_modified": "2026-10-01T20:24:15Z",
+      "go_version": "go1.26.8",
+      "scan_level": "module",
+      "scan_mode": "source"
+    },
+    "findings": [
+      {
+        "osv": "GO-2026-5970",
+        "fixed_version": "v0.39.0",
+        "trace": [
+          {
+            "module": "golang.org/x/text",
+            "version": "v0.32.0"
+          }
+        ]
+      },
+      {
+        "osv": "GO-2026-4918",
+        "fixed_version": "v0.53.0",
+        "trace": [
+          {
+            "module": "golang.org/x/net",
+            "version": "v0.48.0"
+          }
+        ]
+      },
+      {
+        "osv": "GO-2026-5025",
+        "fixed_version": "v0.55.0",
+        "trace": [
+          {
+            "module": "golang.org/x/net",
+            "version": "v0.48.0"
+          }
+        ]
+      },
+      {
+        "osv": "GO-2026-5026",
+        "fixed_version": "v0.55.0",
+        "trace": [
+          {
+            "module": "golang.org/x/net",
+            "version": "v0.48.0"
+          }
+        ]
+      },
+      {
+        "osv": "GO-2026-5027",
+        "fixed_version": "v0.55.0",
+        "trace": [
+          {
+            "module": "golang.org/x/net",
+            "version": "v0.48.0"
+          }
+        ]
+      },
+      {
+        "osv": "GO-2026-5028",
+        "fixed_version": "v0.55.0",
+        "trace": [
+          {
+            "module": "golang.org/x/net",
+            "version": "v0.48.0"
+          }
+        ]
+      },
+      {
+        "osv": "GO-2026-5029",
+        "fixed_version": "v0.55.0",
+        "trace": [
+          {
+            "module": "golang.org/x/net",
+            "version": "v0.48.0"
+          }
+        ]
+      },
+      {
+        "osv": "GO-2026-5030",
+        "fixed_version": "v0.55.0",
+        "trace": [
+          {
+            "module": "golang.org/x/net",
+            "version": "v0.48.0"
+          }
+        ]
+      },
+      {
+        "osv": "GO-2026-5942",
+        "fixed_version": "v0.56.0",
+        "trace": [
+          {
+            "module": "golang.org/x/net",
+            "version": "v0.48.0"
+          }
+        ]
+      },
+      {
+        "osv": "GO-2026-6061",
+        "fixed_version": "v1.82.1",
+        "trace": [
+          {
+            "module": "google.golang.org/grpc",
+            "version": "v1.79.3"
+          }
+        ]
+      },
+      {
+        "osv": "GO-2026-6348",
+        "fixed_version": "v1.83.1",
+        "trace": [
+          {
+            "module": "google.golang.org/grpc",
+            "version": "v1.79.3"
+          }
+        ]
+      },
+      {
+        "osv": "GO-2026-6441",
+        "fixed_version": "v1.83.1",
+        "trace": [
+          {
+            "module": "google.golang.org/grpc",
+            "version": "v1.79.3"
+          }
+        ]
+      },
+      {
+        "osv": "GO-2026-6443",
+        "fixed_version": "v1.82.2",
+        "trace": [
+          {
+            "module": "google.golang.org/grpc",
+            "version": "v1.79.3"
+          }
+        ]
+      }
+    ],
+    "advisories": {
+      "GO-2026-4918": {
+        "schema_version": "1.3.1",
+        "id": "GO-2026-4918",
+        "modified": "2026-05-07T19:21:40Z",
+        "published": "2026-05-07T19:21:40Z",
+        "aliases": [
+          "CVE-2026-33814"
+        ],
+        "summary": "Infinite loop in HTTP/2 transport when given bad SETTINGS_MAX_FRAME_SIZE in net/http/internal/http2 in golang.org/x/net",
+        "details": "When processing HTTP/2 SETTINGS frames, transport will enter an infinite loop of writing CONTINUATION frames if it receives a SETTINGS_MAX_FRAME_SIZE with a value of 0.",
+        "affected": [
+          {
+            "package": {
+              "name": "golang.org/x/net",
+              "ecosystem": "Go"
+            },
+            "ranges": [
+              {
+                "type": "SEMVER",
+                "events": [
+                  {
+                    "introduced": "0"
+                  },
+                  {
+                    "fixed": "0.53.0"
+                  }
+                ]
+              }
+            ],
+            "ecosystem_specific": {
+              "imports": [
+                {
+                  "path": "golang.org/x/net/http2",
+                  "symbols": [
+                    "Transport.NewClientConn",
+                    "Transport.RoundTrip",
+                    "Transport.RoundTripOpt",
+                    "clientConnPool.GetClientConn",
+                    "clientConnReadLoop.processSettingsNoWrite",
+                    "noDialClientConnPool.GetClientConn",
+                    "noDialH2RoundTripper.NewClientConn",
+                    "noDialH2RoundTripper.RoundTrip",
+                    "unencryptedTransport.RoundTrip"
+                  ]
+                }
+              ]
+            }
+          },
+          {
+            "package": {
+              "name": "stdlib",
+              "ecosystem": "Go"
+            },
+            "ranges": [
+              {
+                "type": "SEMVER",
+                "events": [
+                  {
+                    "introduced": "0"
+                  },
+                  {
+                    "fixed": "1.25.10"
+                  },
+                  {
+                    "introduced": "1.26.0-0"
+                  },
+                  {
+                    "fixed": "1.26.3"
+                  }
+                ]
+              }
+            ],
+            "ecosystem_specific": {
+              "imports": [
+                {
+                  "path": "net/http",
+                  "symbols": [
+                    "Client.CloseIdleConnections",
+                    "Client.Do",
+                    "Client.Get",
+                    "Client.Head",
+                    "Client.Post",
+                    "Client.PostForm",
+                    "ClientConn.Close",
+                    "ClientConn.RoundTrip",
+                    "Get",
+                    "Head",
+                    "Post",
+                    "PostForm",
+                    "Transport.CloseIdleConnections",
+                    "Transport.NewClientConn",
+                    "Transport.RoundTrip",
+                    "http1ClientConn.Close",
+                    "http1ClientConn.RoundTrip",
+                    "http2Transport.NewClientConn",
+                    "http2Transport.RoundTrip",
+                    "http2Transport.RoundTripOpt",
+                    "http2clientConnPool.GetClientConn",
+                    "http2clientConnReadLoop.processSettingsNoWrite",
+                    "http2noDialClientConnPool.GetClientConn",
+                    "http2noDialH2RoundTripper.NewClientConn",
+                    "http2noDialH2RoundTripper.RoundTrip",
+                    "http2unencryptedTransport.RoundTrip"
+                  ]
+                }
+              ]
+            }
+          }
+        ],
+        "references": [
+          {
+            "type": "FIX",
+            "url": "https://go.dev/cl/761581"
+          },
+          {
+            "type": "FIX",
+            "url": "https://go.dev/cl/761640"
+          },
+          {
+            "type": "REPORT",
+            "url": "https://go.dev/issue/78476"
+          },
+          {
+            "type": "WEB",
+            "url": "https://groups.google.com/g/golang-announce/c/qcCIEXso47M"
+          }
+        ],
+        "credits": [
+          {
+            "name": "Marwan Atia (marwansamir688@gmail.com)"
+          }
+        ],
+        "database_specific": {
+          "url": "https://pkg.go.dev/vuln/GO-2026-4918",
+          "review_status": "REVIEWED"
+        }
+      },
+      "GO-2026-5025": {
+        "schema_version": "1.3.1",
+        "id": "GO-2026-5025",
+        "modified": "2026-05-22T02:46:43Z",
+        "published": "2026-05-22T02:46:43Z",
+        "aliases": [
+          "CVE-2026-42506"
+        ],
+        "summary": "Invoking incorrect handling of namespaced elements in foreign content in golang.org/x/net/html",
+        "details": "Parsing arbitrary HTML which is then rendered using Render can result in an unexpected HTML tree. This can be leveraged to execute XSS attacks in applications that attempt to sanitize input HTML before rendering.",
+        "affected": [
+          {
+            "package": {
+              "name": "golang.org/x/net",
+              "ecosystem": "Go"
+            },
+            "ranges": [
+              {
+                "type": "SEMVER",
+                "events": [
+                  {
+                    "introduced": "0"
+                  },
+                  {
+                    "fixed": "0.55.0"
+                  }
+                ]
+              }
+            ],
+            "ecosystem_specific": {
+              "imports": [
+                {
+                  "path": "golang.org/x/net/html",
+                  "symbols": [
+                    "Parse",
+                    "ParseFragment",
+                    "ParseFragmentWithOptions",
+                    "ParseWithOptions",
+                    "parser.parse"
+                  ]
+                }
+              ]
+            }
+          }
+        ],
+        "references": [
+          {
+            "type": "REPORT",
+            "url": "https://go.dev/issue/79571"
+          },
+          {
+            "type": "WEB",
+            "url": "https://groups.google.com/g/golang-announce/c/iI-mYSI0lu8"
+          },
+          {
+            "type": "FIX",
+            "url": "https://go.dev/cl/781700"
+          }
+        ],
+        "credits": [
+          {
+            "name": "ensy"
+          }
+        ],
+        "database_specific": {
+          "url": "https://pkg.go.dev/vuln/GO-2026-5025",
+          "review_status": "REVIEWED"
+        }
+      },
+      "GO-2026-5026": {
+        "schema_version": "1.3.1",
+        "id": "GO-2026-5026",
+        "modified": "2026-08-21T20:38:00Z",
+        "published": "2026-05-22T02:46:43Z",
+        "aliases": [
+          "CVE-2026-39821"
+        ],
+        "summary": "Invoking failure to reject ASCII-only Punycode-encoded labels in golang.org/x/net/idna",
+        "details": "The ToASCII and ToUnicode functions incorrectly accept Punycode-encoded labels that decode to an ASCII-only label. For example, ToUnicode(\"xn--example-.com\") incorrectly returns the name \"example.com\" rather than an error.\n\nThis behavior can lead to privilege escalation in programs using the idna package. For example, a program which performs privilege checks on the ASCII hostname may reject \"example.com\" but permit \"xn--example-.com\". If that program subsequently converts the ASCII hostname to Unicode, it will inadvertently permits access to the Unicode name \"example.com\".",
+        "affected": [
+          {
+            "package": {
+              "name": "stdlib",
+              "ecosystem": "Go"
+            },
+            "ranges": [
+              {
+                "type": "SEMVER",
+                "events": [
+                  {
+                    "introduced": "0"
+                  },
+                  {
+                    "fixed": "1.25.13"
+                  },
+                  {
+                    "introduced": "1.26.0-0"
+                  },
+                  {
+                    "fixed": "1.26.6"
+                  },
+                  {
+                    "introduced": "1.27.0-0"
+                  },
+                  {
+                    "fixed": "1.27.0-rc.3"
+                  }
+                ]
+              }
+            ],
+            "ecosystem_specific": {
+              "imports": [
+                {
+                  "path": "net/http",
+                  "symbols": [
+                    "Client.CloseIdleConnections",
+                    "Client.Do",
+                    "Client.Get",
+                    "Client.Head",
+                    "Client.Post",
+                    "Client.PostForm",
+                    "ClientConn.Close",
+                    "ClientConn.RoundTrip",
+                    "Get",
+                    "Head",
+                    "Post",
+                    "PostForm",
+                    "Transport.CloseIdleConnections",
+                    "Transport.NewClientConn",
+                    "Transport.RoundTrip",
+                    "http1ClientConn.Close",
+                    "http1ClientConn.RoundTrip",
+                    "http2ClientConn.RoundTrip",
+                    "http2RoundTripper.RoundTrip",
+                    "idnaASCII"
+                  ]
+                },
+                {
+                  "path": "net/http/internal/http2",
+                  "symbols": [
+                    "Transport.AddConn",
+                    "Transport.RoundTrip",
+                    "Transport.RoundTripOpt",
+                    "authorityAddr"
+                  ]
+                }
+              ]
+            }
+          },
+          {
+            "package": {
+              "name": "golang.org/x/net",
+              "ecosystem": "Go"
+            },
+            "ranges": [
+              {
+                "type": "SEMVER",
+                "events": [
+                  {
+                    "introduced": "0"
+                  },
+                  {
+                    "fixed": "0.55.0"
+                  }
+                ]
+              }
+            ],
+            "ecosystem_specific": {
+              "imports": [
+                {
+                  "path": "golang.org/x/net/idna",
+                  "symbols": [
+                    "Profile.ToASCII",
+                    "Profile.ToUnicode",
+                    "Profile.process",
+                    "ToASCII",
+                    "ToUnicode"
+                  ]
+                }
+              ]
+            }
+          }
+        ],
+        "references": [
+          {
+            "type": "FIX",
+            "url": "https://go.dev/cl/767220"
+          },
+          {
+            "type": "REPORT",
+            "url": "https://go.dev/issue/78760"
+          },
+          {
+            "type": "WEB",
+            "url": "https://groups.google.com/g/golang-announce/c/iI-mYSI0lu8"
+          },
+          {
+            "type": "WEB",
+            "url": "https://groups.google.com/g/golang-announce/c/94pEornpRlI"
+          }
+        ],
+        "credits": [
+          {
+            "name": "KC1zs4 (https://github.com/KC1zs4)"
+          },
+          {
+            "name": "Longwei Wang (https://github.com/gn00295120)"
+          }
+        ],
+        "database_specific": {
+          "url": "https://pkg.go.dev/vuln/GO-2026-5026",
+          "review_status": "REVIEWED"
+        }
+      },
+      "GO-2026-5027": {
+        "schema_version": "1.3.1",
+        "id": "GO-2026-5027",
+        "modified": "2026-05-22T02:46:43Z",
+        "published": "2026-05-22T02:46:43Z",
+        "aliases": [
+          "CVE-2026-42502"
+        ],
+        "summary": "Invoking incorrect handling of HTML elements in foreign content in golang.org/x/net/html",
+        "details": "Parsing arbitrary HTML which is then rendered using Render can result in an unexpected HTML tree. This can be leveraged to execute XSS attacks in applications that attempt to sanitize input HTML before rendering.",
+        "affected": [
+          {
+            "package": {
+              "name": "golang.org/x/net",
+              "ecosystem": "Go"
+            },
+            "ranges": [
+              {
+                "type": "SEMVER",
+                "events": [
+                  {
+                    "introduced": "0"
+                  },
+                  {
+                    "fixed": "0.55.0"
+                  }
+                ]
+              }
+            ],
+            "ecosystem_specific": {
+              "imports": [
+                {
+                  "path": "golang.org/x/net/html",
+                  "symbols": [
+                    "Parse",
+                    "ParseFragment",
+                    "ParseFragmentWithOptions",
+                    "ParseWithOptions",
+                    "parser.parse"
+                  ]
+                }
+              ]
+            }
+          }
+        ],
+        "references": [
+          {
+            "type": "REPORT",
+            "url": "https://go.dev/issue/79572"
+          },
+          {
+            "type": "WEB",
+            "url": "https://groups.google.com/g/golang-announce/c/iI-mYSI0lu8"
+          },
+          {
+            "type": "FIX",
+            "url": "https://go.dev/cl/781701"
+          }
+        ],
+        "credits": [
+          {
+            "name": "Tristan Madani"
+          }
+        ],
+        "database_specific": {
+          "url": "https://pkg.go.dev/vuln/GO-2026-5027",
+          "review_status": "REVIEWED"
+        }
+      },
+      "GO-2026-5028": {
+        "schema_version": "1.3.1",
+        "id": "GO-2026-5028",
+        "modified": "2026-05-22T02:46:43Z",
+        "published": "2026-05-22T02:46:43Z",
+        "aliases": [
+          "CVE-2026-25680"
+        ],
+        "summary": "Invoking denial of service when parsing arbitrary HTML in golang.org/x/net/html",
+        "details": "Parsing arbitrary HTML can consume excessive CPU time, possibly leading to denial of service.",
+        "affected": [
+          {
+            "package": {
+              "name": "golang.org/x/net",
+              "ecosystem": "Go"
+            },
+            "ranges": [
+              {
+                "type": "SEMVER",
+                "events": [
+                  {
+                    "introduced": "0"
+                  },
+                  {
+                    "fixed": "0.55.0"
+                  }
+                ]
+              }
+            ],
+            "ecosystem_specific": {
+              "imports": [
+                {
+                  "path": "golang.org/x/net/html",
+                  "symbols": [
+                    "Parse",
+                    "ParseFragment",
+                    "ParseFragmentWithOptions",
+                    "ParseWithOptions",
+                    "parser.parse"
+                  ]
+                }
+              ]
+            }
+          }
+        ],
+        "references": [
+          {
+            "type": "FIX",
+            "url": "https://go.dev/cl/781702"
+          },
+          {
+            "type": "REPORT",
+            "url": "https://go.dev/issue/79573"
+          },
+          {
+            "type": "WEB",
+            "url": "https://groups.google.com/g/golang-announce/c/iI-mYSI0lu8"
+          }
+        ],
+        "credits": [
+          {
+            "name": "IPC Labs"
+          }
+        ],
+        "database_specific": {
+          "url": "https://pkg.go.dev/vuln/GO-2026-5028",
+          "review_status": "REVIEWED"
+        }
+      },
+      "GO-2026-5029": {
+        "schema_version": "1.3.1",
+        "id": "GO-2026-5029",
+        "modified": "2026-05-22T02:46:43Z",
+        "published": "2026-05-22T02:46:43Z",
+        "aliases": [
+          "CVE-2026-25681"
+        ],
+        "summary": "Invoking incorrect handling of character references in DOCTYPE nodes in golang.org/x/net/html",
+        "details": "Parsing arbitrary HTML which is then rendered using Render can result in an unexpected HTML tree. This can be leveraged to execute XSS attacks in applications that attempt to sanitize input HTML before rendering.",
+        "affected": [
+          {
+            "package": {
+              "name": "golang.org/x/net",
+              "ecosystem": "Go"
+            },
+            "ranges": [
+              {
+                "type": "SEMVER",
+                "events": [
+                  {
+                    "introduced": "0"
+                  },
+                  {
+                    "fixed": "0.55.0"
+                  }
+                ]
+              }
+            ],
+            "ecosystem_specific": {
+              "imports": [
+                {
+                  "path": "golang.org/x/net/html",
+                  "symbols": [
+                    "Parse",
+                    "ParseFragment",
+                    "ParseFragmentWithOptions",
+                    "ParseWithOptions",
+                    "parser.parse"
+                  ]
+                }
+              ]
+            }
+          }
+        ],
+        "references": [
+          {
+            "type": "REPORT",
+            "url": "https://go.dev/issue/79574"
+          },
+          {
+            "type": "WEB",
+            "url": "https://groups.google.com/g/golang-announce/c/iI-mYSI0lu8"
+          },
+          {
+            "type": "FIX",
+            "url": "https://go.dev/cl/781703"
+          }
+        ],
+        "credits": [
+          {
+            "name": "ensy"
+          }
+        ],
+        "database_specific": {
+          "url": "https://pkg.go.dev/vuln/GO-2026-5029",
+          "review_status": "REVIEWED"
+        }
+      },
+      "GO-2026-5030": {
+        "schema_version": "1.3.1",
+        "id": "GO-2026-5030",
+        "modified": "2026-05-22T02:46:43Z",
+        "published": "2026-05-22T02:46:43Z",
+        "aliases": [
+          "CVE-2026-27136"
+        ],
+        "summary": "Invoking duplicate attributes can cause XSS in golang.org/x/net/html",
+        "details": "Parsing arbitrary HTML which is then rendered using Render can result in an unexpected HTML tree. This can be leveraged to execute XSS attacks in applications that attempt to sanitize input HTML before rendering.",
+        "affected": [
+          {
+            "package": {
+              "name": "golang.org/x/net",
+              "ecosystem": "Go"
+            },
+            "ranges": [
+              {
+                "type": "SEMVER",
+                "events": [
+                  {
+                    "introduced": "0"
+                  },
+                  {
+                    "fixed": "0.55.0"
+                  }
+                ]
+              }
+            ],
+            "ecosystem_specific": {
+              "imports": [
+                {
+                  "path": "golang.org/x/net/html",
+                  "symbols": [
+                    "Parse",
+                    "ParseFragment",
+                    "ParseFragmentWithOptions",
+                    "ParseWithOptions",
+                    "parser.parse"
+                  ]
+                }
+              ]
+            }
+          }
+        ],
+        "references": [
+          {
+            "type": "REPORT",
+            "url": "https://go.dev/issue/79575"
+          },
+          {
+            "type": "WEB",
+            "url": "https://groups.google.com/g/golang-announce/c/iI-mYSI0lu8"
+          },
+          {
+            "type": "FIX",
+            "url": "https://go.dev/cl/781685"
+          }
+        ],
+        "credits": [
+          {
+            "name": "ensy"
+          }
+        ],
+        "database_specific": {
+          "url": "https://pkg.go.dev/vuln/GO-2026-5030",
+          "review_status": "REVIEWED"
+        }
+      },
+      "GO-2026-5942": {
+        "schema_version": "1.3.1",
+        "id": "GO-2026-5942",
+        "modified": "2026-08-14T15:30:22Z",
+        "published": "2026-07-14T17:29:16Z",
+        "aliases": [
+          "CVE-2026-46600"
+        ],
+        "summary": "Parsing an invalid SVCB or HTTPS RR can panic in golang.org/x/net/dns/dnsmessage",
+        "details": "Parsing an invalid SVCB or HTTPS RR can panic when the size of a parameter value overflows the message buffer.",
+        "affected": [
+          {
+            "package": {
+              "name": "stdlib",
+              "ecosystem": "Go"
+            },
+            "ranges": [
+              {
+                "type": "SEMVER",
+                "events": [
+                  {
+                    "introduced": "1.26.0-0"
+                  },
+                  {
+                    "fixed": "1.26.6"
+                  },
+                  {
+                    "introduced": "1.27.0-0"
+                  },
+                  {
+                    "fixed": "1.27.0-rc.3"
+                  }
+                ]
+              }
+            ],
+            "ecosystem_specific": {
+              "imports": [
+                {
+                  "path": "net",
+                  "symbols": [
+                    "LookupCNAME",
+                    "Resolver.LookupCNAME",
+                    "cgoResSearch"
+                  ]
+                }
+              ]
+            }
+          },
+          {
+            "package": {
+              "name": "golang.org/x/net",
+              "ecosystem": "Go"
+            },
+            "ranges": [
+              {
+                "type": "SEMVER",
+                "events": [
+                  {
+                    "introduced": "0"
+                  },
+                  {
+                    "fixed": "0.56.0"
+                  }
+                ]
+              }
+            ],
+            "ecosystem_specific": {
+              "imports": [
+                {
+                  "path": "golang.org/x/net/dns/dnsmessage",
+                  "symbols": [
+                    "Message.Unpack",
+                    "Parser.Additional",
+                    "Parser.AllAdditionals",
+                    "Parser.AllAnswers",
+                    "Parser.AllAuthorities",
+                    "Parser.Answer",
+                    "Parser.Authority",
+                    "Parser.HTTPSResource",
+                    "Parser.SVCBResource",
+                    "unpackSVCBResource"
+                  ]
+                }
+              ]
+            }
+          }
+        ],
+        "references": [
+          {
+            "type": "FIX",
+            "url": "https://go.dev/cl/786345"
+          },
+          {
+            "type": "REPORT",
+            "url": "https://go.dev/issue/79795"
+          },
+          {
+            "type": "WEB",
+            "url": "https://groups.google.com/g/golang-announce/c/94pEornpRlI"
+          }
+        ],
+        "credits": [
+          {
+            "name": "Mundur (https://github.com/M0nd0R)"
+          }
+        ],
+        "database_specific": {
+          "url": "https://pkg.go.dev/vuln/GO-2026-5942",
+          "review_status": "REVIEWED"
+        }
+      },
+      "GO-2026-5970": {
+        "schema_version": "1.3.1",
+        "id": "GO-2026-5970",
+        "modified": "2026-08-10T22:42:36Z",
+        "published": "2026-07-14T17:29:56Z",
+        "aliases": [
+          "CVE-2026-56852"
+        ],
+        "summary": "Infinite loop on invalid input in golang.org/x/text",
+        "details": "A norm.Iter can enter an infinite loop when handling input containing invalid UTF-8 bytes.",
+        "affected": [
+          {
+            "package": {
+              "name": "golang.org/x/text",
+              "ecosystem": "Go"
+            },
+            "ranges": [
+              {
+                "type": "SEMVER",
+                "events": [
+                  {
+                    "introduced": "0"
+                  },
+                  {
+                    "fixed": "0.39.0"
+                  }
+                ]
+              }
+            ],
+            "ecosystem_specific": {
+              "imports": [
+                {
+                  "path": "golang.org/x/text/unicode/norm",
+                  "symbols": [
+                    "Form.Append",
+                    "Form.AppendString",
+                    "Form.Bytes",
+                    "Form.FirstBoundary",
+                    "Form.FirstBoundaryInString",
+                    "Form.IsNormal",
+                    "Form.IsNormalString",
+                    "Form.LastBoundary",
+                    "Form.NextBoundary",
+                    "Form.NextBoundaryInString",
+                    "Form.Properties",
+                    "Form.PropertiesString",
+                    "Form.QuickSpan",
+                    "Form.QuickSpanString",
+                    "Form.Span",
+                    "Form.SpanString",
+                    "Form.String",
+                    "Form.Transform",
+                    "Iter.Init",
+                    "Iter.InitString",
+                    "Iter.Next",
+                    "Iter.Seek",
+                    "nextComposed",
+                    "normReader.Read",
+                    "normWriter.Write"
+                  ]
+                }
+              ]
+            }
+          }
+        ],
+        "references": [
+          {
+            "type": "REPORT",
+            "url": "https://go.dev/issue/80142"
+          },
+          {
+            "type": "FIX",
+            "url": "https://go.dev/cl/794100"
+          }
+        ],
+        "credits": [
+          {
+            "name": "Viky Choi (\"vikychoi\" on GitHub)"
+          }
+        ],
+        "database_specific": {
+          "url": "https://pkg.go.dev/vuln/GO-2026-5970",
+          "review_status": "REVIEWED"
+        }
+      },
+      "GO-2026-6061": {
+        "schema_version": "1.3.1",
+        "id": "GO-2026-6061",
+        "modified": "2026-07-27T15:30:50Z",
+        "published": "2026-07-27T15:30:50Z",
+        "aliases": [
+          "GHSA-hrxh-6v49-42gf"
+        ],
+        "summary": "Vulnerabilities in the xDS RBAC authorization engine and the HTTP/2 transport server implementation in google.golang.org/grpc",
+        "details": "Vulnerabilities in the xDS RBAC authorization engine and the HTTP/2 transport server implementation in google.golang.org/grpc",
+        "affected": [
+          {
+            "package": {
+              "name": "google.golang.org/grpc",
+              "ecosystem": "Go"
+            },
+            "ranges": [
+              {
+                "type": "SEMVER",
+                "events": [
+                  {
+                    "introduced": "0"
+                  },
+                  {
+                    "fixed": "1.82.1"
+                  }
+                ]
+              }
+            ],
+            "ecosystem_specific": {
+              "imports": [
+                {
+                  "path": "google.golang.org/grpc/internal/transport",
+                  "symbols": [
+                    "ClientStream.Close",
+                    "ClientStream.Header",
+                    "ClientStream.Read",
+                    "ClientStream.RecvCompress",
+                    "ClientStream.TrailersOnly",
+                    "ClientStream.Write",
+                    "NewHTTP2Client",
+                    "NewServerTransport",
+                    "ServerStream.Read",
+                    "ServerStream.SendHeader",
+                    "ServerStream.Write",
+                    "ServerStream.WriteStatus",
+                    "Stream.ReadMessageHeader",
+                    "controlBuffer.executeAndPut",
+                    "controlBuffer.getOnceLocked",
+                    "http2Client.Close",
+                    "http2Client.GracefulClose",
+                    "http2Client.NewStream",
+                    "http2Server.Drain",
+                    "http2Server.HandleStreams",
+                    "recvBufferReader.Read",
+                    "recvBufferReader.ReadMessageHeader",
+                    "transportReader.Read",
+                    "transportReader.ReadMessageHeader"
+                  ]
+                },
+                {
+                  "path": "google.golang.org/grpc/internal/xds/rbac",
+                  "symbols": [
+                    "ChainEngine.IsAuthorized",
+                    "NewChainEngine",
+                    "matchersFromPermissions",
+                    "matchersFromPrincipals"
+                  ]
+                }
+              ]
+            }
+          }
+        ],
+        "references": [
+          {
+            "type": "ADVISORY",
+            "url": "https://github.com/grpc/grpc-go/security/advisories/GHSA-hrxh-6v49-42gf"
+          },
+          {
+            "type": "FIX",
+            "url": "https://github.com/grpc/grpc-go/commit/4ea465d4ab98013f72a142fe0fc89c19770b2935"
+          },
+          {
+            "type": "WEB",
+            "url": "https://github.com/grpc/grpc-go/pull/9236"
+          },
+          {
+            "type": "WEB",
+            "url": "https://github.com/grpc/grpc-go/releases/tag/v1.82.1"
+          }
+        ],
+        "database_specific": {
+          "url": "https://pkg.go.dev/vuln/GO-2026-6061",
+          "review_status": "REVIEWED"
+        }
+      },
+      "GO-2026-6348": {
+        "schema_version": "1.3.1",
+        "id": "GO-2026-6348",
+        "modified": "2026-09-15T18:39:25Z",
+        "published": "2026-09-15T18:39:25Z",
+        "aliases": [
+          "CVE-2026-84304",
+          "GHSA-vp52-pcj8-j9qc"
+        ],
+        "summary": "Heap Memory Exhaustion (OOM) via HTTP/2 DATA Frame Fragmentation in google.golang.org/grpc",
+        "details": "Heap Memory Exhaustion (OOM) via HTTP/2 DATA Frame Fragmentation in google.golang.org/grpc",
+        "affected": [
+          {
+            "package": {
+              "name": "google.golang.org/grpc",
+              "ecosystem": "Go"
+            },
+            "ranges": [
+              {
+                "type": "SEMVER",
+                "events": [
+                  {
+                    "introduced": "0"
+                  },
+                  {
+                    "fixed": "1.83.1"
+                  }
+                ]
+              }
+            ],
+            "ecosystem_specific": {
+              "imports": [
+                {
+                  "path": "google.golang.org/grpc/internal/transport",
+                  "symbols": [
+                    "ClientStream.Close",
+                    "ClientStream.Header",
+                    "ClientStream.Read",
+                    "ClientStream.RecvCompress",
+                    "ClientStream.TrailersOnly",
+                    "NewHTTP2Client",
+                    "NewServerTransport",
+                    "ServerStream.Read",
+                    "Stream.ReadMessageHeader",
+                    "http2Client.Close",
+                    "http2Client.GracefulClose",
+                    "http2Client.NewStream",
+                    "http2Client.newStream",
+                    "http2Server.Close",
+                    "http2Server.HandleStreams",
+                    "http2Server.operateHeaders",
+                    "recvBuffer.init",
+                    "recvBuffer.load",
+                    "recvBuffer.put",
+                    "recvBufferReader.Read",
+                    "recvBufferReader.ReadMessageHeader",
+                    "serverHandlerTransport.HandleStreams",
+                    "transportReader.Read",
+                    "transportReader.ReadMessageHeader"
+                  ]
+                },
+                {
+                  "path": "google.golang.org/grpc/mem",
+                  "symbols": [
+                    "BufferSlice.MaterializeToBuffer",
+                    "Copy",
+                    "IsBelowBufferPoolingThreshold",
+                    "NewBuffer",
+                    "ReadAll",
+                    "writer.Write"
+                  ]
+                }
+              ]
+            }
+          }
+        ],
+        "references": [
+          {
+            "type": "ADVISORY",
+            "url": "https://github.com/grpc/grpc-go/security/advisories/GHSA-vp52-pcj8-j9qc"
+          },
+          {
+            "type": "FIX",
+            "url": "https://github.com/grpc/grpc-go/commit/7354d9c8debb4bcf2225bf429857078de310c176"
+          },
+          {
+            "type": "WEB",
+            "url": "https://github.com/grpc/grpc-go/commit/8cfeca0e1ee5ea0980dcc320e20240fa1079ec77"
+          },
+          {
+            "type": "WEB",
+            "url": "https://github.com/grpc/grpc-go/pull/9331"
+          },
+          {
+            "type": "WEB",
+            "url": "https://github.com/grpc/grpc-go/pull/9333"
+          },
+          {
+            "type": "WEB",
+            "url": "https://github.com/grpc/grpc-go/releases/tag/v1.83.1"
+          }
+        ],
+        "database_specific": {
+          "url": "https://pkg.go.dev/vuln/GO-2026-6348",
+          "review_status": "REVIEWED"
+        }
+      },
+      "GO-2026-6441": {
+        "schema_version": "1.3.1",
+        "id": "GO-2026-6441",
+        "modified": "2026-09-15T18:39:25Z",
+        "published": "2026-09-15T18:39:25Z",
+        "aliases": [
+          "CVE-2026-84303",
+          "GHSA-qc2q-p7wx-3px3"
+        ],
+        "summary": "Bypass of xDS RBAC HTTP filter header matching in google.golang.org/grpc",
+        "details": "In google.golang.org/grpc, the xDS RBAC HTTP filter does not lowercase header matcher names before evaluating them against incoming request metadata. When an RBAC policy defines rules (such as DENY) referencing headers with uppercase or mixed-case characters, the rule fails to match, causing authorization policies to fail open. Additionally, callers can evade gRFC A41 validation blocking \"grpc-\" prefixed headers and \":scheme\" via variations in casing.",
+        "affected": [
+          {
+            "package": {
+              "name": "google.golang.org/grpc",
+              "ecosystem": "Go"
+            },
+            "ranges": [
+              {
+                "type": "SEMVER",
+                "events": [
+                  {
+                    "introduced": "0"
+                  },
+                  {
+                    "fixed": "1.83.1"
+                  }
+                ]
+              }
+            ],
+            "ecosystem_specific": {
+              "imports": [
+                {
+                  "path": "google.golang.org/grpc/internal/xds/httpfilter/rbac",
+                  "symbols": [
+                    "builder.ParseFilterConfig",
+                    "builder.ParseFilterConfigOverride",
+                    "parseConfig"
+                  ]
+                }
+              ]
+            }
+          }
+        ],
+        "references": [
+          {
+            "type": "ADVISORY",
+            "url": "https://github.com/grpc/grpc-go/security/advisories/GHSA-qc2q-p7wx-3px3"
+          },
+          {
+            "type": "FIX",
+            "url": "https://github.com/grpc/grpc-go/pull/9332"
+          }
+        ],
+        "database_specific": {
+          "url": "https://pkg.go.dev/vuln/GO-2026-6441",
+          "review_status": "REVIEWED"
+        }
+      },
+      "GO-2026-6443": {
+        "schema_version": "1.3.1",
+        "id": "GO-2026-6443",
+        "modified": "2026-09-15T18:39:25Z",
+        "published": "2026-09-15T18:39:25Z",
+        "aliases": [
+          "CVE-2026-84445",
+          "GHSA-2v4p-qf9q-27wj"
+        ],
+        "summary": "Server panic via missing authority or Host headers in google.golang.org/grpc",
+        "details": "In google.golang.org/grpc, servers configured with xDS routing can panic when processing requests that lack both :authority and Host headers. The HTTP/2 transport layer accepted requests missing these headers, and the xDS server routing interceptor attempted to index the empty authority slice, causing an unhandled panic and terminating the server.",
+        "affected": [
+          {
+            "package": {
+              "name": "google.golang.org/grpc",
+              "ecosystem": "Go"
+            },
+            "ranges": [
+              {
+                "type": "SEMVER",
+                "events": [
+                  {
+                    "introduced": "0"
+                  },
+                  {
+                    "fixed": "1.82.2"
+                  },
+                  {
+                    "introduced": "1.83.0"
+                  },
+                  {
+                    "fixed": "1.83.2"
+                  },
+                  {
+                    "introduced": "1.84.0-dev"
+                  },
+                  {
+                    "fixed": "1.85.0-dev.0.20260825072537-93e31b48545e"
+                  }
+                ]
+              }
+            ],
+            "ecosystem_specific": {
+              "imports": [
+                {
+                  "path": "google.golang.org/grpc/internal/transport",
+                  "symbols": [
+                    "http2Server.HandleStreams",
+                    "http2Server.operateHeaders"
+                  ]
+                },
+                {
+                  "path": "google.golang.org/grpc/internal/xds/server",
+                  "symbols": [
+                    "RouteAndProcess"
+                  ]
+                }
+              ]
+            }
+          }
+        ],
+        "references": [
+          {
+            "type": "ADVISORY",
+            "url": "https://github.com/grpc/grpc-go/security/advisories/GHSA-2v4p-qf9q-27wj"
+          },
+          {
+            "type": "REPORT",
+            "url": "https://github.com/grpc/grpc-go/issues/9354"
+          },
+          {
+            "type": "FIX",
+            "url": "https://github.com/grpc/grpc-go/pull/9365"
+          }
+        ],
+        "database_specific": {
+          "url": "https://pkg.go.dev/vuln/GO-2026-6443",
+          "review_status": "REVIEWED"
+        }
+      }
+    },
+    "sbom": {
+      "go_version": "go1.26.8",
+      "modules": [
+        {
+          "path": "vynic.local/edge"
+        },
+        {
+          "path": "../../packages/contracts/generated/go"
+        },
+        {
+          "path": "../../packages/contracts/generated/go"
+        },
+        {
+          "path": "github.com/dustin/go-humanize",
+          "version": "v1.0.1"
+        },
+        {
+          "path": "github.com/gofrs/flock",
+          "version": "v0.12.1"
+        },
+        {
+          "path": "github.com/google/uuid",
+          "version": "v1.6.0"
+        },
+        {
+          "path": "github.com/mattn/go-isatty",
+          "version": "v0.0.24"
+        },
+        {
+          "path": "github.com/ncruces/go-strftime",
+          "version": "v1.0.0"
+        },
+        {
+          "path": "github.com/remyoudompheng/bigfft",
+          "version": "v0.0.0-20230129092748-24d4a6f8daec"
+        },
+        {
+          "path": "golang.org/x/net",
+          "version": "v0.48.0"
+        },
+        {
+          "path": "golang.org/x/sys",
+          "version": "v0.47.0"
+        },
+        {
+          "path": "golang.org/x/text",
+          "version": "v0.32.0"
+        },
+        {
+          "path": "google.golang.org/genproto/googleapis/rpc",
+          "version": "v0.0.0-20251202230838-ff82c1b0f217"
+        },
+        {
+          "path": "google.golang.org/grpc",
+          "version": "v1.79.3"
+        },
+        {
+          "path": "google.golang.org/protobuf",
+          "version": "v1.36.11"
+        },
+        {
+          "path": "modernc.org/libc",
+          "version": "v1.75.7"
+        },
+        {
+          "path": "modernc.org/mathutil",
+          "version": "v1.7.1"
+        },
+        {
+          "path": "modernc.org/memory",
+          "version": "v1.12.1"
+        },
+        {
+          "path": "modernc.org/sqlite",
+          "version": "v1.59.0"
+        },
+        {
+          "path": "stdlib",
+          "version": "v1.26.8"
+        }
+      ],
+      "roots": [
+        "vynic.local/edge/cmd/edge"
+      ]
+    },
+    "findingsCount": 13
+  },
+  "contracts-baseline-govulncheck-module": {
+    "config": {
+      "protocol_version": "v1.0.0",
+      "scanner_name": "govulncheck",
+      "scanner_version": "v1.8.0",
+      "db": "https://vuln.go.dev",
+      "db_last_modified": "2026-10-01T20:24:15Z",
+      "go_version": "go1.26.8",
+      "scan_level": "module",
+      "scan_mode": "source"
+    },
+    "findings": [
+      {
+        "osv": "GO-2026-6061",
+        "fixed_version": "v1.82.1",
+        "trace": [
+          {
+            "module": "google.golang.org/grpc",
+            "version": "v1.79.3"
+          }
+        ]
+      },
+      {
+        "osv": "GO-2026-6348",
+        "fixed_version": "v1.83.1",
+        "trace": [
+          {
+            "module": "google.golang.org/grpc",
+            "version": "v1.79.3"
+          }
+        ]
+      },
+      {
+        "osv": "GO-2026-6441",
+        "fixed_version": "v1.83.1",
+        "trace": [
+          {
+            "module": "google.golang.org/grpc",
+            "version": "v1.79.3"
+          }
+        ]
+      },
+      {
+        "osv": "GO-2026-6443",
+        "fixed_version": "v1.82.2",
+        "trace": [
+          {
+            "module": "google.golang.org/grpc",
+            "version": "v1.79.3"
+          }
+        ]
+      },
+      {
+        "osv": "GO-2026-5024",
+        "fixed_version": "v0.44.0",
+        "trace": [
+          {
+            "module": "golang.org/x/sys",
+            "version": "v0.39.0"
+          }
+        ]
+      },
+      {
+        "osv": "GO-2026-4918",
+        "fixed_version": "v0.53.0",
+        "trace": [
+          {
+            "module": "golang.org/x/net",
+            "version": "v0.48.0"
+          }
+        ]
+      },
+      {
+        "osv": "GO-2026-5025",
+        "fixed_version": "v0.55.0",
+        "trace": [
+          {
+            "module": "golang.org/x/net",
+            "version": "v0.48.0"
+          }
+        ]
+      },
+      {
+        "osv": "GO-2026-5026",
+        "fixed_version": "v0.55.0",
+        "trace": [
+          {
+            "module": "golang.org/x/net",
+            "version": "v0.48.0"
+          }
+        ]
+      },
+      {
+        "osv": "GO-2026-5027",
+        "fixed_version": "v0.55.0",
+        "trace": [
+          {
+            "module": "golang.org/x/net",
+            "version": "v0.48.0"
+          }
+        ]
+      },
+      {
+        "osv": "GO-2026-5028",
+        "fixed_version": "v0.55.0",
+        "trace": [
+          {
+            "module": "golang.org/x/net",
+            "version": "v0.48.0"
+          }
+        ]
+      },
+      {
+        "osv": "GO-2026-5029",
+        "fixed_version": "v0.55.0",
+        "trace": [
+          {
+            "module": "golang.org/x/net",
+            "version": "v0.48.0"
+          }
+        ]
+      },
+      {
+        "osv": "GO-2026-5030",
+        "fixed_version": "v0.55.0",
+        "trace": [
+          {
+            "module": "golang.org/x/net",
+            "version": "v0.48.0"
+          }
+        ]
+      },
+      {
+        "osv": "GO-2026-5942",
+        "fixed_version": "v0.56.0",
+        "trace": [
+          {
+            "module": "golang.org/x/net",
+            "version": "v0.48.0"
+          }
+        ]
+      },
+      {
+        "osv": "GO-2026-5970",
+        "fixed_version": "v0.39.0",
+        "trace": [
+          {
+            "module": "golang.org/x/text",
+            "version": "v0.32.0"
+          }
+        ]
+      }
+    ],
+    "advisories": {
+      "GO-2026-4918": {
+        "schema_version": "1.3.1",
+        "id": "GO-2026-4918",
+        "modified": "2026-05-07T19:21:40Z",
+        "published": "2026-05-07T19:21:40Z",
+        "aliases": [
+          "CVE-2026-33814"
+        ],
+        "summary": "Infinite loop in HTTP/2 transport when given bad SETTINGS_MAX_FRAME_SIZE in net/http/internal/http2 in golang.org/x/net",
+        "details": "When processing HTTP/2 SETTINGS frames, transport will enter an infinite loop of writing CONTINUATION frames if it receives a SETTINGS_MAX_FRAME_SIZE with a value of 0.",
+        "affected": [
+          {
+            "package": {
+              "name": "golang.org/x/net",
+              "ecosystem": "Go"
+            },
+            "ranges": [
+              {
+                "type": "SEMVER",
+                "events": [
+                  {
+                    "introduced": "0"
+                  },
+                  {
+                    "fixed": "0.53.0"
+                  }
+                ]
+              }
+            ],
+            "ecosystem_specific": {
+              "imports": [
+                {
+                  "path": "golang.org/x/net/http2",
+                  "symbols": [
+                    "Transport.NewClientConn",
+                    "Transport.RoundTrip",
+                    "Transport.RoundTripOpt",
+                    "clientConnPool.GetClientConn",
+                    "clientConnReadLoop.processSettingsNoWrite",
+                    "noDialClientConnPool.GetClientConn",
+                    "noDialH2RoundTripper.NewClientConn",
+                    "noDialH2RoundTripper.RoundTrip",
+                    "unencryptedTransport.RoundTrip"
+                  ]
+                }
+              ]
+            }
+          },
+          {
+            "package": {
+              "name": "stdlib",
+              "ecosystem": "Go"
+            },
+            "ranges": [
+              {
+                "type": "SEMVER",
+                "events": [
+                  {
+                    "introduced": "0"
+                  },
+                  {
+                    "fixed": "1.25.10"
+                  },
+                  {
+                    "introduced": "1.26.0-0"
+                  },
+                  {
+                    "fixed": "1.26.3"
+                  }
+                ]
+              }
+            ],
+            "ecosystem_specific": {
+              "imports": [
+                {
+                  "path": "net/http",
+                  "symbols": [
+                    "Client.CloseIdleConnections",
+                    "Client.Do",
+                    "Client.Get",
+                    "Client.Head",
+                    "Client.Post",
+                    "Client.PostForm",
+                    "ClientConn.Close",
+                    "ClientConn.RoundTrip",
+                    "Get",
+                    "Head",
+                    "Post",
+                    "PostForm",
+                    "Transport.CloseIdleConnections",
+                    "Transport.NewClientConn",
+                    "Transport.RoundTrip",
+                    "http1ClientConn.Close",
+                    "http1ClientConn.RoundTrip",
+                    "http2Transport.NewClientConn",
+                    "http2Transport.RoundTrip",
+                    "http2Transport.RoundTripOpt",
+                    "http2clientConnPool.GetClientConn",
+                    "http2clientConnReadLoop.processSettingsNoWrite",
+                    "http2noDialClientConnPool.GetClientConn",
+                    "http2noDialH2RoundTripper.NewClientConn",
+                    "http2noDialH2RoundTripper.RoundTrip",
+                    "http2unencryptedTransport.RoundTrip"
+                  ]
+                }
+              ]
+            }
+          }
+        ],
+        "references": [
+          {
+            "type": "FIX",
+            "url": "https://go.dev/cl/761581"
+          },
+          {
+            "type": "FIX",
+            "url": "https://go.dev/cl/761640"
+          },
+          {
+            "type": "REPORT",
+            "url": "https://go.dev/issue/78476"
+          },
+          {
+            "type": "WEB",
+            "url": "https://groups.google.com/g/golang-announce/c/qcCIEXso47M"
+          }
+        ],
+        "credits": [
+          {
+            "name": "Marwan Atia (marwansamir688@gmail.com)"
+          }
+        ],
+        "database_specific": {
+          "url": "https://pkg.go.dev/vuln/GO-2026-4918",
+          "review_status": "REVIEWED"
+        }
+      },
+      "GO-2026-5024": {
+        "schema_version": "1.3.1",
+        "id": "GO-2026-5024",
+        "modified": "2026-05-22T18:28:47Z",
+        "published": "2026-05-22T18:28:47Z",
+        "aliases": [
+          "CVE-2026-39824"
+        ],
+        "summary": "Invoking integer overflow in NewNTUnicodeString in golang.org/x/sys/windows",
+        "details": "NewNTUnicodeString does not check for string length overflow. When provided with a string that overflows the maximum size of a NTUnicodeString (a 16-bit number of bytes), it returns a truncated string rather than an error.",
+        "affected": [
+          {
+            "package": {
+              "name": "golang.org/x/sys",
+              "ecosystem": "Go"
+            },
+            "ranges": [
+              {
+                "type": "SEMVER",
+                "events": [
+                  {
+                    "introduced": "0"
+                  },
+                  {
+                    "fixed": "0.44.0"
+                  }
+                ]
+              }
+            ],
+            "ecosystem_specific": {
+              "imports": [
+                {
+                  "path": "golang.org/x/sys/windows",
+                  "goos": [
+                    "windows"
+                  ],
+                  "symbols": [
+                    "NewNTUnicodeString"
+                  ]
+                }
+              ]
+            }
+          }
+        ],
+        "references": [
+          {
+            "type": "REPORT",
+            "url": "https://go.dev/issue/78916"
+          },
+          {
+            "type": "FIX",
+            "url": "https://go.dev/cl/770080"
+          },
+          {
+            "type": "WEB",
+            "url": "https://groups.google.com/g/golang-announce/c/6MMI8Lj-Atg"
+          }
+        ],
+        "database_specific": {
+          "url": "https://pkg.go.dev/vuln/GO-2026-5024",
+          "review_status": "REVIEWED"
+        }
+      },
+      "GO-2026-5025": {
+        "schema_version": "1.3.1",
+        "id": "GO-2026-5025",
+        "modified": "2026-05-22T02:46:43Z",
+        "published": "2026-05-22T02:46:43Z",
+        "aliases": [
+          "CVE-2026-42506"
+        ],
+        "summary": "Invoking incorrect handling of namespaced elements in foreign content in golang.org/x/net/html",
+        "details": "Parsing arbitrary HTML which is then rendered using Render can result in an unexpected HTML tree. This can be leveraged to execute XSS attacks in applications that attempt to sanitize input HTML before rendering.",
+        "affected": [
+          {
+            "package": {
+              "name": "golang.org/x/net",
+              "ecosystem": "Go"
+            },
+            "ranges": [
+              {
+                "type": "SEMVER",
+                "events": [
+                  {
+                    "introduced": "0"
+                  },
+                  {
+                    "fixed": "0.55.0"
+                  }
+                ]
+              }
+            ],
+            "ecosystem_specific": {
+              "imports": [
+                {
+                  "path": "golang.org/x/net/html",
+                  "symbols": [
+                    "Parse",
+                    "ParseFragment",
+                    "ParseFragmentWithOptions",
+                    "ParseWithOptions",
+                    "parser.parse"
+                  ]
+                }
+              ]
+            }
+          }
+        ],
+        "references": [
+          {
+            "type": "REPORT",
+            "url": "https://go.dev/issue/79571"
+          },
+          {
+            "type": "WEB",
+            "url": "https://groups.google.com/g/golang-announce/c/iI-mYSI0lu8"
+          },
+          {
+            "type": "FIX",
+            "url": "https://go.dev/cl/781700"
+          }
+        ],
+        "credits": [
+          {
+            "name": "ensy"
+          }
+        ],
+        "database_specific": {
+          "url": "https://pkg.go.dev/vuln/GO-2026-5025",
+          "review_status": "REVIEWED"
+        }
+      },
+      "GO-2026-5026": {
+        "schema_version": "1.3.1",
+        "id": "GO-2026-5026",
+        "modified": "2026-08-21T20:38:00Z",
+        "published": "2026-05-22T02:46:43Z",
+        "aliases": [
+          "CVE-2026-39821"
+        ],
+        "summary": "Invoking failure to reject ASCII-only Punycode-encoded labels in golang.org/x/net/idna",
+        "details": "The ToASCII and ToUnicode functions incorrectly accept Punycode-encoded labels that decode to an ASCII-only label. For example, ToUnicode(\"xn--example-.com\") incorrectly returns the name \"example.com\" rather than an error.\n\nThis behavior can lead to privilege escalation in programs using the idna package. For example, a program which performs privilege checks on the ASCII hostname may reject \"example.com\" but permit \"xn--example-.com\". If that program subsequently converts the ASCII hostname to Unicode, it will inadvertently permits access to the Unicode name \"example.com\".",
+        "affected": [
+          {
+            "package": {
+              "name": "stdlib",
+              "ecosystem": "Go"
+            },
+            "ranges": [
+              {
+                "type": "SEMVER",
+                "events": [
+                  {
+                    "introduced": "0"
+                  },
+                  {
+                    "fixed": "1.25.13"
+                  },
+                  {
+                    "introduced": "1.26.0-0"
+                  },
+                  {
+                    "fixed": "1.26.6"
+                  },
+                  {
+                    "introduced": "1.27.0-0"
+                  },
+                  {
+                    "fixed": "1.27.0-rc.3"
+                  }
+                ]
+              }
+            ],
+            "ecosystem_specific": {
+              "imports": [
+                {
+                  "path": "net/http",
+                  "symbols": [
+                    "Client.CloseIdleConnections",
+                    "Client.Do",
+                    "Client.Get",
+                    "Client.Head",
+                    "Client.Post",
+                    "Client.PostForm",
+                    "ClientConn.Close",
+                    "ClientConn.RoundTrip",
+                    "Get",
+                    "Head",
+                    "Post",
+                    "PostForm",
+                    "Transport.CloseIdleConnections",
+                    "Transport.NewClientConn",
+                    "Transport.RoundTrip",
+                    "http1ClientConn.Close",
+                    "http1ClientConn.RoundTrip",
+                    "http2ClientConn.RoundTrip",
+                    "http2RoundTripper.RoundTrip",
+                    "idnaASCII"
+                  ]
+                },
+                {
+                  "path": "net/http/internal/http2",
+                  "symbols": [
+                    "Transport.AddConn",
+                    "Transport.RoundTrip",
+                    "Transport.RoundTripOpt",
+                    "authorityAddr"
+                  ]
+                }
+              ]
+            }
+          },
+          {
+            "package": {
+              "name": "golang.org/x/net",
+              "ecosystem": "Go"
+            },
+            "ranges": [
+              {
+                "type": "SEMVER",
+                "events": [
+                  {
+                    "introduced": "0"
+                  },
+                  {
+                    "fixed": "0.55.0"
+                  }
+                ]
+              }
+            ],
+            "ecosystem_specific": {
+              "imports": [
+                {
+                  "path": "golang.org/x/net/idna",
+                  "symbols": [
+                    "Profile.ToASCII",
+                    "Profile.ToUnicode",
+                    "Profile.process",
+                    "ToASCII",
+                    "ToUnicode"
+                  ]
+                }
+              ]
+            }
+          }
+        ],
+        "references": [
+          {
+            "type": "FIX",
+            "url": "https://go.dev/cl/767220"
+          },
+          {
+            "type": "REPORT",
+            "url": "https://go.dev/issue/78760"
+          },
+          {
+            "type": "WEB",
+            "url": "https://groups.google.com/g/golang-announce/c/iI-mYSI0lu8"
+          },
+          {
+            "type": "WEB",
+            "url": "https://groups.google.com/g/golang-announce/c/94pEornpRlI"
+          }
+        ],
+        "credits": [
+          {
+            "name": "KC1zs4 (https://github.com/KC1zs4)"
+          },
+          {
+            "name": "Longwei Wang (https://github.com/gn00295120)"
+          }
+        ],
+        "database_specific": {
+          "url": "https://pkg.go.dev/vuln/GO-2026-5026",
+          "review_status": "REVIEWED"
+        }
+      },
+      "GO-2026-5027": {
+        "schema_version": "1.3.1",
+        "id": "GO-2026-5027",
+        "modified": "2026-05-22T02:46:43Z",
+        "published": "2026-05-22T02:46:43Z",
+        "aliases": [
+          "CVE-2026-42502"
+        ],
+        "summary": "Invoking incorrect handling of HTML elements in foreign content in golang.org/x/net/html",
+        "details": "Parsing arbitrary HTML which is then rendered using Render can result in an unexpected HTML tree. This can be leveraged to execute XSS attacks in applications that attempt to sanitize input HTML before rendering.",
+        "affected": [
+          {
+            "package": {
+              "name": "golang.org/x/net",
+              "ecosystem": "Go"
+            },
+            "ranges": [
+              {
+                "type": "SEMVER",
+                "events": [
+                  {
+                    "introduced": "0"
+                  },
+                  {
+                    "fixed": "0.55.0"
+                  }
+                ]
+              }
+            ],
+            "ecosystem_specific": {
+              "imports": [
+                {
+                  "path": "golang.org/x/net/html",
+                  "symbols": [
+                    "Parse",
+                    "ParseFragment",
+                    "ParseFragmentWithOptions",
+                    "ParseWithOptions",
+                    "parser.parse"
+                  ]
+                }
+              ]
+            }
+          }
+        ],
+        "references": [
+          {
+            "type": "REPORT",
+            "url": "https://go.dev/issue/79572"
+          },
+          {
+            "type": "WEB",
+            "url": "https://groups.google.com/g/golang-announce/c/iI-mYSI0lu8"
+          },
+          {
+            "type": "FIX",
+            "url": "https://go.dev/cl/781701"
+          }
+        ],
+        "credits": [
+          {
+            "name": "Tristan Madani"
+          }
+        ],
+        "database_specific": {
+          "url": "https://pkg.go.dev/vuln/GO-2026-5027",
+          "review_status": "REVIEWED"
+        }
+      },
+      "GO-2026-5028": {
+        "schema_version": "1.3.1",
+        "id": "GO-2026-5028",
+        "modified": "2026-05-22T02:46:43Z",
+        "published": "2026-05-22T02:46:43Z",
+        "aliases": [
+          "CVE-2026-25680"
+        ],
+        "summary": "Invoking denial of service when parsing arbitrary HTML in golang.org/x/net/html",
+        "details": "Parsing arbitrary HTML can consume excessive CPU time, possibly leading to denial of service.",
+        "affected": [
+          {
+            "package": {
+              "name": "golang.org/x/net",
+              "ecosystem": "Go"
+            },
+            "ranges": [
+              {
+                "type": "SEMVER",
+                "events": [
+                  {
+                    "introduced": "0"
+                  },
+                  {
+                    "fixed": "0.55.0"
+                  }
+                ]
+              }
+            ],
+            "ecosystem_specific": {
+              "imports": [
+                {
+                  "path": "golang.org/x/net/html",
+                  "symbols": [
+                    "Parse",
+                    "ParseFragment",
+                    "ParseFragmentWithOptions",
+                    "ParseWithOptions",
+                    "parser.parse"
+                  ]
+                }
+              ]
+            }
+          }
+        ],
+        "references": [
+          {
+            "type": "FIX",
+            "url": "https://go.dev/cl/781702"
+          },
+          {
+            "type": "REPORT",
+            "url": "https://go.dev/issue/79573"
+          },
+          {
+            "type": "WEB",
+            "url": "https://groups.google.com/g/golang-announce/c/iI-mYSI0lu8"
+          }
+        ],
+        "credits": [
+          {
+            "name": "IPC Labs"
+          }
+        ],
+        "database_specific": {
+          "url": "https://pkg.go.dev/vuln/GO-2026-5028",
+          "review_status": "REVIEWED"
+        }
+      },
+      "GO-2026-5029": {
+        "schema_version": "1.3.1",
+        "id": "GO-2026-5029",
+        "modified": "2026-05-22T02:46:43Z",
+        "published": "2026-05-22T02:46:43Z",
+        "aliases": [
+          "CVE-2026-25681"
+        ],
+        "summary": "Invoking incorrect handling of character references in DOCTYPE nodes in golang.org/x/net/html",
+        "details": "Parsing arbitrary HTML which is then rendered using Render can result in an unexpected HTML tree. This can be leveraged to execute XSS attacks in applications that attempt to sanitize input HTML before rendering.",
+        "affected": [
+          {
+            "package": {
+              "name": "golang.org/x/net",
+              "ecosystem": "Go"
+            },
+            "ranges": [
+              {
+                "type": "SEMVER",
+                "events": [
+                  {
+                    "introduced": "0"
+                  },
+                  {
+                    "fixed": "0.55.0"
+                  }
+                ]
+              }
+            ],
+            "ecosystem_specific": {
+              "imports": [
+                {
+                  "path": "golang.org/x/net/html",
+                  "symbols": [
+                    "Parse",
+                    "ParseFragment",
+                    "ParseFragmentWithOptions",
+                    "ParseWithOptions",
+                    "parser.parse"
+                  ]
+                }
+              ]
+            }
+          }
+        ],
+        "references": [
+          {
+            "type": "REPORT",
+            "url": "https://go.dev/issue/79574"
+          },
+          {
+            "type": "WEB",
+            "url": "https://groups.google.com/g/golang-announce/c/iI-mYSI0lu8"
+          },
+          {
+            "type": "FIX",
+            "url": "https://go.dev/cl/781703"
+          }
+        ],
+        "credits": [
+          {
+            "name": "ensy"
+          }
+        ],
+        "database_specific": {
+          "url": "https://pkg.go.dev/vuln/GO-2026-5029",
+          "review_status": "REVIEWED"
+        }
+      },
+      "GO-2026-5030": {
+        "schema_version": "1.3.1",
+        "id": "GO-2026-5030",
+        "modified": "2026-05-22T02:46:43Z",
+        "published": "2026-05-22T02:46:43Z",
+        "aliases": [
+          "CVE-2026-27136"
+        ],
+        "summary": "Invoking duplicate attributes can cause XSS in golang.org/x/net/html",
+        "details": "Parsing arbitrary HTML which is then rendered using Render can result in an unexpected HTML tree. This can be leveraged to execute XSS attacks in applications that attempt to sanitize input HTML before rendering.",
+        "affected": [
+          {
+            "package": {
+              "name": "golang.org/x/net",
+              "ecosystem": "Go"
+            },
+            "ranges": [
+              {
+                "type": "SEMVER",
+                "events": [
+                  {
+                    "introduced": "0"
+                  },
+                  {
+                    "fixed": "0.55.0"
+                  }
+                ]
+              }
+            ],
+            "ecosystem_specific": {
+              "imports": [
+                {
+                  "path": "golang.org/x/net/html",
+                  "symbols": [
+                    "Parse",
+                    "ParseFragment",
+                    "ParseFragmentWithOptions",
+                    "ParseWithOptions",
+                    "parser.parse"
+                  ]
+                }
+              ]
+            }
+          }
+        ],
+        "references": [
+          {
+            "type": "REPORT",
+            "url": "https://go.dev/issue/79575"
+          },
+          {
+            "type": "WEB",
+            "url": "https://groups.google.com/g/golang-announce/c/iI-mYSI0lu8"
+          },
+          {
+            "type": "FIX",
+            "url": "https://go.dev/cl/781685"
+          }
+        ],
+        "credits": [
+          {
+            "name": "ensy"
+          }
+        ],
+        "database_specific": {
+          "url": "https://pkg.go.dev/vuln/GO-2026-5030",
+          "review_status": "REVIEWED"
+        }
+      },
+      "GO-2026-5942": {
+        "schema_version": "1.3.1",
+        "id": "GO-2026-5942",
+        "modified": "2026-08-14T15:30:22Z",
+        "published": "2026-07-14T17:29:16Z",
+        "aliases": [
+          "CVE-2026-46600"
+        ],
+        "summary": "Parsing an invalid SVCB or HTTPS RR can panic in golang.org/x/net/dns/dnsmessage",
+        "details": "Parsing an invalid SVCB or HTTPS RR can panic when the size of a parameter value overflows the message buffer.",
+        "affected": [
+          {
+            "package": {
+              "name": "stdlib",
+              "ecosystem": "Go"
+            },
+            "ranges": [
+              {
+                "type": "SEMVER",
+                "events": [
+                  {
+                    "introduced": "1.26.0-0"
+                  },
+                  {
+                    "fixed": "1.26.6"
+                  },
+                  {
+                    "introduced": "1.27.0-0"
+                  },
+                  {
+                    "fixed": "1.27.0-rc.3"
+                  }
+                ]
+              }
+            ],
+            "ecosystem_specific": {
+              "imports": [
+                {
+                  "path": "net",
+                  "symbols": [
+                    "LookupCNAME",
+                    "Resolver.LookupCNAME",
+                    "cgoResSearch"
+                  ]
+                }
+              ]
+            }
+          },
+          {
+            "package": {
+              "name": "golang.org/x/net",
+              "ecosystem": "Go"
+            },
+            "ranges": [
+              {
+                "type": "SEMVER",
+                "events": [
+                  {
+                    "introduced": "0"
+                  },
+                  {
+                    "fixed": "0.56.0"
+                  }
+                ]
+              }
+            ],
+            "ecosystem_specific": {
+              "imports": [
+                {
+                  "path": "golang.org/x/net/dns/dnsmessage",
+                  "symbols": [
+                    "Message.Unpack",
+                    "Parser.Additional",
+                    "Parser.AllAdditionals",
+                    "Parser.AllAnswers",
+                    "Parser.AllAuthorities",
+                    "Parser.Answer",
+                    "Parser.Authority",
+                    "Parser.HTTPSResource",
+                    "Parser.SVCBResource",
+                    "unpackSVCBResource"
+                  ]
+                }
+              ]
+            }
+          }
+        ],
+        "references": [
+          {
+            "type": "FIX",
+            "url": "https://go.dev/cl/786345"
+          },
+          {
+            "type": "REPORT",
+            "url": "https://go.dev/issue/79795"
+          },
+          {
+            "type": "WEB",
+            "url": "https://groups.google.com/g/golang-announce/c/94pEornpRlI"
+          }
+        ],
+        "credits": [
+          {
+            "name": "Mundur (https://github.com/M0nd0R)"
+          }
+        ],
+        "database_specific": {
+          "url": "https://pkg.go.dev/vuln/GO-2026-5942",
+          "review_status": "REVIEWED"
+        }
+      },
+      "GO-2026-5970": {
+        "schema_version": "1.3.1",
+        "id": "GO-2026-5970",
+        "modified": "2026-08-10T22:42:36Z",
+        "published": "2026-07-14T17:29:56Z",
+        "aliases": [
+          "CVE-2026-56852"
+        ],
+        "summary": "Infinite loop on invalid input in golang.org/x/text",
+        "details": "A norm.Iter can enter an infinite loop when handling input containing invalid UTF-8 bytes.",
+        "affected": [
+          {
+            "package": {
+              "name": "golang.org/x/text",
+              "ecosystem": "Go"
+            },
+            "ranges": [
+              {
+                "type": "SEMVER",
+                "events": [
+                  {
+                    "introduced": "0"
+                  },
+                  {
+                    "fixed": "0.39.0"
+                  }
+                ]
+              }
+            ],
+            "ecosystem_specific": {
+              "imports": [
+                {
+                  "path": "golang.org/x/text/unicode/norm",
+                  "symbols": [
+                    "Form.Append",
+                    "Form.AppendString",
+                    "Form.Bytes",
+                    "Form.FirstBoundary",
+                    "Form.FirstBoundaryInString",
+                    "Form.IsNormal",
+                    "Form.IsNormalString",
+                    "Form.LastBoundary",
+                    "Form.NextBoundary",
+                    "Form.NextBoundaryInString",
+                    "Form.Properties",
+                    "Form.PropertiesString",
+                    "Form.QuickSpan",
+                    "Form.QuickSpanString",
+                    "Form.Span",
+                    "Form.SpanString",
+                    "Form.String",
+                    "Form.Transform",
+                    "Iter.Init",
+                    "Iter.InitString",
+                    "Iter.Next",
+                    "Iter.Seek",
+                    "nextComposed",
+                    "normReader.Read",
+                    "normWriter.Write"
+                  ]
+                }
+              ]
+            }
+          }
+        ],
+        "references": [
+          {
+            "type": "REPORT",
+            "url": "https://go.dev/issue/80142"
+          },
+          {
+            "type": "FIX",
+            "url": "https://go.dev/cl/794100"
+          }
+        ],
+        "credits": [
+          {
+            "name": "Viky Choi (\"vikychoi\" on GitHub)"
+          }
+        ],
+        "database_specific": {
+          "url": "https://pkg.go.dev/vuln/GO-2026-5970",
+          "review_status": "REVIEWED"
+        }
+      },
+      "GO-2026-6061": {
+        "schema_version": "1.3.1",
+        "id": "GO-2026-6061",
+        "modified": "2026-07-27T15:30:50Z",
+        "published": "2026-07-27T15:30:50Z",
+        "aliases": [
+          "GHSA-hrxh-6v49-42gf"
+        ],
+        "summary": "Vulnerabilities in the xDS RBAC authorization engine and the HTTP/2 transport server implementation in google.golang.org/grpc",
+        "details": "Vulnerabilities in the xDS RBAC authorization engine and the HTTP/2 transport server implementation in google.golang.org/grpc",
+        "affected": [
+          {
+            "package": {
+              "name": "google.golang.org/grpc",
+              "ecosystem": "Go"
+            },
+            "ranges": [
+              {
+                "type": "SEMVER",
+                "events": [
+                  {
+                    "introduced": "0"
+                  },
+                  {
+                    "fixed": "1.82.1"
+                  }
+                ]
+              }
+            ],
+            "ecosystem_specific": {
+              "imports": [
+                {
+                  "path": "google.golang.org/grpc/internal/transport",
+                  "symbols": [
+                    "ClientStream.Close",
+                    "ClientStream.Header",
+                    "ClientStream.Read",
+                    "ClientStream.RecvCompress",
+                    "ClientStream.TrailersOnly",
+                    "ClientStream.Write",
+                    "NewHTTP2Client",
+                    "NewServerTransport",
+                    "ServerStream.Read",
+                    "ServerStream.SendHeader",
+                    "ServerStream.Write",
+                    "ServerStream.WriteStatus",
+                    "Stream.ReadMessageHeader",
+                    "controlBuffer.executeAndPut",
+                    "controlBuffer.getOnceLocked",
+                    "http2Client.Close",
+                    "http2Client.GracefulClose",
+                    "http2Client.NewStream",
+                    "http2Server.Drain",
+                    "http2Server.HandleStreams",
+                    "recvBufferReader.Read",
+                    "recvBufferReader.ReadMessageHeader",
+                    "transportReader.Read",
+                    "transportReader.ReadMessageHeader"
+                  ]
+                },
+                {
+                  "path": "google.golang.org/grpc/internal/xds/rbac",
+                  "symbols": [
+                    "ChainEngine.IsAuthorized",
+                    "NewChainEngine",
+                    "matchersFromPermissions",
+                    "matchersFromPrincipals"
+                  ]
+                }
+              ]
+            }
+          }
+        ],
+        "references": [
+          {
+            "type": "ADVISORY",
+            "url": "https://github.com/grpc/grpc-go/security/advisories/GHSA-hrxh-6v49-42gf"
+          },
+          {
+            "type": "FIX",
+            "url": "https://github.com/grpc/grpc-go/commit/4ea465d4ab98013f72a142fe0fc89c19770b2935"
+          },
+          {
+            "type": "WEB",
+            "url": "https://github.com/grpc/grpc-go/pull/9236"
+          },
+          {
+            "type": "WEB",
+            "url": "https://github.com/grpc/grpc-go/releases/tag/v1.82.1"
+          }
+        ],
+        "database_specific": {
+          "url": "https://pkg.go.dev/vuln/GO-2026-6061",
+          "review_status": "REVIEWED"
+        }
+      },
+      "GO-2026-6348": {
+        "schema_version": "1.3.1",
+        "id": "GO-2026-6348",
+        "modified": "2026-09-15T18:39:25Z",
+        "published": "2026-09-15T18:39:25Z",
+        "aliases": [
+          "CVE-2026-84304",
+          "GHSA-vp52-pcj8-j9qc"
+        ],
+        "summary": "Heap Memory Exhaustion (OOM) via HTTP/2 DATA Frame Fragmentation in google.golang.org/grpc",
+        "details": "Heap Memory Exhaustion (OOM) via HTTP/2 DATA Frame Fragmentation in google.golang.org/grpc",
+        "affected": [
+          {
+            "package": {
+              "name": "google.golang.org/grpc",
+              "ecosystem": "Go"
+            },
+            "ranges": [
+              {
+                "type": "SEMVER",
+                "events": [
+                  {
+                    "introduced": "0"
+                  },
+                  {
+                    "fixed": "1.83.1"
+                  }
+                ]
+              }
+            ],
+            "ecosystem_specific": {
+              "imports": [
+                {
+                  "path": "google.golang.org/grpc/internal/transport",
+                  "symbols": [
+                    "ClientStream.Close",
+                    "ClientStream.Header",
+                    "ClientStream.Read",
+                    "ClientStream.RecvCompress",
+                    "ClientStream.TrailersOnly",
+                    "NewHTTP2Client",
+                    "NewServerTransport",
+                    "ServerStream.Read",
+                    "Stream.ReadMessageHeader",
+                    "http2Client.Close",
+                    "http2Client.GracefulClose",
+                    "http2Client.NewStream",
+                    "http2Client.newStream",
+                    "http2Server.Close",
+                    "http2Server.HandleStreams",
+                    "http2Server.operateHeaders",
+                    "recvBuffer.init",
+                    "recvBuffer.load",
+                    "recvBuffer.put",
+                    "recvBufferReader.Read",
+                    "recvBufferReader.ReadMessageHeader",
+                    "serverHandlerTransport.HandleStreams",
+                    "transportReader.Read",
+                    "transportReader.ReadMessageHeader"
+                  ]
+                },
+                {
+                  "path": "google.golang.org/grpc/mem",
+                  "symbols": [
+                    "BufferSlice.MaterializeToBuffer",
+                    "Copy",
+                    "IsBelowBufferPoolingThreshold",
+                    "NewBuffer",
+                    "ReadAll",
+                    "writer.Write"
+                  ]
+                }
+              ]
+            }
+          }
+        ],
+        "references": [
+          {
+            "type": "ADVISORY",
+            "url": "https://github.com/grpc/grpc-go/security/advisories/GHSA-vp52-pcj8-j9qc"
+          },
+          {
+            "type": "FIX",
+            "url": "https://github.com/grpc/grpc-go/commit/7354d9c8debb4bcf2225bf429857078de310c176"
+          },
+          {
+            "type": "WEB",
+            "url": "https://github.com/grpc/grpc-go/commit/8cfeca0e1ee5ea0980dcc320e20240fa1079ec77"
+          },
+          {
+            "type": "WEB",
+            "url": "https://github.com/grpc/grpc-go/pull/9331"
+          },
+          {
+            "type": "WEB",
+            "url": "https://github.com/grpc/grpc-go/pull/9333"
+          },
+          {
+            "type": "WEB",
+            "url": "https://github.com/grpc/grpc-go/releases/tag/v1.83.1"
+          }
+        ],
+        "database_specific": {
+          "url": "https://pkg.go.dev/vuln/GO-2026-6348",
+          "review_status": "REVIEWED"
+        }
+      },
+      "GO-2026-6441": {
+        "schema_version": "1.3.1",
+        "id": "GO-2026-6441",
+        "modified": "2026-09-15T18:39:25Z",
+        "published": "2026-09-15T18:39:25Z",
+        "aliases": [
+          "CVE-2026-84303",
+          "GHSA-qc2q-p7wx-3px3"
+        ],
+        "summary": "Bypass of xDS RBAC HTTP filter header matching in google.golang.org/grpc",
+        "details": "In google.golang.org/grpc, the xDS RBAC HTTP filter does not lowercase header matcher names before evaluating them against incoming request metadata. When an RBAC policy defines rules (such as DENY) referencing headers with uppercase or mixed-case characters, the rule fails to match, causing authorization policies to fail open. Additionally, callers can evade gRFC A41 validation blocking \"grpc-\" prefixed headers and \":scheme\" via variations in casing.",
+        "affected": [
+          {
+            "package": {
+              "name": "google.golang.org/grpc",
+              "ecosystem": "Go"
+            },
+            "ranges": [
+              {
+                "type": "SEMVER",
+                "events": [
+                  {
+                    "introduced": "0"
+                  },
+                  {
+                    "fixed": "1.83.1"
+                  }
+                ]
+              }
+            ],
+            "ecosystem_specific": {
+              "imports": [
+                {
+                  "path": "google.golang.org/grpc/internal/xds/httpfilter/rbac",
+                  "symbols": [
+                    "builder.ParseFilterConfig",
+                    "builder.ParseFilterConfigOverride",
+                    "parseConfig"
+                  ]
+                }
+              ]
+            }
+          }
+        ],
+        "references": [
+          {
+            "type": "ADVISORY",
+            "url": "https://github.com/grpc/grpc-go/security/advisories/GHSA-qc2q-p7wx-3px3"
+          },
+          {
+            "type": "FIX",
+            "url": "https://github.com/grpc/grpc-go/pull/9332"
+          }
+        ],
+        "database_specific": {
+          "url": "https://pkg.go.dev/vuln/GO-2026-6441",
+          "review_status": "REVIEWED"
+        }
+      },
+      "GO-2026-6443": {
+        "schema_version": "1.3.1",
+        "id": "GO-2026-6443",
+        "modified": "2026-09-15T18:39:25Z",
+        "published": "2026-09-15T18:39:25Z",
+        "aliases": [
+          "CVE-2026-84445",
+          "GHSA-2v4p-qf9q-27wj"
+        ],
+        "summary": "Server panic via missing authority or Host headers in google.golang.org/grpc",
+        "details": "In google.golang.org/grpc, servers configured with xDS routing can panic when processing requests that lack both :authority and Host headers. The HTTP/2 transport layer accepted requests missing these headers, and the xDS server routing interceptor attempted to index the empty authority slice, causing an unhandled panic and terminating the server.",
+        "affected": [
+          {
+            "package": {
+              "name": "google.golang.org/grpc",
+              "ecosystem": "Go"
+            },
+            "ranges": [
+              {
+                "type": "SEMVER",
+                "events": [
+                  {
+                    "introduced": "0"
+                  },
+                  {
+                    "fixed": "1.82.2"
+                  },
+                  {
+                    "introduced": "1.83.0"
+                  },
+                  {
+                    "fixed": "1.83.2"
+                  },
+                  {
+                    "introduced": "1.84.0-dev"
+                  },
+                  {
+                    "fixed": "1.85.0-dev.0.20260825072537-93e31b48545e"
+                  }
+                ]
+              }
+            ],
+            "ecosystem_specific": {
+              "imports": [
+                {
+                  "path": "google.golang.org/grpc/internal/transport",
+                  "symbols": [
+                    "http2Server.HandleStreams",
+                    "http2Server.operateHeaders"
+                  ]
+                },
+                {
+                  "path": "google.golang.org/grpc/internal/xds/server",
+                  "symbols": [
+                    "RouteAndProcess"
+                  ]
+                }
+              ]
+            }
+          }
+        ],
+        "references": [
+          {
+            "type": "ADVISORY",
+            "url": "https://github.com/grpc/grpc-go/security/advisories/GHSA-2v4p-qf9q-27wj"
+          },
+          {
+            "type": "REPORT",
+            "url": "https://github.com/grpc/grpc-go/issues/9354"
+          },
+          {
+            "type": "FIX",
+            "url": "https://github.com/grpc/grpc-go/pull/9365"
+          }
+        ],
+        "database_specific": {
+          "url": "https://pkg.go.dev/vuln/GO-2026-6443",
+          "review_status": "REVIEWED"
+        }
+      }
+    },
+    "sbom": {
+      "go_version": "go1.26.8",
+      "modules": [
+        {
+          "path": "vynic.local/contracts/go"
+        },
+        {
+          "path": "golang.org/x/net",
+          "version": "v0.48.0"
+        },
+        {
+          "path": "golang.org/x/sys",
+          "version": "v0.39.0"
+        },
+        {
+          "path": "golang.org/x/text",
+          "version": "v0.32.0"
+        },
+        {
+          "path": "google.golang.org/genproto/googleapis/rpc",
+          "version": "v0.0.0-20251202230838-ff82c1b0f217"
+        },
+        {
+          "path": "google.golang.org/grpc",
+          "version": "v1.79.3"
+        },
+        {
+          "path": "google.golang.org/protobuf",
+          "version": "v1.36.11"
+        },
+        {
+          "path": "stdlib",
+          "version": "v1.26.8"
+        }
+      ],
+      "roots": [
+        "vynic.local/contracts/go/vynic/edge/v1"
+      ]
+    },
+    "findingsCount": 14
+  }
+}

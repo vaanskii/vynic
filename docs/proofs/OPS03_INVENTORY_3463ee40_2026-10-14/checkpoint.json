@@ -1,0 +1,28 @@
+{
+  "status": "BOUNDED_AUDIT_COMPLETE_WITH_RELEASE_GAPS",
+  "qualification": "qualification.json",
+  "toolTestsPassed": 19,
+  "queryCompleted": true,
+  "queried": 1764,
+  "matchedVersions": 41,
+  "advisoryIds": 107,
+  "SBOMStatuses": {
+    "PASS": 5,
+    "SCOPE_INCOMPLETE": 3,
+    "FAILED": 4
+  },
+  "images": {
+    "captured": 6,
+    "inspectable": 3,
+    "unavailableImageObjects": 3,
+    "backendLockHashMatchesSource": false,
+    "lockedNameVersionSetMatches": true,
+    "installedGraphOrCodeAttested": false,
+    "OSVulnerabilityScan": false
+  },
+  "POSFixComplete": true,
+  "sourceUpgradeOrLiveChanges": false,
+  "stalledCommands": false,
+  "approvalsPending": false,
+  "next": "OPS-03.B: repair and qualify lock/composition completeness in an isolated candidate, then prepare compatibility-tested runtime/proxy/parser fixes; no forced upgrades"
+}

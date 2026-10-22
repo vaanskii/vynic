@@ -1,0 +1,165 @@
+{
+  "status": "PASS",
+  "syntheticOnly": true,
+  "deviceContact": false,
+  "sourceBindings": {
+    "tool/pos02_acceptance_ledger.dart": "06e9fe52d0bfa8d9de9093b98fdeecc097467ad24b16c98df43baddb5a5f3fa2",
+    "tool/pos02_acceptance_ledger_probe.dart": "1d1eb52506a4a5de5ac8d2f66acb8916af9878d77a30fea607b17246a0fc1a65",
+    "tool/prove_pos02_acceptance_ledger.py": "f1a4b2b83dc4b8a270ac27f066b4ec4f51166aee498d69f8e2c24f01f150fbdf"
+  },
+  "checkpoints": [
+    {
+      "phase": "reserved",
+      "lockRejected": true,
+      "ownedChildKilled": true,
+      "consumedOnRestart": true,
+      "journalUnchanged": true,
+      "journalSha256": "992247385cf10420ff432fae5fac5df0e9837fab99d41012ad98546822b8a3cf",
+      "events": [
+        {
+          "seq": 0,
+          "previous": "c7077aae1d0edce109457e10a259af0e1754805974b55286edb43690f564979c",
+          "event": "reserved",
+          "at": "2026-10-02T22:06:09.548529Z",
+          "detail": {
+            "simulated": false,
+            "actionId": "pos02-kill-reserved",
+            "jobId": "pos02-kill-reserved"
+          },
+          "sha256": "ecc3d63d683cfe73f3040efa2b1b534f708ca54ea9207b3fd68ff1e5b652f845"
+        }
+      ]
+    },
+    {
+      "phase": "admitted",
+      "lockRejected": true,
+      "ownedChildKilled": true,
+      "consumedOnRestart": true,
+      "journalUnchanged": true,
+      "journalSha256": "47b693ff9ff1d62a2b87d72e4b065c236e824982b648c3beb5bdae17201fc22a",
+      "events": [
+        {
+          "seq": 0,
+          "previous": "842a2b45fa31d1beb09bfe04c3046c7e66a5b35b201c86699f79e4e6dae75704",
+          "event": "reserved",
+          "at": "2026-10-02T22:06:09.912754Z",
+          "detail": {
+            "simulated": false,
+            "actionId": "pos02-kill-admitted",
+            "jobId": "pos02-kill-admitted"
+          },
+          "sha256": "aa21a83d939f486dbbad2db9bbfce36116a9645ac1c8dbed55ec74056e10a387"
+        },
+        {
+          "seq": 1,
+          "previous": "aa21a83d939f486dbbad2db9bbfce36116a9645ac1c8dbed55ec74056e10a387",
+          "event": "admitted",
+          "at": "2026-10-02T22:06:09.914638Z",
+          "detail": {
+            "jobId": "pos02-kill-admitted",
+            "attemptId": "pos02-kill-admitted",
+            "payloadSha256": "4b75ef41ffc417d5bacc0d73609fe181fddb3f8e010fa399d11511eedaea668e",
+            "transmissionSha256": "4b75ef41ffc417d5bacc0d73609fe181fddb3f8e010fa399d11511eedaea668e"
+          },
+          "sha256": "edd1414f024054475c4af78fedb84c4f575a9abf73eef2970c6e1358f2921cb2"
+        }
+      ]
+    },
+    {
+      "phase": "connect",
+      "lockRejected": true,
+      "ownedChildKilled": true,
+      "consumedOnRestart": true,
+      "journalUnchanged": true,
+      "journalSha256": "9dcd2ad219a2ea1b890f6b76c6e5717789907983be1eb0ecc7452b047996f3b8",
+      "events": [
+        {
+          "seq": 0,
+          "previous": "7e9b16c4d7ef14ed9aeb26c65eb01be8238d4c8b5d9d6dd6e9c554d6a86fac43",
+          "event": "reserved",
+          "at": "2026-10-02T22:06:10.289297Z",
+          "detail": {
+            "simulated": false,
+            "actionId": "pos02-kill-connect",
+            "jobId": "pos02-kill-connect"
+          },
+          "sha256": "33909c16066213750d2055068c910c8affb053d32600fca8cbfe29dbcc23cfec"
+        },
+        {
+          "seq": 1,
+          "previous": "33909c16066213750d2055068c910c8affb053d32600fca8cbfe29dbcc23cfec",
+          "event": "admitted",
+          "at": "2026-10-02T22:06:10.291250Z",
+          "detail": {
+            "jobId": "pos02-kill-connect",
+            "attemptId": "pos02-kill-connect",
+            "payloadSha256": "4b75ef41ffc417d5bacc0d73609fe181fddb3f8e010fa399d11511eedaea668e",
+            "transmissionSha256": "4b75ef41ffc417d5bacc0d73609fe181fddb3f8e010fa399d11511eedaea668e"
+          },
+          "sha256": "feeea3cd3642067a76c7e4b74ee8e9b021a90aaafd5eb745e6298d015b5e072d"
+        },
+        {
+          "seq": 2,
+          "previous": "feeea3cd3642067a76c7e4b74ee8e9b021a90aaafd5eb745e6298d015b5e072d",
+          "event": "connect",
+          "at": "2026-10-02T22:06:10.291721Z",
+          "detail": {},
+          "sha256": "303f66b8b5a7ebeff216ab57eab49434e1af5118c767bd5f86d014c0bb8b4db6"
+        }
+      ]
+    },
+    {
+      "phase": "write",
+      "lockRejected": true,
+      "ownedChildKilled": true,
+      "consumedOnRestart": true,
+      "journalUnchanged": true,
+      "journalSha256": "4b3e3d6090b293a1726812b4f752758b87bf8b3d144ed1741eba740c5c7e1272",
+      "events": [
+        {
+          "seq": 0,
+          "previous": "48c26d9e45d57f2744efb9c8013656e1f345d41cf8a71f91975745918437c8b2",
+          "event": "reserved",
+          "at": "2026-10-02T22:06:10.665683Z",
+          "detail": {
+            "simulated": false,
+            "actionId": "pos02-kill-write",
+            "jobId": "pos02-kill-write"
+          },
+          "sha256": "dc6e17a1bee2a6b117a85b8b10d85868961009f7db056bfa5bc78a10c3a940d6"
+        },
+        {
+          "seq": 1,
+          "previous": "dc6e17a1bee2a6b117a85b8b10d85868961009f7db056bfa5bc78a10c3a940d6",
+          "event": "admitted",
+          "at": "2026-10-02T22:06:10.667683Z",
+          "detail": {
+            "jobId": "pos02-kill-write",
+            "attemptId": "pos02-kill-write",
+            "payloadSha256": "4b75ef41ffc417d5bacc0d73609fe181fddb3f8e010fa399d11511eedaea668e",
+            "transmissionSha256": "4b75ef41ffc417d5bacc0d73609fe181fddb3f8e010fa399d11511eedaea668e"
+          },
+          "sha256": "b8da69bd2209597515e8d8dce9afb7a52bc5f85ba1e3d866abb2a86e2285e63b"
+        },
+        {
+          "seq": 2,
+          "previous": "b8da69bd2209597515e8d8dce9afb7a52bc5f85ba1e3d866abb2a86e2285e63b",
+          "event": "connect",
+          "at": "2026-10-02T22:06:10.668162Z",
+          "detail": {},
+          "sha256": "4e08c23e0461d7114dba70b388743fdd653158d06dcfee06337c34a92a083d67"
+        },
+        {
+          "seq": 3,
+          "previous": "4e08c23e0461d7114dba70b388743fdd653158d06dcfee06337c34a92a083d67",
+          "event": "write",
+          "at": "2026-10-02T22:06:10.668587Z",
+          "detail": {
+            "transmissionSha256": "4b75ef41ffc417d5bacc0d73609fe181fddb3f8e010fa399d11511eedaea668e"
+          },
+          "sha256": "593cc0eb1eda0d59c33dee42695cbea9726e0bcc04df50b84f94ebe427b56652"
+        }
+      ]
+    }
+  ]
+}

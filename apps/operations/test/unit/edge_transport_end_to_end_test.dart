@@ -4,6 +4,7 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
+import 'package:http/io_client.dart';
 import 'package:vynic/core/contracts/edge_command.dart';
 import 'package:vynic/core/services/edge/edge_command_handler.dart';
 import 'package:vynic/core/services/edge/edge_command_journal.dart';
@@ -45,6 +46,9 @@ void main() {
     service = EdgeTransportService(
       client: EdgeTransportClient(
         baseUrl: () => cloud.baseUrl,
+        // This explicit client belongs to the synthetic 127.0.0.1 fixture.
+        // Keep the suite-wide external HTTP guard for every other caller.
+        httpClient: IOClient(_LoopbackFixtureHttp().createHttpClient(null)),
         credential: () => EdgeDeviceCredentialStore.credential,
       ),
       registry: EdgeCommandRegistry(<EdgeCommandHandler>[
@@ -130,6 +134,9 @@ void main() {
     final restarted = EdgeTransportService(
       client: EdgeTransportClient(
         baseUrl: () => cloud.baseUrl,
+        // This explicit client belongs to the synthetic 127.0.0.1 fixture.
+        // Keep the suite-wide external HTTP guard for every other caller.
+        httpClient: IOClient(_LoopbackFixtureHttp().createHttpClient(null)),
         credential: () => EdgeDeviceCredentialStore.credential,
       ),
       registry: EdgeCommandRegistry(<EdgeCommandHandler>[
@@ -222,6 +229,9 @@ void main() {
       final restarted = EdgeTransportService(
         client: EdgeTransportClient(
           baseUrl: () => cloud.baseUrl,
+          // This explicit client belongs to the synthetic 127.0.0.1 fixture.
+          // Keep the suite-wide external HTTP guard for every other caller.
+          httpClient: IOClient(_LoopbackFixtureHttp().createHttpClient(null)),
           credential: () => EdgeDeviceCredentialStore.credential,
         ),
         registry: EdgeCommandRegistry(<EdgeCommandHandler>[
@@ -247,6 +257,9 @@ void main() {
       final restarted = EdgeTransportService(
         client: EdgeTransportClient(
           baseUrl: () => cloud.baseUrl,
+          // This explicit client belongs to the synthetic 127.0.0.1 fixture.
+          // Keep the suite-wide external HTTP guard for every other caller.
+          httpClient: IOClient(_LoopbackFixtureHttp().createHttpClient(null)),
           credential: () => EdgeDeviceCredentialStore.credential,
         ),
         registry: EdgeCommandRegistry(<EdgeCommandHandler>[
@@ -456,3 +469,6 @@ class _FakeCloud {
     await request.response.close();
   }
 }
+
+// Explicit concrete factory for this suite-owned loopback HTTP client.
+class _LoopbackFixtureHttp extends HttpOverrides {}

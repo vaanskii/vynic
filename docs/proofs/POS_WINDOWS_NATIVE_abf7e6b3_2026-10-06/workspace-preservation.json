@@ -1,0 +1,14 @@
+{
+  "atUtc": "2026-10-06T10:50:30.365083+00:00",
+  "head": "275688e1e5c5dc0e26e62705ab0c7670cf16d99a",
+  "branch": "codex/docker-deployment-foundation",
+  "indexEmpty": true,
+  "stash": "9df454225caec647f67ad4f70ef6038dbbbe41d6 On main: reorg-wip-holdout",
+  "startupFiles": 472,
+  "unrelatedFilesVerifiedUnchanged": 451,
+  "ownedSourceAndDocumentationFilesVerified": 76,
+  "oldSealedArtifactsVerifiedUnchanged": 69,
+  "oldArtifactManifestSha256": "163473fcf3b8d05a80b1f39868a42c2a807222c808dac91c7ad659f3fcfe863c",
+  "diffCheck": "PASS",
+  "localCommitCreated": false
+}

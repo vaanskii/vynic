@@ -51,53 +51,61 @@ class NotificationsScreen extends StatelessWidget {
     final dateFmt = DateFormat('d MMM');
     return Scaffold(
       backgroundColor: theme.scaffoldBackground,
-      body: SafeArea(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            _buildHeader(context, theme),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Text(
-                'მარცხნივ გადასმა — წაშლა',
-                style: TextStyle(color: theme.textSecondary, fontSize: 12),
-              ),
-            ),
-            SizedBox(height: 8),
-            Expanded(
-              child: ValueListenableBuilder<List<AppNotificationEntry>>(
-                valueListenable: AppNotificationHistoryStore.instance.entries,
-                builder: (_, entries, __) {
-                  if (entries.isEmpty) return _buildEmpty(theme);
-                  return ListView.separated(
-                    physics: const BouncingScrollPhysics(),
-                    padding: const EdgeInsets.fromLTRB(16, 4, 16, 32),
-                    itemCount: entries.length,
-                    separatorBuilder: (_, __) => SizedBox(height: 8),
-                    itemBuilder: (context, index) {
-                      final entry = entries[index];
-                      return Dismissible(
-                        key: ValueKey(entry.id),
-                        direction: DismissDirection.endToStart,
-                        movementDuration: const Duration(milliseconds: 220),
-                        onDismissed: (_) {
-                          AppNotificationHistoryStore.instance.remove(entry.id);
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 960),
+          child: SafeArea(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _buildHeader(context, theme),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: Text(
+                    'მარცხნივ გადასმა — წაშლა',
+                    style: TextStyle(color: theme.textSecondary, fontSize: 12),
+                  ),
+                ),
+                SizedBox(height: 8),
+                Expanded(
+                  child: ValueListenableBuilder<List<AppNotificationEntry>>(
+                    valueListenable:
+                        AppNotificationHistoryStore.instance.entries,
+                    builder: (_, entries, __) {
+                      if (entries.isEmpty) return _buildEmpty(theme);
+                      return ListView.separated(
+                        physics: const BouncingScrollPhysics(),
+                        padding: const EdgeInsets.fromLTRB(16, 4, 16, 32),
+                        itemCount: entries.length,
+                        separatorBuilder: (_, __) => SizedBox(height: 8),
+                        itemBuilder: (context, index) {
+                          final entry = entries[index];
+                          return Dismissible(
+                            key: ValueKey(entry.id),
+                            direction: DismissDirection.endToStart,
+                            movementDuration: const Duration(milliseconds: 220),
+                            onDismissed: (_) {
+                              AppNotificationHistoryStore.instance.remove(
+                                entry.id,
+                              );
+                            },
+                            background: const _SwipeDeleteBackground(),
+                            child: NotificationEntryTile(
+                              entry: entry,
+                              timeLabel:
+                                  '${dateFmt.format(entry.at)} ${entry.timeLabel}',
+                              onTap: () => onEntryTap(entry),
+                              light: theme.notificationTileLight,
+                            ),
+                          );
                         },
-                        background: const _SwipeDeleteBackground(),
-                        child: NotificationEntryTile(
-                          entry: entry,
-                          timeLabel:
-                              '${dateFmt.format(entry.at)} ${entry.timeLabel}',
-                          onTap: () => onEntryTap(entry),
-                          light: theme.notificationTileLight,
-                        ),
                       );
                     },
-                  );
-                },
-              ),
+                  ),
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );

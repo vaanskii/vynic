@@ -1,0 +1,16 @@
+{
+  "recordedAtUTC": "2026-10-04T21:16:49.459617+00:00",
+  "head": "275688e1e5c5dc0e26e62705ab0c7670cf16d99a",
+  "headUnchanged": true,
+  "branchUnchanged": true,
+  "stashUnchanged": true,
+  "indexUnchanged": true,
+  "baselineHashCount": 2437,
+  "missing": [],
+  "changed": [],
+  "gitDiffCheckExit": 0,
+  "environmentFilesUnchanged": true,
+  "changedEnvironmentFiles": [],
+  "sensitiveValueMatchesInFollowupEvidence": [],
+  "note": "Audit documentation only; no VM interaction, env edits, dependency fixes or deployment. Concurrent changes, if any, reported rather than reverted."
+}

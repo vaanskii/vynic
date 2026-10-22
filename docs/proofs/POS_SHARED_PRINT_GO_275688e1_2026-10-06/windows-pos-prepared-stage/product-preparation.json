@@ -1,0 +1,90 @@
+{
+  "tool": "apps/operations/tool/product.py::prepare",
+  "toolSHA256": "90aa1c0ec15ccb12d13e3fb2da881b50f551687b8cf4520f4c98e4555ef57e5a",
+  "originalSourceVerified": true,
+  "deltas": [
+    {
+      "path": "apps/operations/data/menu.json",
+      "before": {
+        "sha256": "dade96639d13912828f0aa4b70efd77467b6258703fd495e0e53059ccf9ee749",
+        "bytes": 40823
+      },
+      "after": null
+    },
+    {
+      "path": "apps/operations/lib/main.dart",
+      "before": {
+        "sha256": "27d8a77f93b4238888e6bc89cfc52800951dd24f4bb066f5c7cd4a2a209d7633",
+        "bytes": 104
+      },
+      "after": {
+        "sha256": "8537094b7276d49d07264d4631b07db82666593917e5f44f3c105e1ce95c7ae5",
+        "bytes": 24
+      }
+    },
+    {
+      "path": "apps/operations/macos/Runner/Configs/AppInfo.xcconfig",
+      "before": {
+        "sha256": "59d71facd75ed185d5e965a346a9064e9b24fa836e4d07f7ec697e97497ca723",
+        "bytes": 604
+      },
+      "after": {
+        "sha256": "588d89081065abad791741cc650990c23abc6e01ae8b03c2f790a30bea082aa1",
+        "bytes": 596
+      }
+    },
+    {
+      "path": "apps/operations/product-identity.json",
+      "before": null,
+      "after": {
+        "sha256": "a9d6e2b469231a659a4fb5484528e99c0b3ce53e6061bdd175126c721674dbe0",
+        "bytes": 128
+      }
+    },
+    {
+      "path": "apps/operations/pubspec.yaml",
+      "before": {
+        "sha256": "e56661e303516d54194d90510ad10c078a6ac5835162cf3e937874942deefb0c",
+        "bytes": 5014
+      },
+      "after": {
+        "sha256": "9af6f4aef6cab2606a5f73ff592b9f1b11546498d7937fc72683e7e6d3a99b93",
+        "bytes": 4993
+      }
+    },
+    {
+      "path": "apps/operations/windows/CMakeLists.txt",
+      "before": {
+        "sha256": "33075e456c7a3be19869506a5664fe5f2fa0ebb009332608285734783b8c2f87",
+        "bytes": 4346
+      },
+      "after": {
+        "sha256": "68045352e4a3c87f3f0b4cbbe3beefd455b08a8ea402b2aeb820ad9aede9c54c",
+        "bytes": 4342
+      }
+    },
+    {
+      "path": "apps/operations/windows/runner/Runner.rc",
+      "before": {
+        "sha256": "0d4177a2b2b214fd2c8cc5813e49a38359858b4f44226762964b21ee041e72fb",
+        "bytes": 3039
+      },
+      "after": {
+        "sha256": "eae79543301c722eed7ca725648ce184e02c2e03835a97925bf8f76bf9d8560a",
+        "bytes": 3021
+      }
+    },
+    {
+      "path": "apps/operations/windows/runner/main.cpp",
+      "before": {
+        "sha256": "41085bf49acd0d53105fb54de669861dfb84fa9a0237f16a57cf55ac7515deb3",
+        "bytes": 1352
+      },
+      "after": {
+        "sha256": "fb8f7f9f4b9ed738d50ac6ce112a48b0c14763710bb41bbdc8b5c7c7c9f38590",
+        "bytes": 1344
+      }
+    }
+  ],
+  "preparedFiles": 898
+}

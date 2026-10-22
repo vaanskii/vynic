@@ -1,0 +1,24 @@
+{
+  "schema": 1,
+  "recordedAtUtc": "2026-10-06T17:59:11.400550+00:00",
+  "status": "NOT_STARTED_GUEST_SESSION_UNAVAILABLE_AFTER_ONE_IDENTICAL_RETRY",
+  "exitCode": 255,
+  "approvalRejected": false,
+  "analysisStarted": false,
+  "identicalRetry": true,
+  "rawLog": {
+    "path": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/windows-software-v2/analysis-original-guest-session-attempt2.log",
+    "sha256": "7bdf6af6e52aba57a408bc9f26a1cd21242f9617bb6c0fa25c1ffab9c07696b5"
+  },
+  "launcherSHA256": "1394de960e5d0f7629e9910f8d97624c5bb51fbfa5706ecd1f9f97f4b399d09c",
+  "PowerShellCharacters": 4223,
+  "encodedArgumentCharacters": 11264,
+  "readOnlyTargetStatus": {
+    "tool": "prlctl list 9830bac8-34c6-46f7-9062-cd8f62f7a127 -o status",
+    "exitCode": 0,
+    "result": "running"
+  },
+  "settingsOrRestartAttempts": false,
+  "furtherGuestExecutionHeld": true,
+  "possibleCommandSizeIssue": "Unproven; full encoded analysis body longer than prior successful short pinned launcher. Parent informed for bounded diagnosis."
+}

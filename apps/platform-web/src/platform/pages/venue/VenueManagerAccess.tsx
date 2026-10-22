@@ -51,12 +51,15 @@ export function VenueManagerAccess({
           <p>მენეჯერის აპლიკაცია გამორთულია</p>
         ) : (
           <p>
-            კოდი შეიყვანეთ ერთხელ თითოეულ მოწყობილობაზე. შემდეგ შესასვლელად
-            გამოიყენეთ პირადი PIN.
+            ეს რესტორნის მუდმივი იდენტიფიკატორია. ახალი Manager აპის
+            დასაკავშირებლად ქვემოთ შექმენით ერთჯერადი დაკავშირების კოდი.
+            შემდეგ შესასვლელად გამოიყენეთ პირადი PIN.
           </p>
         )}
       </Panel>
-      {enabled && <VenueCommercialTab venueId={venue.id} accessOnly />}
+      {enabled && (
+        <VenueCommercialTab key={venue.id} venueId={venue.id} accessOnly />
+      )}
     </>
   );
 }

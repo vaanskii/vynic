@@ -1,0 +1,26 @@
+{
+  "schema": 1,
+  "createdAtUtc": "2026-10-06T17:48:58.977206+00:00",
+  "status": "STAGED_NOT_EXECUTED",
+  "finalSourceSHA256": "193e4800e5d0733a30bc6c8d4ac993590219363941e69a787bba5ac3681c8f68",
+  "stages": {
+    "software-windows-flutter-stage-v2": {
+      "path": "/Users/vaanskii/Developer/vynic/docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/software-windows-flutter-stage-v2",
+      "runnerArtifactsSHA256": "a13ef6185fa4ebdcb5866aa7444fc349b678bf132f40cfab6de47e44f8a2621b",
+      "sourceZipSHA256": "dedd8e046927fe20954e392aaf7b92e76e06145f54b7e7c2f5f5f9920052b066",
+      "sourceManifestSHA256": "f53338cbe0a30d867ab0b370d861671ace9e31b2de0d88696960ec6c3f6c65d6",
+      "guestJobSuffix": "VynicReadinessNative/software-2bd986d1ac2a-flutter-v2"
+    },
+    "software-windows-pos-stage-v2": {
+      "path": "/Users/vaanskii/Developer/vynic/docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/software-windows-pos-stage-v2",
+      "runnerArtifactsSHA256": "ab06f453c4c13b2f0b9ff0c9dc429ba56d54d9f39270ac9129c1a017e2cc34c1",
+      "sourceZipSHA256": "03187911b7c50a52276ad5c2dd4fc54e8201e54c5610456fc6138977a68a8796",
+      "sourceManifestSHA256": "a3b3d2ae6b226685ee737bd0228b5c779b0246974a8c115ec3351731f1409205",
+      "guestJobSuffix": "VynicReadinessNative/software-2bd986d1ac2a-pos-v2"
+    }
+  },
+  "predecessorsUnchanged": true,
+  "sourceEdits": false,
+  "WindowsTestsRun": false,
+  "WindowsBuildRun": false
+}

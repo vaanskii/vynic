@@ -1,11 +1,16 @@
+import '../widgets/manager_design_components.dart';
+import 'package:vynic/apps/mobile_app/presentation/widgets/manager_operations_panel.dart';
 import 'package:vynic/apps/mobile_app/theme/manager_theme.dart';
 import 'package:vynic/apps/mobile_app/presentation/widgets/mobile_glass_ui.dart';
 import 'package:flutter/material.dart';
+import 'package:vynic/core/services/manager_app/order_edit_request.dart';
+import 'package:vynic/core/services/manager_app/pos_command_delivery.dart';
 import 'package:intl/intl.dart';
 import 'package:vynic/apps/mobile_app/presentation/screens/order_editor_screen.dart';
 import 'package:vynic/apps/mobile_app/presentation/widgets/mobile_receipt_preview_dialog.dart';
 import 'package:vynic/core/widgets/service_fee_adjust_dialog.dart';
 import 'package:vynic/core/models/order.dart';
+import 'package:vynic/core/models/order_edit_projection.dart';
 import 'package:vynic/core/models/table.dart';
 import 'package:vynic/core/models/user.dart';
 import 'package:vynic/core/utils/table_group_style.dart';
@@ -24,8 +29,10 @@ class MobileOrderDetailScreen extends StatefulWidget {
     this.tableNumber,
     this.floor,
     this.highlightItemKeys,
+    this.onClose,
   });
 
+  final ValueChanged<Object?>? onClose;
   final User user;
   final int orderId;
   final String? tableNumber;
@@ -39,6 +46,16 @@ class MobileOrderDetailScreen extends StatefulWidget {
 
 class _MobileOrderDetailScreenState extends State<MobileOrderDetailScreen> {
   Order? _order;
+  String? _displayedEditScope;
+  OrderEditResult? _editResult;
+  bool get _sameEditSession =>
+      _displayedEditScope != null &&
+      MobileApiService.isCurrentTableRepairScope(_displayedEditScope!);
+  bool get _canEditFee =>
+      _canEdit &&
+      _sameEditSession &&
+      _order?.managerEditProjection != null &&
+      (_editResult == null || _editResult!.isDone);
   bool _isLoading = true;
   bool _isTogglingServiceFee = false;
   bool _serviceFeeAvailable = false;
@@ -46,9 +63,22 @@ class _MobileOrderDetailScreenState extends State<MobileOrderDetailScreen> {
   int _serviceFeePercent = 10;
   late Set<String> _highlightKeys;
 
+  void _close([Object? result]) {
+    if (widget.onClose != null) {
+      widget.onClose!(result);
+    } else {
+      Navigator.of(context).pop(result);
+    }
+  }
+
   @override
   void initState() {
     super.initState();
+    try {
+      _displayedEditScope = MobileApiService.tableRepairScope;
+    } catch (_) {
+      _displayedEditScope = null;
+    }
     _highlightKeys =
         widget.highlightItemKeys ??
         PosChangeHighlightService.takeForOrder(widget.orderId) ??
@@ -74,6 +104,16 @@ class _MobileOrderDetailScreenState extends State<MobileOrderDetailScreen> {
         MobileApiService.getRestaurantSettings(),
         MobileApiService.getTables(),
       ]);
+      await OrderEditRequests.init();
+      if (!mounted) return;
+      if (!_sameEditSession) {
+        setState(() => _isLoading = false);
+        return;
+      }
+      final retained = OrderEditRequests.read(
+        _displayedEditScope!,
+        widget.orderId,
+      );
       var order = results[0] as Order;
       final settings = results[1] as Map<String, dynamic>;
       final tables = results[2] as List<TableModel>;
@@ -82,6 +122,9 @@ class _MobileOrderDetailScreenState extends State<MobileOrderDetailScreen> {
       if (!mounted) return;
       setState(() {
         _order = order;
+        _editResult = retained == null
+            ? null
+            : OrderEditResult.fromMap(retained['result']);
         _serviceFeeAvailable = settings['serviceFeeAvailable'] == true;
         _serviceFeePercent =
             (settings['serviceFeePercent'] as num?)?.round() ?? 10;
@@ -179,9 +222,12 @@ class _MobileOrderDetailScreenState extends State<MobileOrderDetailScreen> {
   }
 
   Future<void> _toggleServiceFee() async {
-    final order = _order;
+    final current = _order;
+    final order = current?.managerEditProjection == null
+        ? null
+        : OrderEditProjection.read(current!.managerEditProjection!);
     if (order == null ||
-        !_canEdit ||
+        !_canEditFee ||
         !_serviceFeeAvailable ||
         _isTogglingServiceFee) {
       return;
@@ -197,12 +243,22 @@ class _MobileOrderDetailScreenState extends State<MobileOrderDetailScreen> {
           100;
       order.includeServiceFee = turningOn;
       order.recalculateTotal(serviceFeeRate: turningOn ? rate : 0);
-      await MobileApiService.updateOrder(
+      final delivery = await MobileApiService.updateOrder(
         order,
-        updatedBy: widget.user.username,
+        expectedScope: _displayedEditScope,
       );
+      if (!mounted || !_sameEditSession) return;
+      setState(() => _editResult = delivery);
       await _loadOrder();
-      if (!mounted) return;
+      if (!mounted || !_sameEditSession) return;
+      if (!delivery.isDone) {
+        ManagerToast.show(
+          context,
+          delivery.message,
+          isError: !delivery.needsCheck,
+        );
+        return;
+      }
       ManagerToast.show(
         context,
         turningOn
@@ -223,8 +279,11 @@ class _MobileOrderDetailScreenState extends State<MobileOrderDetailScreen> {
   }
 
   Future<void> _openServiceFeeConfig() async {
-    final order = _order;
-    if (order == null || !_canEdit || !_serviceFeeAvailable) return;
+    final current = _order;
+    final order = current?.managerEditProjection == null
+        ? null
+        : OrderEditProjection.read(current!.managerEditProjection!);
+    if (order == null || !_canEditFee || !_serviceFeeAvailable) return;
 
     final defaultPercent = _serviceFeePercent.toDouble();
     final initialPercent = order.getEffectiveServiceFeePercentage(
@@ -243,7 +302,7 @@ class _MobileOrderDetailScreenState extends State<MobileOrderDetailScreen> {
       ),
     );
 
-    if (result == null || !mounted) return;
+    if (result == null || !mounted || !_sameEditSession) return;
 
     setState(() => _isTogglingServiceFee = true);
     try {
@@ -257,12 +316,22 @@ class _MobileOrderDetailScreenState extends State<MobileOrderDetailScreen> {
           ? null
           : normalizedPercent;
       order.recalculateTotal(serviceFeeRate: normalizedPercent / 100);
-      await MobileApiService.updateOrder(
+      final delivery = await MobileApiService.updateOrder(
         order,
-        updatedBy: widget.user.username,
+        expectedScope: _displayedEditScope,
       );
+      if (!mounted || !_sameEditSession) return;
+      setState(() => _editResult = delivery);
       await _loadOrder();
-      if (!mounted) return;
+      if (!mounted || !_sameEditSession) return;
+      if (!delivery.isDone) {
+        ManagerToast.show(
+          context,
+          delivery.message,
+          isError: !delivery.needsCheck,
+        );
+        return;
+      }
       ManagerToast.show(context, 'სერვისი განახლდა');
     } catch (e) {
       if (mounted) {
@@ -313,7 +382,7 @@ class _MobileOrderDetailScreenState extends State<MobileOrderDetailScreen> {
     await _loadOrder();
     if (!mounted) return;
     if (result != null) {
-      Navigator.pop(context, result);
+      _close(result);
     }
   }
 
@@ -366,10 +435,17 @@ class _MobileOrderDetailScreenState extends State<MobileOrderDetailScreen> {
     if (confirmed != true || !mounted) return;
 
     try {
-      await MobileApiService.cancelOrder(order.orderId);
-      if (!mounted) return;
-      ManagerToast.show(context, 'მაგიდა გაუქმებულია');
-      Navigator.pop(context, 'cancelled');
+      final result = await MobileApiService.cancelOrder(
+        order.orderId,
+        expectedScope: _displayedEditScope,
+      );
+      if (!mounted || !_sameEditSession) return;
+      ManagerToast.show(
+        context,
+        result.message,
+        isError: result.delivery.name == 'failed',
+      );
+      if (result.isDone) _close('cancelled');
     } catch (e) {
       if (!mounted) return;
       ManagerToast.show(context, 'გაუქმება ვერ მოხერხდა: $e', isError: true);
@@ -436,7 +512,8 @@ class _MobileOrderDetailScreenState extends State<MobileOrderDetailScreen> {
       // somebody to an empty printer.
       ManagerToast.show(
         context,
-        delivery.isPending ? 'ბეჭდვა გაიგზავნა POS-ზე' : 'ჩეკი დაიბეჭდა',
+        delivery.printMessage,
+        isError: delivery.name == 'failed' || delivery.name == 'unavailable',
       );
     } catch (e) {
       if (!mounted) return;
@@ -459,94 +536,192 @@ class _MobileOrderDetailScreenState extends State<MobileOrderDetailScreen> {
     }
   }
 
+  Future<void> _checkEditResult() async {
+    if (!_sameEditSession || _isTogglingServiceFee) return;
+    final draft = OrderEditRequests.draft(_displayedEditScope!, widget.orderId);
+    if (draft == null) return;
+    setState(() => _isTogglingServiceFee = true);
+    try {
+      final result = await MobileApiService.updateOrder(
+        draft,
+        expectedScope: _displayedEditScope,
+      );
+      if (!mounted || !_sameEditSession) return;
+      setState(() => _editResult = result);
+      if (result.isDone) await _loadOrder();
+    } catch (e) {
+      if (mounted && _sameEditSession)
+        ManagerToast.show(
+          context,
+          'შედეგის გადამოწმება ვერ მოხერხდა',
+          isError: true,
+        );
+    } finally {
+      if (mounted) setState(() => _isTogglingServiceFee = false);
+    }
+  }
+
+  Future<void> _discardEditResult() async {
+    if (!_sameEditSession || _editResult?.needsCheck == true) return;
+    try {
+      await OrderEditRequests.discard(_displayedEditScope!, widget.orderId);
+    } catch (e) {
+      if (mounted)
+        ManagerToast.show(
+          context,
+          'მონახაზის გაუქმება ვერ მოხერხდა — სცადეთ ხელახლა',
+          isError: true,
+        );
+      return;
+    }
+    if (!mounted || !_sameEditSession) return;
+    await _loadOrder();
+  }
+
+  Widget _editDeliveryPanel() => Padding(
+    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          _editResult!.message,
+          key: const ValueKey('manager-order-detail-edit-status'),
+        ),
+        if (!_editResult!.isDone)
+          Wrap(
+            spacing: 12,
+            children: [
+              if (_editResult!.delivery != PosCommandDelivery.failed)
+                TextButton(
+                  onPressed: _isTogglingServiceFee ? null : _checkEditResult,
+                  child: const Text('შედეგის გადამოწმება'),
+                ),
+              if (!_editResult!.needsCheck)
+                TextButton(
+                  onPressed: _discardEditResult,
+                  child: const Text('განახლება და მონახაზის გაუქმება'),
+                ),
+            ],
+          ),
+      ],
+    ),
+  );
+
   @override
   Widget build(BuildContext context) {
-    if (_isLoading) {
-      return MobileGlassScreen(
-        orbs: [
-          Positioned(
-            top: -80,
-            right: -60,
-            child: MobileGlowOrb(color: MobileGlassTheme.primary, size: 220),
-          ),
-          Positioned(
-            bottom: 80,
-            left: -80,
-            child: MobileGlowOrb(color: MobileGlassTheme.accent, size: 260),
-          ),
-        ],
-        body: Column(
-          children: [
-            MobileGlassHeader(
-              title: 'შეკვეთა #${widget.orderId}',
-              onBack: () => Navigator.pop(context),
-            ),
-            Expanded(
-              child: Center(
-                child: CircularProgressIndicator(
-                  color: MobileGlassTheme.primary,
+    if (!_sameEditSession)
+      return ManagerOperationBoundary(
+        scope: _displayedEditScope,
+        slot: 'order_cancel:${widget.orderId}',
+        child: MobileGlassScreen(
+          body: Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text('სესია შეიცვალა — გახსენით შეკვეთა თავიდან'),
+                TextButton(
+                  onPressed: () => _close(),
+                  child: const Text('უკან'),
                 ),
-              ),
+              ],
+            ),
+          ),
+        ),
+      );
+    if (_isLoading) {
+      return ManagerOperationBoundary(
+        scope: _displayedEditScope,
+        slot: 'order_cancel:${widget.orderId}',
+        child: MobileGlassScreen(
+          orbs: [
+            Positioned(
+              top: -80,
+              right: -60,
+              child: MobileGlowOrb(color: MobileGlassTheme.primary, size: 220),
+            ),
+            Positioned(
+              bottom: 80,
+              left: -80,
+              child: MobileGlowOrb(color: MobileGlassTheme.accent, size: 260),
             ),
           ],
+          body: Column(
+            children: [
+              MobileGlassHeader(
+                title: 'შეკვეთა #${widget.orderId}',
+                onBack: () => _close(),
+              ),
+              Expanded(
+                child: Center(
+                  child: CircularProgressIndicator(
+                    color: MobileGlassTheme.primary,
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       );
     }
 
     if (_order == null) {
-      return MobileGlassScreen(
-        orbs: [
-          Positioned(
-            top: -80,
-            right: -60,
-            child: MobileGlowOrb(color: MobileGlassTheme.warn, size: 220),
-          ),
-        ],
-        body: Column(
-          children: [
-            MobileGlassHeader(
-              title: 'შეკვეთა #${widget.orderId}',
-              onBack: () => Navigator.pop(context),
+      return ManagerOperationBoundary(
+        scope: _displayedEditScope,
+        slot: 'order_cancel:${widget.orderId}',
+        child: MobileGlassScreen(
+          orbs: [
+            Positioned(
+              top: -80,
+              right: -60,
+              child: MobileGlowOrb(color: MobileGlassTheme.warn, size: 220),
             ),
-            Expanded(
-              child: Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(24),
-                  child: MobileGlassCard(
+          ],
+          body: Column(
+            children: [
+              MobileGlassHeader(
+                title: 'შეკვეთა #${widget.orderId}',
+                onBack: () => _close(),
+              ),
+              Expanded(
+                child: Center(
+                  child: Padding(
                     padding: const EdgeInsets.all(24),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.warning_amber_rounded,
-                          size: 48,
-                          color: MobileGlassTheme.warn,
-                        ),
-                        SizedBox(height: 16),
-                        Text(
-                          'შეკვეთა ვერ მოიძებნა',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: MobileGlassTheme.textPrimary,
+                    child: MobileGlassCard(
+                      padding: const EdgeInsets.all(24),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.warning_amber_rounded,
+                            size: 48,
+                            color: MobileGlassTheme.warn,
                           ),
-                        ),
-                        SizedBox(height: 16),
-                        MobileGlassPrimaryButton(
-                          label: 'თავიდან',
-                          icon: Icons.refresh_rounded,
-                          onPressed: () {
-                            setState(() => _isLoading = true);
-                            _loadOrder();
-                          },
-                        ),
-                      ],
+                          SizedBox(height: 16),
+                          Text(
+                            'შეკვეთა ვერ მოიძებნა',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: MobileGlassTheme.textPrimary,
+                            ),
+                          ),
+                          SizedBox(height: 16),
+                          MobileGlassPrimaryButton(
+                            label: 'თავიდან',
+                            icon: Icons.refresh_rounded,
+                            onPressed: () {
+                              setState(() => _isLoading = true);
+                              _loadOrder();
+                            },
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       );
     }
@@ -554,46 +729,93 @@ class _MobileOrderDetailScreenState extends State<MobileOrderDetailScreen> {
     final order = _order!;
     final dateFmt = DateFormat('dd.MM.yyyy HH:mm');
 
-    return MobileGlassScreen(
-      orbs: [
-        Positioned(
-          top: -90,
-          right: -70,
-          child: MobileGlowOrb(color: MobileGlassTheme.primary, size: 240),
-        ),
-        Positioned(
-          bottom: 100,
-          left: -90,
-          child: MobileGlowOrb(color: MobileGlassTheme.accent, size: 280),
-        ),
-      ],
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          MobileGlassHeader(
-            title: 'შეკვეთა #${order.orderId}',
-            subtitle: _tableLabel(order),
-            onBack: () => Navigator.pop(context),
-            actions: [
-              IconButton(
-                onPressed: _viewReceipt,
-                icon: Icon(
-                  Icons.receipt_long_rounded,
-                  color: MobileGlassTheme.muted(0.85),
-                ),
-                tooltip: 'ქვითარი',
-              ),
-            ],
+    return ManagerOperationBoundary(
+      scope: _displayedEditScope,
+      slot: 'order_cancel:${widget.orderId}',
+      child: MobileGlassScreen(
+        orbs: [
+          Positioned(
+            top: -90,
+            right: -70,
+            child: MobileGlowOrb(color: MobileGlassTheme.primary, size: 240),
           ),
-          if (_highlightKeys.isNotEmpty) _buildChangeBanner(),
-          _buildHeaderCard(order, dateFmt),
-          Expanded(child: _buildItemsList(order)),
-          _buildTotalsFooter(order),
-          if (_canEdit && _serviceFeeAvailable && widget.floor != 'takeaway')
-            _buildServiceFeeRow(order),
-          _buildPrintCheckBar(),
-          if (_canEdit) _buildActionBar(),
+          Positioned(
+            bottom: 100,
+            left: -90,
+            child: MobileGlowOrb(color: MobileGlassTheme.accent, size: 280),
+          ),
         ],
+        body: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            MobileGlassHeader(
+              title: 'შეკვეთა #${order.orderId}',
+              subtitle: _tableLabel(order),
+              onBack: () => _close(),
+              actions: [
+                IconButton(
+                  onPressed: _viewReceipt,
+                  icon: Icon(
+                    Icons.receipt_long_rounded,
+                    color: MobileGlassTheme.muted(0.85),
+                  ),
+                  tooltip: 'ქვითარი',
+                ),
+              ],
+            ),
+            if (_editResult != null) _editDeliveryPanel(),
+            if (_highlightKeys.isNotEmpty) _buildChangeBanner(),
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 700),
+                    child: ManagerPanel(
+                      padding: 22,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          _buildHeaderCard(order, dateFmt),
+                          const Divider(height: 36),
+                          _buildItemsList(order),
+                          const Divider(height: 24),
+                          _buildTotalsFooter(order),
+                          if (_canEdit &&
+                              _serviceFeeAvailable &&
+                              widget.floor != 'takeaway')
+                            ExpansionTile(
+                              tilePadding: EdgeInsets.zero,
+                              title: Text(
+                                'მომსახურების პარამეტრები',
+                                style: managerDesignText(
+                                  context,
+                                  12,
+                                  muted: true,
+                                ),
+                              ),
+                              children: [_buildServiceFeeRow(order)],
+                            ),
+                          const SizedBox(height: 18),
+                          if (_canEdit) _buildActionBar(),
+                          _buildPrintCheckBar(),
+                          if (_canEdit)
+                            TextButton(
+                              onPressed: _cancelOrder,
+                              style: TextButton.styleFrom(
+                                foregroundColor: MobileGlassTheme.bad,
+                              ),
+                              child: const Text('შეკვეთის გაუქმება'),
+                            ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -602,77 +824,50 @@ class _MobileOrderDetailScreenState extends State<MobileOrderDetailScreen> {
     return Padding(padding: const EdgeInsets.fromLTRB(16, 0, 16, 8));
   }
 
-  Widget _buildHeaderCard(Order order, DateFormat dateFmt) {
-    final statusColor = _statusColor(order.status);
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-      child: MobileGlassCard(
-        padding: const EdgeInsets.all(16),
-        child: Row(
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'შექმნილია: ${dateFmt.format(order.createdAt)}',
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: MobileGlassTheme.muted(),
-                    ),
-                  ),
-                  if (order.createdBy.isNotEmpty) ...[
-                    SizedBox(height: 4),
-                    Text(
-                      'ოპერატორი: ${order.createdBy}',
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: MobileGlassTheme.muted(0.45),
-                      ),
-                    ),
-                  ],
-                ],
-              ),
+  Widget _buildHeaderCard(Order order, DateFormat dateFmt) => Column(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      Row(
+        children: [
+          Expanded(
+            child: Text(
+              _tableLabel(order),
+              style: managerDesignText(context, 22, weight: FontWeight.w600),
             ),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(
-                color: statusColor.withValues(alpha: 0.2),
-                borderRadius: BorderRadius.circular(999),
-                border: Border.all(color: statusColor.withValues(alpha: 0.45)),
-              ),
-              child: Text(
-                _statusLabel(order.status),
-                style: TextStyle(
-                  color: statusColor,
-                  fontWeight: FontWeight.w700,
-                  fontSize: 11,
-                ),
-              ),
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+            decoration: BoxDecoration(
+              color: _statusColor(order.status).withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(8),
             ),
-          ],
-        ),
+            child: Text(
+              _statusLabel(order.status),
+              style: managerDesignText(
+                context,
+                11,
+              ).copyWith(color: _statusColor(order.status)),
+            ),
+          ),
+        ],
       ),
-    );
-  }
+      const SizedBox(height: 6),
+      Text(
+        'შეკვეთა #${order.orderId}',
+        style: managerDesignText(context, 11, muted: true),
+      ),
+      const SizedBox(height: 18),
+      if (order.createdBy.isNotEmpty)
+        ManagerKeyValue('ოპერატორი', order.createdBy),
+      ManagerKeyValue('შექმნილია', dateFmt.format(order.createdAt)),
+    ],
+  );
 
-  Widget _buildItemsList(Order order) {
-    if (order.items.isEmpty) {
-      return Center(
-        child: Text(
-          'შეკვეთაში პოზიციები არ არის',
-          style: TextStyle(color: MobileGlassTheme.muted(), fontSize: 15),
-        ),
-      );
-    }
-
-    return ListView.separated(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      itemCount: order.items.length,
-      separatorBuilder: (_, __) => SizedBox(height: 8),
-      itemBuilder: (context, i) => _buildItemTile(order.items[i]),
-    );
-  }
+  Widget _buildItemsList(Order order) => order.items.isEmpty
+      ? const ManagerHelpCallout('შეკვეთაში პოზიციები არ არის')
+      : Column(
+          children: [for (final item in order.items) _buildItemTile(item)],
+        );
 
   Widget _buildItemTile(OrderItem item) {
     final highlighted = PosChangeHighlightService.shouldHighlightItem(
@@ -680,81 +875,54 @@ class _MobileOrderDetailScreenState extends State<MobileOrderDetailScreen> {
       item.itemKey,
       item.itemName,
     );
-
-    return MobileGlassCard(
-      padding: const EdgeInsets.all(14),
-      radius: 16,
-      borderColor: highlighted
-          ? MobileGlassTheme.highlightBorder.withValues(alpha: 0.7)
-          : MobileGlassTheme.border(),
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 9),
+      decoration: highlighted
+          ? BoxDecoration(
+              color: MobileGlassTheme.highlightBorder.withValues(alpha: 0.1),
+              border: Border(
+                left: BorderSide(
+                  color: MobileGlassTheme.highlightBorder,
+                  width: 3,
+                ),
+              ),
+            )
+          : null,
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            width: 36,
-            height: 36,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              color: highlighted
-                  ? MobileGlassTheme.highlightBorder.withValues(alpha: 0.2)
-                  : MobileGlassTheme.primary.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Text(
-              '${item.quantity}',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                color: highlighted
-                    ? MobileGlassTheme.warn
-                    : MobileGlassTheme.primary,
-              ),
-            ),
-          ),
-          SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   item.itemName,
-                  style: TextStyle(
-                    fontWeight: FontWeight.w600,
-                    fontSize: 15,
-                    color: highlighted ? MobileGlassTheme.warn : Colors.white,
+                  style: managerDesignText(
+                    context,
+                    12,
+                    weight: FontWeight.w500,
                   ),
                 ),
-                SizedBox(height: 4),
+                const SizedBox(height: 4),
                 Text(
-                  '${item.unitPrice.toStringAsFixed(2)} ₾ × ${item.quantity}',
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: MobileGlassTheme.muted(),
-                  ),
+                  '${item.quantity} × ${item.unitPrice.toStringAsFixed(2)} ₾',
+                  style: managerDesignText(context, 10, muted: true),
                 ),
-                if (item.comment != null && item.comment!.isNotEmpty)
+                if (item.comment?.isNotEmpty == true)
                   Padding(
                     padding: const EdgeInsets.only(top: 4),
                     child: Text(
                       item.comment!,
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontStyle: FontStyle.italic,
-                        color: MobileGlassTheme.muted(0.45),
-                      ),
+                      style: managerDesignText(context, 11, muted: true),
                     ),
                   ),
               ],
             ),
           ),
+          const SizedBox(width: 8),
           Text(
             '${item.total.toStringAsFixed(2)} ₾',
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              fontSize: 15,
-              color: highlighted
-                  ? MobileGlassTheme.warn
-                  : MobileGlassTheme.good,
-            ),
+            style: managerDesignText(context, 12, weight: FontWeight.w500),
           ),
         ],
       ),
@@ -777,68 +945,28 @@ class _MobileOrderDetailScreenState extends State<MobileOrderDetailScreen> {
         )
         .round();
 
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-      child: MobileGlassCard(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            _totalRow('ქვეჯამი', subtotal),
-            if (_serviceFeeAvailable &&
-                widget.floor != 'takeaway' &&
-                order.includeServiceFee &&
-                serviceFee > 0)
-              _totalRow('სერვისი ($feeLabel%)', serviceFee),
-            if (order.discountAmount > 0)
-              _totalRow('ფასდაკლება', -order.discountAmount),
-            Divider(height: 24, color: MobileGlassTheme.border(0.08)),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'სულ',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: MobileGlassTheme.muted(),
-                  ),
-                ),
-                Text(
-                  '${order.totalAmount.toStringAsFixed(2)} ₾',
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.w800,
-                    color: MobileGlassTheme.textPrimary,
-                  ),
-                ),
-              ],
-            ),
-          ],
+    return Column(
+      children: [
+        ManagerKeyValue('პროდუქტების ჯამი', '${subtotal.toStringAsFixed(2)} ₾'),
+        if (_serviceFeeAvailable &&
+            widget.floor != 'takeaway' &&
+            order.includeServiceFee &&
+            serviceFee > 0)
+          ManagerKeyValue(
+            'მომსახურება · $feeLabel%',
+            '${serviceFee.toStringAsFixed(2)} ₾',
+          ),
+        if (order.discountAmount > 0)
+          ManagerKeyValue(
+            'ფასდაკლება',
+            '-${order.discountAmount.toStringAsFixed(2)} ₾',
+          ),
+        ManagerKeyValue(
+          'გადასახდელი',
+          '${order.totalAmount.toStringAsFixed(2)} ₾',
+          emphasis: true,
         ),
-      ),
-    );
-  }
-
-  Widget _totalRow(String label, double amount) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 6),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            label,
-            style: TextStyle(fontSize: 13, color: MobileGlassTheme.muted()),
-          ),
-          Text(
-            '${amount.toStringAsFixed(2)} ₾',
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-              color: MobileGlassTheme.textPrimary,
-            ),
-          ),
-        ],
-      ),
+      ],
     );
   }
 
@@ -871,7 +999,7 @@ class _MobileOrderDetailScreenState extends State<MobileOrderDetailScreen> {
               )
             else ...[
               IconButton(
-                onPressed: _canEdit ? _openServiceFeeConfig : null,
+                onPressed: _canEditFee ? _openServiceFeeConfig : null,
                 icon: Icon(
                   Icons.tune_rounded,
                   size: 20,
@@ -886,7 +1014,7 @@ class _MobileOrderDetailScreenState extends State<MobileOrderDetailScreen> {
               Switch.adaptive(
                 value: order.includeServiceFee,
                 activeColor: MobileGlassTheme.primary,
-                onChanged: _canEdit ? (_) => _toggleServiceFee() : null,
+                onChanged: _canEditFee ? (_) => _toggleServiceFee() : null,
               ),
             ],
           ],
@@ -898,46 +1026,18 @@ class _MobileOrderDetailScreenState extends State<MobileOrderDetailScreen> {
   /// Full-width "ჩეკის ბეჭდვა" button. Always visible (even when the order is
   /// not editable) so a manager can print a pre-bill on any open order. Disabled
   /// while a print is in flight so rapid taps can't fire repeated prints.
-  Widget _buildPrintCheckBar() {
-    final isLast = !_canEdit;
-    return SafeArea(
-      top: false,
-      bottom: isLast,
-      child: Padding(
-        padding: EdgeInsets.fromLTRB(16, 0, 16, isLast ? 16 : 8),
-        child: MobileGlassPrimaryButton(
-          label: _printingCheck ? 'იბეჭდება…' : 'ჩეკის ბეჭდვა',
-          icon: _printingCheck ? null : Icons.print_rounded,
-          color: MobileGlassTheme.primary,
-          onPressed: _printingCheck ? null : _printOrderCheck,
-        ),
-      ),
-    );
-  }
+  Widget _buildPrintCheckBar() => OutlinedButton.icon(
+    onPressed: _printingCheck ? null : _printOrderCheck,
+    icon: const Icon(Icons.print_outlined, size: 18),
+    label: Text(_printingCheck ? 'იბეჭდება…' : 'ჩეკის ბეჭდვა'),
+  );
 
-  Widget _buildActionBar() {
-    return SafeArea(
-      top: false,
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-        child: Row(
-          children: [
-            MobileGlassIconButton(
-              icon: Icons.delete_outline_rounded,
-              onPressed: _cancelOrder,
-            ),
-            SizedBox(width: 12),
-            Expanded(
-              child: MobileGlassPrimaryButton(
-                label: 'რედაქტირება',
-                icon: Icons.edit_rounded,
-                color: MobileGlassTheme.primary,
-                onPressed: _editOrder,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+  Widget _buildActionBar() => Padding(
+    padding: const EdgeInsets.only(bottom: 10),
+    child: FilledButton.icon(
+      onPressed: _editOrder,
+      icon: const Icon(Icons.edit_outlined, size: 18),
+      label: const Text('შეკვეთის რედაქტირება'),
+    ),
+  );
 }

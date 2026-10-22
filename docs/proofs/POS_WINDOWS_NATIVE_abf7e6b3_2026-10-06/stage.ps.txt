@@ -1,0 +1,31 @@
+$ErrorActionPreference='Stop'; $ProgressPreference='SilentlyContinue'
+$shared='\\Mac\Home\Developer\vynic\docs\proofs\POS_WINDOWS_NATIVE_abf7e6b3_2026-10-06'
+$job=Join-Path $env:LOCALAPPDATA 'VynicReadinessNative\abf7e6b3-zgovo5qh'
+if(Test-Path -LiteralPath $job){throw 'Unique task directory already exists; no overwrite'}
+New-Item -ItemType Directory -Path $job | Out-Null
+$archive=Join-Path $shared 'prepared-source.zip'
+if((Get-FileHash -LiteralPath $archive -Algorithm SHA256).Hash.ToLowerInvariant() -ne '47fc5e03e355e01e114743c61ec9ed17ac042b7a00bdd5be78dd6a7175e32a90'){throw 'Prepared source archive hash mismatch'}
+Copy-Item -LiteralPath $archive -Destination (Join-Path $job 'source.zip')
+Expand-Archive -LiteralPath (Join-Path $job 'source.zip') -DestinationPath $job
+$manifest=Get-Content -LiteralPath (Join-Path $shared 'prepared-source-sha256.json') -Raw | ConvertFrom-Json
+function Assert-Source {
+ foreach($entry in $manifest.PSObject.Properties){
+  $p=Join-Path $job $entry.Name
+  if(!(Test-Path -LiteralPath $p -PathType Leaf) -or (Get-FileHash -LiteralPath $p -Algorithm SHA256).Hash.ToLowerInvariant() -ne $entry.Value){throw ('Source mismatch: '+$entry.Name)}
+ }
+}
+Assert-Source
+$flutter=Join-Path $env:USERPROFILE 'develop\flutter\bin\flutter.bat'
+$env:FLUTTER_SUPPRESS_ANALYTICS='true';$env:DART_SUPPRESS_ANALYTICS='true';$env:CI='true'
+$env:HTTP_PROXY='http://127.0.0.1:9';$env:HTTPS_PROXY='http://127.0.0.1:9';$env:NO_PROXY='127.0.0.1,localhost,::1'
+$op=Join-Path $job 'apps\operations';Set-Location -LiteralPath $op
+& $flutter pub get --offline --enforce-lockfile
+if($LASTEXITCODE -ne 0){throw ('Offline locked pub get failed: '+$LASTEXITCODE)}
+Assert-Source
+$vs=Join-Path ${env:ProgramFiles(x86)} 'Microsoft Visual Studio\Installer\vswhere.exe'
+$install=& $vs -latest -products '*' -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+$cmake=Join-Path $install 'Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe'
+$ctest=Join-Path $install 'Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\ctest.exe'
+if(!(Test-Path -LiteralPath $cmake)){throw 'Existing VS CMake missing'}
+[pscustomobject]@{job=$job;flutter=$flutter;cmake=$cmake;ctest=$ctest;sourceFiles=$manifest.PSObject.Properties.Count;sourceUnchanged=$true;offlineResolution=$true;physicalJobs=0} | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $shared 'windows-stage.json') -Encoding UTF8
+Write-Output 'STAGE_OK_SOURCE_VERIFIED_OFFLINE_LOCK_UNCHANGED'

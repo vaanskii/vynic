@@ -59,6 +59,17 @@ class Reservation extends HiveObject with UpdateTrackedHiveObject {
   @HiveField(14)
   List<String>? tableRefs;
 
+  @HiveField(15, defaultValue: 0.0)
+  double advanceAmount;
+  @HiveField(16)
+  String? advanceCollectedOn;
+  @HiveField(17)
+  String? advanceReceiptId;
+
+  /// Flushed reservation is the durable intent until its receipt is flushed.
+  @HiveField(18, defaultValue: false)
+  bool advanceReceiptPending;
+
   Reservation({
     required this.id,
     required this.customerName,
@@ -75,6 +86,10 @@ class Reservation extends HiveObject with UpdateTrackedHiveObject {
     this.isTakeAway = false,
     this.linkedOrderId,
     this.tableRefs,
+    this.advanceAmount = 0,
+    this.advanceCollectedOn,
+    this.advanceReceiptId,
+    this.advanceReceiptPending = false,
   });
 
   /// Typed view of [status]. Storage stays the raw `String` field (Hive

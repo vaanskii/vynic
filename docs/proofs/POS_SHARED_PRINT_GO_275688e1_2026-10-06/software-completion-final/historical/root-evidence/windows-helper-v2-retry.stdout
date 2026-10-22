@@ -1,0 +1,221 @@
+-- Selecting Windows SDK version 10.0.26100.0 to target Windows 10.0.26200.
+-- The CXX compiler identification is MSVC 19.44.35228.0
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/MSVC/14.44.35207/bin/Hostarm64/x64/cl.exe - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- Configuring done (2.0s)
+-- Generating done (0.0s)
+-- Build files have been written to: C:/Users/vaanskii/AppData/Local/VynicReadinessGoHelpers/638458dd-root-20261006-v2/output/helper
+MSBuild version 17.14.40+3e7442088 for .NET Framework
+
+  1>Checking Build System
+  Building Custom Rule C:/Users/vaanskii/AppData/Local/VynicReadinessGoHelpers/638458dd-root-20261006-v2/source/apps/edge/native/print_helper/CMakeLists.txt
+  protocol.cpp
+  session.cpp
+  Generating Code...
+  vynic_print_helper_session.vcxproj -> C:\Users\vaanskii\AppData\Local\VynicReadinessGoHelpers\638458dd-root-20261006-v2\output\helper\Release\vynic_print_helper_session.lib
+  Building Custom Rule C:/Users/vaanskii/AppData/Local/VynicReadinessGoHelpers/638458dd-root-20261006-v2/source/apps/edge/native/print_helper/CMakeLists.txt
+  protocol_test.cpp
+  windows_spooler.cpp
+  Generating Code...
+  print_helper_protocol_test.vcxproj -> C:\Users\vaanskii\AppData\Local\VynicReadinessGoHelpers\638458dd-root-20261006-v2\output\helper\Release\print_helper_protocol_test.exe
+  Building Custom Rule C:/Users/vaanskii/AppData/Local/VynicReadinessGoHelpers/638458dd-root-20261006-v2/source/apps/edge/native/print_helper/CMakeLists.txt
+  main_windows.cpp
+  windows_spooler.cpp
+  windows_spooler_native.cpp
+  Generating Code...
+  vynic_print_helper.vcxproj -> C:\Users\vaanskii\AppData\Local\VynicReadinessGoHelpers\638458dd-root-20261006-v2\output\helper\Release\vynic_print_helper.exe
+  Building Custom Rule C:/Users/vaanskii/AppData/Local/VynicReadinessGoHelpers/638458dd-root-20261006-v2/source/apps/edge/native/print_helper/CMakeLists.txt
+Internal ctest changing into directory: C:/Users/vaanskii/AppData/Local/VynicReadinessGoHelpers/638458dd-root-20261006-v2/output/helper
+UpdateCTestConfiguration  from :C:/Users/vaanskii/AppData/Local/VynicReadinessGoHelpers/638458dd-root-20261006-v2/output/helper/DartConfiguration.tcl
+UpdateCTestConfiguration  from :C:/Users/vaanskii/AppData/Local/VynicReadinessGoHelpers/638458dd-root-20261006-v2/output/helper/DartConfiguration.tcl
+Test project C:/Users/vaanskii/AppData/Local/VynicReadinessGoHelpers/638458dd-root-20261006-v2/output/helper
+Constructing a list of tests
+Done constructing a list of tests
+Updating test list for fixtures
+Added 0 tests to meet fixture requirements
+Checking test dependency graph...
+Checking test dependency graph end
+test 1
+    Start 1: print_helper_fake_protocol
+
+1: Test command: C:\Users\vaanskii\AppData\Local\VynicReadinessGoHelpers\638458dd-root-20261006-v2\output\helper\Release\print_helper_protocol_test.exe
+1: Working Directory: C:/Users/vaanskii/AppData/Local/VynicReadinessGoHelpers/638458dd-root-20261006-v2/output/helper
+1: Test timeout computed to be: 10000000
+1: Print helper fake protocol: 254 assertions passed; no Winspool linked
+1/1 Test #1: print_helper_fake_protocol .......   Passed    0.30 sec
+
+100% tests passed, 0 tests failed out of 1
+
+Total Test time (real) =   0.32 sec
+-- Selecting Windows SDK version 10.0.26100.0 to target Windows 10.0.26200.
+-- The CXX compiler identification is MSVC 19.44.35228.0
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/MSVC/14.44.35207/bin/Hostarm64/x64/cl.exe - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- Configuring done (1.4s)
+-- Generating done (0.0s)
+-- Build files have been written to: C:/Users/vaanskii/AppData/Local/VynicReadinessGoHelpers/638458dd-root-20261006-v2/output/channel
+MSBuild version 17.14.40+3e7442088 for .NET Framework
+
+  1>Checking Build System
+  Building Custom Rule C:/Users/vaanskii/AppData/Local/VynicReadinessGoHelpers/638458dd-root-20261006-v2/source/apps/operations/windows/tests/CMakeLists.txt
+  standard_codec.cc
+  core_implementations.cc
+  Generating Code...
+  vynic_cached_flutter_wrapper.vcxproj -> C:\Users\vaanskii\AppData\Local\VynicReadinessGoHelpers\638458dd-root-20261006-v2\output\channel\Release\vynic_cached_flutter_wrapper.lib
+  Building Custom Rule C:/Users/vaanskii/AppData/Local/VynicReadinessGoHelpers/638458dd-root-20261006-v2/source/apps/operations/windows/tests/CMakeLists.txt
+  windows_spooler_channel_test.cpp
+  windows_spooler.cpp
+  windows_spooler_native.cpp
+  windows_spooler_channel.cpp
+  Generating Code...
+  windows_spooler_channel_test.vcxproj -> C:\Users\vaanskii\AppData\Local\VynicReadinessGoHelpers\638458dd-root-20261006-v2\output\channel\Release\windows_spooler_channel_test.exe
+  Building Custom Rule C:/Users/vaanskii/AppData/Local/VynicReadinessGoHelpers/638458dd-root-20261006-v2/source/apps/operations/windows/tests/CMakeLists.txt
+  windows_spooler_test.cpp
+  windows_spooler.cpp
+  Generating Code...
+  windows_spooler_test.vcxproj -> C:\Users\vaanskii\AppData\Local\VynicReadinessGoHelpers\638458dd-root-20261006-v2\output\channel\Release\windows_spooler_test.exe
+  Building Custom Rule C:/Users/vaanskii/AppData/Local/VynicReadinessGoHelpers/638458dd-root-20261006-v2/source/apps/operations/windows/tests/CMakeLists.txt
+Internal ctest changing into directory: C:/Users/vaanskii/AppData/Local/VynicReadinessGoHelpers/638458dd-root-20261006-v2/output/channel
+UpdateCTestConfiguration  from :C:/Users/vaanskii/AppData/Local/VynicReadinessGoHelpers/638458dd-root-20261006-v2/output/channel/DartConfiguration.tcl
+UpdateCTestConfiguration  from :C:/Users/vaanskii/AppData/Local/VynicReadinessGoHelpers/638458dd-root-20261006-v2/output/channel/DartConfiguration.tcl
+Test project C:/Users/vaanskii/AppData/Local/VynicReadinessGoHelpers/638458dd-root-20261006-v2/output/channel
+Constructing a list of tests
+Done constructing a list of tests
+Updating test list for fixtures
+Added 0 tests to meet fixture requirements
+Checking test dependency graph...
+Checking test dependency graph end
+test 1
+    Start 1: windows_spooler_fake_api
+
+1: Test command: C:\Users\vaanskii\AppData\Local\VynicReadinessGoHelpers\638458dd-root-20261006-v2\output\channel\Release\windows_spooler_test.exe
+1: Working Directory: C:/Users/vaanskii/AppData/Local/VynicReadinessGoHelpers/638458dd-root-20261006-v2/output/channel
+1: Test timeout computed to be: 10000000
+1: Windows spooler fake-only seam: 110 assertions passed
+1/2 Test #1: windows_spooler_fake_api ............   Passed    0.09 sec
+test 2
+    Start 2: windows_spooler_read_only_channel
+
+2: Test command: C:\Users\vaanskii\AppData\Local\VynicReadinessGoHelpers\638458dd-root-20261006-v2\output\channel\Release\windows_spooler_channel_test.exe
+2: Working Directory: C:/Users/vaanskii/AppData/Local/VynicReadinessGoHelpers/638458dd-root-20261006-v2/output/channel
+2: Test timeout computed to be: 30
+2: Windows spooler read-only channel harness: 204 assertions passed; 1 queues enumerated; no documents submitted
+2/2 Test #2: windows_spooler_read_only_channel ...   Passed    0.09 sec
+
+100% tests passed, 0 tests failed out of 2
+
+Total Test time (real) =   0.20 sec
+=== RUN   TestHelperOutcomeAndNoCommitRetry
+=== RUN   TestHelperOutcomeAndNoCommitRetry/prewrite_refusal
+=== RUN   TestHelperOutcomeAndNoCommitRetry/accepted
+=== RUN   TestHelperOutcomeAndNoCommitRetry/native_prewrite
+=== RUN   TestHelperOutcomeAndNoCommitRetry/partial_uncertainty
+=== RUN   TestHelperOutcomeAndNoCommitRetry/ACK_lost
+=== RUN   TestHelperOutcomeAndNoCommitRetry/READY_lost
+=== RUN   TestHelperOutcomeAndNoCommitRetry/contradictory_early_write
+--- PASS: TestHelperOutcomeAndNoCommitRetry (0.01s)
+    --- PASS: TestHelperOutcomeAndNoCommitRetry/prewrite_refusal (0.01s)
+    --- PASS: TestHelperOutcomeAndNoCommitRetry/accepted (0.00s)
+    --- PASS: TestHelperOutcomeAndNoCommitRetry/native_prewrite (0.00s)
+    --- PASS: TestHelperOutcomeAndNoCommitRetry/partial_uncertainty (0.00s)
+    --- PASS: TestHelperOutcomeAndNoCommitRetry/ACK_lost (0.00s)
+    --- PASS: TestHelperOutcomeAndNoCommitRetry/READY_lost (0.00s)
+    --- PASS: TestHelperOutcomeAndNoCommitRetry/contradictory_early_write (0.00s)
+=== RUN   TestHelperTimeoutRetainsOriginalLifetimeAndGuard
+--- PASS: TestHelperTimeoutRetainsOriginalLifetimeAndGuard (0.00s)
+=== RUN   TestHelperFrameAndResultBounds
+--- PASS: TestHelperFrameAndResultBounds (0.00s)
+=== RUN   TestGuardIdentityActiveCallAndIdempotentClose
+--- PASS: TestGuardIdentityActiveCallAndIdempotentClose (0.00s)
+=== RUN   TestWindowsJobContainsChildAndStdinHasNoInheritedWriter
+--- PASS: TestWindowsJobContainsChildAndStdinHasNoInheritedWriter (0.10s)
+=== RUN   TestWindowsUnsupportedJobListFailsBeforeProcessCreation
+    helper_windows_test.go:172: unsupported JOB_LIST rejected before CreateProcess; no child or request bytes
+--- PASS: TestWindowsUnsupportedJobListFailsBeforeProcessCreation (0.03s)
+=== RUN   TestWindowsParentDeathTerminatesChildAndFreshGuardAcquires
+--- PASS: TestWindowsParentDeathTerminatesChildAndFreshGuardAcquires (0.25s)
+=== RUN   TestWindowsActualHelperReadOnlyAndInvalidRequests
+    helper_windows_test.go:293: real read-only helper enumerated 1 queues; no documents submitted
+=== RUN   TestWindowsActualHelperReadOnlyAndInvalidRequests/missing
+=== RUN   TestWindowsActualHelperReadOnlyAndInvalidRequests/empty
+=== RUN   TestWindowsActualHelperReadOnlyAndInvalidRequests/extra_inventory_field
+=== RUN   TestWindowsActualHelperReadOnlyAndInvalidRequests/partial_prefix
+=== RUN   TestWindowsActualHelperReadOnlyAndInvalidRequests/partial_body
+=== RUN   TestWindowsActualHelperReadOnlyAndInvalidRequests/zero
+--- PASS: TestWindowsActualHelperReadOnlyAndInvalidRequests (0.34s)
+    --- PASS: TestWindowsActualHelperReadOnlyAndInvalidRequests/missing (0.05s)
+    --- PASS: TestWindowsActualHelperReadOnlyAndInvalidRequests/empty (0.04s)
+    --- PASS: TestWindowsActualHelperReadOnlyAndInvalidRequests/extra_inventory_field (0.04s)
+    --- PASS: TestWindowsActualHelperReadOnlyAndInvalidRequests/partial_prefix (0.04s)
+    --- PASS: TestWindowsActualHelperReadOnlyAndInvalidRequests/partial_body (0.04s)
+    --- PASS: TestWindowsActualHelperReadOnlyAndInvalidRequests/zero (0.04s)
+=== RUN   TestTCPFailureBoundariesAndOneWrite
+=== RUN   TestTCPFailureBoundariesAndOneWrite/dial
+=== RUN   TestTCPFailureBoundariesAndOneWrite/deadline
+=== RUN   TestTCPFailureBoundariesAndOneWrite/zero_error
+=== RUN   TestTCPFailureBoundariesAndOneWrite/partial_error
+=== RUN   TestTCPFailureBoundariesAndOneWrite/short_write
+=== RUN   TestTCPFailureBoundariesAndOneWrite/close_error
+=== RUN   TestTCPFailureBoundariesAndOneWrite/accepted
+--- PASS: TestTCPFailureBoundariesAndOneWrite (0.00s)
+    --- PASS: TestTCPFailureBoundariesAndOneWrite/dial (0.00s)
+    --- PASS: TestTCPFailureBoundariesAndOneWrite/deadline (0.00s)
+    --- PASS: TestTCPFailureBoundariesAndOneWrite/zero_error (0.00s)
+    --- PASS: TestTCPFailureBoundariesAndOneWrite/partial_error (0.00s)
+    --- PASS: TestTCPFailureBoundariesAndOneWrite/short_write (0.00s)
+    --- PASS: TestTCPFailureBoundariesAndOneWrite/close_error (0.00s)
+    --- PASS: TestTCPFailureBoundariesAndOneWrite/accepted (0.00s)
+=== RUN   TestRejectBeforeDialAndFreezeBytes
+=== RUN   TestRejectBeforeDialAndFreezeBytes/empty
+=== RUN   TestRejectBeforeDialAndFreezeBytes/large
+=== RUN   TestRejectBeforeDialAndFreezeBytes/worker_pin
+=== RUN   TestRejectBeforeDialAndFreezeBytes/mixed_transport
+=== RUN   TestRejectBeforeDialAndFreezeBytes/DNS
+=== RUN   TestRejectBeforeDialAndFreezeBytes/frozen_after_admission
+--- PASS: TestRejectBeforeDialAndFreezeBytes (0.00s)
+    --- PASS: TestRejectBeforeDialAndFreezeBytes/empty (0.00s)
+    --- PASS: TestRejectBeforeDialAndFreezeBytes/large (0.00s)
+    --- PASS: TestRejectBeforeDialAndFreezeBytes/worker_pin (0.00s)
+    --- PASS: TestRejectBeforeDialAndFreezeBytes/mixed_transport (0.00s)
+    --- PASS: TestRejectBeforeDialAndFreezeBytes/DNS (0.00s)
+    --- PASS: TestRejectBeforeDialAndFreezeBytes/frozen_after_admission (0.00s)
+=== RUN   TestCancelWriteRemainsUncertainAndGuardBusy
+--- PASS: TestCancelWriteRemainsUncertainAndGuardBusy (0.00s)
+=== RUN   TestDestinationAndHelperPins
+--- PASS: TestDestinationAndHelperPins (0.00s)
+PASS
+{
+    "scope":  "nonphysical source-only helper/guard/channel qualification",
+    "helperSha256":  "b720e1eedc77ab574d769865e39f71506a5f3ebc9d93ab5166bc3f112203019d",
+    "helperBytes":  316416,
+    "helperProtocol":  1,
+    "flutterEngineStarted":  false,
+    "productStarted":  false,
+    "serviceOperations":  false,
+    "driverOperations":  false,
+    "documentsSubmitted":  0,
+    "positiveWrites":  "fake APIs/processes only",
+    "sourceHashesUnchanged":  true,
+    "cachedSdkHashesUnchanged":  true
+}
+{
+    "status":  "PASS",
+    "failure":  null,
+    "guestBase":  "C:\\Users\\vaanskii\\AppData\\Local\\VynicReadinessGoHelpers\\638458dd-root-20261006-v2",
+    "guestArchitecture":  "ARM64",
+    "sourceZipSHA256":  "1f318eab633481898c1c88f43dfbcda432ffdf7c3ec56ded69c4359195b8377f",
+    "printJobsBefore":  0,
+    "printJobsAfter":  0,
+    "documentsSubmitted":  0,
+    "sourceOnly":  true,
+    "serviceRegistration":  false,
+    "driverInstall":  false,
+    "productStarted":  false,
+    "machineRestarted":  false
+}

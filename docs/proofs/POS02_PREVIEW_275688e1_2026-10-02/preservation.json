@@ -1,0 +1,81 @@
+{
+  "baseCommit": "275688e1e5c5dc0e26e62705ab0c7670cf16d99a",
+  "branch": "codex/docker-deployment-foundation",
+  "stash": [
+    "stash@{0} 9df454225caec647f67ad4f70ef6038dbbbe41d6 On main: reorg-wip-holdout"
+  ],
+  "index": [],
+  "originalWipFiles": 267,
+  "originalUnrelatedFilesByteIdentical": 265,
+  "twoTargetedPos02Docs": [
+    "docs/agent-state/VYNIC_CODE_MAP.md",
+    "docs/agent-state/VYNIC_PROJECT_STATE.md"
+  ],
+  "additionalConcurrentPathsPreserved": [
+    {
+      "path": "apps/platform-web/src/components/home/RibbonField.tsx",
+      "sha256Observed": "f1c137bd711a70cf1fb7839303ee493176a5614b3b00e29090c1dafd25464405"
+    },
+    {
+      "path": "apps/platform-web/src/components/home/home.css",
+      "sha256Observed": "53526b65fad6bac26b0457247bf985837bffdc0fb7b874b40c64e89ea0273dac"
+    },
+    {
+      "path": "apps/platform-web/src/components/home/homeCopy.ts",
+      "sha256Observed": "07194c1210c0f47392f832521b9f3f0e9f92079703656a6d681ee680d936ad20"
+    },
+    {
+      "path": "apps/platform-web/src/components/home/primitives.tsx",
+      "sha256Observed": "47fb36ba8f852fc51a60c90ce14983b0b69de5612692603131f57a69d82b392f"
+    }
+  ],
+  "taskHashesBeforePackage": {
+    "apps/operations/lib/apps/windows_pos/screens/admin_screen.dart": "25af295a6cfaf9dce370a18fea2d3961bd2acd705109f219a2246a822e1bffcd",
+    "apps/operations/lib/apps/windows_pos/screens/home_screen.dart": "7127e28aebacb21a6dd585c96141330be1894a14599d38069cb9157176d77d7e",
+    "apps/operations/lib/apps/windows_pos/screens/menu_screen.dart": "7c4cb7dbba9b8e670dd49e1e39bfa2a75ff1b1ab7c43d3e69ea250fb3e2ed3f6",
+    "apps/operations/lib/apps/windows_pos/screens/order_detail_screen.dart": "01e8bf805a3d214cf81cdfc546a45fe5fe68797aaada391c689e092543ee8dab",
+    "apps/operations/lib/apps/windows_pos/widgets/admin/admin_close_day_section.dart": "b374dd4b1c6bcef5dd04488d12c8208c7e5762820924461ecc5ad3b54daff879",
+    "apps/operations/lib/apps/windows_pos/widgets/admin/admin_reservations_section.dart": "352600026ba63ff28beb69b1d2e3426553e16a3d2c5d6ce36f5df8a3a9cdd6a1",
+    "apps/operations/lib/apps/windows_pos/widgets/admin/printers/admin_printers_section.dart": "cf7456776aed5db65542e02e39d2fb62352904203dd73f84f5c81a0c04e5d816",
+    "apps/operations/lib/apps/windows_pos/widgets/home/home_calculator_page.dart": "b347e2f2208563902bb23a54579370492bdc6fdfbe7ea494fdce4d04cbfcb11b",
+    "apps/operations/lib/apps/windows_pos/widgets/home/home_reservations_section.dart": "887d65da8851251eee18de81796664f725f30299154742e926102f7f2bf65a87",
+    "apps/operations/lib/apps/windows_pos/widgets/home/home_take_away_section.dart": "a0401f7e99e7a35ac091019df91f7a73556b446934c723b3acaec4c38128a9e3",
+    "apps/operations/lib/apps/windows_pos/widgets/home/home_x_report_helper.dart": "42ef88e39f9091a6ad8edde39341a011079693c9e49d26113b273a7386005137",
+    "apps/operations/lib/apps/windows_pos/widgets/shared/print_jobs.dart": "148c598463149378a3c720192bd6c04b72df3a10840f9f95ad365049125fa26b",
+    "apps/operations/lib/core/database/database_core.dart": "d34840c7105afee29ba986bf66e1506c940b648354fabeac3f16de57c873f2d0",
+    "apps/operations/lib/core/database/repositories/backup_repository.dart": "fc696b0e00bd4ca073017ee6a97374bad790bd9f7c043255dacc9d12d0ecfee2",
+    "apps/operations/lib/core/database/repositories/print_job_repository.dart": "fbd8889faa4c353025e6abe2f4db4e3d30f6f4c2dcad3c80906547f3f28e6053",
+    "apps/operations/lib/core/services/pos/order_confirmation_print.dart": "0a8bc36c57a0091cbc22ad1faabbd891a328bf3694ed632a450db5e527b1c95e",
+    "apps/operations/lib/core/services/pos/pos_command_applier.dart": "73a5a42e73e39359dfa5bd8b98a9a9942f9230f4524855ef23dc1af63ad2dde4",
+    "apps/operations/lib/core/services/pos/update/update_readiness.dart": "180fe2f78bbf84f91e041a30e3676a26998781db3438e541f138efa42a01343a",
+    "apps/operations/lib/core/services/printing/escpos_kitchen_renderer.dart": "a24d1934be602ab37d8c301d18ae62fbd8335d92998f18f9c587274c06b98473",
+    "apps/operations/lib/core/services/printing/escpos_receipt_renderer.dart": "da6a1a0433ec2531b2b09ecfd9c94d91f0eb54b697264a0c909cc69b033401f9",
+    "apps/operations/lib/core/services/printing/print_job.dart": "4be584c07b66ec79b42b30569d6a760a0261a2fc79a2bb7ea4c055ae161daf72",
+    "apps/operations/lib/core/services/printing/print_queue.dart": "77b761cec692bfabc4281a5b1977ed4bfe0691d612d4d726bee25f4fafd3229d",
+    "apps/operations/lib/core/services/printing/print_reconciliation.dart": "c5d3dac05fd22d5f2deb2b5d43084fdeffb1c189831b819ebc371029a4e5daea",
+    "apps/operations/lib/core/services/printing/printer_connection.dart": "df54d137aa3856431b7f6ed6f86bee4a43d4647451e4e32175716611c7ace260",
+    "apps/operations/lib/core/services/printing/printer_service.dart": "d78ce14fa4d3cf0eea3e3f10d0adc7b07d0ad269ec8c404a2c167104c13e3531",
+    "apps/operations/lib/core/services/printing/printer_transport.dart": "832310d5520c2660af4194b35a4a9b15f67aebc83460bc17b91be51b2796546e",
+    "apps/operations/test/live/pos02_process_recovery_test.dart": "8bd9f6e53ddcaf1895c3578ba476105eae07b1fa1e07e013018a69ce361d38e6",
+    "apps/operations/test/support/pos02_fixture.dart": "ac635950edc503118d4ecaaa977056872fd484f86335489229a47a1d675a6b15",
+    "apps/operations/test/unit/pos02_backup_restore_test.dart": "145d5cea5abbd791c9d5c76c889639f93221c80c1b4f2337713ca77634f9ec6e",
+    "apps/operations/test/unit/pos02_print_delivery_test.dart": "c2b22a98cd291b8a74d427dcbfe6b5283895597acd07d1f760db786222f6ebfe",
+    "apps/operations/test/widget/pos02_print_jobs_test.dart": "c14530cdddfadc4a26f97da492248308d2fa47de45c4f28c0bef743b4514511d",
+    "apps/operations/tool/prove_pos02_recovery.py": "e8e1e83ead069851321ea6d7f6f4e460ca25e6709cca3c9b52dd7ef8c844684c",
+    "docs/POS02_PRINT_DELIVERY.md": "a2c2a3b9d728a2940129c063038fb80b71c85db0abb85189ebf2d05afe84b52e",
+    "docs/agent-state/VYNIC_CODE_MAP.md": "54ff88b06cbb4c37b6f10183d2bfb32af620f10529dd56d8ab927c2d27e59084",
+    "docs/agent-state/VYNIC_PROJECT_STATE.md": "0fd8c9aa482aa8c2320e2a4be5279425743a6e806e9064254931b3a36ba02e0f",
+    "docs/proofs/POS02_CANDIDATE_275688e1_2026-10-02.json": "c84f8295e86035f43c773a407ddc09dc2b576eff0d439bd79045b02ecf281af8",
+    "docs/proofs/POS02_LOGS_275688e1_2026-10-02.zip": "5d09f134458fc17d260ba284167655e25fc12a372ea15bfe9f0842c3d9db69f8",
+    "docs/proofs/POS02_NATIVE_275688e1_2026-10-02.json": "ffc509bad9b4594f2ba20cfb72f509960b1df8c475636d7657392104c0237198",
+    "docs/proofs/POS02_PRINT_JOBS_640_2026-10-02.png": "c777b203b2a956cd441fb2f4ca18491148786aa091178d4b88b6444fe47631f6",
+    "apps/operations/tool/pos02_preview.dart": "1d567f63efbf3f9473b8aea7a6d410eb769be7bc3aee9214750986fe885edeb4",
+    "apps/operations/test/support/pos02_preview_harness.dart": "f2f739fdb38eca03b7c8771599d3db605606b43630ed6a867705851e965e3e3e",
+    "apps/operations/test/unit/pos02_preview_safety_test.dart": "1343a4a440f535c582c24612a304efb9670728bcb1f15005ae4ea708a34f9992"
+  },
+  "sharedRootPackageLockConfigContractsChangedByPreview": false,
+  "platformWebEditedByPreview": false,
+  "branchChanged": false,
+  "staged": false,
+  "committed": false
+}

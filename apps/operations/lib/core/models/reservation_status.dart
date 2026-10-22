@@ -15,6 +15,7 @@
 /// behavior. See `docs/VYNIC_PROJECT_PLAN.md` Phase 4 report for the
 /// call-sites-not-migrated list.
 enum ReservationStatus {
+  hold,
   pending,
   preparing,
   confirmed,
@@ -34,6 +35,8 @@ enum ReservationStatus {
         .replaceAll('_', '-')
         .replaceAll(RegExp(r'\s+'), '-');
     switch (normalized) {
+      case 'hold':
+        return ReservationStatus.hold;
       case 'pending':
         return ReservationStatus.pending;
       case 'preparing':
@@ -59,6 +62,8 @@ enum ReservationStatus {
   /// Canonical string to persist. [unknown] has no canonical form.
   String get storageValue {
     switch (this) {
+      case ReservationStatus.hold:
+        return 'hold';
       case ReservationStatus.pending:
         return 'pending';
       case ReservationStatus.preparing:

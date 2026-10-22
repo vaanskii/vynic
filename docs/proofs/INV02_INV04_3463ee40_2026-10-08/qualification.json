@@ -1,0 +1,87 @@
+{
+  "status": "PASS",
+  "qualifiedAtUtc": "2026-10-08T17:46:40.519402+00:00",
+  "head": "3463ee406184fec7f53818416e11d0e5f5602c87",
+  "branch": "codex/docker-deployment-foundation",
+  "milestones": [
+    "INV-02",
+    "INV-04"
+  ],
+  "backendAggregate": {
+    "passed": 858,
+    "skipped": 713,
+    "failed": 0
+  },
+  "additionalPg": {
+    "passed": 141,
+    "failed": 0
+  },
+  "inventoryFocusedPg": {
+    "passed": 60,
+    "failed": 0,
+    "aggregateOverlap": 7
+  },
+  "flutterAggregate": {
+    "passed": 2597,
+    "skipped": 16,
+    "failed": 0,
+    "concurrency": 2,
+    "actualGoProcessFixtures": true,
+    "actualMenu09HttpPgWriter": true
+  },
+  "newFlutterFocused": {
+    "passed": 13,
+    "failed": 0
+  },
+  "webAggregate": {
+    "passed": 166,
+    "failed": 0,
+    "files": 25
+  },
+  "checks": {
+    "backendTypecheck": "PASS",
+    "backendBuild": "PASS",
+    "webBuild": "PASS",
+    "changedDartAnalysis": "PASS",
+    "newBackendEslint": "PASS",
+    "changedBackendNoNewDiagnostics": true,
+    "existingTouchedBackendLintErrors": 341,
+    "existingTouchedBackendLintWarnings": 17,
+    "backendLintErrorsRemoved": 41,
+    "gitDiffCheck": "PASS",
+    "noExecutableSourceChangesDuringFinalChecks": true
+  },
+  "boundaries": {
+    "liveFinancialOrCredentialWrites": false,
+    "liveServicesRestarted": false,
+    "deployed": false,
+    "committed": false,
+    "pushed": false,
+    "costingRule": "D015_CLOUD_ACCEPTANCE_ORDER",
+    "historyWindow": "CREATION_CUTOFF_WITH_STATE_CURRENT_PER_REQUEST"
+  },
+  "limitations": [
+    "Historical close-time COGS, realized profit, full cashflow and full warehouse Inventory are not implemented.",
+    "The creation window is not an MVCC snapshot across HTTP requests; reversal/payment state is current per request.",
+    "Legacy clients retain the 100-row array and offline POS inspection remains a bounded labelled excerpt.",
+    "713 Backend and 16 Flutter opt-in cases remain skipped; no pass claim is made for them.",
+    "An unchanged MGR-05 editor test failed once with default concurrency while awaiting the loopback response. Its 15 focused tests and final full suite with concurrency 2 passed; the original failure log hash is retained. No MGR-05 source was modified.",
+    "341 errors and 17 warnings remain in seven touched pre-existing Backend files; no new diagnostics were introduced. New files have clean lint.",
+    "Existing web large-chunk/jsdom scrollTo and Flutter CocoaPods migration notices remain.",
+    "Real user enrollment/registration/POS/Manager login and Windows/hardware qualification remain open independent gates.",
+    "The prior authorized reset is separate from these isolated milestones."
+  ],
+  "testOverlap": {
+    "backendAggregate": 858,
+    "inventoryFocused": 60,
+    "authPlatformFoundationPg": 141,
+    "existingInventoryCases": 53,
+    "newInventoryCases": 7,
+    "inventoryAuthPlatformOverlap": 0,
+    "inventoryAggregateOverlap": 7,
+    "extraAggregateOverlap": 0,
+    "distinctBackendPassedCases": 1052,
+    "comparisonIdentity": "repository file + assertion ordinal + full test name"
+  },
+  "privateRawLogDirectory": "/tmp/vynic-inv02-inv04-qm0ykgjt"
+}

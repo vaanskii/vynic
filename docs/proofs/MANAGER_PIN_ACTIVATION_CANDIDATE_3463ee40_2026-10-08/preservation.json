@@ -1,0 +1,20 @@
+{
+  "baselineFiles": 3710,
+  "changedFiles": [
+    "apps/backend/src/edge-foundation/edge-foundation.integration.spec.ts",
+    "apps/backend/src/mobile/services/mgr01-table-layout.integration.spec.ts",
+    "apps/backend/src/platform/platform-control-plane.integration.spec.ts",
+    "apps/backend/src/platform/platform-password.spec.ts",
+    "apps/operations/lib/core/services/edge/inventory_projection_sync_service.dart",
+    "apps/operations/test/unit/inventory_projection_sync_test.dart",
+    "apps/platform-web/src/components/home/FloorScene.tsx",
+    "apps/platform-web/src/components/home/ShiftScene.tsx",
+    "apps/platform-web/src/test/site-motion.test.tsx",
+    "docs/SAAS_BUILD_RUNTIME_ONBOARDING.md",
+    "docs/SAAS_PHASE2_CONTROL_PLANE.md"
+  ],
+  "unexpectedChanges": [],
+  "unchangedOtherBaselineFiles": 3699,
+  "environmentFilesExcluded": true,
+  "head": "3463ee406184fec7f53818416e11d0e5f5602c87"
+}

@@ -7,7 +7,12 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { Prisma, ReceivingStatus, StockMovementType } from '@prisma/client';
+import {
+  Prisma,
+  ReceivingStatus,
+  StockMovementType,
+  type StockMovement,
+} from '@prisma/client';
 import { PrismaService } from '../prisma.service';
 import type { TenantContext } from '../tenancy/tenant-context';
 import {
@@ -28,6 +33,8 @@ import {
   unitCostText,
 } from './inventory-quantity';
 import { inventoryUnit } from './inventory-unit';
+import { requireStockLocation } from './stock-locations';
+import { lockStockItems } from './stock-item-lock';
 
 export interface ReceivingLineInput {
   stockItemId?: unknown;
@@ -40,6 +47,7 @@ export interface ReceivingLineInput {
 }
 
 export interface ReceivingInput {
+  locationId?: unknown;
   requestId?: unknown;
   supplierId?: unknown;
   sourceType?: unknown;
@@ -257,9 +265,14 @@ export class ReceivingService {
         ? await this.requireSupplier(tx, actor, header.supplierId)
         : null;
       const lines = await this.prepareLines(tx, actor, input.lines);
+      const locationId =
+        input.locationId == null
+          ? undefined
+          : await requireStockLocation(tx, actor, input.locationId);
       const created = await tx.receiving.create({
         data: {
           venueId: actor.venueId,
+          locationId,
           dueDate: input.dueDate ? isoDateText(input.dueDate) : null,
           supplierId: supplier?.id ?? null,
           sourceType: header.sourceType,
@@ -313,10 +326,15 @@ export class ReceivingService {
         ? await this.requireSupplier(tx, actor, header.supplierId)
         : null;
       const lines = await this.prepareLines(tx, actor, input.lines);
+      const locationId =
+        input.locationId == null
+          ? existing.locationId
+          : await requireStockLocation(tx, actor, input.locationId);
       await tx.receivingLine.deleteMany({ where: { receivingId: cleanId } });
       const updated = await tx.receiving.update({
         where: { id: cleanId },
         data: {
+          locationId,
           dueDate: input.dueDate ? isoDateText(input.dueDate) : null,
           supplierId: supplier?.id ?? null,
           sourceType: header.sourceType,
@@ -406,6 +424,11 @@ export class ReceivingService {
 
       // Re-validate against live tenancy: a Stock Item may have been disabled
       // or a Supplier reassigned while the draft sat open.
+      await lockStockItems(
+        tx,
+        actor.venueId,
+        lines.map((line) => line.stockItemId),
+      );
       const stockItems = await tx.stockItem.findMany({
         where: {
           id: { in: lines.map((line) => line.stockItemId) },
@@ -436,11 +459,11 @@ export class ReceivingService {
       if (locked.supplierId)
         await this.requireSupplier(tx, actor, locked.supplierId);
 
-      await tx.$queryRaw`SELECT id FROM pos."StockItem" WHERE "venueId"=${actor.venueId} AND id IN (SELECT "stockItemId" FROM pos."ReceivingLine" WHERE "receivingId"=${cleanId}) ORDER BY id FOR UPDATE`;
       const postedAt = new Date();
       await tx.stockMovement.createMany({
         data: lines.map((line) => ({
           venueId: actor.venueId,
+          locationId: locked.locationId,
           stockItemId: line.stockItemId,
           movementType: StockMovementType.RECEIVING,
           quantityDeltaBase: line.baseQuantity,
@@ -635,13 +658,14 @@ export class ReceivingService {
         id: string;
         status: ReceivingStatus;
         supplierId: string | null;
+        locationId: string | null;
         documentDate: string;
         businessDate: string;
         receivedAt: Date;
         waybillNumber: string | null;
       }[]
     >`
-      SELECT "id", "status", "supplierId", "documentDate", "businessDate", "receivedAt", "waybillNumber"
+      SELECT "id", "status", "supplierId", "locationId", "documentDate", "businessDate", "receivedAt", "waybillNumber"
       FROM "pos"."Receiving"
       WHERE "id" = ${id} AND "venueId" = ${venueId}
       FOR UPDATE
@@ -731,6 +755,7 @@ export class ReceivingService {
         inputs.map((line) => requiredText(line.stockItemId, 'stockItemId')),
       ),
     );
+    await lockStockItems(tx, actor.venueId, ids);
     const items = await tx.stockItem.findMany({
       where: { id: { in: ids }, venueId: actor.venueId },
       select: {
@@ -823,6 +848,7 @@ export class ReceivingService {
 
   private auditContext(row: {
     id: string;
+    locationId: string | null;
     supplierId: string | null;
     supplierNameSnapshot: string;
     waybillNumber: string | null;
@@ -834,6 +860,7 @@ export class ReceivingService {
   }) {
     return {
       receivingId: row.id,
+      locationId: row.locationId,
       supplierId: row.supplierId,
       supplierName: row.supplierNameSnapshot,
       sourceType: 'sourceType' in row ? row.sourceType : 'SUPPLIER',
@@ -854,6 +881,7 @@ export class ReceivingService {
         amount: p.amount.toFixed(2),
       })),
       id: row.id,
+      locationId: (row as { locationId?: string | null }).locationId ?? null,
       supplierId: row.supplierId,
       supplierName: row.supplierNameSnapshot,
       sourceType: 'sourceType' in row ? row.sourceType : 'SUPPLIER',
@@ -902,18 +930,25 @@ export class ReceivingService {
       ...this.presentSummary(row),
       lines: (row.lines ?? []).map((line: any) => this.presentLine(line)),
       movements: (row.movements ?? []).map((movement: any) =>
-        presentMovement(movement),
+        presentMovement(movement as StockMovement),
       ),
     };
   }
 }
 
-export function presentMovement(movement: any) {
+export function presentMovement(movement: StockMovement) {
   return {
     costPerBaseUnit: movement.costPerBaseUnit?.toFixed(12) ?? null,
     inventoryValueDelta: movement.inventoryValueDelta?.toFixed(12) ?? null,
     valuationStatus: movement.valuationStatus,
+    valuationSequence: movement.valuationSequence?.toString() ?? null,
+    valueOrigin: movement.reversalOfMovementId
+      ? 'FROZEN_ORIGINAL_REVERSAL'
+      : movement.valuationStatus === 'RECONSTRUCTED'
+        ? 'RECONSTRUCTED_RECORDED_ORDER'
+        : 'CLOUD_ACCEPTANCE',
     id: movement.id,
+    locationId: movement.locationId,
     stockItemId: movement.stockItemId,
     movementType: movement.movementType,
     quantityDeltaBase: stockQuantityText(movement.quantityDeltaBase),

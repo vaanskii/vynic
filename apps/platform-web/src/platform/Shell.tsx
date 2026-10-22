@@ -1,3 +1,4 @@
+import { publicSiteUrl } from "../site-origins";
 import { useState } from "react";
 import {
   Buildings,
@@ -18,31 +19,31 @@ import vynicLogo from "../assets/vynic-logo.png";
 import { useAuth } from "./auth";
 
 const navigation = [
-  { label: "Onboarding", to: "/admin/onboarding", icon: Buildings },
-  { label: "Overview", to: "/admin", icon: SquaresFour, end: true },
-  { label: "Organizations", to: "/admin/organizations", icon: Buildings },
-  { label: "Platform users", to: "/admin/users", icon: Buildings },
-  { label: "Venues", to: "/admin/venues", icon: Storefront },
+  { label: "Onboarding", to: "/onboarding", icon: Buildings },
+  { label: "Overview", to: "/", icon: SquaresFour, end: true },
+  { label: "Organizations", to: "/organizations", icon: Buildings },
+  { label: "Platform users", to: "/users", icon: Buildings },
+  { label: "Venues", to: "/venues", icon: Storefront },
 ];
 
 const groups = [
   {
     label: "Product",
     items: [
-      { label: "Plans", to: "/admin/plans", icon: ChartDonut },
-      { label: "Features", to: "/admin/features", icon: SlidersHorizontal },
+      { label: "Plans", to: "/plans", icon: ChartDonut },
+      { label: "Features", to: "/features", icon: SlidersHorizontal },
     ],
   },
   {
     label: "Infrastructure",
     items: [
-      { label: "Devices", to: "/admin/devices", icon: DesktopTower },
-      { label: "Domains", to: "/admin/domains", icon: Globe },
+      { label: "Devices", to: "/devices", icon: DesktopTower },
+      { label: "Domains", to: "/domains", icon: Globe },
     ],
   },
   {
     label: "Activity",
-    items: [{ label: "Audit log", to: "/admin/audit", icon: ClockCounterClockwise },
+    items: [{ label: "Audit log", to: "/audit", icon: ClockCounterClockwise },
     ],
   },
 ];
@@ -71,7 +72,7 @@ export function Shell() {
     <div className="platform-shell">
       <aside className={`platform-sidebar${open ? " is-open" : ""}`}>
         <div className="platform-sidebar__top">
-          <NavLink className="platform-brand" to="/admin" onClick={() => setOpen(false)}>
+          <NavLink className="platform-brand" to="/" onClick={() => setOpen(false)}>
             <img src={vynicLogo} alt="" />
             <span>Vynic</span>
             <small>Platform</small>
@@ -89,7 +90,7 @@ export function Shell() {
             </div>
           ))}
         </nav>
-        <a className="platform-sidebar__product-link" href="/">View Vynic site</a>
+        <a className="platform-sidebar__product-link" href={publicSiteUrl()}>View Vynic site</a>
       </aside>
       {open ? (
         <button className="platform-sidebar__scrim" aria-label="Close navigation" onClick={() => setOpen(false)} />

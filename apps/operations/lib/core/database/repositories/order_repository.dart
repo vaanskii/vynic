@@ -1,7 +1,6 @@
+import '../transactions/cancel_order_transaction.dart';
 import 'package:vynic/core/services/pos/update/update_readiness.dart';
 import 'dart:async';
-import '../../services/edge/orders_tables/shadow.dart';
-import '../../services/edge/orders_tables/pos_shadow_projection.dart';
 
 import 'package:flutter/foundation.dart';
 import 'package:vynic/core/models/audit_report.dart';
@@ -21,11 +20,55 @@ import '../database_core.dart';
 import 'reservation_repository.dart';
 import 'settings_repository.dart';
 import 'table_repository.dart';
+import 'order_table_mutation_repository.dart';
 
 /// Order lifecycle: creation (dine-in, takeaway, package, mobile upserts),
 /// updates, deletion/cleanup, and item mutations.
 class OrderRepository {
   OrderRepository._();
+
+  static Map<String, dynamic> _packageRequest(Package p) => {
+    'id': p.packageId,
+    'name': p.name,
+    'description': p.description,
+    'pricePerPerson': p.pricePerPerson,
+    'isActive': p.isActive,
+    'allowedTables': List.of(p.allowedTables),
+    'servingSize': p.servingSize,
+    'items': [
+      for (final i in p.items)
+        {
+          'itemKey': i.itemKey,
+          'itemName': i.itemName,
+          'quantity': i.quantity,
+          'unitPrice': i.unitPrice,
+          'menuItemId': i.menuItemId,
+          'variantId': i.variantId,
+        },
+    ],
+  };
+  static Package _copyPackage(Package p) => Package(
+    packageId: p.packageId,
+    name: p.name,
+    description: p.description,
+    pricePerPerson: p.pricePerPerson,
+    isActive: p.isActive,
+    createdAt: p.createdAt,
+    createdBy: p.createdBy,
+    servingSize: p.servingSize,
+    allowedTables: List.of(p.allowedTables),
+    items: [
+      for (final i in p.items)
+        PackageItem(
+          itemKey: i.itemKey,
+          itemName: i.itemName,
+          quantity: i.quantity,
+          unitPrice: i.unitPrice,
+          menuItemId: i.menuItemId,
+          variantId: i.variantId,
+        ),
+    ],
+  );
 
   // Get next order ID
   static int _getNextOrderId() {
@@ -57,170 +100,182 @@ class OrderRepository {
     bool forPackage = false,
     String? activatesReservationId,
     String? reservationCustomerName,
-  }) => UpdateReadiness.track(
-    'createOrder',
-    () => _updateTrackedCreateOrder(
-      tableNumbers: tableNumbers,
-      floor: floor,
-      createdBy: createdBy,
-      items: items,
-      includeServiceFee: includeServiceFee,
-      source: source,
-      forPackage: forPackage,
-      activatesReservationId: activatesReservationId,
-      reservationCustomerName: reservationCustomerName,
-    ),
-  );
-
-  static Future<Order> _updateTrackedCreateOrder({
-    required List<String> tableNumbers,
-    required String floor,
-    required String createdBy,
-    required List<OrderItem> items,
-    bool? includeServiceFee,
-    AuditSource source = AuditSource.pos,
-    bool forPackage = false,
-    String? activatesReservationId,
-    String? reservationCustomerName,
-  }) async {
-    final normalizedTables = <String>[];
-    final seenTables = <String>{};
-    for (final raw in tableNumbers) {
-      final normalized = TableRepository.normalizeTableIdentifier(raw, floor);
-      if (normalized == null) {
-        continue;
+    String? requestId,
+    String? expectedBusinessDate,
+    Package? initialPackage,
+    int packageGuestCount = 0,
+  }) {
+    final tables = tableNumbers
+        .map(
+          (t) => floor == 'takeaway'
+              ? t.trim()
+              : TableRepository.normalizeTableIdentifier(t, floor),
+        )
+        .whereType<String>()
+        .toSet()
+        .toList();
+    final frozenItems = items.map((i) => i.clone()).toList();
+    final date = expectedBusinessDate ?? OrderTableMutationRepository.dateKey;
+    final request = <String, dynamic>{
+      'kind': 'dineIn',
+      'tables': tables,
+      'floor': floor,
+      'actor': createdBy,
+      'items': frozenItems
+          .map(OrderTableMutationRepository.itemRequest)
+          .toList(),
+      'includeServiceFee': includeServiceFee,
+      'source': source.wireValue,
+      'forPackage': forPackage,
+      'reservationId': activatesReservationId,
+      'customerName': reservationCustomerName,
+      'expectedBusinessDate': expectedBusinessDate,
+      if (initialPackage != null) 'package': _packageRequest(initialPackage),
+      if (initialPackage != null) 'guestCount': packageGuestCount,
+    };
+    return UpdateReadiness.mutate('createOrder', () async {
+      if (requestId != null) {
+        final old = OrderTableMutationRepository.retry(requestId, request);
+        if (old != null) return old;
       }
-      if (seenTables.add(normalized)) {
-        normalizedTables.add(normalized);
-      }
-    }
-
-    if (normalizedTables.isEmpty) {
-      throw ArgumentError('Select at least one table');
-    }
-
-    for (final tableNumber in normalizedTables) {
-      final table = TableRepository.getTable(tableNumber, floor);
-      if (table != null && table.isReserved) {
-        final details = StringBuffer(
-          'Table $tableNumber on $floor floor is busy',
+      if (date != OrderTableMutationRepository.dateKey) {
+        throw OrderMutationConflict(
+          'stale_date',
+          'Business date changed before Order creation',
         );
-        if (table.activeOrderId != null) {
-          details.write(' (order #${table.activeOrderId})');
-        } else if (table.reservationId != null) {
-          details.write(' (reservation ${table.reservationId})');
-        }
-        throw StateError(details.toString());
       }
-    }
-
-    final orderTableNumbers = List<String>.from(normalizedTables);
-    final orderId = _getNextOrderId();
-    final shouldIncludeServiceFee =
-        includeServiceFee ?? SettingsRepository.defaultIncludeServiceFee();
-    final order = Order(
-      orderId: orderId,
-      tableNumbers: orderTableNumbers,
-      floor: floor,
-      items: items,
-      totalAmount: 0,
-      createdAt: BusinessDayRepository.getCurrentDateTime(),
-      createdBy: createdBy,
-      status: OrderStatus.pending.storageValue,
-      includeServiceFee: shouldIncludeServiceFee,
-      openedByUserId: createdBy, // Set owner when table is created
-    );
-    order.recalculateTotal();
-
-    return OrderTableShadow.observe(
-      proposed: () => PosShadowProjection.orders([order], opening: true),
-      actual: () => PosShadowProjection.orders([order]),
-      operation: () async {
-        await DatabaseCore.orderBox!.add(order);
-        await DatabaseCore.settingsBox?.put('lastOrderId', orderId);
-
-        // Reserve tables
-        for (final tableNumber in orderTableNumbers) {
-          await TableRepository.reserveTable(
-            tableNumber: tableNumber,
-            floor: floor,
-            username: createdBy,
-            orderId: orderId,
-            reservationId: null,
-          );
-        }
-
-        SyncHub.notify(
-          SyncEvent(
-            type: SyncEventType.orders,
-            action: 'created',
-            payload: {'orderId': orderId},
+      final normalized = <String>[];
+      for (final raw in tables) {
+        final n = TableRepository.normalizeTableIdentifier(raw, floor);
+        if (n != null && !normalized.contains(n)) normalized.add(n);
+      }
+      if (normalized.isEmpty) throw ArgumentError('Select at least one table');
+      final order = Order(
+        orderId: _getNextOrderId(),
+        tableNumbers: normalized,
+        floor: floor,
+        items: frozenItems,
+        totalAmount: 0,
+        createdAt: OrderTableMutationRepository.now(),
+        createdBy: createdBy,
+        status: activatesReservationId == null && !forPackage
+            ? OrderStatus.pending.storageValue
+            : OrderStatus.confirmed.storageValue,
+        includeServiceFee:
+            includeServiceFee ?? SettingsRepository.defaultIncludeServiceFee(),
+        openedByUserId: createdBy,
+      );
+      if (activatesReservationId != null) {
+        final booking = ReservationRepository.findReservationById(
+          activatesReservationId,
+        );
+        if (booking == null)
+          throw StateError('Activation reservation is missing');
+        await ReservationRepository.ensureAdvanceReceipt(booking);
+        order.advanceAmount = booking.advanceAmount;
+        order.advanceCollectedOn = booking.advanceCollectedOn;
+        order.advanceReceiptId = booking.advanceReceiptId;
+        order.customerName = booking.customerName;
+        order.customerPhone = booking.customerPhone;
+      }
+      if (initialPackage != null) {
+        order.packageId = initialPackage.packageId;
+        order.packageName = initialPackage.name;
+        order.packageUnitPrice = initialPackage.pricePerPerson;
+        order.packageGuestCount = packageGuestCount;
+        order.packagePrice = double.parse(
+          (initialPackage.pricePerPerson * packageGuestCount).toStringAsFixed(
+            2,
           ),
         );
-
-        debugPrint('[Audit] Logging ORDER_CREATED for order $orderId');
-        unawaited(
-          AuditEventService.logEvent(
-            action: 'ORDER_CREATED',
-            userId: createdBy,
-            entityType: GlobalAuditEntity.order,
-            entityId: '$orderId',
-            data: {
-              'orderId': orderId,
-              'tableNumbers': tableNumbers,
-              'total': order.totalAmount,
-              'floor': floor,
+        order.packageItems = initialPackage.items
+            .map(
+              (i) => OrderItem(
+                itemKey: i.itemKey,
+                itemName: i.itemName,
+                unitPrice: i.unitPrice,
+                quantity: i.quantity,
+                total: double.parse(
+                  (i.unitPrice * i.quantity).toStringAsFixed(2),
+                ),
+                menuItemId: i.menuItemId,
+                variantId: i.variantId,
+              ),
+            )
+            .toList();
+      }
+      order.recalculateTotal();
+      final kind = activatesReservationId != null
+          ? OrderAuditDetails.reservation
+          : forPackage
+          ? OrderAuditDetails.package
+          : OrderAuditDetails.walkIn;
+      final creation = AuditEvent(
+        type: activatesReservationId != null
+            ? AuditEventType.activateReservation
+            : AuditEventType.createWalkIn,
+        itemName: OrderAuditDetails.orderItemName,
+        previousQty: 0,
+        newQty: 0,
+        waiterId: createdBy,
+        waiterName: createdBy,
+        timestamp: order.createdAt,
+        details: {
+          ...OrderAuditDetails.base(
+            order: order,
+            orderKind: kind,
+            source: source,
+            actorId: createdBy,
+          ),
+          'includeServiceFee': order.includeServiceFee,
+          if (activatesReservationId != null)
+            'reservationId': activatesReservationId,
+          if (reservationCustomerName?.trim().isNotEmpty == true)
+            'customerName': reservationCustomerName!.trim(),
+        },
+      );
+      final extra = <AuditEvent>[];
+      if (initialPackage != null) {
+        extra.add(
+          AuditEvent(
+            type: AuditEventType.applyPackage,
+            itemName: initialPackage.name,
+            previousQty: 0,
+            newQty: 0,
+            waiterId: createdBy,
+            waiterName: createdBy,
+            timestamp: OrderAuditDetails.strictlyAfter(
+              order.createdAt,
+              order.createdAt,
+            ),
+            details: {
+              ...OrderAuditDetails.base(
+                order: order,
+                orderKind: OrderAuditDetails.package,
+                source: source,
+                actorId: createdBy,
+              ),
+              'packageId': order.packageId,
+              'packageName': order.packageName,
+              'packageGuestCount': order.packageGuestCount,
+              'packageUnitPrice': order.packageUnitPrice,
+              'packagePrice': order.packagePrice,
+              'packageItems': order.packageItems
+                  .map((i) => i.toJson())
+                  .toList(),
             },
           ),
         );
-
-        final isActivation =
-            activatesReservationId != null && activatesReservationId.isNotEmpty;
-        final creationEvent = AuditEvent(
-          type: isActivation
-              ? AuditEventType.activateReservation
-              : AuditEventType.createWalkIn,
-          itemName: OrderAuditDetails.orderItemName,
-          previousQty: 0,
-          newQty: 0,
-          waiterId: createdBy,
-          waiterName: createdBy,
-          timestamp: order.createdAt,
-          details: <String, dynamic>{
-            ...OrderAuditDetails.base(
-              order: order,
-              orderKind: isActivation
-                  ? OrderAuditDetails.reservation
-                  : forPackage
-                  ? OrderAuditDetails.package
-                  : OrderAuditDetails.walkIn,
-              source: source,
-              actorId: createdBy,
-            ),
-            if (isActivation) 'reservationId': activatesReservationId,
-            if (isActivation &&
-                reservationCustomerName != null &&
-                reservationCustomerName.trim().isNotEmpty)
-              'customerName': reservationCustomerName.trim(),
-            'includeServiceFee': shouldIncludeServiceFee,
-          },
-        );
-        await _appendCreationAudit(
-          order: order,
-          creationEvent: creationEvent,
-          actor: createdBy,
-        );
-
-        await AuditRepository.finalizeConflictingOpenAuditReports(
-          currentOrderId: orderId,
-          floor: floor,
-          tableNumbers: orderTableNumbers,
-          closedBy: createdBy,
-        );
-
-        return order;
-      },
-    );
+      }
+      return OrderTableMutationRepository.create(
+        request: request,
+        order: order,
+        creationEvent: creation,
+        extraEvents: extra,
+        requestId: requestId,
+        activatesReservationId: activatesReservationId,
+      );
+    });
   }
 
   static Future<Order> createTakeAwayOrder({
@@ -231,87 +286,58 @@ class OrderRepository {
     required List<OrderItem> items,
     required String createdBy,
     AuditSource source = AuditSource.pos,
-  }) => UpdateReadiness.track(
-    'createTakeAwayOrder',
-    () => _updateTrackedCreateTakeAwayOrder(
-      customerName: customerName,
-      customerPhone: customerPhone,
-      pickupTime: pickupTime,
-      notes: notes,
-      items: items,
-      createdBy: createdBy,
-      source: source,
-    ),
-  );
-
-  static Future<Order> _updateTrackedCreateTakeAwayOrder({
-    required String customerName,
-    required String customerPhone,
-    required String pickupTime,
-    String? notes,
-    required List<OrderItem> items,
-    required String createdBy,
-    AuditSource source = AuditSource.pos,
-  }) async {
-    final orderId = _getNextOrderId();
-    final order = Order(
-      orderId: orderId,
-      tableNumbers: ['TA-$orderId'],
-      floor: 'takeaway',
-      items: items,
-      totalAmount: 0,
-      createdAt: BusinessDayRepository.getCurrentDateTime(),
-      createdBy: createdBy,
-      status: OrderStatus.pending.storageValue,
-      includeServiceFee: false,
-      customerName: customerName,
-      customerPhone: customerPhone,
-      pickupTime: pickupTime,
-    );
-    order.recalculateTotal();
-
-    return OrderTableShadow.observe(
-      proposed: () => PosShadowProjection.orders([order]),
-      actual: () => PosShadowProjection.orders([order]),
-      operation: () async {
-        await DatabaseCore.orderBox!.add(order);
-
-        SyncHub.notify(
-          SyncEvent(
-            type: SyncEventType.orders,
-            action: 'created',
-            payload: {'orderId': orderId, 'takeAway': true},
-          ),
-        );
-
-        unawaited(
-          AuditEventService.logEvent(
-            action: 'TAKEAWAY_ORDER_CREATED',
-            userId: createdBy,
-            entityType: GlobalAuditEntity.order,
-            entityId: '$orderId',
-            data: {
-              'orderId': orderId,
-              'customerName': customerName,
-              'total': order.totalAmount,
-            },
-          ),
-        );
-
-        // The report exists from the first moment, not from the first later edit.
-        await _appendCreationAudit(
+    String? requestId,
+    String? expectedBusinessDate,
+  }) {
+    final frozenItems = items.map((i) => i.clone()).toList();
+    final date = expectedBusinessDate ?? OrderTableMutationRepository.dateKey;
+    final request = {
+      'kind': 'takeaway',
+      'customerName': customerName,
+      'customerPhone': customerPhone,
+      'pickupTime': pickupTime,
+      'notes': notes,
+      'items': frozenItems
+          .map(OrderTableMutationRepository.itemRequest)
+          .toList(),
+      'actor': createdBy,
+      'source': source.wireValue,
+      'expectedBusinessDate': expectedBusinessDate,
+    };
+    return UpdateReadiness.mutate('createTakeAwayOrder', () async {
+      if (requestId != null) {
+        final old = OrderTableMutationRepository.retry(requestId, request);
+        if (old != null) return old;
+      }
+      if (date != OrderTableMutationRepository.dateKey)
+        throw OrderMutationConflict('stale_date', 'Business date changed');
+      final id = _getNextOrderId();
+      final order = Order(
+        orderId: id,
+        tableNumbers: ['TA-$id'],
+        floor: 'takeaway',
+        items: frozenItems,
+        totalAmount: 0,
+        createdAt: OrderTableMutationRepository.now(),
+        createdBy: createdBy,
+        status: OrderStatus.pending.storageValue,
+        includeServiceFee: false,
+        customerName: customerName,
+        customerPhone: customerPhone,
+        pickupTime: pickupTime,
+      );
+      order.recalculateTotal();
+      return OrderTableMutationRepository.create(
+        request: request,
+        order: order,
+        creationEvent: _takeawayCreationEvent(
           order: order,
-          creationEvent: _takeawayCreationEvent(
-            order: order,
-            source: source,
-            actor: createdBy,
-          ),
+          source: source,
           actor: createdBy,
-        );
-
-        return order;
-      },
-    );
+        ),
+        requestId: requestId,
+      );
+    });
   }
 
   /// Mobile/cloud takeaway with a fixed `posOrderId` from the backend counter.
@@ -323,97 +349,24 @@ class OrderRepository {
     required List<OrderItem> items,
     double? totalAmount,
     AuditSource source = AuditSource.manager,
-  }) => UpdateReadiness.track(
-    'upsertMobileTakeawayOrder',
-    () => _updateTrackedUpsertMobileTakeawayOrder(
-      posOrderId: posOrderId,
-      customerName: customerName,
-      pickupTime: pickupTime,
-      waiterName: waiterName,
-      items: items,
-      totalAmount: totalAmount,
-      source: source,
-    ),
+    String? requestId,
+    bool createOnly = false,
+    String? expectedBusinessDate,
+  }) => _mobileUpsert(
+    posOrderId: posOrderId,
+    tableNumbers: ['TA-$posOrderId'],
+    floor: 'takeaway',
+    waiterName: waiterName,
+    items: items,
+    totalAmount: totalAmount,
+    source: source,
+    requestId: requestId,
+    createOnly: createOnly,
+    expectedBusinessDate: expectedBusinessDate,
+    customerName: customerName,
+    pickupTime: pickupTime,
   );
 
-  static Future<Order?> _updateTrackedUpsertMobileTakeawayOrder({
-    required int posOrderId,
-    required String customerName,
-    required String pickupTime,
-    required String waiterName,
-    required List<OrderItem> items,
-    double? totalAmount,
-    AuditSource source = AuditSource.manager,
-  }) async {
-    final existing = getOrder(posOrderId);
-    if (existing != null) {
-      await _auditManagerItemReplacement(
-        order: existing,
-        updatedItems: items,
-        actor: waiterName,
-        source: source,
-      );
-      existing.items = items;
-      existing.customerName = customerName;
-      existing.pickupTime = pickupTime;
-      if (totalAmount != null) {
-        existing.totalAmount = totalAmount;
-      } else {
-        existing.recalculateTotal();
-      }
-      existing.updatedAt = BusinessDayRepository.getCurrentDateTime();
-      await existing.save();
-      return existing;
-    }
-
-    final order = Order(
-      orderId: posOrderId,
-      tableNumbers: ['TA-$posOrderId'],
-      floor: 'takeaway',
-      items: items,
-      totalAmount: totalAmount ?? 0,
-      createdAt: BusinessDayRepository.getCurrentDateTime(),
-      createdBy: waiterName,
-      // Mobile-originated takeaway orders are auto-confirmed (skip manual
-      // "შეკვეთის დადასტურება" step on POS) so the kitchen check fires immediately.
-      status: OrderStatus.confirmed.storageValue,
-      includeServiceFee: false,
-      customerName: customerName,
-      pickupTime: pickupTime,
-    );
-    if (totalAmount == null) {
-      order.recalculateTotal();
-    }
-
-    await DatabaseCore.orderBox!.add(order);
-    final lastId = (DatabaseCore.settingsBox?.get('lastOrderId') as int?) ?? 0;
-    if (posOrderId > lastId) {
-      await DatabaseCore.settingsBox?.put('lastOrderId', posOrderId);
-    }
-
-    SyncHub.notify(
-      SyncEvent(
-        type: SyncEventType.orders,
-        action: 'created',
-        payload: {'orderId': posOrderId, 'takeAway': true, 'source': 'mobile'},
-      ),
-    );
-
-    await _appendCreationAudit(
-      order: order,
-      creationEvent: _takeawayCreationEvent(
-        order: order,
-        source: source,
-        actor: waiterName,
-      ),
-      actor: waiterName,
-    );
-
-    return order;
-  }
-
-  /// Mobile/cloud dine-in (walk-in) order with a fixed `posOrderId`.
-  /// Reserves the chosen tables without manufacturing a Reservation record.
   static Future<Order?> upsertMobileDineInOrder({
     required int posOrderId,
     required List<String> tableNumbers,
@@ -423,129 +376,173 @@ class OrderRepository {
     int guestCount = 0,
     double? totalAmount,
     AuditSource source = AuditSource.manager,
-  }) => UpdateReadiness.track(
-    'upsertMobileDineInOrder',
-    () => _updateTrackedUpsertMobileDineInOrder(
-      posOrderId: posOrderId,
-      tableNumbers: tableNumbers,
-      floor: floor,
-      waiterName: waiterName,
-      items: items,
-      guestCount: guestCount,
-      totalAmount: totalAmount,
-      source: source,
-    ),
+    String? requestId,
+    bool createOnly = false,
+    String? expectedBusinessDate,
+  }) => _mobileUpsert(
+    posOrderId: posOrderId,
+    tableNumbers: tableNumbers,
+    floor: floor,
+    waiterName: waiterName,
+    items: items,
+    totalAmount: totalAmount,
+    source: source,
+    requestId: requestId,
+    createOnly: createOnly,
+    expectedBusinessDate: expectedBusinessDate,
+    guestCount: guestCount,
   );
 
-  static Future<Order?> _updateTrackedUpsertMobileDineInOrder({
+  static Future<Order?> _mobileUpsert({
     required int posOrderId,
     required List<String> tableNumbers,
     required String floor,
     required String waiterName,
     required List<OrderItem> items,
-    int guestCount = 0,
     double? totalAmount,
-    AuditSource source = AuditSource.manager,
-  }) async {
-    final existing = getOrder(posOrderId);
-    if (existing != null) {
-      await _auditManagerItemReplacement(
-        order: existing,
-        updatedItems: items,
-        actor: waiterName,
-        source: source,
-      );
-      existing.items = items;
-      if (totalAmount != null) {
-        existing.totalAmount = totalAmount;
-      } else {
-        existing.recalculateTotal();
+    required AuditSource source,
+    String? requestId,
+    bool createOnly = false,
+    String? expectedBusinessDate,
+    int guestCount = 0,
+    String customerName = '',
+    String pickupTime = '',
+  }) {
+    final frozenItems = items.map((i) => i.clone()).toList();
+    final tables = tableNumbers
+        .map(
+          (t) => floor == 'takeaway'
+              ? t.trim()
+              : TableRepository.normalizeTableIdentifier(t, floor),
+        )
+        .whereType<String>()
+        .toSet()
+        .toList();
+    final date = expectedBusinessDate ?? OrderTableMutationRepository.dateKey;
+    final request = <String, dynamic>{
+      'kind': 'mobileUpsert',
+      if (createOnly) 'createOnly': true,
+      if (expectedBusinessDate != null)
+        'expectedBusinessDate': expectedBusinessDate,
+      'posOrderId': posOrderId,
+      'tables': tables,
+      'floor': floor,
+      'actor': waiterName,
+      'source': source.wireValue,
+      'items': frozenItems
+          .map(OrderTableMutationRepository.itemRequest)
+          .toList(),
+      'totalAmount': totalAmount,
+      'guestCount': guestCount,
+      'customerName': customerName,
+      'pickupTime': pickupTime,
+    };
+    // Capture the expected existing image before waiting for another owner.
+    final expected = getOrder(posOrderId);
+    return UpdateReadiness.mutate('upsertMobileDineInOrder', () async {
+      if (requestId != null) {
+        final old = OrderTableMutationRepository.retry(requestId, request);
+        if (old != null) return old;
       }
-      existing.updatedAt = BusinessDayRepository.getCurrentDateTime();
-      await existing.save();
-      return existing;
-    }
-
-    final normalizedTables = <String>[];
-    final seenTables = <String>{};
-    for (final raw in tableNumbers) {
-      final normalized = TableRepository.normalizeTableIdentifier(raw, floor);
-      if (normalized == null) continue;
-      if (seenTables.add(normalized)) {
-        normalizedTables.add(normalized);
+      if (date != OrderTableMutationRepository.dateKey)
+        throw OrderMutationConflict('stale_date', 'Business date changed');
+      final existing = getOrder(posOrderId);
+      if (existing != null) {
+        if (createOnly)
+          throw OrderMutationConflict(
+            'order_id_conflict',
+            'A local Order already owns this ID',
+          );
+        if (expected != null)
+          OrderTableMutationRepository.requireFresh(expected);
+        OrderTableMutationRepository.requireFresh(existing);
+        if (existing.floor != floor ||
+            !listEquals(existing.tableNumbers, tables)) {
+          throw OrderMutationConflict(
+            'request_conflict',
+            'Upsert identity cannot change physical ownership',
+          );
+        }
+        await _auditManagerItemReplacement(
+          order: existing,
+          updatedItems: frozenItems,
+          actor: waiterName,
+          source: source,
+        );
+        existing.items = frozenItems;
+        if (floor == 'takeaway') {
+          existing.customerName = customerName;
+          existing.pickupTime = pickupTime;
+        }
+        if (totalAmount != null) {
+          existing.totalAmount = totalAmount;
+        } else {
+          existing.recalculateTotal();
+        }
+        existing.updatedAt = OrderTableMutationRepository.now();
+        await existing.save();
+        return existing;
       }
-    }
-    if (normalizedTables.isEmpty) {
-      return null;
-    }
-
-    final order = Order(
-      orderId: posOrderId,
-      tableNumbers: normalizedTables,
-      floor: floor,
-      items: items,
-      totalAmount: totalAmount ?? 0,
-      createdAt: BusinessDayRepository.getCurrentDateTime(),
-      createdBy: waiterName,
-      // Mobile-originated walk-in orders are auto-confirmed (skip manual
-      // "შეკვეთის დადასტურება" step on POS) so the kitchen check fires immediately.
-      status: OrderStatus.confirmed.storageValue,
-      includeServiceFee: false,
-      openedByUserId: waiterName,
-    );
-    if (totalAmount == null) {
-      order.recalculateTotal();
-    }
-
-    await DatabaseCore.orderBox!.add(order);
-    final lastId = (DatabaseCore.settingsBox?.get('lastOrderId') as int?) ?? 0;
-    if (posOrderId > lastId) {
-      await DatabaseCore.settingsBox?.put('lastOrderId', posOrderId);
-    }
-
-    for (final tableNumber in normalizedTables) {
-      await TableRepository.reserveTable(
-        tableNumber: tableNumber,
-        floor: floor,
-        username: waiterName,
+      if (expected != null)
+        throw OrderMutationConflict(
+          'stale_order',
+          'Expected Order disappeared',
+        );
+      final normalized = <String>[];
+      for (final raw in tables) {
+        final n = floor == 'takeaway'
+            ? raw
+            : TableRepository.normalizeTableIdentifier(raw, floor);
+        if (n != null && !normalized.contains(n)) normalized.add(n);
+      }
+      if (normalized.isEmpty) return null;
+      final order = Order(
         orderId: posOrderId,
-        reservationId: null,
+        tableNumbers: normalized,
+        floor: floor,
+        items: frozenItems,
+        totalAmount: totalAmount ?? 0,
+        createdAt: OrderTableMutationRepository.now(),
+        createdBy: waiterName,
+        status: OrderStatus.confirmed.storageValue,
+        includeServiceFee: false,
+        openedByUserId: waiterName,
+        customerName: customerName,
+        pickupTime: pickupTime,
       );
-    }
-
-    SyncHub.notify(
-      SyncEvent(
-        type: SyncEventType.orders,
-        action: 'created',
-        payload: {'orderId': posOrderId, 'source': 'mobile'},
-      ),
-    );
-
-    await _appendCreationAudit(
-      order: order,
-      creationEvent: AuditEvent(
-        type: AuditEventType.createWalkIn,
-        itemName: OrderAuditDetails.orderItemName,
-        previousQty: 0,
-        newQty: 0,
-        waiterId: waiterName,
-        waiterName: waiterName,
-        timestamp: order.createdAt,
-        details: <String, dynamic>{
-          ...OrderAuditDetails.base(
-            order: order,
-            orderKind: OrderAuditDetails.walkIn,
-            source: source,
-            actorId: waiterName,
-          ),
-          if (guestCount > 0) 'guestCount': guestCount,
-          'includeServiceFee': order.includeServiceFee,
-        },
-      ),
-      actor: waiterName,
-    );
-
-    return order;
+      if (totalAmount == null) order.recalculateTotal();
+      final event = floor == 'takeaway'
+          ? _takeawayCreationEvent(
+              order: order,
+              source: source,
+              actor: waiterName,
+            )
+          : AuditEvent(
+              type: AuditEventType.createWalkIn,
+              itemName: OrderAuditDetails.orderItemName,
+              previousQty: 0,
+              newQty: 0,
+              waiterId: waiterName,
+              waiterName: waiterName,
+              timestamp: order.createdAt,
+              details: {
+                ...OrderAuditDetails.base(
+                  order: order,
+                  orderKind: OrderAuditDetails.walkIn,
+                  source: source,
+                  actorId: waiterName,
+                ),
+                'includeServiceFee': false,
+                if (guestCount > 0) 'guestCount': guestCount,
+              },
+            );
+      return OrderTableMutationRepository.create(
+        request: request,
+        order: order,
+        creationEvent: event,
+        requestId: requestId,
+      );
+    });
   }
 
   static Future<Order> createOrderForPackage({
@@ -555,175 +552,42 @@ class OrderRepository {
     required int guestCount,
     required String createdBy,
     AuditSource source = AuditSource.pos,
-  }) => UpdateReadiness.track(
-    'createOrderForPackage',
-    () => _updateTrackedCreateOrderForPackage(
-      package: package,
-      tableNumbers: tableNumbers,
-      floor: floor,
-      guestCount: guestCount,
-      createdBy: createdBy,
-      source: source,
-    ),
-  );
-
-  static Future<Order> _updateTrackedCreateOrderForPackage({
-    required Package package,
-    required List<String> tableNumbers,
-    required String floor,
-    required int guestCount,
-    required String createdBy,
-    AuditSource source = AuditSource.pos,
-  }) async {
-    if (guestCount <= 0) {
-      throw ArgumentError('Guest count must be greater than zero');
-    }
-
-    final uniqueTables = <String>[];
-    for (final raw in tableNumbers) {
-      final trimmed = raw.trim();
-      if (trimmed.isEmpty) {
-        continue;
-      }
-      if (!uniqueTables.contains(trimmed)) {
-        uniqueTables.add(trimmed);
-      }
-    }
-
-    if (uniqueTables.isEmpty) {
-      throw ArgumentError('Select at least one table');
-    }
-
-    if (!package.isActive) {
-      throw StateError('Activate the package before assigning it to tables');
-    }
-
-    if (package.allowedTables.isNotEmpty) {
-      final disallowed = uniqueTables
-          .where((table) => !package.allowedTables.contains(table))
-          .toList();
-      if (disallowed.isNotEmpty) {
-        throw StateError(
-          'Package is not available for tables ${disallowed.join(", ")}',
-        );
-      }
-    }
-
-    final conflictedTables = <String>{};
-    for (final order in DatabaseCore.orderBox!.values) {
-      if (!isOrderStatusActive(order.status)) {
-        continue;
-      }
-      if (order.floor != floor) {
-        continue;
-      }
-      if (order.tableNumbers.any(uniqueTables.contains)) {
-        conflictedTables.addAll(
-          order.tableNumbers.where(uniqueTables.contains),
-        );
-      }
-    }
-
-    if (conflictedTables.isNotEmpty) {
-      final sorted = conflictedTables.toList()..sort();
-      final suffix = sorted.length > 1 ? 's' : '';
-      final verb = sorted.length > 1 ? 'have' : 'has';
-      throw StateError(
-        'Table$suffix ${sorted.join(", ")} already $verb an active order',
-      );
-    }
-
-    final includeServiceForPackage =
-        SettingsRepository.defaultIncludeServiceFee();
-
-    final order = await createOrder(
-      tableNumbers: uniqueTables,
-      floor: floor,
-      createdBy: createdBy,
-      items: <OrderItem>[],
-      includeServiceFee: includeServiceForPackage,
-      source: source,
-      forPackage: true,
-    );
-
-    final packageItems = package.items
+    String? requestId,
+    String? expectedBusinessDate,
+  }) {
+    final frozen = _copyPackage(package);
+    final date = expectedBusinessDate ?? OrderTableMutationRepository.dateKey;
+    final tables = tableNumbers
         .map(
-          (item) => OrderItem(
-            itemKey: item.itemKey,
-            itemName: item.itemName,
-            unitPrice: item.unitPrice,
-            quantity: item.quantity,
-            total: double.parse(
-              (item.unitPrice * item.quantity).toStringAsFixed(2),
-            ),
-            menuItemId: item.menuItemId,
-            variantId: item.variantId,
-          ),
+          (t) => floor == 'takeaway'
+              ? t.trim()
+              : TableRepository.normalizeTableIdentifier(t, floor),
         )
+        .whereType<String>()
+        .toSet()
         .toList();
-
-    order.packageId = package.packageId;
-    order.packageName = package.name;
-    order.packageUnitPrice = package.pricePerPerson;
-    order.packageGuestCount = guestCount;
-    order.packageItems = packageItems;
-    order.packagePrice = double.parse(
-      (package.pricePerPerson * guestCount).toStringAsFixed(2),
-    );
-    order.includeServiceFee = includeServiceForPackage;
-    order.updatedAt = BusinessDayRepository.getCurrentDateTime();
-
-    await updateOrder(order);
-
-    // The package is what the guests are being sold; the report says so
-    // rather than showing an empty Order that silently became `confirmed`.
-    await _appendCreationAudit(
-      order: order,
-      creationEvent: AuditEvent(
-        type: AuditEventType.applyPackage,
-        itemName: package.name,
-        previousQty: 0,
-        newQty: 0,
-        waiterId: createdBy,
-        waiterName: createdBy,
-        timestamp: OrderAuditDetails.strictlyAfter(
-          order.createdAt,
-          order.updatedAt ?? order.createdAt,
-        ),
-        details: <String, dynamic>{
-          ...OrderAuditDetails.base(
-            order: order,
-            orderKind: OrderAuditDetails.package,
-            source: source,
-            actorId: createdBy,
-          ),
-          'packageId': package.packageId,
-          'packageName': package.name,
-          'packageGuestCount': guestCount,
-          'packageUnitPrice': package.pricePerPerson,
-          'packagePrice': order.packagePrice,
-          'packageItems': packageItems
-              .map(
-                (item) => <String, dynamic>{
-                  'itemName': item.itemName,
-                  'quantity': item.quantity,
-                  'unitPrice': item.unitPrice,
-                  if (item.menuItemId != null) 'menuItemId': item.menuItemId,
-                  if (item.variantId != null) 'variantId': item.variantId,
-                },
-              )
-              .toList(growable: false),
-        },
-      ),
-      actor: createdBy,
-    );
-
-    await updateOrderStatus(
-      orderId: order.orderId,
-      status: OrderStatus.confirmed.storageValue,
-    );
-
-    return order;
+    return UpdateReadiness.mutate('createOrderForPackage', () async {
+      if (guestCount <= 0)
+        throw ArgumentError('Guest count must be greater than zero');
+      if (!frozen.isActive)
+        throw StateError('Activate the package before assigning it to tables');
+      if (frozen.allowedTables.isNotEmpty &&
+          tables.any((t) => !frozen.allowedTables.contains(t))) {
+        throw StateError('Package is not available for selected tables');
+      }
+      return createOrder(
+        tableNumbers: tables,
+        floor: floor,
+        createdBy: createdBy,
+        items: [],
+        source: source,
+        forPackage: true,
+        initialPackage: frozen,
+        packageGuestCount: guestCount,
+        requestId: requestId,
+        expectedBusinessDate: date,
+      );
+    });
   }
 
   static AuditEvent _takeawayCreationEvent({
@@ -763,42 +627,6 @@ class OrderRepository {
   /// A report locked by an earlier life of the same id (a repair delete
   /// followed by a Manager re-send) cannot take the event; the Order still
   /// exists and creation is not rolled back over its trail.
-  static Future<void> _appendCreationAudit({
-    required Order order,
-    required AuditEvent creationEvent,
-    required String actor,
-  }) async {
-    final initialEvents = order.items
-        .map(
-          (item) => AuditEvent(
-            type: AuditEventType.addItem,
-            itemName: item.itemName,
-            previousQty: 0,
-            newQty: item.quantity,
-            waiterId: actor,
-            waiterName: actor,
-            timestamp: order.createdAt,
-            details: <String, dynamic>{
-              if (item.menuItemId != null) 'menuItemId': item.menuItemId,
-              if (item.variantId != null) 'variantId': item.variantId,
-            },
-          ),
-        )
-        .toList();
-    try {
-      await AuditRepository.appendOrderAuditEvents(
-        orderId: order.orderId,
-        events: [creationEvent, ...initialEvents],
-      );
-    } on StateError catch (e) {
-      if (!e.toString().toLowerCase().contains('locked')) rethrow;
-      debugPrint(
-        '[Audit] Report for order ${order.orderId} is locked; '
-        'creation event not recorded',
-      );
-    }
-  }
-
   /// The item audit for a Manager upsert that lands on an Order that already
   /// exists.
   ///
@@ -855,19 +683,16 @@ class OrderRepository {
 
   // Get order by ID
   static Order? getOrder(int orderId) {
-    try {
-      return DatabaseCore.orderBox!.values.firstWhere(
-        (order) => order.orderId == orderId,
-      );
-    } catch (e) {
-      return null;
-    }
+    final row = OrderTableMutationRepository.persisted(orderId);
+    return row == null
+        ? null
+        : OrderTableMutationRepository.detached(row.$2, row.$1);
   }
 
-  // Get all orders
-  static List<Order> getAllOrders() {
-    return DatabaseCore.orderBox!.values.toList();
-  }
+  static List<Order> getAllOrders() => [
+    for (final row in DatabaseCore.orderBox!.toMap().entries)
+      OrderTableMutationRepository.detached(row.value, row.key),
+  ];
 
   static bool isOrderStatusActive(String status) {
     final normalized = status.toLowerCase();
@@ -877,79 +702,45 @@ class OrderRepository {
   }
 
   // Get active orders (not paid or cancelled)
-  static List<Order> getActiveOrders() {
-    return DatabaseCore.orderBox!.values.where((order) {
-      return isOrderStatusActive(order.status);
-    }).toList();
-  }
+  static List<Order> getActiveOrders() =>
+      getAllOrders().where((o) => isOrderStatusActive(o.status)).toList();
 
   // Update order
   static Future<void> updateOrder(
     Order order, {
     bool? previousIncludeServiceFee,
-  }) => UpdateReadiness.track(
-    'updateOrder',
-    () => _updateTrackedUpdateOrder(
-      order,
-      previousIncludeServiceFee: previousIncludeServiceFee,
-    ),
-  );
+  }) {
+    final frozen = order.clone();
+    frozen.mutationBaseline = order.mutationBaseline == null
+        ? OrderTableMutationRepository.image(order)
+        : Map.of(order.mutationBaseline!);
+    return UpdateReadiness.mutate('updateOrder', () async {
+      await _updateTrackedUpdateOrder(
+        frozen,
+        previousIncludeServiceFee: previousIncludeServiceFee,
+      );
+      order.mutationBaseline = frozen.mutationBaseline;
+      order.mutationKey = frozen.mutationKey;
+      order.totalAmount = frozen.totalAmount;
+    });
+  }
 
   static Future<void> _updateTrackedUpdateOrder(
     Order order, {
     bool? previousIncludeServiceFee,
   }) async {
+    OrderTableMutationRepository.requireFresh(order);
     order.recalculateTotal();
-
-    Order? original;
-    if (order.isInBox) {
-      original = order;
-    } else {
-      try {
-        original = DatabaseCore.orderBox!.values.firstWhere(
-          (o) => o.orderId == order.orderId,
-        );
-      } catch (e) {
-        // If not found, we can't update
-        return;
-      }
-    }
-
-    final prevIncludeServiceFee =
-        previousIncludeServiceFee ?? original.includeServiceFee;
-
-    if (original != order) {
-      original.items = order.items;
-      original.totalAmount = order.totalAmount;
-      original.includeServiceFee = order.includeServiceFee;
-      original.discountAmount = order.discountAmount;
-      original.manualAdjustmentAmount = order.manualAdjustmentAmount;
-      original.updatedAt = order.updatedAt;
-      original.status = order.status;
-      original.paymentMethod = order.paymentMethod;
-      original.closedAt = order.closedAt;
-      original.packageId = order.packageId;
-      original.packageName = order.packageName;
-      original.packagePrice = order.packagePrice;
-      original.packageItems = order.packageItems;
-      original.packageUnitPrice = order.packageUnitPrice;
-      original.packageGuestCount = order.packageGuestCount;
-    }
-
-    await OrderTableShadow.observe(
-      proposed: () => PosShadowProjection.orders([original!]),
-      actual: () => PosShadowProjection.orders([original!]),
-      operation: () => original!.save(),
-    );
-    final serviceFeeChanged =
-        original.includeServiceFee != prevIncludeServiceFee;
+    await order.save();
     SyncHub.notify(
       SyncEvent(
         type: SyncEventType.orders,
         action: 'updated',
         payload: {
           'orderId': order.orderId,
-          if (serviceFeeChanged) 'serviceFeeChanged': true,
+          if (previousIncludeServiceFee != null &&
+              previousIncludeServiceFee != order.includeServiceFee)
+            'serviceFeeChanged': true,
         },
       ),
     );
@@ -971,7 +762,7 @@ class OrderRepository {
   static Future<void> updateOrderStatus({
     required int orderId,
     required String status,
-  }) => UpdateReadiness.track(
+  }) => UpdateReadiness.mutate(
     'updateOrderStatus',
     () => _updateTrackedUpdateOrderStatus(orderId: orderId, status: status),
   );
@@ -991,8 +782,24 @@ class OrderRepository {
     final canonical = parsed.storageValue;
     final order = getOrder(orderId);
     if (order != null) {
-      order.updateStatus(canonical);
-      await order.save();
+      if (parsed == OrderStatus.cancelled) {
+        final outcome = await CancelOrderTransaction.run(
+          orderId: orderId,
+          actorId: order.createdBy,
+          source: AuditSource.pos,
+          expectedOrder: order,
+        );
+        if (![
+          CancelOrderOutcome.cancelled,
+          CancelOrderOutcome.alreadyCancelled,
+        ].contains(outcome))
+          throw OrderMutationConflict(
+            'recovery_required',
+            'Cancellation lifecycle did not complete',
+          );
+        return;
+      }
+      await order.updateStatus(canonical);
 
       // A settled order no longer holds its tables. Previously spelled
       // `paid || cancelled`; `paid` now normalizes to `closed`, and no
@@ -1003,6 +810,7 @@ class OrderRepository {
           await TableRepository.freeTable(
             tableNumber: tableNumber,
             floor: order.floor,
+            expectedOrderId: order.orderId,
           );
         }
       }
@@ -1031,7 +839,7 @@ class OrderRepository {
     required int orderId,
     required String deletedBy,
     bool cancelLinkedReservation = true,
-  }) => UpdateReadiness.track(
+  }) => UpdateReadiness.mutate(
     'hardDeleteOrderForRepair',
     () => _updateTrackedHardDeleteOrderForRepair(
       orderId: orderId,
@@ -1051,11 +859,20 @@ class OrderRepository {
         return false;
       }
 
+      OrderTableMutationRepository.requireConsistent(orderId: orderId);
+      final stored = OrderTableMutationRepository.persisted(
+        orderId,
+        uuid: order.orderUuid,
+      )!;
+      await DatabaseCore.orderBox!.delete(stored.$1);
+      await DatabaseCore.orderBox!.flush();
+
       // Free all tables associated with this order
       for (final tableNumber in order.tableNumbers) {
         await TableRepository.freeTable(
           tableNumber: tableNumber,
           floor: order.floor,
+          expectedOrderId: order.orderId,
         );
       }
 
@@ -1080,7 +897,6 @@ class OrderRepository {
       };
 
       // Delete the order record itself
-      await order.delete();
 
       unawaited(
         AuditEventService.logEvent(
@@ -1110,7 +926,7 @@ class OrderRepository {
   static Future<void> addItemToOrder({
     required int orderId,
     required OrderItem item,
-  }) => UpdateReadiness.track(
+  }) => UpdateReadiness.mutate(
     'addItemToOrder',
     () => _updateTrackedAddItemToOrder(orderId: orderId, item: item),
   );
@@ -1121,7 +937,7 @@ class OrderRepository {
   }) async {
     final order = getOrder(orderId);
     if (order != null) {
-      order.addItem(item);
+      await order.addItem(item);
       await updateOrder(order);
     }
   }
@@ -1130,7 +946,7 @@ class OrderRepository {
   static Future<void> removeItemFromOrder({
     required int orderId,
     required String itemKey,
-  }) => UpdateReadiness.track(
+  }) => UpdateReadiness.mutate(
     'removeItemFromOrder',
     () => _updateTrackedRemoveItemFromOrder(orderId: orderId, itemKey: itemKey),
   );
@@ -1141,7 +957,7 @@ class OrderRepository {
   }) async {
     final order = getOrder(orderId);
     if (order != null) {
-      order.removeItem(itemKey);
+      await order.removeItem(itemKey);
       await updateOrder(order);
     }
   }
@@ -1151,7 +967,7 @@ class OrderRepository {
     required int orderId,
     required String itemKey,
     required int quantity,
-  }) => UpdateReadiness.track(
+  }) => UpdateReadiness.mutate(
     'updateOrderItemQuantity',
     () => _updateTrackedUpdateOrderItemQuantity(
       orderId: orderId,
@@ -1167,7 +983,7 @@ class OrderRepository {
   }) async {
     final order = getOrder(orderId);
     if (order != null) {
-      order.updateItemQuantity(itemKey, quantity);
+      await order.updateItemQuantity(itemKey, quantity);
       await updateOrder(order);
     }
   }

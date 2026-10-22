@@ -1,0 +1,43 @@
+$ErrorActionPreference='Stop';$ProgressPreference='SilentlyContinue';Set-StrictMode -Version Latest
+$sid=[Security.Principal.WindowsIdentity]::GetCurrent().User.Value
+if($sid -eq 'S-1-5-18' -or $sid -ne 'S-1-5-21-611125631-3759947118-1641436196-1000'){throw 'Current-user identity changed/refused'}
+$share='\\Mac\Home\Developer\vynic\docs\proofs\POS_SHARED_PRINT_GO_275688e1_2026-10-06'
+$stage=Join-Path $share 'software-windows-flutter-stage-v2'
+$results=Join-Path $share 'software-windows-flutter-analysis-result-v2'
+if(Test-Path -LiteralPath $results){throw 'Fresh analysis result path occupied'}
+$pin=Join-Path $stage 'runner-artifacts.json'
+if((Get-FileHash -LiteralPath $pin -Algorithm SHA256).Hash.ToLowerInvariant() -ne 'a13ef6185fa4ebdcb5866aa7444fc349b678bf132f40cfab6de47e44f8a2621b'){throw 'Runner pin mismatch'}
+$assets=Get-Content -LiteralPath $pin -Raw | ConvertFrom-Json
+foreach($entry in $assets.assets.PSObject.Properties){$p=Join-Path $stage $entry.Name;if((Get-Item -LiteralPath $p).Length -ne $entry.Value.bytes -or (Get-FileHash -LiteralPath $p -Algorithm SHA256).Hash.ToLowerInvariant() -ne $entry.Value.sha256){throw 'Staged asset pin mismatch'}}
+$receipt=Get-Content -LiteralPath (Join-Path $stage 'stage-receipt.json') -Raw | ConvertFrom-Json
+$manifest=Get-Content -LiteralPath (Join-Path $stage 'source-manifest.json') -Raw | ConvertFrom-Json
+[string[]]$analysis=Get-Content -LiteralPath (Join-Path $stage 'analysis-selection.json') -Raw | ConvertFrom-Json
+if($analysis.Count -ne 68 -or @($manifest.PSObject.Properties).Count -ne 1109){throw 'Frozen selection count mismatch'}
+$job=Join-Path $env:LOCALAPPDATA $receipt.guestJobSuffix
+$source=Join-Path $job 'source';$fixtures=Join-Path $job 'fixtures'
+function Assert-Inputs {
+foreach($entry in $manifest.PSObject.Properties){$p=Join-Path $source $entry.Name;$f=Get-Item -LiteralPath $p;if(($f.Attributes -band [IO.FileAttributes]::ReparsePoint) -ne 0 -or $f.Length -ne $entry.Value.bytes -or (Get-FileHash -LiteralPath $p -Algorithm SHA256).Hash.ToLowerInvariant() -ne $entry.Value.sha256){throw ('Frozen source mismatch: '+$entry.Name)}}
+foreach($entry in $receipt.fixtures.PSObject.Properties){$p=Join-Path $fixtures $entry.Name;if((Get-Item -LiteralPath $p).Length -ne $entry.Value.bytes -or (Get-FileHash -LiteralPath $p -Algorithm SHA256).Hash.ToLowerInvariant() -ne $entry.Value.sha256){throw 'Frozen fixture mismatch'}}
+}
+New-Item -ItemType Directory -Path $results | Out-Null
+$status='FAILED';$failure=$null;$exit=$null;$before=$false;$after=$false;$started=[DateTime]::UtcNow.ToString('o')
+$jobsBefore=@(Get-CimInstance Win32_PrintJob).Count
+try {
+ if($jobsBefore -ne 0){throw 'Existing print jobs; qualification refused'}
+ Assert-Inputs;$before=$true
+ $env:FLUTTER_SUPPRESS_ANALYTICS='true';$env:DART_SUPPRESS_ANALYTICS='true';$env:CI='true'
+ $env:HTTP_PROXY='http://127.0.0.1:9';$env:HTTPS_PROXY='http://127.0.0.1:9';$env:NO_PROXY='127.0.0.1,localhost,::1'
+ $dart=Join-Path $env:USERPROFILE 'develop\flutter\bin\cache\dart-sdk\bin\dart.exe'
+ Set-Location -LiteralPath (Join-Path $source 'apps\operations')
+ & $dart --suppress-analytics analyze @analysis *> (Join-Path $results 'analysis.log')
+ $exit=$LASTEXITCODE
+ Assert-Inputs;$after=$true
+ if($exit -ne 0){throw ('Native Dart analysis failed: '+$exit)}
+ $status='PASS'
+} catch {$failure=$_.ToString()} finally {
+ $jobsAfter=@(Get-CimInstance Win32_PrintJob).Count
+ if($jobsAfter -ne 0){$status='FAILED';$failure='Nonzero final print jobs: '+$failure}
+ [ordered]@{schema=1;status=$status;failure=$failure;SID=$sid;currentUser=[Security.Principal.WindowsIdentity]::GetCurrent().Name;startedUtc=$started;finishedUtc=[DateTime]::UtcNow.ToString('o');sourceReceiptSHA256=$receipt.finalSourceReceiptSHA256;sourceFiles=1109;analysisFiles=$analysis.Count;analysisExitCode=$exit;sourceBefore=$before;sourceAfter=$after;fixturesVerified=$after;printJobsBefore=$jobsBefore;printJobsAfter=$jobsAfter;physicalJobs=0;productStarted=$false;serviceOperations=$false} | ConvertTo-Json -Depth 6 | Set-Content -Encoding UTF8 (Join-Path $results 'windows-software-analysis.json')
+}
+if($status -ne 'PASS'){throw $failure}
+Write-Output 'SOFTWARE_ANALYSIS_PASS_UNCHANGED_FIRST_COHORT_AFTER_FAILED_TESTS'

@@ -1,0 +1,9 @@
+{
+  "files": 898,
+  "sourceZipSHA256": "9658d3ace23b36c9991298813a3ac23191e36d8c0c5b9006c58747f8fbd271a9",
+  "sourceManifestSHA256": "5ecd47010ddba432a6a223c7768fde0098498c87cba40caf5358d3afb1d358f8",
+  "firebaseSdk": "C:\\Users\\vaanskii\\AppData\\Local\\VynicLocalReleaseBuild\\e7a0ffd0bb571781\\apps\\operations\\build\\windows\\x64\\extracted\\firebase_cpp_sdk_windows",
+  "firebaseVersion": "13.5.0",
+  "firebaseVersionHeaderSha256": "8485c4305c02638bca186a082a7c3b94040f995bc542664f3be002610847da24",
+  "scope": "Existing official product.prepare(pos) over frozen 898-file generic candidate; eight declared metadata/data changes, no unrelated WIP"
+}

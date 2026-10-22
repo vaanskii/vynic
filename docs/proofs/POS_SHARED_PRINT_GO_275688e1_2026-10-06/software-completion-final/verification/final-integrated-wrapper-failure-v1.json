@@ -1,0 +1,5 @@
+{
+  "status": "SUMMARIZER_FAILED_BEFORE_RECEIPT",
+  "failure": "A top-level counter added nullable Test fields; fixed by counting matching records. No test/source change.",
+  "sourceManifestSHA256": "193e4800e5d0733a30bc6c8d4ac993590219363941e69a787bba5ac3681c8f68"
+}

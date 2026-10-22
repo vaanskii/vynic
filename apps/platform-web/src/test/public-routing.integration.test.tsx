@@ -1,7 +1,7 @@
 import { screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { LOCALE_STORAGE_KEY } from "../lib/i18n";
-import { installApi, renderPlatform } from "./platform-test-utils";
+import { installApi, renderPublic as renderPlatform } from "./platform-test-utils";
 
 describe("public language routing", () => {
   it("redirects the root to the saved language", async () => {

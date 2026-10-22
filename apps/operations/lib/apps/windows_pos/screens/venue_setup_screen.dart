@@ -5,18 +5,13 @@ import 'package:vynic/core/services/database_service.dart';
 import 'package:vynic/core/services/pos/venue_identity_draft.dart';
 import 'package:vynic/core/ui/vynic_floor_tokens.dart';
 import 'package:vynic/apps/windows_pos/widgets/shared/venue_identity_panel.dart';
+import 'package:vynic/core/services/pos/pos_input_settings.dart';
+import 'package:vynic/core/database/repositories/settings_repository.dart';
 
 /// The one screen a terminal shows before it has ever been used.
 ///
-/// A POS out of the box used to come up as this restaurant: nine tables, four
-/// VIP booths, a full Georgian menu and a manager called „vaanskii". A venue
-/// had to delete all of it before it could enter its own. Now it comes up
-/// empty and asks a single question.
-///
-/// Only the name is asked here. Printers, the backend address and the floor
-/// plan are all things that need a network, a printer on a desk, and a room to
-/// look at — they belong in Settings, where they can be changed again when the
-/// second printer arrives.
+/// Collect restaurant identity and this terminal's input preference after login.
+/// Completion is persisted last so interrupted saves can be safely retried.
 class VenueSetupScreen extends StatefulWidget {
   const VenueSetupScreen({super.key, required this.onCompleted});
 
@@ -30,11 +25,13 @@ class VenueSetupScreen extends StatefulWidget {
 class _VenueSetupScreenState extends State<VenueSetupScreen> {
   final VenueIdentityDraft _draft = VenueIdentityDraft();
   bool _saving = false;
+  late bool _touchInput;
   String? _error;
 
   @override
   void initState() {
     super.initState();
+    _touchInput = SettingsRepository.getPosOnScreenInputEnabled();
     _draft.addListener(_onDraftChanged);
   }
 
@@ -59,6 +56,7 @@ class _VenueSetupScreenState extends State<VenueSetupScreen> {
     });
     try {
       await _draft.save();
+      await PosInputSettings.save(_touchInput);
       await DatabaseService.markSetupComplete();
     } catch (error, stack) {
       debugPrint('Venue setup save failed: $error\n$stack');
@@ -104,10 +102,9 @@ class _VenueSetupScreenState extends State<VenueSetupScreen> {
                   ),
                   const SizedBox(height: 6),
                   const Text(
-                    'დასაწყებად მხოლოდ რესტორნის სახელი შეიყვანეთ. '
-                    'ლოგოს მოგვიანებით პარამეტრებიდან დაამატებთ. '
-                    'მაგიდები, მენიუ და პრინტერები ცარიელია — '
-                    'მათ პარამეტრებიდან დაამატებთ.',
+                    'შეამოწმეთ რესტორნის მონაცემები და აირჩიეთ შეყვანის გზა. '
+                    'მისამართი და ტელეფონი სურვილისამებრ შეგიძლიათ დაამატოთ. '
+                    'არჩევანის შეცვლა მოგვიანებითაც შეგიძლიათ პარამეტრებიდან.',
                     style: TextStyle(
                       color: VynicFloorTokens.textMuted,
                       fontSize: 13.5,
@@ -119,9 +116,31 @@ class _VenueSetupScreenState extends State<VenueSetupScreen> {
                   // later looks like the place it was first entered.
                   VenueIdentityPanel(
                     draft: _draft,
-                    showAddressAndPhone: false,
+                    showAddressAndPhone: true,
                     showSaveButton: false,
                     showLogo: false,
+                  ),
+                  const SizedBox(height: 20),
+                  const Text('როგორ იყენებთ POS-ს?'),
+                  const SizedBox(height: 8),
+                  SegmentedButton<bool>(
+                    segments: const [
+                      ButtonSegment(
+                        value: true,
+                        label: Text('სენსორული ეკრანი'),
+                        icon: Icon(Icons.touch_app),
+                      ),
+                      ButtonSegment(
+                        value: false,
+                        label: Text('კლავიატურა'),
+                        icon: Icon(Icons.keyboard),
+                      ),
+                    ],
+                    selected: {_touchInput},
+                    onSelectionChanged: _saving
+                        ? null
+                        : (values) =>
+                              setState(() => _touchInput = values.single),
                   ),
                   const SizedBox(height: 20),
                   if (_error != null)

@@ -1,0 +1,109 @@
+[
+  {
+    "label": "inventory-regression",
+    "exitCode": 0,
+    "command": [
+      "npm",
+      "test",
+      "--",
+      "--runInBand",
+      "--testPathPatterns=inventory/.*integration.spec.ts",
+      "--json",
+      "--outputFile",
+      "/private/tmp/vynic-inv01-f1f2-6sijarr6/inventory-regression-jest.json"
+    ]
+  },
+  {
+    "label": "backend-aggregate",
+    "exitCode": 0,
+    "command": [
+      "npm",
+      "test",
+      "--",
+      "--runInBand",
+      "--json",
+      "--outputFile",
+      "/private/tmp/vynic-inv01-f1f2-6sijarr6/backend-aggregate-jest.json"
+    ]
+  },
+  {
+    "label": "backend-typecheck",
+    "exitCode": 0,
+    "command": [
+      "npx",
+      "tsc",
+      "--noEmit"
+    ]
+  },
+  {
+    "label": "backend-build",
+    "exitCode": 0,
+    "command": [
+      "npm",
+      "run",
+      "build"
+    ]
+  },
+  {
+    "label": "new-files-lint",
+    "exitCode": 0,
+    "command": [
+      "npx",
+      "eslint",
+      "src/inventory/stock-locations.ts",
+      "src/inventory/inventory-locations.integration.spec.ts",
+      "test/inventory-location-process.fixture.ts"
+    ]
+  },
+  {
+    "label": "changed-files-format",
+    "exitCode": 0,
+    "command": [
+      "npx",
+      "prettier",
+      "--check",
+      "src/inventory/stock-locations.ts",
+      "src/inventory/inventory-locations.integration.spec.ts",
+      "test/inventory-location-process.fixture.ts",
+      "src/inventory/inventory.service.ts",
+      "src/inventory/receiving.service.ts",
+      "src/inventory/inventory-audit.ts",
+      "src/mobile/mobile.controller.ts",
+      "src/local-tools/deletion-matrix.ts"
+    ]
+  },
+  {
+    "label": "prisma-validate",
+    "exitCode": 0,
+    "command": [
+      "npx",
+      "prisma",
+      "validate"
+    ]
+  },
+  {
+    "label": "prisma-diff",
+    "exitCode": 2,
+    "command": [
+      "npx",
+      "prisma",
+      "migrate",
+      "diff",
+      "--from-url",
+      "OWNED_DISPOSABLE_DATABASE",
+      "--to-schema-datamodel",
+      "prisma/schema.prisma",
+      "--exit-code"
+    ]
+  },
+  {
+    "label": "migration-retry",
+    "exitCode": 0,
+    "command": [
+      "npx",
+      "prisma",
+      "migrate",
+      "deploy"
+    ]
+  }
+]

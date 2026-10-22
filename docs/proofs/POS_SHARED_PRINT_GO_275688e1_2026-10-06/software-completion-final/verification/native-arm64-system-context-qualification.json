@@ -1,0 +1,116 @@
+{
+  "status": "PASS",
+  "scope": "native ARM64 nonphysical software qualification; default SYSTEM context retained explicitly",
+  "executionPrincipalObservation": {
+    "accountName": "NT AUTHORITY\\SYSTEM",
+    "sid": "S-1-5-18",
+    "isSystem": true,
+    "processArchitecture": "ARM64",
+    "localAppData": "C:\\WINDOWS\\system32\\config\\systemprofile\\AppData\\Local"
+  },
+  "selectedServicePrincipalQualified": false,
+  "physicalEligible": false,
+  "helper": {
+    "path": "/Users/vaanskii/Developer/vynic/docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/windows-native-arm64-result/vynic_print_helper.exe",
+    "sha256": "267f3ba86edae2bb0098fd55f1bf1c342d2761a699cf535afb4f4970709a8d94",
+    "bytes": 291328,
+    "machine": "0xaa64",
+    "protocol": 1,
+    "imports": [
+      "WINSPOOL.DRV",
+      "KERNEL32.dll"
+    ]
+  },
+  "sourceManifest": {
+    "path": "/Users/vaanskii/Developer/vynic/docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/windows-native-arm64-stage/source-manifest.json",
+    "sha256": "f968938283c4bec391894a59d0f7f8c1632564317f2a38feee0cd23643c46430",
+    "bytes": 6879
+  },
+  "stageManifest": {
+    "path": "/Users/vaanskii/Developer/vynic/docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/windows-native-arm64-stage/stage-manifest.json",
+    "sha256": "527d487cd3ac960773395e15b7531f599ada3fa618e235c09b608df43489123f",
+    "bytes": 908
+  },
+  "sourceZip": {
+    "path": "/Users/vaanskii/Developer/vynic/docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/windows-native-arm64-stage/source.zip",
+    "sha256": "236db386b539ff6e9efffe3477a7a738f8bacdea448b61d8b5fe3ca018951b70",
+    "bytes": 64180
+  },
+  "sourceInputCount": 34,
+  "testExecutable": {
+    "path": "/Users/vaanskii/Developer/vynic/docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/windows-native-arm64-stage/printtransport-windows-arm64.test.exe",
+    "sha256": "5f83c5f8326a67a5e0ccb7eb7c6f7d1cb41fc163620a027ceba6457f7db30fab",
+    "bytes": 5548544
+  },
+  "cachedInputsCount": 2984,
+  "cachedInputsBefore": {
+    "path": "/Users/vaanskii/Developer/vynic/docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/windows-native-arm64-result/cached-inputs-before.json",
+    "sha256": "914518ae50fa064d858c4daad381b9e62d1da13207d6adc7686ebd5f99a04fe0",
+    "bytes": 495190
+  },
+  "cachedInputsAfter": {
+    "path": "/Users/vaanskii/Developer/vynic/docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/windows-native-arm64-result/cached-inputs-after.json",
+    "sha256": "914518ae50fa064d858c4daad381b9e62d1da13207d6adc7686ebd5f99a04fe0",
+    "bytes": 495190
+  },
+  "cachedInputHashesUnchanged": true,
+  "tests": {
+    "goTopLevel": 12,
+    "goSubtests": 26,
+    "skipped": 0,
+    "helperFakeAssertions": 254,
+    "coreFakeAssertions": 110,
+    "queuesEnumerated": 1,
+    "parentDeathExactChildTerminationFreshGuard": true,
+    "noInheritedStdinWriter": true,
+    "unsupportedJobListInjectedFailClosed": true
+  },
+  "runResult": {
+    "path": "/Users/vaanskii/Developer/vynic/docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/windows-native-arm64-result/run-result.json",
+    "sha256": "858b8981b4f80321c4a2c32456847756f3430ee706bc1379aea6a088ad3f3b51",
+    "bytes": 565
+  },
+  "guestReceipt": {
+    "path": "/Users/vaanskii/Developer/vynic/docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/windows-native-arm64-result/receipt.json",
+    "sha256": "8ba96a718b5635b2b08d386856d43852934afbdae40870453e2923e4b8783fe3",
+    "bytes": 662
+  },
+  "logs": {
+    "helper-build.log": {
+      "path": "/Users/vaanskii/Developer/vynic/docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/windows-native-arm64-result/helper-build.log",
+      "sha256": "e17c301dad1617940e31e36451d831f63f37910fc27f143a4aeaf85faaa786e8",
+      "bytes": 3264
+    },
+    "helper-fake-tests.log": {
+      "path": "/Users/vaanskii/Developer/vynic/docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/windows-native-arm64-result/helper-fake-tests.log",
+      "sha256": "8d4a68b44a01bade14147c15ff86dbb5cbf902dba3f41d8bbcd5f48f345131a8",
+      "bytes": 3038
+    },
+    "core-build.log": {
+      "path": "/Users/vaanskii/Developer/vynic/docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/windows-native-arm64-result/core-build.log",
+      "sha256": "e8d8ee2dbbfb1f904f603d0438b0193006a104e9533b87760e5ff8175b27a5af",
+      "bytes": 1434
+    },
+    "core-fake-tests.log": {
+      "path": "/Users/vaanskii/Developer/vynic/docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/windows-native-arm64-result/core-fake-tests.log",
+      "sha256": "817c196d50851658f26377fec90de24de22aeb7318c740a8b0e9084a0b0fea3c",
+      "bytes": 2966
+    },
+    "go-transport-tests.log": {
+      "path": "/Users/vaanskii/Developer/vynic/docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/windows-native-arm64-result/go-transport-tests.log",
+      "sha256": "90b79271510abcb285a7e641edcdd7b62326f2b961214137a2055e0c31a8acc9",
+      "bytes": 10282
+    }
+  },
+  "nonphysical": {
+    "printJobsBefore": 0,
+    "printJobsAfter": 0,
+    "documentsSubmitted": 0,
+    "serviceOperations": false,
+    "accountChanges": false,
+    "driverChanges": false,
+    "productStarted": false,
+    "vmConfigurationChanges": false
+  },
+  "correction": "Parent requires fresh same-code --current-user rerun; this earlier context is preserved and is not used as selected service principal evidence."
+}

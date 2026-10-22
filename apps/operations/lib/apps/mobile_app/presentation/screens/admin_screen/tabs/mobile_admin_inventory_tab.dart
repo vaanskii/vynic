@@ -16,6 +16,7 @@ class InventoryAdminTab extends StatefulWidget {
     this.loadSuppliers,
     this.loadReceivings,
     this.loadRecipes,
+    this.loadPayables,
     this.initialSection,
     this.initialStockStatus,
     this.initialBusinessDate,
@@ -25,6 +26,8 @@ class InventoryAdminTab extends StatefulWidget {
   final Future<List<Supplier>> Function()? loadSuppliers;
   final Future<ReceivingPage> Function()? loadReceivings;
   final Future<List<RecipeMenuItem>> Function()? loadRecipes;
+
+  final Future<Map<String, dynamic>> Function()? loadPayables;
 
   final String? initialStockStatus;
   final String? initialBusinessDate;
@@ -58,6 +61,8 @@ class _InventoryTabState extends State<InventoryAdminTab>
   late String? _stockStatusFilter = widget.initialStockStatus;
   List<ReceivingDaySummary> _receivingDays = const [];
   String? _receivingCursor;
+  String? _payablesError;
+  String? _outstanding;
   bool _loadingMore = false;
   bool _loading = true;
   String? _error;
@@ -75,7 +80,40 @@ class _InventoryTabState extends State<InventoryAdminTab>
     super.dispose();
   }
 
+  Future<void> _loadPayables() async {
+    // Explicit fixture seams must not fall through to production HTTP.
+    if (widget.loadPayables == null && widget.loadStockItems != null) return;
+    try {
+      final data =
+          await (widget.loadPayables?.call() ??
+              MobileApiService.procurementRequest('payables'));
+      final rows = (data['receivings'] as List? ?? []).cast<Map>();
+      final total = rows
+          .where(
+            (row) =>
+                row['status'] != 'CANCELLED' &&
+                row['paymentStatus'] != 'UNVERIFIED',
+          )
+          .fold(
+            InventoryDecimal.zero,
+            (sum, row) =>
+                sum + InventoryDecimal.parse('${row['remaining'] ?? '0'}'),
+          );
+      if (mounted)
+        setState(() {
+          _outstanding = total.toStringAsFixed(2);
+          _payablesError = null;
+        });
+    } catch (error) {
+      if (mounted)
+        setState(() {
+          _payablesError = 'დავალიანება ვერ განახლდა: $error';
+        });
+    }
+  }
+
   Future<void> _load() async {
+    _loadPayables();
     setState(() {
       _loading = true;
       _error = null;
@@ -140,7 +178,7 @@ class _InventoryTabState extends State<InventoryAdminTab>
               _section != _InventorySection.payments && n.depth == 0,
           child: LayoutBuilder(
             builder: (context, constraints) {
-              final horizontal = constraints.maxWidth >= 720 ? 24.0 : 16.0;
+              final horizontal = constraints.maxWidth >= 720 ? 32.0 : 20.0;
               final content = _section == _InventorySection.payments
                   ? SupplierPayablesView(supplierId: _paymentSupplierId)
                   : _section == _InventorySection.recipes
@@ -165,7 +203,7 @@ class _InventoryTabState extends State<InventoryAdminTab>
                       children: [
                         Center(
                           child: ConstrainedBox(
-                            constraints: const BoxConstraints(maxWidth: 1280),
+                            constraints: const BoxConstraints(maxWidth: 1360),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.stretch,
                               children: [
@@ -245,74 +283,96 @@ class _InventoryTabState extends State<InventoryAdminTab>
       _load();
   }
 
-  static const _destinations = <_InventorySection, (String, IconData)>{
-    _InventorySection.home: ('მიმოხილვა', Icons.home_outlined),
-    _InventorySection.receiving: (
-      'მიღებების ისტორია',
-      Icons.receipt_long_outlined,
-    ),
-    _InventorySection.stockItems: ('ნაშთები', Icons.inventory_2_outlined),
-    _InventorySection.payments: (
-      'გადახდები და დავალიანება',
-      Icons.account_balance_wallet_outlined,
-    ),
-    _InventorySection.suppliers: (
-      'მომწოდებლები',
-      Icons.local_shipping_outlined,
-    ),
-    _InventorySection.recipes: ('მენიუს შემადგენლობა', Icons.restaurant_menu),
-  };
-
-  Widget _sectionSelector() => Padding(
-    key: const Key('inventory-section-selector'),
-    padding: const EdgeInsets.fromLTRB(8, 8, 8, 8),
-    child: Row(
-      children: [
-        if (_section != _InventorySection.home)
-          IconButton(
-            key: const Key('inventory-tab-home'),
-            tooltip: 'მარაგების მიმოხილვა',
-            onPressed: () => _navigate(_InventorySection.home),
-            icon: const Icon(Icons.arrow_back),
-          )
-        else
-          const SizedBox(width: 8),
-        Expanded(
-          child: Text(
-            _section == _InventorySection.home
-                ? 'მარაგები'
-                : _destinations[_section]!.$1,
-            style: TextStyle(
-              color: AdminTheme.text,
-              fontSize: 21,
-              fontWeight: FontWeight.w700,
-            ),
+  Widget _sectionSelector() {
+    const sections = [
+      _InventorySection.home,
+      _InventorySection.receiving,
+      _InventorySection.stockItems,
+      _InventorySection.suppliers,
+      _InventorySection.recipes,
+      _InventorySection.payments,
+    ];
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 1424),
+        child: Padding(
+          key: const Key('inventory-section-selector'),
+          padding: EdgeInsets.fromLTRB(
+            MediaQuery.sizeOf(context).width < 700 ? 20 : 32,
+            24,
+            MediaQuery.sizeOf(context).width < 700 ? 20 : 32,
+            10,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              LayoutBuilder(
+                builder: (context, box) {
+                  final title = Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'მარაგები',
+                        style: managerDesignText(
+                          context,
+                          box.maxWidth < 700 ? 25 : 30,
+                          weight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: 7),
+                      Text(
+                        'მიღება, ნაშთები და მომწოდებლები',
+                        style: managerDesignText(context, 13, muted: true),
+                      ),
+                    ],
+                  );
+                  final action = FilledButton.icon(
+                    key: Key(
+                      _section == _InventorySection.home
+                          ? 'inventory-add'
+                          : 'inventory-home-create',
+                    ),
+                    onPressed: () => _editReceiving(),
+                    icon: const Icon(Icons.add, size: 17),
+                    label: const Text('ახალი მიღება'),
+                  );
+                  return box.maxWidth < 700
+                      ? Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [title, const SizedBox(height: 16), action],
+                        )
+                      : Row(
+                          children: [
+                            Expanded(child: title),
+                            action,
+                          ],
+                        );
+                },
+              ),
+              const SizedBox(height: 22),
+              ManagerSegments(
+                key: const Key('inventory-navigation'),
+                labels: const [
+                  'მიმოხილვა',
+                  'მიღებები',
+                  'ნაშთები',
+                  'მომწოდებლები',
+                  'შემადგენლობა',
+                  'გადახდები',
+                ],
+                selected: sections.indexOf(_section),
+                keys: [
+                  for (final section in sections)
+                    Key('inventory-tab-${section.name}'),
+                ],
+                onSelect: (index) => _navigate(sections[index]),
+              ),
+            ],
           ),
         ),
-        PopupMenuButton<_InventorySection>(
-          key: const Key('inventory-navigation'),
-          tooltip: 'მარაგების განყოფილებები',
-          icon: const Icon(Icons.menu_open),
-          color: AdminTheme.surface,
-          onSelected: _navigate,
-          itemBuilder: (_) => [
-            for (final entry in _destinations.entries)
-              PopupMenuItem(
-                key: Key('inventory-tab-${entry.key.name}'),
-                value: entry.key,
-                child: Row(
-                  children: [
-                    Icon(entry.value.$2, size: 20),
-                    const SizedBox(width: 12),
-                    Flexible(child: Text(entry.value.$1)),
-                  ],
-                ),
-              ),
-          ],
-        ),
-      ],
-    ),
-  );
+      ),
+    );
+  }
 
   Widget _inventoryHome() {
     final today = _businessDate;
@@ -320,165 +380,228 @@ class _InventoryTabState extends State<InventoryAdminTab>
         .where((r) => r.effectiveBusinessDate == today)
         .toList();
     final active = _stockItems.where((i) => i.isActive).toList();
-    final low = active.where((i) => i.stockStatus == 'LOW').length;
-    final negative = active.where((i) => i.stockStatus == 'NEGATIVE').length;
-    final incomplete = _recipes.where((i) => !i.isFullyConfigured).length;
-    final work = Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
+    final low = active
+        .where((i) => i.stockStatus == 'LOW' || i.stockStatus == 'NEGATIVE')
+        .toList();
+    Widget metric(String label, String value, String subtitle) => Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _homeHeading('ყოველდღიური სამუშაო'),
+        Text(label, style: managerDesignText(context, 11, muted: true)),
         const SizedBox(height: 8),
-        _homeDestination(
-          _InventorySection.receiving,
-          'შენახული მიღებები და მონახაზები',
+        Text(
+          value,
+          style: managerDesignText(context, 23, weight: FontWeight.w600),
         ),
-        _homeDestination(
-          _InventorySection.stockItems,
-          '${active.length} პროდუქტი მარაგში',
-        ),
-        _homeDestination(
-          _InventorySection.payments,
-          'ვის რამდენი დარჩა გადასახდელი',
-        ),
-        const SizedBox(height: 24),
-        _homeHeading('კატალოგი'),
-        const SizedBox(height: 8),
-        _homeDestination(
-          _InventorySection.suppliers,
-          'პროდუქტები და კონტაქტები',
-        ),
-        _homeDestination(
-          _InventorySection.recipes,
-          incomplete > 0
-              ? '$incomplete პროდუქტის შემადგენლობა შესავსებია'
-              : 'რა იხარჯება ერთი გაყიდვისას',
-        ),
+        const SizedBox(height: 6),
+        Text(subtitle, style: managerDesignText(context, 10, muted: true)),
       ],
     );
-    final recent = Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        _homeHeading('დღევანდელი მიღებები'),
-        const SizedBox(height: 8),
-        if (receipts.isEmpty)
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 16),
-            child: Text(
-              'დღეს მიღება ჯერ არ არის',
-              style: TextStyle(color: AdminTheme.textMuted),
-            ),
-          ),
-        for (final receipt in receipts.take(3))
-          _ReceivingCard(
-            receiving: receipt,
-            onOpen: () => _openReceiving(receipt),
-          ),
-      ],
-    );
-    return Column(
-      key: const Key('inventory-home'),
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        FilledButton.icon(
-          key: const Key('inventory-add'),
-          onPressed: () => _editReceiving(),
-          style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(52)),
-          icon: const Icon(Icons.add),
-          label: const Text('ახალი მიღება'),
-        ),
-        const SizedBox(height: 16),
-        Row(
+    return LayoutBuilder(
+      builder: (context, box) {
+        final small = box.maxWidth < 650;
+        return Column(
+          key: const Key('inventory-home'),
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Expanded(
-              child: Text(
-                'დღეს მივიღეთ',
-                style: TextStyle(color: AdminTheme.textMuted),
-              ),
-            ),
-            Text(
-              today == null ? '—' : '${_todayTotal(today)} ₾',
-              style: TextStyle(
-                color: AdminTheme.text,
-                fontSize: 22,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ],
-        ),
-        if (low > 0 || negative > 0)
-          Padding(
-            padding: const EdgeInsets.only(top: 12),
-            child: Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                for (final warning in [
-                  ('LOW', low, 'დაბალი მარაგი'),
-                  ('NEGATIVE', negative, 'უარყოფითი მარაგი'),
-                ])
-                  if (warning.$2 > 0)
-                    ActionChip(
-                      avatar: Icon(
-                        Icons.warning_amber_rounded,
-                        size: 18,
-                        color: AdminTheme.warn,
+            ManagerPanel(
+              padding: small ? 20 : 26,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const ManagerSectionHeading(
+                    'დღიური მარაგები',
+                    subtitle: 'რა მივიღეთ და რას სჭირდება ყურადღება',
+                  ),
+                  Wrap(
+                    spacing: small ? 28 : 80,
+                    runSpacing: 20,
+                    children: [
+                      metric(
+                        'დღეს მიღებული',
+                        today == null ? '—' : '${_todayTotal(today)} ₾',
+                        '${receipts.length} დოკუმენტი',
                       ),
-                      label: Text('${warning.$3}: ${warning.$2}'),
-                      onPressed: () {
-                        _stockStatusFilter = warning.$1;
-                        _navigate(_InventorySection.stockItems);
-                      },
+                      metric(
+                        'დაბალი ნაშთი',
+                        '${low.length} პროდუქტი',
+                        'მინიმალურ ზღვარზე ქვემოთ',
+                      ),
+                      metric(
+                        'მომწოდებლების ვალი',
+                        _outstanding == null
+                            ? 'მიუწვდომელია'
+                            : '$_outstanding ₾',
+                        _payablesError == null
+                            ? 'შეუსრულებელი გადახდები'
+                            : 'განახლება ვერ მოხერხდა',
+                      ),
+                    ],
+                  ),
+                  if (_payablesError != null)
+                    TextButton(
+                      onPressed: _loadPayables,
+                      child: const Text('დავალიანების ხელახლა ჩატვირთვა'),
                     ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 22),
+            ManagerPanel(
+              padding: 22,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  ManagerSectionHeading(
+                    'დაბალი ნაშთი',
+                    action: 'ყველა ნაშთი',
+                    onAction: () {
+                      _stockStatusFilter = null;
+                      _navigate(_InventorySection.stockItems);
+                    },
+                  ),
+                  if (low.isEmpty)
+                    Text(
+                      'დაბალი ნაშთი არ არის',
+                      style: managerDesignText(context, 13, muted: true),
+                    ),
+                  for (final item in low.take(5))
+                    ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      leading: Container(
+                        width: 37,
+                        height: 37,
+                        decoration: BoxDecoration(
+                          color: AdminTheme.warn.withValues(alpha: .10),
+                          borderRadius: BorderRadius.circular(9),
+                        ),
+                        child: Icon(
+                          Icons.inventory_2_outlined,
+                          size: 18,
+                          color: AdminTheme.warn,
+                        ),
+                      ),
+                      title: Text(
+                        item.name,
+                        style: managerDesignText(
+                          context,
+                          13,
+                          weight: FontWeight.w500,
+                        ),
+                      ),
+                      subtitle: Text(
+                        item.minimumStock == null
+                            ? 'უარყოფითი ნაშთი'
+                            : 'მინ. ${_quantity(item.minimumStock!)} ${_unitShort(item.baseUnit)}',
+                        style: managerDesignText(context, 10, muted: true),
+                      ),
+                      trailing: Text(
+                        '${_quantityText(item.currentStock)} ${_unitShort(item.baseUnit)}',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: AdminTheme.warn,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      onTap: () => _openStockItem(item),
+                    ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 22),
+            ManagerPanel(
+              padding: 22,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  ManagerSectionHeading(
+                    'ბოლო მიღებები',
+                    action: 'ყველა',
+                    onAction: () => _navigate(_InventorySection.receiving),
+                  ),
+                  if (receipts.isEmpty)
+                    Text(
+                      'დღეს მიღება ჯერ არ არის',
+                      style: managerDesignText(context, 13, muted: true),
+                    ),
+                  for (final receipt in receipts.take(3))
+                    ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      title: Text(
+                        receipt.waybillNumber == null
+                            ? 'მიღება'
+                            : 'მიღება #${receipt.waybillNumber}',
+                        style: managerDesignText(
+                          context,
+                          13,
+                          weight: FontWeight.w500,
+                        ),
+                      ),
+                      subtitle: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            '${receipt.supplierName} · ${receipt.effectiveBusinessDate}',
+                            style: managerDesignText(context, 10, muted: true),
+                          ),
+                          Text(
+                            receipt.isPosted
+                                ? 'მარაგში დაემატა'
+                                : receipt.isCancelled
+                                ? 'გაუქმებული მიღება'
+                                : 'მარაგში ჯერ არ დამატებულა',
+                            style: managerDesignText(context, 10, muted: true),
+                          ),
+                        ],
+                      ),
+                      trailing: Text(
+                        '${receipt.documentTotal} ₾',
+                        style: managerDesignText(
+                          context,
+                          13,
+                          weight: FontWeight.w600,
+                        ),
+                      ),
+                      onTap: () => _openReceiving(receipt),
+                    ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 20),
+            Wrap(
+              spacing: 12,
+              runSpacing: 12,
+              children: [
+                OutlinedButton.icon(
+                  onPressed: () => _navigate(_InventorySection.payments),
+                  icon: const Icon(
+                    Icons.account_balance_wallet_outlined,
+                    size: 17,
+                  ),
+                  label: const Text('გადახდები და დავალიანება'),
+                ),
+                OutlinedButton.icon(
+                  onPressed: () => _navigate(_InventorySection.stockItems),
+                  icon: const Icon(Icons.history, size: 17),
+                  label: const Text('მოძრაობების ისტორია'),
+                ),
+                OutlinedButton.icon(
+                  key: const Key('inventory-consumption-history'),
+                  onPressed: () => Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => const ConsumptionHistoryScreen(),
+                    ),
+                  ),
+                  icon: const Icon(Icons.receipt_long_outlined, size: 17),
+                  label: const Text('ჩამოწერების ისტორია'),
+                ),
               ],
             ),
-          ),
-        const Divider(height: 32),
-        LayoutBuilder(
-          builder: (_, c) => c.maxWidth >= 720
-              ? Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(child: work),
-                    const SizedBox(width: 32),
-                    Expanded(child: recent),
-                  ],
-                )
-              : Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [work, const SizedBox(height: 28), recent],
-                ),
-        ),
-      ],
+          ],
+        );
+      },
     );
   }
 
-  Widget _homeDestination(_InventorySection section, String detail) {
-    final destination = _destinations[section]!;
-    return ListTile(
-      key: Key('inventory-tab-${section.name}'),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 0, vertical: 4),
-      leading: Icon(destination.$2, color: AdminTheme.primary),
-      title: Text(
-        destination.$1,
-        style: const TextStyle(fontWeight: FontWeight.w600),
-      ),
-      subtitle: Text(
-        detail,
-        style: TextStyle(color: AdminTheme.textMuted, fontSize: 12),
-      ),
-      trailing: const Icon(Icons.chevron_right, size: 20),
-      onTap: () => _navigate(section),
-    );
-  }
-
-  Widget _homeHeading(String title) => Text(
-    title,
-    style: TextStyle(
-      color: AdminTheme.text,
-      fontSize: 18,
-      fontWeight: FontWeight.w700,
-    ),
-  );
   Widget _searchAndAdd(double width) {
     final search = TextField(
       key: const Key('inventory-search'),
@@ -615,17 +738,24 @@ class _InventoryTabState extends State<InventoryAdminTab>
             : 'შეცვალეთ საძიებო სიტყვა.',
       );
     }
-    return Column(
-      key: const Key('stock-item-list'),
-      children: [
-        for (final item in items)
-          _StockItemCard(
-            item: item,
-            onEdit: () => _editStockItem(item),
-            onToggle: () => _toggleStockItem(item),
-            onOpen: () => _openStockItem(item),
+    return ManagerPanel(
+      child: Column(
+        key: const Key('stock-item-list'),
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          ManagerSectionHeading(
+            _archivedStock ? 'არქივი' : 'აქტიური მარაგები',
+            subtitle: 'ნაშთი · საშუალო მიმდინარე ფასი',
           ),
-      ],
+          for (final item in items)
+            _StockItemCard(
+              item: item,
+              onEdit: () => _editStockItem(item),
+              onToggle: () => _toggleStockItem(item),
+              onOpen: () => _openStockItem(item),
+            ),
+        ],
+      ),
     );
   }
 
@@ -651,17 +781,21 @@ class _InventoryTabState extends State<InventoryAdminTab>
             : 'შეცვალეთ საძიებო სიტყვა.',
       );
     }
-    return Column(
-      key: const Key('supplier-list'),
-      children: [
-        for (final supplier in items)
-          _SupplierCard(
-            supplier: supplier,
-            onOpen: () => _openSupplier(supplier),
-            onEdit: () => _editSupplier(supplier),
-            onToggle: () => _toggleSupplier(supplier),
-          ),
-      ],
+    return ManagerPanel(
+      child: Column(
+        key: const Key('supplier-list'),
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const ManagerSectionHeading('მომწოდებლები'),
+          for (final supplier in items)
+            _SupplierCard(
+              supplier: supplier,
+              onOpen: () => _openSupplier(supplier),
+              onEdit: () => _editSupplier(supplier),
+              onToggle: () => _toggleSupplier(supplier),
+            ),
+        ],
+      ),
     );
   }
 
@@ -836,25 +970,33 @@ class _InventoryTabState extends State<InventoryAdminTab>
                 : 'შეცვალეთ ფილტრი ან საძიებო სიტყვა.',
           )
         else
-          for (var index = 0; index < items.length; index++) ...[
-            if (index == 0 ||
-                items[index - 1].effectiveBusinessDate !=
-                    items[index].effectiveBusinessDate)
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 10),
-                child: Text(
-                  'სამუშაო დღე: ${items[index].effectiveBusinessDate}${_dayTotal(items[index].effectiveBusinessDate)}',
-                  style: TextStyle(
-                    color: AdminTheme.text,
-                    fontWeight: FontWeight.w700,
+          ManagerPanel(
+            padding: 22,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                for (var index = 0; index < items.length; index++) ...[
+                  if (index == 0 ||
+                      items[index - 1].effectiveBusinessDate !=
+                          items[index].effectiveBusinessDate)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                      child: Text(
+                        'სამუშაო დღე: ${items[index].effectiveBusinessDate}${_dayTotal(items[index].effectiveBusinessDate)}',
+                        style: TextStyle(
+                          color: AdminTheme.text,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  _ReceivingCard(
+                    receiving: items[index],
+                    onOpen: () => _openReceiving(items[index]),
                   ),
-                ),
-              ),
-            _ReceivingCard(
-              receiving: items[index],
-              onOpen: () => _openReceiving(items[index]),
+                ],
+              ],
             ),
-          ],
+          ),
         if (_receivingCursor != null)
           TextButton(
             onPressed: _loadingMore ? null : _moreReceivings,
@@ -1019,121 +1161,82 @@ class _StockItemCard extends StatelessWidget {
   final VoidCallback onOpen;
 
   @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: VynicSpacing.sm),
-      child: _AdminPanel(
-        padding: const EdgeInsets.all(VynicSpacing.md),
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            final content = Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  item.name,
-                  style: TextStyle(
-                    color: AdminTheme.text,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-                const SizedBox(height: VynicSpacing.xs),
-                Wrap(
-                  spacing: VynicSpacing.xs,
-                  runSpacing: VynicSpacing.xs,
-                  crossAxisAlignment: WrapCrossAlignment.center,
-                  children: [
-                    Text(
-                      'მარაგშია: ${_quantityText(item.currentStock)} ${_unitShort(item.baseUnit)}',
-                      style: TextStyle(
-                        color: item.isNegativeStock
-                            ? AdminTheme.bad
-                            : AdminTheme.text,
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    if (item.isNegativeStock)
-                      Text(
-                        'უარყოფითი მარაგი',
-                        style: TextStyle(
-                          color: AdminTheme.bad,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      )
-                    else if (item.isLowStock)
-                      const _LowStockBadge(),
-                    if (!item.isActive)
-                      const Text('არქივში', style: TextStyle(fontSize: 12)),
-                  ],
-                ),
-                const SizedBox(height: VynicSpacing.sm),
-                Wrap(
-                  spacing: 12,
-                  runSpacing: 6,
-                  children: [
-                    if (item.menuUsageCount != null)
-                      _InventoryMeta(
-                        icon: Icons.restaurant_outlined,
-                        label:
-                            'გამოიყენება ${item.menuUsageCount} მენიუს პროდუქტში',
-                      ),
-                    if (item.lastPurchaseUnitCost != null)
-                      _InventoryMeta(
-                        icon: Icons.payments_outlined,
-                        label:
-                            'ბოლო ფასი: ${_quantityText(item.lastPurchaseUnitCost!)} ₾ / ${_unitShort(item.baseUnit)}',
-                      ),
-                    if (item.weightedUnitCost != null)
-                      _InventoryMeta(
-                        icon: Icons.calculate_outlined,
-                        label:
-                            'მიმდინარე საშუალო ფასი: ${_quantityText(item.weightedUnitCost!)} ₾ / ${_unitShort(item.baseUnit)}${item.costStatus == 'PROVISIONAL' ? ' · წინასწარი' : ''}',
-                      ),
-                    if (item.minimumStock != null)
-                      _InventoryMeta(
-                        icon: Icons.notification_important_outlined,
-                        label:
-                            'მინიმალური მარაგი: ${_quantity(item.minimumStock!)} ${_unitShort(item.baseUnit)}',
-                      ),
-                    if (item.sku != null)
-                      _InventoryMeta(
-                        icon: Icons.qr_code_rounded,
-                        label: 'კოდი: ${item.sku}',
-                      ),
-                  ],
-                ),
-              ],
-            );
-            final actions = _InventoryActions(
-              archive: true,
-              active: item.isActive,
-              onEdit: onEdit,
-              onToggle: onToggle,
-              onOpen: onOpen,
-            );
-            if (constraints.maxWidth < 560) {
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.symmetric(vertical: 8),
+    child: Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          child: InkWell(
+            onTap: onOpen,
+            borderRadius: BorderRadius.circular(8),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  content,
-                  const SizedBox(height: VynicSpacing.sm),
-                  actions,
+                  Text(
+                    item.name,
+                    style: managerDesignText(
+                      context,
+                      13,
+                      weight: FontWeight.w500,
+                    ),
+                  ),
+                  const SizedBox(height: 5),
+                  Text(
+                    'მარაგშია: ${_quantityText(item.currentStock)} ${_unitShort(item.baseUnit)}',
+                    style: managerDesignText(context, 11, muted: true),
+                  ),
+                  if (item.isNegativeStock)
+                    Text(
+                      'უარყოფითი მარაგი',
+                      style: TextStyle(color: AdminTheme.bad, fontSize: 11),
+                    )
+                  else if (item.isLowStock)
+                    const _LowStockBadge(),
+                  if (!item.isActive)
+                    const Text('არქივში', style: TextStyle(fontSize: 11)),
+                  if (item.weightedUnitCost != null)
+                    Text(
+                      'მიმდინარე საშუალო ფასი: ${_quantityText(item.weightedUnitCost!)} ₾ / ${_unitShort(item.baseUnit)}${item.costStatus == 'PROVISIONAL' ? ' · წინასწარი' : ''}',
+                      style: managerDesignText(context, 11, muted: true),
+                    ),
+                  if (item.lastPurchaseUnitCost != null)
+                    Text(
+                      'ბოლო ფასი: ${_quantityText(item.lastPurchaseUnitCost!)} ₾ / ${_unitShort(item.baseUnit)}',
+                      style: managerDesignText(context, 11, muted: true),
+                    ),
+                  if (item.minimumStock != null)
+                    Text(
+                      'მინიმალური მარაგი: ${_quantity(item.minimumStock!)} ${_unitShort(item.baseUnit)}',
+                      style: managerDesignText(context, 11, muted: true),
+                    ),
+                  if (item.menuUsageCount != null)
+                    Text(
+                      'გამოიყენება ${item.menuUsageCount} მენიუს პროდუქტში',
+                      style: managerDesignText(context, 11, muted: true),
+                    ),
+                  if (item.sku != null)
+                    Text(
+                      'კოდი: ${item.sku}',
+                      style: managerDesignText(context, 11, muted: true),
+                    ),
                 ],
-              );
-            }
-            return Row(
-              children: [
-                Expanded(child: content),
-                const SizedBox(width: 12),
-                actions,
-              ],
-            );
-          },
+              ),
+            ),
+          ),
         ),
-      ),
-    );
-  }
+        _InventoryActions(
+          archive: true,
+          active: item.isActive,
+          onEdit: onEdit,
+          onToggle: onToggle,
+          onOpen: onOpen,
+        ),
+      ],
+    ),
+  );
 }
 
 class _SupplierCard extends StatelessWidget {
@@ -1151,76 +1254,60 @@ class _SupplierCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final details = <String>[
+    final details = [
       if (supplier.taxId != null) 'ს/კ ${supplier.taxId}',
       if (supplier.phone != null) supplier.phone!,
       if (supplier.email != null) supplier.email!,
       if (supplier.address != null) supplier.address!,
     ];
     return Padding(
-      padding: const EdgeInsets.only(bottom: VynicSpacing.sm),
-      child: _AdminPanel(
-        padding: const EdgeInsets.all(VynicSpacing.md),
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            final content = Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        children: [
+          Icon(
+            Icons.local_shipping_outlined,
+            color: AdminTheme.primary,
+            size: 22,
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: InkWell(
+              onTap: onOpen,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 10),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Expanded(
-                      child: Text(
-                        supplier.name,
-                        style: TextStyle(
-                          color: AdminTheme.text,
-                          fontSize: 15,
-                          fontWeight: FontWeight.w800,
-                        ),
+                    Text(
+                      supplier.name,
+                      style: managerDesignText(
+                        context,
+                        14,
+                        weight: FontWeight.w500,
                       ),
                     ),
-                    _InventoryStateBadge(active: supplier.isActive),
+                    if (details.isNotEmpty)
+                      Text(
+                        details.join(' · '),
+                        style: managerDesignText(context, 11, muted: true),
+                      ),
+                    if (!supplier.isActive)
+                      Text(
+                        'გამორთული',
+                        style: managerDesignText(context, 11, muted: true),
+                      ),
                   ],
                 ),
-                TextButton.icon(
-                  onPressed: onOpen,
-                  icon: const Icon(Icons.inventory_2_outlined, size: 18),
-                  label: Text('მომწოდებლის ნახვა'),
-                ),
-                if (details.isNotEmpty) ...[
-                  const SizedBox(height: 7),
-                  Text(
-                    details.join(' · '),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(color: AdminTheme.textMuted, fontSize: 12),
-                  ),
-                ],
-              ],
-            );
-            final actions = _InventoryActions(
-              active: supplier.isActive,
-              onEdit: onEdit,
-              onToggle: onToggle,
-            );
-            if (constraints.maxWidth < 560) {
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  content,
-                  const SizedBox(height: VynicSpacing.sm),
-                  actions,
-                ],
-              );
-            }
-            return Row(
-              children: [
-                Expanded(child: content),
-                const SizedBox(width: 12),
-                actions,
-              ],
-            );
-          },
-        ),
+              ),
+            ),
+          ),
+          _InventoryActions(
+            active: supplier.isActive,
+            onEdit: onEdit,
+            onToggle: onToggle,
+            onOpen: onOpen,
+          ),
+        ],
       ),
     );
   }
@@ -1242,40 +1329,17 @@ class _InventoryActions extends StatelessWidget {
   final VoidCallback? onOpen;
 
   @override
-  Widget build(BuildContext context) {
-    // Bounded so the row beside it keeps its width: three actions would
-    // otherwise take their full intrinsic line and overflow a wide card.
-    return ConstrainedBox(
-      constraints: const BoxConstraints(maxWidth: 320),
-      child: Wrap(
-        spacing: 6,
-        runSpacing: 6,
-        alignment: WrapAlignment.end,
-        children: [
-          if (onOpen != null)
-            TextButton.icon(
-              key: const Key('stock-item-open'),
-              onPressed: onOpen,
-              icon: const Icon(Icons.history_rounded, size: 17),
-              label: const Text('მოძრაობები'),
-              style: TextButton.styleFrom(
-                foregroundColor: AdminTheme.textMuted,
-              ),
-            ),
-          OutlinedButton.icon(
-            onPressed: onEdit,
-            icon: const Icon(Icons.edit_outlined, size: 17),
-            label: const Text('რედაქტირება'),
-            style: OutlinedButton.styleFrom(
-              foregroundColor: AdminTheme.text,
-              side: BorderSide(color: AdminTheme.border),
-            ),
-          ),
-          TextButton(
-            onPressed: onToggle,
-            style: TextButton.styleFrom(
-              foregroundColor: active ? AdminTheme.warn : AdminTheme.good,
-            ),
+  Widget build(BuildContext context) => Row(
+    mainAxisSize: MainAxisSize.min,
+    children: [
+      PopupMenuButton<String>(
+        tooltip: 'მოქმედებები',
+        icon: Icon(Icons.more_horiz, size: 20, color: AdminTheme.textMuted),
+        onSelected: (value) => value == 'edit' ? onEdit() : onToggle(),
+        itemBuilder: (_) => [
+          const PopupMenuItem(value: 'edit', child: Text('რედაქტირება')),
+          PopupMenuItem(
+            value: 'toggle',
             child: Text(
               archive
                   ? (active ? 'ამოღება სიიდან' : 'აღდგენა')
@@ -1284,33 +1348,15 @@ class _InventoryActions extends StatelessWidget {
           ),
         ],
       ),
-    );
-  }
-}
-
-class _InventoryStateBadge extends StatelessWidget {
-  const _InventoryStateBadge({required this.active});
-  final bool active;
-
-  @override
-  Widget build(BuildContext context) {
-    final color = active ? AdminTheme.good : AdminTheme.textDim;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: Text(
-        active ? 'აქტიური' : 'გათიშული',
-        style: TextStyle(
-          color: color,
-          fontSize: 11,
-          fontWeight: FontWeight.w700,
+      if (onOpen != null)
+        IconButton(
+          key: archive ? const Key('stock-item-open') : null,
+          tooltip: archive ? 'მოძრაობები' : 'მომწოდებლის ნახვა',
+          onPressed: onOpen,
+          icon: const Icon(Icons.chevron_right, size: 18),
         ),
-      ),
-    );
-  }
+    ],
+  );
 }
 
 class _InventoryMeta extends StatelessWidget {
@@ -1587,7 +1633,7 @@ class _StockItemEditorDialogState extends State<_StockItemEditorDialog> {
   Widget build(BuildContext context) {
     return Theme(
       data: inventoryTheme(context),
-      child: AlertDialog(
+      child: ManagerFormDialog(
         insetPadding: const EdgeInsets.all(VynicSpacing.md),
         contentPadding: const EdgeInsets.all(VynicSpacing.md),
         key: const Key('stock-item-editor'),
@@ -1821,7 +1867,7 @@ class _SupplierEditorDialogState extends State<_SupplierEditorDialog> {
   Widget build(BuildContext context) {
     return Theme(
       data: inventoryTheme(context),
-      child: AlertDialog(
+      child: ManagerFormDialog(
         insetPadding: const EdgeInsets.all(VynicSpacing.md),
         contentPadding: const EdgeInsets.all(VynicSpacing.md),
         key: const Key('supplier-editor'),
@@ -2300,7 +2346,7 @@ class _SupplierDetailDialogState extends State<SupplierDetailDialog> {
         .cast<Map>();
     return Theme(
       data: inventoryTheme(context),
-      child: AlertDialog(
+      child: ManagerFormDialog(
         insetPadding: const EdgeInsets.all(VynicSpacing.md),
         contentPadding: const EdgeInsets.all(VynicSpacing.md),
         key: const Key('supplier-detail'),
@@ -2440,66 +2486,8 @@ Color _inventoryInk(Color background) => background.computeLuminance() <= .183
           : AdminTheme.text);
 Color get _inventoryOnPrimary => _inventoryInk(AdminTheme.primary);
 
-ThemeData inventoryTheme(BuildContext context) {
-  final theme = Theme.of(context);
-  final shape = RoundedRectangleBorder(borderRadius: BorderRadius.circular(12));
-  final style = ButtonStyle(
-    minimumSize: const WidgetStatePropertyAll(Size(48, 48)),
-    shape: WidgetStatePropertyAll(shape),
-  );
-  return theme.copyWith(
-    scaffoldBackgroundColor: AdminTheme.bg,
-    canvasColor: AdminTheme.surface,
-    textTheme: theme.textTheme.apply(
-      bodyColor: AdminTheme.text,
-      displayColor: AdminTheme.text,
-    ),
-    colorScheme: theme.colorScheme.copyWith(
-      brightness: ThemeData.estimateBrightnessForColor(AdminTheme.bg),
-      primary: AdminTheme.primary,
-      onPrimary: _inventoryOnPrimary,
-      surface: AdminTheme.surface,
-      onSurface: AdminTheme.text,
-      onSurfaceVariant: AdminTheme.textMuted,
-      surfaceContainerHighest: AdminTheme.surfaceElevated,
-      secondaryContainer: AdminTheme.surfaceElevated,
-      onSecondaryContainer: AdminTheme.text,
-      outline: AdminTheme.border,
-      error: AdminTheme.bad,
-    ),
-    chipTheme: theme.chipTheme.copyWith(
-      backgroundColor: AdminTheme.surfaceElevated,
-      selectedColor: AdminTheme.primary.withValues(alpha: .12),
-      disabledColor: AdminTheme.surfaceElevated,
-      labelStyle: theme.textTheme.labelLarge!.copyWith(color: AdminTheme.text),
-      secondaryLabelStyle: theme.textTheme.labelLarge!.copyWith(
-        color: AdminTheme.text,
-      ),
-      checkmarkColor: AdminTheme.primary,
-      side: BorderSide(color: AdminTheme.border),
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
-    ),
-    iconTheme: theme.iconTheme.copyWith(color: AdminTheme.textMuted),
-    cardTheme: theme.cardTheme.copyWith(
-      color: AdminTheme.surface,
-      surfaceTintColor: Colors.transparent,
-      elevation: 0,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: AdminTheme.border),
-      ),
-    ),
-    dialogTheme: theme.dialogTheme.copyWith(
-      backgroundColor: AdminTheme.surface,
-    ),
-    filledButtonTheme: FilledButtonThemeData(style: style),
-    outlinedButtonTheme: OutlinedButtonThemeData(style: style),
-    textButtonTheme: TextButtonThemeData(style: style),
-    iconButtonTheme: const IconButtonThemeData(
-      style: ButtonStyle(minimumSize: WidgetStatePropertyAll(Size(48, 48))),
-    ),
-  );
-}
+ThemeData inventoryTheme(BuildContext context) =>
+    managerMaterialTheme(ManagerAppPreferences.dashboardAppearance.value);
 
 /// One navigable Inventory destination shared by Dashboard and Financials.
 class InventoryScreen extends StatelessWidget {

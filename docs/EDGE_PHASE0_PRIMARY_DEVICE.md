@@ -135,7 +135,7 @@ Disabling the primary does not auto-promote another Device.
 
 ## Custom website and BOG boundary
 
-`apps/venue-web` is the custom Vankisi website. Its current BOG integration and
+`apps/vankisi-custom-web` is the custom Vankisi website. Its current BOG integration and
 related payment backend are not the Vynic restaurant SaaS website product.
 Their one-restaurant assumptions are not SaaS defects. Neither the website nor
 BOG integration is migrated or redesigned by Phase 0, and neither supplies the

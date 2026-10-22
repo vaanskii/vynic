@@ -1,0 +1,76 @@
+{
+  "createdAtUtc": "2026-10-06T18:07:45.755859+00:00",
+  "source": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/final-cohort-v2",
+  "sourceReceiptSHA256": "faaaec2f1ece4f8259353666000eb4c0d3aee6143e73ae7fdf90772a937b581b",
+  "scope": "Readonly opt-in11-key profile and manual developer-scoped printer-agent health UI; distinct POS/Go installation IDs; no service startup/physical API",
+  "files": {
+    "apps/operations/lib/apps/windows_pos/widgets/admin/printers/admin_printers_section.dart": {
+      "sha256": "8258f28ac8ad46ea49c89cf59298c3b83bba2e85af47fdc8f10e51d9b801934a",
+      "bytes": 24006,
+      "before": {
+        "sha256": "4d9c61d780bf49660694ee306a0a51f0b4466dc330d52e137a189a374061366c",
+        "bytes": 23513
+      },
+      "priorV1SHA256": "8258f28ac8ad46ea49c89cf59298c3b83bba2e85af47fdc8f10e51d9b801934a"
+    },
+    "apps/operations/lib/apps/windows_pos/widgets/admin/printers/printer_agent_status_card.dart": {
+      "sha256": "1bcaf3839f7ccd25ed1991298d6772dcfd834020043b649739c49adb650b0263",
+      "bytes": 17084,
+      "before": null,
+      "priorV1SHA256": "1bcaf3839f7ccd25ed1991298d6772dcfd834020043b649739c49adb650b0263"
+    },
+    "apps/operations/lib/core/services/printing/printer_agent_runtime_profile.dart": {
+      "sha256": "ac21ec13d9e093cf916e9232441225a5236b4cac8b1c20d9364d9581179ecc4a",
+      "bytes": 17120,
+      "before": null,
+      "priorV1SHA256": "ac21ec13d9e093cf916e9232441225a5236b4cac8b1c20d9364d9581179ecc4a"
+    },
+    "apps/operations/test/support/printer_agent_status_fixture.dart": {
+      "sha256": "55cd87eda5bfe9ce2ccd442e32a161ce130f673d1e8ce4fb3ecea86942610c15",
+      "bytes": 3442,
+      "before": null,
+      "priorV1SHA256": "55cd87eda5bfe9ce2ccd442e32a161ce130f673d1e8ce4fb3ecea86942610c15"
+    },
+    "apps/operations/test/unit/printer_agent_runtime_profile_test.dart": {
+      "sha256": "2418752a45d5fdbf1ee764071ba79869d76d4696a1ff4444ab62cdccf7db9a21",
+      "bytes": 16627,
+      "before": null,
+      "priorV1SHA256": "d4f7c08db3c086704f4fa480970fa3676693534ec29ad12b78a2849f8bc165d2"
+    },
+    "apps/operations/test/widget/printer_agent_status_card_test.dart": {
+      "sha256": "114da755f85c962c9cd73576fbd6d60331c2f29b17bbb26cdfaf10ea5e9277cf",
+      "bytes": 23130,
+      "before": null,
+      "priorV1SHA256": "540c5df33fbf5e4efc67fd5a807a0322b2eb461e134bb15ff328cdcbf9f6243f"
+    }
+  },
+  "changesSinceV1": [
+    "apps/operations/test/unit/printer_agent_runtime_profile_test.dart",
+    "apps/operations/test/widget/printer_agent_status_card_test.dart"
+  ],
+  "priorManifest": {
+    "path": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/metadata/printer-agent-ui-owned-hashes.json",
+    "sha256": "b7bc1d8fb500858976d2e8bc9c62af8031ce19ac1d7b83cc3c3b5e955fb54754"
+  },
+  "productionUIAndRuntimeUnchangedSinceV1": true,
+  "getterProvenance": {
+    "path": "apps/operations/lib/core/services/edge/edge_device_credential_store.dart",
+    "sha256": "2015a817e6026d52fa669816ecf8cc56a45ec1a9df81c949f07c5f7f25fd8191",
+    "owned": false,
+    "getterAlreadyPresent": true
+  },
+  "fixtureFixReview": {
+    "path": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/windows-software-v2/fixture-native-paths-v2-independent-review.json",
+    "sha256": "91b62022b8c73aa1641706ba0dfef155aafbdc90b7df20510b6e26767161fbb5"
+  },
+  "Windows39SuiteReceipt": {
+    "path": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/windows-software-v2/flutter-v3-final-receipt.json",
+    "sha256": "f25fdd77b405b7b445e39ce1dd0cf15f153630542c140ab396a2b87721f21d60"
+  },
+  "Mac39SuiteReceipt": {
+    "path": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/software-v2-mac-retry/final-flutter-tests-v2-receipt.json",
+    "sha256": "14cd6235904bdafc04527f0b8b1e50bda70d237725b57684a23f6040e82efe8f"
+  },
+  "hardwareQualified": false,
+  "continuousHealthMonitoring": false
+}

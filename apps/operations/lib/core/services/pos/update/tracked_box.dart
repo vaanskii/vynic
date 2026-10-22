@@ -5,7 +5,7 @@ import 'update_readiness.dart';
 mixin UpdateTrackedHiveObject on HiveObject {
   Future<void> _persist(Future<void> Function() action) async {
     try {
-      await UpdateReadiness.track('Hive model write', action);
+      await UpdateReadiness.mutate('Hive model write', action);
     } catch (e) {
       if (UpdateReadiness.enabled && !UpdateReadiness.frozen)
         UpdateReadiness.failure = e.toString();
@@ -24,7 +24,7 @@ class UpdateTrackedBox<E> implements Box<E> {
   final Box<E> inner;
   Future<T> _write<T>(Future<T> Function() f) async {
     try {
-      return await UpdateReadiness.track('Hive write', f);
+      return await UpdateReadiness.mutate('Hive write', f);
     } catch (e) {
       if (UpdateReadiness.enabled && !UpdateReadiness.frozen)
         UpdateReadiness.failure = e.toString();

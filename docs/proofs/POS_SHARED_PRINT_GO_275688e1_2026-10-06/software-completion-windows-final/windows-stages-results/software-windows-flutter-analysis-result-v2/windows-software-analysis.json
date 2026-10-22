@@ -1,0 +1,21 @@
+﻿{
+    "schema":  1,
+    "status":  "PASS",
+    "failure":  null,
+    "SID":  "S-1-5-21-611125631-3759947118-1641436196-1000",
+    "currentUser":  "VANSKI\\vaanskii",
+    "startedUtc":  "2026-10-06T18:01:22.2589516Z",
+    "finishedUtc":  "2026-10-06T18:01:36.2228330Z",
+    "sourceReceiptSHA256":  "193e4800e5d0733a30bc6c8d4ac993590219363941e69a787bba5ac3681c8f68",
+    "sourceFiles":  1109,
+    "analysisFiles":  68,
+    "analysisExitCode":  0,
+    "sourceBefore":  true,
+    "sourceAfter":  true,
+    "fixturesVerified":  true,
+    "printJobsBefore":  0,
+    "printJobsAfter":  0,
+    "physicalJobs":  0,
+    "productStarted":  false,
+    "serviceOperations":  false
+}

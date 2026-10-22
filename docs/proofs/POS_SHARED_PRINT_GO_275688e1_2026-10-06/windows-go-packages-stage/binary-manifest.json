@@ -1,0 +1,49 @@
+{
+  "schema": 1,
+  "compilerReceiptSHA256": "57441bd7550ab4e0056ce34b36579ca56222ee5e58588bce9a7552963c79a404",
+  "count": 7,
+  "files": {
+    "store.test.exe": {
+      "sha256": "f88b9b38eaa3c71241b3176646de8216547a35895817ab28c6a7aed42686bf1c",
+      "bytes": 24472576,
+      "package": "store",
+      "workingDirectory": "source/apps/edge/internal/store"
+    },
+    "server.test.exe": {
+      "sha256": "cded3bef20097a35e7aa0b96ce63942c58e8d701dd405add6be51110365f252d",
+      "bytes": 26283520,
+      "package": "server",
+      "workingDirectory": "source/apps/edge/internal/server"
+    },
+    "printqueue.test.exe": {
+      "sha256": "b3e4db66c08ba1126d93978c59d4504a31724aaee80157fa667f4215e9051b6e",
+      "bytes": 17430528,
+      "package": "printqueue",
+      "workingDirectory": "source/apps/edge/internal/printqueue"
+    },
+    "printhost.test.exe": {
+      "sha256": "6314038ec90b7ae6f51b97ec86e1284e178cbbcd096e3c55b5e09d0d6239e564",
+      "bytes": 23958528,
+      "package": "printhost",
+      "workingDirectory": "source/apps/edge/internal/printhost"
+    },
+    "printcluster.test.exe": {
+      "sha256": "499823899f0ca0e15b987a7ca66827c2207403db663a74b2e61e5c88789d927c",
+      "bytes": 29537280,
+      "package": "printcluster",
+      "workingDirectory": "source/apps/edge/internal/printcluster"
+    },
+    "printeligibility.test.exe": {
+      "sha256": "c79d6f27da15fc50a5a04fb941fa2363ca779d96214aea3ab3fb6908e9abe2bd",
+      "bytes": 5501440,
+      "package": "printeligibility",
+      "workingDirectory": "source/apps/edge/internal/printeligibility"
+    },
+    "printtransport.test.exe": {
+      "sha256": "24eb7968003bb0195d94b9cdab36232f977e9153fcc2f6a13a58045bf4203516",
+      "bytes": 5940224,
+      "package": "printtransport",
+      "workingDirectory": "source/apps/edge/internal/printtransport"
+    }
+  }
+}

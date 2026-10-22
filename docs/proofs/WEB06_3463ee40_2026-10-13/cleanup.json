@@ -1,0 +1,6 @@
+{
+  "ownedCluster": "STOPPED",
+  "pgCtlStatusExit": 3,
+  "postmasterPidAbsent": true,
+  "realServicesChanged": false
+}

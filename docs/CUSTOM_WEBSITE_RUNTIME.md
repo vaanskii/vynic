@@ -1,22 +1,28 @@
 # ADR: custom restaurant website runtime and deployment
 
-**Status: open.** Step 4B2B answered exactly one of the questions below —
-**Venue binding** — and deliberately left the rest untouched.
+**Status: decided** for binding, hosting shape and repository strategy; see
+[CUSTOM_WEBSITES.md](CUSTOM_WEBSITES.md) for the implemented model. Deployment
+automation, DNS/TLS and observability remain manual/deferred.
 
-A registered hostname now resolves a Venue authoritatively
-(`VenueDomain` → Venue → Organization → `WEBSITE`), so a running site cannot
-claim a Venue it was not registered for. See
-[PUBLIC_TENANCY.md](PUBLIC_TENANCY.md). Everything about *how a custom site is
-built, hosted, deployed and renewed* remains undecided, and resolving a tenant
-did not require deciding it.
+| Question | Decision |
+| --- | --- |
+| Venue binding | Host → `VenueDomain` → Venue (Step 4B2B), plus WebsiteMode=CUSTOM. |
+| Build registration | Operator records `CustomWebsiteBinding.siteKey` (the frontend build's identity); the shared client refuses to render on a mismatch. |
+| Deployment ownership | One static build per client, served for its domains behind a host-preserving `/api` proxy to the shared backend. No per-client backend. |
+| Domain binding | Operator-managed `VenueDomain` registration/disable/release, audited. DNS/TLS manual. |
+| API authentication | None: public routes need no credential; the proxied Host is the authority. Cross-origin API hosting is unsupported. |
+| Lifecycle | Operator-attested `SETUP_PENDING → READY → ACTIVE` (`ERROR`), gated by a server checklist. No automation. |
+| Configuration | Venue data lives in Cloud; the frontend holds only its own `SITE_KEY`. |
+| Versioning | Each client app builds and deploys independently. |
+| Repository | Monorepo `apps/<client>-web`; Vankisi is `apps/vankisi-custom-web` (bespoke, standalone). Future sites may start from `templates/custom-site` with shared logic in `packages/website-client`. |
+| Observability | Not implemented. |
+| Deactivation | WEBSITE loss/Trial expiry or a disabled domain stops the public API immediately; the static frontend then renders "unavailable". |
 
-This document exists so that the *distinction* between a custom and a SaaS
-website survives until the runtime question is answered properly, rather than
-being settled by accident the first time someone wires a domain up.
+The rest of this document is the original context, kept for history.
 
 ## Context
 
-`apps/venue-web/` is the custom restaurant website built specifically for
+`apps/vankisi-custom-web/` is the custom restaurant website built specifically for
 Vankisi. It is a single compiled site with its own branding, layout, SVG floor
 plans, Three.js behaviour, booking UX, and restaurant-specific presentation.
 It is a real, live product and stays that way.
@@ -77,10 +83,8 @@ a custom site may resolve it from a build-time or credential-bound identity.
 The mechanisms may differ; the requirement that the resolution be authoritative
 and server-side does not.
 
-That resolution is **not implemented**. `apps/venue-web/` today talks to a
-single-restaurant backend, and the backend still pins website and Manager reads
-to the bootstrap Venue (see [TENANT_SCOPING.md](TENANT_SCOPING.md)). Host and
-domain → Venue resolution is later work.
+(Historical: at the time of writing this resolution was not implemented. It is
+now — Host resolution since Step 4B2B, CUSTOM binding in CUSTOM_WEBSITES.md.)
 
 ## What was deliberately not done
 
@@ -90,10 +94,10 @@ this ADR guards against:
 - No domain routing, Host header parsing, or per-site request resolution.
 - No deployment, hosting, or build-registration mechanism.
 - No website credential, API key, or authentication path for a custom site.
-- No change to `apps/venue-web/` — not its branding, layout, floor plans,
+- No change to `apps/vankisi-custom-web/` — not its branding, layout, floor plans,
   Three.js behaviour, booking UX, or configuration. It does not read the new
   entitlement tables and behaves exactly as before.
-- No repurposing of `apps/venue-web/` into the generic SaaS website.
+- No repurposing of `apps/vankisi-custom-web/` into the generic SaaS website.
 - No monorepo-versus-separate-repository decision.
 - No deployment or health status modelled anywhere. "Entitled to a custom
   website" says nothing about whether one is deployed or healthy, and Step 5A's

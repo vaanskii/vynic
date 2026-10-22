@@ -1,0 +1,52 @@
+[
+  {
+    "command": [
+      "go",
+      "version"
+    ],
+    "stdout": "go version go1.26.8 darwin/arm64",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "protoc",
+      "--version"
+    ],
+    "stdout": "libprotoc 36.2",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "protoc-gen-go",
+      "--version"
+    ],
+    "stdout": "protoc-gen-go v1.36.11",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "protoc-gen-go-grpc",
+      "--version"
+    ],
+    "stdout": "protoc-gen-go-grpc 1.6.2",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "dart",
+      "--version"
+    ],
+    "stdout": "Dart SDK version: 3.12.1 (stable) (Tue May 26 01:02:21 2026 -0700) on \"macos_arm64\"",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "dart",
+      "pub",
+      "global",
+      "list"
+    ],
+    "stdout": "protoc_plugin 25.0.0",
+    "stderr": ""
+  }
+]

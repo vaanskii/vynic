@@ -80,10 +80,14 @@ class EdgeTransportClient {
           )
           .timeout(_timeout);
 
-      final outcome = _classify(response.statusCode);
-      if (outcome != EdgeTransportOutcome.ok) {
-        return EdgeClaimResponse(outcome);
+      // Enrollment may rotate the credential while this request is in flight.
+      // Neither old work nor an old rejection belongs to the current identity.
+      // Leave the old lease unacknowledged and poll again with its replacement.
+      if (headers['X-POS-Sync-Key'] != _credential()) {
+        return const EdgeClaimResponse(EdgeTransportOutcome.ok);
       }
+      final outcome = _classify(response.statusCode);
+      if (outcome != EdgeTransportOutcome.ok) return EdgeClaimResponse(outcome);
 
       // Parsed separately from the request: a body we cannot read is a server
       // problem, not an unreachable network, and the two lead to different

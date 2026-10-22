@@ -1,0 +1,13 @@
+{
+  "inputSourceManifestSha256": "abf7e6b346ec5ab81a6ce2ce23fe1cba8f3bec2b318b63f45e120bc3030de9ef",
+  "preparedFiles": 815,
+  "buildSourceManifestSha256": "03f2087c1c6d639a8fde39fdc830e49afdbaec3768018efff45b7a76724ffb48",
+  "testedSourceManifestSha256": "f3c8c2e37ddd75e0b726258cfa9d3be9ee49994256b84e5f16a0798fd6c10a7a",
+  "testedSourceArchiveSha256": "de272dfcf1a07b86daa186ce78578f6b713df0a6062a9da1d4d70cabb2aea597",
+  "changesFromBuildSource": [
+    "apps/operations/test/unit/pos02_acceptance_runner_test.dart"
+  ],
+  "runtimeSourceChanges": 0,
+  "stageRawSourceFilesMetadata": "windows-stage.json contains one numeric 1 per manifest property due to PowerShell property enumeration; exact count815 verified against manifest and unchanged hashes",
+  "artifactNativeArchiveQualifiedForRelease": false
+}

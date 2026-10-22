@@ -1,0 +1,14 @@
+{
+  "candidateIdentity": "POS02_ADMIN_d194367f_2026-10-02",
+  "baseCommit": "275688e1e5c5dc0e26e62705ab0c7670cf16d99a",
+  "sourceManifestSha256": "d194367f8fd0e2f6d9dcfea86f52d09cb605b32779b7904613b00466bd084de8",
+  "sourceFileCount": 876,
+  "entrypoint": "lib/main_pos.dart",
+  "guiLaunched": false,
+  "livePrinterOrVmActions": false,
+  "WindowsCurrentRevision": "PENDING_NOT_RUN",
+  "physicalAcceptance": "PENDING",
+  "milestoneDone": false,
+  "extraPrinters": "developer-only; named IPv4; port9100; unassigned routing",
+  "kitchenCopies": "authenticated Staff; Georgian Run/Cancel; fixed audit reason; labeled copy; no automatic uncertain retry"
+}

@@ -1,0 +1,28 @@
+{
+  "web06": {
+    "passed": 7,
+    "failed": 0,
+    "skipped": 0
+  },
+  "w1-regression": {
+    "passed": 8,
+    "failed": 0,
+    "skipped": 0
+  },
+  "website-regression": {
+    "passed": 23,
+    "failed": 0,
+    "skipped": 0
+  },
+  "backend-aggregate": {
+    "passed": 851,
+    "failed": 0,
+    "skipped": 775
+  },
+  "overlap": {
+    "additionalPgPassed": 38,
+    "aggregatePassedOverlap": 0,
+    "aggregateSkippedRunSeparately": 38,
+    "distinctBackendPassed": 889
+  }
+}

@@ -1,0 +1,137 @@
+$ProgressPreference = 'SilentlyContinue'
+$ErrorActionPreference = 'Stop'
+Set-StrictMode -Version Latest
+$currentIdentity = [Security.Principal.WindowsIdentity]::GetCurrent()
+if ($currentIdentity.IsSystem) { throw 'Current-user qualification refuses default SYSTEM context' }
+$stage = '\\Mac\Home\Developer\vynic\docs\proofs\POS_SHARED_PRINT_GO_275688e1_2026-10-06\windows-native-arm64-stage-v2-current-user'
+$resultShare = '\\Mac\Home\Developer\vynic\docs\proofs\POS_SHARED_PRINT_GO_275688e1_2026-10-06\windows-native-arm64-result-v2-current-user'
+$base = Join-Path $env:LOCALAPPDATA 'VynicReadinessNativeArm64\native-v2-current-user-20261006-c4fe6021'
+if ((Test-Path -LiteralPath $base) -or (Test-Path -LiteralPath $resultShare)) { throw 'Fresh ARM64 qualification paths already occupied' }
+if ($env:VYNIC_PRINT_TEST_CHILD) { throw 'Unexpected test-child environment' }
+New-Item -ItemType Directory -Path $base | Out-Null
+$manifest = Get-Content -Raw (Join-Path $stage 'stage-manifest.json') | ConvertFrom-Json
+foreach ($entry in $manifest.artifacts.PSObject.Properties) {
+  $path = Join-Path $stage $entry.Name
+  if ((Get-FileHash -LiteralPath $path -Algorithm SHA256).Hash.ToLowerInvariant() -ne $entry.Value.sha256 -or (Get-Item -LiteralPath $path).Length -ne $entry.Value.bytes) { throw 'Staged artifact mismatch' }
+  Copy-Item -LiteralPath $path -Destination (Join-Path $base $entry.Name)
+}
+$source = Join-Path $base 'source'
+Expand-Archive -LiteralPath (Join-Path $base 'source.zip') -DestinationPath $source
+$output = Join-Path $base 'output'
+New-Item -ItemType Directory -Path $output | Out-Null
+$vc = 'C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.44.35207'
+$kit = 'C:\Program Files (x86)\Windows Kits\10'
+$sdkVersion = '10.0.26100.0'
+$cmakeBin = 'C:\Program Files\Microsoft Visual Studio\2022\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin'
+$env:PATH = $cmakeBin + ';' + $env:PATH
+$env:HTTP_PROXY = 'http://127.0.0.1:9'
+$env:HTTPS_PROXY = 'http://127.0.0.1:9'
+$env:VSLANG = '1033'
+
+function Verify-Source {
+  $pins = Get-Content -Raw (Join-Path $base 'source-manifest.json') | ConvertFrom-Json
+  foreach ($entry in $pins.files.PSObject.Properties) {
+    $path = Join-Path $source ($entry.Name.Replace('/', '\'))
+    if ((Get-FileHash -LiteralPath $path -Algorithm SHA256).Hash.ToLowerInvariant() -ne $entry.Value.sha256 -or (Get-Item -LiteralPath $path).Length -ne $entry.Value.bytes) { throw "Source hash/length changed: $($entry.Name)" }
+  }
+  $test = Join-Path $base 'printtransport-windows-arm64.test.exe'
+  if ((Get-FileHash -LiteralPath $test -Algorithm SHA256).Hash.ToLowerInvariant() -ne $pins.testExecutable.sha256 -or (Get-Item -LiteralPath $test).Length -ne $pins.testExecutable.bytes) { throw 'ARM64 Go test executable changed' }
+}
+
+function Cache-Snapshot {
+  $paths = @(
+    (Join-Path $cmakeBin 'cmake.exe'),
+    (Join-Path $cmakeBin 'ctest.exe'),
+    (Join-Path $vc 'lib\arm64\libcmt.lib'),
+    (Join-Path $vc 'lib\arm64\libcpmt.lib'),
+    (Join-Path $vc 'lib\arm64\libvcruntime.lib'),
+    (Join-Path $vc 'lib\arm64\oldnames.lib'),
+    (Join-Path $kit ('Lib\'+$sdkVersion+'\um\arm64\WinSpool.Lib')),
+    (Join-Path $kit ('Lib\'+$sdkVersion+'\um\arm64\kernel32.Lib')),
+    (Join-Path $kit ('Lib\'+$sdkVersion+'\ucrt\arm64\libucrt.lib'))
+  )
+  $directories = @((Join-Path $vc 'bin\Hostarm64\arm64'), (Join-Path $vc 'include'))
+  foreach ($include in @('shared','um','ucrt')) { $directories += Join-Path $kit ('Include\'+$sdkVersion+'\'+$include) }
+  foreach ($directory in $directories) {
+    if (-not (Test-Path -LiteralPath $directory -PathType Container)) { throw "Cached tool/header directory missing: $directory" }
+    $paths += @(Get-ChildItem -LiteralPath $directory -Recurse -File | Select-Object -ExpandProperty FullName)
+  }
+  $hashes = [ordered]@{}
+  foreach ($path in @($paths | Sort-Object -Unique)) {
+    if (-not (Test-Path -LiteralPath $path -PathType Leaf)) { throw "Cached ARM64 input missing: $path" }
+    $hashes[$path] = (Get-FileHash -LiteralPath $path -Algorithm SHA256).Hash.ToLowerInvariant()
+  }
+  return $hashes
+}
+
+function Machine([string]$Path) {
+  $bytes = [IO.File]::ReadAllBytes($Path)
+  $offset = [BitConverter]::ToInt32($bytes, 60)
+  if ($offset -lt 64 -or $offset + 6 -ge $bytes.Length -or [BitConverter]::ToUInt32($bytes, $offset) -ne 17744) { throw 'Invalid PE image' }
+  return [BitConverter]::ToUInt16($bytes, $offset + 4)
+}
+
+function Run-Checked([string]$Label, [string]$Program, [string[]]$Arguments) {
+  $log = Join-Path $output ($Label+'.log')
+  & $Program @Arguments *> $log
+  $code = $LASTEXITCODE
+  Get-Content -LiteralPath $log
+  if ($code -ne 0) { throw "$Label failed with exit $code" }
+}
+
+$jobsBefore = @(Get-CimInstance -ClassName Win32_PrintJob)
+$status = 'FAILED'
+$failure = $null
+$oldHelperPath = $env:VYNIC_PRINT_HELPER_TEST_PATH
+$oldHelperHash = $env:VYNIC_PRINT_HELPER_TEST_SHA256
+try {
+  Verify-Source
+  if ((Machine (Join-Path $base 'printtransport-windows-arm64.test.exe')) -ne 43620) { throw 'Go test executable is not native ARM64' }
+  $cacheBefore = Cache-Snapshot
+  $cacheBefore | ConvertTo-Json -Depth 3 | Set-Content -Encoding UTF8 (Join-Path $output 'cached-inputs-before.json')
+  $helperBuild = Join-Path $output 'helper'
+  $coreBuild = Join-Path $output 'core'
+  Run-Checked 'helper-configure' 'cmake' @('-S',(Join-Path $source 'apps\edge\native\print_helper'),'-B',$helperBuild,'-G','Visual Studio 17 2022','-A','ARM64','-T','host=ARM64')
+  Run-Checked 'helper-build' 'cmake' @('--build',$helperBuild,'--config','Release')
+  Run-Checked 'helper-fake-tests' 'ctest' @('--test-dir',$helperBuild,'-C','Release','--output-on-failure','-V')
+  Run-Checked 'core-configure' 'cmake' @('-S',(Join-Path $source 'apps\operations\windows\tests'),'-B',$coreBuild,'-G','Visual Studio 17 2022','-A','ARM64','-T','host=ARM64')
+  Run-Checked 'core-build' 'cmake' @('--build',$coreBuild,'--config','Release')
+  Run-Checked 'core-fake-tests' 'ctest' @('--test-dir',$coreBuild,'-C','Release','--output-on-failure','-V')
+  $helper = Join-Path $helperBuild 'Release\vynic_print_helper.exe'
+  $helperHash = (Get-FileHash -LiteralPath $helper -Algorithm SHA256).Hash.ToLowerInvariant()
+  foreach ($native in @($helper,(Join-Path $helperBuild 'Release\print_helper_protocol_test.exe'),(Join-Path $coreBuild 'Release\windows_spooler_test.exe'))) {
+    if ((Machine $native) -ne 43620) { throw 'Native target is not ARM64' }
+  }
+  $env:VYNIC_PRINT_HELPER_TEST_PATH = $helper
+  $env:VYNIC_PRINT_HELPER_TEST_SHA256 = $helperHash
+  Run-Checked 'go-transport-tests' (Join-Path $base 'printtransport-windows-arm64.test.exe') @('-test.v','-test.timeout=60s')
+  $goLog = Get-Content -Raw (Join-Path $output 'go-transport-tests.log')
+  if ($goLog -match '--- SKIP:|--- FAIL:|panic:') { throw 'Native Go test skipped or failed' }
+  foreach ($test in @('TestWindowsJobContainsChildAndStdinHasNoInheritedWriter','TestWindowsUnsupportedJobListFailsBeforeProcessCreation','TestWindowsParentDeathTerminatesChildAndFreshGuardAcquires','TestWindowsActualHelperReadOnlyAndInvalidRequests')) {
+    if ($goLog -notmatch ('--- PASS: '+[regex]::Escape($test)+' \(')) { throw "Required native lifecycle test absent: $test" }
+  }
+  Verify-Source
+  $cacheAfter = Cache-Snapshot
+  $cacheAfter | ConvertTo-Json -Depth 3 | Set-Content -Encoding UTF8 (Join-Path $output 'cached-inputs-after.json')
+  if ($cacheBefore.Count -ne $cacheAfter.Count) { throw 'Cached input inventory changed' }
+  foreach ($key in $cacheBefore.Keys) { if ($cacheBefore[$key] -ne $cacheAfter[$key]) { throw "Cached ARM64 input changed: $key" } }
+  $receipt = [ordered]@{ scope='native ARM64 nonphysical helper/core/Go lifecycle qualification'; helperSha256=$helperHash; helperBytes=(Get-Item -LiteralPath $helper).Length; helperProtocol=1; observedAccountName=$currentIdentity.Name; observedAccountSID=$currentIdentity.User.Value; selectedServicePrincipalQualified=$false; helperMachine='0xaa64'; goTestMachine='0xaa64'; sourceInputCount=34; sourceHashesUnchanged=$true; cachedInputsCount=$cacheBefore.Count; cachedInputHashesUnchanged=$true; documentsSubmitted=0; productStarted=$false; flutterEngineStarted=$false; serviceOperations=$false; driverOperations=$false; positiveWrites='fake APIs/processes only' }
+  $receipt | ConvertTo-Json -Depth 6 | Set-Content -Encoding UTF8 (Join-Path $output 'receipt.json')
+  $status = 'PASS'
+} catch {
+  $failure = $_.ToString()
+} finally {
+  $env:VYNIC_PRINT_HELPER_TEST_PATH = $oldHelperPath
+  $env:VYNIC_PRINT_HELPER_TEST_SHA256 = $oldHelperHash
+  $jobsAfter = @(Get-CimInstance -ClassName Win32_PrintJob)
+  New-Item -ItemType Directory -Path $resultShare | Out-Null
+  Get-ChildItem -LiteralPath $output -File | Copy-Item -Destination $resultShare
+  $binaries = @(Get-ChildItem -LiteralPath $output -Recurse -File | Where-Object { $_.Extension -eq '.exe' -or $_.Extension -eq '.dll' })
+  @($binaries | ForEach-Object { [ordered]@{path=$_.FullName.Substring($output.Length+1); bytes=$_.Length; sha256=(Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash.ToLowerInvariant(); machine=(Machine $_.FullName)} }) | ConvertTo-Json -Depth 6 | Set-Content -Encoding UTF8 (Join-Path $resultShare 'built-artifact-hashes.json')
+  $helperPath = Join-Path $output 'helper\Release\vynic_print_helper.exe'
+  if (Test-Path -LiteralPath $helperPath) { Copy-Item -LiteralPath $helperPath -Destination $resultShare }
+  $runResult = [ordered]@{status=$status; failure=$failure; guestBase=$base; guestArchitecture=$env:PROCESSOR_ARCHITECTURE; observedAccountName=$currentIdentity.Name; observedAccountSID=$currentIdentity.User.Value; isSystem=$currentIdentity.IsSystem; selectedServicePrincipalQualified=$false; sourceZipSHA256=(Get-FileHash -LiteralPath (Join-Path $base 'source.zip') -Algorithm SHA256).Hash.ToLowerInvariant(); printJobsBefore=$jobsBefore.Count; printJobsAfter=$jobsAfter.Count; documentsSubmitted=0; sourceOnly=$true; serviceRegistration=$false; driverInstall=$false; productStarted=$false; machineRestarted=$false}
+  $runResult | ConvertTo-Json -Depth 6 | Set-Content -Encoding UTF8 (Join-Path $resultShare 'run-result.json')
+  $runResult | ConvertTo-Json -Depth 6
+}
+if ($status -ne 'PASS') { throw $failure }

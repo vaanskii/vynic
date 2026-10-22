@@ -18,7 +18,7 @@ const url = process.env.TENANT_INTEGRATION_DATABASE_URL;
       format: 'jwk',
     }).x!;
     const body = { installationId, publicKey };
-    const post = (venue = f.venueId, token = f.token, payload = body) =>
+    const post = (venue = f.venueId, token = f.token, payload: object = body) =>
       request(f.app.getHttpServer())
         .post(`/platform/venues/${venue}/edge-foundations`)
         .set('Authorization', `Bearer ${token}`)

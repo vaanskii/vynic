@@ -55,6 +55,12 @@ interface StaffKey {
 
 /** The `staff` and `setting` tables, with their real compound unique keys. */
 class FakeDb {
+  async $transaction<T>(fn: (db: this) => Promise<T>) {
+    return fn(this);
+  }
+  $queryRaw() {
+    return Promise.resolve([]);
+  }
   readonly rows: StaffRow[] = [];
   readonly settings = new Map<string, string>();
   private seq = 0;
@@ -69,8 +75,23 @@ class FakeDb {
   readonly staff = {
     findUnique: ({ where }: { where: StaffKey }) =>
       Promise.resolve(this.find(where) ?? null),
-    findMany: ({ where }: { where: { venueId: string } }) =>
-      Promise.resolve(this.rows.filter((row) => row.venueId === where.venueId)),
+    findMany: ({
+      where,
+    }: {
+      where: {
+        venueId: string;
+        isActive?: boolean;
+        username?: { not: string };
+      };
+    }) =>
+      Promise.resolve(
+        this.rows.filter(
+          (row) =>
+            row.venueId === where.venueId &&
+            (where.isActive === undefined || row.isActive === where.isActive) &&
+            row.username !== where.username?.not,
+        ),
+      ),
     create: ({
       data,
     }: {
@@ -153,10 +174,11 @@ function makeService() {
   const db = new FakeDb();
   const dispatched: TenantContext[] = [];
   const dispatcher = {
-    dispatch: (tenant: TenantContext) => {
+    recordCloudMutation: (_tx: unknown, tenant: TenantContext) => {
       dispatched.push(tenant);
       return Promise.resolve({ delivered: false });
     },
+    kickRecordedDelivery: () => undefined,
   } as unknown as PosCommandDispatcher;
   const vault = new StaffPinVault(db as unknown as PrismaService);
   const users = new MobileUsersService(

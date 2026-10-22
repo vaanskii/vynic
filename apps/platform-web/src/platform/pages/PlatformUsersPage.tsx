@@ -126,12 +126,12 @@ export function PlatformUsersPage() {
                 <option value="SUPER_ADMIN">Super admin</option>
               </Select>
             </Field>
-            <Field label="Initial password (at least 12 characters)">
+            <Field label="Initial password (at least 8 characters)">
               <Input
                 type="password"
                 autoComplete="new-password"
                 required
-                minLength={12}
+                minLength={8}
                 value={form.password}
                 onChange={(e) => setForm({ ...form, password: e.target.value })}
               />

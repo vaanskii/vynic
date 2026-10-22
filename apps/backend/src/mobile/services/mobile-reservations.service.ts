@@ -1,18 +1,16 @@
+import { PrismaService } from '../../prisma.service';
+import { requestManagerOperation } from './manager-operation';
+import type { ManagerAuthContext } from '../../auth/manager-auth-context';
 import {
   BadRequestException,
   Injectable,
   NotFoundException,
   ServiceUnavailableException,
 } from '@nestjs/common';
-import {
-  PosCommandDispatcher,
-  type PosDelivery,
-} from '../../pos/pos-command-dispatcher.service';
+import { PosCommandDispatcher } from '../../pos/pos-command-dispatcher.service';
 import { EdgeCommandTypes } from '../../shared/contracts/edge-command';
-import { allocatePosReservationId } from '../../pos/pos-reservation-id';
 import { PosReservationMirrorService } from '../../pos/pos-reservation-mirror.service';
 import { MonitoringGateway } from '../../realtime/monitoring.gateway';
-import { suppressPosEchoForReservation } from '../../pos/sync-echo-guard';
 import { MobileMutationSupport } from './mobile-mutation-support.service';
 import type { TenantContext } from '../../tenancy/tenant-context';
 
@@ -27,6 +25,9 @@ export interface ReservationResponseItem {
   notes?: string;
   status: string;
   createdBy?: string;
+  advanceAmount?: number;
+  advanceCollectedOn?: string | null;
+  advanceReceiptId?: string | null;
 }
 
 /**
@@ -44,6 +45,7 @@ export class MobileReservationsService {
     private readonly posCommands: PosCommandDispatcher,
     private readonly gateway: MonitoringGateway,
     private readonly mutationSupport: MobileMutationSupport,
+    private readonly prisma: PrismaService,
   ) {}
 
   /**
@@ -89,6 +91,7 @@ export class MobileReservationsService {
         notes: r.notes ? String(r.notes) : undefined,
         status: String(r.status ?? 'pending'),
         createdBy: r.createdBy ? String(r.createdBy) : undefined,
+        ...(Number(r.advanceAmount ?? 0) > 0 ? { advanceAmount: Number(r.advanceAmount), advanceCollectedOn: r.advanceCollectedOn, advanceReceiptId: r.advanceReceiptId } : {}),
       }))
       .filter((r) => r.id.length > 0);
 
@@ -98,170 +101,42 @@ export class MobileReservationsService {
     return normalized;
   }
 
-  async createReservation(
-    tenant: TenantContext,
-    monitoringSocketId: string | undefined,
-    payload: {
-      customerName?: string;
-      customerPhone?: string;
-      tableNumbers?: number[];
-      reservationDate?: string;
-      reservationTime?: string;
-      numberOfGuests?: number;
-      notes?: string;
-      createdBy?: string;
-      status?: string;
-      preOrderItems?: Array<Record<string, unknown>>;
-    },
-  ): Promise<ReservationResponseItem & { posDelivery: PosDelivery }> {
-    const customerName = (payload.customerName ?? '').trim();
-    const customerPhone = (payload.customerPhone ?? '').trim();
-    const reservationDate = (payload.reservationDate ?? '').trim();
-    const reservationTime = (payload.reservationTime ?? '').trim();
-    const tableNumbers = Array.isArray(payload.tableNumbers)
-      ? payload.tableNumbers
-          .map((n) => Number(n))
-          .filter((n) => Number.isFinite(n))
-      : [];
-    const numberOfGuests = Number(payload.numberOfGuests ?? 0);
-    if (
-      customerName.length === 0 ||
-      reservationDate.length === 0 ||
-      reservationTime.length === 0
-    ) {
-      throw new BadRequestException(
-        'customerName, reservationDate, reservationTime are required',
-      );
-    }
-    if (!Number.isFinite(numberOfGuests) || numberOfGuests <= 0) {
-      throw new BadRequestException('numberOfGuests must be greater than zero');
-    }
-
-    const preOrderItems = Array.isArray(payload.preOrderItems)
-      ? payload.preOrderItems
-      : [];
-
-    const reservationPayload = {
-      customerName,
-      customerPhone,
-      tableNumbers,
-      reservationDate,
-      reservationTime,
-      numberOfGuests,
-      notes: (payload.notes ?? '').toString(),
-      createdBy: (payload.createdBy ?? 'mobile_manager').toString(),
-      status: (payload.status ?? 'confirmed').toString(),
-      isTakeAway: false,
-      preOrderItems,
-    };
-
-    // The reservation's identity is allocated here rather than by the POS.
-    // It used to come back from a synchronous LAN call, which meant the id did
-    // not exist until the restaurant answered — and meant a redelivered create
-    // produced a second booking. Cloud naming it makes the command convergent
-    // and lets this request answer immediately.
-    const reservationId = allocatePosReservationId();
-    const posDelivery = await this.posCommands.dispatch(tenant, {
-      type: EdgeCommandTypes.RESERVATION_CREATE,
-      payload: { ...reservationPayload, reservationId },
-    });
-
-    // Suppress the POS round-trip echo so the device that created this
-    // reservation isn't re-notified when the POS syncs it back.
-    suppressPosEchoForReservation(tenant, reservationId);
-    this.gateway.broadcastUpdate(
-      tenant,
-      'data_updated',
-      {
-        type: 'reservations',
-        action: 'created',
-        customerName,
-        tableNumbers,
-        reservationTime,
-        reservationDate,
-      },
-      this.mutationSupport.wsExcludeOpts(monitoringSocketId),
-    );
-    return {
-      id: reservationId,
-      customerName,
-      customerPhone,
-      tableNumbers,
-      reservationDate,
-      reservationTime,
-      numberOfGuests,
-      notes: reservationPayload.notes || undefined,
-      status: reservationPayload.status,
-      createdBy: reservationPayload.createdBy,
-      posDelivery,
-    };
-  }
-
-  async updateReservationStatus(
-    tenant: TenantContext,
-    id: string,
-    monitoringSocketId: string | undefined,
-    payload: { status?: string },
+  createReservation(
+    actor: ManagerAuthContext,
+    _socket: string | undefined,
+    body: unknown,
   ) {
-    const status = (payload.status ?? '').trim().toLowerCase();
-    if (status.length === 0) {
-      throw new BadRequestException('status is required');
-    }
-    if (
-      status === 'completed' ||
-      status === 'in-progress' ||
-      status === 'inprogress'
-    ) {
-      throw new BadRequestException(
-        'Moving reservation to table is not allowed from mobile',
-      );
-    }
-    const posDelivery = await this.posCommands.dispatch(tenant, {
-      type: EdgeCommandTypes.RESERVATION_STATUS_UPDATE,
-      payload: { reservationId: id, status },
+    return requestManagerOperation(this.prisma, actor, 'reservation_create', {
+      requestId: (body as Record<string, unknown> | null)?.requestId,
+      body,
     });
-    this.gateway.broadcastUpdate(
-      tenant,
-      'data_updated',
-      {
-        type: 'reservations',
-        action: status === 'cancelled' ? 'cancelled' : 'updated',
-        reservationId: id,
-      },
-      this.mutationSupport.wsExcludeOpts(monitoringSocketId),
-    );
-    return { success: true, posDelivery };
   }
-
-  async deleteReservation(
-    tenant: TenantContext,
+  updateReservationStatus(
+    actor: ManagerAuthContext,
     id: string,
-    monitoringSocketId?: string,
+    _socket: string | undefined,
+    body: unknown,
   ) {
-    const posDelivery = await this.posCommands.dispatch(tenant, {
-      type: EdgeCommandTypes.RESERVATION_DELETE,
-      payload: { reservationId: id },
-    });
-    this.gateway.broadcastUpdate(
-      tenant,
-      'data_updated',
-      {
-        type: 'reservations',
-        action: 'cancelled',
+    return requestManagerOperation(this.prisma, actor, 'reservation_status', {
+      requestId: (body as Record<string, unknown> | null)?.requestId,
+      body: {
         reservationId: id,
+        status: (body as Record<string, unknown> | null)?.status,
       },
-      this.mutationSupport.wsExcludeOpts(monitoringSocketId),
-    );
-    return { success: true, posDelivery };
+    });
+  }
+  deleteReservation(
+    actor: ManagerAuthContext,
+    id: string,
+    _socket?: string,
+    body?: unknown,
+  ) {
+    return requestManagerOperation(this.prisma, actor, 'reservation_delete', {
+      requestId: (body as Record<string, unknown> | null)?.requestId,
+      body: { reservationId: id },
+    });
   }
 
-  /**
-   * Relay a reservation-check print request to the Windows POS (the only print
-   * host) via the direct POS callback path. No realtime broadcast: printing is
-   * not a data mutation, so nothing changes for other clients. POS-side
-   * failures (unreachable POS, reservation missing in Hive) are surfaced as
-   * clean HTTP errors instead of a raw 500.
-   */
   async printReservationCheck(tenant: TenantContext, id: string) {
     const reservationId = (id ?? '').trim();
     if (reservationId.length === 0) {

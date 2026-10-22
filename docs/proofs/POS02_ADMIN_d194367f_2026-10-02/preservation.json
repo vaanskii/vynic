@@ -1,0 +1,38 @@
+{
+  "head": "275688e1e5c5dc0e26e62705ab0c7670cf16d99a",
+  "branch": "codex/docker-deployment-foundation",
+  "stash": [
+    "stash@{0} 9df454225caec647f67ad4f70ef6038dbbbe41d6 On main: reorg-wip-holdout"
+  ],
+  "index": [],
+  "originalWipFileCount": 267,
+  "originalWipUnchangedCount": 263,
+  "missingOriginalFiles": [],
+  "differencesFromOriginalBaseline": [
+    "apps/platform-web/src/pages/HomePage.tsx",
+    "docs/agent-state/VYNIC_CODE_MAP.md",
+    "docs/agent-state/VYNIC_PROJECT_STATE.md",
+    "apps/platform-web/src/test/site-motion.test.tsx"
+  ],
+  "ownedDocumentationDifferences": [
+    "docs/agent-state/VYNIC_CODE_MAP.md",
+    "docs/agent-state/VYNIC_PROJECT_STATE.md"
+  ],
+  "concurrentClaudePlatformDifferences": [
+    "apps/platform-web/src/pages/HomePage.tsx",
+    "apps/platform-web/src/test/site-motion.test.tsx"
+  ],
+  "platformWebEditsByThisRevision": false,
+  "sharedContractRootLockOrConfigEditsByThisRevision": false,
+  "originalDevelopmentUrlOverlaysExcluded": [
+    "apps/operations/lib/apps/windows_pos/screens/pos_first_run.dart",
+    "apps/operations/lib/core/services/edge/pos_enrollment_service.dart",
+    "apps/operations/lib/core/services/sync/api_config.dart"
+  ],
+  "oldArchivesSha256": {
+    "docs/proofs/POS02_WINDOWS_CANDIDATE_275688e1_2026-10-02.zip": "6142021ae4e2164487356a0a422e0a050feb2fb206fc5cd4c9f1175818afe733",
+    "docs/proofs/POS02_PREVIEW_275688e1_2026-10-02/preview-source.zip": "481403a271c36133d7ac20e326113b7e451b928580970fa836a21d5e15f37dd8",
+    "docs/proofs/POS02_PREVIEW_275688e1_2026-10-02/mac-preview.zip": "4b4131b1fcd8945130f0c095b58741d2f557c13d6c82d58f8e4f00a180ff16c3",
+    "docs/proofs/POS02_CHECKPOINT_275688e1_2026-10-02/CHECKSUMS.json": "ef6f8acbc990e805e60137d2f6bb4e8372d5da501c6b0beeccfe062041caec82"
+  }
+}

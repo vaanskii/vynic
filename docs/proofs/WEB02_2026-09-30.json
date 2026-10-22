@@ -1,0 +1,789 @@
+{
+  "issue": "WEB-02",
+  "status": "DONE",
+  "closed_local_date": "2026-09-30",
+  "timezone": "Asia/Tbilisi",
+  "recorded_at_utc": "2026-09-29T20:55:05.540865+00:00",
+  "baseline": {
+    "branch": "codex/docker-deployment-foundation",
+    "head": "64d668fe20f43dd822e5ae31dbdef78cad5bcfa9",
+    "git_status": [
+      " M .env.docker.example",
+      " M .env.production.example",
+      " M apps/backend/src/customer/commercial-access.integration.spec.ts",
+      " M apps/backend/src/dev-origins.spec.ts",
+      " M apps/backend/src/dev-origins.ts",
+      " M apps/backend/src/subscriptions/subscription.integration.spec.ts",
+      " M apps/backend/src/subscriptions/subscription.service.ts",
+      " M apps/backend/src/website/custom/custom-website.integration.spec.ts",
+      " M apps/backend/src/website/provisioning/website-provisioning.integration.spec.ts",
+      " M apps/backend/src/website/provisioning/website-provisioning.ts",
+      " M apps/operations/lib/apps/windows_pos/screens/pos_first_run.dart",
+      " M apps/operations/lib/core/services/edge/pos_enrollment_service.dart",
+      " M apps/operations/lib/core/services/sync/api_config.dart",
+      " M apps/operations/test/unit/pos_enrollment_test.dart",
+      " M apps/platform-web/src/platform/pages/venue/SubscriptionPanel.tsx",
+      " M apps/platform-web/src/subscriptions/operator-actions.ts",
+      " M apps/platform-web/src/subscriptions/types.ts",
+      " M apps/platform-web/src/test/commercial-control-ux.test.tsx",
+      " M apps/platform-web/src/test/subscription-lifecycle.test.tsx",
+      " M compose.local.yaml",
+      " M compose.yaml",
+      " M deploy/traefik/routes.yml",
+      " M docs/CANONICAL_MENU_SYNC.md",
+      " M docs/COMMERCIAL_SUBSCRIPTION_LIFECYCLE.md",
+      " M docs/DEPLOYMENT.md",
+      " M docs/DEPLOYMENT_PROOF.md",
+      " M docs/agent-state/VYNIC_CODE_MAP.md",
+      " M docs/agent-state/VYNIC_DECISIONS.md",
+      " M docs/agent-state/VYNIC_PROJECT_STATE.md",
+      " M scripts/docker.sh",
+      "?? apps/operations/test/live/native_ingress_live_test.dart",
+      "?? compose.lan.yaml",
+      "?? docs/audits/2026-09-29-f7bb982/"
+    ],
+    "stash_preserved": "stash@{0}: On main: reorg-wip-holdout",
+    "tracked_wip_diff_sha256_before_and_after": "7e8e687de210f0ed4b5d81839312b26fbfc663f19cd05570b0b350a9165d450c",
+    "untracked_manifest_sha256_before_and_after": "6d7dd4391d214a695510059dd1ba143fde881a5ffce4a49e5cdb56e352ccef91",
+    "sec01_commits": [
+      "cb283d9e483a2d757d845faccd2519987a0051bd",
+      "a4036379931387e5a36bdcf03e297e0893558ee8"
+    ],
+    "sec02_commits": [
+      "038ece4e8e216098175dac9d7a17d306a251c8c1",
+      "64d668fe20f43dd822e5ae31dbdef78cad5bcfa9"
+    ],
+    "migration_tip_before": "20261011120000_canonical_menu_sync",
+    "migrations_before": 60
+  },
+  "implementation_commit": "f453ab75728088a7b497880457e8a441d6a97b91",
+  "historical_migration": {
+    "name": "20261010120000_shared_website_foundation",
+    "sha256": "88e7406332b9e90af622674e545f8ba4d515d556951285cec9865749808c8d50",
+    "edited": false,
+    "behavior": "COALESCE(draft, published) whole document -> VenuePublicProfile (workingHours, contactEmail, mapUrl, socials, gallery); keys then deleted from both draft and published",
+    "provenance_lost": [
+      "published values of the moved fields",
+      "whether draft values differed from published"
+    ],
+    "provenance_remaining": [
+      "revision",
+      "publishedRevision",
+      "status",
+      "publishedAt",
+      "published IS NULL",
+      "VenueWebsiteConfig.updatedAt",
+      "CustomerAuditEvent website.draft_saved/published (revision only)",
+      "website.public_info_saved (fields)",
+      "_prisma_migrations.finished_at"
+    ]
+  },
+  "migrations_added": [
+    {
+      "name": "20261010110000_web02_capture_public_info_evidence",
+      "sha256": "08e3b087da28d31541b28f5b2daeee5fd4b49c83057875b3cf22782a8fd290e8",
+      "ordering": "before the foundation; applied late on already-upgraded databases, then records nothing"
+    },
+    {
+      "name": "20261012120000_web02_restore_public_info_authority",
+      "sha256": "62035f02e44bcadc44ab2f36fbe68fb65ccc9909cbdfb335c80d75eebbe03ac8",
+      "ordering": "after the tip; compare-and-set from captured evidence only"
+    }
+  ],
+  "migration_tip_after": "20261012120000_web02_restore_public_info_authority",
+  "migrations_after": 62,
+  "classification": {
+    "A_provably_published": "live = published values",
+    "B_provably_unpublished_draft": "removed from live; private PENDING review",
+    "C_ambiguous": "no automatic change; report + explicit audited decision"
+  },
+  "runtime": {
+    "postgresql": "17.10 (Homebrew)",
+    "host": "127.0.0.1",
+    "port": 64611,
+    "cluster": "private, session scratchpad, TCP only, removed after proof",
+    "real_nest_http": true,
+    "real_prisma": true,
+    "host_resolution": "NODE_ENV=production (fail closed)"
+  },
+  "fixtures": {
+    "venues": 10,
+    "separate_organizations": true,
+    "keys": [
+      "pubonly",
+      "synced",
+      "draftonly",
+      "divergent",
+      "empty",
+      "blank",
+      "partial",
+      "customdraft",
+      "customdiv",
+      "disabled"
+    ],
+    "pre_upgrade_backup": "pg_dump -Fc, restored for every upgrade path"
+  },
+  "reproduction_original_chain": {
+    "suite": {
+      "passed": 6,
+      "total": 6,
+      "failed": 0,
+      "skipped": 0
+    },
+    "unsafe_fixtures": [
+      "customdiv",
+      "customdraft",
+      "disabled",
+      "divergent",
+      "draftonly",
+      "partial"
+    ],
+    "evidence": {
+      "pubonly": "a-pubonly@web02.test",
+      "synced": "a-synced@web02.test",
+      "draftonly": "b-draftonly@web02.test",
+      "divergent": "b-divergent@web02.test",
+      "empty": null,
+      "blank": null,
+      "partial": "a-partial@web02.test",
+      "customdraft": "b-customdraft@web02.test",
+      "customdiv": "b-customdiv@web02.test",
+      "disabled": "b-disabled@web02.test"
+    }
+  },
+  "upgrade_results": {
+    "public": {
+      "pubonly": {
+        "bootstrap": 200,
+        "venue": 200,
+        "shared": {
+          "workingHours": [
+            {
+              "day": 1,
+              "opens": "09:00",
+              "closes": "18:00"
+            },
+            {
+              "day": 5,
+              "opens": "09:00",
+              "closes": "18:00"
+            }
+          ],
+          "contactEmail": "a-pubonly@web02.test",
+          "mapUrl": "https://maps.example/a-pubonly",
+          "socials": [
+            {
+              "label": "published pubonly",
+              "url": "https://social.example/a-pubonly"
+            }
+          ],
+          "gallery": [
+            {
+              "url": "/media/website-logos/a0000000-0000-4000-8000-000000000001.webp",
+              "alt": "published pubonly"
+            }
+          ]
+        }
+      },
+      "synced": {
+        "bootstrap": 200,
+        "venue": 200,
+        "shared": {
+          "workingHours": [
+            {
+              "day": 1,
+              "opens": "09:00",
+              "closes": "18:00"
+            },
+            {
+              "day": 5,
+              "opens": "09:00",
+              "closes": "18:00"
+            }
+          ],
+          "contactEmail": "a-synced@web02.test",
+          "mapUrl": "https://maps.example/a-synced",
+          "socials": [
+            {
+              "label": "published synced",
+              "url": "https://social.example/a-synced"
+            }
+          ],
+          "gallery": [
+            {
+              "url": "/media/website-logos/a0000000-0000-4000-8000-000000000002.webp",
+              "alt": "published synced"
+            }
+          ]
+        }
+      },
+      "draftonly": {
+        "bootstrap": 404,
+        "venue": 404,
+        "shared": null
+      },
+      "divergent": {
+        "bootstrap": 200,
+        "venue": 200,
+        "shared": {
+          "workingHours": [
+            {
+              "day": 1,
+              "opens": "09:00",
+              "closes": "18:00"
+            },
+            {
+              "day": 5,
+              "opens": "09:00",
+              "closes": "18:00"
+            }
+          ],
+          "contactEmail": "a-divergent@web02.test",
+          "mapUrl": "https://maps.example/a-divergent",
+          "socials": [
+            {
+              "label": "published divergent",
+              "url": "https://social.example/a-divergent"
+            }
+          ],
+          "gallery": [
+            {
+              "url": "/media/website-logos/a0000000-0000-4000-8000-000000000004.webp",
+              "alt": "published divergent"
+            }
+          ]
+        }
+      },
+      "empty": {
+        "bootstrap": 200,
+        "venue": 200,
+        "shared": {
+          "workingHours": [],
+          "contactEmail": "",
+          "mapUrl": "",
+          "socials": [],
+          "gallery": []
+        }
+      },
+      "blank": {
+        "bootstrap": 404,
+        "venue": 404,
+        "shared": null
+      },
+      "partial": {
+        "bootstrap": 200,
+        "venue": 200,
+        "shared": {
+          "workingHours": [
+            {
+              "day": 1,
+              "opens": "09:00",
+              "closes": "18:00"
+            },
+            {
+              "day": 5,
+              "opens": "09:00",
+              "closes": "18:00"
+            }
+          ],
+          "contactEmail": "a-partial@web02.test",
+          "mapUrl": "https://maps.example/a-partial",
+          "socials": [
+            {
+              "label": "published partial",
+              "url": "https://social.example/a-partial"
+            }
+          ],
+          "gallery": [
+            {
+              "url": "/media/website-logos/a0000000-0000-4000-8000-000000000007.webp",
+              "alt": "published partial"
+            }
+          ]
+        }
+      },
+      "customdraft": {
+        "bootstrap": 200,
+        "venue": 200,
+        "shared": {
+          "workingHours": [],
+          "contactEmail": "",
+          "mapUrl": "",
+          "socials": [],
+          "gallery": []
+        }
+      },
+      "customdiv": {
+        "bootstrap": 200,
+        "venue": 200,
+        "shared": {
+          "workingHours": [
+            {
+              "day": 1,
+              "opens": "09:00",
+              "closes": "18:00"
+            },
+            {
+              "day": 5,
+              "opens": "09:00",
+              "closes": "18:00"
+            }
+          ],
+          "contactEmail": "a-customdiv@web02.test",
+          "mapUrl": "https://maps.example/a-customdiv",
+          "socials": [
+            {
+              "label": "published customdiv",
+              "url": "https://social.example/a-customdiv"
+            }
+          ],
+          "gallery": [
+            {
+              "url": "/media/website-logos/a0000000-0000-4000-8000-000000000009.webp",
+              "alt": "published customdiv"
+            }
+          ]
+        }
+      },
+      "disabled": {
+        "bootstrap": 404,
+        "venue": 403,
+        "shared": null
+      }
+    },
+    "evidence": {
+      "pubonly": {
+        "provenance": "PUBLISHED",
+        "state": "NOT_REQUIRED"
+      },
+      "synced": {
+        "provenance": "PUBLISHED",
+        "state": "NOT_REQUIRED"
+      },
+      "draftonly": {
+        "provenance": "DRAFT_ONLY",
+        "state": "PENDING"
+      },
+      "divergent": {
+        "provenance": "DIVERGENT",
+        "state": "PENDING"
+      },
+      "empty": {
+        "provenance": "EMPTY",
+        "state": "NOT_REQUIRED"
+      },
+      "blank": null,
+      "partial": {
+        "provenance": "DIVERGENT",
+        "state": "PENDING"
+      },
+      "customdraft": {
+        "provenance": "DRAFT_ONLY",
+        "state": "PENDING"
+      },
+      "customdiv": {
+        "provenance": "DIVERGENT",
+        "state": "PENDING"
+      },
+      "disabled": {
+        "provenance": "DIVERGENT",
+        "state": "PENDING"
+      }
+    }
+  },
+  "suites": {
+    "reproduction": {
+      "passed": 6,
+      "total": 6,
+      "failed": 0,
+      "skipped": 0
+    },
+    "already_migrated": {
+      "passed": 6,
+      "total": 6,
+      "failed": 0,
+      "skipped": 0
+    },
+    "upgrade_restored_backup": {
+      "passed": 11,
+      "total": 11,
+      "failed": 0,
+      "skipped": 0
+    },
+    "upgrade_in_place": {
+      "passed": 11,
+      "total": 11,
+      "failed": 0,
+      "skipped": 0
+    },
+    "unit_public_info_review": {
+      "passed": 5,
+      "total": 5,
+      "failed": 0,
+      "skipped": 0
+    }
+  },
+  "runner_steps": [
+    {
+      "step": "migration chains",
+      "total": 62,
+      "original": 60,
+      "pre": 58,
+      "web02": [
+        "20261010110000_web02_capture_public_info_evidence",
+        "20261012120000_web02_restore_public_info_authority"
+      ],
+      "historical_edited": [],
+      "foundation_sha256": "88e7406332b9e90af622674e545f8ba4d515d556951285cec9865749808c8d50"
+    },
+    {
+      "step": "all target names absent before creation"
+    },
+    {
+      "step": "pre-foundation fixtures and backup",
+      "applied": 58,
+      "venues": 10,
+      "backup_sha256": "c881de790d29ba425c375c52c611619d55f2105f424f7023a42945f7d55d2cf6",
+      "profile_table_before": "f"
+    },
+    {
+      "step": "original chain applied",
+      "checksums": {
+        "applied": 60,
+        "mismatched": []
+      }
+    },
+    {
+      "step": "jest reproduction",
+      "numTotalTests": 6,
+      "numPassedTests": 6,
+      "numFailedTests": 0,
+      "numPendingTests": 0,
+      "numTodoTests": 0
+    },
+    {
+      "step": "already-migrated upgrade + CLI report",
+      "checksums": {
+        "applied": 62,
+        "mismatched": []
+      },
+      "live_unchanged_by_current_chain": true,
+      "review_rows": "0",
+      "schema_diff": {
+        "exit_code": 0,
+        "empty": true,
+        "output": "No difference detected."
+      },
+      "cli_report_read_only": true,
+      "requiring_decision": 6
+    },
+    {
+      "step": "jest posthoc",
+      "numTotalTests": 6,
+      "numPassedTests": 6,
+      "numFailedTests": 0,
+      "numPendingTests": 0,
+      "numTodoTests": 0
+    },
+    {
+      "step": "CLI decision",
+      "state": "CONFIRMED",
+      "audit": "website.public_info_confirm_live",
+      "unknown_actor_exit": 1,
+      "unknown_actor_error": "Unknown platform user"
+    },
+    {
+      "step": "restored backup upgraded + CLI report",
+      "checksums": {
+        "applied": 62,
+        "mismatched": []
+      },
+      "schema_diff": {
+        "exit_code": 0,
+        "empty": true,
+        "output": "No difference detected."
+      },
+      "cli_report_read_only": true,
+      "requiring_decision": 6
+    },
+    {
+      "step": "jest restored",
+      "numTotalTests": 11,
+      "numPassedTests": 11,
+      "numFailedTests": 0,
+      "numPendingTests": 0,
+      "numTodoTests": 0
+    },
+    {
+      "step": "seed upgraded in place",
+      "checksums": {
+        "applied": 62,
+        "mismatched": []
+      },
+      "schema_diff": {
+        "exit_code": 0,
+        "empty": true,
+        "output": "No difference detected."
+      }
+    },
+    {
+      "step": "jest inplace",
+      "numTotalTests": 11,
+      "numPassedTests": 11,
+      "numFailedTests": 0,
+      "numPendingTests": 0,
+      "numTodoTests": 0
+    },
+    {
+      "step": "restore path equals in-place path",
+      "database": true,
+      "public": true
+    },
+    {
+      "step": "fresh install",
+      "checksums": {
+        "applied": 62,
+        "mismatched": []
+      },
+      "schema_diff": {
+        "exit_code": 0,
+        "empty": true,
+        "output": "No difference detected."
+      },
+      "history_diff_empty": true,
+      "migrate_status_exit": 0,
+      "migrate_status": "Database schema is up to date!",
+      "review_rows": "0",
+      "profile_rows": "0"
+    }
+  ],
+  "already_migrated_report": {
+    "requiring_decision": 6,
+    "entries": {
+      "web02-venue-customdiv": {
+        "provenance": "AMBIGUOUS",
+        "action": "CONFIRM_OR_WITHHOLD",
+        "launched": true
+      },
+      "web02-venue-customdraft": {
+        "provenance": "DRAFT_ONLY",
+        "action": "WITHHOLD_RECOMMENDED",
+        "launched": true
+      },
+      "web02-venue-disabled": {
+        "provenance": "AMBIGUOUS",
+        "action": "CONFIRM_OR_WITHHOLD",
+        "launched": false
+      },
+      "web02-venue-divergent": {
+        "provenance": "AMBIGUOUS",
+        "action": "CONFIRM_OR_WITHHOLD",
+        "launched": true
+      },
+      "web02-venue-draftonly": {
+        "provenance": "DRAFT_ONLY",
+        "action": "WITHHOLD_RECOMMENDED",
+        "launched": false
+      },
+      "web02-venue-empty": {
+        "provenance": "NOT_AFFECTED",
+        "action": "NONE",
+        "launched": true
+      },
+      "web02-venue-partial": {
+        "provenance": "AMBIGUOUS",
+        "action": "CONFIRM_OR_WITHHOLD",
+        "launched": true
+      },
+      "web02-venue-pubonly": {
+        "provenance": "PUBLISHED",
+        "action": "NONE",
+        "launched": true
+      },
+      "web02-venue-synced": {
+        "provenance": "PUBLISHED",
+        "action": "NONE",
+        "launched": true
+      }
+    }
+  },
+  "regressions": {
+    "w3_website": {
+      "passed": 13,
+      "total": 13,
+      "failed": 0,
+      "skipped": 0
+    },
+    "website_core": {
+      "passed": 10,
+      "total": 10,
+      "failed": 0,
+      "skipped": 0
+    },
+    "public_tenant_isolation": {
+      "passed": 20,
+      "total": 20,
+      "failed": 0,
+      "skipped": 0
+    },
+    "website_provisioning": {
+      "passed": 14,
+      "total": 14,
+      "failed": 0,
+      "skipped": 0
+    },
+    "custom_website": {
+      "passed": 15,
+      "total": 15,
+      "failed": 0,
+      "skipped": 0
+    },
+    "w1_payment_integrations": {
+      "passed": 8,
+      "total": 8,
+      "failed": 0,
+      "skipped": 0
+    },
+    "venue_entitlements": {
+      "passed": 12,
+      "total": 12,
+      "failed": 0,
+      "skipped": 0
+    },
+    "sec01_unit": {
+      "passed": 83,
+      "skipped": 0
+    },
+    "sec01_postgresql_http": {
+      "passed": 45,
+      "total": 45,
+      "failed": 0,
+      "skipped": 0
+    },
+    "sec02_unit": {
+      "passed": 14,
+      "skipped": 0
+    },
+    "sec02_postgresql_http": {
+      "passed": 25,
+      "total": 25,
+      "failed": 0,
+      "skipped": 0
+    },
+    "backend_jest_all": {
+      "suites_passed": 66,
+      "suites_failed": 0,
+      "suites_db_gated_skipped": 43,
+      "tests_passed": 645,
+      "tests_failed": 0
+    },
+    "backend_compile": "tsc -p tsconfig.build.json passed",
+    "restaurant_web": {
+      "tests": 19,
+      "build": "passed"
+    },
+    "vankisi_custom_build": "passed",
+    "website_client": {
+      "tests": 6,
+      "typecheck": "passed"
+    },
+    "lint": "new/changed TypeScript clean; website-media-test-fixture.ts unchanged baseline diagnostics",
+    "pre_existing_type_errors": [
+      "edge-foundation.integration.spec.ts",
+      "platform-control-plane.integration.spec.ts",
+      "platform-password.spec.ts"
+    ],
+    "git_diff_check": "passed"
+  },
+  "sec01_status": "DONE",
+  "sec02_status": "DONE",
+  "databases": {
+    "distinct_owned_names": [
+      "disposable_sec01_web02_8487f20d_sec01",
+      "disposable_sec02_web02_8487f20d_sec02",
+      "disposable_web02_8487f20d_core",
+      "disposable_web02_8487f20d_custom",
+      "disposable_web02_8487f20d_entitlements",
+      "disposable_web02_8487f20d_fresh",
+      "disposable_web02_8487f20d_inspect",
+      "disposable_web02_8487f20d_order",
+      "disposable_web02_8487f20d_original",
+      "disposable_web02_8487f20d_posthoc",
+      "disposable_web02_8487f20d_sanity",
+      "disposable_web02_8487f20d_seed",
+      "disposable_web02_8487f20d_shadow",
+      "disposable_web02_8487f20d_tenant",
+      "disposable_web02_8487f20d_trial1",
+      "disposable_web02_8487f20d_upgrade",
+      "disposable_web02_8487f20d_w1",
+      "disposable_web02_8487f20d_w3",
+      "disposable_web02_8487f20d_website_provisioning"
+    ],
+    "creations": 25,
+    "all_absent_before_creation": true,
+    "all_dropped": true,
+    "all_absent_after": true,
+    "final_runner": [
+      {
+        "name": "disposable_web02_8487f20d_seed",
+        "absent_before": true,
+        "created": true,
+        "dropped": true,
+        "absent_after": true
+      },
+      {
+        "name": "disposable_web02_8487f20d_original",
+        "absent_before": true,
+        "created": true,
+        "dropped": true,
+        "absent_after": true
+      },
+      {
+        "name": "disposable_web02_8487f20d_posthoc",
+        "absent_before": true,
+        "created": true,
+        "dropped": true,
+        "absent_after": true
+      },
+      {
+        "name": "disposable_web02_8487f20d_upgrade",
+        "absent_before": true,
+        "created": true,
+        "dropped": true,
+        "absent_after": true
+      },
+      {
+        "name": "disposable_web02_8487f20d_fresh",
+        "absent_before": true,
+        "created": true,
+        "dropped": true,
+        "absent_after": true
+      },
+      {
+        "name": "disposable_web02_8487f20d_shadow",
+        "absent_before": true,
+        "created": true,
+        "dropped": true,
+        "absent_after": true
+      }
+    ]
+  },
+  "cleanup": {
+    "cluster_stopped": true,
+    "port_closed": true,
+    "data_directory_removed": true,
+    "normal_databases_touched": false,
+    "docker_touched": false,
+    "frontend_copies_removed": true,
+    "ignored_caches_refreshed": [
+      "restaurant-web node_modules/.tmp/*.tsbuildinfo",
+      "vankisi-custom-web node_modules/.tmp/*.tsbuildinfo",
+      "vitest results.json (restaurant-web, website-client)"
+    ]
+  },
+  "owner_decisions": [
+    "surface pending private drafts in the owner Dashboard or keep operator CLI",
+    "draft/publish flow for shared information vs live (D028)",
+    "affected-owner communication and pre-migration backup recovery for already-upgraded Venues"
+  ]
+}

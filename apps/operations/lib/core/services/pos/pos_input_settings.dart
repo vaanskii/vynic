@@ -26,15 +26,14 @@ class PosInputSettings {
 }
 
 class PosInputScope extends InheritedNotifier<ValueNotifier<bool>> {
-  PosInputScope({super.key, required Widget child})
-    : super(
-        notifier: PosInputSettings.enabled,
-        child: _PosKeyboardViewport(child: child),
-      );
+  PosInputScope({super.key, required super.child})
+    : super(notifier: PosInputSettings.enabled);
 }
 
-class _PosKeyboardViewport extends StatelessWidget {
-  const _PosKeyboardViewport({required this.child});
+/// Reserve keyboard room only inside a modal route. The floor and other pages
+/// keep their layout while the dock overlays them.
+class PosKeyboardViewport extends StatelessWidget {
+  const PosKeyboardViewport({super.key, required this.child});
   final Widget child;
   @override
   Widget build(BuildContext context) => ValueListenableBuilder<double>(

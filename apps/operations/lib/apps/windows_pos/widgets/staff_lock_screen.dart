@@ -193,14 +193,18 @@ class _StaffLockScreenState extends State<_StaffLockScreen> {
     );
   }
 
-  Widget _buildPad() => PinPad(
-    authentication: true,
-    onDigitPressed: _addDigit,
-    onDeletePressed: _deleteDigit,
-    onClearPressed: () => setState(() {
-      _pin = '';
-      _error = false;
-    }),
-    onSubmit: _tryUnlock,
+  Widget _buildPad() => SizedBox(
+    key: const Key('staff-compact-pin-pad'),
+    width: 320,
+    child: PinPad(
+      authentication: true,
+      onDigitPressed: _addDigit,
+      onDeletePressed: _deleteDigit,
+      onClearPressed: () => setState(() {
+        _pin = '';
+        _error = false;
+      }),
+      onSubmit: _tryUnlock,
+    ),
   );
 }

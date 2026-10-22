@@ -1,0 +1,32 @@
+$ErrorActionPreference='Stop';$ProgressPreference='SilentlyContinue'
+Set-StrictMode -Version Latest
+$shared='\\Mac\Home\Developer\vynic\docs\proofs\POS_SHARED_PRINT_GO_275688e1_2026-10-06'
+$results=Join-Path $shared 'windows-flutter-analysis-result'
+$job=Join-Path $env:LOCALAPPDATA 'VynicReadinessNative\final535-20261006'
+if (Test-Path -LiteralPath $results) { throw 'Preserve prior analysis result' }
+New-Item -ItemType Directory -Path $results | Out-Null
+$manifest=Get-Content -Raw (Join-Path $shared 'windows-pos-stage\source-manifest.json') | ConvertFrom-Json
+function Assert-Source { foreach($entry in $manifest.PSObject.Properties) { if ((Get-FileHash -LiteralPath (Join-Path $job $entry.Name) -Algorithm SHA256).Hash.ToLowerInvariant() -ne $entry.Value.sha256) { throw ('Source mismatch: '+$entry.Name) } } }
+$fixture=Join-Path $job 'operational-proof-server-windows.test.exe'
+$fixtureSHA='f61d5b985d10356701bc4eb9974dd5762c9d31cdb7a6c6a65012bdda8fc4e231'
+$dart=Join-Path $env:USERPROFILE 'develop\flutter\bin\cache\dart-sdk\bin\dart.exe'
+$analysis=Get-Content -Raw (Join-Path $shared 'windows-flutter-tests\flutter-final-analysis-selection.json') | ConvertFrom-Json
+$env:FLUTTER_SUPPRESS_ANALYTICS='true';$env:DART_SUPPRESS_ANALYTICS='true';$env:CI='true'
+$env:HTTP_PROXY='http://127.0.0.1:9';$env:HTTPS_PROXY='http://127.0.0.1:9';$env:NO_PROXY='127.0.0.1,localhost,::1'
+$status='FAILED';$failure=$null;$analysisExit=$null;$jobsBefore=@(Get-CimInstance Win32_PrintJob)
+try {
+ Assert-Source
+ if ((Get-FileHash -LiteralPath $fixture -Algorithm SHA256).Hash.ToLowerInvariant() -ne $fixtureSHA) { throw 'Fixture mismatch' }
+ if ($analysis.Count -ne 59) { throw ('Analysis selectors: '+$analysis.Count) }
+ Set-Location -LiteralPath (Join-Path $job 'apps\operations')
+ & $dart analyze @analysis *> (Join-Path $results 'analysis.log')
+ $analysisExit=$LASTEXITCODE
+ if ($analysisExit -ne 0) { throw ('Dart analysis failed: '+$analysisExit) }
+ Assert-Source
+ $status='PASS'
+} catch { $failure=$_.ToString() } finally {
+ $jobsAfter=@(Get-CimInstance Win32_PrintJob)
+ [ordered]@{status=$status;failure=$failure;sourceFiles=@($manifest.PSObject.Properties).Count;sourceUnchanged=($status -eq 'PASS');analysisFiles=$analysis.Count;analysisExitCode=$analysisExit;nativeDart=$dart;fixtureSHA256=$fixtureSHA;previousAttempt='windows-flutter-result/windows-flutter-tests.json';previousTestExitCode=0;productStarted=$false;installed=$false;serviceOperations=$false;driverOperations=$false;printJobsBefore=$jobsBefore.Count;printJobsAfter=$jobsAfter.Count;physicalJobs=0} | ConvertTo-Json -Depth 5 | Set-Content -Encoding UTF8 (Join-Path $results 'windows-flutter-analysis.json')
+}
+if($status -ne 'PASS'){throw $failure}
+Write-Output 'WINDOWS_FLUTTER_ANALYSIS_PASS'

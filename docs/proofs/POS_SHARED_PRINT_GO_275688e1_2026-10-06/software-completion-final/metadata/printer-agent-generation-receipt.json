@@ -1,0 +1,26 @@
+{
+  "additiveNongeneratedBarrelExport": "packages/contracts/generated/edge_dart/lib/vynic_edge_contracts.dart",
+  "canonicalScript": "packages/contracts/scripts/generate-edge.sh",
+  "freshCanonicalCheck": {
+    "exitCode": 0,
+    "log": "printer-agent-final-generation-check.log",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "generatedOutputCount": 6,
+  "generatedOutputSha256": {
+    "packages/contracts/generated/edge_dart/lib/src/generated/vynic/edge/v1/printer_agent.pb.dart": "f8b04fc126f146f43862fab37768e3950e9d56b290e7fc79b3fa4b6dfba819d9",
+    "packages/contracts/generated/edge_dart/lib/src/generated/vynic/edge/v1/printer_agent.pbenum.dart": "c7fc2e32ddf3cf8a8b48dd0c30a77db74eceb213ca9d2580b3b538c650cbf353",
+    "packages/contracts/generated/edge_dart/lib/src/generated/vynic/edge/v1/printer_agent.pbgrpc.dart": "c397a3fb6511826055b5c8b7332d00dad5183091646e3f7fc1022a043fe0afc9",
+    "packages/contracts/generated/edge_dart/lib/src/generated/vynic/edge/v1/printer_agent.pbjson.dart": "76ba90705cf8785f9d12ad4b95ebe94ed1257d6d030299e9620d91a9d10b03f5",
+    "packages/contracts/generated/go/vynic/edge/v1/printer_agent.pb.go": "b06143fb946328878ed862956d200dd0d0caa4c3b50a1025d1713e98456c87a5",
+    "packages/contracts/generated/go/vynic/edge/v1/printer_agent_grpc.pb.go": "1a54912959370809206b94f26c17cf5de92f126f17262a3cb93b7d779e587227"
+  },
+  "handEditedGeneratedFiles": false,
+  "previousGeneratedFilesUnchanged": true,
+  "tools": {
+    "protoc": "36.2",
+    "protoc-gen-go": "1.36.11",
+    "protoc-gen-go-grpc": "1.6.2",
+    "protoc_plugin": "25.0.0"
+  }
+}

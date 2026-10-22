@@ -1,0 +1,206 @@
+{
+  "recordedAtUTC": "2026-10-04T21:10:45.850558+00:00",
+  "authorization": "User explicitly approved dependency-name/version disclosure after the initial denial",
+  "command": "npm audit --omit=dev --ignore-scripts --json --cache=/tmp/vynic-readiness-npm-cache --fetch-retries=0 --fetch-timeout=15000",
+  "cwd": "apps/backend",
+  "target": "https://registry.npmjs.org/-/npm/v1/security/advisories/bulk",
+  "exitCode": 1,
+  "exitMeaning": "Scan completed; affected dependencies reported",
+  "counts": {
+    "info": 0,
+    "low": 0,
+    "moderate": 2,
+    "high": 11,
+    "critical": 0,
+    "total": 13
+  },
+  "packageLockSha256": "a473f6f0332845314368960f34e5d55f125d5898e3ca7672ad82cdd98369ff1f",
+  "entries": [
+    {
+      "package": "@fastify/busboy",
+      "severity": "high",
+      "direct": false,
+      "installedLockVersions": [
+        "3.2.0"
+      ],
+      "npmSuggestedFix": true,
+      "advisoryLinks": [
+        "https://github.com/advisories/GHSA-x8mw-p69m-v3mx",
+        "https://github.com/advisories/GHSA-xjh9-v7x6-24jw"
+      ]
+    },
+    {
+      "package": "@grpc/grpc-js",
+      "severity": "high",
+      "direct": false,
+      "installedLockVersions": [
+        "1.14.4"
+      ],
+      "npmSuggestedFix": true,
+      "advisoryLinks": [
+        "https://github.com/advisories/GHSA-f596-whhp-79r4",
+        "https://github.com/advisories/GHSA-m9gg-hp2v-232j"
+      ]
+    },
+    {
+      "package": "@nestjs/platform-express",
+      "severity": "high",
+      "direct": true,
+      "installedLockVersions": [
+        "11.1.27"
+      ],
+      "npmSuggestedFix": true,
+      "advisoryLinks": []
+    },
+    {
+      "package": "@prisma/config",
+      "severity": "high",
+      "direct": true,
+      "installedLockVersions": [
+        "6.19.3"
+      ],
+      "npmSuggestedFix": {
+        "name": "@prisma/config",
+        "version": "6.12.0",
+        "isSemVerMajor": true
+      },
+      "advisoryLinks": []
+    },
+    {
+      "package": "axios",
+      "severity": "high",
+      "direct": true,
+      "installedLockVersions": [
+        "1.18.0"
+      ],
+      "npmSuggestedFix": true,
+      "advisoryLinks": [
+        "https://github.com/advisories/GHSA-3pq3-5fj3-cg6v",
+        "https://github.com/advisories/GHSA-44g4-m2mj-wpvx",
+        "https://github.com/advisories/GHSA-4hqw-qxg8-jxx2",
+        "https://github.com/advisories/GHSA-542g-h47m-68v8",
+        "https://github.com/advisories/GHSA-9fr6-4gfg-395g",
+        "https://github.com/advisories/GHSA-c29m-xwm3-cm6r",
+        "https://github.com/advisories/GHSA-j8rh-479h-cp32",
+        "https://github.com/advisories/GHSA-m8m8-qj5v-23w3",
+        "https://github.com/advisories/GHSA-mghh-pgcx-3jjj",
+        "https://github.com/advisories/GHSA-r4gj-5m52-g5wh",
+        "https://github.com/advisories/GHSA-vh66-26gq-q6x8",
+        "https://github.com/advisories/GHSA-x97p-jq2g-jp4f"
+      ]
+    },
+    {
+      "package": "deepmerge-ts",
+      "severity": "high",
+      "direct": false,
+      "installedLockVersions": [
+        "7.1.5"
+      ],
+      "npmSuggestedFix": {
+        "name": "@prisma/config",
+        "version": "6.12.0",
+        "isSemVerMajor": true
+      },
+      "advisoryLinks": [
+        "https://github.com/advisories/GHSA-ggr8-5vv4-36mx"
+      ]
+    },
+    {
+      "package": "engine.io",
+      "severity": "high",
+      "direct": false,
+      "installedLockVersions": [
+        "6.6.9"
+      ],
+      "npmSuggestedFix": true,
+      "advisoryLinks": [
+        "https://github.com/advisories/GHSA-2gc4-cqfq-p2gv"
+      ]
+    },
+    {
+      "package": "fast-xml-parser",
+      "severity": "high",
+      "direct": false,
+      "installedLockVersions": [
+        "5.9.3"
+      ],
+      "npmSuggestedFix": true,
+      "advisoryLinks": [
+        "https://github.com/advisories/GHSA-8r6m-32jq-jx6q"
+      ]
+    },
+    {
+      "package": "multer",
+      "severity": "high",
+      "direct": false,
+      "installedLockVersions": [
+        "2.1.1"
+      ],
+      "npmSuggestedFix": true,
+      "advisoryLinks": [
+        "https://github.com/advisories/GHSA-3p4h-7m6x-2hcm",
+        "https://github.com/advisories/GHSA-535w-7cp7-47q4",
+        "https://github.com/advisories/GHSA-72gw-mp4g-v24j",
+        "https://github.com/advisories/GHSA-qvfw-j98x-7q72",
+        "https://github.com/advisories/GHSA-wc9g-mqfw-jrwm"
+      ]
+    },
+    {
+      "package": "prisma",
+      "severity": "high",
+      "direct": true,
+      "installedLockVersions": [
+        "6.19.3"
+      ],
+      "npmSuggestedFix": {
+        "name": "prisma",
+        "version": "6.12.0",
+        "isSemVerMajor": true
+      },
+      "advisoryLinks": []
+    },
+    {
+      "package": "protobufjs",
+      "severity": "moderate",
+      "direct": false,
+      "installedLockVersions": [
+        "7.6.4"
+      ],
+      "npmSuggestedFix": true,
+      "advisoryLinks": [
+        "https://github.com/advisories/GHSA-j3f2-48v5-ccww"
+      ]
+    },
+    {
+      "package": "qs",
+      "severity": "moderate",
+      "direct": false,
+      "installedLockVersions": [
+        "6.15.2"
+      ],
+      "npmSuggestedFix": true,
+      "advisoryLinks": [
+        "https://github.com/advisories/GHSA-4mjr-xmp4-gh2g",
+        "https://github.com/advisories/GHSA-x5fp-wj9c-mxmx"
+      ]
+    },
+    {
+      "package": "socket.io-parser",
+      "severity": "high",
+      "direct": false,
+      "installedLockVersions": [
+        "4.2.6"
+      ],
+      "npmSuggestedFix": true,
+      "advisoryLinks": [
+        "https://github.com/advisories/GHSA-2m8v-j782-fhvr"
+      ]
+    }
+  ],
+  "limits": [
+    "Dependency entries including transitive/meta findings, not unique exploit count",
+    "No reachability conclusion",
+    "Backend production dependencies only; not Docker OS/Go/Dart/frontends",
+    "No install/fix/upgrade performed"
+  ]
+}

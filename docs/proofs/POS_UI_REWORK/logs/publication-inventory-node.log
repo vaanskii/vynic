@@ -1,0 +1,12 @@
+✔ production retains a dependency shared with development tools (164.832209ms)
+✔ build includes both root scopes with exact locked versions (110.190458ms)
+✔ required children of an optional package are not silently omitted (110.895375ms)
+✔ build refuses a missing declared development dependency (206.8615ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 4
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 624.450333

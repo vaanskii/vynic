@@ -1,0 +1,32 @@
+{
+  "status": "COMPLETED_READ_ONLY_PROPOSAL_AWAITING_PRODUCT_APPROVAL",
+  "head": "3463ee406184fec7f53818416e11d0e5f5602c87",
+  "proposal": "proposal.md",
+  "configurationEvidence": "configuration-evidence.json",
+  "facts": [
+    "POS enrollment already resolves Venue; no additional POS restaurant-code input in current first registration",
+    "Separate first Manager invitation is an authorization grant, not a second Venue selector",
+    "Manager binds Venue once per origin using existing code and thereafter prompts PIN",
+    "Both current detached developer build metadata files omit VYNIC_API_URL; after clearing override macOS source fallback is127.0.0.1:3000",
+    "Live Manager currently displays correct api.vynic.localhost and remembered Venue",
+    "Production backend edit controls already gated off by kDebugMode && development"
+  ],
+  "pendingNavigationPatch": "../POS_RECONNECT_UI_3463ee40_2026-10-14/partial-navigation.patch; source changed, untested, not applied to running app",
+  "implementationPerformed": false,
+  "envFilesChanged": false,
+  "credentialActions": false,
+  "OPS01": "Paused, temporary cluster stopped, denied restore not retried",
+  "decisionRequired": "Approve a first-POS enrollment that explicitly authorizes initial Manager setup, with an internal single-use Device/Venue-scoped grant; ordinary/additional POS enrollment grants no Manager bootstrap/recovery rights",
+  "updatedAt": "2026-10-14T11:51:28.871938+00:00",
+  "sourceHashesVerified": 16,
+  "gitDiffCheck": "PASS",
+  "tests": "No implementation tests run: this task was proposal/read-only; earlier navigation patch explicitly remains UNTESTED",
+  "expectedEffort": {
+    "developerConfig": "S",
+    "combinedFirstSetupAuthorization": "M",
+    "POSWizard": "S/M",
+    "ManagerExistingOnceBindingWording": "S",
+    "note": "Several focused stages; no calendar commitment before grant/retry design approval"
+  },
+  "migrationImpact": "Likely one additive grant linkage/purpose migration; no historical Staff/PIN/IDs rewrite; retain legacy route during rollout"
+}

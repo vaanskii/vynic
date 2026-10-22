@@ -1,0 +1,16 @@
+{
+  "createdAtUtc": "2026-10-06T16:26:52.320391+00:00",
+  "source": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/source",
+  "scope": "Flutter readonly agent health status/runtime profile only; sealed baseline and original untouched",
+  "files": {
+    "apps/operations/lib/apps/windows_pos/widgets/admin/printers/admin_printers_section.dart": {
+      "sha256": "4d9c61d780bf49660694ee306a0a51f0b4466dc330d52e137a189a374061366c",
+      "bytes": 23513
+    },
+    "apps/operations/lib/apps/windows_pos/widgets/admin/printers/printer_agent_status_card.dart": null,
+    "apps/operations/lib/core/services/printing/printer_agent_runtime_profile.dart": null,
+    "apps/operations/test/widget/printer_agent_status_card_test.dart": null,
+    "apps/operations/test/unit/printer_agent_runtime_profile_test.dart": null,
+    "apps/operations/test/support/printer_agent_status_fixture.dart": null
+  }
+}

@@ -16,9 +16,22 @@ export interface TableSync {
   isReserved: boolean;
   activeOrderId?: number;
   currentBill?: number;
+  /** Omitted by legacy clients; never erase newer layout metadata. */
+  tableKind?: 'PHYSICAL' | 'VIRTUAL';
+  tableLabel?: string;
+  floorLabel?: string;
+  tableSortOrder?: number;
+  floorSortOrder?: number;
+}
+
+/** Validated complete saved layout, never inferred from missing table rows. */
+export interface TableLayoutSync {
+  version: 1;
+  physicalTableIds: string[];
 }
 
 export interface OrderSync {
+  managerEditProjection?: unknown;
   posOrderId: number;
   orderId?: number;
   status: string;
@@ -145,6 +158,9 @@ export interface ReservationSync {
   status?: string;
   isTakeAway?: boolean;
   linkedOrderId?: number | null;
+  advanceAmount?: number;
+  advanceCollectedOn?: string | null;
+  advanceReceiptId?: string | null;
 }
 
 export interface AuditEventLogSync {
@@ -233,6 +249,7 @@ export interface SaleLedgerDaySync {
 
 export interface SyncPayload {
   tables?: TableSync[];
+  tableLayout?: TableLayoutSync;
   orders?: OrderSync[];
   expenses?: ExpenseSync[];
   menu?: MenuCategorySync[];

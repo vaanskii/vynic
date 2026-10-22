@@ -1,3 +1,7 @@
+import 'package:vynic/core/models/order_edit_projection.dart';
+import 'package:vynic/core/database/repositories/settings_repository.dart';
+import 'table_snapshot_projection.dart';
+import '../menu/menu_client_compatibility.dart';
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'dart:convert';
@@ -13,6 +17,7 @@ import 'package:vynic/core/services/sync/sync_timing.dart';
 import 'package:vynic/core/services/sync/pos_callback_config.dart';
 import 'package:vynic/core/services/sync/sync_events.dart';
 import 'package:vynic/core/database/repositories/menu_repository.dart';
+import 'package:vynic/core/services/menu/pos_menu_sync_service.dart';
 import 'package:vynic/core/models/order.dart';
 import 'package:vynic/core/models/reservation_classification.dart';
 import 'package:vynic/core/services/pos/pos_change_highlight_service.dart';
@@ -30,6 +35,7 @@ class ManagerSyncService {
   static String get serverUrl => ApiConfig.baseUrl;
 
   static bool _startupSyncScheduled = false;
+  static Timer? _startupSyncTimer;
 
   /// Last synced line snapshot per order — diff drives manager notifications + highlights.
   static final Map<int, List<OrderItem>> _lastOrderItemsByOrderId =
@@ -56,7 +62,8 @@ class ManagerSyncService {
 
   static void Function(SyncEvent event)? _previousOnLocalChange;
   static bool _hooksRegistered = false;
-  static bool _realtimeOnly = false;
+  static Timer? _fullSnapshotTimer;
+  static const Duration _fullSnapshotInterval = Duration(minutes: 2);
 
   /// Periodic retry that flushes pending local changes to the backend so a POS
   /// edit made while the server was unreachable reaches it on its own once it
@@ -83,7 +90,24 @@ class ManagerSyncService {
     ConnectionStatusService.markPendingLocalChange();
   }
 
-  static void initialize() {
+  static void initialize() => _initialize();
+
+  @visibleForTesting
+  static void initializeForTesting({
+    required Duration retryInterval,
+    required Duration refreshInterval,
+    required Duration startupDelay,
+  }) => _initialize(
+    retryInterval: retryInterval,
+    refreshInterval: refreshInterval,
+    startupDelay: startupDelay,
+  );
+
+  static void _initialize({
+    Duration retryInterval = _pendingFlushInterval,
+    Duration refreshInterval = _fullSnapshotInterval,
+    Duration startupDelay = const Duration(seconds: 3),
+  }) {
     if (_shuttingDown) return;
     ConnectionStatusService.initialize();
 
@@ -103,14 +127,20 @@ class ManagerSyncService {
 
     // Auto-flush retry loop. The POS has no monitoring socket (that runs on the
     // mobile app), so it can't react to the server returning — instead it polls:
-    // whenever there are unpushed local changes, re-attempt the push until it
-    // lands. A successful push clears the pending flag, so this is a no-op once
-    // everything is in sync.
-    _pendingFlushTimer ??= Timer.periodic(_pendingFlushInterval, (_) {
+    // Retry pending work and failed startup uploads. Even an idle POS must
+    // periodically attest its current snapshot before Manager's five-minute
+    // source freshness limit; API reads alone cannot freshen the POS.
+    _pendingFlushTimer ??= Timer.periodic(retryInterval, (_) {
       if (_pendingFlushInFlight) return;
-      if (!ConnectionStatusService.hasPendingLocalChanges.value) return;
+      if (!ConnectionStatusService.hasPendingLocalChanges.value &&
+          ConnectionStatusService.backendState.value !=
+              BackendConnectionState.offline)
+        return;
       _pendingFlushInFlight = true;
       syncToManagerApp().whenComplete(() => _pendingFlushInFlight = false);
+    });
+    _fullSnapshotTimer ??= Timer.periodic(refreshInterval, (_) {
+      syncToManagerApp();
     });
 
     if (_startupSyncScheduled) return;
@@ -119,7 +149,7 @@ class ManagerSyncService {
     // Delay the initial sync by 3 seconds to ensure the local Hive DB
     // is fully loaded before we push data. This prevents an empty push
     // from overwriting reserved table state on the cloud.
-    Timer(const Duration(seconds: 3), () {
+    _startupSyncTimer = Timer(startupDelay, () {
       debugPrint(
         '[ManagerSync] Backend=${ApiConfig.baseUrl} '
         'ingest=${PosCallbackConfig.baseUrl ?? "not running"}',
@@ -281,10 +311,14 @@ class ManagerSyncService {
 
   static void dispose() {
     _startupSyncScheduled = false;
+    _startupSyncTimer?.cancel();
+    _startupSyncTimer = null;
     _pendingSinceMicros = null;
     _pendingFlushTimer?.cancel();
     _pendingFlushTimer = null;
     _pendingFlushInFlight = false;
+    _fullSnapshotTimer?.cancel();
+    _fullSnapshotTimer = null;
   }
 
   /// Marks that local POS data should be pushed on the next manual sync.
@@ -334,14 +368,8 @@ class ManagerSyncService {
     _markPendingLocalChange();
   }
 
-  static Future<void> syncRealtimeToManagerApp() async {
-    _realtimeOnly = true;
-    try {
-      await syncToManagerApp();
-    } finally {
-      _realtimeOnly = false;
-    }
-  }
+  static Future<void> syncRealtimeToManagerApp() =>
+      _startSnapshot(realtimeOnly: true);
 
   /// Guards against two pushes being in flight at once.
   ///
@@ -350,6 +378,7 @@ class ManagerSyncService {
   /// overlapping pushes made the server delete and recreate the same order's
   /// lines twice over, which surfaced on the manager app as duplicated items.
   static Future<void>? _inFlight;
+  static bool _inFlightRealtimeOnly = false;
   static bool _shuttingDown = false;
 
   /// Stop this POS's mirror worker; pending durable work resumes next launch.
@@ -359,14 +388,18 @@ class ManagerSyncService {
     await _inFlight;
   }
 
-  static Future<void> syncToManagerApp() {
+  static Future<void> syncToManagerApp() => _startSnapshot(realtimeOnly: false);
+
+  static Future<void> _startSnapshot({required bool realtimeOnly}) {
     if (_shuttingDown) return Future<void>.value();
     final running = _inFlight;
     if (running != null) {
-      // Coalesce: the push already running carries the same local state.
+      // A partial push must never consume a requested full reporting upload.
+      if (!realtimeOnly && _inFlightRealtimeOnly) _markPendingLocalChange();
       return running;
     }
-    final next = _syncToManagerApp();
+    _inFlightRealtimeOnly = realtimeOnly;
+    final next = _syncToManagerApp(realtimeOnly: realtimeOnly);
     _inFlight = next;
     return next.whenComplete(() {
       if (identical(_inFlight, next)) _inFlight = null;
@@ -390,6 +423,7 @@ class ManagerSyncService {
         .map((order) {
           final tableIds = _canonicalTableIdsForOrder(order);
           return <String, dynamic>{
+            'managerEditProjection': OrderEditProjection.build(order),
             'posOrderId': order.orderId,
             'status': order.status,
             // Last local-edit time — lets the server resolve same-order
@@ -401,7 +435,11 @@ class ManagerSyncService {
                 .toLowerCase(),
             'waiterName': order.createdBy,
             'tableNumbers': order.tableNumbers
-                .map((table) => table.toString())
+                .map(
+                  (table) => tableIds != null
+                      ? _normalizeTableNumberForSync(table, order.floor)!
+                      : table,
+                )
                 .toList(),
             if (tableIds != null) 'tableIds': tableIds,
             'floor': order.floor,
@@ -414,7 +452,9 @@ class ManagerSyncService {
             // Cloud's totalAmount cannot be reconciled against its own item
             // lines, discount and service fee.
             'manualAdjustmentAmount': order.manualAdjustmentAmount,
-            'serviceFeePercent': (order.customServiceFeePercentage ?? 10.0),
+            'serviceFeePercent':
+                (order.customServiceFeePercentage ??
+                DatabaseService.getServiceFeePercentage()),
             'items': order.items
                 .map(
                   (item) => {
@@ -431,7 +471,8 @@ class ManagerSyncService {
         .toList();
   }
 
-  static Future<void> _syncToManagerApp() async {
+  static Future<void> _syncToManagerApp({required bool realtimeOnly}) async {
+    final localRevision = ConnectionStatusService.localRevision;
     // Measurement starts where the work does, carrying how long the oldest
     // unpushed change waited to get here.
     final timing = SyncTiming.begin(pendingSinceMicros: _pendingSinceMicros);
@@ -452,7 +493,8 @@ class ManagerSyncService {
       );
       timing.mark('orders');
 
-      final tables = _buildTablesSyncPayload(allOrders, businessDate);
+      final tableProjection = _buildTablesSyncPayload(allOrders, businessDate);
+      final tables = tableProjection.tables;
       final orderMaps = todayOrders
           .map((e) => Map<String, dynamic>.from(e as Map))
           .toList();
@@ -475,10 +517,12 @@ class ManagerSyncService {
             (sum, t) => sum + ((t['currentBill'] as num?)?.toDouble() ?? 0),
           );
 
-      if (_realtimeOnly) {
+      if (realtimeOnly) {
         final payload = <String, dynamic>{
           'realtimeOnly': true,
           'tables': tables,
+          if (tableProjection.layout != null)
+            'tableLayout': tableProjection.layout,
           'orders': todayOrders,
           if (touchedOrderHints.isNotEmpty)
             'touchedOrderHints': touchedOrderHints,
@@ -486,7 +530,7 @@ class ManagerSyncService {
             'touchedTableHints': touchedTableHints,
           if (touchedReservationHints.isNotEmpty)
             'touchedReservationHints': touchedReservationHints,
-          'syncedAt': DateTime.now().toIso8601String(),
+          'syncedAt': DateTime.now().toUtc().toIso8601String(),
           'businessDate': businessDateString,
           'dailySalesTotal': double.parse(
             DatabaseService.getDailySalesTotal().toStringAsFixed(2),
@@ -522,8 +566,7 @@ class ManagerSyncService {
         timing.mark('http');
         if (response.statusCode == 200 || response.statusCode == 201) {
           debugPrint('[ManagerSync] Realtime OK (${response.statusCode})');
-          _pendingSinceMicros = null;
-          await ConnectionStatusService.markSuccess();
+          await ConnectionStatusService.markSuccess(clearPendingChanges: false);
         } else {
           debugPrint(
             '[ManagerSync] Realtime failed (${response.statusCode}): ${response.body}',
@@ -874,6 +917,8 @@ class ManagerSyncService {
 
       final payload = {
         'tables': tables,
+        if (tableProjection.layout != null)
+          'tableLayout': tableProjection.layout,
         'orders': todayOrders,
         if (touchedOrderHints.isNotEmpty)
           'touchedOrderHints': touchedOrderHints,
@@ -881,10 +926,16 @@ class ManagerSyncService {
           'touchedTableHints': touchedTableHints,
         if (touchedReservationHints.isNotEmpty)
           'touchedReservationHints': touchedReservationHints,
-        'menu': menu,
-        // Signals that every persisted menu node has a stable id and this is a
-        // complete authoritative projection, so Cloud may reconcile omissions.
-        'menuIdentityVersion': 1,
+        // A canonical Cloud Menu is changed only by revisioned mutations
+        // (docs/CANONICAL_MENU_SYNC.md); the legacy full-snapshot mirror —
+        // including "missing means deleted" — applies to legacy Venues only.
+        if (!PosMenuSyncService.isCanonical) ...{
+          'menu': menu,
+          // Signals that every persisted menu node has a stable id and this
+          // is a complete authoritative projection, so Cloud may reconcile
+          // omissions.
+          'menuIdentityVersion': 1,
+        },
         // Real expense records, not an empty list beside a derived profit
         // figure. Each carries its POS-side id so re-sending the same record
         // updates it instead of adding a second one.
@@ -900,7 +951,7 @@ class ManagerSyncService {
         // and this is what fills it. The POS is still the one that owns them.
         'reservations': reservationPayload,
         'quickOrders': quickOrders,
-        'syncedAt': DateTime.now().toIso8601String(),
+        'syncedAt': DateTime.now().toUtc().toIso8601String(),
         // Send current business date so the backend knows which calendar day
         // the POS considers "today" (independent of wall-clock midnight).
         'businessDate': businessDateString,
@@ -961,6 +1012,13 @@ class ManagerSyncService {
       );
       timing.mark('http');
 
+      final menuResponse = jsonDecode(response.body);
+      MenuClientCompatibility.observe(response.statusCode, menuResponse);
+      if (response.statusCode == 426 &&
+          menuResponse is Map &&
+          menuResponse['code'] == 'CANONICAL_MENU_SNAPSHOT_UNSUPPORTED') {
+        unawaited(PosMenuSyncService.instance.refreshAuthority());
+      }
       if (response.statusCode != 201 && response.statusCode != 200) {
         debugPrint(
           'Manager Sync Failed (${response.statusCode}) → $serverUrl: ${response.body}',
@@ -973,12 +1031,18 @@ class ManagerSyncService {
           '[ManagerSync] OK → $serverUrl '
           'callback=${payload['posCallbackUrl'] ?? "missing"}',
         );
-        _pendingSinceMicros = null;
         await _acknowledgeStaffCredentials(staffSelection, response.body);
         final ledgerAckSupported =
             await SaleLedgerSyncState.acknowledgeResponse(response.body);
-        await ConnectionStatusService.markSuccess();
-        if (ledgerAckSupported && saleLedger.isNotEmpty) {
+        await ConnectionStatusService.markSuccess(
+          acknowledgedRevision: localRevision,
+        );
+        if (!ConnectionStatusService.hasPendingLocalChanges.value) {
+          _pendingSinceMicros = null;
+        }
+        if (ledgerAckSupported &&
+            (saleLedger.isNotEmpty ||
+                SaleLedgerSyncState.buildBatch(allSales).isNotEmpty)) {
           // One follow-up full snapshot advances the next bounded batch and,
           // after the final ACK, lets closed-day completeness be proven.
           _markPendingLocalChange();
@@ -1523,103 +1587,34 @@ class ManagerSyncService {
   }
 
   /// Hive table map + active dine-in orders (source of truth when Hive lags).
-  static List<Map<String, dynamic>> _buildTablesSyncPayload(
+  static TableSnapshotProjection _buildTablesSyncPayload(
     List<Order> allOrders,
     DateTime businessDate,
   ) {
-    final byKey = <String, Map<String, dynamic>>{};
-
-    for (final table in DatabaseService.getAllTables()) {
-      if (table.activeOrderId != null) {
-        final order = allOrders
-            .where((o) => o.orderId == table.activeOrderId)
-            .firstOrNull;
-        table.currentBill = order?.totalAmount ?? 0.0;
-      } else {
-        table.currentBill = 0.0;
+    final projection = TableSnapshotProjection.build(
+      sourceTables: DatabaseService.getAllTables(),
+      orders: allOrders,
+      businessDate: businessDate,
+      savedLayout: SettingsRepository.getActiveTableLayoutForSync(),
+    );
+    if (projection.layout == null) {
+      for (final row in projection.tables) {
+        final id = _canonicalTableIdForAlias(
+          floor: row['floor'] as String,
+          tableNumber: row['tableNumber'] as String,
+        );
+        if (id != null) row['tableId'] = id;
       }
-      final json = Map<String, dynamic>.from(table.toJson());
-      final tableId = _canonicalTableIdForAlias(
-        floor: table.floor,
-        tableNumber: table.tableNumber,
+    }
+    return projection;
+  }
+
+  static String? _normalizeTableNumberForSync(String raw, String floor) =>
+      TableSnapshotProjection.normalizeAlias(
+        raw,
+        floor,
+        SettingsRepository.getActiveTableLayoutForSync(),
       );
-      if (tableId != null) {
-        json['tableId'] = tableId;
-      }
-      byKey[_tableKeyForSync(json)] = json;
-    }
-
-    for (final order in allOrders) {
-      if (!_isActiveDineInOrderForBusinessDate(order, businessDate)) {
-        continue;
-      }
-      for (final rawNum in order.tableNumbers) {
-        final tableNumber = _normalizeTableNumberForSync(
-          rawNum.toString(),
-          order.floor,
-        );
-        if (tableNumber == null || tableNumber.isEmpty) continue;
-        final key = '${tableNumber}_${order.floor}';
-        final merged = Map<String, dynamic>.from(
-          byKey[key] ??
-              {
-                'tableNumber': tableNumber,
-                'floor': order.floor,
-                'isReserved': false,
-                'currentBill': 0.0,
-              },
-        );
-        final tableId = _canonicalTableIdForAlias(
-          floor: order.floor,
-          tableNumber: tableNumber,
-        );
-        if (tableId != null) {
-          merged['tableId'] = tableId;
-        }
-        merged['isReserved'] = true;
-        merged['activeOrderId'] = order.orderId;
-        merged['currentBill'] = order.totalAmount;
-        byKey[key] = merged;
-      }
-    }
-
-    return byKey.values.toList();
-  }
-
-  static bool _isActiveDineInOrderForBusinessDate(
-    Order order,
-    DateTime businessDate,
-  ) {
-    final status = order.status.toLowerCase();
-    if (status == 'closed' || status == 'cancelled' || status == 'paid') {
-      return false;
-    }
-    final floor = order.floor.toLowerCase();
-    if (floor.contains('takeaway') || floor.contains('take away')) {
-      return false;
-    }
-    final created = order.createdAt;
-    return created.year == businessDate.year &&
-        created.month == businessDate.month &&
-        created.day == businessDate.day;
-  }
-
-  static String? _normalizeTableNumberForSync(String raw, String floor) {
-    final trimmed = raw.trim();
-    if (trimmed.isEmpty) return null;
-    final lower = trimmed.toLowerCase();
-    if (lower.startsWith('table ')) {
-      return trimmed.substring(6).trim();
-    }
-    if (lower.startsWith('vip zone ')) {
-      return trimmed.substring(9).trim();
-    }
-    final parsed = int.tryParse(trimmed);
-    if (parsed != null && floor == 'second' && parsed > 10) {
-      return (parsed - 10).toString();
-    }
-    return trimmed;
-  }
 
   static String? _canonicalTableIdForAlias({
     required String floor,

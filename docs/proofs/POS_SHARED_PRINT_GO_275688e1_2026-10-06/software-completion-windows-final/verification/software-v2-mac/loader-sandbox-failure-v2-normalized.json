@@ -1,0 +1,22 @@
+{
+  "recordedAtUTC": "2026-10-06T18:18:06.805373+00:00",
+  "status": "LOADER_EPERN_FAILURE_HISTORICAL",
+  "authoritative": true,
+  "supersededAnnotation": {
+    "path": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/software-v2-mac/loader-sandbox-failure-classification.json",
+    "sha256": "e5f321af28333241bc8f0fa118e38852148bae4f55613d3a498e3c44b2f7b028",
+    "incorrectFields": [
+      "failedHiddenLoaders",
+      "visibleTestsExecuted"
+    ],
+    "reason": "Failed loading records are reported with testDone.hidden=false. They are visible ERROR records; no test bodies executed."
+  },
+  "actualProcessExit": 1,
+  "visibleLoaderErrors": 39,
+  "hiddenLoaderErrors": 0,
+  "testBodiesExecuted": 0,
+  "sourceChanged": false,
+  "rawSHA256": "bfd38692e982420afd6da7451271782ea7849d86417f0e5c58176f878a4111e7",
+  "cause": "Flutter loaders could not bind ephemeral127.0.0.1 sockets in default sandbox, errno1 EPERM.",
+  "successfulSameSourceRerun": "../software-v2-mac-retry/final-flutter-tests-v2-receipt.json"
+}

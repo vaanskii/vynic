@@ -1,0 +1,40 @@
+{
+  "schema": 1,
+  "reviewedAtUtc": "2026-10-06T17:35:52.349996+00:00",
+  "verdict": "PASS_BOUNDED_MATRIX_AND_WINDOWS_COMPILE_STAGE",
+  "openP1": [],
+  "openP2": [],
+  "matrix": {
+    "path": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/printer-validation/acceptance-matrix-v9-software-completion.json",
+    "sha256": "19f3cc4431982ad2f1304a0ba485b3e3588234096d019c3dbf3c58c9448f5f70"
+  },
+  "stageReceipt": {
+    "path": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/windows-software-go-stage/stage-receipt.json",
+    "sha256": "deb1832d9d580f807e74ce1ecac57813c17c981d27151a9692aff154f02f3d01"
+  },
+  "independentChecks": {
+    "newEvidenceReferencesRehashed": 17,
+    "newExactPassRecordAndSourceReferencesVerified": 10,
+    "sourceZipEntriesHashed": 1109,
+    "stageArtifactsRehashed": 8,
+    "PEEntriesRehashedAndArchitectureParsed": 10,
+    "portableZipPaths": true,
+    "boundedSoftwarePass": 17,
+    "boundedSoftwareNotRun": 1,
+    "fullPhysicalAcceptanceNotRun": 18
+  },
+  "boundaryFindings": [
+    "Case8 explicitly records actual prefix delivery and absent Write-return marker; wrapper gap prevents instruction-exact syscall claim.",
+    "Case9 observes complete16-byte primary/cut and Submitted before durable disposition; no paper-delivered claim.",
+    "Case18 is actual macOS foreground stop/restart/exclusion/fault handling only, with retained primary/beep uncertainty; SCM and Windows OS restart remain not-run.",
+    "All18 top-level full acceptance statuses remain not-run; expected unsafe RAW counterexamples remain failed physical guarantees.",
+    "Current1109 source and old163/898 historical cohorts are separated. New10 Windows binaries and source ZIP are compile/stage-only, with no guest calls or runtime qualification.",
+    "Stage contains four package tests plus real foreground executable per architecture, exact amd64/arm64 PEs, no SCM application or physical enablement script.",
+    "Final normal/race764 pass records225 top9 fixture skips agrees with previously independently parsed source-matched logs."
+  ],
+  "limits": [
+    "No VM command, package test, service/account/driver/ACL/physical operation performed during review.",
+    "New Windows runtime remains automatic-approval-blocked as reported by parent; staged files do not close that gate.",
+    "Production authority/current-state/route, LAN runtime, complete business/Hive bridge and physical cutover remain pending."
+  ]
+}

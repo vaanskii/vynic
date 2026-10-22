@@ -1,0 +1,189 @@
+{
+  "status": "PASS",
+  "scope": "read-only reuse check; new service composition qualification pending",
+  "sourceRoot": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/source",
+  "referenceManifestSha256": "638458ddc270fa3638c52f2a7bc491e6327bebbf2a46caba9fb451f64bae680f",
+  "qualifiedWindowsReceiptSha256": "559f55d6e56d943bc1f92e954040732d0453f29563aab1f72c1ac27f8a473ae8",
+  "unchangedReferenceFileCount": 32,
+  "files": {
+    "apps/edge/internal/printtransport/guard.go": {
+      "sha256": "d46cbaa04bbb9e5a21966c43794f6d63be1d8418aa6315089694613993b3ae87",
+      "bytes": 2308,
+      "owned": true
+    },
+    "apps/edge/internal/printtransport/guard_other.go": {
+      "sha256": "dd0cc72fe6c3de335dd563a7ff9a7b95870d52654a8f68809d906d661a8288e5",
+      "bytes": 538,
+      "owned": true
+    },
+    "apps/edge/internal/printtransport/guard_windows.go": {
+      "sha256": "414f50c210190c303da0ef0727b7c0e5e01d3fe89e4c12c4b777eb77f42b4b3f",
+      "bytes": 1152,
+      "owned": true
+    },
+    "apps/edge/internal/printtransport/helper.go": {
+      "sha256": "344d1fb146346d8ab25dbdea8e3c1aaec7017e7d6517b84f9addae86a7c03185",
+      "bytes": 6178,
+      "owned": true
+    },
+    "apps/edge/internal/printtransport/helper_other.go": {
+      "sha256": "39314257c720573695d8db34d02fa74eb08b58c388f5500c453f48e1ea3b22b3",
+      "bytes": 233,
+      "owned": true
+    },
+    "apps/edge/internal/printtransport/helper_test.go": {
+      "sha256": "0d4a5ccd85664fb1c7ce28337de60e5f422ddd5708fce9ebcde467e37e563d99",
+      "bytes": 6976,
+      "owned": true
+    },
+    "apps/edge/internal/printtransport/helper_windows.go": {
+      "sha256": "562135704cee8202560b58e642c0746c4c4b854beddc44cfa49a1022b242964b",
+      "bytes": 10139,
+      "owned": true
+    },
+    "apps/edge/internal/printtransport/helper_windows_test.go": {
+      "sha256": "feb123a3e952a62e5116024d5b434e2b72be7ccdc71e1b327211931ed3e8ce13",
+      "bytes": 9570,
+      "owned": true
+    },
+    "apps/edge/internal/printtransport/protocol.go": {
+      "sha256": "982b068c3011f2dd6dc490af838f7a2b97d38afe9fa20729040772842dd3be29",
+      "bytes": 5784,
+      "owned": true
+    },
+    "apps/edge/internal/printtransport/router.go": {
+      "sha256": "754bdca3212b3c145c46ab91371259e796a7858a271322386c7ad33e59788cfe",
+      "bytes": 2552,
+      "owned": true
+    },
+    "apps/edge/internal/printtransport/tcp.go": {
+      "sha256": "18df0eaff557bfd2285e270fa519e66d1115924d5c7b86bfaa8618a009cd1d2f",
+      "bytes": 1801,
+      "owned": true
+    },
+    "apps/edge/internal/printtransport/tcp_test.go": {
+      "sha256": "6588d48b0f00be575789adf9b26349d50f7102f7d9faf01f51ce1b2ab665e9d4",
+      "bytes": 7698,
+      "owned": true
+    },
+    "apps/edge/internal/printtransport/transport.go": {
+      "sha256": "e6ad771e28315311052c60cd108e097ffc557d0075d8fc3db9aa4f14673b06aa",
+      "bytes": 4089,
+      "owned": true
+    },
+    "apps/edge/native/print_helper/CMakeLists.txt": {
+      "sha256": "c9dc30418926ff8eb24b9cf54eec2e620b4d1e3b7943b8bd4ee146d6730945cc",
+      "bytes": 1918,
+      "owned": true
+    },
+    "apps/edge/native/print_helper/README.md": {
+      "sha256": "c3d4be526b028c064a5896b93531c1c85e808b6f8717bc370e9e2ed0c314b8be",
+      "bytes": 4796,
+      "owned": true
+    },
+    "apps/edge/native/print_helper/main_windows.cpp": {
+      "sha256": "1edb8b42e709083f9f1b61a5008d2393fbfaa82987541a3a92563659ccfadf50",
+      "bytes": 4131,
+      "owned": true
+    },
+    "apps/edge/native/print_helper/protocol.cpp": {
+      "sha256": "526046639db53d383d143c70a2401baa8454255c3fe1d0d896e11709fbb5d9bb",
+      "bytes": 6309,
+      "owned": true
+    },
+    "apps/edge/native/print_helper/protocol.h": {
+      "sha256": "9825f57f4524265463f3021afe77a751816b52fabad3653440d271376f0019a7",
+      "bytes": 1566,
+      "owned": true
+    },
+    "apps/edge/native/print_helper/protocol_test.cpp": {
+      "sha256": "35596e34502d6c6f05e768a22df0c1088d867b87a4fb90d1c4595d2f38350121",
+      "bytes": 11104,
+      "owned": true
+    },
+    "apps/edge/native/print_helper/qualify_windows.ps1": {
+      "sha256": "1b1c47f22fc768743a94d1eff9e0d970b7a0c5e0face062fe90ebe65e6a75c78",
+      "bytes": 4602,
+      "owned": true
+    },
+    "apps/edge/native/print_helper/session.cpp": {
+      "sha256": "8011075a2b6667d30e881f7561fc428fb5f147c822b1ba4308e071fd10c0f083",
+      "bytes": 2880,
+      "owned": true
+    },
+    "apps/edge/native/print_helper/session.h": {
+      "sha256": "0e1f72e7597b93ff6a95013ee1a78561684f4896c1f34468162bf4d510ff443f",
+      "bytes": 1027,
+      "owned": true
+    },
+    "apps/operations/windows/runner/CMakeLists.txt": {
+      "sha256": "56018eee14758aa2ebffe3f5ffb88e19c716dc2b48e3d7010b9b8b352aeae3b2",
+      "bytes": 2208,
+      "owned": true
+    },
+    "apps/operations/windows/runner/windows_spooler.cpp": {
+      "sha256": "db67699562cb477ece7e82569e9c3ecb2a4389865ba124e47d0de34e6ae015ec",
+      "bytes": 6546,
+      "owned": false
+    },
+    "apps/operations/windows/runner/windows_spooler.h": {
+      "sha256": "75a307ac62916cedf1db39c33fc92bb1f1312b0d62b551b8e33c0ed4da821056",
+      "bytes": 2383,
+      "owned": false
+    },
+    "apps/operations/windows/runner/windows_spooler_channel.cpp": {
+      "sha256": "b05bccf184bd523ddc6ebcabe837443428daf6b9c8d5503f5d9a1a60dc32b221",
+      "bytes": 11809,
+      "owned": true
+    },
+    "apps/operations/windows/runner/windows_spooler_channel.h": {
+      "sha256": "8da79f824905bcd4ca3fcf6547a9fc5239654709b4e5c31798cd6a21430ca0dc",
+      "bytes": 1245,
+      "owned": false
+    },
+    "apps/operations/windows/runner/windows_spooler_native.cpp": {
+      "sha256": "c2b6f8d07c55b5cebbe32b3e597b5ff4a5b40bebd6c2b4a73fa1e1dd90ad5527",
+      "bytes": 6541,
+      "owned": true
+    },
+    "apps/operations/windows/runner/windows_spooler_native.h": {
+      "sha256": "82564a1481807b2a40d184c4adcde115189b284484fb752a4ba272fb6cf51610",
+      "bytes": 1110,
+      "owned": true
+    },
+    "apps/operations/windows/tests/CMakeLists.txt": {
+      "sha256": "75a19684ede50228109ea12d91bbb6337bc75befc529c50be8340f7ae7e4d554",
+      "bytes": 4194,
+      "owned": true
+    },
+    "apps/operations/windows/tests/windows_spooler_channel_test.cpp": {
+      "sha256": "cfac9a776024cbd71b65b301714c24f64ed7b0db44f958b0af7586a94fe36a8f",
+      "bytes": 16768,
+      "owned": false
+    },
+    "apps/operations/windows/tests/windows_spooler_test.cpp": {
+      "sha256": "d68ea69bc9ff2167848860d8a18482ecedeac48edf8d69e4eeba5d75577007b8",
+      "bytes": 10782,
+      "owned": false
+    }
+  },
+  "qualifiedHelper": {
+    "sha256": "b720e1eedc77ab574d769865e39f71506a5f3ebc9d93ab5166bc3f112203019d",
+    "bytes": 316416,
+    "protocol": 1,
+    "PEMachine": "0x8664",
+    "imports": [
+      "WINSPOOL.DRV",
+      "KERNEL32.dll"
+    ]
+  },
+  "priorTestCounts": {
+    "goTopLevel": 12,
+    "goSubtests": 26,
+    "helperFakeAssertions": 254,
+    "coreFakeAssertions": 110,
+    "readOnlyChannelAssertions": 204
+  },
+  "physicalEligibility": false,
+  "principalQualification": "pending selected service account; prior run foreground account only"
+}

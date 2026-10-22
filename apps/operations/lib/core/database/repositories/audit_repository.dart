@@ -1,6 +1,8 @@
+import 'order_table_mutation_repository.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'dart:developer' as developer;
+import '../local_data_admission.dart';
 
 import 'package:flutter/foundation.dart';
 import 'package:vynic/core/models/audit_report.dart';
@@ -29,6 +31,10 @@ class AuditRepository {
   static void registerAuditChangedCallback(void Function() cb) {
     _onAuditChanged = cb;
   }
+
+  /// Durable multi-store operations notify only after releasing admission.
+  static void notifyAuditChanged() =>
+      LocalDataAdmission.afterMutation(() => _onAuditChanged?.call());
 
   static String buildAuditReportKey(int orderId) =>
       '$_auditReportKeyPrefix$orderId';
@@ -113,7 +119,7 @@ class AuditRepository {
   static Future<void> saveAuditReport(AuditReport report) async {
     if (DatabaseCore.auditLogBox == null) return;
     await DatabaseCore.auditLogBox!.put(report.reportId, report.toMap());
-    _onAuditChanged?.call();
+    notifyAuditChanged();
   }
 
   static AuditReport? getAuditReport(int orderId) {
@@ -232,11 +238,17 @@ class AuditRepository {
     }
 
     if (changed) {
-      _onAuditChanged?.call();
+      notifyAuditChanged();
     }
   }
 
   static Future<void> runAuditDuplicateOpenCleanupOnce() async {
+    if (OrderTableMutationRepository.integrityReport().isNotEmpty) {
+      debugPrint(
+        '[AuditCleanup] Ownership repair report requires inspection; cleanup skipped.',
+      );
+      return;
+    }
     if (DatabaseCore.settingsBox == null || DatabaseCore.auditLogBox == null) {
       return;
     }
@@ -309,7 +321,7 @@ class AuditRepository {
 
     await DatabaseCore.settingsBox!.put(cleanupKey, true);
     if (changed) {
-      _onAuditChanged?.call();
+      notifyAuditChanged();
     }
   }
 
@@ -676,7 +688,7 @@ class AuditRepository {
       updatedReport.reportId,
       updatedReport.toMap(),
     );
-    _onAuditChanged?.call();
+    notifyAuditChanged();
   }
 
   /// Appends and locks one typed closure event, or proves that exact closure
@@ -817,7 +829,7 @@ class AuditRepository {
     );
 
     await DatabaseCore.auditLogBox!.put(reopened.reportId, reopened.toMap());
-    _onAuditChanged?.call();
+    notifyAuditChanged();
   }
 
   static String _legacyActionForEvent(AuditEventType type) {
@@ -998,7 +1010,7 @@ class AuditRepository {
         },
       ),
     );
-    _onAuditChanged?.call();
+    notifyAuditChanged();
   }
 
   static List<Map<String, dynamic>> getAuditLogs({

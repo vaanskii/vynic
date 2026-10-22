@@ -1,0 +1,98 @@
+{
+  "artifacts": {
+    "printer-validation/queue-independent-review.json": {
+      "bytes": 4107,
+      "sha256": "458cfa099b9054cc96adcfafcb5d0dfe9b03ed179f705f66c219827d860cd2bc"
+    },
+    "printqueue-tests-go-race.jsonl": {
+      "bytes": 64004,
+      "sha256": "99a7a555532303ddea3ff9c8b3ef3afefe84b1923b98b04dd79233fdb017e98d"
+    },
+    "printqueue-vet.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "printqueue-windows-crosscompile.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "printqueue-windows.test.exe": {
+      "bytes": 17431040,
+      "sha256": "5fb179fa0f7adb625cb89bdfdb5250bd83adbf35826a0aaea5c6a4f013a8bb14"
+    },
+    "shared-printqueue-baseline.json": {
+      "bytes": 806,
+      "sha256": "d2fdd08258d291f8b08d5949907ee581c44573af3964fa739c1f2b96c12796fa"
+    },
+    "shared-printqueue-owned-sha256.json": {
+      "bytes": 2832,
+      "sha256": "31760c3b9df3913c241d8f8e9aaffc3b032f7d34c661b1374dfa0c5a63781795"
+    },
+    "shared-printqueue-owned.patch": {
+      "bytes": 114153,
+      "sha256": "3923d77a15b60861430318b50cae5216adcb59e5b2b74accc74a7ee32d4fd4ed"
+    }
+  },
+  "atUTC": "2026-10-06T15:01:18.249543+00:00",
+  "checks": [
+    {
+      "command": "GOPROXY=off go test -mod=readonly -count=1 -race -json ./internal/printqueue",
+      "elapsedSeconds": 8.724,
+      "note": "Includes one subprocess-helper top-level test that returns without helper environment.",
+      "result": "PASS",
+      "topLevelPassRecords": 22,
+      "totalPassRecordsIncludingSubtests": 67
+    },
+    {
+      "command": "GOPROXY=off go vet -mod=readonly ./internal/printqueue",
+      "diagnostics": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "GOOS=windows GOARCH=amd64 CGO_ENABLED=0 GOPROXY=off go test -c -mod=readonly ./internal/printqueue",
+      "result": "PASS compilation only",
+      "runOnWindows": false
+    },
+    {
+      "command": "gofmt + git diff --no-index --check /dev/null per owned new file",
+      "note": "Isolated source export has no .git.",
+      "result": "PASS"
+    },
+    {
+      "result": "PASS bounded independent review",
+      "reviewSHA256": "458cfa099b9054cc96adcfafcb5d0dfe9b03ed179f705f66c219827d860cd2bc"
+    }
+  ],
+  "format": 1,
+  "limitations": [
+    "Loopback services share one test process/OS: not three physical computers, TLS authentication, LAN partition, replicated consensus or hardware availability qualification",
+    "Same canonical database-path worker lock and injected guard are proof controls, not alias-proof copied-root or cross-host raw-TCP fencing",
+    "A primary UNCERTAIN head retains its printer indefinitely; no automatic replay, lease takeover or operator transfer is implemented",
+    "Physical Sender constructor attachment is refused in proof scheduler; full authority/writer/host fencing, real transport integration and physical qualification remain pending",
+    "Windows artifact compiled but not executed by this agent; older Edge schema rollback remains blocked/unqualified",
+    "Final combined repository race/vulnerability validation belongs to dependency/coordinator owners"
+  ],
+  "oldMigrationsUnchanged": {
+    "apps/edge/internal/store/migrations/003_operational_coordination.sql": true,
+    "apps/edge/internal/store/migrations/004_operational_entity_kinds.sql": true
+  },
+  "originalWorkspaceAndSealedProofs": "Untouched by this agent",
+  "ownedNewFiles": 12,
+  "physicalDocuments": 0,
+  "productionActivated": false,
+  "scope": "Reusable isolated LOCAL / qualified-gateway executor primitive; not the separately developing VENUE_SHARED consensus queue",
+  "sourceManifestSHA256": "31760c3b9df3913c241d8f8e9aaffc3b032f7d34c661b1374dfa0c5a63781795",
+  "sourceRoot": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/source",
+  "sourceUnchangedAfterValidation": true,
+  "verified": [
+    "Dart-generated TCP and Windows queue envelopes decode with exact IDs/revisions/header/cut/hash; duplicate/case-alias/unsupported primary profiles reject",
+    "Canonical PRINT + job + immutable receipt + sequence are one SQL transaction; result failure rolls all back; opaque PRINT is inert/refused",
+    "Exact lost-ACK retry returns same immutable receipt; payload reuse/stale binding/wrong Venue/alias retarget/equivalent duplicate endpoint refuse",
+    "FIFO physical UUID claims; concurrent workers refuse same head; independent second printer progresses through stalled/uncertain first printer",
+    "Actual SIGKILL at nine admitted/native/durable boundaries; restart integrity ok; STARTED becomes held UNCERTAIN; no automatic primary replay",
+    "Accepted primary survives spent/unknown/malformed/failed beep; durable reservation precedes beep; same guard retained; reserved beep never replays",
+    "Public Wait/Stop timeout preserves actual native lifetime/process lock; late completion settles; separate competing process cannot recover or submit",
+    "Three loopback Go relay services with distinct WAL databases forward to a fourth executor database; one relay stops, two remaining admit new jobs across two printers",
+    "Capacity bounds and immutable receipt retries survive config changes; exact schema6 and one FULL/FK/WAL connection required"
+  ]
+}

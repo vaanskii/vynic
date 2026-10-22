@@ -1,0 +1,9 @@
+{
+  "tests/CMakeLists.txt": "fd4021883de3b4e98712695b46aa6e04b16ff5ae58977902cf44b8b3912f42be",
+  "tests/windows_spooler_test.cpp": "d68ea69bc9ff2167848860d8a18482ecedeac48edf8d69e4eeba5d75577007b8",
+  "tests/windows_spooler_channel_test.cpp": "cfac9a776024cbd71b65b301714c24f64ed7b0db44f958b0af7586a94fe36a8f",
+  "runner/windows_spooler.h": "75a307ac62916cedf1db39c33fc92bb1f1312b0d62b551b8e33c0ed4da821056",
+  "runner/windows_spooler.cpp": "db67699562cb477ece7e82569e9c3ecb2a4389865ba124e47d0de34e6ae015ec",
+  "runner/windows_spooler_channel.h": "8da79f824905bcd4ca3fcf6547a9fc5239654709b4e5c31798cd6a21430ca0dc",
+  "runner/windows_spooler_channel.cpp": "158bd4da5339f897bab2a688ff1a8df87e3f68e6cfe6b6c7333f4f186275b9d3"
+}

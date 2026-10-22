@@ -1,0 +1,22 @@
+00:00 +0: loading /Users/vaanskii/Developer/vynic/apps/operations/test/widget/pos_theme_test.dart
+00:00 +0: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/pos_theme_test.dart: (setUpAll)
+00:00 +0: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/pos_theme_test.dart: POS Georgian text survives component themes at 1.0
+00:00 +1: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/admin_sections_render_test.dart: staff
+00:00 +2: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/admin_sections_render_test.dart: staff
+00:00 +3: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/admin_sections_render_test.dart: staff
+00:00 +4: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/admin_sections_render_test.dart: staff
+00:00 +5: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/admin_sections_render_test.dart: reservations
+00:00 +6: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/admin_sections_render_test.dart: sales
+00:00 +7: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/admin_sections_render_test.dart: non-fiscal sales cards react to feature changes without deleting history
+00:00 +8: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/admin_sections_render_test.dart: display
+00:00 +9: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/admin_sections_render_test.dart: errors
+00:01 +10: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/admin_sections_render_test.dart: backup
+00:01 +11: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/admin_sections_render_test.dart: backup, as Settings renders it — create only
+00:01 +12: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/admin_sections_render_test.dart: developer
+00:01 +13: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/admin_sections_render_test.dart: audit
+00:01 +14: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/admin_sections_render_test.dart: salesReport
+00:01 +15: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/admin_sections_render_test.dart: menu
+00:01 +16: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/admin_sections_render_test.dart: packages
+00:01 +17: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/admin_sections_render_test.dart: settings
+00:01 +18: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/admin_sections_render_test.dart: (tearDownAll)
+00:01 +18: All tests passed!

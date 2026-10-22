@@ -1,0 +1,75 @@
+{
+  "reviewedAtUTC": "2026-10-06T18:06:40.356842+00:00",
+  "outcome": "PASS_BOUNDED_MAC_AND_WINDOWS_FLUTTER_V2_SOURCE_QUALIFICATION",
+  "openP1P2": [],
+  "sourceFiles": 1109,
+  "sourceManifestSHA256": "faaaec2f1ece4f8259353666000eb4c0d3aee6143e73ae7fdf90772a937b581b",
+  "sourceChangesFromV1": [
+    "apps/operations/test/unit/printer_agent_runtime_profile_test.dart",
+    "apps/operations/test/widget/printer_agent_status_card_test.dart"
+  ],
+  "mac": {
+    "visible": {
+      "success": 623
+    },
+    "hidden": 51,
+    "skipped": 0,
+    "errors": 0,
+    "suites": 39,
+    "done": [
+      true
+    ]
+  },
+  "windows": {
+    "visible": {
+      "success": 623
+    },
+    "hidden": 51,
+    "skipped": 0,
+    "errors": 0,
+    "suites": 39,
+    "done": [
+      true
+    ]
+  },
+  "analysisFilesPerPlatform": 68,
+  "windowsContext": {
+    "user": "VANSKI\\vaanskii",
+    "SID": "S-1-5-21-611125631-3759947118-1641436196-1000",
+    "guestArchitecture": "ARM64",
+    "fixtureArchitecture": "amd64",
+    "printJobsBefore": 0,
+    "printJobsAfter": 0
+  },
+  "evidence": {
+    "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/final-cohort-v2-source.json": "faaaec2f1ece4f8259353666000eb4c0d3aee6143e73ae7fdf90772a937b581b",
+    "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/windows-software-v2/final-cohort-v2-lineage.json": "bab023485c929364a2a4432586615e07de6af9d99911c0030070b516694e4ee3",
+    "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/windows-software-v2/fixture-native-paths-v2-independent-review.json": "91b62022b8c73aa1641706ba0dfef155aafbdc90b7df20510b6e26767161fbb5",
+    "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/software-v2-mac-retry/final-flutter-tests-v2-receipt.json": "14cd6235904bdafc04527f0b8b1e50bda70d237725b57684a23f6040e82efe8f",
+    "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/software-v2-mac-retry/final-flutter-tests-v2.jsonl": "fd49e143f6376b45df58908f6fe6bf8b28c87fbb80b2fdbbaac7f1d17f9908fa",
+    "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/software-v2-mac/final-flutter-analysis-receipt.json": "8bec0acca689418fffebc2dd6b9fe5d25f513f16161ff221f5d57baf4a2b915d",
+    "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/software-v2-mac/final-flutter-analysis.jsonl": "69ae5aee995845e1ec9bc7fbf61724527c8b6c6932aa2ed01930a09e80bc5aa8",
+    "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/software-v2-mac/loader-sandbox-failure-classification.json": "e5f321af28333241bc8f0fa118e38852148bae4f55613d3a498e3c44b2f7b028",
+    "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/windows-software-v2/flutter-first-failed-receipt.json": "e75f84fcb038e216d89342720b430ceb445b5367a0bd5b625e3a34c523ee35d1",
+    "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/windows-software-v2/analysis-original-short-success-receipt.json": "cd503c0ee1437cc20591f1f33c4da27f1c814bbf95e2ae13bfada7b803d31d8a",
+    "/Users/vaanskii/Developer/vynic/docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/software-windows-flutter-stage-v3/runner-artifacts.json": "bbcc14b8ed7670098d5b3a74a730297b4dbc5869fbc101833dc321aaaf634ab9",
+    "/Users/vaanskii/Developer/vynic/docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/software-windows-flutter-result-v3/windows-software-flutter.json": "756e1295ec39fc92ea78d05c236261cc57aa7c86d8f61850d90f5c450a32ae29",
+    "/Users/vaanskii/Developer/vynic/docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/software-windows-flutter-result-v3/flutter-tests.jsonl": "e3169377d751af410325a114dcc5d824d1eadc5762e8594ad1c3f6284bd0bdd3",
+    "/Users/vaanskii/Developer/vynic/docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/software-windows-flutter-result-v3/analysis.log": "45ea90c6c4d114d7eecfd9e580705b7b0b4e98d3c49c7270835c659537d3ee9a",
+    "/Users/vaanskii/Developer/vynic/docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/software-completion-final/ARTIFACTS.json": "f42021a776158e9d12ccf3a5cec7333f655a45e56a3d6050adc8a147a13faf65"
+  },
+  "review": [
+    "Current source-v2 and frozen final-cohort-v2 match all1109 entries. Windows staged ZIP, both real Go fixtures and runner assets are hash-pinned and match retained manifests; source checked before and after execution.",
+    "Both platforms independently parsed623 visible successful tests plus51 hidden outcomes,39 suites,zero skips/errors and terminal success. Both68-target analysis logs report no issues.",
+    "Component lineage retains existing Go normal/race/static/scanner proof for byte-identical Go/proto inputs. These were not rerun as part of the two-test-only Dart correction.",
+    "Initial Windows12 visible failures are preserved as failures; sourceAfter=false records early failure before its after-check, not proof of source mutation. Corrected two native fixture paths are a new cohort.",
+    "Initial Mac39-loader sandbox EPERM failure and two oversized Windows launcher session failures remain separate retained history; successful permitted Mac rerun and shorter pinned Windows launcher do not erase those failures.",
+    "Entire621-file v1 sealed packet rehashed unchanged; v1 historical blocked status is not retroactively edited."
+  ],
+  "limits": [
+    "Independent reviewer performed no tests, guest commands, source edits, service registration or physical printing.",
+    "Windows ARM64 guest ran amd64 Go fixtures; this receipt does not qualify Flutter native ARM64, selected SCM service account, registered service/reboot/power lifecycle or physical printer model/cut/beep behavior.",
+    "Subsequent eight-package Windows Go execution and prepared POS native build are separate receipts, not claimed here.",
+    "Production authority/LAN shared runtime/complete writers and Hive cutover remain held. Original dirty workspace and committed runtime are not qualified by isolated source verification."
+  ]
+}

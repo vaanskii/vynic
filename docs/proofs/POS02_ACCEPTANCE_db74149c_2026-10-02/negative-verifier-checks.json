@@ -1,0 +1,23 @@
+{
+  "status": "PASS",
+  "cases": [
+    {
+      "case": "manifestChanged",
+      "status": "REJECTED",
+      "exitCode": 1,
+      "reason": "ValueError: Candidate manifest changed"
+    },
+    {
+      "case": "truncatedNative",
+      "status": "REJECTED",
+      "exitCode": 1,
+      "reason": "ValueError: Native checkpoint matrix changed"
+    },
+    {
+      "case": "paperAllowanceRaised",
+      "status": "REJECTED",
+      "exitCode": 1,
+      "reason": "ValueError: Candidate identity/status/budget mismatch"
+    }
+  ]
+}

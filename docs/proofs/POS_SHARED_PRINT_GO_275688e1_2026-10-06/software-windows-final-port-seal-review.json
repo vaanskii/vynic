@@ -1,0 +1,73 @@
+{
+  "reviewedAtUTC": "2026-10-06T18:30:05.395413+00:00",
+  "outcome": "PASS_FINAL_GUARDED_PORT_AND_IMMUTABLE_WINDOWS_PROOF_SEAL",
+  "openP1P2": [],
+  "port": {
+    "reviewedOriginalPathsRehashed": 156,
+    "unrelatedPreimagesRehashed": 666,
+    "sourceAndVerificationCopyFilesRehashedEach": 1109,
+    "knownUserOwnedRuntimeDifferencesPreserved": 5,
+    "historicalDifferencesPreserved": 7,
+    "originalDecisionsReconstructedSHA256": "391ad1e91b98fcafcd5f46964a4913db5d4e42feefc3e0a692ac314fb4a2f6fc",
+    "originalD031AndAllOtherDecisionBytesPreserved": true,
+    "onlyDecisionDelta": "D034 inserted before retained Maintenance section",
+    "reportSHA256": "c5f37d33f35141180ff104626dc58787a5d395d4eb1f6ac2b117a7761ed67b31",
+    "stateSHA256": "9f534006be72a37b5b4697188738c361c665cfbb2a38884bce19c93459b71d6e"
+  },
+  "packet": {
+    "path": "/Users/vaanskii/Developer/vynic/docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/software-completion-windows-final",
+    "sealSHA256": "a6c5b61c7e30cb5aa5bd41f21d9957b8c16359f1d21ae2d2e06a2a68e75e92ab",
+    "internalArtifactsVerified": 163,
+    "internalArtifactBytes": 7097027,
+    "externalManifestSHA256": "7ffb419dd0d65ae6c27f93302a3c0029004b7050266ad445191b85172f3d0346",
+    "externalArtifactsVerified": 869,
+    "externalArtifactBytes": 907478348,
+    "unexpectedInternalFiles": 0,
+    "modifiedByReviewer": false
+  },
+  "preservedEarlierProof": {
+    "old621ArtifactSealSHA256": "f42021a776158e9d12ccf3a5cec7333f655a45e56a3d6050adc8a147a13faf65",
+    "old621ArtifactsRehashed": 621,
+    "earlierProofs": [
+      {
+        "directory": "POS_MULTI_TERMINAL_275688e1_2026-10-06",
+        "sealSHA256": "163473fcf3b8d05a80b1f39868a42c2a807222c808dac91c7ad659f3fcfe863c",
+        "artifacts": 69
+      },
+      {
+        "directory": "POS_WINDOWS_NATIVE_abf7e6b3_2026-10-06",
+        "sealSHA256": "9a209a98330f8e108cd53ab2d88c799b20511a3f5c0a4d2fee58a77ba16d5859",
+        "artifacts": 88
+      },
+      {
+        "directory": "POS_MANAGER_ITEMS_275688e1_2026-10-06",
+        "sealSHA256": "7365038dfb3aaa6d6485f19711d65b347fa8a30a3face4fd1b9c109327b1df71",
+        "artifacts": 23
+      }
+    ]
+  },
+  "repository": {
+    "head": "275688e1e5c5dc0e26e62705ab0c7670cf16d99a",
+    "branch": "codex/docker-deployment-foundation",
+    "stash": "9df454225caec647f67ad4f70ef6038dbbbe41d6",
+    "stagedFiles": ""
+  },
+  "gitDiffCheckExitCode": 0,
+  "supportingEvidence": {
+    "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/windows-software-v2/reviewed-printer-port-v2-manifest.json": "07705e80942193412becd49815bf17b4624f2730fa6d5a07d940103c09250bed",
+    "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/windows-software-v2/fixture-port-v2-receipt.json": "fbcb8557cf83d96b23a52e20f18720cea94856ce1397a2afd588fd9e2b26b67a",
+    "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/windows-software-v2/documentation-port-v2-receipt.json": "4ad8f32fe900629301f5b32b4e737d1130df21cfac49d9f4fe7db86176f21c0c",
+    "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/windows-software-v2/final-report-state-matrix-independent-review.json": "f8b22e1b5c71339808a1df305b9c07f826fdd389eccf7bdc508e69883ea228e6",
+    "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/windows-software-v2/pos-and-windows-aggregate-independent-review.json": "7916e6272828f1aceb2783db23fb98369c0d485218225da84fad2c85587fd3cb",
+    "/Users/vaanskii/Developer/vynic/docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/software-completion-windows-final/workspace-final-preservation.json": "a0f26bd0fa5f937b1ac55c4bcc44bd3a0e4cd5db4622f3feb1844ee6d1c1a2fe",
+    "/Users/vaanskii/Developer/vynic/docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/software-completion-windows-final/ARTIFACTS.json": "a6c5b61c7e30cb5aa5bd41f21d9957b8c16359f1d21ae2d2e06a2a68e75e92ab",
+    "/Users/vaanskii/Developer/vynic/docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/software-completion-windows-final/EXTERNAL_ARTIFACTS.json": "7ffb419dd0d65ae6c27f93302a3c0029004b7050266ad445191b85172f3d0346"
+  },
+  "limits": [
+    "This receipt is outside the immutable packet. Reviewer performed only reads/hashes and repository status/diff checks, with no tests, VM calls, source changes or service operations.",
+    "HEAD/branch/stash and staged-empty state match retained records; no claim of a byte-for-byte Git index baseline. No commit, merge, deployment or push performed.",
+    "Available isolated software qualification is complete as documented. Original dirty workspace retains five distinct user-owned runtime/source inputs and is not the exact qualified cohort.",
+    "Production issuer/enrollment and protected current authorization, shared LAN runtime, complete writer/Hive cutover/rollback, physical downstream fencing/model output and selected SCM/service-account/OS lifecycle remain pending.",
+    "Later owner seal is an optional external addendum; the reviewed final aggregate1db6cb1a and independent7916e627/f8b22e1b receipts are already authoritative and archived. No packet amendment was made."
+  ]
+}

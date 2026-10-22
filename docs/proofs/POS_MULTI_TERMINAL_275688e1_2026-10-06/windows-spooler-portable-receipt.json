@@ -1,0 +1,41 @@
+{
+  "kind": "PORTABLE_CXX_FAKE_API_ONLY",
+  "compiler": "Apple clang version 21.0.0 (clang-2100.3.34.2)\nTarget: arm64-apple-darwin27.0.0\nThread model: posix\nInstalledDir: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin\n",
+  "compileCommand": [
+    "/usr/bin/clang++",
+    "-std=c++17",
+    "-Wall",
+    "-Wextra",
+    "-Werror",
+    "/Users/vaanskii/Developer/vynic/apps/operations/windows/runner/windows_spooler.cpp",
+    "/Users/vaanskii/Developer/vynic/apps/operations/windows/tests/windows_spooler_test.cpp",
+    "-o",
+    "/tmp/vynic-readiness-20261006-a2nbcprb/windows-spooler-portable-proof"
+  ],
+  "compileExitCode": 0,
+  "testCommand": [
+    "/tmp/vynic-readiness-20261006-a2nbcprb/windows-spooler-portable-proof"
+  ],
+  "testExitCode": 0,
+  "assertionsPassed": 110,
+  "binarySha256": "b49621714a50e31322e4d76534f050c2b2a89be1da1836cb07d5e355ce108c10",
+  "compileLogSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "testLogSha256": "b1c0017bfa312bdf32f5c8681fceb251846ec1ded688e1cad0ab554125374aaf",
+  "sourceHashes": {
+    "apps/operations/lib/core/services/printing/windows_spooler_transport.dart": "0efb38362c59ac80921804740a84faab78fcfdfb5e0e3d336706b23a808acf1f",
+    "apps/operations/windows/runner/windows_spooler.h": "75a307ac62916cedf1db39c33fc92bb1f1312b0d62b551b8e33c0ed4da821056",
+    "apps/operations/windows/runner/windows_spooler.cpp": "db67699562cb477ece7e82569e9c3ecb2a4389865ba124e47d0de34e6ae015ec",
+    "apps/operations/windows/runner/windows_spooler_channel.h": "8da79f824905bcd4ca3fcf6547a9fc5239654709b4e5c31798cd6a21430ca0dc",
+    "apps/operations/windows/runner/windows_spooler_channel.cpp": "158bd4da5339f897bab2a688ff1a8df87e3f68e6cfe6b6c7333f4f186275b9d3",
+    "apps/operations/test/unit/windows_spooler_transport_test.dart": "75ea3990b836b49b4b30826fb100d653aef2815f5c4c925b9f7d4448ddb46743",
+    "apps/operations/windows/tests/windows_spooler_test.cpp": "d68ea69bc9ff2167848860d8a18482ecedeac48edf8d69e4eeba5d75577007b8",
+    "apps/operations/windows/tests/CMakeLists.txt": "a596af6b86f1f05bd4f3527a96ea036de810b0b0dd0f174eac81594b67409996",
+    "apps/operations/windows/runner/flutter_window.h": "baa732f98148d681bd7f86172098c00f777f33a10e55ba42cb338fc5ffd94519",
+    "apps/operations/windows/runner/flutter_window.cpp": "4711ca99df19df14caa17db7a753432b9b61e38556915e451a29b05f630fc35c",
+    "apps/operations/windows/runner/CMakeLists.txt": "5e88bff3c5389e4e027f46d0fec3e66f13cbae839629e1f402a55065e424874b"
+  },
+  "sourceUnchanged": true,
+  "Win32Compiled": false,
+  "flutterChannelCompiled": false,
+  "physicalJobs": 0
+}

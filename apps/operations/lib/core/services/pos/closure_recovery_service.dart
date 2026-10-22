@@ -1,11 +1,10 @@
+import 'package:vynic/core/database/repositories/order_repository.dart';
 import 'dart:developer' as developer;
 
-import 'package:vynic/core/database/database_core.dart';
 import 'package:vynic/core/database/repositories/closure_journal_repository.dart';
 import 'package:vynic/core/database/repositories/sales_repository.dart';
 import 'package:vynic/core/database/transactions/close_table_transaction.dart';
 import 'package:vynic/core/models/audit_source.dart';
-import 'package:vynic/core/models/order.dart';
 import 'package:vynic/core/services/audit/money_audit.dart';
 
 /// What recovery did to one interrupted closure.
@@ -86,14 +85,7 @@ class ClosureRecoveryService {
     // likely to have lost.
     final saleKey = SalesRepository.findSaleKeyByClosureId(entry.closureId);
 
-    Order? order;
-    try {
-      order = DatabaseCore.orderBox!.values.firstWhere(
-        (o) => o.orderId == entry.orderId,
-      );
-    } catch (_) {
-      order = null;
-    }
+    final order = OrderRepository.getOrder(entry.orderId);
 
     if (saleKey == null) {
       // No sale: nothing was collected as far as the records are concerned.

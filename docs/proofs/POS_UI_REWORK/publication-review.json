@@ -1,0 +1,299 @@
+{
+  "scope": "Publication review of all legitimate pending work requested after POS UI completion; not a deployment or release acceptance.",
+  "base_commit": "3463ee406184fec7f53818416e11d0e5f5602c87",
+  "destination": "origin/codex/docker-deployment-foundation",
+  "remote_branch_before": "absent; main is not modified",
+  "dependencies": "current locks match previously qualified private installations; current source copied without environment files; backend Prisma client generated inside an owned dependency copy",
+  "backend": {
+    "numPassedTests": 921,
+    "numFailedTests": 0,
+    "numPendingTests": 892
+  },
+  "web": {
+    "apps-platform-web": {
+      "numPassedTests": 256,
+      "numFailedTests": 0,
+      "numPendingTests": 0
+    },
+    "apps-restaurant-web": {
+      "numPassedTests": 19,
+      "numFailedTests": 0,
+      "numPendingTests": 0
+    },
+    "packages-website-client": {
+      "numPassedTests": 6,
+      "numFailedTests": 0,
+      "numPendingTests": 0
+    },
+    "templates-custom-site": {
+      "numPassedTests": 3,
+      "numFailedTests": 0,
+      "numPendingTests": 0
+    }
+  },
+  "steps": [
+    {
+      "label": "prisma-generate",
+      "project": "apps/backend",
+      "command": [
+        "node",
+        "node_modules/prisma/build/index.js",
+        "generate"
+      ],
+      "exitCode": 0,
+      "seconds": 1.0
+    },
+    {
+      "label": "prisma-validate",
+      "project": "apps/backend",
+      "command": [
+        "node",
+        "node_modules/prisma/build/index.js",
+        "validate"
+      ],
+      "exitCode": 0,
+      "seconds": 0.4
+    },
+    {
+      "label": "backend-build",
+      "project": "apps/backend",
+      "command": [
+        "npm",
+        "run",
+        "build"
+      ],
+      "exitCode": 0,
+      "seconds": 4.9
+    },
+    {
+      "label": "backend-tests",
+      "project": "apps/backend",
+      "command": [
+        "node",
+        "node_modules/jest/bin/jest.js",
+        "--runInBand",
+        "--json",
+        "--outputFile=/tmp/vynic-publication-validation/backend-tests.json"
+      ],
+      "exitCode": 1,
+      "seconds": 19.1
+    },
+    {
+      "label": "apps-platform-web-build",
+      "project": "apps/platform-web",
+      "command": [
+        "npm",
+        "run",
+        "build"
+      ],
+      "exitCode": 0,
+      "seconds": 4.3
+    },
+    {
+      "label": "apps-platform-web-tests",
+      "project": "apps/platform-web",
+      "command": [
+        "npm",
+        "test",
+        "--",
+        "--maxWorkers=2",
+        "--reporter=json",
+        "--outputFile=/tmp/vynic-publication-validation/apps-platform-web-tests.json"
+      ],
+      "exitCode": 0,
+      "seconds": 24.3
+    },
+    {
+      "label": "apps-restaurant-web-build",
+      "project": "apps/restaurant-web",
+      "command": [
+        "npm",
+        "run",
+        "build"
+      ],
+      "exitCode": 0,
+      "seconds": 1.3
+    },
+    {
+      "label": "apps-restaurant-web-tests",
+      "project": "apps/restaurant-web",
+      "command": [
+        "npm",
+        "test",
+        "--",
+        "--maxWorkers=2",
+        "--reporter=json",
+        "--outputFile=/tmp/vynic-publication-validation/apps-restaurant-web-tests.json"
+      ],
+      "exitCode": 0,
+      "seconds": 1.5
+    },
+    {
+      "label": "apps-vankisi-custom-web-build",
+      "project": "apps/vankisi-custom-web",
+      "command": [
+        "npm",
+        "run",
+        "build"
+      ],
+      "exitCode": 0,
+      "seconds": 5.5
+    },
+    {
+      "label": "packages-website-client-build",
+      "project": "packages/website-client",
+      "command": [
+        "npm",
+        "run",
+        "typecheck"
+      ],
+      "exitCode": 0,
+      "seconds": 0.3
+    },
+    {
+      "label": "packages-website-client-tests",
+      "project": "packages/website-client",
+      "command": [
+        "npm",
+        "test",
+        "--",
+        "--maxWorkers=2",
+        "--reporter=json",
+        "--outputFile=/tmp/vynic-publication-validation/packages-website-client-tests.json"
+      ],
+      "exitCode": 0,
+      "seconds": 0.4
+    },
+    {
+      "label": "templates-custom-site-build",
+      "project": "templates/custom-site",
+      "command": [
+        "npm",
+        "run",
+        "build"
+      ],
+      "exitCode": 0,
+      "seconds": 1.0
+    },
+    {
+      "label": "templates-custom-site-tests",
+      "project": "templates/custom-site",
+      "command": [
+        "npm",
+        "test",
+        "--",
+        "--maxWorkers=2",
+        "--reporter=json",
+        "--outputFile=/tmp/vynic-publication-validation/templates-custom-site-tests.json"
+      ],
+      "exitCode": 0,
+      "seconds": 0.9
+    },
+    {
+      "label": "website-manifest",
+      "project": "packages/website-client",
+      "command": [
+        "npm",
+        "run",
+        "test:manifest"
+      ],
+      "exitCode": 0,
+      "seconds": 0.2
+    },
+    {
+      "label": "contract-generated",
+      "project": "packages/contracts",
+      "command": [
+        "node",
+        "scripts/generate.mjs",
+        "--check"
+      ],
+      "exitCode": 0,
+      "seconds": 0.0
+    },
+    {
+      "label": "inventory-python",
+      "project": "scripts",
+      "command": [
+        "python3",
+        "release_inventory_test.py"
+      ],
+      "exitCode": 0,
+      "seconds": 0.4
+    },
+    {
+      "label": "inventory-node",
+      "project": "scripts",
+      "command": [
+        "node",
+        "--test",
+        "npm_lock_sbom_test.cjs"
+      ],
+      "exitCode": 0,
+      "seconds": 0.7
+    }
+  ],
+  "disposable_database_steps": [
+    {
+      "label": "pg-init",
+      "exitCode": 0,
+      "seconds": 0.5
+    },
+    {
+      "label": "pg-start",
+      "exitCode": 0,
+      "seconds": 0.1
+    },
+    {
+      "label": "pg-create-menu",
+      "exitCode": 0,
+      "seconds": 0.2
+    },
+    {
+      "label": "pg-migrate-menu",
+      "exitCode": 0,
+      "seconds": 1.3
+    },
+    {
+      "label": "pg-create-activation",
+      "exitCode": 0,
+      "seconds": 0.1
+    },
+    {
+      "label": "pg-migrate-activation",
+      "exitCode": 0,
+      "seconds": 0.6
+    },
+    {
+      "label": "backend-final-tests",
+      "exitCode": 0,
+      "seconds": 20.5
+    },
+    {
+      "label": "pg-stop",
+      "exitCode": 0,
+      "seconds": 0.3
+    }
+  ],
+  "owned_database_stopped": true,
+  "go_tests": "PASS",
+  "go_vet": "PASS",
+  "ui_aggregate": "2700 passed, 17 skipped, same 44 pre-existing printer failures",
+  "sensitive_scan": "45 assignment matches reviewed as synthetic test fixtures or code expressions; no private key, JWT or provider token matches in candidate text",
+  "exclusions_manifest": "publication-exclusions.json",
+  "limitations": [
+    "Native Windows build, GPU and physical touch not run on macOS",
+    "Backend 892 opt-in cases skipped",
+    "Edge protobuf regeneration check not run: pinned protoc toolchain absent",
+    "Existing film experiments retained without a new video render",
+    "No deployment, existing service restart, live data change or environment-file access"
+  ],
+  "go_test_packages": 18,
+  "staged_diff_check": {
+    "source": "PASS",
+    "all_files": "528 whitespace warnings in retained proof patches/raw logs and historical Markdown; no application source warnings",
+    "details": "publication-diff-check.txt",
+    "evidence_policy": "Original recorded patch/log contents retained; repository LF normalization follows existing .gitattributes."
+  },
+  "publication_state": "reviewed and ready for commit; remote verification recorded in final task response"
+}

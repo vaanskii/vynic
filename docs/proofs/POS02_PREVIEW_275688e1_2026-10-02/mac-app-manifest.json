@@ -1,0 +1,417 @@
+{
+  "Vynic Manager.app/Contents/Frameworks/App.framework/App": {
+    "kind": "symlink",
+    "sha256": "fceb37e1aa9c3df1a6d4c2dc93fe3e9a881badff96c527c739b3c383fd2ec746",
+    "bytes": 20
+  },
+  "Vynic Manager.app/Contents/Frameworks/App.framework/Resources": {
+    "kind": "symlink",
+    "sha256": "59991b51b8ee15b59f07ec45942957a4ce90494257766964f5df60b7c7998e42",
+    "bytes": 26
+  },
+  "Vynic Manager.app/Contents/Frameworks/App.framework/Versions/A/App": {
+    "kind": "file",
+    "sha256": "00375b29471776a1b9560985153a6b3e2549004e485a2d40fd72076229b68148",
+    "bytes": 16800
+  },
+  "Vynic Manager.app/Contents/Frameworks/App.framework/Versions/A/Resources/Info.plist": {
+    "kind": "file",
+    "sha256": "08b03b58e4ff25c66f5e60193b2728ab5246563bc4f253211a5c4835bbc1d333",
+    "bytes": 666
+  },
+  "Vynic Manager.app/Contents/Frameworks/App.framework/Versions/A/Resources/flutter_assets/AssetManifest.bin": {
+    "kind": "file",
+    "sha256": "bb12b997e25be8590535a8af755ccafad751b6fdd7efc62239240b898c297d62",
+    "bytes": 496
+  },
+  "Vynic Manager.app/Contents/Frameworks/App.framework/Versions/A/Resources/flutter_assets/FontManifest.json": {
+    "kind": "file",
+    "sha256": "d952dc8bad7fb84e26d8db976376625a780ca850a5e352fa8e3a9ba9cb09d6bf",
+    "bytes": 294
+  },
+  "Vynic Manager.app/Contents/Frameworks/App.framework/Versions/A/Resources/flutter_assets/NOTICES.Z": {
+    "kind": "file",
+    "sha256": "993f0fc7c2653d762bd464cae092ec92ab531c9fd7e0fe79aef0352f3fe638ed",
+    "bytes": 134799
+  },
+  "Vynic Manager.app/Contents/Frameworks/App.framework/Versions/A/Resources/flutter_assets/NativeAssetsManifest.json": {
+    "kind": "file",
+    "sha256": "e293bf3b416b4011b24695ce7904bfcf30d160f793ac2e294e5d06e17d5d0eac",
+    "bytes": 149
+  },
+  "Vynic Manager.app/Contents/Frameworks/App.framework/Versions/A/Resources/flutter_assets/assets/black-logo.png": {
+    "kind": "file",
+    "sha256": "1decee3afbc5bc80a34398bf93e031a766dedfe572cb323a0b30a90a12d3ccf0",
+    "bytes": 2060538
+  },
+  "Vynic Manager.app/Contents/Frameworks/App.framework/Versions/A/Resources/flutter_assets/assets/fonts/NotoSansGeorgian.ttf": {
+    "kind": "file",
+    "sha256": "d96c44584566c7106f7fdea7c07ad09f63e481bf9066e89b1d14195a967d4ca2",
+    "bytes": 224288
+  },
+  "Vynic Manager.app/Contents/Frameworks/App.framework/Versions/A/Resources/flutter_assets/assets/logo/vynic-logo.png": {
+    "kind": "file",
+    "sha256": "ed454fd692b4aa820ae29bbfe4b4b182e50c8100f640ed7f2eb0fcc77062c91f",
+    "bytes": 10000
+  },
+  "Vynic Manager.app/Contents/Frameworks/App.framework/Versions/A/Resources/flutter_assets/data/menu.json": {
+    "kind": "file",
+    "sha256": "dade96639d13912828f0aa4b70efd77467b6258703fd495e0e53059ccf9ee749",
+    "bytes": 40823
+  },
+  "Vynic Manager.app/Contents/Frameworks/App.framework/Versions/A/Resources/flutter_assets/fonts/MaterialIcons-Regular.otf": {
+    "kind": "file",
+    "sha256": "d9865b671a09d683d13a863089d8825e0f61a37696ce5d7d448bc8023aa62453",
+    "bytes": 1645184
+  },
+  "Vynic Manager.app/Contents/Frameworks/App.framework/Versions/A/Resources/flutter_assets/isolate_snapshot_data": {
+    "kind": "file",
+    "sha256": "e689fed74ea5d8935376203a47068eae61387de131570e28f634c016da5366f7",
+    "bytes": 11093091
+  },
+  "Vynic Manager.app/Contents/Frameworks/App.framework/Versions/A/Resources/flutter_assets/kernel_blob.bin": {
+    "kind": "file",
+    "sha256": "11db0adabe82e1d9d402be221b94603935463713e3ddf1c4f1f0a464f2492bb6",
+    "bytes": 77428840
+  },
+  "Vynic Manager.app/Contents/Frameworks/App.framework/Versions/A/Resources/flutter_assets/packages/cupertino_icons/assets/CupertinoIcons.ttf": {
+    "kind": "file",
+    "sha256": "67c44fe9183b002e79dde7f6977e2988661c9a3e4a3c5fce968787efdbed823c",
+    "bytes": 257628
+  },
+  "Vynic Manager.app/Contents/Frameworks/App.framework/Versions/A/Resources/flutter_assets/packages/flutter_esc_pos_utils/resources/capabilities.json": {
+    "kind": "file",
+    "sha256": "445e5e0139afc14d557a16801b74256738e51f1f21c4d13f43f4a660e3df4941",
+    "bytes": 8450
+  },
+  "Vynic Manager.app/Contents/Frameworks/App.framework/Versions/A/Resources/flutter_assets/shaders/ink_sparkle.frag": {
+    "kind": "file",
+    "sha256": "c4b3f5d1db405d50b8b7678d8bb446237f37ead86501e32c7a77fac963baff2d",
+    "bytes": 11992
+  },
+  "Vynic Manager.app/Contents/Frameworks/App.framework/Versions/A/Resources/flutter_assets/shaders/stretch_effect.frag": {
+    "kind": "file",
+    "sha256": "50c8c225a68bcb36805a9d3fde5be28e315e666fd1c142a2d88f3fb5dfc7d9ff",
+    "bytes": 10192
+  },
+  "Vynic Manager.app/Contents/Frameworks/App.framework/Versions/A/Resources/flutter_assets/vm_snapshot_data": {
+    "kind": "file",
+    "sha256": "d0f254c29f65c8031ff67e0ca451f29dfb7d77aab2fa98a650ecac399fa4f0b2",
+    "bytes": 13646
+  },
+  "Vynic Manager.app/Contents/Frameworks/App.framework/Versions/A/_CodeSignature/CodeResources": {
+    "kind": "file",
+    "sha256": "92b6465fdb93e8a9b9f95c3ba23cc5e6d6df9024e5d9fd2458e3a0e0fd15b477",
+    "bytes": 7026
+  },
+  "Vynic Manager.app/Contents/Frameworks/App.framework/Versions/Current": {
+    "kind": "symlink",
+    "sha256": "559aead08264d5795d3909718cdd05abd49572e84fe55590eef31a88a08fdffd",
+    "bytes": 1
+  },
+  "Vynic Manager.app/Contents/Frameworks/FlutterMacOS.framework/FlutterMacOS": {
+    "kind": "symlink",
+    "sha256": "93e8b4721001457335f63dc810d55827b485deda03ade666141fb7311d5e1e45",
+    "bytes": 29
+  },
+  "Vynic Manager.app/Contents/Frameworks/FlutterMacOS.framework/Resources": {
+    "kind": "symlink",
+    "sha256": "59991b51b8ee15b59f07ec45942957a4ce90494257766964f5df60b7c7998e42",
+    "bytes": 26
+  },
+  "Vynic Manager.app/Contents/Frameworks/FlutterMacOS.framework/Versions/A/FlutterMacOS": {
+    "kind": "file",
+    "sha256": "1fe05d7fbaf3c6c0c22c214adf59dcfb1a41b4a788699c90b05cbc1c7c33daee",
+    "bytes": 47223968
+  },
+  "Vynic Manager.app/Contents/Frameworks/FlutterMacOS.framework/Versions/A/Resources/Info.plist": {
+    "kind": "file",
+    "sha256": "89d3aee7742d13d2fbc1c730fc59be229589dec38f844ee464398b1dd39d9118",
+    "bytes": 848
+  },
+  "Vynic Manager.app/Contents/Frameworks/FlutterMacOS.framework/Versions/A/Resources/PrivacyInfo.xcprivacy": {
+    "kind": "file",
+    "sha256": "42542470043a0a3af3ab452ae4355bf764b916b7a442d3c814f362241a794454",
+    "bytes": 325
+  },
+  "Vynic Manager.app/Contents/Frameworks/FlutterMacOS.framework/Versions/A/Resources/icudtl.dat": {
+    "kind": "file",
+    "sha256": "998367809a821d595928089c197b3f7959f0420f81f79d4d0daee53378492ed5",
+    "bytes": 862304
+  },
+  "Vynic Manager.app/Contents/Frameworks/FlutterMacOS.framework/Versions/A/_CodeSignature/CodeResources": {
+    "kind": "file",
+    "sha256": "1866b60a0cda896750f53ecd25ba07c7bc6ed98f2e863972cbb68c52b27941eb",
+    "bytes": 2916
+  },
+  "Vynic Manager.app/Contents/Frameworks/FlutterMacOS.framework/Versions/Current": {
+    "kind": "symlink",
+    "sha256": "559aead08264d5795d3909718cdd05abd49572e84fe55590eef31a88a08fdffd",
+    "bytes": 1
+  },
+  "Vynic Manager.app/Contents/Frameworks/objective_c.framework/Resources": {
+    "kind": "symlink",
+    "sha256": "59991b51b8ee15b59f07ec45942957a4ce90494257766964f5df60b7c7998e42",
+    "bytes": 26
+  },
+  "Vynic Manager.app/Contents/Frameworks/objective_c.framework/Versions/A/Resources/Info.plist": {
+    "kind": "file",
+    "sha256": "57f0160881d1040458efd11a5256f761775e915a0060496b4a79ccb902f8485c",
+    "bytes": 739
+  },
+  "Vynic Manager.app/Contents/Frameworks/objective_c.framework/Versions/A/_CodeSignature/CodeResources": {
+    "kind": "file",
+    "sha256": "8d91bc8b7e125eed13b8800bbb5edb28f94cf67d749b9b6db670eb5727f86c4c",
+    "bytes": 2442
+  },
+  "Vynic Manager.app/Contents/Frameworks/objective_c.framework/Versions/A/objective_c": {
+    "kind": "file",
+    "sha256": "3d299f23d9aac37ba0b947f12d55423f8a648e21609c1cd6a157fa1eb522637f",
+    "bytes": 163952
+  },
+  "Vynic Manager.app/Contents/Frameworks/objective_c.framework/Versions/Current": {
+    "kind": "symlink",
+    "sha256": "559aead08264d5795d3909718cdd05abd49572e84fe55590eef31a88a08fdffd",
+    "bytes": 1
+  },
+  "Vynic Manager.app/Contents/Frameworks/objective_c.framework/objective_c": {
+    "kind": "symlink",
+    "sha256": "9faa2ed3fd14b148c9c0baa3c21143eec95ef80acc66f743c4e35361f817d3de",
+    "bytes": 28
+  },
+  "Vynic Manager.app/Contents/Info.plist": {
+    "kind": "file",
+    "sha256": "53a1c61901e644d0bf27da6cebaa39d6b8a9f41061687d7b1a0fdf0d0213dcf2",
+    "bytes": 1620
+  },
+  "Vynic Manager.app/Contents/MacOS/Vynic Manager": {
+    "kind": "file",
+    "sha256": "6cc7197b82296674c70f29e17e53dc7c4a3d9e25725a63eba787eb528d9bc2e3",
+    "bytes": 41088
+  },
+  "Vynic Manager.app/Contents/MacOS/Vynic Manager.debug.dylib": {
+    "kind": "file",
+    "sha256": "07db65c01f7784eb5d0e14408555247b47aefc960a92f81d6de34573a168996f",
+    "bytes": 2935264
+  },
+  "Vynic Manager.app/Contents/MacOS/__preview.dylib": {
+    "kind": "file",
+    "sha256": "9d43260602b030e5b8f769a6d74a13bf478b50454bdb07b8c70a0cb8188b8fe5",
+    "bytes": 16800
+  },
+  "Vynic Manager.app/Contents/PkgInfo": {
+    "kind": "file",
+    "sha256": "82502191c9484b04d685374f9879a0066069c49b8acae7a04b01d38d07e8eca0",
+    "bytes": 8
+  },
+  "Vynic Manager.app/Contents/Resources/AppIcon.icns": {
+    "kind": "file",
+    "sha256": "058f13c3ee1f8e4e1a145a362b007dcffca301d13e33ebff3422a4fccb0fa0a9",
+    "bytes": 15604
+  },
+  "Vynic Manager.app/Contents/Resources/Assets.car": {
+    "kind": "file",
+    "sha256": "6efb13d9038097a96b3e7e8e8c9d4dcc7e05243a8be6d9ee8c1c25a4933e10ec",
+    "bytes": 138536
+  },
+  "Vynic Manager.app/Contents/Resources/Base.lproj/MainMenu.nib": {
+    "kind": "file",
+    "sha256": "48f55e19cbfdabd482d43b68bc2a343c589d7a7dd9374b4e03619a22aed673ad",
+    "bytes": 16229
+  },
+  "Vynic Manager.app/Contents/Resources/Firebase_FirebaseCore.bundle/Contents/Info.plist": {
+    "kind": "file",
+    "sha256": "349ff9838873606a7b59e8e127df9c53696d605e311ed655ab5e2ab1fb50eb9b",
+    "bytes": 1146
+  },
+  "Vynic Manager.app/Contents/Resources/Firebase_FirebaseCore.bundle/Contents/Resources/PrivacyInfo.xcprivacy": {
+    "kind": "file",
+    "sha256": "11e31f5f6b60e80ebd5901549fce5043f9af3e683f874022945000b405306c3f",
+    "bytes": 855
+  },
+  "Vynic Manager.app/Contents/Resources/Firebase_FirebaseCoreInternal.bundle/Contents/Info.plist": {
+    "kind": "file",
+    "sha256": "1329f409f026183fec021919afb48b2b1794c925081117ec709178a944aca3fc",
+    "bytes": 1162
+  },
+  "Vynic Manager.app/Contents/Resources/Firebase_FirebaseCoreInternal.bundle/Contents/Resources/PrivacyInfo.xcprivacy": {
+    "kind": "file",
+    "sha256": "5b7fe979423dede3e08afc29a42f00f6086275dc548a84c29774235863eed3ef",
+    "bytes": 855
+  },
+  "Vynic Manager.app/Contents/Resources/Firebase_FirebaseInstallations.bundle/Contents/Info.plist": {
+    "kind": "file",
+    "sha256": "4916ea101a419c0e7f80df3d906f7d09c9737fdfcb5c7e4758acd499739512dd",
+    "bytes": 1164
+  },
+  "Vynic Manager.app/Contents/Resources/Firebase_FirebaseInstallations.bundle/Contents/Resources/PrivacyInfo.xcprivacy": {
+    "kind": "file",
+    "sha256": "cfbb3c4f76a66d53698bae91f7110c00f2148e6e6f13ad7d32592909bc010e51",
+    "bytes": 1105
+  },
+  "Vynic Manager.app/Contents/Resources/Firebase_FirebaseMessaging.bundle/Contents/Info.plist": {
+    "kind": "file",
+    "sha256": "9fc0378ecef782c83eb6a315c6794b80634355a116198271df54ec76bff9896b",
+    "bytes": 1156
+  },
+  "Vynic Manager.app/Contents/Resources/Firebase_FirebaseMessaging.bundle/Contents/Resources/PrivacyInfo.xcprivacy": {
+    "kind": "file",
+    "sha256": "98762096372ac27f5e888c7372d512f0d3f5cf3283c64006070f4cde1a72a071",
+    "bytes": 2357
+  },
+  "Vynic Manager.app/Contents/Resources/GoogleDataTransport_GoogleDataTransport.bundle/Contents/Info.plist": {
+    "kind": "file",
+    "sha256": "866dfb25b5d84448ef18a476cb7c8cdcf51df43f6a8b4e9deb63699e28da4448",
+    "bytes": 1174
+  },
+  "Vynic Manager.app/Contents/Resources/GoogleDataTransport_GoogleDataTransport.bundle/Contents/Resources/PrivacyInfo.xcprivacy": {
+    "kind": "file",
+    "sha256": "cfbb3c4f76a66d53698bae91f7110c00f2148e6e6f13ad7d32592909bc010e51",
+    "bytes": 1105
+  },
+  "Vynic Manager.app/Contents/Resources/GoogleUtilities_GoogleUtilities-AppDelegateSwizzler.bundle/Contents/Info.plist": {
+    "kind": "file",
+    "sha256": "7fe3477244feaf7401ef17febc5ee2588594cee593598052ad4e01d8e3c7b555",
+    "bytes": 1198
+  },
+  "Vynic Manager.app/Contents/Resources/GoogleUtilities_GoogleUtilities-AppDelegateSwizzler.bundle/Contents/Resources/PrivacyInfo.xcprivacy": {
+    "kind": "file",
+    "sha256": "1377eccedff8f8320f78040e9c9d3e17ecc0ea569594b56af0ef17be44197c7a",
+    "bytes": 478
+  },
+  "Vynic Manager.app/Contents/Resources/GoogleUtilities_GoogleUtilities-Environment.bundle/Contents/Info.plist": {
+    "kind": "file",
+    "sha256": "dd67f7a0d44834078d55c83ea074f8b27c9f8163327d2f42ee8f651044e319f2",
+    "bytes": 1182
+  },
+  "Vynic Manager.app/Contents/Resources/GoogleUtilities_GoogleUtilities-Environment.bundle/Contents/Resources/PrivacyInfo.xcprivacy": {
+    "kind": "file",
+    "sha256": "b08273d687379394792f71c94c1083616a04af8afaa396d8058980f444cfb3d4",
+    "bytes": 855
+  },
+  "Vynic Manager.app/Contents/Resources/GoogleUtilities_GoogleUtilities-Logger.bundle/Contents/Info.plist": {
+    "kind": "file",
+    "sha256": "f545796a69fedc240c1ccabfef5a09b7565f35e676e02b39949ae4a20f87a534",
+    "bytes": 1172
+  },
+  "Vynic Manager.app/Contents/Resources/GoogleUtilities_GoogleUtilities-Logger.bundle/Contents/Resources/PrivacyInfo.xcprivacy": {
+    "kind": "file",
+    "sha256": "1377eccedff8f8320f78040e9c9d3e17ecc0ea569594b56af0ef17be44197c7a",
+    "bytes": 478
+  },
+  "Vynic Manager.app/Contents/Resources/GoogleUtilities_GoogleUtilities-NSData.bundle/Contents/Info.plist": {
+    "kind": "file",
+    "sha256": "078c508384637063652eaefd6d71c36aa0e98e0f442eb3c0c316820a65406630",
+    "bytes": 1172
+  },
+  "Vynic Manager.app/Contents/Resources/GoogleUtilities_GoogleUtilities-NSData.bundle/Contents/Resources/PrivacyInfo.xcprivacy": {
+    "kind": "file",
+    "sha256": "1377eccedff8f8320f78040e9c9d3e17ecc0ea569594b56af0ef17be44197c7a",
+    "bytes": 478
+  },
+  "Vynic Manager.app/Contents/Resources/GoogleUtilities_GoogleUtilities-Network.bundle/Contents/Info.plist": {
+    "kind": "file",
+    "sha256": "55d7545a3c8759ec3f27fb1371b88e0f8f181f3810fd50110926e35d40b635a1",
+    "bytes": 1174
+  },
+  "Vynic Manager.app/Contents/Resources/GoogleUtilities_GoogleUtilities-Network.bundle/Contents/Resources/PrivacyInfo.xcprivacy": {
+    "kind": "file",
+    "sha256": "0ac00a0b7eff0079dce252e29ab41d71cf58c6c94fe4e44ea110cef5c62970e1",
+    "bytes": 856
+  },
+  "Vynic Manager.app/Contents/Resources/GoogleUtilities_GoogleUtilities-Reachability.bundle/Contents/Info.plist": {
+    "kind": "file",
+    "sha256": "e3c57508dc23eb9f352510057d8602e3bd6d437fc9d98615989f6de9f335f9fa",
+    "bytes": 1184
+  },
+  "Vynic Manager.app/Contents/Resources/GoogleUtilities_GoogleUtilities-Reachability.bundle/Contents/Resources/PrivacyInfo.xcprivacy": {
+    "kind": "file",
+    "sha256": "1377eccedff8f8320f78040e9c9d3e17ecc0ea569594b56af0ef17be44197c7a",
+    "bytes": 478
+  },
+  "Vynic Manager.app/Contents/Resources/GoogleUtilities_GoogleUtilities-UserDefaults.bundle/Contents/Info.plist": {
+    "kind": "file",
+    "sha256": "81e348277dd89f7f52263aac09b17003435df2ba6edbc50bc5b54c4e6f95fcd2",
+    "bytes": 1184
+  },
+  "Vynic Manager.app/Contents/Resources/GoogleUtilities_GoogleUtilities-UserDefaults.bundle/Contents/Resources/PrivacyInfo.xcprivacy": {
+    "kind": "file",
+    "sha256": "fac507c510aba7884e805fb5feff1a8a8d0c7f42c01d174f927a2bdfaa7130b4",
+    "bytes": 911
+  },
+  "Vynic Manager.app/Contents/Resources/Promises_FBLPromises.bundle/Contents/Info.plist": {
+    "kind": "file",
+    "sha256": "0ddf71d914b694cb9142a8867b77d42d3362c3fb8ccf1c5b5c5adee69213399f",
+    "bytes": 1136
+  },
+  "Vynic Manager.app/Contents/Resources/Promises_FBLPromises.bundle/Contents/Resources/PrivacyInfo.xcprivacy": {
+    "kind": "file",
+    "sha256": "74b0cd72fc23c1ef302f22ee2753f61817cdc5af0ff7a7f2d0632b524fb8acea",
+    "bytes": 373
+  },
+  "Vynic Manager.app/Contents/Resources/file_picker_file_picker.bundle/Contents/Info.plist": {
+    "kind": "file",
+    "sha256": "12676f66eb777655a9ef74388d928314bd7aa1b32c271c7dd8173a778e4fa250",
+    "bytes": 1148
+  },
+  "Vynic Manager.app/Contents/Resources/file_picker_file_picker.bundle/Contents/Resources/PrivacyInfo.xcprivacy": {
+    "kind": "file",
+    "sha256": "204d035a88eab2281b3d914f46c796766ae78e3cb82537711928dca9e28dbbb8",
+    "bytes": 325
+  },
+  "Vynic Manager.app/Contents/Resources/file_selector_macos_file_selector_macos.bundle/Contents/Info.plist": {
+    "kind": "file",
+    "sha256": "f377564ad732c1a66116992eea8d4eecc2c270a907146d91e17e25f906e57ed5",
+    "bytes": 1180
+  },
+  "Vynic Manager.app/Contents/Resources/file_selector_macos_file_selector_macos.bundle/Contents/Resources/PrivacyInfo.xcprivacy": {
+    "kind": "file",
+    "sha256": "204d035a88eab2281b3d914f46c796766ae78e3cb82537711928dca9e28dbbb8",
+    "bytes": 325
+  },
+  "Vynic Manager.app/Contents/Resources/firebase_messaging_firebase_messaging.bundle/Contents/Info.plist": {
+    "kind": "file",
+    "sha256": "1e5f51d520381c44b464faf736e26152e1fe25989550ef122ccb6eeb9f00df88",
+    "bytes": 1177
+  },
+  "Vynic Manager.app/Contents/Resources/firebase_messaging_firebase_messaging.bundle/Contents/Resources/PrivacyInfo.xcprivacy": {
+    "kind": "file",
+    "sha256": "a0adcd321efe21cebe0f0f8538018335089bb56451c882a737a08df7234fc6bb",
+    "bytes": 854
+  },
+  "Vynic Manager.app/Contents/Resources/flutter_local_notifications_flutter_local_notifications.bundle/Contents/Info.plist": {
+    "kind": "file",
+    "sha256": "8af3c7f2dac47a6171449043d6483f262e7c0b8cebbc2ca0ea98f053f825aaba",
+    "bytes": 1213
+  },
+  "Vynic Manager.app/Contents/Resources/flutter_local_notifications_flutter_local_notifications.bundle/Contents/Resources/PrivacyInfo.xcprivacy": {
+    "kind": "file",
+    "sha256": "1d821a83fb0a7583b0b03075050761341e367f37167f8398a631a30376cd6369",
+    "bytes": 597
+  },
+  "Vynic Manager.app/Contents/Resources/nanopb_nanopb.bundle/Contents/Info.plist": {
+    "kind": "file",
+    "sha256": "4d0e7da090e40c473fe9673e6437717e899bbf9d56bf359711b8466226b7683d",
+    "bytes": 1122
+  },
+  "Vynic Manager.app/Contents/Resources/nanopb_nanopb.bundle/Contents/Resources/PrivacyInfo.xcprivacy": {
+    "kind": "file",
+    "sha256": "729ba3cbd0f458c78cd61edf17350edafe0e34ca86e314ec64c8cb22ccd21b54",
+    "bytes": 374
+  },
+  "Vynic Manager.app/Contents/Resources/share_plus_share_plus.bundle/Contents/Info.plist": {
+    "kind": "file",
+    "sha256": "000141dea488317425efd1e6b2d85b22650955ea14d634c2eaf37f1a9f0b1467",
+    "bytes": 1145
+  },
+  "Vynic Manager.app/Contents/Resources/share_plus_share_plus.bundle/Contents/Resources/PrivacyInfo.xcprivacy": {
+    "kind": "file",
+    "sha256": "204d035a88eab2281b3d914f46c796766ae78e3cb82537711928dca9e28dbbb8",
+    "bytes": 325
+  },
+  "Vynic Manager.app/Contents/_CodeSignature/CodeResources": {
+    "kind": "file",
+    "sha256": "fe33e61c2c755dc494922e1170a5682a3ca7b825f89affc22534ea1b623164c0",
+    "bytes": 17363
+  }
+}

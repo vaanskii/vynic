@@ -1,3 +1,4 @@
+import { LocalDeletePanel } from "../../components/LocalDeletePanel";
 import { VenueManagerAccess } from "./VenueManagerAccess";
 import { VenueCommercialTab } from "./VenueCommercialTab";
 import { useState } from "react";
@@ -45,16 +46,16 @@ export function VenueDetailPage() {
     );
   const record = venue.data;
   const currentTab = tabs.includes(tab as (typeof tabs)[number]) ? tab : "overview";
-  if (currentTab !== tab) return <Navigate to={`/admin/venues/${venueId}`} replace />;
+  if (currentTab !== tab) return <Navigate to={`/venues/${venueId}`} replace />;
 
   return (
     <>
-    <NavLink to={`/admin/onboarding/${venueId}`}>Customer owner and onboarding</NavLink>
+    <NavLink to={`/onboarding/${venueId}`}>Customer owner and onboarding</NavLink>
     <PageHeader eyebrow={`${record.organization?.name ?? record.organizationId} / Venue`} title={record.name} description="Platform configuration and infrastructure for this location." actions={<><StatusBadge value={record.status} /><Button onClick={() => { setForm({ name: record.name, timezone: record.timezone, currency: record.currency,
                 }); setEditOpen(true); }}><PencilSimple size={16} /> Edit details</Button><Button tone={record.status === "ACTIVE" ? "danger" : "secondary"} onClick={() => setConfirmStatus(true)}><Power size={16} /> {" "}
               {record.status === "ACTIVE" ? "Disable" : "Enable"}</Button></>} />
     <nav className="platform-tabs" aria-label="Venue sections">{tabs.map((name) => (
-          <NavLink key={name} end={name === "overview"} className={({ isActive }) => (isActive ? "is-active" : "")} to={name === "overview" ? `/admin/venues/${venueId}` : `/admin/venues/${venueId}/${name}`}>{name[0].toUpperCase() + name.slice(1)}</NavLink>))}</nav>
+          <NavLink key={name} end={name === "overview"} className={({ isActive }) => (isActive ? "is-active" : "")} to={name === "overview" ? `/venues/${venueId}` : `/venues/${venueId}/${name}`}>{name[0].toUpperCase() + name.slice(1)}</NavLink>))}</nav>
     {feedback ? (
         <div className="platform-feedback platform-feedback--success" role="status">{feedback}</div>
       ) : null}
@@ -70,7 +71,8 @@ export function VenueDetailPage() {
     {currentTab === "activity" ? (
         <VenueActivityTab venueId={venueId} />
       ) : null}
-    <VenueManagerAccess venue={record} />
+    {currentTab === "product" && <VenueManagerAccess venue={record} />}
+    {currentTab === "overview" && <LocalDeletePanel kind="venue" id={record.id} name={record.name} />}
     <Dialog open={editOpen} onOpenChange={setEditOpen} title="Edit venue details" description="Basic location metadata only. Product and infrastructure settings live in their own tabs." footer={<><Button onClick={() => setEditOpen(false)}>Cancel</Button><Button tone="primary" type="submit" form="edit-venue" disabled={update.isPending}>Save changes</Button></>}>
       <form id="edit-venue" className="platform-form" onSubmit={(event) => { event.preventDefault(); update.mutate(); }}><Field label="Venue name"><Input value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} required /></Field><div className="platform-form-grid"><Field label="Timezone"><Input value={form.timezone} onChange={(event) => setForm({ ...form, timezone: event.target.value })} required maxLength={64} /></Field><Field label="Currency"><Input value={form.currency} onChange={(event) => setForm({ ...form, currency: event.target.value.toUpperCase(),
                   })} required minLength={3} maxLength={3} /></Field></div><FormError>{update.error ? errorMessage(update.error) : undefined}</FormError></form>

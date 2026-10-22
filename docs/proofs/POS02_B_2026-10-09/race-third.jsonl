@@ -1,0 +1,60 @@
+{"Time":"2026-10-09T22:09:03.877899+04:00","Action":"start","Package":"vynic.local/edge/internal/printpeer"}
+{"Time":"2026-10-09T22:09:04.527784+04:00","Action":"run","Package":"vynic.local/edge/internal/printpeer","Test":"TestPeerProcessRecovery"}
+{"Time":"2026-10-09T22:09:04.527849+04:00","Action":"output","Package":"vynic.local/edge/internal/printpeer","Test":"TestPeerProcessRecovery","Output":"=== RUN   TestPeerProcessRecovery\n"}
+{"Time":"2026-10-09T22:09:25.658288+04:00","Action":"output","Package":"vynic.local/edge/internal/printpeer","Test":"TestPeerProcessRecovery","Output":"--- PASS: TestPeerProcessRecovery (21.13s)\n"}
+{"Time":"2026-10-09T22:09:25.65832+04:00","Action":"pass","Package":"vynic.local/edge/internal/printpeer","Test":"TestPeerProcessRecovery","Elapsed":21.13}
+{"Time":"2026-10-09T22:09:25.658524+04:00","Action":"run","Package":"vynic.local/edge/internal/printpeer","Test":"TestPeerProcessJoinAndExpansion"}
+{"Time":"2026-10-09T22:09:25.658531+04:00","Action":"output","Package":"vynic.local/edge/internal/printpeer","Test":"TestPeerProcessJoinAndExpansion","Output":"=== RUN   TestPeerProcessJoinAndExpansion\n"}
+{"Time":"2026-10-09T22:09:31.816403+04:00","Action":"output","Package":"vynic.local/edge/internal/printpeer","Test":"TestPeerProcessJoinAndExpansion","Output":"--- PASS: TestPeerProcessJoinAndExpansion (6.16s)\n"}
+{"Time":"2026-10-09T22:09:31.816433+04:00","Action":"pass","Package":"vynic.local/edge/internal/printpeer","Test":"TestPeerProcessJoinAndExpansion","Elapsed":6.16}
+{"Time":"2026-10-09T22:09:31.816477+04:00","Action":"run","Package":"vynic.local/edge/internal/printpeer","Test":"TestPeerProcessSecurity"}
+{"Time":"2026-10-09T22:09:31.816483+04:00","Action":"output","Package":"vynic.local/edge/internal/printpeer","Test":"TestPeerProcessSecurity","Output":"=== RUN   TestPeerProcessSecurity\n"}
+{"Time":"2026-10-09T22:09:33.139844+04:00","Action":"run","Package":"vynic.local/edge/internal/printpeer","Test":"TestPeerProcessSecurity/client_cannot_raft"}
+{"Time":"2026-10-09T22:09:33.139874+04:00","Action":"output","Package":"vynic.local/edge/internal/printpeer","Test":"TestPeerProcessSecurity/client_cannot_raft","Output":"=== RUN   TestPeerProcessSecurity/client_cannot_raft\n"}
+{"Time":"2026-10-09T22:09:33.184117+04:00","Action":"output","Package":"vynic.local/edge/internal/printpeer","Test":"TestPeerProcessSecurity/client_cannot_raft","Output":"--- PASS: TestPeerProcessSecurity/client_cannot_raft (0.04s)\n"}
+{"Time":"2026-10-09T22:09:33.18415+04:00","Action":"pass","Package":"vynic.local/edge/internal/printpeer","Test":"TestPeerProcessSecurity/client_cannot_raft","Elapsed":0.04}
+{"Time":"2026-10-09T22:09:33.184158+04:00","Action":"run","Package":"vynic.local/edge/internal/printpeer","Test":"TestPeerProcessSecurity/foreign_device"}
+{"Time":"2026-10-09T22:09:33.184163+04:00","Action":"output","Package":"vynic.local/edge/internal/printpeer","Test":"TestPeerProcessSecurity/foreign_device","Output":"=== RUN   TestPeerProcessSecurity/foreign_device\n"}
+{"Time":"2026-10-09T22:09:33.237783+04:00","Action":"output","Package":"vynic.local/edge/internal/printpeer","Test":"TestPeerProcessSecurity/foreign_device","Output":"--- PASS: TestPeerProcessSecurity/foreign_device (0.05s)\n"}
+{"Time":"2026-10-09T22:09:33.237816+04:00","Action":"pass","Package":"vynic.local/edge/internal/printpeer","Test":"TestPeerProcessSecurity/foreign_device","Elapsed":0.05}
+{"Time":"2026-10-09T22:09:33.237825+04:00","Action":"run","Package":"vynic.local/edge/internal/printpeer","Test":"TestPeerProcessSecurity/unknown_station"}
+{"Time":"2026-10-09T22:09:33.237831+04:00","Action":"output","Package":"vynic.local/edge/internal/printpeer","Test":"TestPeerProcessSecurity/unknown_station","Output":"=== RUN   TestPeerProcessSecurity/unknown_station\n"}
+{"Time":"2026-10-09T22:09:33.290891+04:00","Action":"output","Package":"vynic.local/edge/internal/printpeer","Test":"TestPeerProcessSecurity/unknown_station","Output":"--- PASS: TestPeerProcessSecurity/unknown_station (0.05s)\n"}
+{"Time":"2026-10-09T22:09:33.290927+04:00","Action":"pass","Package":"vynic.local/edge/internal/printpeer","Test":"TestPeerProcessSecurity/unknown_station","Elapsed":0.05}
+{"Time":"2026-10-09T22:09:33.290949+04:00","Action":"run","Package":"vynic.local/edge/internal/printpeer","Test":"TestPeerProcessSecurity/foreign_venue"}
+{"Time":"2026-10-09T22:09:33.290953+04:00","Action":"output","Package":"vynic.local/edge/internal/printpeer","Test":"TestPeerProcessSecurity/foreign_venue","Output":"=== RUN   TestPeerProcessSecurity/foreign_venue\n"}
+{"Time":"2026-10-09T22:09:33.343757+04:00","Action":"output","Package":"vynic.local/edge/internal/printpeer","Test":"TestPeerProcessSecurity/foreign_venue","Output":"--- PASS: TestPeerProcessSecurity/foreign_venue (0.05s)\n"}
+{"Time":"2026-10-09T22:09:33.343776+04:00","Action":"pass","Package":"vynic.local/edge/internal/printpeer","Test":"TestPeerProcessSecurity/foreign_venue","Elapsed":0.05}
+{"Time":"2026-10-09T22:09:33.343781+04:00","Action":"run","Package":"vynic.local/edge/internal/printpeer","Test":"TestPeerProcessSecurity/tampered_grant"}
+{"Time":"2026-10-09T22:09:33.343784+04:00","Action":"output","Package":"vynic.local/edge/internal/printpeer","Test":"TestPeerProcessSecurity/tampered_grant","Output":"=== RUN   TestPeerProcessSecurity/tampered_grant\n"}
+{"Time":"2026-10-09T22:09:33.347378+04:00","Action":"output","Package":"vynic.local/edge/internal/printpeer","Test":"TestPeerProcessSecurity/tampered_grant","Output":"--- PASS: TestPeerProcessSecurity/tampered_grant (0.00s)\n"}
+{"Time":"2026-10-09T22:09:33.347404+04:00","Action":"pass","Package":"vynic.local/edge/internal/printpeer","Test":"TestPeerProcessSecurity/tampered_grant","Elapsed":0}
+{"Time":"2026-10-09T22:09:33.347413+04:00","Action":"run","Package":"vynic.local/edge/internal/printpeer","Test":"TestPeerProcessSecurity/stale_generation"}
+{"Time":"2026-10-09T22:09:33.347417+04:00","Action":"output","Package":"vynic.local/edge/internal/printpeer","Test":"TestPeerProcessSecurity/stale_generation","Output":"=== RUN   TestPeerProcessSecurity/stale_generation\n"}
+{"Time":"2026-10-09T22:09:33.422608+04:00","Action":"output","Package":"vynic.local/edge/internal/printpeer","Test":"TestPeerProcessSecurity/stale_generation","Output":"--- PASS: TestPeerProcessSecurity/stale_generation (0.08s)\n"}
+{"Time":"2026-10-09T22:09:33.422629+04:00","Action":"pass","Package":"vynic.local/edge/internal/printpeer","Test":"TestPeerProcessSecurity/stale_generation","Elapsed":0.08}
+{"Time":"2026-10-09T22:09:33.422634+04:00","Action":"run","Package":"vynic.local/edge/internal/printpeer","Test":"TestPeerProcessSecurity/clock_rollback"}
+{"Time":"2026-10-09T22:09:33.422637+04:00","Action":"output","Package":"vynic.local/edge/internal/printpeer","Test":"TestPeerProcessSecurity/clock_rollback","Output":"=== RUN   TestPeerProcessSecurity/clock_rollback\n"}
+{"Time":"2026-10-09T22:09:33.42332+04:00","Action":"output","Package":"vynic.local/edge/internal/printpeer","Test":"TestPeerProcessSecurity/clock_rollback","Output":"--- PASS: TestPeerProcessSecurity/clock_rollback (0.00s)\n"}
+{"Time":"2026-10-09T22:09:33.423327+04:00","Action":"pass","Package":"vynic.local/edge/internal/printpeer","Test":"TestPeerProcessSecurity/clock_rollback","Elapsed":0}
+{"Time":"2026-10-09T22:09:33.423337+04:00","Action":"run","Package":"vynic.local/edge/internal/printpeer","Test":"TestPeerProcessSecurity/expiry"}
+{"Time":"2026-10-09T22:09:33.423341+04:00","Action":"output","Package":"vynic.local/edge/internal/printpeer","Test":"TestPeerProcessSecurity/expiry","Output":"=== RUN   TestPeerProcessSecurity/expiry\n"}
+{"Time":"2026-10-09T22:09:33.426406+04:00","Action":"output","Package":"vynic.local/edge/internal/printpeer","Test":"TestPeerProcessSecurity/expiry","Output":"--- PASS: TestPeerProcessSecurity/expiry (0.00s)\n"}
+{"Time":"2026-10-09T22:09:33.426416+04:00","Action":"pass","Package":"vynic.local/edge/internal/printpeer","Test":"TestPeerProcessSecurity/expiry","Elapsed":0}
+{"Time":"2026-10-09T22:09:33.426435+04:00","Action":"run","Package":"vynic.local/edge/internal/printpeer","Test":"TestPeerProcessSecurity/learned_revocation"}
+{"Time":"2026-10-09T22:09:33.426439+04:00","Action":"output","Package":"vynic.local/edge/internal/printpeer","Test":"TestPeerProcessSecurity/learned_revocation","Output":"=== RUN   TestPeerProcessSecurity/learned_revocation\n"}
+{"Time":"2026-10-09T22:09:35.414651+04:00","Action":"output","Package":"vynic.local/edge/internal/printpeer","Test":"TestPeerProcessSecurity/learned_revocation","Output":"--- PASS: TestPeerProcessSecurity/learned_revocation (1.99s)\n"}
+{"Time":"2026-10-09T22:09:35.414691+04:00","Action":"pass","Package":"vynic.local/edge/internal/printpeer","Test":"TestPeerProcessSecurity/learned_revocation","Elapsed":1.99}
+{"Time":"2026-10-09T22:09:35.419542+04:00","Action":"output","Package":"vynic.local/edge/internal/printpeer","Test":"TestPeerProcessSecurity","Output":"--- PASS: TestPeerProcessSecurity (3.60s)\n"}
+{"Time":"2026-10-09T22:09:35.419572+04:00","Action":"pass","Package":"vynic.local/edge/internal/printpeer","Test":"TestPeerProcessSecurity","Elapsed":3.6}
+{"Time":"2026-10-09T22:09:35.419609+04:00","Action":"run","Package":"vynic.local/edge/internal/printpeer","Test":"TestPeerProcessOpenConnectionRevocation"}
+{"Time":"2026-10-09T22:09:35.419625+04:00","Action":"output","Package":"vynic.local/edge/internal/printpeer","Test":"TestPeerProcessOpenConnectionRevocation","Output":"=== RUN   TestPeerProcessOpenConnectionRevocation\n"}
+{"Time":"2026-10-09T22:09:36.961391+04:00","Action":"output","Package":"vynic.local/edge/internal/printpeer","Test":"TestPeerProcessOpenConnectionRevocation","Output":"--- PASS: TestPeerProcessOpenConnectionRevocation (1.54s)\n"}
+{"Time":"2026-10-09T22:09:36.961417+04:00","Action":"pass","Package":"vynic.local/edge/internal/printpeer","Test":"TestPeerProcessOpenConnectionRevocation","Elapsed":1.54}
+{"Time":"2026-10-09T22:09:36.961441+04:00","Action":"run","Package":"vynic.local/edge/internal/printpeer","Test":"TestPeerProcessTCPPartition"}
+{"Time":"2026-10-09T22:09:36.961447+04:00","Action":"output","Package":"vynic.local/edge/internal/printpeer","Test":"TestPeerProcessTCPPartition","Output":"=== RUN   TestPeerProcessTCPPartition\n"}
+{"Time":"2026-10-09T22:09:48.567657+04:00","Action":"output","Package":"vynic.local/edge/internal/printpeer","Test":"TestPeerProcessTCPPartition","Output":"--- PASS: TestPeerProcessTCPPartition (11.61s)\n"}
+{"Time":"2026-10-09T22:09:48.567683+04:00","Action":"pass","Package":"vynic.local/edge/internal/printpeer","Test":"TestPeerProcessTCPPartition","Elapsed":11.61}
+{"Time":"2026-10-09T22:09:48.567718+04:00","Action":"output","Package":"vynic.local/edge/internal/printpeer","Output":"PASS\n"}
+{"Time":"2026-10-09T22:09:49.577701+04:00","Action":"output","Package":"vynic.local/edge/internal/printpeer","Output":"ok  \tvynic.local/edge/internal/printpeer\t45.700s\n"}
+{"Time":"2026-10-09T22:09:49.577871+04:00","Action":"pass","Package":"vynic.local/edge/internal/printpeer","Elapsed":45.7}

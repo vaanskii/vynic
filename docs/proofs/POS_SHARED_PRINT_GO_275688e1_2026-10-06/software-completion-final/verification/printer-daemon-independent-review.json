@@ -1,0 +1,95 @@
+{
+  "schema": 1,
+  "reviewedAtUtc": "2026-10-06T17:24:49.274371+00:00",
+  "verdict": "PASS_BOUNDED_HELD_DAEMON_AND_INSTALLER_SOURCE",
+  "openP1": [],
+  "openP2": [],
+  "ownedManifest": {
+    "path": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/metadata/printer-daemon-owned-source-manifest.json",
+    "sha256": "551a32eb428ca46726640a2c2f89701762a2460214a7eb1b682df9e4eea6f18e"
+  },
+  "ownedSourceFilesVerifiedInBothCopies": 21,
+  "combinedManifest": {
+    "path": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/final-cohort-source.json",
+    "sha256": "193e4800e5d0733a30bc6c8d4ac993590219363941e69a787bba5ac3681c8f68"
+  },
+  "combinedFilesRehashedInSourceAndFinalCohort": 1109,
+  "logs": {
+    "unit.jsonl": {
+      "path": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/printer-daemon-v1/unit.jsonl",
+      "sha256": "5577b0f76bf3f17c23ef77b9cd3958f20097cf6f09a70ca679af7d63958fc94e"
+    },
+    "race.jsonl": {
+      "path": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/printer-daemon-v1/race.jsonl",
+      "sha256": "e62cdf0f03ddd3417fd585980bdb6f501928dcfc861bb51b96ea2c23b3234e12"
+    },
+    "vet.log": {
+      "path": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/printer-daemon-v1/vet.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "windows-build.log": {
+      "path": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/printer-daemon-v1/windows-build.log",
+      "sha256": "c49e2612f9a32ee827cc25fd2c91ea15b9f183fdead1fd2569141e6d85b0dfb2"
+    },
+    "bundle-build.log": {
+      "path": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/printer-daemon-v1/bundle-build.log",
+      "sha256": "0043dad05edecf51b21ac0a1b30468741bd12e7a77d918280bad20f6b3463529"
+    },
+    "agent-build-inputs.json": {
+      "path": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/printer-daemon-v1/agent-build-inputs.json",
+      "sha256": "8265133677ed972e72c0e666e28002577b1b747ae7caa770acae787dfdface40"
+    },
+    "module-graph.txt": {
+      "path": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/printer-daemon-v1/module-graph.txt",
+      "sha256": "0183e7ef4147b0aad2a893b218b4e57acc3102a7d9dcfbc07037451a198bc095"
+    }
+  },
+  "executionEvidenceIndependentlyParsed": {
+    "executedByReviewer": false,
+    "unit": {
+      "topLevelPassRecords": 33,
+      "allPassRecords": 108,
+      "skip": 0,
+      "fail": 0
+    },
+    "race": {
+      "topLevelPassRecords": 33,
+      "allPassRecords": 108,
+      "skip": 0,
+      "fail": 0,
+      "dataRace": false
+    },
+    "fixtureAccounting": "One passing standalone TestForegroundHeldChild entry returns without work; its retained-process paths are exercised in three actual child-process subtests.",
+    "actualMacForegroundProcessTests": [
+      "exclusive authenticated health and portable stop/restart with retained primary/beep jobs",
+      "wrong identity/root/role/reader refusal without DB reset",
+      "helper/marker/actual SQL table failure propagates and drains"
+    ],
+    "windows": "Four amd64/arm64 package test executables crosscompiled and rehashed; NEW Windows execution NOT_RUN_BLOCKED, per parent-reported automatic approval rejection. No VM action performed by reviewer.",
+    "bundles": "Both actual amd64/arm64 bundles independently checked: exactly three declared artifacts plus manifest, actual matching PE architectures and every hash, no credentials, physical false and HELD_PROVISIONING."
+  },
+  "closedFindings": [
+    "Every post-Start foreground failure uses original retained drain; unresolved cleanup cannot voluntarily exit/release owner. Actual process tests cover startup, announcement and wait failures.",
+    "Startup after DB acquisition transfers cleanup responsibility to Host before reporting errors; unresolved DB close retains original owner and exclusive writer.",
+    "Health serializes and rechecks binary/helper/profile/marker and actual storage evidence; trusted failure latches drain, ordinary caller cancellation does not.",
+    "Config, marker, plan, bundle and client profile recursively reject unknown/case aliases/missing/null schemas. Bundle-negative tests replace original manifest, so unrelated directory count no longer masks schema rejection.",
+    "Client profile verifies exact purpose/SAN/key/DER registration and configured CA chain before validating a plan.",
+    "Windows local drive read-only SQLite URI uses empty authority and /C:/ path, with proper escaping and sole mode=ro. UNC/device/reparse/remote drives remain refused.",
+    "SCM backend uses exact System32 executable and bounded12-argument create-stopped-manual invocation, no shell, start, delete or reconfiguration. Default PlanOnly makes zero backend calls."
+  ],
+  "reviewedBoundaries": [
+    "Existing dedicated schema6/identity state only; no ordinary Edge/Hive root migration, production enrollment, credential generation or implicit discovery.",
+    "Physical scheduler never starts; guard unconditionally refuses; Submit/Result permanently held through separate reviewed RPC.",
+    "VENUE_SHARED_HELD is infrastructure-only and does not join Raft or claim replica health.",
+    "Explicit later Apply source requires reviewed immutable plan, current artifact/profile/account/SID evidence and Administrator; exact existing service preserved or refused. LOCAL scope only.",
+    "Foregound/SCM adapters retain original handler/queue lifetime and resources before exclusive-owner release; voluntary cleanup is distinct from forced Windows termination."
+  ],
+  "sourceReferenceForWindowsURI": "https://www.sqlite.org/uri.html#the_uri_path",
+  "limits": [
+    "Actual new Windows daemon/CLI/service-account/SCM execution is not qualified; prior Windows535, seven-package and native-helper proofs are separate pinned cohorts.",
+    "Installer backend mutations tested with fake backend only; no service/account/ACL/logon-right/firewall/trust/driver or physical operation executed.",
+    "Bundle descriptors use synthetic identity/profile pins, not provisioned production TLS/state/authority. Packaging success cannot start a usable production service.",
+    "Production issuer/current persisted authorization/revocation, active physical routes, authenticated LAN runtime, complete business/Hive bridge and cutover remain unimplemented.",
+    "Final combined broad tests and final report metric insertion remain parent-owned qualification steps."
+  ]
+}

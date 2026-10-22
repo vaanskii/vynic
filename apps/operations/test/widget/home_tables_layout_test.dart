@@ -199,25 +199,30 @@ void main() {
     expect(find.text('Reserve'), findsNothing);
   });
 
-  testWidgets('the service rail is docked on the right at 1024x768', (
-    tester,
-  ) async {
-    const size = Size(1024, 768);
-    tester.view
-      ..devicePixelRatio = 1.0
-      ..physicalSize = size;
-    addTearDown(tester.view.reset);
+  testWidgets(
+    'tables use the available width without a service rail at 1024x768',
+    (tester) async {
+      const size = Size(1024, 768);
+      tester.view
+        ..devicePixelRatio = 1.0
+        ..physicalSize = size;
+      addTearDown(tester.view.reset);
 
-    await tester.pumpWidget(
-      _harness(size, _collapsedSidebar, PosDisplaySettings.defaults),
-    );
-    await tester.pumpAndSettle();
+      await tester.pumpWidget(
+        _harness(size, _collapsedSidebar, PosDisplaySettings.defaults),
+      );
+      await tester.pumpAndSettle();
 
-    // The rail's headings only exist in the docked layout; the compact
-    // fallback shows a horizontal chip strip instead.
-    expect(find.text('SERVICE RIGHT NOW'), findsOneWidget);
-    expect(tester.takeException(), isNull);
-  });
+      expect(find.text('SERVICE RIGHT NOW'), findsNothing);
+      expect(find.text('ჯავშნები'), findsNothing);
+      final panel = tester.getSize(find.byKey(planPanelKey));
+      final viewport = tester.getSize(
+        find.byKey(const Key('home-floor-plan-viewport')),
+      );
+      expect(viewport.width, greaterThan(panel.width - 24));
+      expect(tester.takeException(), isNull);
+    },
+  );
 
   testWidgets('the floor tabs sit evenly between the header and the plan', (
     tester,

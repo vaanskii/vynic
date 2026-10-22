@@ -1,3 +1,9 @@
+import 'package:vynic/core/database/repositories/order_edit_repository.dart';
+import 'repositories/table_repair_repository.dart';
+import 'repositories/order_table_mutation_repository.dart';
+import 'repositories/reservation_repository.dart';
+import 'repositories/print_job_repository.dart';
+import 'package:vynic/core/database/repositories/backup_repository.dart';
 import 'package:vynic/core/services/pos/update/tracked_box.dart';
 import 'dart:io';
 
@@ -11,8 +17,13 @@ import 'package:vynic/core/models/reservation.dart';
 import 'package:vynic/core/models/quick_order_draft.dart';
 import 'package:vynic/core/models/package.dart';
 import 'package:vynic/core/models/sale_record.dart';
+import 'package:vynic/core/services/menu/menu_local_store.dart';
+import 'package:vynic/core/services/edge/edge_device_credential_store.dart';
+import 'local_venue_binding.dart';
 
 import 'package:vynic/core/database/hive_migration_service.dart';
+import 'package:vynic/core/database/transactions/close_day_transaction.dart';
+import 'package:vynic/core/services/pos/order_item_transfer.dart';
 
 /// Owns the Hive storage bootstrap and the opened boxes for the POS database.
 ///
@@ -37,6 +48,8 @@ class DatabaseCore {
   static const String quickOrderBoxName = 'quickOrders';
   static const String closureJournalBoxName = 'closureJournal';
   static const String inventoryBoxName = 'inventoryCatalog';
+  static const String menuCanonicalBoxName = 'menuCanonical';
+  static const String menuJournalBoxName = 'menuMutationJournal';
 
   static Box<User>? userBox;
   static Box<TableModel>? tableBox;
@@ -58,8 +71,35 @@ class DatabaseCore {
   static Box? inventoryBox;
   static Box? metaBox;
 
+  /// Canonical Cloud Menu state/baseline and the durable POS Menu mutation
+  /// journal (docs/CANONICAL_MENU_SYNC.md). Unused in legacy POS mode.
+  static Box<String>? menuCanonicalBox;
+  static Box<String>? menuJournalBox;
+
   static late String dataDirectoryPath;
   static int dbVersion = HiveMigrationService.initialVersion;
+
+  static void validateVenueBinding(String venueId) {
+    final canonical = menuCanonicalBox;
+    final journal = menuJournalBox;
+    final settings = settingsBox;
+    validateLocalVenueBinding(
+      venueId: venueId,
+      restoredVenueId: settings != null && settings.isOpen
+          ? settings.get('restoreVenueBinding') as String?
+          : null,
+      canonical: canonical != null && canonical.isOpen
+          ? canonical.get(MenuLocalStore.stateKey)
+          : null,
+      baseline: canonical != null && canonical.isOpen
+          ? canonical.get(MenuLocalStore.baselineKey)
+          : null,
+      pendingCommit: canonical != null && canonical.isOpen
+          ? canonical.get(MenuLocalStore.commitKey)
+          : null,
+      journal: journal != null && journal.isOpen ? journal.values : const [],
+    );
+  }
 
   /// Resolves the per-machine data directory, initializes Hive, registers
   /// adapters, opens every box, and runs pending schema migrations.
@@ -131,23 +171,37 @@ class DatabaseCore {
     dataDirectoryPath = dataDirectory.path;
 
     // Initialize Hive with custom path unique per machine to avoid shared locks
-    await Hive.initFlutter(dataDirectoryPath);
+    Hive.init(dataDirectoryPath);
 
     // Register adapters
-    Hive.registerAdapter(UserAdapter());
-    Hive.registerAdapter(TableModelAdapter());
-    Hive.registerAdapter(OrderAdapter());
-    Hive.registerAdapter(OrderItemAdapter());
-    Hive.registerAdapter(MenuCategoryDBAdapter());
-    Hive.registerAdapter(MenuSubcategoryDBAdapter());
-    Hive.registerAdapter(MenuItemDBAdapter());
-    Hive.registerAdapter(MenuVariantDBAdapter());
-    Hive.registerAdapter(ReservationAdapter());
-    Hive.registerAdapter(QuickOrderDraftAdapter());
-    Hive.registerAdapter(PackageAdapter());
-    Hive.registerAdapter(PackageItemAdapter());
-    Hive.registerAdapter(SaleRecordAdapter());
-    Hive.registerAdapter(SaleRecordItemAdapter());
+    if (!Hive.isAdapterRegistered(UserAdapter().typeId))
+      Hive.registerAdapter(UserAdapter());
+    if (!Hive.isAdapterRegistered(TableModelAdapter().typeId))
+      Hive.registerAdapter(TableModelAdapter());
+    if (!Hive.isAdapterRegistered(OrderAdapter().typeId))
+      Hive.registerAdapter(OrderAdapter());
+    if (!Hive.isAdapterRegistered(OrderItemAdapter().typeId))
+      Hive.registerAdapter(OrderItemAdapter());
+    if (!Hive.isAdapterRegistered(MenuCategoryDBAdapter().typeId))
+      Hive.registerAdapter(MenuCategoryDBAdapter());
+    if (!Hive.isAdapterRegistered(MenuSubcategoryDBAdapter().typeId))
+      Hive.registerAdapter(MenuSubcategoryDBAdapter());
+    if (!Hive.isAdapterRegistered(MenuItemDBAdapter().typeId))
+      Hive.registerAdapter(MenuItemDBAdapter());
+    if (!Hive.isAdapterRegistered(MenuVariantDBAdapter().typeId))
+      Hive.registerAdapter(MenuVariantDBAdapter());
+    if (!Hive.isAdapterRegistered(ReservationAdapter().typeId))
+      Hive.registerAdapter(ReservationAdapter());
+    if (!Hive.isAdapterRegistered(QuickOrderDraftAdapter().typeId))
+      Hive.registerAdapter(QuickOrderDraftAdapter());
+    if (!Hive.isAdapterRegistered(PackageAdapter().typeId))
+      Hive.registerAdapter(PackageAdapter());
+    if (!Hive.isAdapterRegistered(PackageItemAdapter().typeId))
+      Hive.registerAdapter(PackageItemAdapter());
+    if (!Hive.isAdapterRegistered(SaleRecordAdapter().typeId))
+      Hive.registerAdapter(SaleRecordAdapter());
+    if (!Hive.isAdapterRegistered(SaleRecordItemAdapter().typeId))
+      Hive.registerAdapter(SaleRecordItemAdapter());
 
     metaBox = UpdateTrackedBox(await Hive.openBox(metaBoxName));
 
@@ -172,6 +226,33 @@ class DatabaseCore {
       await Hive.openBox(closureJournalBoxName),
     );
     inventoryBox = UpdateTrackedBox(await Hive.openBox(inventoryBoxName));
+    menuCanonicalBox = UpdateTrackedBox(
+      await Hive.openBox<String>(menuCanonicalBoxName),
+    );
+    menuJournalBox = UpdateTrackedBox(
+      await Hive.openBox<String>(menuJournalBoxName),
+    );
+
+    await EdgeDeviceCredentialStore.load();
+    final venueId = EdgeDeviceCredentialStore.venueId;
+    if (venueId != null) validateVenueBinding(venueId);
+    await BackupRepository.recoverInterruptedRestore();
+    await ReservationRepository.recoverAdvanceReceipts();
+    await PrintJobRepository.recover();
+    await OrderEditRepository.recoverPending();
+    await TableRepairRepository.recoverPending();
+    await OrderTableMutationRepository.recoverPending();
+    await OrderItemTransfer.recoverPending();
+    await CloseDayTransaction.recoverPending();
+
+    // Recover Menu intent/projection BEFORE identity migrations, defaults or UI.
+    // No network is involved; loaded enrollment metadata validates Venue binding.
+    await MenuLocalStore.attach(
+      menuBox: menuBox!,
+      stateBox: menuCanonicalBox!,
+      journalBox: menuJournalBox!,
+      venueId: () => EdgeDeviceCredentialStore.venueId,
+    ).initialize();
 
     // Run schema migrations before seeding defaults.
     final migrationContext = HiveMigrationContext(

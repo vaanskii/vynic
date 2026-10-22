@@ -1,0 +1,42 @@
+{
+  "stage": "/Users/vaanskii/Developer/vynic/docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/windows-native-arm64-stage",
+  "stageManifest": {
+    "sha256": "527d487cd3ac960773395e15b7531f599ada3fa618e235c09b608df43489123f",
+    "bytes": 908
+  },
+  "sourceManifest": {
+    "sha256": "f968938283c4bec391894a59d0f7f8c1632564317f2a38feee0cd23643c46430",
+    "bytes": 6879
+  },
+  "script": {
+    "sha256": "1a85d34fc2817441c075a0aa0bf063fe33eb64f01b9cfc6180b3d73fb5d03b36",
+    "bytes": 9705
+  },
+  "sourceCount": 34,
+  "nativeReferenceCount": 32,
+  "artifacts": {
+    "source.zip": {
+      "sha256": "236db386b539ff6e9efffe3477a7a738f8bacdea448b61d8b5fe3ca018951b70",
+      "bytes": 64180
+    },
+    "source-manifest.json": {
+      "sha256": "f968938283c4bec391894a59d0f7f8c1632564317f2a38feee0cd23643c46430",
+      "bytes": 6879
+    },
+    "printtransport-windows-arm64.test.exe": {
+      "sha256": "5f83c5f8326a67a5e0ccb7eb7c6f7d1cb41fc163620a027ceba6457f7db30fab",
+      "bytes": 5548544
+    },
+    "module-graph.txt": {
+      "sha256": "0183e7ef4147b0aad2a893b218b4e57acc3102a7d9dcfbc07037451a198bc095",
+      "bytes": 4838
+    },
+    "qualify_native_arm64.ps.txt": {
+      "sha256": "1a85d34fc2817441c075a0aa0bf063fe33eb64f01b9cfc6180b3d73fb5d03b36",
+      "bytes": 9705
+    }
+  },
+  "sourceBeforeAfterCopyEqual": true,
+  "sourceEdits": false,
+  "whitespaceCheck": "PASS"
+}

@@ -1,0 +1,11 @@
+{
+  "verdict": "PASS test-only explicit ASCII conversion delta",
+  "source_manifest_sha256": "638458ddc270fa3638c52f2a7bc491e6327bebbf2a46caba9fb451f64bae680f",
+  "changed_file": "apps/edge/native/print_helper/protocol_test.cpp",
+  "changed_file_sha256": "35596e34502d6c6f05e768a22df0c1088d867b87a4fb90d1c4595d2f38350121",
+  "review": "Fake inventory text explicitly rejects nonASCII then casts each checked wchar; production transport unchanged. All manifest source hashes verified.",
+  "limits": [
+    "First actual Windows build failed /WX narrowing before test execution; rerun pending",
+    "No Windows qualification or physical printing claim"
+  ]
+}

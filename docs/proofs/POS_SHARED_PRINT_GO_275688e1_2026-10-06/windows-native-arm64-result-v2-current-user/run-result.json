@@ -1,0 +1,19 @@
+﻿{
+    "status":  "PASS",
+    "failure":  null,
+    "guestBase":  "C:\\Users\\vaanskii\\AppData\\Local\\VynicReadinessNativeArm64\\native-v2-current-user-20261006-c4fe6021",
+    "guestArchitecture":  "ARM64",
+    "observedAccountName":  "VANSKI\\vaanskii",
+    "observedAccountSID":  "S-1-5-21-611125631-3759947118-1641436196-1000",
+    "isSystem":  false,
+    "selectedServicePrincipalQualified":  false,
+    "sourceZipSHA256":  "236db386b539ff6e9efffe3477a7a738f8bacdea448b61d8b5fe3ca018951b70",
+    "printJobsBefore":  0,
+    "printJobsAfter":  0,
+    "documentsSubmitted":  0,
+    "sourceOnly":  true,
+    "serviceRegistration":  false,
+    "driverInstall":  false,
+    "productStarted":  false,
+    "machineRestarted":  false
+}

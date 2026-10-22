@@ -1,0 +1,18 @@
+{
+  "apps/edge/go.mod": {
+    "sha256": "ebe6a02e46ff7d9e3596f1d636c6adc627cd0a1b454acccb51104f4247149ce0",
+    "bytes": 871
+  },
+  "apps/edge/go.sum": {
+    "sha256": "1e1ea952193292233968c2d4eefca73b1e3f5d2f6aeabae01ab5b10da7c6cdb6",
+    "bytes": 7953
+  },
+  "packages/contracts/generated/go/go.mod": {
+    "sha256": "ac118a4193a52805d0527458033c05fbd59c363a01ff6bd392cacf387fa7f506",
+    "bytes": 343
+  },
+  "packages/contracts/generated/go/go.sum": {
+    "sha256": "7781e70033bff344f07778f5571238347209d0b1d249b515547527ed757dd359",
+    "bytes": 3297
+  }
+}

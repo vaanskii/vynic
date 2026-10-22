@@ -1,0 +1,31 @@
+00:00 +0: loading /Users/vaanskii/Developer/vynic/apps/operations/test/widget/pos_checkout_forms_test.dart
+00:00 +0: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/pos_checkout_forms_test.dart: compact reservation submits guest controls, future hold and cent advance once
+00:00 +1: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/pos_checkout_forms_test.dart: changing only advance or hold requires explicit discard and keeps the input on continue
+00:00 +2: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/pos_checkout_forms_test.dart: estimate optional contacts return trimmed values; cancel has no persistence
+00:01 +3: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/pos_checkout_forms_test.dart: estimate browser filters actual surname phone amount and hides manager deletion
+00:01 +4: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/admin_sections_render_test.dart: staff
+00:01 +5: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/admin_sections_render_test.dart: staff
+00:01 +6: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/admin_sections_render_test.dart: staff
+00:01 +7: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/pos_checkout_forms_test.dart: PIN pad stays compact and system back cannot bypass authentication
+00:01 +8: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/pos_checkout_forms_test.dart: PIN pad stays compact and system back cannot bypass authentication
+00:01 +9: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/admin_sections_render_test.dart: sales
+00:01 +10: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/pos_checkout_forms_test.dart: fully prepaid payment requires confirmation; cancel retains it and excess is refused
+00:01 +11: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/admin_sections_render_test.dart: non-fiscal sales cards react to feature changes without deleting history
+00:01 +12: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/admin_sections_render_test.dart: display
+00:01 +13: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/admin_sections_render_test.dart: errors
+00:01 +14: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/admin_sections_render_test.dart: backup
+00:02 +15: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/admin_sections_render_test.dart: backup, as Settings renders it — create only
+00:02 +16: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/admin_sections_render_test.dart: developer
+00:02 +17: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/admin_sections_render_test.dart: audit
+00:02 +18: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/admin_sections_render_test.dart: salesReport
+00:02 +19: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/admin_sections_render_test.dart: menu
+00:02 +20: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/admin_sections_render_test.dart: packages
+00:02 +21: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/admin_sections_render_test.dart: settings
+00:02 +22: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/admin_sections_render_test.dart: (tearDownAll)
+00:03 +22: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/pos_home_correction_test.dart: (setUpAll)
+00:03 +22: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/pos_home_correction_test.dart: connected workflows retain actual Home navigation at 1024
+00:03 +23: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/pos_home_correction_test.dart: restrained full-width table view 1024x768
+00:04 +24: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/pos_home_correction_test.dart: restrained full-width table view 1440x900
+00:04 +25: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/pos_home_correction_test.dart: empty stored floor is explicit, never fabricated tables or a narrow blank grid
+00:04 +26: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/pos_home_correction_test.dart: (tearDownAll)
+00:04 +26: All tests passed!

@@ -1,7 +1,14 @@
+import { provisionWebsite } from '../website/provisioning/website-provisioning';
+import { SubscriptionService } from '../subscriptions/subscription.service';
+import { nextRenewal } from '../subscriptions/billing-policy';
+import { requireCommercialFeature } from '../entitlements/commercial-state';
+import { CommercialLifecycleService } from '../entitlements/commercial-lifecycle.service';
+import { assignCommercialPlan } from './plan-assignment';
 import type { ControlActor } from './control-actor';
 import {
   BadRequestException,
   ConflictException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -12,9 +19,11 @@ import {
   PlatformRole,
 } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
+import { assertStaffPinAvailable } from '../staff/staff-pin-policy';
 import * as argon2 from 'argon2';
 import { PrismaService } from '../prisma.service';
 import { StaffPinVault } from '../auth/staff-pin-vault.service';
+import { ManagerActivationService } from '../auth/manager-activation.service';
 import {
   EDGE_COMMAND_CONTRACT_VERSION,
   EdgeCommandTypes,
@@ -91,13 +100,15 @@ export class PlatformCommercialService {
 
   async subscription(venueId: string) {
     await this.db.venue.findUniqueOrThrow({ where: { id: venueId } });
-    return this.db.venueSubscription.findUnique({ where: { venueId } });
+    await new CommercialLifecycleService(this.db).reconcile(venueId);
+    return new SubscriptionService(this.db).snapshot(venueId);
   }
 
   async setSubscription(
     actor: PlatformPrincipal,
     venueId: string,
     body: Record<string, unknown>,
+    existingTx?: Prisma.TransactionClient,
   ) {
     const status = requireEnumValue(
       body.status,
@@ -107,7 +118,7 @@ export class PlatformCommercialService {
     const note = body.note
       ? requireText(body.note, 'note', { max: 1000 })
       : null;
-    return this.db.$transaction(async (tx) => {
+    const run = async (tx: Prisma.TransactionClient) => {
       await tx.$queryRaw`SELECT "id" FROM "pos"."Venue" WHERE "id"=${venueId} FOR UPDATE`;
       if (
         !(await tx.venue.findUnique({
@@ -119,6 +130,61 @@ export class PlatformCommercialService {
       const before = await tx.venueSubscription.findUnique({
         where: { venueId },
       });
+      if (before?.billingManaged)
+        throw new ConflictException(
+          'Use lifecycle actions for a billing agreement',
+        );
+      if (['SUSPENDED', 'CANCELLED'].includes(status)) {
+        requireText(body.note, 'Operator reason', { max: 1000 });
+        if (body.confirm !== true)
+          throw new BadRequestException('Confirm immediate access change');
+      }
+      if (body.planId)
+        await assignCommercialPlan(
+          tx,
+          venueId,
+          requireText(body.planId, 'Plan'),
+        );
+      const assignment = await tx.venuePlanAssignment.findUnique({
+        where: { venueId },
+      });
+      if (['TRIAL', 'ACTIVE', 'PAST_DUE'].includes(status) && !assignment)
+        throw new BadRequestException('Assign a plan before activating access');
+      // Assigning a package that opens access provisions its website too.
+      if (
+        (body.planId || body.websiteMode) &&
+        ['TRIAL', 'ACTIVE'].includes(status)
+      )
+        await provisionWebsite(
+          tx,
+          venueId,
+          body.websiteMode,
+          actor,
+          'subscription.status_set',
+        );
+      const trialEndsAt =
+        body.trialEndsAt !== undefined
+          ? date(body.trialEndsAt)
+          : before?.trialEndsAt;
+      if (status === 'TRIAL' && (!trialEndsAt || trialEndsAt <= new Date()))
+        throw new BadRequestException('Trial requires a future end date');
+      const now = new Date();
+      const paid =
+        status === 'ACTIVE'
+          ? {
+              billingManaged: true,
+              billingAnchorAt: now,
+              currentPeriodStart: now,
+              currentPeriodEndsAt: nextRenewal(
+                now,
+                assignment!.agreedBillingPeriod ?? 'MONTH',
+                now,
+              ),
+              paymentState: 'MANUAL',
+              trialEndedAt:
+                before?.status === 'TRIAL' ? now : before?.trialEndedAt,
+            }
+          : {};
       const row = await tx.venueSubscription.upsert({
         where: { venueId },
         create: {
@@ -131,9 +197,13 @@ export class PlatformCommercialService {
           cancelledAt: status === 'CANCELLED' ? new Date() : null,
           trialEndsAt: date(body.trialEndsAt),
           currentPeriodEndsAt: date(body.currentPeriodEndsAt),
+          ...paid,
         },
         update: {
           status,
+          ...(status === 'TRIAL' && before?.status !== 'TRIAL'
+            ? { startedAt: now }
+            : {}),
           note,
           updatedBy: actor.platformUserId,
           ...(body.trialEndsAt !== undefined
@@ -144,17 +214,36 @@ export class PlatformCommercialService {
             : {}),
           suspendedAt: status === 'SUSPENDED' ? new Date() : null,
           cancelledAt: status === 'CANCELLED' ? new Date() : null,
+          suspendedFrom: status === 'SUSPENDED' ? before?.status : null,
+          version: { increment: 1 },
+          ...(status === 'CANCELLED' && before?.status === 'TRIAL'
+            ? { trialEndedAt: now, trialEndsAt: now }
+            : {}),
+          ...paid,
         },
       });
       await audit(tx, actor, venueId, 'venue.subscription_changed', {
+        planId: assignment?.planId ?? null,
         from: before?.status ?? null,
         to: status,
         note,
+        previousTrialEndsAt: before?.trialEndsAt?.toISOString() ?? null,
         trialEndsAt: row.trialEndsAt?.toISOString() ?? null,
         currentPeriodEndsAt: row.currentPeriodEndsAt?.toISOString() ?? null,
       });
       return row;
-    });
+    };
+    if (existingTx) return run(existingTx);
+    const result = await this.db.$transaction(run);
+    await new CommercialLifecycleService(this.db).reconcile(venueId);
+    return result;
+  }
+
+  activation(actor: ControlActor, venueId: string) {
+    return new ManagerActivationService(this.db, this.vault).issue(
+      actor,
+      venueId,
+    );
   }
 
   async managers(venueId: string) {
@@ -168,7 +257,10 @@ export class PlatformCommercialService {
         const delivery = await this.db.edgeCommand.findFirst({
           where: {
             venueId,
-            idempotencyKey: { startsWith: 'platform-staff:' },
+            OR: [
+              { idempotencyKey: { startsWith: 'platform-staff:' } },
+              { idempotencyKey: { startsWith: 'manager-activation:' } },
+            ],
             payload: { path: ['staffId'], equals: member.id },
           },
           orderBy: { createdAt: 'desc' },
@@ -186,6 +278,10 @@ export class PlatformCommercialService {
     body: Record<string, unknown>,
     staffId?: string,
   ) {
+    if (actor.customerAccountId || !actor.platformUserId)
+      throw new ForbiddenException(
+        'Only Vynic Platform Admin can manage existing Manager access',
+      );
     const requestId = requireUuid(body.requestId, 'requestId');
     const pin = action === 'disable' ? undefined : requireText(body.pin, 'PIN');
     if (pin && !/^\d{4,6}$/.test(pin))
@@ -217,17 +313,8 @@ export class PlatformCommercialService {
           }))
         )
           throw new NotFoundException('Venue not found');
-        if (
-          actor.customerAccountId &&
-          !(await tx.customerAccount.findFirst({
-            where: {
-              id: actor.customerAccountId,
-              isActive: true,
-              organization: { venues: { some: { id: venueId } } },
-            },
-          }))
-        )
-          throw new NotFoundException('Venue not found');
+        if (action !== 'disable')
+          await requireCommercialFeature(tx, venueId, 'MANAGER_APP');
         const idempotencyKey = `platform-staff:${requestId}`;
         const previous = await tx.edgeCommand.findUnique({
           where: { venueId_idempotencyKey: { venueId, idempotencyKey } },
@@ -253,6 +340,17 @@ export class PlatformCommercialService {
             delivery: { commandId: previous.id, status: previous.status },
           };
         }
+        if (
+          action === 'create' &&
+          !(await tx.staff.count({
+            where: { venueId, role: { in: ['MANAGER', 'ADMIN'] } },
+          })) &&
+          !(await tx.managerActivation.findUnique({ where: { venueId } }))
+            ?.consumedAt
+        )
+          throw new ConflictException(
+            'Complete first registration in the enrolled POS',
+          );
         const before =
           action === 'create'
             ? null
@@ -273,19 +371,7 @@ export class PlatformCommercialService {
         )
           throw new ConflictException('Username already exists');
         if (pin) {
-          const others = await tx.staff.findMany({
-            where: {
-              venueId,
-              isActive: true,
-              ...(staffId ? { id: { not: staffId } } : {}),
-            },
-            select: { pinHash: true },
-          });
-          for (const other of others)
-            if (await bcrypt.compare(pin, other.pinHash))
-              throw new ConflictException(
-                'PIN is already in use in this Venue',
-              );
+          await assertStaffPinAvailable(tx, venueId, pin, before?.username);
         }
         const pinHash = pin ? await bcrypt.hash(pin, 12) : undefined;
         const revision = Math.max(
@@ -374,7 +460,7 @@ export class PlatformCommercialService {
       'role',
     );
     const passwordHash = await argon2.hash(
-      requireText(body.password, 'password', { min: 12, max: 200 }),
+      requireText(body.password, 'password', { min: 8, max: 200 }),
     );
     return this.db.$transaction(async (tx) => {
       const user = await tx.platformUser.create({

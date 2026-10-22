@@ -131,7 +131,28 @@ class HiveMigrationService {
         DateTime.now().toIso8601String(),
       );
     }
+    await persistReservationLineIdentities(
+      context.metaBox,
+      context.reservationBox,
+    );
     return currentVersion;
+  }
+
+  /// Additive identity bootstrap for legacy pre-order lines. Constructors mint
+  /// missing IDs; flush existing fields before allowing new ownership intents.
+  /// No table, content, money or booking status is selected/repaired here.
+  static Future<void> persistReservationLineIdentities(
+    Box meta,
+    Box<Reservation> reservations,
+  ) async {
+    const marker = 'reservationLineIdentitiesV1';
+    if (meta.get(marker) == true) return;
+    for (final entry in reservations.toMap().entries) {
+      await reservations.put(entry.key, entry.value);
+    }
+    await reservations.flush();
+    await meta.put(marker, true);
+    await meta.flush();
   }
 
   /// Constructors assign missing IDs while reading legacy adapters. Persist all
@@ -139,7 +160,7 @@ class HiveMigrationService {
   /// Each successful row save preserves its IDs if migration is interrupted.
   static Future<void> migrateV8toV9(HiveMigrationContext context) async {
     for (final order in context.orderBox.values) {
-      await order.save();
+      await context.orderBox.put(order.key, order);
     }
     await context.orderBox.flush();
   }
@@ -157,11 +178,11 @@ class HiveMigrationService {
     for (final order in context.orderBox.values) {
       if (order.discountAmount.isNaN || order.discountAmount < 0) {
         order.discountAmount = 0.0;
-        await order.save();
+        await context.orderBox.put(order.key, order);
       }
       if (order.totalAmount <= 0) {
         order.recalculateTotal();
-        await order.save();
+        await context.orderBox.put(order.key, order);
       }
     }
 
@@ -265,7 +286,7 @@ class HiveMigrationService {
       order.advanceCollectedOn ??= order.createdAt.toIso8601String().split(
         'T',
       )[0];
-      await order.save();
+      await context.orderBox.put(order.key, order);
     }
   }
 

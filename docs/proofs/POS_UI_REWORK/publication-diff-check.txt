@@ -1,0 +1,1049 @@
+docs/audits/2026-09-29-f7bb982/VYNIC_MASTER_STABILIZATION_AND_RELEASE_PLAN_2026-09-29.md:3: trailing whitespace.
++**Basis:** 2026-09-29 audit set, HEAD `f7bb982` + the WIP that existed when the audit started.  
+docs/audits/2026-09-29-f7bb982/VYNIC_MASTER_STABILIZATION_AND_RELEASE_PLAN_2026-09-29.md:4: trailing whitespace.
++**Purpose:** turn the audit into one execution plan that can be followed without losing track of what is fixed, what is proven, what is still blocked, and what may be sold.  
+docs/audits/2026-09-29-f7bb982/VYNIC_MASTER_STABILIZATION_AND_RELEASE_PLAN_2026-09-29.md:92: trailing whitespace.
++Use `MASTER_BACKLOG.md` issue IDs.  
+docs/proofs/POS02_ADMIN_d194367f_2026-10-02/owned-runtime.patch:53: trailing whitespace.
++ 
+docs/proofs/POS02_ADMIN_d194367f_2026-10-02/owned-runtime.patch:66: trailing whitespace.
++ 
+docs/proofs/POS02_ADMIN_d194367f_2026-10-02/owned-runtime.patch:74: trailing whitespace.
++ 
+docs/proofs/POS02_ADMIN_d194367f_2026-10-02/owned-runtime.patch:87: trailing whitespace.
++ 
+docs/proofs/POS02_ADMIN_d194367f_2026-10-02/owned-runtime.patch:97: trailing whitespace.
++ 
+docs/proofs/POS02_ADMIN_d194367f_2026-10-02/owned-runtime.patch:119: trailing whitespace.
++ 
+docs/proofs/POS02_ADMIN_d194367f_2026-10-02/owned-runtime.patch:129: trailing whitespace.
++ 
+docs/proofs/POS02_ADMIN_d194367f_2026-10-02/owned-runtime.patch:155: trailing whitespace.
++ 
+docs/proofs/POS02_ADMIN_d194367f_2026-10-02/owned-runtime.patch:164: trailing whitespace.
++ 
+docs/proofs/POS02_ADMIN_d194367f_2026-10-02/owned-runtime.patch:177: trailing whitespace.
++ 
+docs/proofs/POS02_ADMIN_d194367f_2026-10-02/owned-runtime.patch:201: trailing whitespace.
++ 
+docs/proofs/POS02_ADMIN_d194367f_2026-10-02/owned-runtime.patch:248: trailing whitespace.
++ 
+docs/proofs/POS02_ADMIN_d194367f_2026-10-02/owned-runtime.patch:278: trailing whitespace.
++ 
+docs/proofs/POS02_ADMIN_d194367f_2026-10-02/owned-runtime.patch:345: trailing whitespace.
++ 
+docs/proofs/POS02_ADMIN_d194367f_2026-10-02/owned-runtime.patch:386: trailing whitespace.
++ 
+docs/proofs/POS02_ADMIN_d194367f_2026-10-02/owned-runtime.patch:399: trailing whitespace.
++ 
+docs/proofs/POS02_ADMIN_d194367f_2026-10-02/owned-runtime.patch:403: trailing whitespace.
++ 
+docs/proofs/POS02_ADMIN_d194367f_2026-10-02/owned-runtime.patch:434: trailing whitespace.
++ 
+docs/proofs/POS02_ADMIN_d194367f_2026-10-02/owned-runtime.patch:442: trailing whitespace.
++ 
+docs/proofs/POS02_ADMIN_d194367f_2026-10-02/owned-runtime.patch:448: trailing whitespace.
++ 
+docs/proofs/POS02_ADMIN_d194367f_2026-10-02/owned-runtime.patch:525: trailing whitespace.
++ 
+docs/proofs/POS02_ADMIN_d194367f_2026-10-02/owned-runtime.patch:579: trailing whitespace.
++ 
+docs/proofs/POS02_ADMIN_d194367f_2026-10-02/owned-runtime.patch:581: trailing whitespace.
++ 
+docs/proofs/POS02_ADMIN_d194367f_2026-10-02/owned-runtime.patch:587: trailing whitespace.
++ 
+docs/proofs/POS02_ADMIN_d194367f_2026-10-02/owned-runtime.patch:615: trailing whitespace.
++ 
+docs/proofs/POS02_ADMIN_d194367f_2026-10-02/owned-runtime.patch:618: trailing whitespace.
++ 
+docs/proofs/POS02_ADMIN_d194367f_2026-10-02/owned-runtime.patch:624: trailing whitespace.
++ 
+docs/proofs/POS02_ADMIN_d194367f_2026-10-02/owned-runtime.patch:632: trailing whitespace.
++ 
+docs/proofs/POS02_ADMIN_d194367f_2026-10-02/owned-runtime.patch:658: trailing whitespace.
++ 
+docs/proofs/POS02_ADMIN_d194367f_2026-10-02/owned-runtime.patch:667: trailing whitespace.
++ 
+docs/proofs/POS02_ADMIN_d194367f_2026-10-02/owned-runtime.patch:669: trailing whitespace.
++ 
+docs/proofs/POS02_ADMIN_d194367f_2026-10-02/owned-runtime.patch:712: trailing whitespace.
++ 
+docs/proofs/POS02_ADMIN_d194367f_2026-10-02/owned-runtime.patch:746: trailing whitespace.
++ 
+docs/proofs/POS02_ADMIN_d194367f_2026-10-02/owned-runtime.patch:793: trailing whitespace.
++ 
+docs/proofs/POS02_ADMIN_d194367f_2026-10-02/owned-runtime.patch:829: trailing whitespace.
++ 
+docs/proofs/POS02_ADMIN_d194367f_2026-10-02/owned-runtime.patch:898: trailing whitespace.
++ 
+docs/proofs/POS02_ADMIN_d194367f_2026-10-02/owned-runtime.patch:903: trailing whitespace.
++ 
+docs/proofs/POS02_ADMIN_d194367f_2026-10-02/owned-runtime.patch:922: trailing whitespace.
++ 
+docs/proofs/POS02_ADMIN_d194367f_2026-10-02/owned-runtime.patch:986: trailing whitespace.
++ 
+docs/proofs/POS02_ADMIN_d194367f_2026-10-02/owned-runtime.patch:1015: trailing whitespace.
++ 
+docs/proofs/POS02_ADMIN_d194367f_2026-10-02/owned-runtime.patch:1019: trailing whitespace.
++ 
+docs/proofs/POS02_ADMIN_d194367f_2026-10-02/owned-runtime.patch:1053: trailing whitespace.
++ 
+docs/proofs/POS02_ADMIN_d194367f_2026-10-02/owned-runtime.patch:1066: trailing whitespace.
++ 
+docs/proofs/POS02_ADMIN_d194367f_2026-10-02/owned-runtime.patch:1093: trailing whitespace.
++ 
+docs/proofs/POS02_ADMIN_d194367f_2026-10-02/owned-runtime.patch:1108: trailing whitespace.
++ 
+docs/proofs/POS02_ADMIN_d194367f_2026-10-02/owned-runtime.patch:1113: trailing whitespace.
++ 
+docs/proofs/POS02_ADMIN_d194367f_2026-10-02/owned-runtime.patch:1135: trailing whitespace.
++ 
+docs/proofs/POS02_ADMIN_d194367f_2026-10-02/owned-runtime.patch:1148: trailing whitespace.
++ 
+docs/proofs/POS02_ADMIN_d194367f_2026-10-02/owned-runtime.patch:1151: trailing whitespace.
++ 
+docs/proofs/POS02_ADMIN_d194367f_2026-10-02/owned-runtime.patch:1153: trailing whitespace.
++ 
+docs/proofs/POS02_ADMIN_d194367f_2026-10-02/owned-runtime.patch:1207: trailing whitespace.
++ 
+docs/proofs/POS02_ADMIN_d194367f_2026-10-02/owned-runtime.patch:1227: trailing whitespace.
++ 
+docs/proofs/POS02_ADMIN_d194367f_2026-10-02/owned-runtime.patch:1242: trailing whitespace.
++ 
+docs/proofs/POS02_ADMIN_d194367f_2026-10-02/owned-runtime.patch:1338: trailing whitespace.
++ 
+docs/proofs/POS02_ADMIN_d194367f_2026-10-02/owned-runtime.patch:1351: trailing whitespace.
++ 
+docs/proofs/POS02_ADMIN_d194367f_2026-10-02/owned-runtime.patch:1359: trailing whitespace.
++ 
+docs/proofs/POS02_ADMIN_d194367f_2026-10-02/owned-runtime.patch:1362: trailing whitespace.
++ 
+docs/proofs/POS02_ADMIN_d194367f_2026-10-02/owned-runtime.patch:1390: trailing whitespace.
++ 
+docs/proofs/POS02_ADMIN_d194367f_2026-10-02/owned-runtime.patch:1527: trailing whitespace.
++ 
+docs/proofs/POS02_ADMIN_d194367f_2026-10-02/owned-runtime.patch:1545: trailing whitespace.
++ 
+docs/proofs/POS02_ADMIN_d194367f_2026-10-02/owned-runtime.patch:1560: trailing whitespace.
++ 
+docs/proofs/POS02_ADMIN_d194367f_2026-10-02/owned-runtime.patch:1600: trailing whitespace.
++ 
+docs/proofs/POS02_ADMIN_d194367f_2026-10-02/owned-runtime.patch:1619: trailing whitespace.
++ 
+docs/proofs/POS02_ADMIN_d194367f_2026-10-02/owned-runtime.patch:1622: trailing whitespace.
++ 
+docs/proofs/POS02_ADMIN_d194367f_2026-10-02/owned-runtime.patch:1630: trailing whitespace.
++ 
+docs/proofs/POS02_ADMIN_d194367f_2026-10-02/owned-runtime.patch:1657: trailing whitespace.
++ 
+docs/proofs/POS02_ADMIN_d194367f_2026-10-02/owned-runtime.patch:1682: trailing whitespace.
++ 
+docs/proofs/POS02_ADMIN_d194367f_2026-10-02/owned-runtime.patch:1695: trailing whitespace.
++ 
+docs/proofs/POS02_ADMIN_d194367f_2026-10-02/owned-runtime.patch:1700: trailing whitespace.
++ 
+docs/proofs/POS02_ADMIN_d194367f_2026-10-02/owned-runtime.patch:1704: trailing whitespace.
++ 
+docs/proofs/POS02_ADMIN_d194367f_2026-10-02/owned-runtime.patch:1746: trailing whitespace.
++ 
+docs/proofs/POS02_ADMIN_d194367f_2026-10-02/owned-runtime.patch:1754: trailing whitespace.
++ 
+docs/proofs/POS02_ADMIN_d194367f_2026-10-02/owned-runtime.patch:1803: trailing whitespace.
++ 
+docs/proofs/POS02_ADMIN_d194367f_2026-10-02/owned-runtime.patch:1828: trailing whitespace.
++ 
+docs/proofs/POS02_ADMIN_d194367f_2026-10-02/owned-runtime.patch:1837: trailing whitespace.
++ 
+docs/proofs/POS02_ADMIN_d194367f_2026-10-02/owned-runtime.patch:1861: trailing whitespace.
++ 
+docs/proofs/POS02_ADMIN_d194367f_2026-10-02/owned-runtime.patch:1882: trailing whitespace.
++ 
+docs/proofs/POS02_ADMIN_d194367f_2026-10-02/owned-runtime.patch:1891: trailing whitespace.
++ 
+docs/proofs/POS02_ADMIN_d194367f_2026-10-02/owned-runtime.patch:2029: trailing whitespace.
++ 
+docs/proofs/POS02_ADMIN_d194367f_2026-10-02/owned-runtime.patch:2125: trailing whitespace.
++ 
+docs/proofs/POS02_ADMIN_d194367f_2026-10-02/owned-runtime.patch:2159: trailing whitespace.
++ 
+docs/proofs/POS02_ADMIN_d194367f_2026-10-02/owned-runtime.patch:2210: trailing whitespace.
++ 
+docs/proofs/POS02_ADMIN_d194367f_2026-10-02/owned-runtime.patch:2230: trailing whitespace.
++ 
+docs/proofs/POS02_ADMIN_d194367f_2026-10-02/owned-runtime.patch:2242: trailing whitespace.
++ 
+docs/proofs/POS02_ADMIN_d194367f_2026-10-02/owned-runtime.patch:2314: trailing whitespace.
++ 
+docs/proofs/POS02_ADMIN_d194367f_2026-10-02/owned-runtime.patch:2328: trailing whitespace.
++ 
+docs/proofs/POS02_ADMIN_d194367f_2026-10-02/owned-runtime.patch:2346: trailing whitespace.
++ 
+docs/proofs/POS02_ADMIN_d194367f_2026-10-02/owned-runtime.patch:2356: trailing whitespace.
++ 
+docs/proofs/POS02_ADMIN_d194367f_2026-10-02/owned-runtime.patch:2370: trailing whitespace.
++ 
+docs/proofs/POS02_ADMIN_d194367f_2026-10-02/owned-runtime.patch:2384: trailing whitespace.
++ 
+docs/proofs/POS02_ADMIN_d194367f_2026-10-02/owned-runtime.patch:2396: trailing whitespace.
++ 
+docs/proofs/POS02_ADMIN_d194367f_2026-10-02/owned-runtime.patch:2414: trailing whitespace.
++ 
+docs/proofs/POS02_ADMIN_d194367f_2026-10-02/owned-runtime.patch:2598: trailing whitespace.
++ 
+docs/proofs/POS02_ADMIN_d194367f_2026-10-02/owned-runtime.patch:2654: trailing whitespace.
++ 
+docs/proofs/POS02_ADMIN_d194367f_2026-10-02/owned-runtime.patch:2674: trailing whitespace.
++ 
+docs/proofs/POS02_A_PROVISIONING_2026-10-09/schema-diff.sql:8: new blank line at EOF.
+docs/proofs/POS02_CHECKPOINT_275688e1_2026-10-02/pos02-docs-delta.patch:26: trailing whitespace.
++ 
+docs/proofs/POS02_CHECKPOINT_275688e1_2026-10-02/pos02-runtime.patch:15: trailing whitespace.
++ 
+docs/proofs/POS02_CHECKPOINT_275688e1_2026-10-02/pos02-runtime.patch:25: trailing whitespace.
++ 
+docs/proofs/POS02_CHECKPOINT_275688e1_2026-10-02/pos02-runtime.patch:47: trailing whitespace.
++ 
+docs/proofs/POS02_CHECKPOINT_275688e1_2026-10-02/pos02-runtime.patch:57: trailing whitespace.
++ 
+docs/proofs/POS02_CHECKPOINT_275688e1_2026-10-02/pos02-runtime.patch:98: trailing whitespace.
++ 
+docs/proofs/POS02_CHECKPOINT_275688e1_2026-10-02/pos02-runtime.patch:161: trailing whitespace.
++ 
+docs/proofs/POS02_CHECKPOINT_275688e1_2026-10-02/pos02-runtime.patch:170: trailing whitespace.
++ 
+docs/proofs/POS02_CHECKPOINT_275688e1_2026-10-02/pos02-runtime.patch:201: trailing whitespace.
++ 
+docs/proofs/POS02_CHECKPOINT_275688e1_2026-10-02/pos02-runtime.patch:210: trailing whitespace.
++ 
+docs/proofs/POS02_CHECKPOINT_275688e1_2026-10-02/pos02-runtime.patch:242: trailing whitespace.
++ 
+docs/proofs/POS02_CHECKPOINT_275688e1_2026-10-02/pos02-runtime.patch:296: trailing whitespace.
++ 
+docs/proofs/POS02_CHECKPOINT_275688e1_2026-10-02/pos02-runtime.patch:298: trailing whitespace.
++ 
+docs/proofs/POS02_CHECKPOINT_275688e1_2026-10-02/pos02-runtime.patch:304: trailing whitespace.
++ 
+docs/proofs/POS02_CHECKPOINT_275688e1_2026-10-02/pos02-runtime.patch:332: trailing whitespace.
++ 
+docs/proofs/POS02_CHECKPOINT_275688e1_2026-10-02/pos02-runtime.patch:335: trailing whitespace.
++ 
+docs/proofs/POS02_CHECKPOINT_275688e1_2026-10-02/pos02-runtime.patch:341: trailing whitespace.
++ 
+docs/proofs/POS02_CHECKPOINT_275688e1_2026-10-02/pos02-runtime.patch:349: trailing whitespace.
++ 
+docs/proofs/POS02_CHECKPOINT_275688e1_2026-10-02/pos02-runtime.patch:379: trailing whitespace.
++ 
+docs/proofs/POS02_CHECKPOINT_275688e1_2026-10-02/pos02-runtime.patch:381: trailing whitespace.
++ 
+docs/proofs/POS02_CHECKPOINT_275688e1_2026-10-02/pos02-runtime.patch:416: trailing whitespace.
++ 
+docs/proofs/POS02_CHECKPOINT_275688e1_2026-10-02/pos02-runtime.patch:450: trailing whitespace.
++ 
+docs/proofs/POS02_CHECKPOINT_275688e1_2026-10-02/pos02-runtime.patch:497: trailing whitespace.
++ 
+docs/proofs/POS02_CHECKPOINT_275688e1_2026-10-02/pos02-runtime.patch:533: trailing whitespace.
++ 
+docs/proofs/POS02_CHECKPOINT_275688e1_2026-10-02/pos02-runtime.patch:633: trailing whitespace.
++ 
+docs/proofs/POS02_CHECKPOINT_275688e1_2026-10-02/pos02-runtime.patch:662: trailing whitespace.
++ 
+docs/proofs/POS02_CHECKPOINT_275688e1_2026-10-02/pos02-runtime.patch:666: trailing whitespace.
++ 
+docs/proofs/POS02_CHECKPOINT_275688e1_2026-10-02/pos02-runtime.patch:700: trailing whitespace.
++ 
+docs/proofs/POS02_CHECKPOINT_275688e1_2026-10-02/pos02-runtime.patch:713: trailing whitespace.
++ 
+docs/proofs/POS02_CHECKPOINT_275688e1_2026-10-02/pos02-runtime.patch:740: trailing whitespace.
++ 
+docs/proofs/POS02_CHECKPOINT_275688e1_2026-10-02/pos02-runtime.patch:755: trailing whitespace.
++ 
+docs/proofs/POS02_CHECKPOINT_275688e1_2026-10-02/pos02-runtime.patch:760: trailing whitespace.
++ 
+docs/proofs/POS02_CHECKPOINT_275688e1_2026-10-02/pos02-runtime.patch:782: trailing whitespace.
++ 
+docs/proofs/POS02_CHECKPOINT_275688e1_2026-10-02/pos02-runtime.patch:795: trailing whitespace.
++ 
+docs/proofs/POS02_CHECKPOINT_275688e1_2026-10-02/pos02-runtime.patch:798: trailing whitespace.
++ 
+docs/proofs/POS02_CHECKPOINT_275688e1_2026-10-02/pos02-runtime.patch:800: trailing whitespace.
++ 
+docs/proofs/POS02_CHECKPOINT_275688e1_2026-10-02/pos02-runtime.patch:854: trailing whitespace.
++ 
+docs/proofs/POS02_CHECKPOINT_275688e1_2026-10-02/pos02-runtime.patch:874: trailing whitespace.
++ 
+docs/proofs/POS02_CHECKPOINT_275688e1_2026-10-02/pos02-runtime.patch:889: trailing whitespace.
++ 
+docs/proofs/POS02_CHECKPOINT_275688e1_2026-10-02/pos02-runtime.patch:985: trailing whitespace.
++ 
+docs/proofs/POS02_CHECKPOINT_275688e1_2026-10-02/pos02-runtime.patch:998: trailing whitespace.
++ 
+docs/proofs/POS02_CHECKPOINT_275688e1_2026-10-02/pos02-runtime.patch:1006: trailing whitespace.
++ 
+docs/proofs/POS02_CHECKPOINT_275688e1_2026-10-02/pos02-runtime.patch:1009: trailing whitespace.
++ 
+docs/proofs/POS02_CHECKPOINT_275688e1_2026-10-02/pos02-runtime.patch:1037: trailing whitespace.
++ 
+docs/proofs/POS02_CHECKPOINT_275688e1_2026-10-02/pos02-runtime.patch:1174: trailing whitespace.
++ 
+docs/proofs/POS02_CHECKPOINT_275688e1_2026-10-02/pos02-runtime.patch:1192: trailing whitespace.
++ 
+docs/proofs/POS02_CHECKPOINT_275688e1_2026-10-02/pos02-runtime.patch:1207: trailing whitespace.
++ 
+docs/proofs/POS02_CHECKPOINT_275688e1_2026-10-02/pos02-runtime.patch:1247: trailing whitespace.
++ 
+docs/proofs/POS02_CHECKPOINT_275688e1_2026-10-02/pos02-runtime.patch:1266: trailing whitespace.
++ 
+docs/proofs/POS02_CHECKPOINT_275688e1_2026-10-02/pos02-runtime.patch:1269: trailing whitespace.
++ 
+docs/proofs/POS02_CHECKPOINT_275688e1_2026-10-02/pos02-runtime.patch:1277: trailing whitespace.
++ 
+docs/proofs/POS02_CHECKPOINT_275688e1_2026-10-02/pos02-runtime.patch:1304: trailing whitespace.
++ 
+docs/proofs/POS02_CHECKPOINT_275688e1_2026-10-02/pos02-runtime.patch:1329: trailing whitespace.
++ 
+docs/proofs/POS02_CHECKPOINT_275688e1_2026-10-02/pos02-runtime.patch:1342: trailing whitespace.
++ 
+docs/proofs/POS02_CHECKPOINT_275688e1_2026-10-02/pos02-runtime.patch:1347: trailing whitespace.
++ 
+docs/proofs/POS02_CHECKPOINT_275688e1_2026-10-02/pos02-runtime.patch:1351: trailing whitespace.
++ 
+docs/proofs/POS02_CHECKPOINT_275688e1_2026-10-02/pos02-runtime.patch:1393: trailing whitespace.
++ 
+docs/proofs/POS02_CHECKPOINT_275688e1_2026-10-02/pos02-runtime.patch:1401: trailing whitespace.
++ 
+docs/proofs/POS02_CHECKPOINT_275688e1_2026-10-02/pos02-runtime.patch:1450: trailing whitespace.
++ 
+docs/proofs/POS02_CHECKPOINT_275688e1_2026-10-02/pos02-runtime.patch:1475: trailing whitespace.
++ 
+docs/proofs/POS02_CHECKPOINT_275688e1_2026-10-02/pos02-runtime.patch:1484: trailing whitespace.
++ 
+docs/proofs/POS02_CHECKPOINT_275688e1_2026-10-02/pos02-runtime.patch:1508: trailing whitespace.
++ 
+docs/proofs/POS02_CHECKPOINT_275688e1_2026-10-02/pos02-runtime.patch:1529: trailing whitespace.
++ 
+docs/proofs/POS02_CHECKPOINT_275688e1_2026-10-02/pos02-runtime.patch:1538: trailing whitespace.
++ 
+docs/proofs/POS02_CHECKPOINT_275688e1_2026-10-02/pos02-runtime.patch:1676: trailing whitespace.
++ 
+docs/proofs/POS02_CHECKPOINT_275688e1_2026-10-02/pos02-runtime.patch:1772: trailing whitespace.
++ 
+docs/proofs/POS02_CHECKPOINT_275688e1_2026-10-02/pos02-runtime.patch:1806: trailing whitespace.
++ 
+docs/proofs/POS02_CHECKPOINT_275688e1_2026-10-02/pos02-runtime.patch:1857: trailing whitespace.
++ 
+docs/proofs/POS02_CHECKPOINT_275688e1_2026-10-02/pos02-runtime.patch:1877: trailing whitespace.
++ 
+docs/proofs/POS02_CHECKPOINT_275688e1_2026-10-02/pos02-runtime.patch:1889: trailing whitespace.
++ 
+docs/proofs/POS02_CHECKPOINT_275688e1_2026-10-02/pos02-runtime.patch:1955: trailing whitespace.
++ 
+docs/proofs/POS02_CHECKPOINT_275688e1_2026-10-02/pos02-runtime.patch:1969: trailing whitespace.
++ 
+docs/proofs/POS02_CHECKPOINT_275688e1_2026-10-02/pos02-runtime.patch:1987: trailing whitespace.
++ 
+docs/proofs/POS02_CHECKPOINT_275688e1_2026-10-02/pos02-runtime.patch:1997: trailing whitespace.
++ 
+docs/proofs/POS02_CHECKPOINT_275688e1_2026-10-02/pos02-runtime.patch:2011: trailing whitespace.
++ 
+docs/proofs/POS02_CHECKPOINT_275688e1_2026-10-02/pos02-runtime.patch:2025: trailing whitespace.
++ 
+docs/proofs/POS02_CHECKPOINT_275688e1_2026-10-02/pos02-runtime.patch:2037: trailing whitespace.
++ 
+docs/proofs/POS02_CHECKPOINT_275688e1_2026-10-02/pos02-runtime.patch:2055: trailing whitespace.
++ 
+docs/proofs/POS02_CHECKPOINT_275688e1_2026-10-02/pos02-runtime.patch:2239: trailing whitespace.
++ 
+docs/proofs/POS02_CHECKPOINT_275688e1_2026-10-02/pos02-runtime.patch:2295: trailing whitespace.
++ 
+docs/proofs/POS_MULTI_TERMINAL_275688e1_2026-10-06/operational-go-uncompiled.patch:2054: trailing whitespace.
++ 
+docs/proofs/POS_MULTI_TERMINAL_275688e1_2026-10-06/operational-go-uncompiled.patch:2060: trailing whitespace.
++ 
+docs/proofs/POS_MULTI_TERMINAL_275688e1_2026-10-06/operational-go-uncompiled.patch:2065: space before tab in indent.
++ 	dir := t.TempDir()
+docs/proofs/POS_MULTI_TERMINAL_275688e1_2026-10-06/operational-go-uncompiled.patch:2066: space before tab in indent.
++ 	s, id := testutil.Bound(t, dir)
+docs/proofs/POS_MULTI_TERMINAL_275688e1_2026-10-06/operational-go-uncompiled.patch:2067: space before tab in indent.
++ 	a := terminal(t, s)
+docs/proofs/POS_MULTI_TERMINAL_275688e1_2026-10-06/operational-go-uncompiled.patch:2070: space before tab in indent.
++ 		if _, e := s.DB.Exec(q); e != nil {
+docs/proofs/POS_MULTI_TERMINAL_275688e1_2026-10-06/operational-go-uncompiled.patch:2071: space before tab in indent.
++ 			t.Fatal(e)
+docs/proofs/POS_MULTI_TERMINAL_275688e1_2026-10-06/operational-go-uncompiled.patch:2072: space before tab in indent.
++ 		}
+docs/proofs/POS_MULTI_TERMINAL_275688e1_2026-10-06/operational-ordinary-planner-fee-seam.patch:30: trailing whitespace.
++ 
+docs/proofs/POS_MULTI_TERMINAL_275688e1_2026-10-06/operational-ordinary-planner-fee-seam.patch:45: trailing whitespace.
++ 
+docs/proofs/POS_MULTI_TERMINAL_275688e1_2026-10-06/workspace-owned-delta.patch:72: trailing whitespace.
++ 
+docs/proofs/POS_MULTI_TERMINAL_275688e1_2026-10-06/workspace-owned-delta.patch:80: trailing whitespace.
++ 
+docs/proofs/POS_MULTI_TERMINAL_275688e1_2026-10-06/workspace-owned-delta.patch:108: trailing whitespace.
++ 
+docs/proofs/POS_MULTI_TERMINAL_275688e1_2026-10-06/workspace-owned-delta.patch:124: trailing whitespace.
++ 
+docs/proofs/POS_MULTI_TERMINAL_275688e1_2026-10-06/workspace-owned-delta.patch:172: trailing whitespace.
++ 
+docs/proofs/POS_MULTI_TERMINAL_275688e1_2026-10-06/workspace-owned-delta.patch:3331: trailing whitespace.
++ 
+docs/proofs/POS_MULTI_TERMINAL_275688e1_2026-10-06/workspace-owned-delta.patch:3333: trailing whitespace.
++ 
+docs/proofs/POS_MULTI_TERMINAL_275688e1_2026-10-06/workspace-owned-delta.patch:3339: trailing whitespace.
++ 
+docs/proofs/POS_MULTI_TERMINAL_275688e1_2026-10-06/workspace-owned-delta.patch:3341: trailing whitespace.
++ 
+docs/proofs/POS_MULTI_TERMINAL_275688e1_2026-10-06/workspace-owned-delta.patch:3355: trailing whitespace.
++ 
+docs/proofs/POS_MULTI_TERMINAL_275688e1_2026-10-06/workspace-owned-delta.patch:4006: trailing whitespace.
++ 
+docs/proofs/POS_MULTI_TERMINAL_275688e1_2026-10-06/workspace-owned-delta.patch:4156: trailing whitespace.
++ 
+docs/proofs/POS_MULTI_TERMINAL_275688e1_2026-10-06/workspace-owned-delta.patch:4171: trailing whitespace.
++ 
+docs/proofs/POS_MULTI_TERMINAL_275688e1_2026-10-06/workspace-owned-delta.patch:4217: trailing whitespace.
++ 
+docs/proofs/POS_MULTI_TERMINAL_275688e1_2026-10-06/workspace-owned-delta.patch:4232: trailing whitespace.
++ 
+docs/proofs/POS_MULTI_TERMINAL_275688e1_2026-10-06/workspace-owned-delta.patch:4258: trailing whitespace.
++ 
+docs/proofs/POS_MULTI_TERMINAL_275688e1_2026-10-06/workspace-owned-delta.patch:4329: trailing whitespace.
++ 
+docs/proofs/POS_MULTI_TERMINAL_275688e1_2026-10-06/workspace-owned-delta.patch:4386: trailing whitespace.
++ 
+docs/proofs/POS_MULTI_TERMINAL_275688e1_2026-10-06/workspace-owned-delta.patch:4390: trailing whitespace.
++ 
+docs/proofs/POS_MULTI_TERMINAL_275688e1_2026-10-06/workspace-owned-delta.patch:4415: trailing whitespace.
++ 
+docs/proofs/POS_MULTI_TERMINAL_275688e1_2026-10-06/workspace-owned-delta.patch:4439: trailing whitespace.
++ 
+docs/proofs/POS_MULTI_TERMINAL_275688e1_2026-10-06/workspace-owned-delta.patch:8165: trailing whitespace.
++ 
+docs/proofs/POS_MULTI_TERMINAL_275688e1_2026-10-06/workspace-owned-delta.patch:8249: trailing whitespace.
++ 
+docs/proofs/POS_MULTI_TERMINAL_275688e1_2026-10-06/workspace-owned-delta.patch:8254: trailing whitespace.
++ 
+docs/proofs/POS_MULTI_TERMINAL_275688e1_2026-10-06/workspace-owned-delta.patch:8617: trailing whitespace.
++ 
+docs/proofs/POS_MULTI_TERMINAL_275688e1_2026-10-06/workspace-owned-delta.patch:8621: trailing whitespace.
++ 
+docs/proofs/POS_MULTI_TERMINAL_275688e1_2026-10-06/workspace-owned-delta.patch:8641: trailing whitespace.
++ 
+docs/proofs/POS_MULTI_TERMINAL_275688e1_2026-10-06/workspace-owned-delta.patch:8649: trailing whitespace.
++ 
+docs/proofs/POS_MULTI_TERMINAL_275688e1_2026-10-06/workspace-owned-delta.patch:8654: trailing whitespace.
++ 
+docs/proofs/POS_MULTI_TERMINAL_275688e1_2026-10-06/workspace-owned-delta.patch:8662: trailing whitespace.
++ 
+docs/proofs/POS_MULTI_TERMINAL_275688e1_2026-10-06/workspace-owned-delta.patch:8675: trailing whitespace.
++ 
+docs/proofs/POS_MULTI_TERMINAL_275688e1_2026-10-06/workspace-owned-delta.patch:8682: trailing whitespace.
++ 
+docs/proofs/POS_MULTI_TERMINAL_275688e1_2026-10-06/workspace-owned-delta.patch:8686: trailing whitespace.
++ 
+docs/proofs/POS_MULTI_TERMINAL_275688e1_2026-10-06/workspace-owned-delta.patch:8694: trailing whitespace.
++ 
+docs/proofs/POS_MULTI_TERMINAL_275688e1_2026-10-06/workspace-owned-delta.patch:8701: trailing whitespace.
++ 
+docs/proofs/POS_MULTI_TERMINAL_275688e1_2026-10-06/workspace-owned-delta.patch:8704: trailing whitespace.
++ 
+docs/proofs/POS_MULTI_TERMINAL_275688e1_2026-10-06/workspace-owned-delta.patch:8724: trailing whitespace.
++ 
+docs/proofs/POS_MULTI_TERMINAL_275688e1_2026-10-06/workspace-owned-delta.patch:8732: trailing whitespace.
++ 
+docs/proofs/POS_MULTI_TERMINAL_275688e1_2026-10-06/workspace-owned-delta.patch:8737: trailing whitespace.
++ 
+docs/proofs/POS_MULTI_TERMINAL_275688e1_2026-10-06/workspace-owned-delta.patch:8745: trailing whitespace.
++ 
+docs/proofs/POS_MULTI_TERMINAL_275688e1_2026-10-06/workspace-owned-delta.patch:8774: trailing whitespace.
++ 
+docs/proofs/POS_MULTI_TERMINAL_275688e1_2026-10-06/workspace-owned-delta.patch:8785: trailing whitespace.
++ 
+docs/proofs/POS_MULTI_TERMINAL_275688e1_2026-10-06/workspace-owned-delta.patch:8792: trailing whitespace.
++ 
+docs/proofs/POS_MULTI_TERMINAL_275688e1_2026-10-06/workspace-owned-delta.patch:8796: trailing whitespace.
++ 
+docs/proofs/POS_MULTI_TERMINAL_275688e1_2026-10-06/workspace-owned-delta.patch:8822: trailing whitespace.
++ 
+docs/proofs/POS_MULTI_TERMINAL_275688e1_2026-10-06/workspace-owned-delta.patch:8826: trailing whitespace.
++ 
+docs/proofs/POS_MULTI_TERMINAL_275688e1_2026-10-06/workspace-owned-delta.patch:8830: trailing whitespace.
++ 
+docs/proofs/POS_MULTI_TERMINAL_275688e1_2026-10-06/workspace-owned-delta.patch:8836: trailing whitespace.
++ 
+docs/proofs/POS_MULTI_TERMINAL_275688e1_2026-10-06/workspace-owned-delta.patch:8913: trailing whitespace.
++ 
+docs/proofs/POS_MULTI_TERMINAL_275688e1_2026-10-06/workspace-owned-delta.patch:8917: trailing whitespace.
++ 
+docs/proofs/POS_MULTI_TERMINAL_275688e1_2026-10-06/workspace-owned-delta.patch:8925: trailing whitespace.
++ 
+docs/proofs/POS_MULTI_TERMINAL_275688e1_2026-10-06/workspace-owned-delta.patch:8943: trailing whitespace.
++ 
+docs/proofs/POS_MULTI_TERMINAL_275688e1_2026-10-06/workspace-owned-delta.patch:9258: trailing whitespace.
++ 
+docs/proofs/POS_MULTI_TERMINAL_275688e1_2026-10-06/workspace-owned-delta.patch:9264: trailing whitespace.
++ 
+docs/proofs/POS_MULTI_TERMINAL_275688e1_2026-10-06/workspace-owned-delta.patch:9562: trailing whitespace.
++ 
+docs/proofs/POS_MULTI_TERMINAL_275688e1_2026-10-06/workspace-owned-delta.patch:9632: trailing whitespace.
++ 
+docs/proofs/POS_MULTI_TERMINAL_275688e1_2026-10-06/workspace-owned-delta.patch:9733: trailing whitespace.
++ 
+docs/proofs/POS_MULTI_TERMINAL_275688e1_2026-10-06/workspace-owned-delta.patch:9741: trailing whitespace.
++ 
+docs/proofs/POS_MULTI_TERMINAL_275688e1_2026-10-06/workspace-owned-delta.patch:9870: trailing whitespace.
++ 
+docs/proofs/POS_MULTI_TERMINAL_275688e1_2026-10-06/workspace-owned-delta.patch:9889: trailing whitespace.
++ 
+docs/proofs/POS_MULTI_TERMINAL_275688e1_2026-10-06/workspace-owned-delta.patch:9891: trailing whitespace.
++ 
+docs/proofs/POS_MULTI_TERMINAL_275688e1_2026-10-06/workspace-owned-delta.patch:10367: trailing whitespace.
++ 
+docs/proofs/POS_MULTI_TERMINAL_275688e1_2026-10-06/workspace-owned-delta.patch:10402: trailing whitespace.
++ 
+docs/proofs/POS_MULTI_TERMINAL_275688e1_2026-10-06/workspace-owned-delta.patch:10415: trailing whitespace.
++ 
+docs/proofs/POS_MULTI_TERMINAL_275688e1_2026-10-06/workspace-owned-delta.patch:10453: trailing whitespace.
++ 
+docs/proofs/POS_MULTI_TERMINAL_275688e1_2026-10-06/workspace-owned-delta.patch:10502: trailing whitespace.
++ 
+docs/proofs/POS_MULTI_TERMINAL_275688e1_2026-10-06/workspace-owned-delta.patch:10575: trailing whitespace.
++ 
+docs/proofs/POS_MULTI_TERMINAL_275688e1_2026-10-06/workspace-owned-delta.patch:19133: trailing whitespace.
++ 
+docs/proofs/POS_MULTI_TERMINAL_275688e1_2026-10-06/workspace-owned-delta.patch:19144: trailing whitespace.
++ 
+docs/proofs/POS_MULTI_TERMINAL_275688e1_2026-10-06/workspace-owned-delta.patch:19148: trailing whitespace.
++ 
+docs/proofs/POS_MULTI_TERMINAL_275688e1_2026-10-06/workspace-owned-delta.patch:19167: trailing whitespace.
++ 
+docs/proofs/POS_MULTI_TERMINAL_275688e1_2026-10-06/workspace-owned-delta.patch:19170: trailing whitespace.
++ 
+docs/proofs/POS_MULTI_TERMINAL_275688e1_2026-10-06/workspace-owned-delta.patch:19174: trailing whitespace.
++ 
+docs/proofs/POS_MULTI_TERMINAL_275688e1_2026-10-06/workspace-owned-delta.patch:19179: trailing whitespace.
++ 
+docs/proofs/POS_MULTI_TERMINAL_275688e1_2026-10-06/workspace-owned-delta.patch:20539: trailing whitespace.
++ 
+docs/proofs/POS_MULTI_TERMINAL_275688e1_2026-10-06/workspace-owned-delta.patch:20554: trailing whitespace.
++ 
+docs/proofs/POS_MULTI_TERMINAL_275688e1_2026-10-06/workspace-owned-delta.patch:20637: trailing whitespace.
++ 
+docs/proofs/POS_MULTI_TERMINAL_275688e1_2026-10-06/workspace-owned-delta.patch:20645: trailing whitespace.
++ 
+docs/proofs/POS_MULTI_TERMINAL_275688e1_2026-10-06/workspace-owned-delta.patch:20647: trailing whitespace.
++ 
+docs/proofs/POS_MULTI_TERMINAL_275688e1_2026-10-06/workspace-owned-delta.patch:20649: trailing whitespace.
++ 
+docs/proofs/POS_MULTI_TERMINAL_275688e1_2026-10-06/workspace-owned-delta.patch:20651: trailing whitespace.
++ 
+docs/proofs/POS_MULTI_TERMINAL_275688e1_2026-10-06/workspace-owned-delta.patch:20658: trailing whitespace.
++ 
+docs/proofs/POS_MULTI_TERMINAL_275688e1_2026-10-06/workspace-owned-delta.patch:20660: trailing whitespace.
++ 
+docs/proofs/POS_MULTI_TERMINAL_275688e1_2026-10-06/workspace-owned-delta.patch:20664: trailing whitespace.
++ **Basis:** 2026-09-29 audit set, HEAD `f7bb982` + the WIP that existed when the audit started.  
+docs/proofs/POS_MULTI_TERMINAL_275688e1_2026-10-06/workspace-owned-delta.patch:20665: trailing whitespace.
++ **Purpose:** turn the audit into one execution plan that can be followed without losing track of what is fixed, what is proven, what is still blocked, and what may be sold.  
+docs/proofs/POS_MULTI_TERMINAL_275688e1_2026-10-06/workspace-owned-delta.patch:20673: trailing whitespace.
++ 
+docs/proofs/POS_MULTI_TERMINAL_275688e1_2026-10-06/workspace-owned-delta.patch:20675: trailing whitespace.
++ 
+docs/proofs/POS_MULTI_TERMINAL_275688e1_2026-10-06/workspace-owned-delta.patch:20677: trailing whitespace.
++ 
+docs/proofs/POS_MULTI_TERMINAL_275688e1_2026-10-06/workspace-owned-delta.patch:20679: trailing whitespace.
++ 
+docs/proofs/POS_MULTI_TERMINAL_275688e1_2026-10-06/workspace-owned-delta.patch:20684: trailing whitespace.
++ 
+docs/proofs/POS_MULTI_TERMINAL_275688e1_2026-10-06/workspace-owned-delta.patch:20686: trailing whitespace.
++ 
+docs/proofs/POS_MULTI_TERMINAL_275688e1_2026-10-06/workspace-owned-delta.patch:20689: trailing whitespace.
++ 
+docs/proofs/POS_MULTI_TERMINAL_275688e1_2026-10-06/workspace-owned-delta.patch:20695: trailing whitespace.
++ 
+docs/proofs/POS_MULTI_TERMINAL_275688e1_2026-10-06/workspace-owned-delta.patch:20697: trailing whitespace.
++ 
+docs/proofs/POS_MULTI_TERMINAL_275688e1_2026-10-06/workspace-owned-delta.patch:20700: trailing whitespace.
++ 
+docs/proofs/POS_MULTI_TERMINAL_275688e1_2026-10-06/workspace-owned-delta.patch:20705: trailing whitespace.
++ 
+docs/proofs/POS_MULTI_TERMINAL_275688e1_2026-10-06/workspace-owned-delta.patch:20718: trailing whitespace.
++ 
+docs/proofs/POS_MULTI_TERMINAL_275688e1_2026-10-06/workspace-owned-delta.patch:20720: trailing whitespace.
++ 
+docs/proofs/POS_MULTI_TERMINAL_275688e1_2026-10-06/workspace-owned-delta.patch:20720: new blank line at EOF.
+docs/proofs/POS_RECONNECT_UI_3463ee40_2026-10-14/partial-navigation.patch:13: trailing whitespace.
++ 
+docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/software-completion-final/historical/root-evidence/operational-wire-windows-fixture-build-info.txt:3: trailing whitespace.
++	mod	vynic.local/edge	(devel)	
+docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/software-completion-final/historical/tool-metadata/govulncheck-help.txt:9: space before tab in indent.
++    	change to dir before running govulncheck
+docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/software-completion-final/historical/tool-metadata/govulncheck-help.txt:11: space before tab in indent.
++    	vulnerability database url (default "https://vuln.go.dev")
+docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/software-completion-final/historical/tool-metadata/govulncheck-help.txt:13: space before tab in indent.
++    	specify format output
+docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/software-completion-final/historical/tool-metadata/govulncheck-help.txt:14: space before tab in indent.
++    	The supported values are 'text', 'json', 'sarif', and 'openvex' (default 'text')
+docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/software-completion-final/historical/tool-metadata/govulncheck-help.txt:16: space before tab in indent.
++    	output JSON (Go compatible legacy flag, see format flag)
+docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/software-completion-final/historical/tool-metadata/govulncheck-help.txt:18: space before tab in indent.
++    	supports 'source', 'binary', and 'extract' (default 'source')
+docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/software-completion-final/historical/tool-metadata/govulncheck-help.txt:20: space before tab in indent.
++    	set the scanning level desired, one of 'module', 'package', or 'symbol' (default 'symbol')
+docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/software-completion-final/historical/tool-metadata/govulncheck-help.txt:22: space before tab in indent.
++    	enable display of additional information specified by the comma separated list
+docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/software-completion-final/historical/tool-metadata/govulncheck-help.txt:23: space before tab in indent.
++    	The supported values are 'traces','color', 'version', and 'verbose'
+docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/software-completion-final/historical/tool-metadata/govulncheck-help.txt:25: space before tab in indent.
++    	comma-separated list of build tags
+docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/software-completion-final/historical/tool-metadata/govulncheck-help.txt:27: space before tab in indent.
++    	analyze test files (only valid for source mode, default false)
+docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/software-completion-final/historical/tool-metadata/govulncheck-help.txt:29: space before tab in indent.
++    	print the version information
+docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/software-completion-final/historical/tool-metadata/govulncheck-version.txt:5: new blank line at EOF.
+docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/software-completion-windows-final/verification/windows-software-v2/fixture-native-paths-v2-final.patch:10: trailing whitespace.
++ 
+docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/software-completion-windows-final/verification/windows-software-v2/fixture-native-paths-v2-final.patch:110: trailing whitespace.
++ 
+docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/software-completion-windows-final/verification/windows-software-v2/fixture-native-paths-v2-final.patch:123: trailing whitespace.
++ 
+docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/software-completion-windows-final/verification/windows-software-v2/fixture-native-paths-v2.patch:10: trailing whitespace.
++ 
+docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/software-completion-windows-final/verification/windows-software-v2/fixture-native-paths-v2.patch:105: trailing whitespace.
++ 
+docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/software-completion-windows-final/verification/windows-software-v2/fixture-native-paths-v2.patch:123: trailing whitespace.
++ 
+docs/proofs/POS_UI_REWORK/logs/analysis.log:1: trailing whitespace.
++Analyzing operations...                                         
+docs/proofs/POS_UI_REWORK/logs/candidate-analysis.log:1: trailing whitespace.
++Analyzing operations...                                         
+docs/proofs/POS_UI_REWORK/logs/final-analysis.log:1: trailing whitespace.
++Analyzing operations...                                         
+docs/proofs/POS_UI_REWORK/logs/final-full-aggregate.log:340: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/final-full-aggregate.log:344: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/final-full-aggregate.log:358: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/final-full-aggregate.log:362: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/final-full-aggregate.log:376: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/final-full-aggregate.log:380: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/final-full-aggregate.log:394: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/final-full-aggregate.log:398: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/final-full-aggregate.log:412: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/final-full-aggregate.log:416: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/final-full-aggregate.log:430: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/final-full-aggregate.log:434: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/final-full-aggregate.log:448: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/final-full-aggregate.log:452: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/final-full-aggregate.log:466: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/final-full-aggregate.log:470: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/final-full-aggregate.log:484: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/final-full-aggregate.log:488: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/final-full-aggregate.log:502: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/final-full-aggregate.log:506: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/final-full-aggregate.log:520: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/final-full-aggregate.log:524: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/final-full-aggregate.log:538: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/final-full-aggregate.log:542: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/final-full-aggregate.log:556: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/final-full-aggregate.log:560: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/final-full-aggregate.log:574: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/final-full-aggregate.log:578: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/final-full-aggregate.log:592: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/final-full-aggregate.log:596: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/final-full-aggregate.log:610: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/final-full-aggregate.log:614: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/final-full-aggregate.log:628: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/final-full-aggregate.log:632: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/final-full-aggregate.log:646: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/final-full-aggregate.log:650: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/final-full-aggregate.log:664: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/final-full-aggregate.log:668: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/final-full-aggregate.log:682: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/final-full-aggregate.log:686: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/final-full-aggregate.log:1524: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/final-full-aggregate.log:1546: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/final-full-aggregate.log:1568: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/final-full-aggregate.log:1591: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/final-full-aggregate.log:1614: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/final-full-aggregate.log:1634: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/final-full-aggregate.log:1654: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/final-full-aggregate.log:1674: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/final-full-aggregate.log:3866: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/final-full-aggregate.log:3870: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/final-full-aggregate.log:3906: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/final-full-aggregate.log:3910: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/final-full-aggregate.log:3947: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/final-full-aggregate.log:4340: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/final-full-aggregate.log:4861: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/final-full-aggregate.log:5138: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/final-full-aggregate.log:5204: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/final-full-aggregate.log:5366: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/final-full-aggregate.log:5520: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/final-full-aggregate.log:5898: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/final-full-aggregate.log:5907: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/final-full-aggregate.log:5935: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/final-full-aggregate.log:5991: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/final-full-aggregate.log:6308: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/final-full-aggregate.log:6385: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/final-full-aggregate.log:6438: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/full-aggregate.log:349: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/full-aggregate.log:353: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/full-aggregate.log:368: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/full-aggregate.log:372: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/full-aggregate.log:387: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/full-aggregate.log:391: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/full-aggregate.log:407: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/full-aggregate.log:411: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/full-aggregate.log:425: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/full-aggregate.log:429: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/full-aggregate.log:443: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/full-aggregate.log:447: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/full-aggregate.log:466: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/full-aggregate.log:470: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/full-aggregate.log:487: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/full-aggregate.log:491: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/full-aggregate.log:509: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/full-aggregate.log:513: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/full-aggregate.log:532: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/full-aggregate.log:538: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/full-aggregate.log:567: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/full-aggregate.log:571: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/full-aggregate.log:594: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/full-aggregate.log:598: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/full-aggregate.log:620: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/full-aggregate.log:639: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/full-aggregate.log:654: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/full-aggregate.log:658: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/full-aggregate.log:673: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/full-aggregate.log:677: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/full-aggregate.log:703: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/full-aggregate.log:707: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/full-aggregate.log:722: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/full-aggregate.log:726: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/full-aggregate.log:744: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/full-aggregate.log:748: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/full-aggregate.log:763: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/full-aggregate.log:767: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/full-aggregate.log:783: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/full-aggregate.log:791: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/full-aggregate.log:1833: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/full-aggregate.log:1865: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/full-aggregate.log:1903: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/full-aggregate.log:1949: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/full-aggregate.log:1977: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/full-aggregate.log:2005: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/full-aggregate.log:2033: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/full-aggregate.log:2054: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/full-aggregate.log:4052: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/full-aggregate.log:4056: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/full-aggregate.log:4107: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/full-aggregate.log:4111: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/full-aggregate.log:4267: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/full-aggregate.log:5187: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/full-aggregate.log:5390: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/full-aggregate.log:5522: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/full-aggregate.log:5546: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/full-aggregate.log:5617: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/full-aggregate.log:6255: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/full-aggregate.log:6400: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/full-aggregate.log:6457: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/full-aggregate.log:6486: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/full-aggregate.log:6517: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/full-aggregate.log:6874: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/full-aggregate.log:6921: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/full-aggregate.log:6940: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/full-aggregate.log:6945: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/full-aggregate.log:6950: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/full-aggregate.log:6955: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/full-aggregate.log:6960: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/full-aggregate.log:6965: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/full-aggregate.log:6970: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/full-aggregate.log:6975: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/printer-before.log:19: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/printer-before.log:23: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/printer-before.log:37: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/printer-before.log:41: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/printer-before.log:55: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/printer-before.log:59: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/printer-before.log:77: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/printer-before.log:81: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/printer-before.log:95: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/printer-before.log:99: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/printer-before.log:118: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/printer-before.log:124: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/printer-before.log:142: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/printer-before.log:146: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/printer-before.log:164: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/printer-before.log:173: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/printer-before.log:193: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/printer-before.log:197: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/printer-before.log:219: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/printer-before.log:223: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/printer-before.log:243: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/printer-before.log:247: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/printer-before.log:269: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/printer-before.log:278: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/printer-before.log:298: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/printer-before.log:302: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/printer-before.log:321: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/printer-before.log:325: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/printer-before.log:348: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/printer-before.log:352: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/printer-before.log:373: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/printer-before.log:377: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/printer-before.log:396: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/printer-before.log:400: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/printer-before.log:427: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/printer-before.log:431: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/printer-before.log:446: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/printer-before.log:450: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/printer-before.log:477: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/printer-before.log:483: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/printer-before.log:594: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/printer-before.log:625: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/printer-before.log:647: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/printer-before.log:678: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/printer-before.log:708: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/printer-before.log:736: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/printer-before.log:740: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/printer-before.log:744: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/printer-before.log:775: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/printer-before.log:809: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/printer-before.log:813: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/printer-before.log:842: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/printer-before.log:933: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/printer-before.log:1011: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/printer-before.log:1077: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/printer-before.log:1154: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/printer-before.log:1159: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/printer-before.log:1164: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/printer-before.log:1169: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/printer-before.log:1174: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/printer-before.log:1179: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/printer-before.log:1184: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/printer-before.log:1189: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/printer-before.log:1194: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/printer-before.log:1199: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/printer-before.log:1204: trailing whitespace.
++  
+docs/proofs/POS_UI_REWORK/logs/publication-apps-platform-web-build.log:30: trailing whitespace.
++[33m[plugin builtin:vite-reporter] 
+docs/proofs/POS_UI_REWORK/logs/publication-backend-build.log:4: new blank line at EOF.
+docs/proofs/POS_UI_REWORK/logs/publication-packages-website-client-build.log:4: new blank line at EOF.
+docs/proofs/POS_UI_REWORK/logs/publication-pg-init.log:23: new blank line at EOF.
+docs/proofs/POS_UI_REWORK/logs/publication-pg-migrate-activation.log:247: trailing whitespace.
++      
+docs/proofs/POS_UI_REWORK/logs/publication-pg-migrate-menu.log:247: trailing whitespace.
++      
+docs/proofs/POS_UI_REWORK/logs/publication-prisma-generate.log:11: new blank line at EOF.
+docs/proofs/WEB06_CUSTOM_STATUS_3463ee40_2026-10-14/task-diff.patch:32: trailing whitespace.
++ 
+docs/proofs/WEB06_CUSTOM_STATUS_3463ee40_2026-10-14/task-diff.patch:153: trailing whitespace.
++ 
+docs/proofs/WEB06_CUSTOM_STATUS_3463ee40_2026-10-14/task-diff.patch:161: trailing whitespace.
++ 
+docs/proofs/WEB06_CUSTOM_STATUS_3463ee40_2026-10-14/task-diff.patch:211: trailing whitespace.
++ 

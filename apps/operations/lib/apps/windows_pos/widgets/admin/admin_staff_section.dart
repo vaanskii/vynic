@@ -1,3 +1,6 @@
+import 'package:vynic/apps/windows_pos/widgets/shared/pos_surface.dart';
+import '../shared/pos_pin_form.dart';
+import 'package:vynic/core/ui/widgets/pos_dialog.dart';
 import 'package:vynic/core/widgets/pos_text.dart';
 import 'dart:async';
 import 'dart:io';
@@ -5,7 +8,6 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:vynic/apps/windows_pos/widgets/admin/admin_surface.dart';
-import 'package:vynic/core/widgets/pin_button.dart';
 import 'package:vynic/core/models/staff_role.dart';
 import 'package:vynic/core/models/user.dart';
 import 'package:vynic/core/services/database_service.dart';
@@ -108,7 +110,7 @@ class _AdminStaffSectionState extends State<AdminStaffSection> {
   }
 
   Future<void> _openAddStaffDialog() async {
-    final created = await showDialog<bool>(
+    final created = await showPosModal<bool>(
       context: context,
       builder: (context) => _AddStaffDialog(
         actorId: widget.user.username,
@@ -263,49 +265,18 @@ class _AdminStaffSectionState extends State<AdminStaffSection> {
   }
 
   Widget _buildPageHeader(bool isMobile) {
-    return Row(
-      children: [
-        Container(
-          width: 44,
-          height: 44,
-          decoration: BoxDecoration(
-            color: AdminDesign.accent.withValues(alpha: 0.12),
-            borderRadius: BorderRadius.circular(AdminDesign.radius),
-          ),
-          child: const Icon(
-            Icons.groups_2_outlined,
-            color: AdminDesign.accentDark,
-          ),
-        ),
-        const SizedBox(width: 13),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              PosText(
-                'პერსონალი',
-                style: TextStyle(
-                  color: _staffText,
-                  fontSize: isMobile ? 23 : 27,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-              const SizedBox(height: 2),
-              PosText(
-                _waitersOnlyAdmin
-                    ? 'ოფიციანტების დამატება და PIN-ების მართვა.'
-                    : 'მართეთ თანამშრომლები, როლები და PIN-ები.',
-                style: const TextStyle(color: _staffMuted, fontSize: 13),
-              ),
-            ],
-          ),
-        ),
-        if (!isMobile)
-          AdminStatusBadge(
-            icon: Icons.badge_outlined,
-            label: '${_allUsers.length} თანამშრომელი',
-          ),
-      ],
+    return AdminSectionHeader(
+      icon: Icons.groups_2_outlined,
+      title: 'პერსონალი',
+      subtitle: _waitersOnlyAdmin
+          ? 'ოფიციანტების დამატება და PIN-ების მართვა.'
+          : 'მართეთ თანამშრომლები, როლები და PIN-ები.',
+      badge: !isMobile
+          ? AdminStatusBadge(
+              icon: Icons.badge_outlined,
+              label: '${_allUsers.length} თანამშრომელი',
+            )
+          : null,
     );
   }
 
@@ -752,7 +723,7 @@ class _AdminStaffSectionState extends State<AdminStaffSection> {
   Future<void> _showEditNameDialog(User user) async {
     if (!widget.user.canManageStaffUser(user)) return;
 
-    final newName = await showDialog<String>(
+    final newName = await showPosModal<String>(
       context: context,
       builder: (context) => _EditStaffNameDialog(user: user),
     );
@@ -777,7 +748,7 @@ class _AdminStaffSectionState extends State<AdminStaffSection> {
   Future<void> _showChangePinDialog(User user) async {
     if (!widget.user.canManageStaffUser(user)) return;
 
-    final newPin = await showDialog<String>(
+    final newPin = await showPosModal<String>(
       context: context,
       builder: (context) => _ChangePinDialog(user: user),
     );
@@ -802,7 +773,7 @@ class _AdminStaffSectionState extends State<AdminStaffSection> {
         user.isManager &&
         _allUsers.where((entry) => entry.isManager).length <= 1;
 
-    final role = await showDialog<String>(
+    final role = await showPosModal<String>(
       context: context,
       builder: (context) =>
           _ChangeRoleDialog(user: user, preventManagerDemotion: isOnlyManager),
@@ -834,7 +805,7 @@ class _AdminStaffSectionState extends State<AdminStaffSection> {
   Future<void> _confirmDeleteUser(User user) async {
     if (!widget.user.canManageStaffUser(user)) return;
 
-    final confirmed = await showDialog<bool>(
+    final confirmed = await showPosModal<bool>(
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: _staffCard,
@@ -903,119 +874,31 @@ class _AddStaffDialogState extends State<_AddStaffDialog> {
   }
 
   Future<void> _showPinPicker() async {
-    final isMobile = !kIsWeb && (Platform.isAndroid || Platform.isIOS);
     var tempPin = _pinCode;
-
-    await showDialog<void>(
+    final pin = await showPosModal<String>(
       context: context,
       builder: (dialogContext) => StatefulBuilder(
-        builder: (context, setDialogState) {
-          return Dialog(
-            backgroundColor: _staffCard,
-            insetPadding: EdgeInsets.symmetric(
-              horizontal: isMobile ? 16 : 40,
-              vertical: 24,
-            ),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(AdminDesign.radius),
-              side: const BorderSide(color: _staffBorder),
-            ),
-            child: SizedBox(
-              width: isMobile ? double.infinity : 400,
-              child: Padding(
-                padding: EdgeInsets.all(isMobile ? 16 : 24),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const PosText(
-                      'PIN კოდი',
-                      style: TextStyle(
-                        color: _staffText,
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                    Container(
-                      padding: const EdgeInsets.symmetric(vertical: 18),
-                      decoration: BoxDecoration(
-                        color: _staffSurface,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: _staffBorder),
-                      ),
-                      child: Center(
-                        child: PosText(
-                          '•' * tempPin.length + '—' * (6 - tempPin.length),
-                          style: const TextStyle(
-                            color: _staffText,
-                            fontSize: 28,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 8,
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                    PinPad(
-                      authentication: true,
-                      onSubmit: () {
-                        if (tempPin.length == 6) {
-                          setState(() => _pinCode = tempPin);
-                          Navigator.pop(dialogContext);
-                        }
-                      },
-                      onClearPressed: () => setDialogState(() => tempPin = ''),
-                      onDigitPressed: (d) {
-                        if (tempPin.length < 6) {
-                          setDialogState(() => tempPin += d);
-                        }
-                      },
-                      onDeletePressed: () {
-                        if (tempPin.isNotEmpty) {
-                          setDialogState(
-                            () => tempPin = tempPin.substring(
-                              0,
-                              tempPin.length - 1,
-                            ),
-                          );
-                        }
-                      },
-                    ),
-                    const SizedBox(height: 20),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: OutlinedButton(
-                            onPressed: () => Navigator.pop(dialogContext),
-                            child: const PosText('გაუქმება'),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: ElevatedButton(
-                            onPressed: tempPin.length == 6
-                                ? () {
-                                    setState(() => _pinCode = tempPin);
-                                    Navigator.pop(dialogContext);
-                                  }
-                                : null,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: _staffAccent,
-                              foregroundColor: Colors.white,
-                            ),
-                            child: const PosText('შენახვა'),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          );
-        },
+        builder: (_, update) => PosPinForm(
+          title: 'PIN კოდი',
+          value: tempPin,
+          confirmLabel: 'შენახვა',
+          onDigit: (digit) {
+            if (tempPin.length < 6) update(() => tempPin += digit);
+          },
+          onDelete: () {
+            if (tempPin.isNotEmpty)
+              update(() => tempPin = tempPin.substring(0, tempPin.length - 1));
+          },
+          onClear: () => update(() => tempPin = ''),
+          submitEnabled: tempPin.length == 6,
+          onSubmit: () {
+            if (tempPin.length == 6) Navigator.pop(dialogContext, tempPin);
+          },
+          onCancel: () => Navigator.pop(dialogContext),
+        ),
       ),
     );
+    if (pin != null && mounted) setState(() => _pinCode = pin);
   }
 
   Future<void> _createStaff() async {
@@ -1325,58 +1208,7 @@ class _KpiChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      height: 78,
-      padding: EdgeInsets.symmetric(
-        horizontal: compact ? 10 : 16,
-        vertical: 12,
-      ),
-      decoration: BoxDecoration(
-        color: _staffCard,
-        borderRadius: BorderRadius.circular(AdminDesign.radius),
-        border: Border.all(color: _staffBorder),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: compact ? 40 : 48,
-            height: compact ? 40 : 48,
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.12),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(icon, color: color, size: compact ? 21 : 25),
-          ),
-          SizedBox(width: compact ? 8 : 12),
-          Expanded(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                PosText(
-                  label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: _staffMuted,
-                    fontSize: compact ? 10 : 11,
-                    height: 1.15,
-                  ),
-                ),
-                PosText(
-                  '$value',
-                  style: const TextStyle(
-                    color: _staffText,
-                    fontSize: 22,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
+    return PosMetricCard(label: label, value: '$value', framed: false);
   }
 }
 
@@ -1988,85 +1820,18 @@ class _ChangePinDialogState extends State<_ChangePinDialog> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    final isMobile = !kIsWeb && (Platform.isAndroid || Platform.isIOS);
-    return Dialog(
-      backgroundColor: Colors.white,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(AdminDesign.radius),
-        side: const BorderSide(color: AdminDesign.border),
-      ),
-      child: ConstrainedBox(
-        constraints: BoxConstraints(maxWidth: isMobile ? double.infinity : 420),
-        child: Padding(
-          padding: EdgeInsets.all(isMobile ? 16 : 24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(
-                Icons.lock_reset,
-                color: AdminDesign.accentDark,
-                size: 40,
-              ),
-              const SizedBox(height: 12),
-              PosText(
-                'PIN — ${widget.user.username}',
-                style: const TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w800,
-                  color: AdminDesign.text,
-                ),
-              ),
-              const SizedBox(height: 20),
-              PosText(
-                '•' * _enteredPin.length + '—' * (6 - _enteredPin.length),
-                style: const TextStyle(
-                  fontSize: 24,
-                  letterSpacing: 8,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              if (_errorMessage.isNotEmpty) ...[
-                const SizedBox(height: 8),
-                PosText(
-                  _errorMessage,
-                  style: const TextStyle(color: AdminDesign.danger),
-                ),
-              ],
-              const SizedBox(height: 16),
-              PinPad(
-                authentication: true,
-                onDigitPressed: _onNumberPressed,
-                onDeletePressed: _onBackspacePressed,
-                onClearPressed: () => setState(() {
-                  _enteredPin = '';
-                  _errorMessage = '';
-                }),
-                onSubmit: _onConfirm,
-              ),
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: () => Navigator.pop(context),
-                      child: const PosText('გაუქმება'),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: _onConfirm,
-                      style: AdminDesign.primaryButtonStyle(),
-                      child: const PosText('შენახვა'),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
+  Widget build(BuildContext context) => PosPinForm(
+    title: 'PIN — ${widget.user.username}',
+    value: _enteredPin,
+    error: _errorMessage,
+    confirmLabel: 'შენახვა',
+    onDigit: _onNumberPressed,
+    onDelete: _onBackspacePressed,
+    onClear: () => setState(() {
+      _enteredPin = '';
+      _errorMessage = '';
+    }),
+    onSubmit: _onConfirm,
+    onCancel: () => Navigator.pop(context),
+  );
 }

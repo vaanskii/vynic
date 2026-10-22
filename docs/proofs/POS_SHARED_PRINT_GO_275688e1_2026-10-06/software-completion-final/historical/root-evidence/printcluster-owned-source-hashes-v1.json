@@ -1,0 +1,125 @@
+{
+  "createdAtUtc": "2026-10-06T15:43:38.662849+00:00",
+  "source": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/source",
+  "scope": "Printer-only owned new logical printcluster package and four reviewed Go module manifests; no original source edits",
+  "files": {
+    "apps/edge/internal/printcluster/boundaries_test.go": {
+      "before": null,
+      "sha256": "6a6eed7047b49dde05b49e402e9481d42a20fe72849e02cfcc196d2c76427456",
+      "bytes": 14418
+    },
+    "apps/edge/internal/printcluster/cluster_test.go": {
+      "before": null,
+      "sha256": "8118617df65e078fb51b629964a5fbb165033e76397e3f9427bd99c0d4a72ccd",
+      "bytes": 31467
+    },
+    "apps/edge/internal/printcluster/node.go": {
+      "before": null,
+      "sha256": "90a8fd63aa455e7dc06c5db1308b4df75f1c7943b8a22efa8e6b2c1759b5db0a",
+      "bytes": 14310
+    },
+    "apps/edge/internal/printcluster/process_test.go": {
+      "before": null,
+      "sha256": "e1b94bb3fb2ab6af004c3d4096ce3d8b1bb93f38047f057f144c0d3b1eeb8b51",
+      "bytes": 13620
+    },
+    "apps/edge/internal/printcluster/projection.go": {
+      "before": null,
+      "sha256": "89c5c4d97f00de6c00b3ebb4ccfafacf8e6cd65cbd462bbae37493b155abd62b",
+      "bytes": 7913
+    },
+    "apps/edge/internal/printcluster/schema.sql": {
+      "before": null,
+      "sha256": "e172bcd69670592daadf2b041ee60708abe73e4ea98e370dabe01917f9be4f5e",
+      "bytes": 484
+    },
+    "apps/edge/internal/printcluster/state.go": {
+      "before": null,
+      "sha256": "fecb6b14729115c7c22f2b9b400ce60d406e6f36b3e8615ec363d35ec8a2febe",
+      "bytes": 28740
+    },
+    "apps/edge/internal/printcluster/testdata/local_tcp.config.json": {
+      "before": null,
+      "sha256": "5fb77a085478e13e841b4a9e504973fad13b54cb13260f809f2265f561fa6104",
+      "bytes": 661
+    },
+    "apps/edge/internal/printcluster/testdata/local_tcp.job.json": {
+      "before": null,
+      "sha256": "4b2a9926ba64c7a2e3123993fe1586a9adbdfd44323e4ef1a1a7c6775cb1382f",
+      "bytes": 1026
+    },
+    "apps/edge/internal/printcluster/testdata/shared_tcp.config.json": {
+      "before": null,
+      "sha256": "631484beb05a8d5e53b0049bda893813c2ce247c15de5c1d82ccc4620d0b89f1",
+      "bytes": 669
+    },
+    "apps/edge/internal/printcluster/testdata/shared_tcp.job.json": {
+      "before": null,
+      "sha256": "dfc155cc16c5f6b18c6ff80bff90c1994ae27040fb69d7afa1deaf4124bb1120",
+      "bytes": 1033
+    },
+    "apps/edge/internal/printcluster/testdata/shared_usb.config.json": {
+      "before": null,
+      "sha256": "1c8e94daf8dbd24a2c13e7c8c8e1ebf660f3d6f3e5989bd43f7f33d8adcf2e2b",
+      "bytes": 788
+    },
+    "apps/edge/internal/printcluster/testdata/shared_usb.job.json": {
+      "before": null,
+      "sha256": "31e2179da2e87ea1b13376dc7dcd41cbe23ff4dd1e6e377fa43c7ea3dca15f97",
+      "bytes": 1033
+    },
+    "apps/edge/internal/printcluster/testdata/unknown_beep.config.json": {
+      "before": null,
+      "sha256": "2f02b5d6b6fb0dda028d819e0fccc42957d51996e4d3c3673dff207d558230c7",
+      "bytes": 673
+    },
+    "apps/edge/internal/printcluster/testdata/unknown_beep.job.json": {
+      "before": null,
+      "sha256": "beca2a55a0554f39fa8e5fef7b04ce3c90398778ac43471874229cb2c87c5120",
+      "bytes": 1023
+    },
+    "apps/edge/internal/printcluster/transport.go": {
+      "before": null,
+      "sha256": "5a5844221232d1faddbbc767435eba9625cd0e3f15b9f0e0ed4b0d9ba06e27d7",
+      "bytes": 3249
+    },
+    "apps/edge/internal/printcluster/types.go": {
+      "before": null,
+      "sha256": "c21c89c70c015bf8addea454ab6c6f9b031393656cb86114309d36e2d496b8ae",
+      "bytes": 16995
+    },
+    "apps/edge/go.mod": {
+      "before": {
+        "sha256": "ebe6a02e46ff7d9e3596f1d636c6adc627cd0a1b454acccb51104f4247149ce0",
+        "bytes": 871
+      },
+      "sha256": "ee1b4d46129d70ab34a6c12314daddd5f5a7b0122e28040a52677b359c86f37d",
+      "bytes": 1406
+    },
+    "apps/edge/go.sum": {
+      "before": {
+        "sha256": "1e1ea952193292233968c2d4eefca73b1e3f5d2f6aeabae01ab5b10da7c6cdb6",
+        "bytes": 7953
+      },
+      "sha256": "561b9a04ed2552e61d5187a89b023415fa4b9c5af1ea827a6707b7779234ca56",
+      "bytes": 11936
+    },
+    "packages/contracts/generated/go/go.mod": {
+      "before": {
+        "sha256": "ac118a4193a52805d0527458033c05fbd59c363a01ff6bd392cacf387fa7f506",
+        "bytes": 343
+      },
+      "sha256": "54ad4ea326560555ae16be9943353238cd66ede684166c1984cf96af9a344fe8",
+      "bytes": 343
+    },
+    "packages/contracts/generated/go/go.sum": {
+      "before": {
+        "sha256": "7781e70033bff344f07778f5571238347209d0b1d249b515547527ed757dd359",
+        "bytes": 3297
+      },
+      "sha256": "4d6021e7f1525d43b0713af9db44aead5817e2bbe9910d0f077172a363d4ea52",
+      "bytes": 3297
+    }
+  },
+  "newFiles": 17
+}

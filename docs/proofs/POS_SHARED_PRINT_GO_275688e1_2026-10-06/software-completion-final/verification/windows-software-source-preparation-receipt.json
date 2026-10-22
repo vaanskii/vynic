@@ -1,0 +1,115 @@
+{
+  "schema": 1,
+  "createdAtUtc": "2026-10-06T17:34:04.227181+00:00",
+  "status": "SOURCE_PREPARATION_PASS_WINDOWS_EXECUTION_HELD",
+  "sourceReceipt": {
+    "path": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/final-cohort-source.json",
+    "sha256": "193e4800e5d0733a30bc6c8d4ac993590219363941e69a787bba5ac3681c8f68"
+  },
+  "sourceFiles": 1109,
+  "suites": 39,
+  "analysisSelectors": 68,
+  "sourceVerifiedAfterPreparation": true,
+  "stages": {
+    "software-windows-flutter-stage": {
+      "path": "/Users/vaanskii/Developer/vynic/docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/software-windows-flutter-stage",
+      "runnerArtifacts": {
+        "path": "/Users/vaanskii/Developer/vynic/docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/software-windows-flutter-stage/runner-artifacts.json",
+        "sha256": "c147cb891424b2f1760f198e27ea3bc977891cd2c4a324e3a3b26de5e01b07f6"
+      },
+      "receipt": {
+        "schema": 1,
+        "createdAtUtc": "2026-10-06T17:26:24.799224+00:00",
+        "finalSourceReceiptSHA256": "193e4800e5d0733a30bc6c8d4ac993590219363941e69a787bba5ac3681c8f68",
+        "files": 1109,
+        "sourceZipSHA256": "dedd8e046927fe20954e392aaf7b92e76e06145f54b7e7c2f5f5f9920052b066",
+        "sourceManifestSHA256": "f53338cbe0a30d867ab0b370d861671ace9e31b2de0d88696960ec6c3f6c65d6",
+        "testSuites": 39,
+        "analysisFiles": 68,
+        "fixtures": {
+          "operational-proof-server-windows.test.exe": {
+            "sha256": "2c9370e4c4cfdb55094f63a26a2bf5b45bff43868a1a2c14a0f47c2654c70abb",
+            "bytes": 26370560
+          },
+          "printer-agent-server-windows.test.exe": {
+            "sha256": "f335745e38be573f5ec031478eab4b524a8069c811324ac2a5d39876b676e894",
+            "bytes": 25833472
+          }
+        },
+        "firebaseSdk": "C:\\Users\\vaanskii\\AppData\\Local\\VynicLocalReleaseBuild\\e7a0ffd0bb571781\\apps\\operations\\build\\windows\\x64\\extracted\\firebase_cpp_sdk_windows",
+        "firebaseVersion": "13.5.0",
+        "firebaseVersionHeaderSha256": "8485c4305c02638bca186a082a7c3b94040f995bc542664f3be002610847da24",
+        "guestJobSuffix": "VynicReadinessNative/software-2bd986d1ac2a-flutter",
+        "executionStatus": "HELD_AFTER_AUTOMATIC_APPROVAL_REJECTION",
+        "physicalJobs": 0,
+        "productStarted": false,
+        "serviceOperations": false,
+        "sourceScope": "Exact new software cohort; previous898/535 receipts remain immutable"
+      }
+    },
+    "software-windows-pos-stage": {
+      "path": "/Users/vaanskii/Developer/vynic/docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/software-windows-pos-stage",
+      "runnerArtifacts": {
+        "path": "/Users/vaanskii/Developer/vynic/docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/software-windows-pos-stage/runner-artifacts.json",
+        "sha256": "6bb133df1a2fdf2eac50ab6ac745ec92379c6ee2faccd12848b5d3b47a5c6bea"
+      },
+      "receipt": {
+        "schema": 1,
+        "createdAtUtc": "2026-10-06T17:26:25.127034+00:00",
+        "finalSourceReceiptSHA256": "193e4800e5d0733a30bc6c8d4ac993590219363941e69a787bba5ac3681c8f68",
+        "files": 1109,
+        "sourceZipSHA256": "03187911b7c50a52276ad5c2dd4fc54e8201e54c5610456fc6138977a68a8796",
+        "sourceManifestSHA256": "a3b3d2ae6b226685ee737bd0228b5c779b0246974a8c115ec3351731f1409205",
+        "testSuites": 39,
+        "analysisFiles": 68,
+        "fixtures": {
+          "operational-proof-server-windows.test.exe": {
+            "sha256": "2c9370e4c4cfdb55094f63a26a2bf5b45bff43868a1a2c14a0f47c2654c70abb",
+            "bytes": 26370560
+          },
+          "printer-agent-server-windows.test.exe": {
+            "sha256": "f335745e38be573f5ec031478eab4b524a8069c811324ac2a5d39876b676e894",
+            "bytes": 25833472
+          }
+        },
+        "firebaseSdk": "C:\\Users\\vaanskii\\AppData\\Local\\VynicLocalReleaseBuild\\e7a0ffd0bb571781\\apps\\operations\\build\\windows\\x64\\extracted\\firebase_cpp_sdk_windows",
+        "firebaseVersion": "13.5.0",
+        "firebaseVersionHeaderSha256": "8485c4305c02638bca186a082a7c3b94040f995bc542664f3be002610847da24",
+        "guestJobSuffix": "VynicReadinessNative/software-2bd986d1ac2a-pos",
+        "executionStatus": "HELD_AFTER_AUTOMATIC_APPROVAL_REJECTION",
+        "physicalJobs": 0,
+        "productStarted": false,
+        "serviceOperations": false,
+        "sourceScope": "Exact new software cohort; previous898/535 receipts remain immutable"
+      }
+    }
+  },
+  "officialProductPreparation": {
+    "path": "/Users/vaanskii/Developer/vynic/docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/software-windows-pos-stage/product-preparation.json",
+    "sha256": "0b2191c5d26212836f6967bf2b50bbea23a60da94593f87e99e387d43c3533b4",
+    "declaredDeltaCount": 8,
+    "genericFiles": 1109,
+    "preparedFiles": 1109,
+    "toolSHA256": "90aa1c0ec15ccb12d13e3fb2da881b50f551687b8cf4520f4c98e4555ef57e5a"
+  },
+  "fixtureCompile": {
+    "path": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/windows-final-fixtures-compile.json",
+    "sha256": "6226f5df23c23eb58c27ed3580686b51c27f92775ee5fe1e34a88922b094b083"
+  },
+  "deniedVMPreflight": {
+    "path": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/windows-software-preflight-denial.json",
+    "sha256": "7d8a2753973f8486f4f02b243ac5821ed791fac497638a8727e977d454f0102b"
+  },
+  "VMCallsSucceeded": 0,
+  "windowsTestsRun": false,
+  "windowsBuildRun": false,
+  "serviceInstallOrStart": false,
+  "productLaunched": false,
+  "physicalPrints": 0,
+  "remaining": [
+    "Current scoped user clearance and single identical rejected preflight retry",
+    "Parent CPU release after combined Go race",
+    "Run39-suite/68-analysis Windows selections and prepared POS release compile; seal actual results separately"
+  ],
+  "previousSealsChanged": false
+}

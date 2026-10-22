@@ -1,3 +1,5 @@
+import 'package:vynic/core/services/manager_app/manager_operation_request.dart';
+import 'package:vynic/apps/mobile_app/presentation/widgets/manager_operations_panel.dart';
 import 'package:vynic/apps/mobile_app/theme/manager_theme.dart';
 import 'package:vynic/apps/mobile_app/presentation/widgets/mobile_glass_ui.dart';
 import 'dart:ui';
@@ -42,18 +44,26 @@ class ReservationDetailScreen extends StatelessWidget {
   const ReservationDetailScreen({
     super.key,
     required this.row,
+    required this.operationScope,
     required this.onUpdateStatus,
     required this.onDelete,
   });
 
   final Map<String, dynamic> row;
-  final Future<void> Function(String id, String status) onUpdateStatus;
-  final Future<void> Function(String id) onDelete;
+  final String? operationScope;
+  bool get _sameSession =>
+      operationScope != null &&
+      MobileApiService.isCurrentTableRepairScope(operationScope!);
+  final Future<ManagerOperationResult> Function(String id, String status)
+  onUpdateStatus;
+  final Future<ManagerOperationResult> Function(String id) onDelete;
 
   static Route<bool> route({
     required Map<String, dynamic> row,
-    required Future<void> Function(String id, String status) onUpdateStatus,
-    required Future<void> Function(String id) onDelete,
+    required String? operationScope,
+    required Future<ManagerOperationResult> Function(String id, String status)
+    onUpdateStatus,
+    required Future<ManagerOperationResult> Function(String id) onDelete,
   }) {
     return PageRouteBuilder<bool>(
       transitionDuration: const Duration(milliseconds: 320),
@@ -61,6 +71,7 @@ class ReservationDetailScreen extends StatelessWidget {
       pageBuilder: (_, __, ___) => managerThemedPage(
         ReservationDetailScreen(
           row: row,
+          operationScope: operationScope,
           onUpdateStatus: onUpdateStatus,
           onDelete: onDelete,
         ),
@@ -120,147 +131,159 @@ class ReservationDetailScreen extends StatelessWidget {
         ? (row['tableNumbers'] as List).join(', ')
         : '';
 
-    return Scaffold(
-      backgroundColor: MobileGlassTheme.bg,
-      body: Stack(
-        children: [
-          Positioned(
-            top: -90,
-            right: -60,
-            child: _GlowOrb(color: meta.color, size: 280),
-          ),
-          Positioned(
-            bottom: 80,
-            left: -90,
-            child: _GlowOrb(color: MobileGlassTheme.primary, size: 240),
-          ),
-          SafeArea(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 12, 20, 8),
-                  child: Row(
+    return ManagerOperationBoundary(
+      scope: operationScope,
+      slot: 'reservation:${row['id']}',
+      child: Scaffold(
+        backgroundColor: MobileGlassTheme.bg,
+        body: Stack(
+          children: [
+            Positioned(
+              top: -90,
+              right: -60,
+              child: _GlowOrb(color: meta.color, size: 280),
+            ),
+            Positioned(
+              bottom: 80,
+              left: -90,
+              child: _GlowOrb(color: MobileGlassTheme.primary, size: 240),
+            ),
+            Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 880),
+                child: SafeArea(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      _GlassCircleButton(
-                        icon: Icons.arrow_back_ios_new_rounded,
-                        onTap: () => Navigator.of(context).maybePop(),
-                      ),
-                      SizedBox(width: 14),
-                      Text(
-                        'რეზერვაცია',
-                        style: TextStyle(
-                          color: MobileGlassTheme.textPrimary,
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: -0.5,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Expanded(
-                  child: ListView(
-                    physics: const BouncingScrollPhysics(),
-                    padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
-                    children: [
-                      _GlassCard(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 12, 20, 8),
+                        child: Row(
                           children: [
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: Text(
-                                    name.isEmpty ? 'უსახელო' : name,
-                                    style: TextStyle(
-                                      color: MobileGlassTheme.textPrimary,
-                                      fontSize: 24,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
+                            _GlassCircleButton(
+                              icon: Icons.arrow_back_ios_new_rounded,
+                              onTap: () => Navigator.of(context).maybePop(),
+                            ),
+                            SizedBox(width: 14),
+                            Expanded(
+                              child: Text(
+                                'რეზერვაცია',
+                                style: TextStyle(
+                                  color: MobileGlassTheme.textPrimary,
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.bold,
+                                  letterSpacing: -0.5,
                                 ),
-                                _statusPill(meta),
-                              ],
-                            ),
-                            SizedBox(height: 18),
-                            _infoRow(
-                              Icons.schedule_rounded,
-                              'დრო',
-                              time.isEmpty ? '—' : time,
-                            ),
-                            _infoRow(
-                              Icons.calendar_today_rounded,
-                              'თარიღი',
-                              date.isEmpty ? '—' : date,
-                            ),
-                            _infoRow(
-                              Icons.groups_rounded,
-                              'სტუმრები',
-                              '$guests სტუმარი',
-                            ),
-                            _infoRow(
-                              Icons.table_bar_rounded,
-                              'მაგიდები',
-                              tables.isEmpty ? '—' : tables,
-                            ),
-                            _infoRow(
-                              Icons.phone_rounded,
-                              'ტელეფონი',
-                              phone.isEmpty ? '—' : phone,
+                              ),
                             ),
                           ],
                         ),
                       ),
-                      if (notes.isNotEmpty) ...[
-                        SizedBox(height: 16),
-                        _GlassCard(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
+                      Expanded(
+                        child: ListView(
+                          physics: const BouncingScrollPhysics(),
+                          padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
+                          children: [
+                            _GlassCard(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Icon(
-                                    Icons.notes_rounded,
-                                    color: MobileGlassTheme.textSecondary,
-                                    size: 18,
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        child: Text(
+                                          name.isEmpty ? 'უსახელო' : name,
+                                          style: TextStyle(
+                                            color: MobileGlassTheme.textPrimary,
+                                            fontSize: 24,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ),
+                                      _statusPill(meta),
+                                    ],
                                   ),
-                                  SizedBox(width: 8),
-                                  Text(
-                                    'შენიშვნა',
-                                    style: TextStyle(
-                                      color: MobileGlassTheme.textSecondary,
-                                      fontSize: 13,
-                                    ),
+                                  SizedBox(height: 18),
+                                  _infoRow(
+                                    Icons.schedule_rounded,
+                                    'დრო',
+                                    time.isEmpty ? '—' : time,
+                                  ),
+                                  _infoRow(
+                                    Icons.calendar_today_rounded,
+                                    'თარიღი',
+                                    date.isEmpty ? '—' : date,
+                                  ),
+                                  _infoRow(
+                                    Icons.groups_rounded,
+                                    'სტუმრები',
+                                    '$guests სტუმარი',
+                                  ),
+                                  _infoRow(
+                                    Icons.table_bar_rounded,
+                                    'მაგიდები',
+                                    tables.isEmpty ? '—' : tables,
+                                  ),
+                                  _infoRow(
+                                    Icons.phone_rounded,
+                                    'ტელეფონი',
+                                    phone.isEmpty ? '—' : phone,
                                   ),
                                 ],
                               ),
-                              SizedBox(height: 8),
-                              Text(
-                                notes,
-                                style: TextStyle(
-                                  color: MobileGlassTheme.textPrimary,
-                                  fontSize: 14,
-                                  height: 1.4,
+                            ),
+                            if (notes.isNotEmpty) ...[
+                              SizedBox(height: 16),
+                              _GlassCard(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Icon(
+                                          Icons.notes_rounded,
+                                          color: MobileGlassTheme.textSecondary,
+                                          size: 18,
+                                        ),
+                                        SizedBox(width: 8),
+                                        Text(
+                                          'შენიშვნა',
+                                          style: TextStyle(
+                                            color:
+                                                MobileGlassTheme.textSecondary,
+                                            fontSize: 13,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    SizedBox(height: 8),
+                                    Text(
+                                      notes,
+                                      style: TextStyle(
+                                        color: MobileGlassTheme.textPrimary,
+                                        fontSize: 14,
+                                        height: 1.4,
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
                             ],
-                          ),
+                            if (_preOrder.isNotEmpty) ...[
+                              SizedBox(height: 16),
+                              _buildPreOrderCard(),
+                            ],
+                            SizedBox(height: 24),
+                            _buildActions(context, id, status),
+                          ],
                         ),
-                      ],
-                      if (_preOrder.isNotEmpty) ...[
-                        SizedBox(height: 16),
-                        _buildPreOrderCard(),
-                      ],
-                      SizedBox(height: 24),
-                      _buildActions(context, id, status),
+                      ),
                     ],
                   ),
                 ),
-              ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -344,20 +367,54 @@ class ReservationDetailScreen extends StatelessWidget {
   Widget _buildActions(BuildContext context, String id, String status) {
     final s = status.toLowerCase();
     final canConfirm = !s.startsWith('confirmed') && !s.startsWith('cancelled');
-    final canComplete =
-        !s.startsWith('completed') && !s.startsWith('cancelled');
     final canCancel = !s.startsWith('cancelled');
 
     Future<void> doStatus(String newStatus) async {
-      await onUpdateStatus(id, newStatus);
-      if (context.mounted) Navigator.of(context).pop(true);
+      if (!_sameSession) return;
+      try {
+        final result = await onUpdateStatus(id, newStatus);
+        if (!context.mounted || !_sameSession) return;
+        await showPosToast(
+          context: context,
+          message: result.message,
+          style: result.delivery.name == 'failed'
+              ? PosToastStyle.error
+              : PosToastStyle.info,
+        );
+        if (context.mounted && _sameSession && result.isDone)
+          Navigator.of(context).pop(true);
+      } catch (_) {
+        if (context.mounted && _sameSession)
+          await showErrorToast(
+            context,
+            'შედეგი ვერ დადასტურდა — მოთხოვნა შენარჩუნებულია',
+          );
+      }
     }
 
     Future<void> doDelete() async {
       final ok = await _confirmDelete(context);
       if (ok != true) return;
-      await onDelete(id);
-      if (context.mounted) Navigator.of(context).pop(true);
+      if (!_sameSession) return;
+      try {
+        final result = await onDelete(id);
+        if (!context.mounted || !_sameSession) return;
+        await showPosToast(
+          context: context,
+          message: result.message,
+          style: result.delivery.name == 'failed'
+              ? PosToastStyle.error
+              : PosToastStyle.info,
+        );
+        if (context.mounted && _sameSession && result.isDone)
+          Navigator.of(context).pop(true);
+      } catch (_) {
+        if (context.mounted && _sameSession)
+          await showErrorToast(
+            context,
+            'შედეგი ვერ დადასტურდა — მოთხოვნა შენარჩუნებულია',
+          );
+      }
     }
 
     return Column(
@@ -378,19 +435,9 @@ class ReservationDetailScreen extends StatelessWidget {
                   onTap: () => doStatus('confirmed'),
                 ),
               ),
-            if (canConfirm && canComplete) SizedBox(width: 12),
-            if (canComplete)
-              Expanded(
-                child: _actionButton(
-                  label: 'დასრულება',
-                  icon: Icons.done_all_rounded,
-                  color: MobileGlassTheme.good,
-                  onTap: () => doStatus('completed'),
-                ),
-              ),
           ],
         ),
-        if (canConfirm || canComplete) SizedBox(height: 12),
+        if (canConfirm) SizedBox(height: 12),
         if (canCancel)
           _actionButton(
             label: 'რეზერვაციის გაუქმება',
@@ -566,9 +613,17 @@ class _PrintCheckButtonState extends State<_PrintCheckButton> {
     if (_loading) return;
     setState(() => _loading = true);
     try {
-      await MobileApiService.printReservationCheck(widget.reservationId);
+      final delivery = await MobileApiService.printReservationCheck(
+        widget.reservationId,
+      );
       if (!mounted) return;
-      await showSuccessToast(context, 'ჩეკი გაიგზავნა სამზარეულოში');
+      await showPosToast(
+        context: context,
+        message: delivery.printMessage,
+        style: delivery.name == 'failed' || delivery.name == 'unavailable'
+            ? PosToastStyle.error
+            : PosToastStyle.info,
+      );
     } catch (e) {
       if (!mounted) return;
       final message = e.toString();
@@ -621,29 +676,20 @@ class _PrintCheckButtonState extends State<_PrintCheckButton> {
 
 /// ── shared dark glass widgets ───────────────────────────────────────────
 class _GlassCard extends StatelessWidget {
-  final Widget child;
   const _GlassCard({required this.child});
-
+  final Widget child;
   @override
   Widget build(BuildContext context) {
-    final radius = BorderRadius.circular(22);
-    return ClipRRect(
-      borderRadius: radius,
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
-        child: Container(
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: MobileGlassTheme.surface(0.04),
-            borderRadius: radius,
-            border: Border.all(
-              color: MobileGlassTheme.data.borderSubtle,
-              width: 1,
-            ),
-          ),
-          child: child,
-        ),
+    final theme = MobileGlassTheme.of(context);
+    final radius = BorderRadius.circular(18);
+    return Material(
+      color: theme.surfaceCard,
+      shape: RoundedRectangleBorder(
+        borderRadius: radius,
+        side: BorderSide(color: theme.cardBorder),
       ),
+      clipBehavior: Clip.antiAlias,
+      child: Padding(padding: const EdgeInsets.all(18), child: child),
     );
   }
 }
@@ -679,25 +725,9 @@ class _GlassCircleButton extends StatelessWidget {
 }
 
 class _GlowOrb extends StatelessWidget {
+  const _GlowOrb({required this.color, required this.size});
   final Color color;
   final double size;
-  const _GlowOrb({required this.color, required this.size});
-
   @override
-  Widget build(BuildContext context) {
-    return IgnorePointer(
-      child: Container(
-        width: size,
-        height: size,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          color: color.withValues(alpha: 0.15),
-        ),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 80, sigmaY: 80),
-          child: Container(color: Colors.transparent),
-        ),
-      ),
-    );
-  }
+  Widget build(BuildContext context) => const SizedBox.shrink();
 }

@@ -1,3 +1,5 @@
+import 'package:vynic/core/database/repositories/order_edit_repository.dart';
+import 'package:vynic/core/database/local_data_admission.dart';
 import 'package:vynic/core/services/pos/update/update_readiness.dart';
 import 'dart:async';
 import 'dart:math';
@@ -264,17 +266,64 @@ class EdgeTransportService {
     // again with the outcome it had, and its side effect is not repeated.
     final previous = await EdgeCommandJournal.beginExecution(command);
     if (previous != null && previous.isTerminal) {
+      if (command.type == EdgeCommandTypes.orderEdit &&
+          previous.status == EdgeExecutionStatus.succeeded) {
+        try {
+          return _Handled(
+            _HandledKind.alreadyDone,
+            EdgeCommandResult.succeeded(
+              command.commandId,
+              code: 'order_edited',
+              resultProjection: OrderEditRepository.retainedResult(
+                command.commandId,
+                Map<String, dynamic>.from(command.payload as Map),
+              ),
+            ),
+          );
+        } catch (e) {
+          LocalDataAdmission.failure = 'Order edit recovery: $e';
+          return const _Handled(_HandledKind.alreadyDone, null);
+        }
+      }
       return _Handled(
         _HandledKind.alreadyDone,
         previous.status == EdgeExecutionStatus.succeeded
             ? EdgeCommandResult.succeeded(
                 command.commandId,
-                code: 'already_executed',
+                resultProjection: previous.resultProjection,
+                code:
+                    command.type == EdgeCommandTypes.tableRepair ||
+                        command.type == EdgeCommandTypes.orderEdit
+                    ? previous.code ?? 'repair_receipt_missing'
+                    : 'already_executed',
               )
             : EdgeCommandResult.failed(
                 command.commandId,
                 code: previous.code ?? 'already_failed',
               ),
+      );
+    }
+
+    if (command.type == EdgeCommandTypes.managerOperation &&
+        (previous?.status == EdgeExecutionStatus.interrupted ||
+            previous?.status == EdgeExecutionStatus.running) &&
+        command.payload is Map &&
+        (command.payload as Map)['operationType']?.toString().startsWith(
+              'RESERVATION_',
+            ) ==
+            true) {
+      await EdgeCommandJournal.completeExecution(
+        command.commandId,
+        requireDurability: command.type == EdgeCommandTypes.managerOperation,
+        succeeded: false,
+        code: 'manager_operation_outcome_unknown',
+      );
+      return _Handled(
+        _HandledKind.alreadyDone,
+        EdgeCommandResult.failed(
+          command.commandId,
+          code: 'manager_operation_outcome_unknown',
+        ),
       );
     }
 
@@ -288,6 +337,7 @@ class EdgeTransportService {
         EdgeCommandTypes.noRepeatAfterInterruption.contains(command.type)) {
       await EdgeCommandJournal.completeExecution(
         command.commandId,
+        requireDurability: command.type == EdgeCommandTypes.managerOperation,
         succeeded: false,
         code: 'interrupted_not_repeated',
       );
@@ -303,18 +353,42 @@ class EdgeTransportService {
       );
     }
 
+    var businessSucceeded = false;
+    var outcomeUnknown = false;
     try {
       final result = await handler.execute(command);
       final succeeded = result.status == EdgeCommandResultStatus.succeeded;
+      businessSucceeded = succeeded;
+      outcomeUnknown = result.code == 'manager_operation_outcome_unknown';
+      if (command.type == EdgeCommandTypes.managerOperation &&
+          (LocalDataAdmission.failure != null ||
+              UpdateReadiness.failure != null))
+        return const _Handled(_HandledKind.executed, null);
       await EdgeCommandJournal.completeExecution(
         command.commandId,
+        requireDurability: command.type == EdgeCommandTypes.managerOperation,
         succeeded: succeeded,
         code: result.code,
+        resultProjection: result.resultProjection,
       );
       return _Handled(_HandledKind.executed, result);
     } catch (error) {
+      // A durable edit must be recovered before a business result can be ACKed.
+      // Terminal FAILED would lie after startup rolls this intent forward.
+      if (command.type == EdgeCommandTypes.managerOperation &&
+          (businessSucceeded ||
+              outcomeUnknown ||
+              LocalDataAdmission.failure != null ||
+              UpdateReadiness.failure != null))
+        return const _Handled(_HandledKind.executed, null);
+      if (command.type == EdgeCommandTypes.orderEdit &&
+          (LocalDataAdmission.failure != null ||
+              UpdateReadiness.failure != null ||
+              OrderEditRepository.hasReceipt(command.commandId)))
+        return const _Handled(_HandledKind.executed, null);
       await EdgeCommandJournal.completeExecution(
         command.commandId,
+        requireDurability: command.type == EdgeCommandTypes.managerOperation,
         succeeded: false,
         code: 'handler_threw',
       );

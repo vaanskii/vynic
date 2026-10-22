@@ -1,0 +1,14 @@
+{
+  "allPreviousGeneratedOutputUnchanged": true,
+  "beforeManifestSha256": "3dfbf9963eb24e29341a32e15dfe82154e0b2ed736e1001d7b71b3364e47cef8",
+  "observedChanges": {
+    "oldGenerated": [
+      "packages/contracts/generated/edge_dart/lib/vynic_edge_contracts.dart"
+    ],
+    "prior26": [
+      "packages/contracts/generated/edge_dart/lib/vynic_edge_contracts.dart"
+    ]
+  },
+  "permittedAdditiveBarrelExport": "packages/contracts/generated/edge_dart/lib/vynic_edge_contracts.dart",
+  "sealedOriginalAndPreviousSourceEdited": false
+}

@@ -1,3 +1,5 @@
+import 'package:vynic/core/services/manager_app/manager_operation_request.dart';
+import 'package:vynic/core/services/manager_app/table_repair_request.dart';
 import 'package:vynic/core/widgets/connection_feedback.dart';
 import 'dart:io';
 import 'package:flutter/material.dart';
@@ -5,6 +7,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'firebase_options.dart';
 import 'apps/mobile_app/theme/manager_theme.dart';
+import 'apps/mobile_app/theme/manager_dashboard_theme.dart';
 import 'apps/mobile_app/presentation/screens/mobile_login_screen.dart';
 import 'core/services/auth/auth_token_service.dart';
 import 'core/services/manager_app/mobile_cache_service.dart';
@@ -22,6 +25,8 @@ Future<void> main() async {
   await Future.wait([
     AuthTokenService.init(),
     MobileCacheService.init(),
+    TableRepairRequests.init(),
+    ManagerOperationRequests.init(),
     ManagerAppPreferences.init(),
   ]);
   try {
@@ -39,12 +44,16 @@ Future<void> main() async {
     debugPrint('Manager notifications unavailable: $error');
   }
   runApp(
-    MaterialApp(
-      title: 'Vynic Manager',
-      builder: (context, child) =>
-          ConnectionFeedback.manager(child: child ?? const SizedBox.shrink()),
-      debugShowCheckedModeBanner: false,
-      home: ManagerThemeListener(child: MobileLoginScreen()),
+    ValueListenableBuilder<ManagerDashboardAppearance>(
+      valueListenable: ManagerAppPreferences.dashboardAppearance,
+      builder: (context, appearance, _) => MaterialApp(
+        theme: managerMaterialTheme(appearance),
+        title: 'Vynic Manager',
+        builder: (context, child) =>
+            ConnectionFeedback.manager(child: child ?? const SizedBox.shrink()),
+        debugShowCheckedModeBanner: false,
+        home: ManagerThemeListener(child: MobileLoginScreen()),
+      ),
     ),
   );
 }

@@ -71,7 +71,7 @@ installation uses a Device credential.
 | Device | `apps/backend/prisma/schema.prisma` | One authenticated POS installation | PostgreSQL `pos.Device` | Reuse and attach to Venue |
 | Venue identity settings | `apps/operations/lib/core/database/repositories/settings_repository.dart` | Offline display name, address, phone, and logo for receipts/POS UI | Hive settings | Keep separate; not authoritative cloud ownership |
 | Restaurant settings API | `apps/backend/src/mobile/services/mobile-devices.service.ts` | Service-fee settings for the current single restaurant | PostgreSQL `pos.Setting` | Operational data; tenant scope deferred to Step 4B |
-| Venue web | `apps/venue-web/` | One compiled customer booking site | Static configuration plus backend website data | Host/domain tenancy deferred |
+| Venue web | `apps/vankisi-custom-web/` | One compiled customer booking site | Static configuration plus backend website data | Host/domain tenancy deferred |
 | Platform web | `apps/platform-web/` | Vynic marketing/product website | Static source content | Not a tenant model |
 | Business date | POS and backend order/report code | Operational service-day boundary | Hive and PostgreSQL settings/rows | Not an Organization or Venue |
 

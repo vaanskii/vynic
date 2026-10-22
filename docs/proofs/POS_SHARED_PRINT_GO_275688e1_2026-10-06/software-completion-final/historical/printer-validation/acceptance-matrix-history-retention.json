@@ -1,0 +1,27 @@
+{
+  "matrix_v5_sha256": "fc55b5cabf7d4f95c39e977287dbbbebc6fea9482909bd062cb137fc99cfd8d4",
+  "purpose": "Resolve historical matrix v5 aliases after parent preserves/replaces source/check cohorts; historical matrix bytes stay unchanged.",
+  "rebindings": [
+    {
+      "immutable_retained_path": "printer-validation/acceptance-historical-go-final-source-snapshot.becbed114597.json",
+      "live_alias_sha256": "d694adbe1410f005d6285396f81a7126cdc7b9fb9f44b08a01f7f3c5e523330a",
+      "recorded_path": "tools/metadata/go-final-source-snapshot.json",
+      "recorded_sha256": "becbed114597ac2e6d153fe0c5bbc75bd720a497f43678dd5cb7954e64b76f5f",
+      "reference": "C_FULL_TEST_SOURCE_SNAPSHOT"
+    },
+    {
+      "immutable_retained_path": "tools/metadata/go-v1-retained-edge-tests.jsonl",
+      "live_alias_sha256": "f593e3f85a59e5f57882519730a09184e54c845ce26fa43fd7216301ba5ec1eb",
+      "recorded_path": "tools/metadata/go-final-edge-tests.jsonl",
+      "recorded_sha256": "ef531aa1603e56e14841578dbd75c179d7c66e5d5fda05dbf80c829a574a61f4",
+      "reference": "C_LOG"
+    },
+    {
+      "immutable_retained_path": "printer-validation/acceptance-cluster-manifest.a43c5b81ef7b.json",
+      "live_alias_sha256": "7f0cb9e7bbb49a65983efeb0fa45b0a2dc4e9929ff737fa8943a9f2b2a74170e",
+      "recorded_path": "printcluster-owned-source-hashes.json",
+      "recorded_sha256": "a43c5b81ef7b143123f9a377c0abcfd058f0096bf8bae0f05eca709530c2cd8d",
+      "reference": "C_MANIFEST"
+    }
+  ]
+}

@@ -1,0 +1,31 @@
+00:00 +0: loading /Users/vaanskii/Developer/vynic/apps/operations/test/widget/pos_theme_test.dart
+00:00 +0: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/pos_theme_test.dart: (setUpAll)
+00:00 +0: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/pos_theme_test.dart: POS Georgian text survives component themes at 1.0
+00:00 +1: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/admin_sections_layout_test.dart: პერსონალი the search row fits at 1024 wide
+00:00 +2: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/admin_sections_layout_test.dart: პერსონალი the search row fits at 1024 wide
+00:00 +3: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/admin_sections_layout_test.dart: პერსონალი the search row fits at 1024 wide
+00:00 +4: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/admin_sections_layout_test.dart: პერსონალი the search row fits at 1280 wide
+00:00 +5: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/admin_sections_layout_test.dart: პერსონალი the search row fits at 1440 wide
+00:00 +6: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/admin_sections_layout_test.dart: პერსონალი the search row fits at 1920 wide
+00:00 +7: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/admin_sections_layout_test.dart: პერსონალი the search row never outgrows the column it sits in
+00:00 +8: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/admin_sections_layout_test.dart: content starts at the top a short section fills the column rather than centring
+00:00 +9: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/admin_sections_layout_test.dart: content starts at the top its content is anchored to the top of the column
+00:00 +10: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/admin_sections_layout_test.dart: (tearDownAll)
+00:01 +10: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/admin_navigation_test.dart: the sidebar reaches every admin tool
+00:01 +11: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/admin_navigation_test.dart: a venue manager sees the business tools and nothing else
+00:01 +12: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/admin_navigation_test.dart: the developer half is exactly the plumbing and the danger tools
+00:01 +13: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/admin_navigation_test.dart: the exports are a destination of their own
+00:01 +14: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/admin_navigation_test.dart: every destination has a title
+00:01 +15: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/admin_close_day_layout_test.dart: (setUpAll)
+00:01 +15: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/admin_close_day_layout_test.dart: layout renders without overflow at 1024.0x768.0
+00:02 +16: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/admin_close_day_layout_test.dart: layout renders without overflow at 1280.0x800.0
+00:02 +17: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/admin_close_day_layout_test.dart: layout renders without overflow at 1440.0x900.0
+00:02 +18: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/admin_close_day_layout_test.dart: layout renders without overflow at 1920.0x1080.0
+00:02 +19: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/admin_close_day_layout_test.dart: layout renders without overflow at 820.0x1180.0
+00:02 +20: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/admin_close_day_layout_test.dart: layout the last row stretches to the bottom of a tall screen
+00:02 +21: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/admin_close_day_layout_test.dart: day summary shows the payment split beside the total
+00:02 +22: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/admin_close_day_layout_test.dart: day summary reports what the total leaves out
+00:02 +23: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/admin_close_day_layout_test.dart: readiness blocks on the open table and the reserved one
+00:02 +24: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/admin_close_day_layout_test.dart: readiness reading readiness does not release reserved tables
+00:02 +25: /Users/vaanskii/Developer/vynic/apps/operations/test/widget/admin_close_day_layout_test.dart: (tearDownAll)
+00:02 +25: All tests passed!

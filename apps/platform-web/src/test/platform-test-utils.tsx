@@ -3,7 +3,6 @@ import { render } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { vi } from "vitest";
 import { AppRoutes } from "../App";
-import { AuthProvider } from "../platform/auth";
 import { platformSession } from "../platform/session";
 
 export const ids = {
@@ -136,6 +135,22 @@ export function installApi(handler?: MockHandler) {
   return { requests, fetchMock };
 }
 
+/** A Website-only Venue: payments not in the package, events etc. not built. */
+export const websiteCapabilities = [
+  ["MENU", "Menu", true, true, true, null],
+  ["HOURS", "Hours", true, true, false, "No opening hours yet"],
+  ["RESERVATIONS", "Reservations", true, true, false, "Bookings are paid online, and online payments are not live"],
+  ["GALLERY", "Gallery", true, true, true, null],
+  ["CUSTOMER_ACCOUNTS", "Customer accounts", true, true, true, null],
+  ["ONLINE_PAYMENTS", "Online payments", true, false, false, "Bank of Georgia is not configured"],
+  ["EVENTS", "Events", false, false, false, "Not built"],
+  ["BANQUETS", "Banquets", false, false, false, "Not built"],
+  ["ONLINE_ORDERING", "Online ordering", false, false, false, "Not built"],
+].map(([key, label, built, commercial, ready, readyDetail]) => ({
+  key, label, built, commercial, enabled: built && commercial, canEnable: commercial, ready, readyDetail,
+  available: built && commercial, live: built && commercial && ready, usedByFrontend: null,
+}));
+
 function defaultReply({ url, method }: MockRequest): MockReply {
   const path = url.pathname;
   if (path === "/platform/auth/login" && method === "POST") return { body: { access_token: "test-token", expiresIn: 28800, actor } };
@@ -147,22 +162,32 @@ function defaultReply({ url, method }: MockRequest): MockReply {
   if (path === "/platform/plans") return { body: plans };
   if (path === "/platform/features") return { body: features };
   if (path === `/platform/venues/${ids.venue}/product`) return { body: product };
+  if (path === `/platform/venues/${ids.venue}/hostname-requests`) return { body: [] };
   if (path === `/platform/venues/${ids.venue}/domains`) return { body: [] };
+  if (path === `/platform/venues/${ids.venue}/website-capabilities`) return { body: websiteCapabilities };
+  if (path === `/platform/venues/${ids.venue}/website-deliveries`)
+    return { body: { items: [], total: 0, offset: 0, limit: 25, primarySelected: true } };
+  if (path === `/platform/venues/${ids.venue}/website-payment-reviews`) return { body: {items: [], total: 0, offset: 0, limit:25, financialDecisionOwner: "RESTAURANT_OWNER"} };
   if (path === `/platform/venues/${ids.venue}/devices`) return { body: [device] };
+  if (path === `/platform/venues/${ids.venue}/manager-links`) return { body: [] };
   if (path === `/platform/venues/${ids.venue}/enrollments`) return { body: [] };
   if (path.startsWith(`/platform/venues/${ids.venue}/test-command/`)) return { body: { commandId: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa", type: "NOOP", status: "PENDING", attemptCount: 0, maxAttempts: 10, claimedAt: null, acknowledgedAt: null, resultCode: null, resultDetail: null, createdAt: "2026-08-31T10:00:00.000Z", updatedAt: "2026-08-31T10:00:00.000Z", claimedBy: null, device: null } };
   if (path === "/platform/audit") return { body: audit };
   return { body: {} };
 }
 
-export function renderPlatform(route: string, options: { authenticated?: boolean } = {}) {
+export function renderPlatform(route: string, options: { authenticated?: boolean; hostname?: string } = {}) {
   if (options.authenticated !== false) platformSession.save("test-token", 28800);
   const client = new QueryClient({ defaultOptions: { queries: { retry: false, staleTime: 0 }, mutations: { retry: false } } });
   return render(
     <QueryClientProvider client={client}>
       <MemoryRouter initialEntries={[route]}>
-        <AuthProvider><AppRoutes /></AuthProvider>
+        <AppRoutes hostname={options.hostname ?? "admin.localhost"} />
       </MemoryRouter>
     </QueryClientProvider>,
   );
+}
+
+export function renderPublic(route: string, options: { authenticated?: boolean } = {}) {
+  return renderPlatform(route, { ...options, hostname: "localhost" });
 }

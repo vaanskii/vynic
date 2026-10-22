@@ -13,6 +13,8 @@ interface EnrollBody {
   installationId?: unknown;
   platform?: unknown;
   displayName?: unknown;
+  menuClient?: unknown;
+  managerSetupVersion?: unknown;
 }
 
 function text(value: unknown, field: string, max: number): string {
@@ -55,6 +57,8 @@ export class DeviceEnrollmentController {
           ? body.displayName.trim().slice(0, 200)
           : undefined,
       clientIp: request.ip,
+      menuClient: body.menuClient,
+      managerSetupVersion: body.managerSetupVersion,
     });
 
     return {

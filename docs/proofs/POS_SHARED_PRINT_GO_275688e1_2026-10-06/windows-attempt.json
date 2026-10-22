@@ -1,0 +1,35 @@
+{
+  "recordedAtUTC": "2026-10-06T15:12:57.654824+00:00",
+  "status": "NOT_RUN_BLOCKED",
+  "scope": "nonphysical Windows helper lifecycle/channel qualification",
+  "targetVM": "9830bac8-34c6-46f7-9062-cd8f62f7a127",
+  "attempt": {
+    "tool": "prlctl exec --current-user powershell.exe -NoProfile -NonInteractive -OutputFormat Text -EncodedCommand <short loader>",
+    "exitCode": 255,
+    "error": "PrlVm_TerminalConnect: PrlJob_Wait: PRL_ERR_IO_STOPPED"
+  },
+  "readOnlyVMState": {
+    "tool": "prlctl list -a",
+    "exitCode": 0,
+    "status": "suspended",
+    "ipAddress": "-"
+  },
+  "sourceCount": 34,
+  "inputManifestSHA256": "237deec3436b5cfa9983cc53ab4b52b4e9c2dcce0a9ca592efb8b26938160bda",
+  "sourceZipSHA256": "de3a827b1ec45556a027af1359dec780e917a63ec3977f42bcfe979d80889b6e",
+  "stageReceiptSHA256": "af253cbb14b91904a835a76c42a8093b5c70e80e8dd7f659554809678d903d0b",
+  "scriptSHA256": "a4ece1cd7913a84e51a1fe657d325662a1b81e7e7afbd56bbf21a255fbdae7fd",
+  "encodedLoaderSHA256": "3c0b4b753430e017c90dd3823c00e39184ed6b8db9f8898e3db29b0e9d176efe",
+  "guestExecutionConfirmed": false,
+  "windowsResultDirectoryExists": false,
+  "heldAction": "Resume the existing suspended VM to run the already prepared software-only packet",
+  "VMResumeOrPowerOperations": 0,
+  "VMConfigurationChanges": 0,
+  "serviceOrDriverOperations": 0,
+  "securityPolicyChanges": 0,
+  "physicalPrintJobs": 0,
+  "limits": [
+    "Crosscompilation and portable fake assertions do not qualify actual Windows Job Object or semaphore lifecycle.",
+    "Existing cached native read-only proof is a separate earlier source version."
+  ]
+}

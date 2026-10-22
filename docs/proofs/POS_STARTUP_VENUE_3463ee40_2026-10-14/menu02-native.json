@@ -1,0 +1,31 @@
+{
+  "status": "PASS",
+  "writerPid": 29817,
+  "readerPid": 30002,
+  "mutationId": "6b8326ce-31b2-4efe-baae-961ab6c597b0",
+  "pendingEntries": 1,
+  "localPrice": 12.0,
+  "otherCloudPrice": 24.0,
+  "journalStatus": "pending",
+  "cloudReachableDuringRecovery": false,
+  "walCleared": true,
+  "projectionMarkerCleared": true,
+  "duplicateCaptureCount": 0,
+  "signal": "SIGKILL",
+  "checkpoint": "clear:after",
+  "projectionEmptyAtKill": true,
+  "writerExit": 79,
+  "readerExit": 0,
+  "platform": "macOS-27.0.1-arm64-arm-64bit",
+  "command": [
+    "/opt/homebrew/share/flutter/bin/flutter",
+    "test",
+    "--no-pub",
+    "--reporter",
+    "expanded",
+    "test/live/menu02_process_restart_test.dart"
+  ],
+  "writerLogSha256": "8da0c189607c785b339a55f71aac50e7f3683eb708da60b5ad7b092593dbed7a",
+  "readerLogSha256": "0b030a6f90ae6d6606b3cd40275a21676aa17c8a4daa4b3920a4016b090d2001",
+  "temporaryDirectoryRemoved": true
+}

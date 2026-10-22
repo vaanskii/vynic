@@ -1,0 +1,994 @@
+<!doctype html>
+<html lang="en" data-composition-variables='[{"id":"sound","type":"boolean","label":"Sound (master)","default":true},{"id":"loopOut","type":"boolean","label":"Loop-safe ending (website)","default":false}]'>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+    <title>Vynic — product film</title>
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      @font-face { font-family: "Geist"; src: url("assets/fonts/Geist-Regular.ttf") format("truetype"); font-weight: 400; }
+      @font-face { font-family: "Geist"; src: url("assets/fonts/Geist-SemiBold.ttf") format("truetype"); font-weight: 600; }
+      @font-face { font-family: "Geist"; src: url("assets/fonts/Geist-Bold.ttf") format("truetype"); font-weight: 700; }
+      @font-face { font-family: "Geist Mono"; src: url("assets/fonts/GeistMono-Variable-latin.woff2") format("woff2"); font-weight: 100 900; }
+      /* Website skins (see assets/fonts/FONTS.md) */
+      @font-face { font-family: "Noto Serif"; src: url("assets/fonts/NotoSerif-Regular.ttf") format("truetype"); font-weight: 400; font-style: normal; }
+      @font-face { font-family: "Noto Serif"; src: url("assets/fonts/NotoSerif-Bold.ttf") format("truetype"); font-weight: 700; font-style: normal; }
+      @font-face { font-family: "Noto Serif"; src: url("assets/fonts/NotoSerif-Italic.ttf") format("truetype"); font-weight: 400; font-style: italic; }
+      @font-face { font-family: "Noto Sans"; src: url("assets/fonts/NotoSans-Regular.ttf") format("truetype"); font-weight: 400; }
+      @font-face { font-family: "Noto Sans"; src: url("assets/fonts/NotoSans-Bold.ttf") format("truetype"); font-weight: 700; }
+      @font-face { font-family: "Cormorant Garamond"; src: url("assets/fonts/CormorantGaramond-400-latin.woff2") format("woff2"); font-weight: 400; }
+      @font-face { font-family: "Cormorant Garamond"; src: url("assets/fonts/CormorantGaramond-700-latin.woff2") format("woff2"); font-weight: 700; }
+
+      :root {
+        --stage: #1a1817;
+        --raised: #22201e;
+        --plum: #764b7c;
+        --lavender: #b9a8c4;
+        --paper: #f7f6f4;
+        --card: #ffffff;
+        --card-soft: #faf9f7;
+        --ink: #1c1a18;
+        --muted: #6f6a65;
+        --muted-dark: #a8a09a;
+        --border: #e6e3de;
+        --pos-action: #4c4272;
+        --pos-select: #f2effa;
+        --pos-select-text: #52447a;
+        --amber: #d9a531;
+        --green: #2e7d5b;
+      }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 1920px; height: 1080px; overflow: hidden; background: var(--stage); }
+      #root { position: relative; width: 100%; height: 100%; overflow: hidden; font-family: "Geist", sans-serif; color: var(--paper); }
+      .mono { font-family: "Geist Mono", monospace; font-feature-settings: "tnum" 1; }
+
+      /* ---------- stage ---------- */
+      #stage { position: absolute; inset: 0; overflow: hidden; background: var(--stage); }
+      #bg-grid {
+        position: absolute; inset: 0; opacity: 0; --gw: 62%; --gh: 70%;
+        background-image:
+          linear-gradient(90deg, rgba(247, 246, 244, 0.07) 1px, transparent 1px),
+          linear-gradient(0deg, rgba(247, 246, 244, 0.07) 1px, transparent 1px);
+        background-size: 44px 44px;
+        -webkit-mask-image: radial-gradient(ellipse var(--gw) var(--gh) at 50% 50%, #000 20%, transparent 78%);
+        mask-image: radial-gradient(ellipse var(--gw) var(--gh) at 50% 50%, #000 20%, transparent 78%);
+      }
+      #vignette {
+        position: absolute; inset: 0; pointer-events: none;
+        background: radial-gradient(ellipse 80% 75% at 50% 50%, transparent 55%, rgba(10, 9, 9, 0.55) 100%);
+      }
+      #world { position: absolute; left: 0; top: 0; width: 3840px; height: 2160px; transform-origin: 0 0; }
+      .glow { position: absolute; border-radius: 50%; pointer-events: none; opacity: 0;
+        background: radial-gradient(circle, rgba(118, 75, 124, 0.55) 0%, rgba(118, 75, 124, 0.18) 38%, transparent 68%); }
+      #links { position: absolute; left: 0; top: 0; width: 3840px; height: 2160px; overflow: visible; }
+      .link-base { opacity: 0; fill: none; stroke: rgba(185, 168, 196, 0.16); stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+      .link { opacity: 0; fill: none; stroke: var(--lavender); stroke-width: 3.5; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 1 1.2; stroke-dashoffset: 1; }
+      .vtrace { stroke-width: 4; }
+      .pulse { fill: none; stroke: #f1e9f5; stroke-width: 7; stroke-linecap: round; stroke-dasharray: 0.05 1.2; stroke-dashoffset: 0.05; opacity: 0; }
+
+      /* ---------- hub + wordmark ---------- */
+      #hub { position: absolute; left: 1790px; top: 950px; width: 260px; height: 260px; }
+      #hub-tile { position: absolute; inset: 0; border-radius: 57px; background: var(--raised);
+        border: 2px solid rgba(185, 168, 196, 0.3); opacity: 0; }
+      #hub-mark { position: absolute; inset: 0; width: 260px; height: 260px; overflow: visible; }
+      .v-thick, .v-thin { fill: none; stroke: var(--lavender); stroke-linecap: round; stroke-dasharray: 1 1.2; stroke-dashoffset: 1; }
+      .v-light { fill: none; stroke: #ffffff; stroke-width: 6; stroke-linecap: round; stroke-dasharray: 0.16 1.4; stroke-dashoffset: 0.16; opacity: 0; }
+      #hub-spark { position: absolute; left: 0; top: 0; width: 28px; height: 28px; border-radius: 50%; opacity: 0;
+        background: radial-gradient(circle, #fff 0%, #e6d7ee 30%, rgba(185, 168, 196, 0) 70%); }
+      #wordmark { position: absolute; opacity: 0; visibility: hidden; left: 2112px; top: 978px; height: 204px; }
+      #wordmark span { display: block; font-size: 172px; line-height: 204px; font-weight: 600; letter-spacing: -0.045em; color: var(--paper); }
+      #tagline { position: absolute; opacity: 0; visibility: hidden; left: 1790px; top: 1262px; width: 800px; overflow: hidden; }
+      #tagline span { display: block; font-size: 44px; line-height: 60px; font-weight: 400; letter-spacing: -0.02em; color: var(--muted-dark); }
+
+
+      /* ghost interface panels behind the mark (scene 1 depth) */
+      .ghost { position: absolute; border: 2px solid rgba(185, 168, 196, 0.2); border-radius: 22px; opacity: 0; }
+
+      /* ---------- venue record (cloud foundation) ---------- */
+      #record { position: absolute; left: 1700px; top: 600px; width: 470px; padding: 26px 28px 20px; border-radius: 22px;
+        background: var(--raised); border: 2px solid rgba(185, 168, 196, 0.26); opacity: 0; }
+      #record .rec-title { font-size: 19px; letter-spacing: 0.14em; color: var(--lavender); }
+      #record .rec-sub { margin-top: 6px; font-size: 26px; font-weight: 600; color: var(--paper); letter-spacing: -0.01em; }
+      .rec-row { position: relative; display: flex; align-items: center; justify-content: space-between; margin-top: 14px;
+        padding: 12px 16px; border-radius: 12px; background: rgba(247, 246, 244, 0.04); border: 1.5px solid rgba(247, 246, 244, 0.08); }
+      .rec-row .name { font-size: 19px; letter-spacing: 0.1em; color: var(--paper); }
+      .rec-row .state { position: relative; width: 150px; height: 24px; text-align: right; font-size: 17px; letter-spacing: 0.08em; }
+      .rec-row .state span { position: absolute; right: 0; top: 0; white-space: nowrap; }
+      .rec-row .hl { position: absolute; inset: -2px; border-radius: 12px; border: 2px solid var(--lavender); opacity: 0; }
+      .st-idle { color: var(--muted-dark); }
+      .st-ok { color: #9fd0b6; opacity: 0; }
+
+      /* ---------- data token ---------- */
+      #token { position: absolute; left: 1318px; top: 1368px; height: 64px; padding: 0 28px; white-space: nowrap; border-radius: 32px;
+        display: flex; align-items: center; justify-content: center; gap: 14px; opacity: 0;
+        background: #2b2629; border: 2px solid var(--lavender); color: var(--paper); font-size: 20px; letter-spacing: 0.08em;
+        box-shadow: 0 18px 50px rgba(0, 0, 0, 0.45); }
+      #token i, #token2 i { display: block; width: 10px; height: 10px; border-radius: 50%; background: var(--lavender); }
+      #token2 { position: absolute; left: 0; top: 0; translate: -50% -50%; height: 52px; padding: 0 22px; white-space: nowrap; border-radius: 26px;
+        display: flex; align-items: center; gap: 12px; opacity: 0; background: #2b2629; border: 2px solid var(--lavender); color: var(--paper);
+        font-size: 18px; letter-spacing: 0.08em; box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45); }
+
+      /* ---------- POS window (faithful rebuild of the current Windows POS) ---------- */
+      #pos { position: absolute; opacity: 0; left: 240px; top: 700px; width: 1440px; height: 900px; border-radius: 18px; overflow: hidden;
+        background: var(--paper); color: var(--ink); border: 1.5px solid #3a3533;
+        box-shadow: 0 60px 120px rgba(0, 0, 0, 0.55), 0 0 0 10px rgba(247, 246, 244, 0.04); }
+      .pos-top { height: 64px; display: flex; align-items: center; justify-content: space-between; padding: 0 24px;
+        background: #fff; border-bottom: 1.5px solid var(--border); }
+      .pos-top .left, .pos-top .right { display: flex; align-items: center; gap: 16px; }
+      .pos-badge { width: 34px; height: 34px; border-radius: 9px; background: #f2edf7; }
+      .pos-title { font-size: 21px; font-weight: 700; }
+      .pos-crumb { font-size: 18px; color: var(--muted); padding-left: 16px; border-left: 1.5px solid var(--border); }
+      .chip { font-size: 15px; font-weight: 600; padding: 7px 12px; border-radius: 8px; border: 1.5px solid var(--border); color: #57514b; background: #faf9f7; }
+      .chip.ok { color: #1f5f44; background: #e7f2ec; border-color: #c7e0d3; }
+      .chip.ok b { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #3f8f68; margin-right: 8px; vertical-align: 1px; }
+      .pos-nav { height: 56px; display: flex; align-items: center; gap: 10px; padding: 0 18px; background: #fff; border-bottom: 1.5px solid var(--border); }
+      .pos-nav .tab { font-size: 17px; font-weight: 600; color: #7c756e; padding: 9px 16px; border-radius: 8px; }
+      .pos-nav .tab.on { background: var(--pos-select); color: var(--pos-select-text); }
+      .pos-nav .count { display: inline-block; margin-left: 6px; font-size: 13px; padding: 1px 7px; border-radius: 10px; background: #fae9e3; color: #8a4f42; }
+      .pos-nav .settings { margin-left: auto; font-size: 16px; font-weight: 600; color: #fff; background: var(--pos-action); padding: 10px 18px; border-radius: 9px; }
+      .pos-body { position: absolute; left: 0; top: 120px; right: 0; bottom: 0; }
+      .pos-main { position: absolute; left: 20px; top: 18px; width: 1030px; height: 744px; border-radius: 14px; background: #fff; border: 1.5px solid #ebe8e3; overflow: hidden; }
+      .pos-side { position: absolute; left: 1068px; top: 18px; width: 352px; height: 744px; border-radius: 14px; background: #fff; border: 1.5px solid #ebe8e3; overflow: hidden; }
+
+      /* floor view */
+      .floor-head { height: 60px; display: flex; align-items: center; gap: 22px; padding: 0 18px; border-bottom: 1.5px solid #f0ede9; }
+      .floor-pills { display: flex; padding: 4px; border-radius: 10px; border: 1.5px solid var(--border); }
+      .floor-pills span { font-size: 15px; font-weight: 600; padding: 6px 12px; border-radius: 7px; color: #7c756e; }
+      .floor-pills span.on { background: var(--pos-select); color: var(--pos-select-text); }
+      .legend { display: flex; gap: 18px; font-size: 15px; font-weight: 600; color: #7c756e; }
+      .legend i { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 7px; vertical-align: 1px; }
+      .canvas { position: absolute; left: 0; top: 60px; right: 0; bottom: 0; background: #fcfcfb;
+        background-image: linear-gradient(90deg, #f3f1ee 1px, transparent 1px), linear-gradient(0deg, #f3f1ee 1px, transparent 1px); background-size: 34px 34px; }
+      .obj { position: absolute; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 16px; font-weight: 700; border-radius: 9px; }
+      .obj.bar { left: 60px; top: 36px; width: 290px; height: 70px; background: #dff2ff; border: 2.5px solid #2499e5; color: #1c668f; }
+      .obj.stage { left: 720px; top: 36px; width: 240px; height: 88px; background: #fde5f0; border: 2.5px solid #f04496; color: #9b2f61; }
+      .tbl { position: absolute; }
+      .tbl .chair { position: absolute; background: #d6d0c8; border-radius: 3px; }
+      .tbl .surf { position: absolute; inset: 11px; display: flex; flex-direction: column; align-items: center; justify-content: center;
+        background: #fff; border: 2px solid #e8e4e0; border-radius: 10px; box-shadow: 0 3px 6px rgba(41, 38, 34, 0.05); }
+      .tbl.round .surf { border-radius: 50%; }
+      .tbl .nm { font-size: 17px; font-weight: 700; display: flex; align-items: center; gap: 7px; }
+      .tbl .nm i { width: 9px; height: 9px; border-radius: 50%; background: #e2e0db; }
+      .tbl .meta { margin-top: 3px; font-size: 14px; font-weight: 600; color: var(--muted); }
+      .tbl.occ .surf { background: #fffdf7; border-color: #ecdcb6; }
+      .tbl.occ .nm i { background: var(--amber); }
+      .tbl.occ .meta { color: #8a6a20; font-weight: 700; }
+      .tbl.res .surf { background: #f5eff9; border-color: #cbb6d9; }
+      .tbl.res .nm i { background: #b994c8; }
+      /* Table 4 states (stacked, crossfaded) */
+      #t4 .surf.after { background: #fffdf7; border-color: #ecdcb6; opacity: 0; }
+      #t4 .surf.after .nm i { background: var(--amber); }
+      #t4 .surf.after .meta { color: #8a6a20; font-weight: 700; }
+      #t4-ring { position: absolute; inset: 4px; border-radius: 14px; border: 4px solid var(--plum); opacity: 0; }
+      .ripple { position: absolute; width: 120px; height: 120px; margin: -60px 0 0 -60px; border-radius: 50%;
+        background: radial-gradient(circle, rgba(118, 75, 124, 0.35) 0%, rgba(118, 75, 124, 0.15) 55%, transparent 70%); opacity: 0; }
+
+      /* order editor view */
+      #editor { position: absolute; inset: 0; opacity: 0; background: #fff; }
+      .ed-search { position: absolute; left: 18px; right: 18px; top: 14px; height: 48px; border-radius: 10px; border: 1.5px solid var(--border);
+        display: flex; align-items: center; padding: 0 16px; font-size: 16px; color: #756f68; }
+      .ed-cats { position: absolute; left: 18px; top: 80px; width: 196px; }
+      .ed-cats div { font-size: 16px; font-weight: 600; color: #6f6962; padding: 12px 14px; border-radius: 9px; margin-bottom: 4px; }
+      .ed-cats div.on { background: var(--pos-select); color: var(--pos-select-text); }
+      .ed-grid { position: absolute; left: 232px; top: 80px; right: 18px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+      .tile { position: relative; height: 120px; border-radius: 12px; border: 1.5px solid #ebe8e3; background: #fff; padding: 16px 16px 14px;
+        box-shadow: 0 2px 4px rgba(41, 38, 34, 0.04); overflow: hidden; }
+      .tile .tn { font-size: 18px; font-weight: 700; }
+      .tile .tp { position: absolute; left: 16px; bottom: 14px; font-size: 20px; font-weight: 700; color: var(--pos-select-text); }
+      .tile .add { position: absolute; right: 14px; bottom: 12px; width: 34px; height: 34px; border-radius: 9px; background: var(--pos-select);
+        color: var(--pos-select-text); font-size: 22px; font-weight: 700; display: flex; align-items: center; justify-content: center; }
+      .tile .flash { position: absolute; inset: 0; border-radius: 12px; background: rgba(118, 75, 124, 0.12); border: 2.5px solid var(--plum); opacity: 0; }
+
+      /* side panel: service now / order */
+      .side-a, .side-b { position: absolute; inset: 0; padding: 20px; }
+      .side-b { opacity: 0; }
+      .lbl { font-size: 13px; font-weight: 700; letter-spacing: 0.12em; color: #6f6a65; text-transform: uppercase; }
+      .kpis { margin-top: 12px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+      .kpi { border-radius: 10px; border: 1.5px solid var(--border); padding: 12px 14px; }
+      .kpi p { font-size: 14px; color: var(--muted); }
+      .kpi b { display: block; margin-top: 4px; font-size: 30px; }
+      .kpi.amber { background: #fbf4e0; border-color: #f0e3c0; }
+      .next { margin-top: 18px; border-radius: 12px; border: 1.5px solid var(--border); padding: 14px; }
+      .next b { display: block; font-size: 19px; margin-top: 6px; }
+      .next span { font-size: 15px; color: var(--muted); }
+      .ord-head { display: flex; align-items: center; justify-content: space-between; }
+      .ord-head h4 { font-size: 30px; font-weight: 700; letter-spacing: -0.02em; }
+      .pill-amber { font-size: 14px; font-weight: 700; padding: 6px 11px; border-radius: 8px; background: #fbf2e0; color: #8a5b14; border: 1.5px solid #ebdcb5; }
+      .ord-meta { margin-top: 4px; font-size: 15px; color: var(--muted); }
+      .ord-list { position: absolute; left: 20px; right: 20px; top: 126px; height: 300px; border-top: 1.5px solid #f0ede9; }
+      .line { position: absolute; left: 0; right: 0; height: 64px; display: flex; align-items: center; justify-content: space-between; opacity: 0;
+        border-bottom: 1.5px solid #f3f0ec; }
+      .line .ln { font-size: 18px; font-weight: 700; }
+      .line .lq { font-size: 14px; color: var(--muted); margin-top: 3px; }
+      .line .lv { font-size: 18px; font-weight: 700; }
+      .line .lq { position: relative; height: 17px; width: 120px; }
+      .line .lq span { position: absolute; left: 0; top: 0; white-space: nowrap; }
+      .line .lq .q2 { opacity: 0; }
+      .line-hl { position: absolute; left: -10px; right: -10px; top: 4px; bottom: 4px; border-radius: 9px; background: rgba(118, 75, 124, 0.09); opacity: 0; }
+      .sums { position: absolute; left: 20px; right: 20px; top: 470px; }
+      .sum-row { display: flex; justify-content: space-between; font-size: 16px; color: #57514b; margin-bottom: 8px; }
+      .sum-total { display: flex; justify-content: space-between; align-items: baseline; margin-top: 12px; padding-top: 12px; border-top: 1.5px solid #ebe8e3; }
+      .sum-total span { font-size: 18px; font-weight: 700; }
+      .sum-total b { font-size: 36px; letter-spacing: -0.02em; }
+      .confirm { position: absolute; left: 20px; right: 20px; bottom: 20px; height: 70px; border-radius: 12px; background: var(--pos-action);
+        color: #fff; font-size: 20px; font-weight: 700; overflow: hidden; }
+      .confirm span { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; gap: 10px; }
+      .confirm .c2 { opacity: 0; background: #3e7d5f; }
+
+      /* ---------- Manager phone (faithful English rebuild of the Georgian Manager UI; light theme tokens) ---------- */
+      #phone { position: absolute; opacity: 0; left: 2820px; top: 190px; width: 420px; height: 880px; border-radius: 64px; padding: 12px;
+        background: #121113; box-shadow: 0 60px 120px rgba(0, 0, 0, 0.6), inset 0 0 0 2px #3b3639; }
+      .screen { position: relative; width: 100%; height: 100%; border-radius: 52px; overflow: hidden; color: #0f172a; background: #e3edfc; }
+      .m-status { position: absolute; left: 0; right: 0; top: 0; z-index: 4; display: flex; justify-content: space-between; padding: 22px 36px 0; font-size: 16px; font-weight: 600; }
+      .m-page { position: absolute; inset: 0; }
+      #m-inv { opacity: 0; visibility: hidden; }
+      #m-recv { visibility: hidden; }
+      .m-scroll { position: absolute; left: 0; right: 0; top: 0; bottom: 0; }
+      .m-spin { position: absolute; left: 50%; top: 62px; width: 38px; height: 38px; margin-left: -19px; border-radius: 50%; background: #fff; opacity: 0;
+        box-shadow: 0 4px 12px rgba(15, 23, 42, 0.12); }
+      .m-spin i { position: absolute; inset: 9px; border-radius: 50%; border: 3px solid #2563eb; border-right-color: transparent; }
+      .m-hello { position: absolute; left: 24px; top: 64px; font-size: 16px; font-weight: 500; letter-spacing: 0.02em; color: #475569; }
+      .m-name { position: absolute; left: 24px; top: 86px; font-size: 28px; font-weight: 700; letter-spacing: -0.02em; }
+      .m-bell { position: absolute; right: 24px; top: 70px; width: 46px; height: 46px; border-radius: 50%; background: #fff; box-shadow: 0 4px 10px rgba(15, 23, 42, 0.05); }
+      .m-bell i { position: absolute; left: 15px; top: 13px; width: 16px; height: 17px; border: 2.5px solid #0f172a; border-radius: 8px 8px 3px 3px; }
+      .m-card { position: absolute; left: 16px; right: 16px; padding: 16px 18px; border-radius: 22px; background: #fff; border: 1px solid rgba(37, 99, 235, 0.08);
+        box-shadow: 0 6px 18px rgba(37, 99, 235, 0.06); }
+      .m-open { display: inline-flex; align-items: center; gap: 7px; padding: 5px 11px; border-radius: 14px; background: #e3f5ec; color: #047857;
+        font-size: 13px; font-weight: 700; }
+      .m-open i { width: 7px; height: 7px; border-radius: 50%; background: #10b981; }
+      .m-l { font-size: 14px; color: #475569; }
+      .m-v { margin-top: 2px; font-size: 20px; font-weight: 700; }
+      .m-rev { margin-top: 2px; font-size: 42px; font-weight: 700; letter-spacing: -0.03em; }
+      .m-row { position: relative; display: flex; justify-content: space-between; align-items: center; margin-top: 9px; padding: 10px 14px;
+        border-radius: 14px; font-size: 14px; font-weight: 600; }
+      .m-row.closed { background: #edf8f2; color: #047857; border: 1px solid #c6ead6; }
+      .m-row.open { background: #fff7ea; color: #92400e; border: 1px solid #f3dcb3; }
+      .m-row .lab { position: relative; width: 150px; height: 20px; }
+      .m-row .lab span { position: absolute; left: 0; top: 0; white-space: nowrap; }
+      .m-ihead { display: flex; align-items: center; gap: 10px; font-size: 17px; font-weight: 700; }
+      .m-ihead .ico { width: 22px; height: 20px; border: 2.5px solid #0f172a; border-radius: 4px; }
+      .m-ihead .go { margin-left: auto; font-size: 14px; font-weight: 700; color: #2563eb; }
+      .m-kv { display: flex; justify-content: space-between; align-items: baseline; margin-top: 12px; font-size: 15px; }
+      .m-kv b { font-size: 21px; }
+      .m-warn { display: flex; align-items: center; gap: 8px; margin-top: 10px; font-size: 14px; }
+      .m-warn i { width: 0; height: 0; border-left: 8px solid transparent; border-right: 8px solid transparent; border-bottom: 14px solid #f59e0b; }
+      .m-warn span:last-child { margin-left: auto; font-weight: 700; }
+      .m-tapfx { position: absolute; border-radius: 12px; background: rgba(37, 99, 235, 0.14); opacity: 0; }
+      /* Inventory home (მარაგები) */
+      .i-title { position: absolute; left: 24px; top: 64px; font-size: 24px; font-weight: 700; letter-spacing: -0.01em; }
+      .i-menu { position: absolute; right: 26px; top: 72px; width: 22px; height: 16px; border-top: 2.5px solid #0f172a; border-bottom: 2.5px solid #0f172a; }
+      .i-menu::after { content: ""; position: absolute; left: 0; right: 6px; top: 4.5px; border-top: 2.5px solid #0f172a; }
+      .i-add { position: absolute; left: 20px; right: 20px; top: 112px; height: 52px; border-radius: 26px; background: #2563eb; color: #fff;
+        display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 16px; font-weight: 700; }
+      .i-today { position: absolute; left: 22px; right: 22px; top: 184px; display: flex; justify-content: space-between; align-items: baseline; }
+      .i-today span { font-size: 15px; color: #475569; }
+      .i-today b { font-size: 22px; font-weight: 700; }
+      .i-chip { position: absolute; left: 20px; top: 222px; height: 34px; padding: 0 14px 0 10px; border-radius: 10px; background: #fff; border: 1px solid #c7d9f5;
+        display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600; }
+      .i-chip i { width: 0; height: 0; border-left: 7px solid transparent; border-right: 7px solid transparent; border-bottom: 12px solid #f59e0b; }
+      .i-chip .n { position: relative; width: 12px; height: 18px; }
+      .i-chip .n span { position: absolute; left: 0; top: 0; }
+      .i-rule { position: absolute; left: 20px; right: 20px; top: 274px; border-top: 1px solid #c7d9f5; }
+      .i-h { position: absolute; left: 22px; font-size: 15px; font-weight: 700; }
+      .i-dest { position: absolute; left: 22px; right: 20px; height: 50px; display: flex; align-items: center; gap: 14px; }
+      .i-dest .ic { width: 22px; height: 22px; border: 2.5px solid #2563eb; border-radius: 6px; flex: none; }
+      .i-dest .t { font-size: 15px; font-weight: 600; }
+      .i-dest .s { margin-top: 2px; font-size: 12px; color: #475569; }
+      .i-dest .ch { margin-left: auto; width: 9px; height: 9px; border-top: 2.5px solid #64748b; border-right: 2.5px solid #64748b; transform: rotate(45deg); }
+      .i-empty { position: absolute; left: 22px; top: 540px; font-size: 14px; color: #475569; }
+      .i-rcpt { position: absolute; left: 16px; right: 16px; top: 532px; padding: 14px 16px; border-radius: 18px; background: #fff; border: 1px solid #c7d9f5; opacity: 0; }
+      .i-rcpt .top { display: flex; align-items: center; gap: 8px; }
+      .i-rcpt .sup { font-size: 16px; font-weight: 700; }
+      .i-rcpt .badge { padding: 4px 8px; border-radius: 999px; background: rgba(16, 185, 129, 0.12); color: #047857; font-size: 11px; font-weight: 700; }
+      .i-rcpt .bot { display: flex; align-items: center; justify-content: space-between; margin-top: 10px; }
+      .i-rcpt .chip2 { padding: 4px 10px; border-radius: 8px; background: #eff6ff; color: #1e40af; font-size: 12px; font-weight: 600; }
+      .i-rcpt b { font-size: 19px; }
+      /* Receiving: payment / review step */
+      #m-recv { position: absolute; inset: 0; z-index: 5; background: #dce8fb; }
+      .r-head { position: absolute; left: 22px; top: 62px; display: flex; align-items: center; gap: 14px; font-size: 20px; font-weight: 700; }
+      .r-head i { width: 11px; height: 11px; border-left: 2.5px solid #0f172a; border-bottom: 2.5px solid #0f172a; transform: rotate(45deg); }
+      .r-steps { position: absolute; left: 22px; right: 22px; top: 106px; display: flex; gap: 8px; font-size: 13px; font-weight: 700; }
+      .r-steps span { flex: 1; padding: 7px 0; text-align: center; border-radius: 10px; background: #fff; color: #475569; }
+      .r-steps span.on { background: #2563eb; color: #fff; }
+      .r-card { position: absolute; left: 16px; right: 16px; padding: 14px 16px; border-radius: 18px; background: #fff; border: 1px solid #c7d9f5; }
+      .r-card .k { font-size: 13px; color: #475569; }
+      .r-card .v { margin-top: 2px; font-size: 16px; font-weight: 700; }
+      .r-pay { position: absolute; left: 22px; top: 230px; font-size: 18px; font-weight: 700; }
+      .r-opt { position: absolute; left: 22px; right: 22px; height: 36px; display: flex; align-items: center; gap: 14px; font-size: 15px; }
+      .r-opt i { width: 20px; height: 20px; border-radius: 50%; border: 2.5px solid #64748b; flex: none; }
+      .r-opt.on { color: #1d4ed8; font-weight: 600; }
+      .r-opt.on i { border-color: #2563eb; box-shadow: inset 0 0 0 4px #fff, inset 0 0 0 10px #2563eb; }
+      .r-sum .h { font-size: 15px; font-weight: 700; }
+      .r-sum .r-line { margin-top: 10px; font-size: 16px; }
+      .r-sum .r-line b { color: #047857; }
+      .r-sum .rule { margin: 14px 0 10px; border-top: 1px solid #e2e8f0; }
+      .r-sum .r-row { margin-top: 7px; font-size: 15px; display: flex; justify-content: space-between; }
+      .r-sum .r-row.debt { padding: 8px 10px; margin: 8px -10px 0; border-radius: 10px; background: #fff7ea; color: #92400e; font-weight: 700; }
+      .r-go { position: absolute; left: 20px; right: 20px; bottom: 34px; height: 54px; border-radius: 27px; background: #2563eb; color: #fff;
+        display: flex; align-items: center; justify-content: center; font-size: 17px; font-weight: 700; }
+      /* navigation: Dashboard, Tables, Financials, Inventory, Reservations, Management */
+      .m-nav { position: absolute; left: 16px; right: 16px; bottom: 24px; height: 72px; border-radius: 36px; z-index: 3;
+        background: linear-gradient(180deg, #ffffff, #f7faff); border: 1px solid #c7d9f5; box-shadow: 0 6px 18px rgba(37, 99, 235, 0.1); }
+      .m-nav i { position: absolute; top: 25px; width: 22px; height: 22px; margin-left: -11px; border-radius: 6px; background: #94a3b8; }
+      #m-pill { position: absolute; top: 9px; left: 5px; width: 54px; height: 52px; border-radius: 26px; background: linear-gradient(135deg, #2563eb, #3b82f6);
+        box-shadow: 0 6px 14px rgba(37, 99, 235, 0.35); }
+      #m-pill i { position: static; display: block; margin: 15px auto 0; width: 22px; height: 22px; border-radius: 6px; background: #fff; }
+      /* ---------- website windows ---------- */
+      .webwin { position: absolute; width: 1200px; height: 720px; border-radius: 16px; overflow: hidden; background: #fbf8f3;
+        box-shadow: 0 60px 120px rgba(0, 0, 0, 0.55); border: 1.5px solid #3a3533; }
+      #web-front { left: 2300px; top: 1330px; opacity: 0; }
+      #web-back { left: 2630px; top: 1180px; opacity: 0; }
+      .chrome { position: absolute; left: 0; right: 0; top: 0; height: 46px; background: #ecebe8; display: flex; align-items: center; gap: 8px; padding: 0 18px; z-index: 3; }
+      .chrome i { width: 12px; height: 12px; border-radius: 50%; background: #cfcac4; }
+      .chrome .url { position: relative; margin-left: 18px; width: 420px; height: 28px; border-radius: 14px; background: #fff; font-size: 14px; color: #68625c;
+        display: flex; align-items: center; padding-left: 14px; font-family: "Noto Sans", sans-serif; }
+      .chrome .url span { position: absolute; left: 14px; top: 0; line-height: 28px; white-space: nowrap; }
+      #url-b { opacity: 0; }
+      .skin { position: absolute; left: 0; right: 0; top: 46px; bottom: 0; }
+      /* SaaS "classic" theme (apps/restaurant-web tokens) */
+      .saas { background: #fbf8f3; color: #1b1815; font-family: "Noto Sans", sans-serif; }
+      .saas .hdr { height: 76px; display: flex; align-items: center; justify-content: space-between; padding: 0 44px; border-bottom: 1px solid #ddd2c1; }
+      .saas .brand { font-family: "Noto Serif", serif; font-size: 28px; font-weight: 700; }
+      .saas .brand small { display: block; font-family: "Noto Sans", sans-serif; font-size: 12px; letter-spacing: 0.12em; color: #554c42; font-weight: 400; }
+      .saas .nav { display: flex; gap: 28px; font-size: 16px; color: #554c42; }
+      .saas .hero { position: absolute; left: 44px; top: 110px; width: 520px; }
+      .saas .hero h2 { font-family: "Noto Serif", serif; font-size: 46px; line-height: 1.1; font-weight: 400; letter-spacing: -0.01em; }
+      .saas .hero p { margin-top: 14px; font-size: 18px; color: #554c42; }
+      .saas .photo { position: absolute; right: 44px; top: 110px; width: 520px; height: 220px; border-radius: 2px;
+        background: linear-gradient(135deg, #d9c7a8 0%, #b98e5c 55%, #7d5b2e 100%); }
+      .saas .mh { position: absolute; left: 44px; top: 386px; font-family: "Noto Serif", serif; font-size: 30px; }
+      .saas .row { border-bottom: 1px dashed #ddd2c1; }
+      .saas .row .n { font-family: "Noto Serif", serif; font-size: 23px; }
+      .saas .row .p { font-family: "Noto Sans", sans-serif; font-size: 17px; color: #7d5b2e; font-weight: 700; }
+      /* CUSTOM bespoke build (dark editorial register) */
+      .custom { background: #0a0a0a; color: #f4eee4; visibility: hidden; opacity: 0; clip-path: inset(0% 0% 100% 0%); font-family: "Noto Sans", sans-serif; }
+      .custom .hdr { height: 76px; display: flex; align-items: center; justify-content: space-between; padding: 0 44px; border-bottom: 1px solid rgba(174, 137, 94, 0.32); }
+      .custom .brand { font-family: "Cormorant Garamond", serif; font-size: 28px; font-weight: 700; letter-spacing: 0.34em; color: #ae895e; }
+      .custom .nav { display: flex; gap: 30px; font-size: 13px; letter-spacing: 0.22em; color: #c9bfb0; }
+      .custom .hero { position: absolute; left: 44px; top: 106px; width: 600px; }
+      .custom .hero h2 { font-family: "Cormorant Garamond", serif; font-size: 66px; line-height: 0.98; font-weight: 700; letter-spacing: -0.01em; }
+      .custom .hero h2 em { font-family: "Noto Serif", serif; font-style: italic; font-weight: 400; font-size: 54px; color: #ae895e; }
+      .custom .hero p { margin-top: 18px; font-size: 14px; letter-spacing: 0.24em; color: #ae895e; }
+      .custom .photo { position: absolute; right: 44px; top: 96px; width: 470px; height: 250px;
+        background: radial-gradient(ellipse at 30% 40%, #4a3a26 0%, #1f1811 60%, #0a0a0a 100%); border: 1px solid rgba(174, 137, 94, 0.4); }
+      .custom .mh { position: absolute; left: 44px; top: 392px; font-size: 15px; letter-spacing: 0.32em; color: #ae895e; }
+      .custom .row { border-bottom: 1px solid rgba(174, 137, 94, 0.3); }
+      .custom .row .n { font-family: "Cormorant Garamond", serif; font-size: 30px; font-weight: 700; color: #f4eee4; }
+      .custom .row .p { font-size: 16px; letter-spacing: 0.08em; color: #ae895e; }
+      /* the shared data layer: sits above both skins, survives the morph */
+      #menu-bind { position: absolute; left: 0; top: 46px; right: 0; bottom: 0; z-index: 4; opacity: 0; pointer-events: none; }
+      #menu-bind .src { position: absolute; right: 44px; top: 382px; padding: 7px 14px; border-radius: 16px; background: #ffffff;
+        border: 2px solid var(--plum); color: #5b3a60; font-size: 14px; letter-spacing: 0.14em; white-space: nowrap; }
+      #menu-bind .bar { position: absolute; left: 24px; width: 5px; height: 38px; border-radius: 3px; background: var(--plum); }
+      #dish { position: absolute; left: 28px; top: 490px; width: 1144px; height: 62px; z-index: 6; opacity: 0; visibility: hidden; border-radius: 12px; }
+      .dc { position: absolute; inset: 0; display: flex; align-items: center; justify-content: space-between; padding: 0 16px; border-radius: 12px; }
+      .dc-saas { background: #fbf8f3; border: 1px solid #ddd2c1; }
+      .dc-saas .n { font-family: "Noto Serif", serif; font-size: 23px; color: #1b1815; }
+      .dc-saas .p { font-family: "Noto Sans", sans-serif; font-size: 17px; font-weight: 700; color: #7d5b2e; }
+      .dc-custom { background: #151210; border: 1px solid rgba(174, 137, 94, 0.55); opacity: 0; }
+      .dc-custom .n { font-family: "Cormorant Garamond", serif; font-size: 30px; font-weight: 700; color: #f4eee4; }
+      .dc-custom .p { font-family: "Noto Sans", sans-serif; font-size: 16px; letter-spacing: 0.08em; color: #ae895e; }
+      #c-row1 { opacity: 0; }
+      #wipe { position: absolute; left: 0; right: 0; top: 46px; height: 3px; z-index: 5; opacity: 0; background: var(--lavender);
+        box-shadow: 0 0 18px 4px rgba(185, 168, 196, 0.7); }
+      /* identical menu geometry in both skins — the anchor of the morph */
+      .menu { position: absolute; left: 44px; right: 44px; top: 444px; }
+      .row { position: relative; height: 62px; display: flex; align-items: center; justify-content: space-between; }
+      .wtag { position: absolute; padding: 10px 18px; border-radius: 22px; font-size: 20px; letter-spacing: 0.14em; color: var(--lavender);
+        border: 2px solid rgba(185, 168, 196, 0.45); background: rgba(34, 32, 30, 0.92); opacity: 0; white-space: nowrap; }
+
+      /* ---------- captions (screen space) ---------- */
+      #captions { position: absolute; left: 96px; bottom: 58px; width: 1200px; height: 92px; }
+      .cap { position: absolute; left: 0; bottom: 0; opacity: 0; }
+      .cap .idx { font-size: 20px; letter-spacing: 0.16em; color: var(--lavender); }
+      .cap .txt { margin-top: 8px; font-size: 36px; font-weight: 600; letter-spacing: -0.02em; color: var(--paper); }
+      .cap .txt em { font-style: normal; color: var(--muted-dark); font-weight: 400; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="25" data-width="1920" data-height="1080">
+      <div id="stage" class="clip" data-start="0" data-duration="25" data-track-index="0">
+        <div id="bg-grid"></div>
+
+        <div id="world">
+          <div class="glow" id="glow-hub" style="left: 1320px; top: 480px; width: 1200px; height: 1200px"></div>
+          <div class="glow" id="glow-pos" style="left: 360px; top: 650px; width: 1200px; height: 1000px"></div>
+          <div class="glow" id="glow-mgr" style="left: 2530px; top: 130px; width: 1000px; height: 1000px"></div>
+          <div class="glow" id="glow-web" style="left: 2300px; top: 1100px; width: 1300px; height: 1100px"></div>
+
+          <div class="ghost" id="ghost-1" style="left: 1480px; top: 800px; width: 360px; height: 230px"></div>
+          <div class="ghost" id="ghost-2" style="left: 2400px; top: 820px; width: 300px; height: 420px"></div>
+          <div class="ghost" id="ghost-3" style="left: 1560px; top: 1260px; width: 560px; height: 150px"></div>
+
+          <svg id="links" viewBox="0 0 3840 2160">
+            <path class="link-base" id="lb-pos" d="M 1680 1420 L 1745 1420 L 1871 1210" />
+            <path class="link-base" id="lb-mgr" d="M 2050 1010 L 2160 1010 L 2476 525 L 2820 525" />
+            <path class="link-base" id="lb-web" d="M 2010 1210 L 2130 1410 L 2300 1410" />
+            <path class="link" id="l-pos" pathLength="1" d="M 1680 1420 L 1745 1420 L 1871 1210" />
+            <path class="link" id="l-mgr" pathLength="1" d="M 2050 1010 L 2160 1010 L 2476 525 L 2820 525" />
+            <path class="link" id="l-web" pathLength="1" d="M 2010 1210 L 2130 1410 L 2300 1410" />
+            <path class="pulse" id="p-pos" pathLength="1" d="M 1871 1210 L 1745 1420 L 1680 1420" />
+            <path class="pulse" id="p-mgr" pathLength="1" d="M 2050 1010 L 2160 1010 L 2476 525 L 2820 525" />
+            <!-- from the V's thick-stroke end cap (1866,1034) up its own axis to the POS top edge, then around the window -->
+            <path class="link vtrace" id="v-trace-a" pathLength="1" d="M 1866 1034 L 1648 700 L 258 700 Q 240 700 240 718 L 240 1582 Q 240 1600 258 1600 L 960 1600" />
+            <path class="link vtrace" id="v-trace-b" pathLength="1" d="M 1648 700 L 1662 700 Q 1680 700 1680 718 L 1680 1582 Q 1680 1600 1662 1600 L 960 1600" />
+            <path class="pulse" id="p-web" pathLength="1" d="M 2010 1210 L 2130 1410 L 2300 1410" />
+          </svg>
+
+          <!-- Venue record: the canonical restaurant foundation in the Cloud -->
+          <div id="record">
+            <div class="rec-title mono">VYNIC CLOUD · VENUE RECORD</div>
+            <div class="rec-sub">Demo Bistro</div>
+            <div class="rec-row" id="row-menu"><span class="name mono">MENU</span><span class="state mono"><span class="st-idle">1 CATALOG</span></span><i class="hl"></i></div>
+            <div class="rec-row" id="row-orders"><span class="name mono">TABLES &amp; ORDERS</span><span class="state mono"><span class="st-idle">20:38</span><span class="st-ok">✓ 20:41</span></span><i class="hl"></i></div>
+            <div class="rec-row" id="row-ledger"><span class="name mono">SALES LEDGER</span><span class="state mono"><span class="st-idle">ON CLOSE</span></span></div>
+          </div>
+
+          <!-- POS -->
+          <div id="pos">
+            <div class="pos-top">
+              <div class="left">
+                <svg class="pos-badge" viewBox="0 0 100 100"><g transform="translate(20 20) scale(0.6)" fill="none" stroke="#4c4272" stroke-linecap="round"><path d="M22 26 L52 72" stroke-width="19" /><path d="M52 72 L84 18" stroke-width="11" /></g></svg>
+                <span class="pos-title">Vynic POS</span>
+                <span class="pos-crumb">Tables</span>
+              </div>
+              <div class="right">
+                <span class="chip ok"><b></b>Online</span>
+                <span class="chip mono">20:41</span>
+                <span class="chip">EN</span>
+                <span class="chip">Nino · Waiter</span>
+              </div>
+            </div>
+            <div class="pos-nav">
+              <span class="tab on">Tables</span><span class="tab">Count</span><span class="tab">Takeaway<span class="count">1</span></span><span class="tab">Reservations</span>
+              <span class="settings">Settings</span>
+            </div>
+            <div class="pos-body">
+              <div class="pos-main">
+                <div id="floor">
+                  <div class="floor-head">
+                    <div class="floor-pills"><span class="on">Floor 1 · 8</span><span>Floor 2 · 4</span></div>
+                    <div class="legend"><span><i style="background: #e2e0db"></i>Free</span><span><i style="background: #d9a531"></i>Occupied</span><span><i style="background: #b994c8"></i>Reserved</span></div>
+                  </div>
+                  <div class="canvas">
+                    <div class="obj bar">Bar</div>
+                    <div class="obj stage">Stage</div>
+                    <div class="tbl occ" style="left: 70px; top: 170px; width: 170px; height: 124px"><i class="chair" style="left: 36px; top: 0; width: 22px; height: 9px"></i><i class="chair" style="right: 36px; top: 0; width: 22px; height: 9px"></i><i class="chair" style="left: 36px; bottom: 0; width: 22px; height: 9px"></i><i class="chair" style="right: 36px; bottom: 0; width: 22px; height: 9px"></i><div class="surf"><span class="nm"><i></i>Table 1</span><span class="meta mono">128.40 GEL</span></div></div>
+                    <div class="tbl round" style="left: 300px; top: 164px; width: 140px; height: 140px"><i class="chair" style="left: 59px; top: 0; width: 22px; height: 9px"></i><i class="chair" style="left: 59px; bottom: 0; width: 22px; height: 9px"></i><i class="chair" style="left: 0; top: 59px; width: 9px; height: 22px"></i><i class="chair" style="right: 0; top: 59px; width: 9px; height: 22px"></i><div class="surf"><span class="nm"><i></i>Table 2</span><span class="meta">4 seats</span></div></div>
+                    <div class="tbl" style="left: 500px; top: 170px; width: 170px; height: 124px"><i class="chair" style="left: 36px; top: 0; width: 22px; height: 9px"></i><i class="chair" style="right: 36px; top: 0; width: 22px; height: 9px"></i><i class="chair" style="left: 36px; bottom: 0; width: 22px; height: 9px"></i><i class="chair" style="right: 36px; bottom: 0; width: 22px; height: 9px"></i><div class="surf"><span class="nm"><i></i>Table 3</span><span class="meta">4 seats</span></div></div>
+                    <div class="tbl" id="t4" style="left: 730px; top: 196px; width: 196px; height: 134px"><i class="chair" style="left: 40px; top: 0; width: 24px; height: 9px"></i><i class="chair" style="right: 40px; top: 0; width: 24px; height: 9px"></i><i class="chair" style="left: 40px; bottom: 0; width: 24px; height: 9px"></i><i class="chair" style="right: 40px; bottom: 0; width: 24px; height: 9px"></i><div class="surf before"><span class="nm"><i></i>Table 4</span><span class="meta">4 seats</span></div><div class="surf after"><span class="nm"><i></i>Table 4</span><span class="meta mono">61.60 GEL</span></div><i id="t4-ring"></i></div>
+                    <div class="tbl round" style="left: 80px; top: 390px; width: 140px; height: 140px"><i class="chair" style="left: 59px; top: 0; width: 22px; height: 9px"></i><i class="chair" style="left: 59px; bottom: 0; width: 22px; height: 9px"></i><i class="chair" style="left: 0; top: 59px; width: 9px; height: 22px"></i><i class="chair" style="right: 0; top: 59px; width: 9px; height: 22px"></i><div class="surf"><span class="nm"><i></i>Table 5</span><span class="meta">2 seats</span></div></div>
+                    <div class="tbl res" style="left: 300px; top: 404px; width: 180px; height: 124px"><i class="chair" style="left: 38px; top: 0; width: 22px; height: 9px"></i><i class="chair" style="right: 38px; top: 0; width: 22px; height: 9px"></i><i class="chair" style="left: 38px; bottom: 0; width: 22px; height: 9px"></i><i class="chair" style="right: 38px; bottom: 0; width: 22px; height: 9px"></i><div class="surf"><span class="nm"><i></i>Table 6</span><span class="meta mono">20:30</span></div></div>
+                    <div class="tbl" style="left: 530px; top: 404px; width: 190px; height: 124px"><i class="chair" style="left: 40px; top: 0; width: 22px; height: 9px"></i><i class="chair" style="right: 40px; top: 0; width: 22px; height: 9px"></i><i class="chair" style="left: 40px; bottom: 0; width: 22px; height: 9px"></i><i class="chair" style="right: 40px; bottom: 0; width: 22px; height: 9px"></i><div class="surf"><span class="nm"><i></i>Table 7</span><span class="meta">6 seats</span></div></div>
+                    <div class="tbl round" style="left: 790px; top: 400px; width: 140px; height: 140px"><i class="chair" style="left: 59px; top: 0; width: 22px; height: 9px"></i><i class="chair" style="left: 59px; bottom: 0; width: 22px; height: 9px"></i><i class="chair" style="left: 0; top: 59px; width: 9px; height: 22px"></i><i class="chair" style="right: 0; top: 59px; width: 9px; height: 22px"></i><div class="surf"><span class="nm"><i></i>Table 8</span><span class="meta">4 seats</span></div></div>
+                    <i class="ripple" id="rip-t4" style="left: 828px; top: 263px"></i>
+                  </div>
+                </div>
+
+                <div id="editor">
+                  <div class="ed-search">⌕&nbsp;&nbsp;Search products…</div>
+                  <div class="ed-cats"><div class="on">Cold dishes</div><div>Hot dishes</div><div>Bakery</div><div>Grill</div><div>Drinks</div><div>Desserts</div></div>
+                  <div class="ed-grid">
+                    <div class="tile" id="tile-1"><div class="tn">Khachapuri</div><div class="tp mono">25.00 GEL</div><div class="add">+</div><i class="flash"></i></div>
+                    <div class="tile" id="tile-2"><div class="tn">Greek salad</div><div class="tp mono">16.00 GEL</div><div class="add">+</div><i class="flash"></i></div>
+                    <div class="tile"><div class="tn">Caesar salad</div><div class="tp mono">19.00 GEL</div><div class="add">+</div></div>
+                    <div class="tile"><div class="tn">Lemonade</div><div class="tp mono">7.50 GEL</div><div class="add">+</div><i class="flash"></i></div>
+                    <div class="tile"><div class="tn">Mtsvadi</div><div class="tp mono">18.00 GEL</div><div class="add">+</div></div>
+                    <div class="tile"><div class="tn">Badrijani</div><div class="tp mono">12.00 GEL</div><div class="add">+</div></div>
+                    <div class="tile"><div class="tn">Pkhali plate</div><div class="tp mono">14.00 GEL</div><div class="add">+</div></div>
+                    <div class="tile"><div class="tn">Chakapuli</div><div class="tp mono">24.00 GEL</div><div class="add">+</div></div>
+                    <div class="tile" id="tile-3"><div class="tn">Churchkhela</div><div class="tp mono">6.00 GEL</div><div class="add">+</div><i class="flash"></i></div>
+                  </div>
+                  <i class="ripple" id="rip-1" style="left: 452px; top: 171px"></i>
+                  <i class="ripple" id="rip-2" style="left: 452px; top: 171px"></i>
+                  <i class="ripple" id="rip-3" style="left: 981px; top: 439px"></i>
+                </div>
+              </div>
+
+              <div class="pos-side">
+                <div class="side-a">
+                  <div class="lbl">Service now</div>
+                  <div class="kpis">
+                    <div class="kpi"><p>Free</p><b>6</b></div>
+                    <div class="kpi amber"><p>Occupied</p><b>1</b></div>
+                    <div class="kpi"><p>Reserved</p><b>1</b></div>
+                    <div class="kpi"><p>To pay</p><b>0</b></div>
+                  </div>
+                  <div class="next"><div class="lbl">Next reservation</div><b>Table 6 · 20:30</b><span>4 guests</span></div>
+                </div>
+                <div class="side-b">
+                  <div class="ord-head"><h4>Table 4</h4><span class="pill-amber">Occupied</span></div>
+                  <div class="ord-meta">Floor 1 · 4 guests · opened 20:39</div>
+                  <div class="ord-list">
+                    <div class="line" id="line-1" style="top: 0"><i class="line-hl"></i><div><div class="ln">Khachapuri</div><div class="lq mono"><span class="q1">1 × 25.00</span><span class="q2">2 × 25.00</span></div></div><div class="lv mono" id="lv-1">25.00</div></div>
+                    <div class="line" id="line-2" style="top: 64px"><div><div class="ln">Churchkhela</div><div class="lq mono"><span>1 × 6.00</span></div></div><div class="lv mono">6.00</div></div>
+                  </div>
+                  <div class="sums">
+                    <div class="sum-row"><span>Subtotal</span><span class="mono" id="v-sub">0.00</span></div>
+                    <div class="sum-row"><span>Service 10%</span><span class="mono" id="v-svc">0.00</span></div>
+                    <div class="sum-total"><span>Total</span><b class="mono" id="v-total">0.00 GEL</b></div>
+                  </div>
+                  <div class="confirm" id="confirm"><span class="c1">Confirm order</span><span class="c2">✓ Sent to kitchen · 20:41</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div id="token" class="mono"><i></i>TABLE 4 · 3 ITEMS · 61.60 GEL</div>
+
+          <!-- Manager: Dashboard → Inventory, one device -->
+          <div id="phone">
+            <div class="screen">
+              <div class="m-status"><span>20:42</span><span>●●● ▮</span></div>
+              <div class="m-page" id="m-dash">
+                <div class="m-spin" id="m-spin"><i></i></div>
+                <div class="m-scroll" id="m-scroll">
+                  <div class="m-hello">Good evening,</div>
+                  <div class="m-name">Nino</div>
+                  <div class="m-bell"><i></i></div>
+                  <div class="m-card" style="top: 140px">
+                    <span class="m-open"><i></i>Open</span>
+                    <div class="m-l" style="margin-top: 8px">Active business day</div>
+                    <div class="m-v mono">2026-09-30 · 11:02</div>
+                  </div>
+                  <div class="m-card" style="top: 262px">
+                    <div class="m-l">Active shift revenue</div>
+                    <div class="m-rev mono" id="m-rev">2,868.65</div>
+                    <div class="m-l">GEL · closed + open tables</div>
+                    <div class="m-row closed"><span>Closed</span><span class="mono">1,282.45</span></div>
+                    <div class="m-row open" id="m-open-row"><span class="lab"><span class="o1">Open tables (2)</span><span class="o2" style="opacity: 0">Open tables (3)</span></span><span class="mono" id="m-open">1,586.20</span></div>
+                  </div>
+                  <div class="m-card" id="m-inv-card" style="top: 522px">
+                    <div class="m-ihead"><span class="ico"></span>Inventory<span class="go">Open →</span></div>
+                    <div class="m-kv"><span>Today's purchases</span><b class="mono">0.00 GEL</b></div>
+                    <div class="m-warn"><i></i><span>Low stock</span><span class="mono">2 ›</span></div>
+                    <i class="m-tapfx" id="tap-open" style="right: 8px; top: 8px; width: 92px; height: 34px"></i>
+                  </div>
+                </div>
+              </div>
+              <div class="m-page" id="m-inv">
+                <div class="i-title">Inventory</div>
+                <div class="i-menu"></div>
+                <div class="i-add">＋ New receiving<i class="m-tapfx" id="tap-add" style="inset: 0; border-radius: 26px; background: rgba(255, 255, 255, 0.28)"></i></div>
+                <div class="i-today"><span>Received today</span><b class="mono" id="inv-today">0.00 GEL</b></div>
+                <div class="i-chip"><i></i>Low stock:<span class="n mono"><span class="lo2">2</span><span class="lo1" style="opacity: 0">1</span></span></div>
+                <div class="i-rule"></div>
+                <div class="i-h" style="top: 292px">Daily work</div>
+                <div class="i-dest" style="top: 322px"><i class="ic"></i><div><div class="t">Receiving history</div><div class="s">Saved receipts and drafts</div></div><i class="ch"></i></div>
+                <div class="i-dest" style="top: 376px"><i class="ic"></i><div><div class="t">Stock balances</div><div class="s">14 products in stock</div></div><i class="ch"></i></div>
+                <div class="i-dest" style="top: 430px"><i class="ic"></i><div><div class="t">Payments &amp; debt</div><div class="s">Who is still owed, and how much</div></div><i class="ch"></i></div>
+                <div class="i-h" style="top: 504px">Today's receipts</div>
+                <div class="i-empty" id="inv-empty">No receipts yet today</div>
+                <div class="i-rcpt" id="inv-rcpt">
+                  <div class="top"><span class="sup">Old Town Mill</span><span class="badge">Added to stock</span></div>
+                  <div class="bot"><span class="chip2">1 item</span><b class="mono">30.00 GEL</b></div>
+                </div>
+              </div>
+              <div id="m-recv" data-layout-allow-overlap>
+                <div class="r-head" data-layout-allow-overlap><i></i>New receiving</div>
+                <div class="r-steps" data-layout-allow-overlap><span data-layout-allow-overlap>1 · Goods ✓</span><span class="on" data-layout-allow-overlap>2 · Payment</span></div>
+                <div class="r-card" style="top: 152px" data-layout-allow-overlap><div class="k" data-layout-allow-overlap>Supplier</div><div class="v" data-layout-allow-overlap>Old Town Mill</div></div>
+                <div class="r-pay" data-layout-allow-overlap>Payment</div>
+                <div class="r-opt on" style="top: 264px" data-layout-allow-overlap><i></i>Not paid yet</div>
+                <div class="r-opt" style="top: 302px" data-layout-allow-overlap><i></i>Paid in full</div>
+                <div class="r-opt" style="top: 340px" data-layout-allow-overlap><i></i>Paid partially</div>
+                <div class="r-card r-sum" style="top: 392px" data-layout-allow-overlap>
+                  <div class="h" data-layout-allow-overlap>Will be added to stock:</div>
+                  <div class="r-line" data-layout-allow-overlap>Flour <b class="mono" data-layout-allow-overlap>+20.000 kg</b></div>
+                  <div class="rule" data-layout-allow-overlap></div>
+                  <div class="r-row" data-layout-allow-overlap><span data-layout-allow-overlap>Receiving value</span><span class="mono" data-layout-allow-overlap>30.00 GEL</span></div>
+                  <div class="r-row" data-layout-allow-overlap><span data-layout-allow-overlap>Paid now</span><span class="mono" data-layout-allow-overlap>0.00 GEL</span></div>
+                  <div class="r-row debt" id="r-debt" data-layout-allow-overlap><span data-layout-allow-overlap>Debt</span><span class="mono" data-layout-allow-overlap>30.00 GEL</span></div>
+                </div>
+                <div class="r-go" data-layout-allow-overlap>Confirm receiving<i class="m-tapfx" id="tap-go" style="inset: 0; border-radius: 27px; background: rgba(255, 255, 255, 0.28)"></i></div>
+              </div>
+              <div class="m-nav"><span id="m-pill"><i></i></span><i style="left: 32px; opacity: 0"></i><i style="left: 91px"></i><i style="left: 150px"></i><i style="left: 209px"></i><i style="left: 268px"></i><i style="left: 327px"></i></div>
+            </div>
+          </div>
+          <div id="token2" class="mono" data-layout-allow-overlap><i></i>TABLE 4 · 61.60 GEL</div>
+
+          <!-- Websites: same restaurant data, two renderers -->
+          <div class="webwin" id="web-back">
+            <div class="chrome"><i></i><i></i><i></i><div class="url">demo-bistro · Vynic site</div></div>
+            <div class="skin saas">
+              <div class="hdr"><div class="brand" data-layout-allow-overlap>Demo Bistro<small>OLD TOWN</small></div><div class="nav" data-layout-allow-overlap><span>Menu</span><span>Hours</span><span>Photos</span><span>Contact</span></div></div>
+              <div class="hero"><h2 data-layout-allow-overlap>Seasonal kitchen in the Old Town</h2><p data-layout-allow-overlap>Open today 12:00–23:00</p></div>
+              <div class="photo"></div>
+              <div class="mh" data-layout-allow-overlap>Menu</div>
+              <div class="menu">
+                <div class="row"><span class="n">Khachapuri</span><span class="p mono">25.00 GEL</span></div>
+                <div class="row"><span class="n">Greek salad</span><span class="p mono">16.00 GEL</span></div>
+                <div class="row"><span class="n">Churchkhela</span><span class="p mono">6.00 GEL</span></div>
+              </div>
+            </div>
+          </div>
+          <div class="webwin" id="web-front">
+            <div class="chrome"><i></i><i></i><i></i><div class="url" id="web-url"><span id="url-a">demo-bistro · Vynic site</span><span id="url-b">demo-bistro · custom domain</span></div></div>
+            <div class="skin saas" id="skin-saas" data-layout-allow-overlap>
+              <div class="hdr" data-layout-allow-overlap><div class="brand" data-layout-allow-overlap>Demo Bistro<small data-layout-allow-overlap>OLD TOWN</small></div><div class="nav" data-layout-allow-overlap><span data-layout-allow-overlap>Menu</span><span data-layout-allow-overlap>Hours</span><span data-layout-allow-overlap>Photos</span><span data-layout-allow-overlap>Contact</span></div></div>
+              <div class="hero" data-layout-allow-overlap><h2 data-layout-allow-overlap>Seasonal kitchen in the Old Town</h2><p data-layout-allow-overlap>Open today 12:00–23:00</p></div>
+              <div class="photo" data-layout-allow-overlap></div>
+              <div class="mh" data-layout-allow-overlap>Menu</div>
+              <div class="menu" data-layout-allow-overlap>
+                <div class="row wrow" data-layout-allow-overlap><span class="n" data-layout-allow-overlap>Khachapuri</span><span class="p mono" data-layout-allow-overlap>25.00 GEL</span></div>
+                <div class="row wrow" data-layout-allow-overlap><span class="n" data-layout-allow-overlap>Greek salad</span><span class="p mono" data-layout-allow-overlap>16.00 GEL</span></div>
+                <div class="row wrow" data-layout-allow-overlap><span class="n" data-layout-allow-overlap>Churchkhela</span><span class="p mono" data-layout-allow-overlap>6.00 GEL</span></div>
+              </div>
+            </div>
+            <div class="skin custom" id="skin-custom" data-layout-allow-overlap>
+              <div class="hdr" data-layout-allow-overlap><div class="brand" data-layout-allow-overlap>DEMO BISTRO</div><div class="nav" data-layout-allow-overlap><span data-layout-allow-overlap>MENU</span><span data-layout-allow-overlap>EVENTS</span><span data-layout-allow-overlap>STORY</span><span data-layout-allow-overlap>VISIT</span></div></div>
+              <div class="hero" data-layout-allow-overlap><h2 data-layout-allow-overlap>Dinner in the <em data-layout-allow-overlap>Old Town</em></h2><p data-layout-allow-overlap>OPEN TODAY · 12:00 — 23:00</p></div>
+              <div class="photo" data-layout-allow-overlap></div>
+              <div class="mh" data-layout-allow-overlap>THE MENU</div>
+              <div class="menu" data-layout-allow-overlap>
+                <div class="row" id="c-row1" data-layout-allow-overlap><span class="n" data-layout-allow-overlap>Khachapuri</span><span class="p" data-layout-allow-overlap>25.00 GEL</span></div>
+                <div class="row" data-layout-allow-overlap><span class="n" data-layout-allow-overlap>Greek salad</span><span class="p" data-layout-allow-overlap>16.00 GEL</span></div>
+                <div class="row" data-layout-allow-overlap><span class="n" data-layout-allow-overlap>Churchkhela</span><span class="p" data-layout-allow-overlap>6.00 GEL</span></div>
+              </div>
+            </div>
+            <div id="dish" data-layout-allow-overlap>
+              <div class="dc dc-saas" data-layout-allow-overlap><span class="n" data-layout-allow-overlap>Khachapuri</span><span class="p" data-layout-allow-overlap>25.00 GEL</span></div>
+              <div class="dc dc-custom" data-layout-allow-overlap><span class="n" data-layout-allow-overlap>Khachapuri</span><span class="p" data-layout-allow-overlap>25.00 GEL</span></div>
+            </div>
+            <div id="menu-bind"><span class="src mono">MENU · VYNIC CLOUD</span><i class="bar" style="top: 456px"></i><i class="bar" style="top: 518px"></i><i class="bar" style="top: 580px"></i></div>
+            <i id="wipe"></i>
+          </div>
+          <div class="wtag mono" id="tag-saas" style="left: 2300px; top: 1262px">SAAS · VYNIC-HOSTED</div>
+          <div class="wtag mono" id="tag-custom" style="left: 2300px; top: 1262px">CUSTOM · BESPOKE BUILD</div>
+          <div class="wtag mono" id="tag-saas-back" style="left: 3500px; top: 1118px">SAAS · VYNIC-HOSTED</div>
+
+          <!-- Hub: the Vynic mark, drawn from its own strokes -->
+          <div id="hub">
+            <div id="hub-tile"></div>
+            <svg id="hub-mark" viewBox="0 0 100 100">
+              <g transform="translate(12.9 12.9) scale(0.742)">
+                <path class="v-thick" pathLength="1" d="M52 72 L22 26" stroke-width="19" />
+                <path class="v-thin" pathLength="1" d="M52 72 L84 18" stroke-width="11" />
+                <path class="v-light" id="v-light" pathLength="1" d="M22 26 L52 72 L84 18" filter="url(#v-glow)" />
+              </g>
+              <defs><filter id="v-glow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="2.2" result="b" /><feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge></filter></defs>
+            </svg>
+            <i id="hub-spark"></i>
+          </div>
+          <div id="wordmark"><span id="wordmark-text">Vynic</span></div>
+          <div id="tagline"><span id="tagline-text">Restaurant operations, connected.</span></div>
+        </div>
+
+        <div id="vignette"></div>
+
+        <div id="captions">
+          <div class="cap" id="cap-1"><div class="idx mono">01 · POS</div><div class="txt">Runs service on the floor. <em>A local app on the restaurant's own device.</em></div></div>
+          <div class="cap" id="cap-2"><div class="idx mono">02 · VYNIC CLOUD</div><div class="txt">One restaurant record behind every surface.</div></div>
+          <div class="cap" id="cap-3"><div class="idx mono">03 · MANAGER</div><div class="txt">The business day, synced from the floor.</div></div>
+          <div class="cap" id="cap-3b"><div class="idx mono">03 · MANAGER · INVENTORY</div><div class="txt">Goods received. <em>Stock and supplier debt follow.</em></div></div>
+          <div class="cap" id="cap-4"><div class="idx mono">04 · WEBSITES</div><div class="txt">Same menu. <em>A Vynic site or a custom build.</em></div></div>
+        </div>
+      </div>
+
+      <audio id="score" src="assets/audio/vynic-score.wav" data-start="0" data-duration="25" data-track-index="10" data-volume="1"></audio>
+    </div>
+
+    <script>
+      (function () {
+        // WEBSITE delivery renders with {"sound": false}; the audio track is then stripped (tools/strip-audio.sh).
+        const vars = (window.__hyperframes && window.__hyperframes.getVariables) ? window.__hyperframes.getVariables() : {};
+        if (vars.sound === false) {
+          const score = document.getElementById("score");
+          if (score) score.remove();
+        }
+        const W = 1920, H = 1080;
+        const world = document.getElementById("world");
+        const grid = document.getElementById("bg-grid");
+
+        // Camera: one source of truth (viewport-change). World point (x, y) sits at frame centre.
+        const cam = { x: 2130, y: 1080, s: 1.0 };
+        function applyCamera() {
+          const tx = W / 2 - cam.s * cam.x;
+          const ty = H / 2 - cam.s * cam.y;
+          world.style.transform = "translate(" + tx.toFixed(2) + "px," + ty.toFixed(2) + "px) scale(" + cam.s.toFixed(4) + ")";
+          // The grid drifts at a fraction of the camera for depth.
+          grid.style.backgroundPosition = (-cam.x * 0.18).toFixed(1) + "px " + (-cam.y * 0.18).toFixed(1) + "px";
+        }
+        applyCamera();
+        const CAM = {
+          open: { x: 2130, y: 1080, s: 1.08 },
+          pos: { x: 930, y: 1185, s: 0.9 },
+          posIn: { x: 950, y: 1195, s: 0.95 },
+          mid: { x: 1600, y: 1130, s: 0.72 },
+          mgr: { x: 2870, y: 640, s: 1.0 },
+          mgrIn: { x: 2850, y: 632, s: 1.07 },
+          web: { x: 3000, y: 1720, s: 0.88 },
+          webWide: { x: 3080, y: 1720, s: 0.84 },
+          all: { x: 2010, y: 1110, s: 0.47 },
+          lock: { x: 2130, y: 1080, s: 1.1 },
+          lockIn: { x: 2130, y: 1080, s: 1.13 },
+        };
+        // Travel: soft acceleration, long controlled deceleration. Settles: slow sine push-ins.
+        function camTo(tl, target, at, dur, ease) {
+          tl.to(cam, { x: target.x, y: target.y, s: target.s, duration: dur, ease: ease || "power3.inOut", onUpdate: applyCamera }, at);
+        }
+
+        // Hub mark geometry: the V vertex (52, 72) in a 100-unit box, 0.742 scale, 12.9 offset, 260px tile.
+        const U = 2.6;
+        const vx = (12.9 + 52 * 0.742) * U, vy = (12.9 + 72 * 0.742) * U;
+        const spark = document.getElementById("hub-spark");
+        spark.style.left = (vx - 14).toFixed(1) + "px";
+        spark.style.top = (vy - 14).toFixed(1) + "px";
+
+        const money = (n) => n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        function counter(tl, el, from, to, at, dur, suffix) {
+          const p = { v: from };
+          tl.fromTo(p, { v: from }, { v: to, duration: dur, ease: "power3.out", immediateRender: false, onUpdate: () => { el.textContent = money(p.v) + (suffix || ""); } }, at);
+        }
+        // Constant-speed travel along a polyline (world or offset coords), one ease for the whole trip.
+        function along(pts) {
+          const seg = [], total = [0];
+          for (let i = 1; i < pts.length; i++) {
+            const d = Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]);
+            seg.push(d); total.push(total[i - 1] + d);
+          }
+          const len = total[total.length - 1];
+          return (p) => {
+            const d = Math.max(0, Math.min(1, p)) * len;
+            let i = 1; while (i < total.length - 1 && total[i] < d) i++;
+            const k = seg[i - 1] ? (d - total[i - 1]) / seg[i - 1] : 0;
+            return [pts[i - 1][0] + (pts[i][0] - pts[i - 1][0]) * k, pts[i - 1][1] + (pts[i][1] - pts[i - 1][1]) * k];
+          };
+        }
+        function travel(tl, sel, pts, at, dur, extra) {
+          const el = document.querySelector(sel), path = along(pts), p = { t: 0 };
+          tl.fromTo(p, { t: 0 }, { t: 1, duration: dur, ease: "power2.inOut", immediateRender: false,
+            onUpdate: () => { const q = path(p.t); gsap.set(el, { x: q[0], y: q[1] }); } }, at);
+          if (extra) tl.to(sel, Object.assign({ duration: dur, ease: "power2.inOut" }, extra), at);
+        }
+        const tap = (tl, rip, at) => tl.fromTo(rip, { opacity: 0.85, scale: 0.25 }, { opacity: 0, scale: 1.7, duration: 0.7, ease: "power2.out", immediateRender: false }, at);
+
+        const tl = gsap.timeline({ paused: true });
+        const tapFx = (sel, at) => tl.fromTo(sel, { opacity: 0 }, { opacity: 1, duration: 0.12, ease: "power2.out", yoyo: true, repeat: 1, immediateRender: false }, at);
+
+        /* ================= 1 · The mark → the POS, one shot (0.0 – 3.6) ================= */
+        camTo(tl, CAM.open, 0, 2.2, "sine.inOut");                               // restrained push-in
+        tl.fromTo("#glow-hub", { opacity: 0, scale: 0.7 }, { opacity: 0.5, scale: 1, duration: 2.0, ease: "sine.out" }, 0.15);
+        tl.fromTo("#hub-spark", { opacity: 0, scale: 0.2 }, { opacity: 1, scale: 1, duration: 0.4, ease: "power2.out" }, 0.2);
+        tl.fromTo(".v-thick", { strokeDashoffset: 1 }, { strokeDashoffset: 0, duration: 0.8, ease: "power2.inOut" }, 0.45);
+        tl.fromTo(".v-thin", { strokeDashoffset: 1 }, { strokeDashoffset: 0, duration: 0.7, ease: "power2.inOut" }, 0.95);
+        tl.to("#hub-spark", { opacity: 0, scale: 1.8, duration: 0.6, ease: "power2.out" }, 1.0);
+        tl.fromTo("#bg-grid", { opacity: 0, "--gw": "16%", "--gh": "18%" }, { opacity: 1, "--gw": "62%", "--gh": "70%", duration: 1.6, ease: "power2.out" }, 1.05);
+        tl.fromTo("#hub-tile", { opacity: 0, scale: 0.94 }, { opacity: 1, scale: 1, duration: 1.1, ease: "expo.out" }, 1.1);
+        tl.fromTo(".ghost", { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.9, ease: "power3.out", stagger: 0.1 }, 1.2);
+        tl.set("#wordmark", { autoAlpha: 1 }, 1.28);
+        tl.fromTo("#wordmark-text", { opacity: 0, y: 34, filter: "blur(14px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: 1.0, ease: "expo.out" }, 1.3);
+        // Light travels through the mark and leaves it white.
+        tl.set("#v-light", { opacity: 1 }, 1.6);
+        tl.fromTo("#v-light", { strokeDashoffset: 0.16 }, { strokeDashoffset: -1.02, duration: 0.75, ease: "power1.inOut" }, 1.6);
+        tl.set("#v-light", { opacity: 0 }, 2.35);
+        tl.to(".v-thick", { stroke: "#f7f6f4", duration: 0.35, ease: "sine.out" }, 1.67);
+        tl.to(".v-thin", { stroke: "#f7f6f4", duration: 0.35, ease: "sine.out" }, 1.95);
+        // The camera begins to move; the thick stroke extends along its own axis and traces the POS window.
+        camTo(tl, CAM.pos, 2.2, 1.4);
+        tl.to(".ghost", { opacity: 0, y: -16, duration: 0.7, ease: "sine.in" }, 2.2);
+        tl.set("#v-trace-a", { opacity: 1 }, 2.3);
+        tl.fromTo("#v-trace-a", { strokeDashoffset: 1 }, { strokeDashoffset: 0, duration: 1.05, ease: "power2.inOut" }, 2.3);
+        tl.set("#v-trace-b", { opacity: 1 }, 2.48);
+        tl.fromTo("#v-trace-b", { strokeDashoffset: 1 }, { strokeDashoffset: 0, duration: 0.87, ease: "power2.inOut" }, 2.48);
+        tl.to("#wordmark-text", { opacity: 0, filter: "blur(8px)", duration: 0.45, ease: "sine.in" }, 2.3);
+        tl.set("#wordmark", { autoAlpha: 0 }, 2.8);
+        tl.to("#glow-hub", { opacity: 0, duration: 0.9, ease: "sine.inOut" }, 2.4);
+        tl.to("#hub", { opacity: 0, duration: 0.5, ease: "sine.inOut" }, 2.55);
+        // The traced outline becomes the window.
+        tl.fromTo("#pos", { opacity: 0 }, { opacity: 1, duration: 0.6, ease: "power2.out" }, 3.0);
+        tl.fromTo("#glow-pos", { opacity: 0 }, { opacity: 0.5, duration: 1.2, ease: "sine.out" }, 2.9);
+        tl.to(["#v-trace-a", "#v-trace-b"], { opacity: 0, duration: 0.45, ease: "sine.inOut" }, 3.4);
+
+        /* ================= 2 · POS runs service (3.6 – 7.6) ================= */
+        camTo(tl, CAM.posIn, 3.6, 4.0, "sine.inOut");                            // slow settle toward the order
+        tl.fromTo("#cap-1", { opacity: 0, y: 18 }, { opacity: 1, y: 0, duration: 0.7, ease: "power3.out" }, 3.35);
+        // Table 4 gets focus (anticipation), then the tap.
+        tl.to(".canvas .tbl:not(#t4), .canvas .obj", { opacity: 0.55, duration: 0.5, ease: "sine.inOut" }, 3.95);
+        tl.fromTo("#t4", { scale: 1 }, { scale: 1.035, duration: 0.45, ease: "power2.out" }, 3.98);
+        tl.fromTo("#t4-ring", { opacity: 0, scale: 1.06 }, { opacity: 0.35, scale: 1, duration: 0.45, ease: "power2.out" }, 3.98);
+        tap(tl, "#rip-t4", 4.45);
+        tl.to("#t4-ring", { opacity: 1, duration: 0.25, ease: "power3.out" }, 4.45);
+        tl.to("#t4", { scale: 1, duration: 0.35, ease: "power3.out" }, 4.45);
+        tl.to("#floor", { autoAlpha: 0, scale: 0.985, duration: 0.35, ease: "power2.in" }, 4.75);
+        tl.set(".canvas .tbl:not(#t4), .canvas .obj", { opacity: 1 }, 5.15);
+        tl.fromTo("#editor", { opacity: 0, x: 30 }, { opacity: 1, x: 0, duration: 0.7, ease: "expo.out" }, 4.95);
+        tl.to(".side-a", { autoAlpha: 0, duration: 0.3, ease: "power2.in" }, 4.75);
+        tl.fromTo(".side-b", { opacity: 0, x: 36 }, { opacity: 1, x: 0, duration: 0.7, ease: "expo.out" }, 4.9);
+
+        const vSub = document.getElementById("v-sub"), vSvc = document.getElementById("v-svc"), vTotal = document.getElementById("v-total");
+        function totals(from, to, at) {
+          counter(tl, vSub, from, to, at, 0.55);
+          counter(tl, vSvc, from * 0.1, to * 0.1, at, 0.55);
+          counter(tl, vTotal, from * 1.1, to * 1.1, at, 0.55, " GEL");
+        }
+        tap(tl, "#rip-1", 5.55);                                                  // Khachapuri
+        tl.fromTo("#tile-1 .flash", { opacity: 1 }, { opacity: 0, duration: 0.6, ease: "power2.out", immediateRender: false }, 5.55);
+        tl.fromTo("#line-1", { opacity: 0, x: -26 }, { opacity: 1, x: 0, duration: 0.5, ease: "power3.out" }, 5.55);
+        totals(0, 25, 5.55);
+        tap(tl, "#rip-2", 6.15);                                                  // the same tile again → 2 × 25.00
+        tl.fromTo("#tile-1 .flash", { opacity: 1 }, { opacity: 0, duration: 0.6, ease: "power2.out", immediateRender: false }, 6.15);
+        tl.fromTo("#line-1 .line-hl", { opacity: 1 }, { opacity: 0, duration: 0.9, ease: "sine.out" }, 6.15);
+        tl.to("#line-1 .q1", { opacity: 0, y: -8, duration: 0.25, ease: "power2.in" }, 6.15);
+        tl.fromTo("#line-1 .q2", { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.35, ease: "power3.out" }, 6.25);
+        counter(tl, document.getElementById("lv-1"), 25, 50, 6.15, 0.55);
+        totals(25, 50, 6.15);
+        tap(tl, "#rip-3", 6.75);                                                  // Churchkhela
+        tl.fromTo("#tile-3 .flash", { opacity: 1 }, { opacity: 0, duration: 0.6, ease: "power2.out", immediateRender: false }, 6.75);
+        tl.fromTo("#line-2", { opacity: 0, x: -26 }, { opacity: 1, x: 0, duration: 0.5, ease: "power3.out" }, 6.75);
+        totals(50, 56, 6.75);
+        tl.to("#confirm", { backgroundColor: "#5a4f86", duration: 0.25, ease: "sine.out" }, 7.1);
+        tl.to("#confirm", { scale: 0.97, duration: 0.1, ease: "power2.in" }, 7.35);
+        tl.to("#confirm", { scale: 1, duration: 0.4, ease: "power3.out" }, 7.45);
+        tl.set("#confirm .c1", { autoAlpha: 0 }, 7.45);
+        tl.fromTo("#confirm .c2", { opacity: 0 }, { opacity: 1, duration: 0.3, ease: "power2.out" }, 7.45);
+
+        /* ================= 3 · Vynic connection / handoff (7.6 – 10.4) ================= */
+        // card-morph-anchor: the order total compresses into a data capsule; the POS keeps its own copy.
+        tl.to(".sums", { autoAlpha: 0, duration: 0.15, ease: "power2.in" }, 7.65);
+        tl.fromTo("#token", { opacity: 0, scale: 1.08, backgroundColor: "#ffffff", color: "#1c1a18", borderColor: "#e6e3de" },
+          { opacity: 1, scale: 1, duration: 0.3, ease: "power2.out" }, 7.68);
+        tl.to("#token", { y: -22, backgroundColor: "#2b2629", color: "#f7f6f4", borderColor: "#b9a8c4", duration: 0.6, ease: "power3.inOut" }, 7.9);
+        tl.to("#editor", { autoAlpha: 0, duration: 0.35, ease: "power2.in" }, 7.95);
+        tl.to("#floor", { autoAlpha: 1, scale: 1, duration: 0.5, ease: "power2.out" }, 8.1);
+        tl.set("#t4 .surf.before", { autoAlpha: 0 }, 8.1);
+        tl.to("#t4 .surf.after", { opacity: 1, duration: 0.4, ease: "power2.out" }, 8.1);
+        tl.to("#cap-1", { opacity: 0, y: -10, duration: 0.35, ease: "power2.in" }, 8.1);
+        tl.to(".sums", { autoAlpha: 1, duration: 0.4, ease: "power2.out" }, 9.65);
+        camTo(tl, CAM.mid, 8.25, 1.4);
+        tl.to("#glow-pos", { opacity: 0.2, duration: 0.8, ease: "sine.inOut" }, 8.5);
+        tl.to("#pos", { opacity: 0.5, duration: 0.8, ease: "power2.inOut" }, 8.9);
+        // Fade in only once the camera has brought the whole mark inside the frame.
+        tl.to("#hub", { opacity: 1, duration: 0.8, ease: "sine.inOut" }, 8.6);
+        tl.to("#glow-hub", { opacity: 0.6, duration: 0.8, ease: "sine.out" }, 8.45);
+        tl.to(["#lb-pos", "#l-pos"], { opacity: 1, duration: 0.2 }, 8.55);
+        tl.fromTo("#l-pos", { strokeDashoffset: 1 }, { strokeDashoffset: 0, duration: 0.8, ease: "power2.inOut" }, 8.55);
+        travel(tl, "#token", [[0, -22], [245, 30], [356, -178]], 8.75, 1.1, { scale: 0.55 });
+        tl.to("#token", { opacity: 0, duration: 0.15, ease: "power1.in" }, 9.73);
+        tl.fromTo("#record", { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.9, ease: "expo.out" }, 9.05);
+        tl.fromTo("#cap-2", { opacity: 0, y: 18 }, { opacity: 1, y: 0, duration: 0.7, ease: "power3.out" }, 8.95);
+        tl.to("#glow-hub", { opacity: 0.85, duration: 0.3, ease: "sine.out" }, 9.85);
+        tl.to("#glow-hub", { opacity: 0.55, duration: 0.3, ease: "sine.inOut" }, 10.17);
+        tl.fromTo("#row-orders .hl", { opacity: 0 }, { opacity: 1, duration: 0.3, ease: "power2.out" }, 9.85);
+        tl.to("#row-orders .st-idle", { opacity: 0, duration: 0.2 }, 9.85);
+        tl.fromTo("#row-orders .st-ok", { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.4, ease: "power3.out" }, 9.9);
+        tl.to("#row-orders .hl", { opacity: 0.35, duration: 0.6, ease: "sine.inOut" }, 10.35);
+        tl.to(["#lb-mgr", "#lb-web", "#l-mgr", "#l-web"], { opacity: 1, duration: 0.2 }, 10.1);
+        tl.fromTo(["#l-mgr", "#l-web"], { strokeDashoffset: 1 }, { strokeDashoffset: 0, duration: 0.9, ease: "power2.inOut", stagger: 0.15 }, 10.1);
+        tl.to("#cap-2", { opacity: 0, y: -10, duration: 0.35, ease: "power2.in" }, 10.65);
+
+        /* ================= 4 · Manager: Dashboard → Inventory (10.4 – 16.35) ================= */
+        // The synced figure leaves the record and lands on the revenue card; the camera follows it.
+        tl.fromTo("#token2", { opacity: 0, scale: 0.8 }, { opacity: 1, scale: 1, duration: 0.35, ease: "power2.out" }, 10.45);
+        travel(tl, "#token2", [[2050, 1010], [2160, 1010], [2476, 525], [2820, 525], [2966, 525]], 10.45, 1.45);
+        tl.to("#token2", { opacity: 0, scale: 0.5, duration: 0.3, ease: "power2.in" }, 11.85);
+        camTo(tl, CAM.mgr, 10.3, 1.5);
+        camTo(tl, CAM.mgrIn, 11.8, 4.5, "sine.inOut");
+        tl.to(["#hub", "#record"], { opacity: 0, duration: 0.5, ease: "power2.inOut" }, 10.45);
+        tl.to("#glow-hub", { opacity: 0.15, duration: 0.8, ease: "sine.inOut" }, 10.5);
+        tl.fromTo("#phone", { opacity: 0, y: 70, scale: 0.96, rotation: -1.5 }, { opacity: 1, y: 0, scale: 1, rotation: 0, duration: 1.2, ease: "expo.out" }, 10.55);
+        tl.fromTo("#glow-mgr", { opacity: 0 }, { opacity: 0.5, duration: 1.0, ease: "sine.out" }, 10.8);
+        tl.fromTo("#cap-3", { opacity: 0, y: 18 }, { opacity: 1, y: 0, duration: 0.7, ease: "power3.out" }, 11.2);
+        // A. Dashboard: pull to refresh (Manager reads Cloud; it is not a live mirror), then the figures land.
+        tl.to("#m-scroll", { y: 48, duration: 0.35, ease: "power2.out" }, 12.0);
+        tl.fromTo("#m-spin", { opacity: 0, rotation: 0 }, { opacity: 1, rotation: 200, duration: 0.45, ease: "none" }, 12.0);
+        tl.to("#m-spin", { opacity: 0, rotation: 320, duration: 0.25, ease: "power1.in" }, 12.45);
+        tl.to("#m-scroll", { y: 0, duration: 0.45, ease: "power3.out" }, 12.4);
+        counter(tl, document.getElementById("m-rev"), 2868.65, 2930.25, 12.45, 1.0);
+        counter(tl, document.getElementById("m-open"), 1586.2, 1647.8, 12.45, 0.9);
+        tl.to(".m-row.open .o1", { opacity: 0, duration: 0.2 }, 12.45);
+        tl.to(".m-row.open .o2", { opacity: 1, duration: 0.3 }, 12.5);
+        tl.fromTo("#m-open-row", { backgroundColor: "#fff7ea" }, { backgroundColor: "#ffefd2", duration: 0.35, ease: "power2.out", yoyo: true, repeat: 1 }, 12.45);
+        tl.to("#cap-3", { opacity: 0, y: -10, duration: 0.35, ease: "power2.in" }, 13.25);
+        // B. Inventory, from the Dashboard's own Inventory card (same device, a tab change).
+        tapFx("#tap-open", 13.15);
+        tl.to("#m-dash", { x: -60, opacity: 0, duration: 0.35, ease: "power2.in" }, 13.35);
+        tl.set("#m-inv", { autoAlpha: 1 }, 13.6);
+        tl.fromTo("#m-inv", { x: 60, opacity: 0 }, { x: 0, opacity: 1, duration: 0.55, ease: "power3.out", immediateRender: false }, 13.6);
+        tl.to("#m-pill", { x: 177, duration: 0.55, ease: "power3.inOut" }, 13.35);
+        tl.to(".m-nav > i:nth-of-type(1)", { opacity: 1, duration: 0.3 }, 13.5);
+        tl.to(".m-nav > i:nth-of-type(4)", { opacity: 0, duration: 0.2 }, 13.55);
+        tl.fromTo("#cap-3b", { opacity: 0, y: 18 }, { opacity: 1, y: 0, duration: 0.7, ease: "power3.out" }, 13.6);
+        // Receive goods: review → confirm.
+        tapFx("#tap-add", 14.3);
+        tl.set("#m-recv", { autoAlpha: 1 }, 14.45);
+        tl.fromTo("#m-recv", { y: 856 }, { y: 0, duration: 0.6, ease: "expo.out", immediateRender: false }, 14.45);
+        tl.to("#m-inv", { opacity: 0, duration: 0.3, ease: "power1.in" }, 14.45);
+        tl.to("#m-inv", { opacity: 1, duration: 0.35, ease: "power1.out" }, 15.55);
+        tl.fromTo("#r-debt", { boxShadow: "0 0 0 0 rgba(245, 158, 11, 0)" }, { boxShadow: "0 0 0 3px rgba(245, 158, 11, 0.45)", duration: 0.3, ease: "power2.out", yoyo: true, repeat: 1 }, 14.95);
+        tapFx("#tap-go", 15.3);
+        tl.to("#m-recv", { y: 856, duration: 0.45, ease: "power3.in" }, 15.5);
+        tl.set("#m-recv", { autoAlpha: 0 }, 15.96);
+        // Stock and supplier obligation follow.
+        counter(tl, document.getElementById("inv-today"), 0, 30, 15.9, 0.6, " GEL");
+        tl.to(".i-chip .lo2", { opacity: 0, y: -8, duration: 0.2, ease: "power2.in" }, 15.95);
+        tl.fromTo(".i-chip .lo1", { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.3, ease: "power3.out" }, 16.05);
+        tl.to("#inv-empty", { opacity: 0, duration: 0.15 }, 15.9);
+        tl.fromTo("#inv-rcpt", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.5, ease: "power3.out" }, 16.0);
+        tl.to("#cap-3b", { opacity: 0, y: -10, duration: 0.35, ease: "power2.in" }, 16.55);
+        tl.to("#glow-mgr", { opacity: 0.15, duration: 0.8, ease: "sine.inOut" }, 16.6);
+
+        /* ================= 5 · Same menu, two websites (16.4 – 21.1) ================= */
+        camTo(tl, CAM.web, 16.4, 1.5);
+        tl.to("#p-web", { opacity: 1, duration: 0.05 }, 16.95);
+        tl.fromTo("#p-web", { strokeDashoffset: 0.05 }, { strokeDashoffset: -1, duration: 0.8, ease: "power1.inOut", immediateRender: false }, 16.95);
+        tl.to("#p-web", { opacity: 0, duration: 0.1 }, 17.67);
+        tl.fromTo("#web-front", { opacity: 0, y: 60, scale: 0.97, rotationX: 6, transformPerspective: 2400, transformOrigin: "50% 100%" },
+          { opacity: 1, y: 0, scale: 1, rotationX: 0, duration: 1.3, ease: "expo.out" }, 16.85);
+        tl.fromTo("#glow-web", { opacity: 0 }, { opacity: 0.45, duration: 1.0, ease: "sine.out" }, 16.95);
+        tl.fromTo("#cap-4", { opacity: 0, y: 18 }, { opacity: 1, y: 0, duration: 0.7, ease: "power3.out" }, 17.3);
+        tl.fromTo("#tag-saas", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.5, ease: "power3.out" }, 17.5);
+        tl.fromTo("#skin-saas .wrow", { opacity: 0, x: -30 }, { opacity: 1, x: 0, duration: 0.6, ease: "expo.out", stagger: 0.15 }, 17.55);
+        tl.fromTo("#menu-bind", { opacity: 0 }, { opacity: 1, duration: 0.5, ease: "power2.out" }, 18.1);
+        tl.fromTo("#menu-bind .bar", { scaleY: 0 }, { scaleY: 1, duration: 0.45, ease: "expo.out", stagger: 0.08 }, 18.1);
+        // The shared content block: the Khachapuri row lifts out of the SaaS page ...
+        tl.set("#dish", { autoAlpha: 1 }, 18.55);
+        tl.set("#skin-saas .wrow:first-child", { opacity: 0 }, 18.56);
+        tl.fromTo("#dish", { y: 0, scale: 1, boxShadow: "0 0 0 rgba(0,0,0,0)" }, { y: -14, scale: 1.035, boxShadow: "0 22px 44px rgba(0,0,0,0.28)", duration: 0.6, ease: "power3.out" }, 18.56);
+        // ... the renderer changes underneath it (masked scan behind a Vynic accent line) ...
+        tl.set("#skin-custom", { autoAlpha: 1 }, 19.0);
+        tl.set("#wipe", { opacity: 1 }, 19.0);
+        tl.fromTo("#skin-custom", { clipPath: "inset(0% 0% 100% 0%)" }, { clipPath: "inset(0% 0% 0% 0%)", duration: 1.1, ease: "power2.inOut" }, 19.0);
+        tl.fromTo("#wipe", { y: 0 }, { y: 671, duration: 1.1, ease: "power2.inOut" }, 19.0);
+        tl.to("#wipe", { opacity: 0, duration: 0.25, ease: "power2.in" }, 20.05);
+        tl.set("#skin-saas", { autoAlpha: 0 }, 20.15);
+        tl.to("#url-a", { opacity: 0, duration: 0.25 }, 19.3);
+        tl.to("#url-b", { opacity: 1, duration: 0.35 }, 19.45);
+        tl.to("#tag-saas", { opacity: 0, duration: 0.3, ease: "power2.in" }, 19.05);
+        tl.fromTo("#tag-custom", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.5, ease: "power3.out" }, 19.9);
+        // ... the same dish takes the bespoke styling and settles into the custom menu.
+        tl.to("#dish .dc-custom", { opacity: 1, duration: 0.45, ease: "sine.inOut" }, 19.75);
+        tl.to("#dish", { y: 0, scale: 1, boxShadow: "0 0 0 rgba(0,0,0,0)", duration: 0.55, ease: "power3.inOut" }, 20.25);
+        tl.set("#c-row1", { opacity: 1 }, 20.8);
+        tl.set("#dish", { autoAlpha: 0 }, 20.82);
+        tl.to("#menu-bind", { opacity: 0, duration: 0.45, ease: "power2.in" }, 20.4);
+        // Both renderers, one foundation: the Vynic site returns behind the custom build.
+        camTo(tl, CAM.webWide, 20.3, 0.9, "sine.inOut");
+        tl.fromTo("#web-back", { opacity: 0, x: -330, y: 150, scale: 0.96, rotationY: 8, transformPerspective: 2400 },
+          { opacity: 1, x: 0, y: 0, scale: 1, rotationY: 0, duration: 1.0, ease: "expo.out" }, 20.4);
+        tl.fromTo("#tag-saas-back", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.45, ease: "power3.out" }, 20.75);
+        tl.to("#cap-4", { opacity: 0, y: -10, duration: 0.35, ease: "power2.in" }, 20.95);
+
+        /* ================= 6 · One Vynic (21.2 – 25.0) ================= */
+        camTo(tl, CAM.all, 21.2, 1.25, "power2.inOut");
+        tl.to(["#hub", "#pos"], { opacity: 1, duration: 0.6, ease: "power2.out" }, 21.3);
+        tl.to(["#glow-pos", "#glow-mgr", "#glow-web"], { opacity: 0.35, duration: 0.7, ease: "sine.inOut" }, 21.35);
+        tl.to("#glow-hub", { opacity: 0.8, duration: 0.7, ease: "sine.inOut" }, 21.35);
+        ["#p-pos", "#p-mgr", "#p-web"].forEach((sel, i) => {
+          tl.to(sel, { opacity: 1, duration: 0.05 }, 21.75);
+          tl.fromTo(sel, { strokeDashoffset: 0.05 }, { strokeDashoffset: -1, duration: i === 1 ? 0.8 : 0.7, ease: "power1.inOut", immediateRender: false }, 21.75);
+        });
+        tl.to(["#p-pos", "#p-mgr", "#p-web"], { opacity: 0, duration: 0.1 }, 22.55);
+        // Everything folds into the hub; the camera returns to the mark.
+        const fold = [
+          ["#pos", 0.6, 420, -80], ["#phone", 0.6, -420, 150], ["#web-front", 0.6, -380, -230], ["#web-back", 0.6, -560, -120],
+          ["#tag-custom", 0.6, -300, -150], ["#tag-saas-back", 0.6, -600, -60],
+        ];
+        fold.forEach(([sel, sc, dx, dy]) => {
+          // Every surface rests at x/y 0 here, so absolute targets are seek-safe.
+          tl.to(sel, { opacity: 0, scale: sc, x: dx, y: dy, duration: 0.6, ease: "power3.in" }, 22.65);
+        });
+        tl.to(["#l-pos", "#l-mgr", "#l-web"], { strokeDashoffset: -1, duration: 0.5, ease: "power2.in" }, 22.65);
+        tl.to([".link-base"], { opacity: 0, duration: 0.5, ease: "power2.in" }, 22.65);
+        tl.to(["#glow-pos", "#glow-mgr", "#glow-web"], { opacity: 0, duration: 0.6 }, 22.65);
+        camTo(tl, CAM.lock, 22.8, 0.9);
+        camTo(tl, CAM.lockIn, 23.7, 1.3, "sine.inOut");                          // the lockup breathes, barely
+        tl.to("#hub-tile", { opacity: 0, duration: 0.6, ease: "power2.inOut" }, 23.0);
+        tl.set("#wordmark", { autoAlpha: 1 }, 23.35);
+        // Without the tile the bare V sits tighter to the wordmark; the statement aligns to the V's left stroke.
+        tl.fromTo("#wordmark-text", { opacity: 0, x: -44, y: 34, filter: "blur(14px)" }, { opacity: 1, x: -44, y: 0, filter: "blur(0px)", duration: 1.0, ease: "expo.out", immediateRender: false }, 23.4);
+        tl.set("#tagline", { autoAlpha: 1 }, 23.65);
+        tl.fromTo("#tagline-text", { x: 58, yPercent: 110 }, { x: 58, yPercent: 0, duration: 0.8, ease: "expo.out" }, 23.7);
+        tl.to("#glow-hub", { opacity: 0.55, duration: 1.1, ease: "sine.inOut" }, 23.4);
+
+        // Website loop: return to the empty stage so the last frame meets frame 0.
+        if (vars.loopOut === true) {
+          tl.to(["#hub", "#wordmark", "#tagline"], { opacity: 0, duration: 0.5, ease: "power2.in" }, 24.45);
+          tl.to(["#glow-hub", "#bg-grid"], { opacity: 0, duration: 0.5, ease: "power2.in" }, 24.45);
+        }
+
+        window.__timelines["main"] = tl;
+      })();
+    </script>
+  </body>
+</html>

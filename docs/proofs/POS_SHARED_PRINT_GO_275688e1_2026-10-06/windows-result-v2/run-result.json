@@ -1,0 +1,15 @@
+﻿{
+    "status":  "PASS",
+    "failure":  null,
+    "guestBase":  "C:\\Users\\vaanskii\\AppData\\Local\\VynicReadinessGoHelpers\\638458dd-root-20261006-v2",
+    "guestArchitecture":  "ARM64",
+    "sourceZipSHA256":  "1f318eab633481898c1c88f43dfbcda432ffdf7c3ec56ded69c4359195b8377f",
+    "printJobsBefore":  0,
+    "printJobsAfter":  0,
+    "documentsSubmitted":  0,
+    "sourceOnly":  true,
+    "serviceRegistration":  false,
+    "driverInstall":  false,
+    "productStarted":  false,
+    "machineRestarted":  false
+}

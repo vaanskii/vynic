@@ -1,0 +1,7 @@
+{
+  "ownedClusterStopped": true,
+  "cluster": "/private/tmp/vynic-menu09-candidate-xxggizsc/pg",
+  "statusExitCode": 3,
+  "disposableDatabases": 8,
+  "liveClusterTouched": false
+}

@@ -1,0 +1,146 @@
+{
+  "status": "PASS_CODE_AND_ISOLATED_TESTS_NOT_DEPLOYED",
+  "qualifiedAtUtc": "2026-10-13T16:28:18.646355+00:00",
+  "head": "3463ee406184fec7f53818416e11d0e5f5602c87",
+  "uncommitted": true,
+  "approvedPolicy": {
+    "occupancy": "WHOLE_DAY",
+    "websiteWindowMinutes": 10,
+    "bogTtlMinutes": 10,
+    "websiteWindowNeverExtended": true,
+    "lateOrUnprovedExpiredPayment": "RESTAURANT_OWNER_REVIEW_NO_AUTO_RESTORE_OR_REFUND",
+    "partialRefund": "KEEP_CONFIRMED_BOOKING",
+    "financialDecisionOwner": "RESTAURANT_OWNER",
+    "supportRole": "TECHNICAL_ASSISTANCE"
+  },
+  "tests": {
+    "backend-aggregate": {
+      "passed": 851,
+      "failed": 0,
+      "skipped": 840
+    },
+    "focused": {
+      "passed": 32,
+      "failed": 0,
+      "skipped": 0
+    },
+    "regressions": {
+      "passed": 179,
+      "failed": 0,
+      "skipped": 0
+    },
+    "w1-original-revision": {
+      "passed": 28,
+      "failed": 0,
+      "skipped": 0
+    },
+    "frontend-aggregate": {
+      "passed": 208,
+      "failed": 0,
+      "skipped": 0
+    },
+    "sdk-tests": {
+      "passed": 6,
+      "failed": 0,
+      "skipped": 0
+    },
+    "overlap": {
+      "regressionPassedOverlap": 83,
+      "additionalPgPassed": 156,
+      "distinctBackendPassed": 1007,
+      "aggregateSkipsRunSeparately": 156,
+      "remainingOptInNotRun": 684,
+      "countMethod": "case multiplicity per file/fullName; repeated identical titles remain separate declared test cases"
+    }
+  },
+  "checks": {
+    "backendTypecheck": "PASS_FINAL",
+    "backendBuild": "PASS_FINAL",
+    "platformBuild": "PASS",
+    "vankisiBuild": "PASS",
+    "sdkTypes": "PASS",
+    "contracts": "PASS",
+    "newBackendFrontendLintErrors": 0,
+    "newBackendFrontendLintWarnings": 0,
+    "touchedImplementationLintExistingErrors": 19,
+    "newImplementationDiagnostics": 0,
+    "fixtureLint": {
+      "beforeErrors": 79,
+      "beforeWarnings": 16,
+      "afterErrors": 79,
+      "afterWarnings": 16,
+      "added": [],
+      "otherChangedFixturesErrors": 0
+    },
+    "gitDiffCheck": "PASS"
+  },
+  "migration": {
+    "freshMigrations": "PASS_TASK_DATABASES",
+    "populatedUpgrade": "PASS",
+    "existingIdsDatesStatusAmountsAndDuplicateLegacyRefsPreserved": true,
+    "legacyState": "UNTRACKED_NO_INFERRED_MONEY_OR_HOLDS",
+    "schemaDiff": "UNCHANGED_PREEXISTING_TWO_PRINTER_FK_NAMES",
+    "websiteSchemaChangesMatchMigration": true,
+    "prismaValidation": "PASS",
+    "verifiedMigrationChecksums": 74,
+    "liveDataChanged": false
+  },
+  "browser": {
+    "method": "CUA_REAL_COMPONENTS_SYNTHETIC_ADAPTERS_AND_CART",
+    "sizes": [
+      375,
+      768,
+      1440
+    ],
+    "languages": [
+      "ka",
+      "en"
+    ],
+    "verified": [
+      "review_preserves_cart",
+      "pending_preserves_cart",
+      "error_preserves_cart",
+      "confirmed_clears_cart",
+      "keyboard_read_retry",
+      "owner_table_keyboard_scroll"
+    ],
+    "screenshots": [
+      "payment-review-375.jpg",
+      "payment-confirmed-1440.jpg",
+      "owner-review-1440.jpg",
+      "owner-review-375.jpg",
+      "payment-pending-768.jpg",
+      "payment-unavailable-375.jpg"
+    ],
+    "tab": "CLOSED",
+    "viewport": "RESET",
+    "platformPanel": "JSDOM_STATE_INTERACTION_QA_NO_PLATFORM_BROWSER_SCREENSHOT"
+  },
+  "boundaries": {
+    "liveDataChanged": false,
+    "liveServicesRestarted": false,
+    "realBankCalls": false,
+    "realCredentialsChangedOrTransmitted": false,
+    "deployment": false,
+    "commit": false,
+    "push": false,
+    "reset": false,
+    "hardwareTest": false
+  },
+  "cleanup": {
+    "ownedPostgres": "STOPPED",
+    "postmasterPidAbsent": true,
+    "ownedPreview": "STOPPED",
+    "loopbackPortClosed": true
+  },
+  "limitations": [
+    "684 opt-in backend cases were not run.",
+    "Pre-existing two printer runtime FK-name differences remain; website schema alignment and migration checks pass.",
+    "Existing implementation and W1 fixture lint debt remains; new files and changes add no diagnostics.",
+    "Cloud holds do not provide global exclusivity with independent offline POS; real bank/fleet/stale-mirror reconciliation remains a release gate.",
+    "Historical money/overlaps are not inferred or automatically repaired.",
+    "Equal configured ten-minute durations do not claim synchronized website/provider creation clocks."
+  ],
+  "selfReview": "Tenant, financial/state, migration, concurrent/rollback and UI boundaries; no separate-agent review claimed",
+  "privateLogs": "/tmp/vynic-web0104-w5pueeer"
+}

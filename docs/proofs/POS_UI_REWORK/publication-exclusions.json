@@ -1,0 +1,512 @@
+[
+  {
+    "path": ".claude/launch.json",
+    "bytes": 548,
+    "classification": "local tool/session configuration",
+    "tracked": false
+  },
+  {
+    "path": ".env.docker.example",
+    "bytes": 753,
+    "classification": "environment or certificate material: not inspected",
+    "tracked": true
+  },
+  {
+    "path": ".env.production.example",
+    "bytes": 793,
+    "classification": "environment or certificate material: not inspected",
+    "tracked": true
+  },
+  {
+    "path": "apps/operations/.env.example",
+    "bytes": 1051,
+    "classification": "environment or certificate material: not inspected",
+    "tracked": true
+  },
+  {
+    "path": "apps/operations/config/production.build.env.example",
+    "bytes": 221,
+    "classification": "environment or certificate material: not inspected",
+    "tracked": false
+  },
+  {
+    "path": "docs/proofs/POS02_ACCEPTANCE_db74149c_2026-10-02/inherited-product-logs.zip",
+    "bytes": 199145,
+    "classification": "generated binary/archive or local runtime data",
+    "tracked": false
+  },
+  {
+    "path": "docs/proofs/POS02_ACCEPTANCE_db74149c_2026-10-02/logs.zip",
+    "bytes": 199551,
+    "classification": "generated binary/archive or local runtime data",
+    "tracked": false
+  },
+  {
+    "path": "docs/proofs/POS02_ACCEPTANCE_db74149c_2026-10-02/rootCA.pem",
+    "bytes": 1744,
+    "classification": "environment or certificate material: not inspected",
+    "tracked": false
+  },
+  {
+    "path": "docs/proofs/POS02_ACCEPTANCE_db74149c_2026-10-02/source.zip",
+    "bytes": 5225741,
+    "classification": "generated binary/archive or local runtime data",
+    "tracked": false
+  },
+  {
+    "path": "docs/proofs/POS02_ADMIN_d194367f_2026-10-02/logs.zip",
+    "bytes": 199145,
+    "classification": "generated binary/archive or local runtime data",
+    "tracked": false
+  },
+  {
+    "path": "docs/proofs/POS02_ADMIN_d194367f_2026-10-02/source.zip",
+    "bytes": 5191802,
+    "classification": "generated binary/archive or local runtime data",
+    "tracked": false
+  },
+  {
+    "path": "docs/proofs/POS02_CHECKPOINT_275688e1_2026-10-02/candidate-source.tar.gz",
+    "bytes": 4604220,
+    "classification": "generated binary/archive or local runtime data",
+    "tracked": false
+  },
+  {
+    "path": "docs/proofs/POS02_CHECKPOINT_275688e1_2026-10-02/evidence/POS02_LOGS_275688e1_2026-10-02.zip",
+    "bytes": 268409,
+    "classification": "generated binary/archive or local runtime data",
+    "tracked": false
+  },
+  {
+    "path": "docs/proofs/POS02_LOGS_275688e1_2026-10-02.zip",
+    "bytes": 268409,
+    "classification": "generated binary/archive or local runtime data",
+    "tracked": false
+  },
+  {
+    "path": "docs/proofs/POS02_PREVIEW_275688e1_2026-10-02/logs.zip",
+    "bytes": 7083,
+    "classification": "generated binary/archive or local runtime data",
+    "tracked": false
+  },
+  {
+    "path": "docs/proofs/POS02_PREVIEW_275688e1_2026-10-02/mac-preview.zip",
+    "bytes": 46034105,
+    "classification": "generated binary/archive or local runtime data",
+    "tracked": false
+  },
+  {
+    "path": "docs/proofs/POS02_PREVIEW_275688e1_2026-10-02/preview-source.zip",
+    "bytes": 5175954,
+    "classification": "generated binary/archive or local runtime data",
+    "tracked": false
+  },
+  {
+    "path": "docs/proofs/POS02_WINDOWS_CANDIDATE_275688e1_2026-10-02.zip",
+    "bytes": 5151288,
+    "classification": "generated binary/archive or local runtime data",
+    "tracked": false
+  },
+  {
+    "path": "docs/proofs/POS02_WINDOWS_RECOVERY_2026-10-04/logs.zip",
+    "bytes": 22521,
+    "classification": "generated binary/archive or local runtime data",
+    "tracked": false
+  },
+  {
+    "path": "docs/proofs/POS_MANAGER_ITEMS_275688e1_2026-10-06/followon-owned-delta.zip",
+    "bytes": 94881,
+    "classification": "generated binary/archive or local runtime data",
+    "tracked": false
+  },
+  {
+    "path": "docs/proofs/POS_MANAGER_ITEMS_275688e1_2026-10-06/manager-source.zip",
+    "bytes": 18372,
+    "classification": "generated binary/archive or local runtime data",
+    "tracked": false
+  },
+  {
+    "path": "docs/proofs/POS_MULTI_TERMINAL_275688e1_2026-10-06/candidate-source.zip",
+    "bytes": 5455307,
+    "classification": "generated binary/archive or local runtime data",
+    "tracked": false
+  },
+  {
+    "path": "docs/proofs/POS_MULTI_TERMINAL_275688e1_2026-10-06/operational-go-uncompiled-source.zip",
+    "bytes": 30006,
+    "classification": "generated binary/archive or local runtime data",
+    "tracked": false
+  },
+  {
+    "path": "docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/software-completion-final/artifacts/bundles/amd64/vynic-print-helper.exe",
+    "bytes": 316416,
+    "classification": "generated binary/archive or local runtime data",
+    "tracked": false
+  },
+  {
+    "path": "docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/software-completion-final/artifacts/bundles/amd64/vynic-printer-agent.exe",
+    "bytes": 24817152,
+    "classification": "generated binary/archive or local runtime data",
+    "tracked": false
+  },
+  {
+    "path": "docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/software-completion-final/artifacts/bundles/arm64/vynic-print-helper.exe",
+    "bytes": 291328,
+    "classification": "generated binary/archive or local runtime data",
+    "tracked": false
+  },
+  {
+    "path": "docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/software-completion-final/artifacts/bundles/arm64/vynic-printer-agent.exe",
+    "bytes": 23291392,
+    "classification": "generated binary/archive or local runtime data",
+    "tracked": false
+  },
+  {
+    "path": "docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/software-completion-final/verification/arm64-source.zip",
+    "bytes": 64180,
+    "classification": "generated binary/archive or local runtime data",
+    "tracked": false
+  },
+  {
+    "path": "docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/software-completion-final/verification/printer-daemon-independent/bundle-reproduction-amd64-1/vynic-print-helper.exe",
+    "bytes": 316416,
+    "classification": "generated binary/archive or local runtime data",
+    "tracked": false
+  },
+  {
+    "path": "docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/software-completion-final/verification/printer-daemon-independent/bundle-reproduction-amd64-2/vynic-print-helper.exe",
+    "bytes": 316416,
+    "classification": "generated binary/archive or local runtime data",
+    "tracked": false
+  },
+  {
+    "path": "docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/software-completion-final/verification/printer-daemon-independent/bundle-reproduction-arm64-1/vynic-print-helper.exe",
+    "bytes": 291328,
+    "classification": "generated binary/archive or local runtime data",
+    "tracked": false
+  },
+  {
+    "path": "docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/software-completion-final/verification/printer-daemon-independent/bundle-reproduction-arm64-2/vynic-print-helper.exe",
+    "bytes": 291328,
+    "classification": "generated binary/archive or local runtime data",
+    "tracked": false
+  },
+  {
+    "path": "docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/software-completion-final/verification/printtransport-windows-arm64.test.exe",
+    "bytes": 5548544,
+    "classification": "generated binary/archive or local runtime data",
+    "tracked": false
+  },
+  {
+    "path": "docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/software-completion-final/verification/windows-software-go-stage/amd64-packages-cli.zip",
+    "bytes": 67394446,
+    "classification": "generated binary/archive or local runtime data",
+    "tracked": false
+  },
+  {
+    "path": "docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/software-completion-final/verification/windows-software-go-stage/arm64-packages-cli.zip",
+    "bytes": 62485269,
+    "classification": "generated binary/archive or local runtime data",
+    "tracked": false
+  },
+  {
+    "path": "docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/software-completion-final/verification/windows-software-go-stage/source1109.zip",
+    "bytes": 5765987,
+    "classification": "generated binary/archive or local runtime data",
+    "tracked": false
+  },
+  {
+    "path": "docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/software-windows-flutter-stage-v2/operational-proof-server-windows.test.exe",
+    "bytes": 26370560,
+    "classification": "generated binary/archive or local runtime data",
+    "tracked": false
+  },
+  {
+    "path": "docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/software-windows-flutter-stage-v2/printer-agent-server-windows.test.exe",
+    "bytes": 25833472,
+    "classification": "generated binary/archive or local runtime data",
+    "tracked": false
+  },
+  {
+    "path": "docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/software-windows-flutter-stage-v2/source.zip",
+    "bytes": 5780809,
+    "classification": "generated binary/archive or local runtime data",
+    "tracked": false
+  },
+  {
+    "path": "docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/software-windows-flutter-stage-v3/operational-proof-server-windows.test.exe",
+    "bytes": 26370560,
+    "classification": "generated binary/archive or local runtime data",
+    "tracked": false
+  },
+  {
+    "path": "docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/software-windows-flutter-stage-v3/printer-agent-server-windows.test.exe",
+    "bytes": 25833472,
+    "classification": "generated binary/archive or local runtime data",
+    "tracked": false
+  },
+  {
+    "path": "docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/software-windows-flutter-stage-v3/source.zip",
+    "bytes": 5780933,
+    "classification": "generated binary/archive or local runtime data",
+    "tracked": false
+  },
+  {
+    "path": "docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/software-windows-flutter-stage/operational-proof-server-windows.test.exe",
+    "bytes": 26370560,
+    "classification": "generated binary/archive or local runtime data",
+    "tracked": false
+  },
+  {
+    "path": "docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/software-windows-flutter-stage/printer-agent-server-windows.test.exe",
+    "bytes": 25833472,
+    "classification": "generated binary/archive or local runtime data",
+    "tracked": false
+  },
+  {
+    "path": "docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/software-windows-flutter-stage/source.zip",
+    "bytes": 5780809,
+    "classification": "generated binary/archive or local runtime data",
+    "tracked": false
+  },
+  {
+    "path": "docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/software-windows-pos-result-v3/native-pos-build.zip",
+    "bytes": 19265604,
+    "classification": "generated binary/archive or local runtime data",
+    "tracked": false
+  },
+  {
+    "path": "docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/software-windows-pos-stage-v2/operational-proof-server-windows.test.exe",
+    "bytes": 26370560,
+    "classification": "generated binary/archive or local runtime data",
+    "tracked": false
+  },
+  {
+    "path": "docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/software-windows-pos-stage-v2/printer-agent-server-windows.test.exe",
+    "bytes": 25833472,
+    "classification": "generated binary/archive or local runtime data",
+    "tracked": false
+  },
+  {
+    "path": "docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/software-windows-pos-stage-v2/source.zip",
+    "bytes": 5776180,
+    "classification": "generated binary/archive or local runtime data",
+    "tracked": false
+  },
+  {
+    "path": "docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/software-windows-pos-stage-v3/operational-proof-server-windows.test.exe",
+    "bytes": 26370560,
+    "classification": "generated binary/archive or local runtime data",
+    "tracked": false
+  },
+  {
+    "path": "docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/software-windows-pos-stage-v3/printer-agent-server-windows.test.exe",
+    "bytes": 25833472,
+    "classification": "generated binary/archive or local runtime data",
+    "tracked": false
+  },
+  {
+    "path": "docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/software-windows-pos-stage-v3/source.zip",
+    "bytes": 5776304,
+    "classification": "generated binary/archive or local runtime data",
+    "tracked": false
+  },
+  {
+    "path": "docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/software-windows-pos-stage/operational-proof-server-windows.test.exe",
+    "bytes": 26370560,
+    "classification": "generated binary/archive or local runtime data",
+    "tracked": false
+  },
+  {
+    "path": "docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/software-windows-pos-stage/printer-agent-server-windows.test.exe",
+    "bytes": 25833472,
+    "classification": "generated binary/archive or local runtime data",
+    "tracked": false
+  },
+  {
+    "path": "docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/software-windows-pos-stage/source.zip",
+    "bytes": 5776180,
+    "classification": "generated binary/archive or local runtime data",
+    "tracked": false
+  },
+  {
+    "path": "docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/windows-flutter-tests/operational-proof-server-windows.test.exe",
+    "bytes": 26283520,
+    "classification": "generated binary/archive or local runtime data",
+    "tracked": false
+  },
+  {
+    "path": "docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/windows-go-packages-stage/packages7.zip",
+    "bytes": 71374136,
+    "classification": "generated binary/archive or local runtime data",
+    "tracked": false
+  },
+  {
+    "path": "docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/windows-go-packages-stage/source163.zip",
+    "bytes": 383910,
+    "classification": "generated binary/archive or local runtime data",
+    "tracked": false
+  },
+  {
+    "path": "docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/windows-go-packages-stage/vynic_print_helper.exe",
+    "bytes": 316416,
+    "classification": "generated binary/archive or local runtime data",
+    "tracked": false
+  },
+  {
+    "path": "docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/windows-native-arm64-result-v2-current-user/vynic_print_helper.exe",
+    "bytes": 291328,
+    "classification": "generated binary/archive or local runtime data",
+    "tracked": false
+  },
+  {
+    "path": "docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/windows-native-arm64-result/vynic_print_helper.exe",
+    "bytes": 291328,
+    "classification": "generated binary/archive or local runtime data",
+    "tracked": false
+  },
+  {
+    "path": "docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/windows-native-arm64-stage-v2-current-user/printtransport-windows-arm64.test.exe",
+    "bytes": 5548544,
+    "classification": "generated binary/archive or local runtime data",
+    "tracked": false
+  },
+  {
+    "path": "docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/windows-native-arm64-stage-v2-current-user/source.zip",
+    "bytes": 64180,
+    "classification": "generated binary/archive or local runtime data",
+    "tracked": false
+  },
+  {
+    "path": "docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/windows-native-arm64-stage/printtransport-windows-arm64.test.exe",
+    "bytes": 5548544,
+    "classification": "generated binary/archive or local runtime data",
+    "tracked": false
+  },
+  {
+    "path": "docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/windows-native-arm64-stage/source.zip",
+    "bytes": 64180,
+    "classification": "generated binary/archive or local runtime data",
+    "tracked": false
+  },
+  {
+    "path": "docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/windows-pos-prepared-result/native-pos-build.zip",
+    "bytes": 19247087,
+    "classification": "generated binary/archive or local runtime data",
+    "tracked": false
+  },
+  {
+    "path": "docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/windows-pos-prepared-stage/source.zip",
+    "bytes": 5263098,
+    "classification": "generated binary/archive or local runtime data",
+    "tracked": false
+  },
+  {
+    "path": "docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/windows-pos-stage/source.zip",
+    "bytes": 5267727,
+    "classification": "generated binary/archive or local runtime data",
+    "tracked": false
+  },
+  {
+    "path": "docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/windows-result-v2/vynic_print_helper.exe",
+    "bytes": 316416,
+    "classification": "generated binary/archive or local runtime data",
+    "tracked": false
+  },
+  {
+    "path": "docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/windows-result/vynic_print_helper.exe",
+    "bytes": 316416,
+    "classification": "generated binary/archive or local runtime data",
+    "tracked": false
+  },
+  {
+    "path": "docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/windows-software-go-packages-stage-v2/amd64-packaged-bundle.zip",
+    "bytes": 13379523,
+    "classification": "generated binary/archive or local runtime data",
+    "tracked": false
+  },
+  {
+    "path": "docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/windows-software-go-packages-stage-v2/amd64-packages-cli.zip",
+    "bytes": 67394446,
+    "classification": "generated binary/archive or local runtime data",
+    "tracked": false
+  },
+  {
+    "path": "docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/windows-software-go-packages-stage-v2/arm64-packaged-bundle.zip",
+    "bytes": 12382935,
+    "classification": "generated binary/archive or local runtime data",
+    "tracked": false
+  },
+  {
+    "path": "docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/windows-software-go-packages-stage-v2/arm64-packages-cli.zip",
+    "bytes": 62485269,
+    "classification": "generated binary/archive or local runtime data",
+    "tracked": false
+  },
+  {
+    "path": "docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/windows-software-go-packages-stage-v2/source1109.zip",
+    "bytes": 5780933,
+    "classification": "generated binary/archive or local runtime data",
+    "tracked": false
+  },
+  {
+    "path": "docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/windows-stage-v2/printtransport-windows.test.exe",
+    "bytes": 5940224,
+    "classification": "generated binary/archive or local runtime data",
+    "tracked": false
+  },
+  {
+    "path": "docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/windows-stage-v2/source.zip",
+    "bytes": 64181,
+    "classification": "generated binary/archive or local runtime data",
+    "tracked": false
+  },
+  {
+    "path": "docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/windows-stage/printtransport-windows.test.exe",
+    "bytes": 5940224,
+    "classification": "generated binary/archive or local runtime data",
+    "tracked": false
+  },
+  {
+    "path": "docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/windows-stage/source.zip",
+    "bytes": 64031,
+    "classification": "generated binary/archive or local runtime data",
+    "tracked": false
+  },
+  {
+    "path": "docs/proofs/POS_WINDOWS_NATIVE_abf7e6b3_2026-10-06/channel-harness-source.zip",
+    "bytes": 18134,
+    "classification": "generated binary/archive or local runtime data",
+    "tracked": false
+  },
+  {
+    "path": "docs/proofs/POS_WINDOWS_NATIVE_abf7e6b3_2026-10-06/initial-channel-harness-source.zip",
+    "bytes": 17583,
+    "classification": "generated binary/archive or local runtime data",
+    "tracked": false
+  },
+  {
+    "path": "docs/proofs/POS_WINDOWS_NATIVE_abf7e6b3_2026-10-06/native-pos-build.zip",
+    "bytes": 19248362,
+    "classification": "generated binary/archive or local runtime data",
+    "tracked": false
+  },
+  {
+    "path": "docs/proofs/POS_WINDOWS_NATIVE_abf7e6b3_2026-10-06/prepared-source-v2.zip",
+    "bytes": 4915571,
+    "classification": "generated binary/archive or local runtime data",
+    "tracked": false
+  },
+  {
+    "path": "docs/proofs/POS_WINDOWS_NATIVE_abf7e6b3_2026-10-06/prepared-source.zip",
+    "bytes": 4915531,
+    "classification": "generated binary/archive or local runtime data",
+    "tracked": false
+  },
+  {
+    "path": "experiments/hyperframes/vynic-product-film/.media/preferences.json",
+    "bytes": 389,
+    "classification": "local tool/session configuration",
+    "tracked": false
+  }
+]

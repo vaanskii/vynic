@@ -1,0 +1,8 @@
+{
+  "freshMigrationCount": 75,
+  "upgradeFrom": 74,
+  "upgradeTo": 75,
+  "legacyValuesAndStatusesUnchanged": true,
+  "legacyBuildFingerprintDefault": null,
+  "historicalMigrationChecksumsUnchanged": true
+}

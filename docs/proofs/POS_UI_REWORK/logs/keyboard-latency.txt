@@ -1,0 +1,11 @@
+vynic-ui-baseline-profile.log
+MODAL_PROFILE admin open: 640ms scheduled, 175351us host
+MODAL_PROFILE admin touch keyboard first build: 192ms
+MODAL_PROFILE estimate open: 640ms scheduled, 53692us host
+MODAL_PROFILE estimate touch keyboard first build: 192ms
+
+vynic-ui-final-visual.log
+MODAL_PROFILE admin open: 640ms scheduled, 96576us host
+MODAL_PROFILE admin touch keyboard first build: 16ms
+MODAL_PROFILE estimate open: 640ms scheduled, 74053us host
+MODAL_PROFILE estimate touch keyboard first build: 16ms

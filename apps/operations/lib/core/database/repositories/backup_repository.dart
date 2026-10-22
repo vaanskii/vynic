@@ -1,14 +1,30 @@
+import 'package:vynic/core/database/repositories/order_edit_repository.dart';
+import 'table_repair_repository.dart';
+import 'package:vynic/core/models/sale_record.dart';
+import 'package:vynic/core/services/menu/canonical_menu.dart';
+import 'package:vynic/core/services/menu/menu_mutation_journal.dart';
+import 'package:vynic/core/services/pos/closure_recovery_service.dart';
+import 'package:vynic/core/services/sync/sale_ledger_sync_state.dart';
+import 'package:vynic/core/database/local_data_admission.dart';
+import 'package:vynic/core/database/pos_backup_format.dart';
+import 'package:vynic/core/services/menu/menu_local_store.dart';
+import 'package:vynic/core/services/edge/edge_command_journal.dart';
+import 'package:vynic/core/services/edge/edge_device_credential_store.dart';
+import 'package:vynic/core/services/edge/orders_tables/shadow.dart';
+import 'package:vynic/core/services/sync/audit_sync_state.dart';
+import 'package:vynic/core/services/sync/staff_credential_sync_state.dart';
+import 'package:vynic/core/services/pos/update/tracked_box.dart';
 import 'package:vynic/core/services/pos/update/update_readiness.dart';
 import 'dart:convert';
 import 'dart:io';
 
 import 'package:crypto/crypto.dart';
+import 'package:uuid/uuid.dart';
 import 'package:hive/hive.dart';
 import 'package:vynic/core/models/audit_report.dart';
 import 'package:vynic/core/models/menu_item_db.dart';
 import 'package:vynic/core/models/order.dart';
 import 'package:vynic/core/models/audit_source.dart';
-import 'package:vynic/core/models/order_status.dart';
 import 'package:vynic/core/models/package.dart';
 import 'package:vynic/core/models/quick_order_draft.dart';
 import 'package:vynic/core/models/reservation.dart';
@@ -20,8 +36,16 @@ import 'package:vynic/core/database/repositories/inventory_repository.dart';
 
 import 'package:vynic/core/database/hive_migration_service.dart';
 import 'package:vynic/core/services/audit/global_audit.dart';
+import 'package:vynic/core/services/menu/pos_menu_sync_service.dart';
 import 'package:vynic/core/services/sync/sync_events.dart';
 import 'business_day_repository.dart';
+import 'closure_journal_repository.dart';
+import 'close_day_journal_repository.dart';
+import 'order_transfer_journal_repository.dart';
+import 'order_table_mutation_repository.dart';
+import 'print_job_repository.dart';
+import 'package:vynic/core/services/pos/order_item_transfer.dart';
+import '../transactions/close_day_transaction.dart';
 import '../database_core.dart';
 import 'menu_repository.dart';
 import 'order_repository.dart';
@@ -30,7 +54,7 @@ import 'table_repository.dart';
 import 'settings_repository.dart';
 import 'user_repository.dart';
 
-/// JSON backup/restore of every Hive box, plus the serialize/deserialize
+/// Versioned restaurant backup/restore, plus the serialize/deserialize
 /// helpers shared with the POS↔server sync payloads.
 class BackupRepository {
   BackupRepository._();
@@ -42,34 +66,72 @@ class BackupRepository {
     return _serializeReservation(reservation);
   }
 
-  static Future<File> createDataBackup({String? targetFilePath}) =>
-      UpdateReadiness.track(
-        'createDataBackup',
-        () => _updateTrackedCreateDataBackup(targetFilePath: targetFilePath),
-      );
+  static const restoreMarkerName = 'pos_restore_pending.json';
+  static Map<String, num> lastBackupMetrics = {};
+  static Map<String, num> lastRestoreMetrics = {};
 
-  static Future<File> _updateTrackedCreateDataBackup({
+  static Future<File> createDataBackup({
     String? targetFilePath,
+    String? password,
   }) async {
-    final timestamp = DateTime.now();
-    final backupFile = targetFilePath != null
-        ? File(targetFilePath)
-        : () {
-            final backupDirectory = Directory(
-              '${DatabaseCore.dataDirectoryPath}/backups',
-            );
-            if (!backupDirectory.existsSync()) {
-              backupDirectory.createSync(recursive: true);
-            }
-            final formattedTimestamp = timestamp
-                .toIso8601String()
-                .replaceAll(':', '-')
-                .replaceAll('.', '-');
-            return File(
-              '${backupDirectory.path}/pos_backup_$formattedTimestamp.json',
-            );
-          }();
+    final total = Stopwatch()..start();
+    if (OrderTableShadow.observer != null)
+      throw StateError('Detach the development shadow before backup');
+    final payload = await LocalDataAdmission.exclusive(_captureSnapshot);
+    final file = await _writeSnapshot(
+      payload,
+      targetFilePath: targetFilePath,
+      password: password,
+    );
+    lastBackupMetrics = {
+      ...lastBackupMetrics,
+      'durationMs': total.elapsedMicroseconds / 1000,
+      'bytes': await file.length(),
+    };
+    return file;
+  }
 
+  static Future<Map<String, dynamic>> _captureSnapshot() async {
+    final pause = Stopwatch()..start();
+    await _ensureRecoveryBoxes();
+    if (_storeBoxes().length != PosBackupFormat.stores.length - 1)
+      throw StateError(
+        'Required restaurant stores are not open; refusing incomplete backup',
+      );
+    await MenuLocalStore.forBox(DatabaseCore.menuBox!).run(() async {});
+    await SaleLedgerSyncState.ensureSaleIdentities();
+    for (final box in _storeBoxes().values) {
+      await box.flush();
+    }
+    await EdgeCommandJournal.flushForUpdate();
+    final data = _snapshotPayload();
+    lastBackupMetrics = {'barrierMs': pause.elapsedMicroseconds / 1000};
+    return data;
+  }
+
+  static Future<File> _writeSnapshot(
+    Map<String, dynamic> payload, {
+    String? targetFilePath,
+    String? password,
+  }) async {
+    PosBackupFormat.seal(payload);
+    PosBackupFormat.validate(payload);
+    _decodeStores(payload);
+    final text = await PosBackupFormat.encode(payload, password: password);
+    final timestamp = DateTime.now().toUtc().toIso8601String().replaceAll(
+      ':',
+      '-',
+    );
+    final file = File(
+      targetFilePath ??
+          '${DatabaseCore.dataDirectoryPath}/backups/pos_backup_$timestamp.json',
+    );
+    await _atomicWrite(file, text);
+    return file;
+  }
+
+  static Map<String, dynamic> _snapshotPayload() {
+    final timestamp = DateTime.now().toUtc();
     // Read once so the keys and the values cannot disagree about their order.
     final auditLogEntries = DatabaseCore.auditLogBox!.toMap().entries.toList(
       growable: false,
@@ -107,24 +169,37 @@ class BackupRepository {
             .map((date) => date.toIso8601String())
             .toList(),
       },
-      'users': DatabaseCore.userBox!.values.map(_serializeUser).toList(),
-      'tables': DatabaseCore.tableBox!.values.map(_serializeTable).toList(),
-      'orders': DatabaseCore.orderBox!.values.map(_serializeOrder).toList(),
-      'packages': DatabaseCore.packageBox!.values
-          .map(_serializePackage)
-          .toList(),
-      'reservations': DatabaseCore.reservationBox!.values
-          .map(_serializeReservation)
-          .toList(),
-      'quickOrders': DatabaseCore.quickOrderBox!.values
-          .map(_serializeQuickOrderDraft)
-          .toList(),
-      'menu': DatabaseCore.menuBox!.values.map(_serializeMenuCategory).toList(),
+      if (DatabaseCore.userBox?.isOpen ?? false)
+        'users': DatabaseCore.userBox!.values.map(_serializeUser).toList(),
+      if (DatabaseCore.tableBox?.isOpen ?? false)
+        'tables': DatabaseCore.tableBox!.values.map(_serializeTable).toList(),
+      if (DatabaseCore.orderBox?.isOpen ?? false)
+        'orders': DatabaseCore.orderBox!.values.map(_serializeOrder).toList(),
+      if (DatabaseCore.packageBox?.isOpen ?? false)
+        'packages': DatabaseCore.packageBox!.values
+            .map(_serializePackage)
+            .toList(),
+      if (DatabaseCore.reservationBox?.isOpen ?? false)
+        'reservations': DatabaseCore.reservationBox!.values
+            .map(_serializeReservation)
+            .toList(),
+      if (DatabaseCore.quickOrderBox?.isOpen ?? false)
+        'quickOrders': DatabaseCore.quickOrderBox!.values
+            .map(_serializeQuickOrderDraft)
+            .toList(),
+      if (DatabaseCore.menuBox?.isOpen ?? false)
+        'menu': DatabaseCore.menuBox!.values
+            .map(_serializeMenuCategory)
+            .toList(),
       'inventoryCatalog': InventoryRepository.exportCatalog(),
-      'sales': DatabaseCore.salesBox!.values.map(_serializeDynamicMap).toList(),
-      'expenses': DatabaseCore.expenseBox!.values
-          .map(_serializeDynamicMap)
-          .toList(),
+      if (DatabaseCore.salesBox?.isOpen ?? false)
+        'sales': DatabaseCore.salesBox!.values
+            .map(_serializeDynamicMap)
+            .toList(),
+      if (DatabaseCore.expenseBox?.isOpen ?? false)
+        'expenses': DatabaseCore.expenseBox!.values
+            .map(_serializeDynamicMap)
+            .toList(),
       'auditLog': auditLogEntries
           .map((entry) => _serializeDynamicMap(entry.value))
           .toList(),
@@ -139,15 +214,788 @@ class BackupRepository {
       // everything again on the next restore. `auditLog` keeps its old shape so
       // a backup taken now still restores on a build that ignores this field.
       'auditLogKeys': auditLogEntries.map((entry) => entry.key).toList(),
-      'errorLog': DatabaseCore.errorLogBox!.values
-          .map(_serializeDynamicMap)
-          .toList(),
+      'errorLog': <dynamic>[],
     };
 
-    await backupFile.writeAsString(
-      const JsonEncoder.withIndent('  ').convert(backupPayload),
+    backupPayload['errorLog'] = <dynamic>[];
+    final stateRaw = DatabaseCore.menuCanonicalBox?.get(
+      MenuLocalStore.stateKey,
     );
-    return backupFile;
+    final canonicalVenue = stateRaw == null
+        ? null
+        : (jsonDecode(stateRaw) as Map)['venueId'];
+    final binding = DatabaseCore.settingsBox?.get('restoreVenueBinding');
+    final venue =
+        EdgeDeviceCredentialStore.venueId ?? binding ?? canonicalVenue;
+    if (canonicalVenue != null && venue != canonicalVenue)
+      throw StateError('Stored Menu belongs to another Venue');
+    final stores = <String, dynamic>{};
+    for (final entry in _storeBoxes().entries) {
+      stores[entry.key] = [
+        for (final row in entry.value.toMap().entries)
+          if (!(entry.key == 'settings' &&
+                  PosBackupFormat.deviceSettings.contains(row.key)) &&
+              !(entry.key == 'meta' && row.key == 'backupRestoreReceipt'))
+            {
+              'key': row.key,
+              'value': PosBackupFormat.encodeValue(
+                _serializeStoreValue(entry.key, row.value),
+              ),
+            },
+      ];
+    }
+    stores[EdgeCommandJournal.boxName] = [
+      for (final row in EdgeCommandJournal.snapshot().entries)
+        {'key': row.key, 'value': PosBackupFormat.encodeValue(row.value)},
+    ];
+    // Detach every nested value before admission resumes.
+    return Map<String, dynamic>.from(
+      jsonDecode(
+        jsonEncode({
+          ...backupPayload,
+          'formatVersion': PosBackupFormat.version,
+          'product': PosBackupFormat.product,
+          'createdAt': timestamp.toIso8601String(),
+          'appVersion': const String.fromEnvironment(
+            'VYNIC_APP_VERSION',
+            defaultValue: '1.0.0+1',
+          ),
+          'hiveSchemaVersion': HiveMigrationService.targetVersion,
+          'menuLocalProtocolVersion': MenuLocalStore.protocolVersion,
+          'venue': {
+            'id': venue,
+            'sourceDeviceId': EdgeDeviceCredentialStore.deviceId,
+            'name': SettingsRepository.getVenueName(),
+          },
+          'recoveryCompleteness':
+              DatabaseCore.settingsBox?.get('restoreLegacyIncomplete') == true
+              ? 'legacy-history-incomplete'
+              : 'complete-current-state',
+          'confidentiality': {
+            'containsStaffPins': true,
+            'containsGuestData': true,
+            'deviceCredentialsIncluded': false,
+            'plaintextRequiresProtectedStorage': true,
+          },
+          'compatibility': {
+            'minimumReaderFormat': PosBackupFormat.version,
+            'hiveSchema': 9,
+            'menuProtocol': 1,
+          },
+          'stores': stores,
+        }),
+      ),
+    );
+  }
+
+  static Map<String, Box> _storeBoxes() => {
+    if (DatabaseCore.metaBox?.isOpen ?? false) 'meta': DatabaseCore.metaBox!,
+    if (DatabaseCore.userBox?.isOpen ?? false) 'users': DatabaseCore.userBox!,
+    if (DatabaseCore.tableBox?.isOpen ?? false)
+      'tables': DatabaseCore.tableBox!,
+    if (DatabaseCore.orderBox?.isOpen ?? false)
+      'orders': DatabaseCore.orderBox!,
+    if (DatabaseCore.packageBox?.isOpen ?? false)
+      'packages': DatabaseCore.packageBox!,
+    if (DatabaseCore.menuBox?.isOpen ?? false) 'menu': DatabaseCore.menuBox!,
+    if (DatabaseCore.settingsBox?.isOpen ?? false)
+      'settings': DatabaseCore.settingsBox!,
+    if (DatabaseCore.salesBox?.isOpen ?? false) 'sales': DatabaseCore.salesBox!,
+    if (DatabaseCore.expenseBox?.isOpen ?? false)
+      'expenses': DatabaseCore.expenseBox!,
+    if (DatabaseCore.auditLogBox?.isOpen ?? false)
+      'auditLog': DatabaseCore.auditLogBox!,
+    if (DatabaseCore.reservationBox?.isOpen ?? false)
+      'reservations': DatabaseCore.reservationBox!,
+    if (DatabaseCore.quickOrderBox?.isOpen ?? false)
+      'quickOrders': DatabaseCore.quickOrderBox!,
+    if (DatabaseCore.closureJournalBox?.isOpen ?? false)
+      'closureJournal': DatabaseCore.closureJournalBox!,
+    if (DatabaseCore.inventoryBox?.isOpen ?? false)
+      'inventoryCatalog': DatabaseCore.inventoryBox!,
+    if (DatabaseCore.menuCanonicalBox?.isOpen ?? false)
+      'menuCanonical': DatabaseCore.menuCanonicalBox!,
+    if (DatabaseCore.menuJournalBox?.isOpen ?? false)
+      'menuMutationJournal': DatabaseCore.menuJournalBox!,
+  };
+
+  static Future<void> _ensureRecoveryBoxes() async {
+    if (!(DatabaseCore.closureJournalBox?.isOpen ?? false))
+      DatabaseCore.closureJournalBox = UpdateTrackedBox(
+        await Hive.openBox(DatabaseCore.closureJournalBoxName),
+      );
+    if (!(DatabaseCore.menuCanonicalBox?.isOpen ?? false))
+      DatabaseCore.menuCanonicalBox = UpdateTrackedBox(
+        await Hive.openBox<String>(DatabaseCore.menuCanonicalBoxName),
+      );
+    if (!(DatabaseCore.menuJournalBox?.isOpen ?? false))
+      DatabaseCore.menuJournalBox = UpdateTrackedBox(
+        await Hive.openBox<String>(DatabaseCore.menuJournalBoxName),
+      );
+    await EdgeCommandJournal.open(pruneExpired: false);
+    if (DatabaseCore.menuBox != null) {
+      MenuLocalStore.attach(
+        menuBox: DatabaseCore.menuBox!,
+        stateBox: DatabaseCore.menuCanonicalBox!,
+        journalBox: DatabaseCore.menuJournalBox!,
+        venueId: () => EdgeDeviceCredentialStore.venueId,
+      );
+    }
+  }
+
+  static dynamic _serializeStoreValue(String store, dynamic value) =>
+      switch (store) {
+        'users' => _serializeUser(value as User),
+        'tables' => _serializeTable(value as TableModel),
+        'orders' => _serializeOrder(value as Order),
+        'packages' => _serializePackage(value as Package),
+        'menu' => _serializeMenuCategory(value as MenuCategoryDB),
+        'reservations' => _serializeReservation(value as Reservation),
+        'quickOrders' => _serializeQuickOrderDraft(value as QuickOrderDraft),
+        'sales' =>
+          value is SaleRecord
+              ? {'backupModel': 'SaleRecord', 'fields': value.toMap()}
+              : value,
+        _ => value,
+      };
+
+  static dynamic _deserializeStoreValue(String store, dynamic value) {
+    Map<String, dynamic> model() => Map<String, dynamic>.from(value as Map);
+    switch (store) {
+      case 'users':
+        return _deserializeUser(model());
+      case 'tables':
+        return _deserializeTable(model());
+      case 'orders':
+        return deserializeOrderSnapshot(model());
+      case 'packages':
+        return _deserializePackage(model());
+      case 'menu':
+        return _deserializeMenuCategory(model());
+      case 'reservations':
+        return _deserializeReservation(model(), preserveStoredValues: true);
+      case 'quickOrders':
+        return _deserializeQuickOrderDraft(model());
+      case 'sales':
+        return value is Map && value['backupModel'] == 'SaleRecord'
+            ? SaleRecord.fromMap(
+                Map<String, dynamic>.from(value['fields'] as Map),
+              )
+            : value;
+      case 'menuCanonical':
+      case 'menuMutationJournal':
+        if (value is! String)
+          throw const FormatException('Invalid Menu store value');
+        return value;
+      case 'edge_command_journal':
+        if (value is! Map ||
+            ![
+              'running',
+              'interrupted',
+              'succeeded',
+              'failed',
+            ].contains(value['status']) ||
+            value['commandId'] is! String)
+          throw const FormatException('Invalid command result journal');
+        return value;
+      default:
+        return value;
+    }
+  }
+
+  static void _validateTypedSnapshot(String name, dynamic value) {
+    const required = {
+      'users': ['username', 'pinCode', 'role'],
+      'tables': ['tableNumber', 'floor', 'edgeRevision', 'activeOrderId'],
+      'orders': [
+        'orderId',
+        'orderUuid',
+        'items',
+        'packageItems',
+        'totalAmount',
+        'createdAt',
+        'createdBy',
+        'status',
+        'floor',
+      ],
+      'packages': [
+        'packageId',
+        'name',
+        'items',
+        'pricePerPerson',
+        'createdAt',
+        'createdBy',
+      ],
+      'menu': [
+        'id',
+        'slug',
+        'translationsEn',
+        'translationsKa',
+        'sendToKitchen',
+      ],
+      'reservations': [
+        'id',
+        'customerName',
+        'customerPhone',
+        'reservationDate',
+        'createdAt',
+        'status',
+      ],
+      'quickOrders': [
+        'id',
+        'items',
+        'subtotal',
+        'total',
+        'createdAt',
+        'createdBy',
+      ],
+      'closureJournal': [
+        'closureId',
+        'orderId',
+        'phase',
+        'businessDate',
+        'grossSaleAmount',
+        'advanceApplied',
+        'collectedNow',
+        'startedAt',
+      ],
+    };
+    final fields = required[name];
+    if (fields == null) return;
+    if (value is! Map || fields.any((key) => !value.containsKey(key)))
+      throw FormatException('Incomplete $name model');
+    for (final key in ['createdAt', 'reservationDate', 'startedAt']) {
+      if (value.containsKey(key)) DateTime.parse(value[key] as String);
+    }
+    if (['orders', 'quickOrders'].contains(name)) {
+      for (final key in ['items', if (name == 'orders') 'packageItems']) {
+        for (final line in value[key] as List) {
+          if (line is! Map ||
+              [
+                'itemKey',
+                'itemName',
+                'unitPrice',
+                'quantity',
+                'total',
+              ].any((key) => !line.containsKey(key)))
+            throw const FormatException('Incomplete captured order line');
+          if (line['unitPrice'] is! num ||
+              line['quantity'] is! int ||
+              line['total'] is! num)
+            throw const FormatException('Invalid captured money/quantity');
+        }
+      }
+    }
+    if (name == 'closureJournal' &&
+        ![
+          'started',
+          'saleWritten',
+          'postSaleEffectsCompleted',
+          'completed',
+        ].contains(value['phase']))
+      throw const FormatException('Unsupported closure phase');
+  }
+
+  static Map<String, Map<dynamic, dynamic>> _decodeStores(
+    Map<String, dynamic> payload,
+  ) {
+    final out = <String, Map<dynamic, dynamic>>{};
+    for (final name in PosBackupFormat.stores) {
+      final rows = <dynamic, dynamic>{};
+      for (final row in payload['stores'][name] as List) {
+        final value = PosBackupFormat.decodeValue(row['value']);
+        _validateTypedSnapshot(name, value);
+        if (name == 'edge_command_journal') {
+          if (value is! Map ||
+              row['key'] != value['commandId'] ||
+              value['idempotencyKey'] is! String ||
+              value['type'] is! String)
+            throw const FormatException('Invalid command identity');
+          DateTime.parse(value['firstSeenAt'] as String);
+          if (value['completedAt'] != null)
+            DateTime.parse(value['completedAt'] as String);
+        }
+        if (name == 'closureJournal') {
+          if (row['key'] != value['closureId'])
+            throw const FormatException('Invalid closure identity');
+          ClosureJournalEntry.fromMap(value as Map);
+        }
+        rows[row['key']] = _deserializeStoreValue(name, value);
+      }
+      out[name] = rows;
+    }
+    final printIds = <String>{};
+    for (final row in out['meta']!.entries) {
+      if (row.key is String && (row.key as String).startsWith('print_job:')) {
+        if (!PrintJobRepository.knownKey(row.key as String))
+          throw const FormatException('Unknown print job protocol in backup');
+        final job = PrintJobRepository.decode(row.key, row.value);
+        if (!printIds.add(job.id)) {
+          throw const FormatException(
+            'Conflicting print job identities in backup',
+          );
+        }
+      }
+    }
+    final menu = out['menuCanonical']!;
+    final dayClose = out['meta']![CloseDayJournalRepository.key];
+    if (dayClose != null) {
+      final intent = CloseDayIntent.fromMap(dayClose);
+      if (intent.pending &&
+          out['settings']!['currentDate'] != intent.fromDate &&
+          out['settings']!['currentDate'] != intent.toDate) {
+        throw const FormatException('Close Day date disagrees with backup');
+      }
+    }
+    var pendingTransfers = 0;
+    for (final entry in out['meta']!.entries) {
+      if (entry.key is! String ||
+          !(entry.key as String).startsWith(
+            OrderTransferJournalRepository.prefix,
+          ))
+        continue;
+      final intent = OrderTransferJournalRepository.decode(
+        entry.key as String,
+        entry.value,
+      );
+      if (intent.pending) {
+        if (++pendingTransfers > 1) {
+          throw const FormatException(
+            'Multiple pending Order transfers in backup',
+          );
+        }
+        if (dayClose != null && CloseDayIntent.fromMap(dayClose).pending ||
+            BusinessDayRepository.dateKey(
+                  DateTime.parse(out['settings']!['currentDate'] as String),
+                ) !=
+                intent.request['businessDate']) {
+          throw const FormatException(
+            'Order transfer backup date/recovery disagrees',
+          );
+        }
+        OrderTransferJournalRepository.validateCurrent(
+          intent,
+          (store, key) =>
+              OrderItemTransfer.persistedImage(store, key, stores: out),
+        );
+      }
+    }
+    final pendingEdits = OrderEditRepository.validateBackup(out);
+    final pendingRepairs = TableRepairRepository.validateBackup(out);
+    if (pendingEdits > 0 &&
+        (pendingRepairs > 0 ||
+            pendingTransfers > 0 ||
+            dayClose != null && CloseDayIntent.fromMap(dayClose).pending))
+      throw const FormatException(
+        'Order edit overlaps another recovery in backup',
+      );
+    if (pendingRepairs > 0 &&
+        (pendingTransfers > 0 ||
+            dayClose != null && CloseDayIntent.fromMap(dayClose).pending))
+      throw const FormatException(
+        'Table repair overlaps another recovery in backup',
+      );
+    var pendingOwnership = 0;
+    for (final entry in out['meta']!.entries) {
+      if (entry.key is! String ||
+          !(entry.key as String).startsWith(
+            OrderTableMutationRepository.prefix,
+          ))
+        continue;
+      if (TableRepairRepository.isRecord(entry.key, entry.value) ||
+          OrderEditRepository.isRecord(entry.key, entry.value))
+        continue;
+      final intent = OrderTableMutationRepository.decode(
+        entry.key as String,
+        entry.value,
+      );
+      if (!intent.pending) continue;
+      if (++pendingOwnership > 1 ||
+          pendingEdits > 0 ||
+          pendingRepairs > 0 ||
+          pendingTransfers > 0 ||
+          dayClose != null && CloseDayIntent.fromMap(dayClose).pending ||
+          BusinessDayRepository.dateKey(
+                DateTime.parse(out['settings']!['currentDate'] as String),
+              ) !=
+              intent.businessDate)
+        throw const FormatException('Ownership backup recovery/date disagrees');
+      OrderTableMutationRepository.validateCurrent(
+        intent,
+        (store, key) => OrderTableMutationRepository.persistedImage(
+          store,
+          key,
+          stores: out,
+        ),
+      );
+      OrderTableMutationRepository.validateFinalOwnership(
+        intent,
+        orders: out['orders']!.cast<dynamic, Order>(),
+        tables: out['tables']!.cast<dynamic, TableModel>(),
+      );
+    }
+    if (menu[MenuLocalStore.versionKey] != null &&
+        menu[MenuLocalStore.versionKey] != '1')
+      throw const FormatException('Unknown local Menu protocol');
+    if (menu.containsKey(MenuLocalStore.commitKey) ||
+        menu.containsKey(MenuLocalStore.rebuildingKey))
+      throw const FormatException(
+        'Backup does not contain a stable Menu boundary',
+      );
+    final state = menu[MenuLocalStore.stateKey];
+    final venue = payload['venue']['id'];
+    if (state != null) CanonicalMenu.fromJsonString(state as String).toHive();
+    if (menu[MenuLocalStore.generationKey] != null &&
+        int.parse(menu[MenuLocalStore.generationKey] as String) < 0) {
+      throw const FormatException('Invalid Menu generation');
+    }
+    if (state != null &&
+        (jsonDecode(state as String) as Map)['venueId'] != venue)
+      throw const FormatException('Menu Venue does not match backup');
+    final baseline = menu[MenuLocalStore.baselineKey];
+    if (baseline != null &&
+        CanonicalMenu.fromJsonString(baseline as String).venueId != venue)
+      throw const FormatException('Menu baseline belongs to another Venue');
+    final journal = out['menuMutationJournal']!;
+    if (journal.isNotEmpty && state == null)
+      throw const FormatException(
+        'Missing canonical recovery state for Menu journal',
+      );
+    for (final entry in journal.entries) {
+      final raw = jsonDecode(entry.value as String) as Map;
+      if (entry.key is! String || int.parse(entry.key as String) != raw['seq'])
+        throw const FormatException('Invalid Menu journal sequence key');
+      MenuMutationEntry.fromJson(Map<String, dynamic>.from(raw));
+      if (!MenuMutationStatus.values.map((s) => s.name).contains(raw['status']))
+        throw const FormatException('Unknown menu mutation status');
+      if (raw['venueId'] != venue || raw['mutationId'] is! String)
+        throw const FormatException(
+          'Mutation Venue/identity does not match backup',
+        );
+    }
+    final pendingProfile = out['settings']!['pendingVenueProfile'];
+    if (pendingProfile is Map && pendingProfile['venueId'] != venue)
+      throw const FormatException('Profile intent belongs to another Venue');
+    if (out['settings']!.keys.any(PosBackupFormat.deviceSettings.contains))
+      throw const FormatException(
+        'Portable backup contains installation identity',
+      );
+    return out;
+  }
+
+  static void _validateVenue(Map<String, dynamic> payload) {
+    final source = payload['venue']['id'];
+    final destination = EdgeDeviceCredentialStore.venueId;
+    final binding = DatabaseCore.settingsBox?.get('restoreVenueBinding');
+    if ((destination != null && source != destination) ||
+        (binding != null && source != binding) ||
+        (EdgeDeviceCredentialStore.hasCredential && destination == null))
+      throw StateError(
+        'Backup does not match the destination enrollment/Venue',
+      );
+    final current = DatabaseCore.menuCanonicalBox?.get(MenuLocalStore.stateKey);
+    if (current != null && (jsonDecode(current) as Map)['venueId'] != source)
+      throw StateError('Backup belongs to another local Venue');
+  }
+
+  static void _validateLegacy(Map<String, dynamic> payload) {
+    if (!payload.keys.any(
+      [
+        'users',
+        'tables',
+        'orders',
+        'menu',
+        'sales',
+        'auditLog',
+        'settingsAll',
+      ].contains,
+    ))
+      throw const FormatException('Unrecognized legacy backup');
+    final schema = (payload['meta'] as Map?)?['db_version'];
+    if (schema != null && (schema is! int || schema > 9))
+      throw const FormatException('Unsupported legacy Hive schema');
+    _normalizeLegacyIdentities(payload);
+    for (final section in [
+      'users',
+      'tables',
+      'orders',
+      'packages',
+      'menu',
+      'reservations',
+      'quickOrders',
+      'sales',
+      'expenses',
+      'auditLog',
+      'errorLog',
+    ]) {
+      if (payload[section] == null) continue;
+      if (payload[section] is! List ||
+          (payload[section] as List).any((row) => row is! Map))
+        throw FormatException('Invalid legacy $section');
+      for (final row in payload[section] as List) {
+        if ([
+          'users',
+          'tables',
+          'orders',
+          'packages',
+          'menu',
+          'reservations',
+          'quickOrders',
+        ].contains(section))
+          _deserializeStoreValue(section, row);
+      }
+    }
+    if (payload['currentDate'] != null)
+      DateTime.parse(payload['currentDate'] as String);
+    if (payload['auditLogKeys'] != null && payload['auditLogKeys'] is! List)
+      throw const FormatException('Invalid legacy audit keys');
+    if (payload['settings'] != null && payload['settings'] is! Map)
+      throw const FormatException('Invalid legacy settings');
+    final oldSettings = payload['settings'] as Map?;
+    for (final key in [
+      'defaultLanguage',
+      'printerKitchenIp',
+      'printerReceiptIp',
+    ]) {
+      if (oldSettings?[key] != null && oldSettings![key] is! String)
+        throw const FormatException('Invalid legacy setting');
+    }
+    if (payload['inventoryCatalog'] != null &&
+        payload['inventoryCatalog'] is! Map)
+      throw const FormatException('Invalid legacy inventory');
+    final all = payload['settingsAll'];
+    if (all != null && all is! Map)
+      throw const FormatException('Invalid legacy settings');
+    if (all is Map)
+      for (final key in PosBackupFormat.deviceSettings) {
+        all.remove(key);
+      }
+  }
+
+  /// Missing identities in pre-identity exports get deterministic upgrade IDs.
+  /// They are fixed in the descriptor before the first destructive write.
+  static void _normalizeLegacyIdentities(Map<String, dynamic> payload) {
+    if (!payload.containsKey('reservations') &&
+        payload.containsKey('reservation'))
+      payload['reservations'] = payload.remove('reservation');
+    if (!payload.containsKey('quickOrders') &&
+        payload.containsKey('quickOrderDrafts'))
+      payload['quickOrders'] = payload.remove('quickOrderDrafts');
+    final seed = PosBackupFormat.digest(payload);
+    void identity(Map row, String key, String path) {
+      if (row[key] == null || row[key] == '')
+        row[key] = const Uuid().v5(
+          Uuid.NAMESPACE_URL,
+          'vynic-legacy:$seed:$path:$key',
+        );
+    }
+
+    void walk(dynamic rows, String path, void Function(Map, String) visit) {
+      if (rows == null) return;
+      if (rows is! List) throw const FormatException('Invalid legacy rows');
+      for (var i = 0; i < rows.length; i++) {
+        if (rows[i] is! Map) throw const FormatException('Invalid legacy row');
+        visit(rows[i] as Map, '$path/$i');
+      }
+    }
+
+    void menu(Map row, String path) {
+      identity(row, 'id', path);
+      walk(row['items'], '$path/items', (row, path) {
+        identity(row, 'id', path);
+        walk(
+          row['variants'],
+          '$path/variants',
+          (row, path) => identity(row, 'id', path),
+        );
+      });
+      walk(row['subcategories'], '$path/subcategories', menu);
+    }
+
+    walk(payload['menu'], 'menu', menu);
+    for (final name in ['orders', 'reservations', 'quickOrders', 'packages']) {
+      walk(payload[name], name, (row, path) {
+        identity(
+          row,
+          name == 'orders'
+              ? 'orderUuid'
+              : name == 'packages'
+              ? 'packageId'
+              : 'id',
+          path,
+        );
+        for (final key in [
+          'createdAt',
+          if (name == 'reservations') 'reservationDate',
+        ]) {
+          row[key] ??= payload['generatedAt'] ?? '1970-01-01T00:00:00.000Z';
+        }
+        if (name != 'packages') {
+          for (final key in ['items', 'packageItems', 'preOrderItems']) {
+            walk(
+              row[key],
+              '$path/$key',
+              (row, path) => identity(row, 'lineUuid', path),
+            );
+          }
+        }
+      });
+    }
+  }
+
+  static Future<void> _atomicWrite(File file, String text) async {
+    await file.parent.create(recursive: true);
+    final staging = File('${file.path}.staging');
+    if (await staging.exists())
+      throw StateError('Unfinished backup staging file; choose a new path');
+    try {
+      await staging.create();
+      if (!Platform.isWindows) {
+        final mode = await Process.run('chmod', ['600', staging.path]);
+        if (mode.exitCode != 0)
+          throw FileSystemException(
+            'Cannot protect backup staging file',
+            staging.path,
+          );
+      }
+      await staging.writeAsString(text, flush: true);
+      await staging.rename(file.path);
+    } catch (_) {
+      if (await staging.exists()) await staging.delete();
+      rethrow;
+    }
+  }
+
+  /// Replays a fully validated descriptor before Menu recovery/defaults/UI.
+  static Future<void> recoverInterruptedRestore() async {
+    final marker = File('${DatabaseCore.dataDirectoryPath}/$restoreMarkerName');
+    if (!await marker.exists()) return;
+    LocalDataAdmission.failure =
+        'Interrupted backup restore requires startup recovery';
+    final descriptor = Map<String, dynamic>.from(
+      jsonDecode(await marker.readAsString()) as Map,
+    );
+    await LocalDataAdmission.exclusive(() async {
+      await _ensureRecoveryBoxes();
+      await _finishRestore(descriptor, marker);
+      LocalDataAdmission.failure = null;
+    }, recovery: true);
+  }
+
+  static Future<void> _finishRestore(
+    Map<String, dynamic> descriptor,
+    File marker,
+  ) async {
+    if (descriptor['restoreProtocolVersion'] != 1)
+      throw const FormatException('Unsupported restore recovery protocol');
+    final unsigned = Map<String, dynamic>.of(descriptor)
+      ..remove('descriptorSha256');
+    if (descriptor['descriptorSha256'] != PosBackupFormat.digest(unsigned))
+      throw const FormatException('Damaged restore marker');
+    if (descriptor['actorId'] is! String ||
+        descriptor['actorName'] != null && descriptor['actorName'] is! String)
+      throw const FormatException('Invalid restore actor');
+    AuditSource.values.byName(descriptor['source'] as String);
+    for (final entry in (descriptor['destinationSettings'] as Map).entries) {
+      if (!PosBackupFormat.deviceSettings.contains(entry.key))
+        throw const FormatException('Invalid destination identity marker');
+      PosBackupFormat.decodeValue(entry.value);
+    }
+    final payload = Map<String, dynamic>.from(descriptor['payload'] as Map);
+    if (descriptor['receipt'] != PosBackupFormat.digest(payload))
+      throw const FormatException('Restore recovery descriptor is damaged');
+    final modern = descriptor['modern'] == true;
+    if (modern) {
+      PosBackupFormat.validate(payload);
+      _validateVenue(payload);
+      final stores = _decodeStores(payload);
+      for (final entry in _storeBoxes().entries) {
+        await entry.value.clear();
+        for (final row in stores[entry.key]!.entries) {
+          await entry.value.put(row.key, row.value);
+        }
+        await entry.value.flush();
+      }
+      await EdgeCommandJournal.restoreSnapshot(
+        stores[EdgeCommandJournal.boxName]!.map(
+          (key, value) => MapEntry(key, value as Map),
+        ),
+      );
+    } else {
+      _validateLegacy(payload);
+      await PosMenuSyncService.instance.externalMenuWrite(
+        () => _applyBackupPayload(
+          payload,
+          clearExisting: descriptor['clearExisting'] == true,
+        ),
+      );
+    }
+    final settings = DatabaseCore.settingsBox!;
+    for (final key in PosBackupFormat.deviceSettings) {
+      await settings.delete(key);
+    }
+    for (final entry in (descriptor['destinationSettings'] as Map).entries) {
+      await settings.put(entry.key, PosBackupFormat.decodeValue(entry.value));
+    }
+    final venue = modern ? payload['venue']['id'] : null;
+    if (venue != null) await settings.put('restoreVenueBinding', venue);
+    await settings.put(
+      'restoreSourceDeviceId',
+      modern ? payload['venue']['sourceDeviceId'] : null,
+    );
+    await settings.put(
+      'restoreLegacyIncomplete',
+      !modern ||
+          venue == null ||
+          payload['recoveryCompleteness'] != 'complete-current-state',
+    );
+    // Restore already owns admission; finish the restored transition before
+    // Menu recovery, rebuilt ACKs or any UI/worker can admit business writes.
+    await ReservationRepository.recoverAdvanceReceipts();
+    await PrintJobRepository.recover(restored: true, underExclusive: true);
+    await OrderEditRepository.recoverPending(underExclusive: true);
+    await TableRepairRepository.recoverPending(underExclusive: true);
+    await OrderTableMutationRepository.recoverPending(underExclusive: true);
+    await CloseDayTransaction.recoverUnderAdmission();
+    await OrderItemTransfer.recoverUnderAdmission();
+    if (DatabaseCore.reservationBox?.isOpen == true)
+      await HiveMigrationService.persistReservationLineIdentities(
+        DatabaseCore.metaBox!,
+        DatabaseCore.reservationBox!,
+      );
+    // Rebuildable ACKs must not hide unsent data on this destination.
+    await AuditSyncState.resetAfterRestore();
+    await StaffCredentialSyncState.resetAfterRestore();
+    if (DatabaseCore.menuBox != null)
+      await MenuLocalStore.forBox(DatabaseCore.menuBox!).initialize();
+    await GlobalAudit.backupRestored(
+      actorId: descriptor['actorId'] as String,
+      actorName: descriptor['actorName'] as String?,
+      source: AuditSource.values.byName(descriptor['source'] as String),
+      backupCreatedAt: payload['generatedAt'] as String?,
+      backupVersion: modern
+          ? '2'
+          : ((payload['meta'] as Map?)?['db_version']?.toString() ??
+                'legacy-incomplete'),
+      safetyBackupPath: descriptor['safetyBackupPath'] as String?,
+      clearedExisting: descriptor['clearExisting'] == true,
+      restoredCounts: {'stores': modern ? 17 : 0, 'legacyIncomplete': !modern},
+    );
+    if (DatabaseCore.orderBox != null && DatabaseCore.salesBox != null) {
+      await ClosureRecoveryService.recoverPending();
+    }
+    await DatabaseCore.metaBox!.put(
+      'backupRestoreReceipt',
+      descriptor['receipt'],
+    );
+    for (final box in _storeBoxes().values) {
+      await box.flush();
+    }
+    DatabaseCore.dbVersion =
+        (DatabaseCore.metaBox!.get(HiveMigrationService.dbVersionKey)
+            as int?) ??
+        HiveMigrationService.targetVersion;
+    await marker.delete();
   }
 
   /// The whole settings box as plain JSON.
@@ -163,7 +1011,8 @@ class BackupRepository {
     for (final key in box.keys) {
       final value = box.get(key);
       if (value == null) continue;
-      out['$key'] = _jsonSafe(value);
+      if (!PosBackupFormat.deviceSettings.contains(key))
+        out['$key'] = _jsonSafe(value);
     }
     return out;
   }
@@ -193,6 +1042,7 @@ class BackupRepository {
   }
 
   static Map<String, dynamic> _serializeDynamicMap(dynamic value) {
+    if (value is SaleRecord) return value.toMap();
     if (value is Map) {
       return value.map((key, dynamic val) => MapEntry(key.toString(), val));
     }
@@ -289,6 +1139,12 @@ class BackupRepository {
           .toList(),
       'isTakeAway': reservation.isTakeAway,
       'linkedOrderId': reservation.linkedOrderId,
+      if (reservation.advanceAmount > 0) ...{
+        'advanceAmount': reservation.advanceAmount,
+        'advanceCollectedOn': reservation.advanceCollectedOn,
+        'advanceReceiptId': reservation.advanceReceiptId,
+        if (reservation.advanceReceiptPending) 'advanceReceiptPending': true,
+      },
     };
   }
 
@@ -329,6 +1185,9 @@ class BackupRepository {
       'serviceFeeRate': draft.serviceFeeRate,
       'createdAt': draft.createdAt.toIso8601String(),
       'createdBy': draft.createdBy,
+      'displayName': draft.displayName,
+      'customerName': draft.customerName,
+      'customerPhone': draft.customerPhone,
     };
   }
 
@@ -394,10 +1253,13 @@ class BackupRepository {
     bool silent = false,
   }) => UpdateReadiness.track(
     'importMenuFromJson',
-    () => _updateTrackedImportMenuFromJson(
-      payload,
-      clearExisting: clearExisting,
-      silent: silent,
+    // Restored rows are not operator edits of a canonical Cloud Menu.
+    () => PosMenuSyncService.instance.externalMenuWrite(
+      () => _updateTrackedImportMenuFromJson(
+        payload,
+        clearExisting: clearExisting,
+        silent: silent,
+      ),
     ),
   );
 
@@ -439,7 +1301,7 @@ class BackupRepository {
   }
 
   static Future<void> replaceOrdersFromJson(List<dynamic> payload) =>
-      UpdateReadiness.track(
+      UpdateReadiness.mutate(
         'replaceOrdersFromJson',
         () => _updateTrackedReplaceOrdersFromJson(payload),
       );
@@ -466,6 +1328,15 @@ class BackupRepository {
   static Map<String, dynamic> serializeOrder(Order order) =>
       _serializeOrder(order);
 
+  /// Lossless local/format-2 image, including hand-priced line totals.
+  /// Legacy imports keep their existing recalculating decoder.
+  static Order deserializeOrderSnapshot(Map<String, dynamic> value) =>
+      _deserializeOrder(
+        value,
+        recalculate: false,
+        preserveStoredLineTotals: true,
+      );
+
   /// Creates a takeaway order received from the mobile app, with a server-assigned ID.
   /// This bypasses the standard createOrder flow (which auto-assigns IDs and reserves tables)
   /// to allow mobile-originated orders to appear on the POS with a known posOrderId.
@@ -475,84 +1346,19 @@ class BackupRepository {
     required String pickupTime,
     required String waiterName,
     required List<Map<String, dynamic>> items,
-  }) => UpdateReadiness.track(
-    'createTakeawayOrderFromRemote',
-    () => _updateTrackedCreateTakeawayOrderFromRemote(
-      orderId: orderId,
-      customerName: customerName,
-      pickupTime: pickupTime,
-      waiterName: waiterName,
-      items: items,
-    ),
+  }) => OrderRepository.upsertMobileTakeawayOrder(
+    posOrderId: orderId,
+    customerName: customerName,
+    pickupTime: pickupTime,
+    waiterName: waiterName,
+    items: items
+        .map((raw) => OrderItem.fromJson(Map<String, dynamic>.of(raw)))
+        .toList(),
+    requestId: 'remote-takeaway:$orderId',
   );
 
-  static Future<Order?> _updateTrackedCreateTakeawayOrderFromRemote({
-    required int orderId,
-    required String customerName,
-    required String pickupTime,
-    required String waiterName,
-    required List<Map<String, dynamic>> items,
-  }) async {
-    if (DatabaseCore.orderBox == null) {
-      return null;
-    }
-    // Idempotent — skip if already exists
-    final existing = OrderRepository.getOrder(orderId);
-    if (existing != null) return existing;
-
-    final now = BusinessDayRepository.getCurrentDateTime();
-    final orderItems = items
-        .map(
-          (it) => OrderItem(
-            itemKey: it['itemName'] as String,
-            itemName: it['itemName'] as String,
-            unitPrice: (it['unitPrice'] as num).toDouble(),
-            quantity: (it['quantity'] as num).toInt(),
-            total:
-                ((it['total'] as num?)?.toDouble()) ??
-                (it['unitPrice'] as num).toDouble() *
-                    (it['quantity'] as num).toInt(),
-            menuItemId: it['menuItemId'] as String?,
-            variantId: it['variantId'] as String?,
-          ),
-        )
-        .toList();
-
-    final order = Order(
-      orderId: orderId,
-      tableNumbers: ['TA-$orderId'],
-      floor: 'takeaway',
-      items: orderItems,
-      totalAmount: 0,
-      createdAt: now,
-      createdBy: waiterName,
-      status: OrderStatus.confirmed.storageValue,
-      includeServiceFee: false,
-      customerName: customerName,
-      pickupTime: pickupTime,
-    );
-    order.recalculateTotal();
-    await DatabaseCore.orderBox!.add(order);
-
-    // Keep lastOrderId counter in sync so future POS orders don't reuse this ID
-    final stored = DatabaseCore.settingsBox?.get('lastOrderId') as int? ?? 0;
-    if (orderId > stored) {
-      await DatabaseCore.settingsBox?.put('lastOrderId', orderId);
-    }
-
-    SyncHub.notify(
-      SyncEvent(
-        type: SyncEventType.orders,
-        action: 'created',
-        payload: {'orderId': orderId},
-      ),
-    );
-
-    return order;
-  }
-
   static Future<Order> createOrderFromJson(Map<String, dynamic> json) =>
-      UpdateReadiness.track(
+      UpdateReadiness.mutate(
         'createOrderFromJson',
         () => _updateTrackedCreateOrderFromJson(json),
       );
@@ -576,6 +1382,7 @@ class BackupRepository {
       createdBy: createdBy,
       items: items,
       includeServiceFee: includeServiceFee,
+      requestId: json['requestId'] as String?,
     );
     return order;
   }
@@ -590,7 +1397,7 @@ class BackupRepository {
   }
 
   static Future<void> replaceReservationsFromJson(List<dynamic> payload) =>
-      UpdateReadiness.track(
+      UpdateReadiness.mutate(
         'replaceReservationsFromJson',
         () => _updateTrackedReplaceReservationsFromJson(payload),
       );
@@ -621,14 +1428,20 @@ class BackupRepository {
   static Future<String> createReservationFromJson(
     Map<String, dynamic> json, {
     AuditSource source = AuditSource.manager,
-  }) => UpdateReadiness.track(
+    bool requireDurability = false,
+  }) => UpdateReadiness.mutate(
     'createReservationFromJson',
-    () => _updateTrackedCreateReservationFromJson(json, source: source),
+    () => _updateTrackedCreateReservationFromJson(
+      json,
+      source: source,
+      requireDurability: requireDurability,
+    ),
   );
 
   static Future<String> _updateTrackedCreateReservationFromJson(
     Map<String, dynamic> json, {
     AuditSource source = AuditSource.manager,
+    bool requireDurability = false,
   }) async {
     final tableNumbers = ((json['tableNumbers'] as List?) ?? const [])
         .map((e) => _coerceToInt(e) ?? 0)
@@ -667,6 +1480,7 @@ class BackupRepository {
       // which is what makes a redelivered create converge instead of duplicate.
       id: json['id'] as String?,
       source: source,
+      requireDurability: requireDurability,
     );
   }
 
@@ -689,7 +1503,7 @@ class BackupRepository {
   }
 
   static Future<void> replaceTablesFromJson(List<dynamic> payload) =>
-      UpdateReadiness.track(
+      UpdateReadiness.mutate(
         'replaceTablesFromJson',
         () => _updateTrackedReplaceTablesFromJson(payload),
       );
@@ -714,7 +1528,7 @@ class BackupRepository {
   }
 
   static Future<void> updateTableFromJson(Map<String, dynamic> json) =>
-      UpdateReadiness.track(
+      UpdateReadiness.mutate(
         'updateTableFromJson',
         () => _updateTrackedUpdateTableFromJson(json),
       );
@@ -746,37 +1560,20 @@ class BackupRepository {
     String actorId = 'unknown',
     String? actorName,
     AuditSource source = AuditSource.pos,
-  }) => UpdateReadiness.track(
-    'restoreDataBackupFromFile',
-    () => _updateTrackedRestoreDataBackupFromFile(
-      backupFile,
-      clearExisting: clearExisting,
-      backupBeforeRestore: backupBeforeRestore,
-      actorId: actorId,
-      actorName: actorName,
-      source: source,
-    ),
-  );
-
-  static Future<void> _updateTrackedRestoreDataBackupFromFile(
-    File backupFile, {
-    bool clearExisting = true,
-    bool backupBeforeRestore = true,
-    String actorId = 'unknown',
-    String? actorName,
-    AuditSource source = AuditSource.pos,
+    String? password,
+    bool allowLegacyIncomplete = false,
   }) async {
-    if (!await backupFile.exists()) {
-      throw ArgumentError('Backup file not found: ${backupFile.path}');
-    }
-    final jsonString = await backupFile.readAsString();
+    if (!await backupFile.exists())
+      throw ArgumentError('Backup file not found');
     await restoreDataBackupFromJson(
-      jsonString,
+      await backupFile.readAsString(),
       clearExisting: clearExisting,
       backupBeforeRestore: backupBeforeRestore,
       actorId: actorId,
       actorName: actorName,
       source: source,
+      password: password,
+      allowLegacyIncomplete: allowLegacyIncomplete,
     );
   }
 
@@ -787,77 +1584,115 @@ class BackupRepository {
     String actorId = 'unknown',
     String? actorName,
     AuditSource source = AuditSource.pos,
-  }) => UpdateReadiness.track(
-    'restoreDataBackupFromJson',
-    () => _updateTrackedRestoreDataBackupFromJson(
-      jsonString,
-      clearExisting: clearExisting,
-      backupBeforeRestore: backupBeforeRestore,
-      actorId: actorId,
-      actorName: actorName,
-      source: source,
-    ),
-  );
-
-  static Future<void> _updateTrackedRestoreDataBackupFromJson(
-    String jsonString, {
-    bool clearExisting = true,
-    bool backupBeforeRestore = true,
-    String actorId = 'unknown',
-    String? actorName,
-    AuditSource source = AuditSource.pos,
+    String? password,
+    bool allowLegacyIncomplete = false,
   }) async {
-    String? safetyBackupPath;
-    if (backupBeforeRestore) {
-      safetyBackupPath = (await createDataBackup()).path;
-    }
-
-    final dynamic decoded = json.decode(jsonString);
-    if (decoded is! Map<String, dynamic>) {
-      throw const FormatException('Backup payload must be a JSON object.');
-    }
-
-    final payload = Map<String, dynamic>.from(decoded);
-    await _applyBackupPayload(payload, clearExisting: clearExisting);
-
-    // Written after the restore, never before: `clearExisting` empties the
-    // audit box and refills it from the backup, so a row written first would
-    // be erased by the very operation it records. Its own restore is the one
-    // event that is not in the file.
-    final meta = payload['meta'];
-    await GlobalAudit.backupRestored(
-      actorId: actorId,
-      actorName: actorName,
-      source: source,
-      backupCreatedAt: (payload['generatedAt'] as String?)?.trim(),
-      backupVersion: meta is Map ? meta['db_version']?.toString() : null,
-      safetyBackupPath: safetyBackupPath,
-      clearedExisting: clearExisting,
-      restoredCounts: <String, dynamic>{
-        'users': (payload['users'] as List?)?.length ?? 0,
-        'tables': (payload['tables'] as List?)?.length ?? 0,
-        'orders': (payload['orders'] as List?)?.length ?? 0,
-        'reservations':
-            (payload['reservations'] as List?)?.length ??
-            (payload['reservation'] as List?)?.length ??
-            0,
-        'sales': (payload['sales'] as List?)?.length ?? 0,
-        'expenses': (payload['expenses'] as List?)?.length ?? 0,
-        'auditLog': (payload['auditLog'] as List?)?.length ?? 0,
-        'stockItems':
-            ((payload['inventoryCatalog'] as Map?)?['stockItems'] as List?)
-                ?.length ??
-            0,
-        'suppliers':
-            ((payload['inventoryCatalog'] as Map?)?['suppliers'] as List?)
-                ?.length ??
-            0,
-        'recipes':
-            ((payload['inventoryCatalog'] as Map?)?['recipes'] as List?)
-                ?.length ??
-            0,
-      },
+    final total = Stopwatch()..start();
+    final payload = await PosBackupFormat.decode(
+      jsonString,
+      password: password,
     );
+    final modern = payload.containsKey('formatVersion');
+    if (modern) {
+      PosBackupFormat.validate(payload);
+      _decodeStores(payload); // Parse every model before any write.
+      _validateVenue(payload);
+      if (!clearExisting)
+        throw const FormatException(
+          'Complete recovery backups replace data; merging is unsupported',
+        );
+    } else {
+      if (!allowLegacyIncomplete)
+        throw const FormatException(
+          'Legacy backup is incomplete: no Menu/closure/command recovery guarantee. Explicit legacy import is required.',
+        );
+      _validateLegacy(payload);
+    }
+    final receipt = PosBackupFormat.digest(payload);
+    if (DatabaseCore.metaBox?.get('backupRestoreReceipt') == receipt) return;
+    await LocalDataAdmission.exclusive(() async {
+      await _ensureRecoveryBoxes();
+      if (modern) {
+        _validateVenue(payload);
+        if (_storeBoxes().length != PosBackupFormat.stores.length - 1)
+          throw StateError('Required restore stores are not open');
+      }
+      if (!modern &&
+          ((DatabaseCore.metaBox?.keys.any(
+                    (key) =>
+                        key is String &&
+                        (key.startsWith(
+                              OrderTransferJournalRepository.prefix,
+                            ) ||
+                            key.startsWith(
+                              OrderTableMutationRepository.prefix,
+                            ) ||
+                            key.startsWith('print_job:')),
+                  ) ??
+                  false) ||
+              (DatabaseCore.metaBox?.containsKey(
+                    CloseDayJournalRepository.key,
+                  ) ??
+                  false) ||
+              (DatabaseCore.menuJournalBox?.isNotEmpty ?? false) ||
+              (DatabaseCore.menuCanonicalBox?.containsKey(
+                    MenuLocalStore.stateKey,
+                  ) ??
+                  false) ||
+              (DatabaseCore.closureJournalBox?.isNotEmpty ?? false) ||
+              EdgeCommandJournal.snapshot().isNotEmpty)) {
+        throw StateError(
+          'Legacy import requires a destination without Menu/closure/command/print recovery state',
+        );
+      }
+      final pause = Stopwatch()..start();
+      final safetyBackupPath = backupBeforeRestore
+          ? (await _writeSnapshot(await _captureSnapshot())).path
+          : null;
+      final descriptor = {
+        'restoreProtocolVersion': 1,
+        'payload': payload,
+        'modern': modern,
+        'clearExisting': clearExisting,
+        'receipt': receipt,
+        'destinationSettings': {
+          for (final key in PosBackupFormat.deviceSettings)
+            if (DatabaseCore.settingsBox?.containsKey(key) ?? false)
+              key: PosBackupFormat.encodeValue(
+                DatabaseCore.settingsBox!.get(key),
+              ),
+        },
+        'actorId': actorId,
+        'actorName': actorName,
+        'source': source.name,
+        'safetyBackupPath': safetyBackupPath,
+      };
+      final marker = File(
+        '${DatabaseCore.dataDirectoryPath}/$restoreMarkerName',
+      );
+      descriptor['descriptorSha256'] = PosBackupFormat.digest(descriptor);
+      await _atomicWrite(marker, jsonEncode(descriptor));
+      try {
+        await _finishRestore(descriptor, marker);
+      } catch (_) {
+        LocalDataAdmission.failure =
+            'Interrupted backup restore; restart to finish recovery';
+        rethrow;
+      }
+      lastRestoreMetrics = {'barrierMs': pause.elapsedMicroseconds / 1000};
+    });
+    lastRestoreMetrics = {
+      ...lastRestoreMetrics,
+      'durationMs': total.elapsedMicroseconds / 1000,
+    };
+    for (final type in [
+      SyncEventType.menu,
+      SyncEventType.orders,
+      SyncEventType.reservations,
+      SyncEventType.tables,
+    ]) {
+      SyncHub.notify(SyncEvent(type: type, action: 'reloaded'));
+    }
   }
 
   /// Erases every box on this terminal and leaves it as if freshly installed.
@@ -870,10 +1705,15 @@ class BackupRepository {
   /// clock high-water mark survive: a wipe must not become a way to shed an
   /// unlock token's device binding or to rewind expiry checks.
   static Future<String?> wipeAllData({bool backupFirst = true}) =>
-      UpdateReadiness.track(
-        'wipeAllData',
-        () => _updateTrackedWipeAllData(backupFirst: backupFirst),
-      );
+      LocalDataAdmission.exclusive(() async {
+        final safety = backupFirst
+            ? (await _writeSnapshot(await _captureSnapshot())).path
+            : null;
+        await PosMenuSyncService.instance.externalMenuWrite(
+          () => _updateTrackedWipeAllData(backupFirst: false),
+        );
+        return safety;
+      });
 
   static Future<String?> _updateTrackedWipeAllData({
     bool backupFirst = true,
@@ -1148,13 +1988,15 @@ class BackupRepository {
 
     for (final saleEntry in salesJson) {
       if (saleEntry is Map) {
-        DatabaseCore.salesBox!.add(Map<String, dynamic>.from(saleEntry));
+        await DatabaseCore.salesBox!.add(Map<String, dynamic>.from(saleEntry));
       }
     }
 
     for (final expenseEntry in expensesJson) {
       if (expenseEntry is Map) {
-        DatabaseCore.expenseBox!.add(Map<String, dynamic>.from(expenseEntry));
+        await DatabaseCore.expenseBox!.add(
+          Map<String, dynamic>.from(expenseEntry),
+        );
       }
     }
 
@@ -1162,7 +2004,9 @@ class BackupRepository {
 
     for (final errorEntry in errorLogJson) {
       if (errorEntry is Map) {
-        DatabaseCore.errorLogBox!.add(Map<String, dynamic>.from(errorEntry));
+        await DatabaseCore.errorLogBox!.add(
+          Map<String, dynamic>.from(errorEntry),
+        );
       }
     }
 
@@ -1271,14 +2115,28 @@ class BackupRepository {
     );
   }
 
-  static Order _deserializeOrder(Map<String, dynamic> json) {
+  static Order _deserializeOrder(
+    Map<String, dynamic> json, {
+    bool recalculate = true,
+    bool preserveStoredLineTotals = false,
+  }) {
     final items = ((json['items'] as List?) ?? const [])
         .whereType<Map>()
-        .map((it) => _deserializeOrderItem(Map<String, dynamic>.from(it)))
+        .map(
+          (it) => _deserializeOrderItem(
+            Map<String, dynamic>.from(it),
+            preserveStoredTotal: preserveStoredLineTotals,
+          ),
+        )
         .toList();
     final packageItems = ((json['packageItems'] as List?) ?? const [])
         .whereType<Map>()
-        .map((it) => _deserializeOrderItem(Map<String, dynamic>.from(it)))
+        .map(
+          (it) => _deserializeOrderItem(
+            Map<String, dynamic>.from(it),
+            preserveStoredTotal: preserveStoredLineTotals,
+          ),
+        )
         .toList();
 
     final order = Order(
@@ -1319,14 +2177,22 @@ class BackupRepository {
       pickupTime: json['pickupTime'] as String? ?? '',
     );
 
-    order.recalculateTotal();
+    if (recalculate) order.recalculateTotal();
     return order;
   }
 
-  static Reservation _deserializeReservation(Map<String, dynamic> json) {
+  static Reservation _deserializeReservation(
+    Map<String, dynamic> json, {
+    bool preserveStoredValues = false,
+  }) {
     final preOrders = ((json['preOrderItems'] as List?) ?? const [])
         .whereType<Map>()
-        .map((it) => _deserializeOrderItem(Map<String, dynamic>.from(it)))
+        .map(
+          (it) => _deserializeOrderItem(
+            Map<String, dynamic>.from(it),
+            preserveStoredTotal: preserveStoredValues,
+          ),
+        )
         .toList();
 
     final tableNumbers = ((json['tableNumbers'] as List?) ?? const [])
@@ -1347,7 +2213,9 @@ class BackupRepository {
       tableNumbers: tableNumbers,
       // Old backups carry no refs; derive them so restored records are
       // complete regardless of the migration state.
-      tableRefs: tableRefs.isNotEmpty
+      tableRefs: preserveStoredValues
+          ? (json['tableRefs'] == null ? null : tableRefs)
+          : tableRefs.isNotEmpty
           ? tableRefs
           : [
               for (final code in tableNumbers)
@@ -1360,9 +2228,17 @@ class BackupRepository {
       createdAt: _parseRequiredDate(json['createdAt'] as String?),
       createdBy: json['createdBy'] as String? ?? 'Unknown',
       status: json['status'] as String? ?? 'pending',
-      preOrderItems: preOrders.isEmpty ? null : preOrders,
+      preOrderItems: preserveStoredValues
+          ? (json['preOrderItems'] == null ? null : preOrders)
+          : preOrders.isEmpty
+          ? null
+          : preOrders,
       isTakeAway: json['isTakeAway'] as bool? ?? false,
       linkedOrderId: (json['linkedOrderId'] as num?)?.toInt(),
+      advanceAmount: (json['advanceAmount'] as num?)?.toDouble() ?? 0,
+      advanceCollectedOn: json['advanceCollectedOn'] as String?,
+      advanceReceiptId: json['advanceReceiptId'] as String?,
+      advanceReceiptPending: json['advanceReceiptPending'] == true,
     );
   }
 
@@ -1422,6 +2298,9 @@ class BackupRepository {
       serviceFeeRate: (json['serviceFeeRate'] as num?)?.toDouble() ?? 0.0,
       createdAt: _parseRequiredDate(json['createdAt'] as String?),
       createdBy: json['createdBy'] as String? ?? 'unknown',
+      displayName: json['displayName'] as String?,
+      customerName: json['customerName'] as String?,
+      customerPhone: json['customerPhone'] as String?,
     );
   }
 
@@ -1486,10 +2365,15 @@ class BackupRepository {
     );
   }
 
-  static OrderItem _deserializeOrderItem(Map<String, dynamic> json) {
+  static OrderItem _deserializeOrderItem(
+    Map<String, dynamic> json, {
+    bool preserveStoredTotal = false,
+  }) {
     final unitPrice = (json['unitPrice'] as num?)?.toDouble() ?? 0.0;
     final quantity = (json['quantity'] as num?)?.toInt() ?? 0;
-    final total = unitPrice * quantity;
+    final total = preserveStoredTotal && json['total'] is num
+        ? (json['total'] as num).toDouble()
+        : unitPrice * quantity;
     return OrderItem(
       lineUuid: json['lineUuid'] as String?,
       itemKey: json['itemKey'] as String? ?? '',

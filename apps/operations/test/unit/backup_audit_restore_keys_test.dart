@@ -70,6 +70,7 @@ void main() {
     return BackupRepository.restoreDataBackupFromJson(
       payload,
       clearExisting: false,
+      allowLegacyIncomplete: true,
       backupBeforeRestore: false,
     );
   }
@@ -92,6 +93,7 @@ void main() {
   setUp(() async {
     directory = await Directory.systemTemp.createTemp('backup-audit-keys-');
     Hive.init(directory.path);
+    DatabaseCore.dataDirectoryPath = directory.path;
     DatabaseCore.auditLogBox = await Hive.openBox('auditLog');
     DatabaseCore.settingsBox = await Hive.openBox('settings');
     DatabaseCore.metaBox = await Hive.openBox('meta');

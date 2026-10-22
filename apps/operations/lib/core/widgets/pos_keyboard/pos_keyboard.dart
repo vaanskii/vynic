@@ -1,5 +1,6 @@
 import 'package:vynic/core/services/pos/pos_locale.dart';
 import 'package:vynic/core/ui/vynic_floor_tokens.dart';
+import 'package:vynic/core/ui/vynic_touch_targets.dart';
 import 'package:flutter/material.dart';
 import 'package:vynic/core/services/pos/pos_input_settings.dart';
 import 'package:vynic/core/widgets/pos_keyboard/pos_keyboard_language.dart';
@@ -31,15 +32,15 @@ class PosKeyboard extends StatefulWidget {
 }
 
 class _PosKeyboardState extends State<PosKeyboard> {
-  static const Color _panel = Colors.white;
-  static const Color _softSurface = Color(0xFFF9FAFB);
-  static const Color _border = Color(0xFFE5E7EB);
-  static const Color _text = Color(0xFF111827);
-  static const Color _muted = Color(0xFF6B7280);
+  static const Color _panel = VynicFloorTokens.panel;
+  static const Color _softSurface = VynicFloorTokens.canvas;
+  static const Color _border = VynicFloorTokens.panelBorder;
+  static const Color _text = VynicFloorTokens.text;
+  static const Color _muted = VynicFloorTokens.textMuted;
   static const Color _accent = VynicFloorTokens.accentStrong;
   static const Color _accentDark = VynicFloorTokens.accentStrong;
-  static const Color _danger = Color(0xFFFEE2E2);
-  static const Color _dangerText = Color(0xFFB91C1C);
+  static const Color _danger = VynicFloorTokens.dangerFill;
+  static const Color _dangerText = VynicFloorTokens.dangerText;
 
   static const Map<String, String> _georgianShiftMap = {
     'ს': 'შ',
@@ -495,7 +496,7 @@ class _KeyboardPreview extends StatelessWidget {
       decoration: InputDecoration(
         hintText: title,
         filled: true,
-        fillColor: Color(0xFFF6F7F9),
+        fillColor: VynicFloorTokens.canvas,
         border: OutlineInputBorder(),
         isDense: true,
       ),
@@ -514,9 +515,9 @@ class _LanguageToggle extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(3),
       decoration: BoxDecoration(
-        color: const Color(0xFFF3F4F6),
+        color: VynicFloorTokens.metricFill,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: const Color(0xFFE5E7EB)),
+        border: Border.all(color: VynicFloorTokens.panelBorder),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -551,9 +552,17 @@ class _LanguageChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return InkWell(
+      canRequestFocus: false,
       onTap: onTap,
       borderRadius: BorderRadius.circular(6),
       child: AnimatedContainer(
+        constraints: BoxConstraints(
+          minWidth: VynicTouchTargets.posDesktop,
+          minHeight: MediaQuery.sizeOf(context).height < 700
+              ? VynicTouchTargets.minPos
+              : VynicTouchTargets.posDesktop,
+        ),
+        alignment: Alignment.center,
         duration: const Duration(milliseconds: 160),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
         decoration: BoxDecoration(
@@ -563,7 +572,9 @@ class _LanguageChip extends StatelessWidget {
         child: Text(
           label,
           style: TextStyle(
-            color: selected ? Colors.white : const Color(0xFF6B7280),
+            color: selected
+                ? VynicFloorTokens.panel
+                : VynicFloorTokens.textMuted,
             fontSize: 12,
             fontWeight: FontWeight.w800,
           ),
@@ -602,7 +613,11 @@ class _KeyboardButton extends StatelessWidget {
 
     return SizedBox(
       width: width,
-      height: 46,
+      // Compact auxiliary windows keep room for the active form above the dock.
+      // The supported desktop layout uses 56px before PosScaledSurface paints it.
+      height: MediaQuery.sizeOf(context).height < 700
+          ? VynicTouchTargets.minPos
+          : VynicTouchTargets.posDesktop,
       child: Material(
         color: bg,
         shape: RoundedRectangleBorder(

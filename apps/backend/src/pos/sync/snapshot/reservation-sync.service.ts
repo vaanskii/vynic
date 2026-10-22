@@ -1,4 +1,5 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../../prisma.service';
 import type { TenantContext } from '../../../auth/pos-auth-context';
 import type { ReservationSync } from '../sync-payload';
@@ -35,16 +36,21 @@ export class ReservationSyncService {
     tenant: Pick<TenantContext, 'venueId'>,
     reservations: ReservationSync[] | undefined,
     failOnError = false,
-  ): Promise<void> {
-    if (!Array.isArray(reservations)) return;
+  ): Promise<{ complete: boolean }> {
+    if (!Array.isArray(reservations)) return { complete: false };
+    let complete = true;
 
     const seen = new Set<string>();
     for (const raw of reservations) {
       const posReservationId = String(raw?.id ?? '').trim();
-      if (!posReservationId) continue;
+      if (!posReservationId) {
+        complete = false;
+        continue;
+      }
 
       const reservationDate = parseDate(raw.reservationDate);
       if (!reservationDate) {
+        complete = false;
         this.logger.warn(
           `Reservation ${posReservationId} has no usable date; skipped.`,
         );
@@ -71,22 +77,46 @@ export class ReservationSyncService {
       };
 
       try {
-        await this.prisma.posReservation.upsert({
-          where: {
-            venueId_posReservationId: {
+        const write = async (
+          db: Pick<Prisma.TransactionClient, 'posReservation'>,
+        ) => {
+          const advance = await this.advanceFields(
+            db,
+            tenant.venueId,
+            posReservationId,
+            raw,
+          );
+          await db.posReservation.upsert({
+            where: {
+              venueId_posReservationId: {
+                venueId: tenant.venueId,
+                posReservationId,
+              },
+            },
+            update: { ...fields, ...advance },
+            create: {
               venueId: tenant.venueId,
               posReservationId,
+              ...fields,
+              ...advance,
             },
-          },
-          update: fields,
-          create: {
-            venueId: tenant.venueId,
-            posReservationId,
-            ...fields,
-          },
-        });
+          });
+        };
+        if (raw.advanceAmount !== undefined) {
+          const lockedWrite = async (tx: Prisma.TransactionClient) => {
+            await tx.$queryRaw`SELECT "id" FROM "pos"."Venue" WHERE "id"=${tenant.venueId} FOR UPDATE`;
+            await write(tx);
+          };
+          // Snapshot ingest supplies its already-open transaction client.
+          if (typeof this.prisma.$transaction === 'function') {
+            await this.prisma.$transaction(lockedWrite);
+          } else await lockedWrite(this.prisma);
+        } else await write(this.prisma);
         seen.add(posReservationId);
       } catch (error) {
+        // Refusing new money metadata must not delete a retained booking.
+        seen.add(posReservationId);
+        complete = false;
         if (failOnError) throw error;
         // One malformed reservation must not cost the rest of the snapshot.
         this.logger.warn(
@@ -108,6 +138,83 @@ export class ReservationSyncService {
         `Venue ${tenant.venueId}: removed ${removed.count} reservation(s) the POS no longer holds`,
       );
     }
+    return { complete };
+  }
+
+  private async advanceFields(
+    db: Pick<Prisma.TransactionClient, 'posReservation'>,
+    venueId: string,
+    posReservationId: string,
+    raw: ReservationSync,
+  ) {
+    // Absence from an older POS says nothing about an already recorded receipt.
+    if (raw.advanceAmount === undefined) return {};
+    const amount = raw.advanceAmount;
+    if (
+      typeof amount !== 'number' ||
+      !Number.isFinite(amount) ||
+      amount < 0 ||
+      amount > 999999999.99 ||
+      Math.abs(amount * 100 - Math.round(amount * 100)) > 0.0001
+    ) {
+      throw new BadRequestException(
+        'Reservation advance must be a non-negative cent amount',
+      );
+    }
+    const date = raw.advanceCollectedOn ?? null;
+    const receiptId = raw.advanceReceiptId ?? null;
+    if (
+      amount > 0 &&
+      (typeof date !== 'string' ||
+        !/^\d{4}-\d{2}-\d{2}$/.test(date) ||
+        typeof receiptId !== 'string' ||
+        !receiptId.trim() ||
+        receiptId.length > 200)
+    ) {
+      throw new BadRequestException(
+        'Reservation advance receipt identity/date are required',
+      );
+    }
+    if (amount === 0 && (date !== null || receiptId !== null)) {
+      throw new BadRequestException(
+        'A zero reservation advance cannot carry a receipt',
+      );
+    }
+    if (date !== null) {
+      const collectionDate = new Date(`${date}T00:00:00Z`);
+      if (
+        !Number.isFinite(collectionDate.getTime()) ||
+        collectionDate.toISOString().slice(0, 10) !== date
+      ) {
+        throw new BadRequestException(
+          'Reservation advance collection date is invalid',
+        );
+      }
+    }
+    const decimal = new Prisma.Decimal(amount.toFixed(2));
+    const old = await db.posReservation.findUnique({
+      where: { venueId_posReservationId: { venueId, posReservationId } },
+      select: {
+        advanceAmount: true,
+        advanceCollectedOn: true,
+        advanceReceiptId: true,
+      },
+    });
+    if (
+      old?.advanceAmount.gt(0) &&
+      (!old.advanceAmount.equals(decimal) ||
+        old.advanceCollectedOn !== date ||
+        old.advanceReceiptId !== receiptId)
+    ) {
+      throw new BadRequestException(
+        'A recorded reservation advance cannot be rewritten by a snapshot',
+      );
+    }
+    return {
+      advanceAmount: decimal,
+      advanceCollectedOn: date,
+      advanceReceiptId: receiptId,
+    };
   }
 }
 

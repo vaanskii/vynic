@@ -1,0 +1,51 @@
+{
+  "reviewDate": "2026-10-06",
+  "reviewer": "multipos_architecture",
+  "status": "NO_P1_P2_IN_REVIEWED_DETACHED_MANAGER_RETAINED_ITEM_SCOPE",
+  "sourceRoot": "/tmp/vynic-readiness-20261006-a2nbcprb/source",
+  "sources": [
+    {
+      "path": "apps/operations/lib/core/services/edge/operational_proof/manager_items_planner.dart",
+      "sha256": "86635d11eed2929e8a7fd454a2d0485fe99c7ef52cfe86c66037700c41e635fd"
+    },
+    {
+      "path": "apps/operations/lib/core/services/edge/operational_proof/manager_items_adapter.dart",
+      "sha256": "34f1a77a254d32832003094d156022a1f30764bb9b2f019322d48fea716a2ad2"
+    },
+    {
+      "path": "apps/operations/test/unit/operational_manager_items_test.dart",
+      "sha256": "3b4fee3bc637b053afecc07c37bfc5a29a87991b548a00effab15ffcc1f44a5d"
+    }
+  ],
+  "existingFilesVerifiedUnchanged": {
+    "apps/operations/lib/core/services/edge/operational_proof/client.dart": "8dd5b07ca905aec3240c0b077e06845ea92488dc89724b74da57eac6704c4338",
+    "apps/operations/lib/core/services/edge/operational_proof/domain.dart": "e14f30e884ae492b172f5ca310395c6932f0f08902beff89e0527f5ccf131c1c",
+    "apps/operations/lib/core/services/edge/operational_proof/frame_store.dart": "95d5893daa62522d96c6688e6b8195c1af4dd191a84b54788877e102a0b22c53",
+    "apps/operations/lib/core/services/edge/operational_proof/intent_adapter.dart": "143e73f8606289f399431682f338ee898eb0f6f1afaf941a9310c4cf012f76e5",
+    "apps/operations/lib/core/services/edge/operational_proof/ordinary_planner.dart": "2b63ba76ff9864e1c92099e7e62a863a7426552d3d4b3d8019e81f5cadd1875f",
+    "apps/operations/lib/core/services/edge/operational_proof/planning_view.dart": "38973bfff6f373abfa575be72c0d1af962ef8c6040c6d5134f92c9052872fe17",
+    "apps/operations/lib/core/database/repositories/order_table_mutation_repository.dart": "9939c54d5b6b9fc927f35ddac94548925d90fab47dea7e0446700b72ecd87a17",
+    "apps/operations/lib/core/models/order.dart": "271c255416aa245ed47f3d31116c7f32fd5e4726f5344e9c9c726c6ecec2a9c1",
+    "apps/operations/test/unit/operational_ordinary_planner_test.dart": "bed0e69dc31b0ea4070c66c7de9f37a7ead2fc1bd716776f8b0d702f28fa172b",
+    "apps/operations/test/unit/operational_proof_client_test.dart": "ac90249cf5d7c0fd4120cdf3072454b6701b0faf24ed88cfbb71a9ed3ddd48fd"
+  },
+  "evidence": [
+    {
+      "path": "operational-manager-items-validation-test.log",
+      "sha256": "f33994b3e491f54adb7ddf5d6e0ab6ae0d09633ee4dfc21e92fd6c4dbea6b551"
+    },
+    {
+      "path": "operational-manager-items-validation-analyze.log",
+      "sha256": "3d1b8e5f21c3a232381c958c2022d476bb93f386ca5eb05448d071bf05ea33e7"
+    }
+  ],
+  "validation": "Source review plus inspected captured 143-pass selected regression and clean targeted analysis. Reviewer did not rerun Dart tests.",
+  "scope": "Manager-only quantity/removal replacement using retained itemKey+lineUuid; no existing source edits or production attachment.",
+  "remainingGates": [
+    "Trusted complete canonical projection capture and authenticated Manager origin/Staff admission",
+    "Remote command ingestion/ACK integration and exact already-completed/no-op lifecycle handling",
+    "New-item frozen catalog quotes and broader item/fee/status writers",
+    "POS modifications require atomic frozen PRINT effects",
+    "Other mandatory writer domains and real three-terminal LAN/RPC/handover/rollback qualification"
+  ]
+}

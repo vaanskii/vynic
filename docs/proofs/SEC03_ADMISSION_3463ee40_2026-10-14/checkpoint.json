@@ -1,0 +1,17 @@
+{
+  "status": "PASS_SOURCE_AND_ISOLATED_TESTS_NOT_DEPLOYED",
+  "scope": "SEC-03 website authentication request admission subset",
+  "qualification": "qualification.json",
+  "newRegressionCases": 51,
+  "passingCases": 957,
+  "liveDataTouched": false,
+  "ownedPostgresStopped": true,
+  "fullSEC03Complete": false,
+  "nextDecisions": [
+    "Session revocation/logout/refresh semantics",
+    "Platform MFA/recovery ownership and supported procedure",
+    "Shared/gateway limits for multi-replica rollout"
+  ],
+  "OPS01": "paused; denied restore not retried",
+  "printerWork": "deferred; separate session untouched"
+}

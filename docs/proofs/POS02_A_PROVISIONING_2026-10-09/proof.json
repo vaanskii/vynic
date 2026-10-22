@@ -1,0 +1,273 @@
+{
+  "substage": "POS-02.A",
+  "status": "DONE",
+  "overallPOS02": "NOT_DONE",
+  "scope": "Production identity, authenticated enrollment, signed configuration and Venue membership verification only",
+  "generatedAtUTC": "2026-10-09T17:34:47.375354+00:00",
+  "branch": "codex/docker-deployment-foundation",
+  "head": "3463ee406184fec7f53818416e11d0e5f5602c87",
+  "commitsCreated": [],
+  "backend": {
+    "passed": 176,
+    "failed": 0,
+    "newRealHttpPostgresCases": 16,
+    "existingPreparedConfigCases": 160,
+    "log": "backend-final.json"
+  },
+  "deletionMatrix": {
+    "passed": 16,
+    "failed": 0,
+    "log": "deletion-matrix.json"
+  },
+  "goRegression": {
+    "passedCases": 268,
+    "skippedTests": [
+      "TestPrinterAgentProcess",
+      "TestProductionBackendExport",
+      "TestProductionBackendVerify"
+    ],
+    "failed": 0,
+    "log": "go-regression.jsonl"
+  },
+  "goRace": {
+    "passedCases": 24,
+    "skippedTests": [
+      "TestProductionBackendExport",
+      "TestProductionBackendVerify"
+    ],
+    "failed": 0,
+    "log": "go-race.jsonl"
+  },
+  "actualBackendToGo": [
+    {
+      "passedCases": 1,
+      "skippedTests": [],
+      "failed": 0,
+      "log": "TestProductionBackendExport.jsonl"
+    },
+    {
+      "passedCases": 1,
+      "skippedTests": [],
+      "failed": 0,
+      "log": "TestProductionBackendVerify.jsonl"
+    }
+  ],
+  "windows": {
+    "exitCode": 0,
+    "stage": "C:\\Users\\vaanskii\\AppData\\Local\\Temp\\vynic-pos02a-39a40b5870b244648c3b29e70f0872a4",
+    "printerIO": false,
+    "architecture": "ARM64",
+    "serviceInstalled": false,
+    "principal": "vanski\\vaanskii",
+    "passedCases": 25,
+    "skippedCases": 2,
+    "failedCases": 0,
+    "originalVmState": "stopped",
+    "finalVmState": "stopped",
+    "scmServiceTested": false
+  },
+  "requirements": {
+    "correctVenueEnrollment": {
+      "status": "PASS",
+      "evidence": [
+        "backend: binds enrollment to Device authority and Go key possession",
+        "TestProductionBackendVerify"
+      ]
+    },
+    "deviceGoBinding": {
+      "status": "PASS",
+      "evidence": [
+        "backend: binds enrollment to Device authority and Go key possession",
+        "backend: cross-Venue/device rebind",
+        "TestProductionSignedBoundary"
+      ]
+    },
+    "signatureVerification": {
+      "status": "PASS",
+      "evidence": [
+        "backend exact Ed25519 signature assertion",
+        "TestProductionBackendVerify",
+        "TestProductionSignedBoundary"
+      ]
+    },
+    "expiry": {
+      "status": "PASS",
+      "evidence": [
+        "TestProductionSignedBoundary/expired",
+        "TestProductionRestartOfflineAndRevocation"
+      ]
+    },
+    "revokedGrants": {
+      "status": "PASS",
+      "evidence": [
+        "backend: revocation is scoped, idempotent, durable",
+        "TestProductionBackendVerify",
+        "TestProductionRestartOfflineAndRevocation"
+      ]
+    },
+    "staleConfiguration": {
+      "status": "PASS",
+      "evidence": [
+        "backend stale CAS assertion",
+        "TestProductionBackendVerify",
+        "TestProductionSignedBoundary",
+        "TestProductionTopologyCounts"
+      ]
+    },
+    "tamperedSignatures": {
+      "status": "PASS",
+      "evidence": [
+        "TestProductionSignedBoundary"
+      ]
+    },
+    "foreignVenue": {
+      "status": "PASS",
+      "evidence": [
+        "backend: cross-Venue/device rebind",
+        "TestProductionSignedBoundary",
+        "TestProductionForeignPeerAndCorruptCache"
+      ]
+    },
+    "foreignDevice": {
+      "status": "PASS",
+      "evidence": [
+        "backend: configuration cannot invent membership, foreign scope, controller rights or RAW takeover",
+        "TestProductionSignedBoundary",
+        "TestProductionMutualTLSAndRights"
+      ]
+    },
+    "duplicateEnrollmentRetry": {
+      "status": "PASS",
+      "evidence": [
+        "backend: simultaneous exact retries"
+      ]
+    },
+    "newPosExistingInventory": {
+      "status": "PASS",
+      "evidence": [
+        "backend: new POS joins existing inventory as client without voter churn",
+        "TestProductionBackendVerify"
+      ]
+    },
+    "revokedPosDenied": {
+      "status": "PASS",
+      "evidence": [
+        "backend: revoked POS credential cannot renew",
+        "TestProductionMutualTLSAndRights",
+        "TestProductionBackendVerify"
+      ]
+    },
+    "offlineValidity": {
+      "status": "PASS",
+      "evidence": [
+        "TestProductionRestartOfflineAndRevocation"
+      ]
+    },
+    "processRestartIdentity": {
+      "status": "PASS",
+      "evidence": [
+        "TestProductionProcessRestart",
+        "TestProductionRestartOfflineAndRevocation",
+        "TestProductionWindowsIdentityProtection"
+      ]
+    },
+    "configurationCannotInventRights": {
+      "status": "PASS",
+      "evidence": [
+        "backend: configuration cannot invent membership, foreign scope, controller rights or RAW takeover",
+        "backend: does not silently transfer existing physical ownership",
+        "TestProductionMutualTLSAndRights",
+        "TestProductionSignedBoundary"
+      ]
+    },
+    "oneTwoThreeFourTenTopology": {
+      "status": "PASS",
+      "evidence": [
+        "TestProductionTopologyCounts"
+      ]
+    },
+    "foundationProofSeparation": {
+      "status": "PASS",
+      "evidence": [
+        "backend: refuses reuse of Foundation identity",
+        "backend: refuses using the Foundation signer",
+        "TestProductionSignedBoundary"
+      ]
+    },
+    "durableAuthorizationFailure": {
+      "status": "PASS",
+      "evidence": [
+        "TestProductionDurableCommitFailure",
+        "TestProductionForeignPeerAndCorruptCache"
+      ]
+    }
+  },
+  "offlinePolicy": {
+    "maxSeconds": 604800,
+    "learnedRevocationPersisted": true,
+    "unknownRevocation": "effective on next verified refresh or grant expiry",
+    "trustedOSClockRequired": true,
+    "adminFullImageRollbackResistance": false
+  },
+  "migrations": {
+    "new": "20261018120000_printer_provisioning",
+    "fresh": "PASS",
+    "populatedUpgrade": "PASS",
+    "existingDeviceUnchanged": true,
+    "prismaValidation": "PASS",
+    "newSchemaDifference": "NONE",
+    "preExistingDiff": [
+      "DevicePrinterRuntimeRequest_device_fkey name",
+      "DevicePrinterRuntimeRequest_venue_fkey name"
+    ],
+    "productionDeployment": "NOT_RUN"
+  },
+  "safety": {
+    "restaurantStorageAccessed": false,
+    "productionCredentialsCreated": false,
+    "servicesInstalledOrActivated": false,
+    "physicalPrinterIO": false,
+    "liveFlutterWriterChanged": false,
+    "resetStashPush": false,
+    "historicalProofFilesUnchanged": 1203,
+    "isolatedPostgresStopped": true
+  },
+  "nextSubstage": "POS-02.B: authenticated Venue peer transport and stable queue-membership wiring",
+  "nextSubstageStarted": false,
+  "notImplemented": [
+    "production service enrollment/renewal lifecycle",
+    "production peer RPC/Raft wiring and live voter reconfiguration",
+    "controller durability and physical dispatch",
+    "Flutter admission",
+    "Hive cutover/rollback",
+    "production deployment and physical qualification"
+  ],
+  "changedExistingFiles": [
+    "apps/backend/prisma/schema.prisma",
+    "apps/backend/src/edge/edge-transport.module.ts",
+    "apps/backend/src/local-tools/deletion-matrix.ts",
+    "apps/backend/src/platform/platform.module.ts",
+    "docs/VYNIC_PRINT_ARCHITECTURE.md",
+    "docs/VYNIC_ROADMAP.md",
+    "docs/agent-state/VYNIC_CODE_MAP.md",
+    "docs/agent-state/VYNIC_DECISIONS.md",
+    "docs/agent-state/VYNIC_PROJECT_STATE.md"
+  ],
+  "newStageFiles": [
+    "apps/backend/prisma/migrations/20261018120000_printer_provisioning/migration.sql",
+    "apps/backend/src/printer-provisioning/contract.ts",
+    "apps/backend/src/printer-provisioning/controller.ts",
+    "apps/backend/src/printer-provisioning/provisioning.integration.spec.ts",
+    "apps/backend/src/printer-provisioning/service.ts",
+    "apps/edge/cmd/printer-provision/main.go",
+    "apps/edge/internal/printerprovisioning/production.go",
+    "apps/edge/internal/printerprovisioning/production_cloud.go",
+    "apps/edge/internal/printerprovisioning/production_machine_other.go",
+    "apps/edge/internal/printerprovisioning/production_machine_windows.go",
+    "apps/edge/internal/printerprovisioning/production_store.go",
+    "apps/edge/internal/printerprovisioning/production_test.go",
+    "apps/edge/internal/printerprovisioning/production_windows_test.go",
+    "docs/POS02_A_PROVISIONING.md"
+  ],
+  "sourceFilesHashed": 643
+}

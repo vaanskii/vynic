@@ -6,10 +6,19 @@ class TakeawayMenuItem {
 }
 
 class TakeawayCartEntry {
+  final String? itemName;
+  final String? menuItemId;
+  final String? variantId;
   final double price;
   int quantity;
 
-  TakeawayCartEntry({required this.price, this.quantity = 1});
+  TakeawayCartEntry({
+    required this.price,
+    this.quantity = 1,
+    this.itemName,
+    this.menuItemId,
+    this.variantId,
+  });
 }
 
 class TakeawayCreatePayload {

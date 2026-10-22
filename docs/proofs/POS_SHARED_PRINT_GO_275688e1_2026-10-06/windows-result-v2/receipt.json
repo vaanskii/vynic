@@ -1,0 +1,14 @@
+﻿{
+    "scope":  "nonphysical source-only helper/guard/channel qualification",
+    "helperSha256":  "b720e1eedc77ab574d769865e39f71506a5f3ebc9d93ab5166bc3f112203019d",
+    "helperBytes":  316416,
+    "helperProtocol":  1,
+    "flutterEngineStarted":  false,
+    "productStarted":  false,
+    "serviceOperations":  false,
+    "driverOperations":  false,
+    "documentsSubmitted":  0,
+    "positiveWrites":  "fake APIs/processes only",
+    "sourceHashesUnchanged":  true,
+    "cachedSdkHashesUnchanged":  true
+}

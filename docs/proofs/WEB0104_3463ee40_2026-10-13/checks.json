@@ -1,0 +1,70 @@
+[
+  {
+    "name": "backend-aggregate",
+    "exitCode": 0,
+    "passed": 851,
+    "failed": 0,
+    "skipped": 839
+  },
+  {
+    "name": "backend-typecheck",
+    "exitCode": 0
+  },
+  {
+    "name": "backend-build",
+    "exitCode": 0
+  },
+  {
+    "name": "frontend-aggregate",
+    "exitCode": 0,
+    "passed": 208,
+    "failed": 0,
+    "skipped": 0
+  },
+  {
+    "name": "frontend-build",
+    "exitCode": 0
+  },
+  {
+    "name": "vankisi-build",
+    "exitCode": 0
+  },
+  {
+    "name": "sdk-tests",
+    "exitCode": 0,
+    "passed": 6,
+    "failed": 0,
+    "skipped": 0
+  },
+  {
+    "name": "sdk-types",
+    "exitCode": 0
+  },
+  {
+    "name": "contracts",
+    "exitCode": 0
+  },
+  {
+    "name": "w1-original-revision",
+    "exitCode": 0,
+    "passed": 28,
+    "failed": 0,
+    "skipped": 0
+  },
+  {
+    "name": "backend-aggregate",
+    "exitCode": 0
+  },
+  {
+    "name": "backend-typecheck",
+    "exitCode": 0
+  },
+  {
+    "name": "backend-build",
+    "exitCode": 0
+  },
+  {
+    "name": "new-lint",
+    "exitCode": 0
+  }
+]

@@ -1,0 +1,258 @@
+{
+  "status": "ISOLATED_SOFTWARE_CHECKS_PASSED",
+  "createdAtUtc": "2026-10-08T16:52:55.172009+00:00",
+  "head": "3463ee406184fec7f53818416e11d0e5f5602c87",
+  "uncommittedCandidate": true,
+  "tests": {
+    "backendAggregate": {
+      "passed": 851,
+      "skipped": 713,
+      "failed": 0,
+      "passedSuites": 73,
+      "skippedSuites": 53,
+      "includesMenu09Postgresql": true
+    },
+    "affectedBackendPostgresql": {
+      "authAndActivation": 55,
+      "commercial": 16,
+      "mgr01": 19,
+      "platform": 43,
+      "edgeFoundation": 8,
+      "total": 141
+    },
+    "inventorySubsetPostgresql": {
+      "passed": 53,
+      "failed": 0,
+      "suites": 5
+    },
+    "flutterAggregate": {
+      "passed": 2584,
+      "skipped": 16,
+      "failed": 0,
+      "actualGoWireProcesses": true,
+      "actualMenu09HttpWriter": true
+    },
+    "webAggregate": {
+      "passed": 166,
+      "failed": 0,
+      "files": 25,
+      "unhandledErrors": 0
+    }
+  },
+  "checks": {
+    "backendTypecheck": "PASS",
+    "backendBuild": "PASS",
+    "webBuild": "PASS",
+    "changedInventoryDartAnalysis": "PASS",
+    "newAuthFilesEslint": "PASS",
+    "gitDiffCheck": "PASS",
+    "noAddedErrorsInFourTypeFixtureFiles": true,
+    "existingErrorsInThoseFiles": 72
+  },
+  "protection": {
+    "preservesUniqueMatchAuthentication": true,
+    "activePinAdmissionUsesVenueLock": true,
+    "staffVaultAndCredentialsAtomic": true,
+    "platformManagedStaffProtected": true,
+    "unchangedSnapshotRetryIdempotent": true,
+    "firstManagerRegistrationOnlyEnrolledPrimaryPos": true,
+    "existingOwnerCabinetRecoveryDenied": true,
+    "storedPinValuesNotReturnedByNormalReads": true
+  },
+  "limitations": [
+    "No real user credential was created or changed during this validation.",
+    "No deployment, live-service restart, commit or push was performed during this validation.",
+    "New real restaurant enrollment/activation/POS/Manager login remains a user-run manual gate.",
+    "No Windows release build or physical POS/printer acceptance was performed.",
+    "Other backend integration suites remain opt-in and skipped; the aggregate is not proof of all 713 skipped cases.",
+    "Web build retains its existing large-chunk warning; jsdom reports an unimplemented scrollTo warning.",
+    "INV-02 provenance labels and INV-04 pagination remain separate follow-up milestones; the Inventory subset tests alone do not close them.",
+    "Code prevents future PIN collisions; existing conflicts need an authorized unique PIN change. The earlier user-authorized data reset is separate from these checks."
+  ],
+  "goToolchain": {
+    "version": "go1.26.8 darwin/arm64",
+    "archiveSource": "https://go.dev/dl/go1.26.8.darwin-arm64.tar.gz",
+    "archiveSha256": "a012b25b571bd0138a03dcd25375ceba866fe5ca822f426d2c66a4de56fd3f4b",
+    "installation": "task temporary folder only",
+    "physicalPrinterAdmission": "HELD"
+  },
+  "logs": [
+    {
+      "name": "backend-aggregate-final.log",
+      "rawLog": "/tmp/vynic-auth-resume-lao0b94r/backend-aggregate-final.log",
+      "sha256": "5501bffa509a664c52cee849862d871ac888366d73f9af010f344b63cd9a3600",
+      "bytes": 2626,
+      "outcomeLines": [
+        "> pos_app_server@0.0.1 test",
+        "> jest --runInBand",
+        "Test Suites: 53 skipped, 73 passed, 73 of 126 total",
+        "Tests:       713 skipped, 851 passed, 1564 total",
+        "Ran all test suites."
+      ]
+    },
+    {
+      "name": "backend-auth-pg.log",
+      "rawLog": "/tmp/vynic-auth-resume-lao0b94r/backend-auth-pg.log",
+      "sha256": "6b03b55ceb644408d99459f805de07b4c606d6049152832cf283922c884db200",
+      "bytes": 607,
+      "outcomeLines": [
+        "> pos_app_server@0.0.1 test",
+        "> jest --runInBand --runTestsByPath src/staff/staff-pin.integration.spec.ts src/auth/manager-activation.integration.spec.ts src/customer/customer-onboarding.integration.spec.ts src/platform/saas-phase2.integration.spec.ts",
+        "Test Suites: 4 passed, 4 total",
+        "Tests:       55 passed, 55 total",
+        "Ran all test suites within paths \"src/staff/staff-pin.integration.spec.ts\", \"src/auth/manager-activation.integration.spec.ts\", \"src/customer/customer-onboarding.integration.spec.ts\", \"src/platform/saas-phase2.integration.spec.ts\"."
+      ]
+    },
+    {
+      "name": "backend-commercial-pg.log",
+      "rawLog": "/tmp/vynic-auth-resume-lao0b94r/backend-commercial-pg.log",
+      "sha256": "241bbb2fc251eb7f9585e3b15135bcd994810c0d78772404165a8e8531da95ec",
+      "bytes": 325,
+      "outcomeLines": [
+        "> pos_app_server@0.0.1 test",
+        "> jest --runInBand --runTestsByPath src/customer/commercial-access.integration.spec.ts",
+        "Test Suites: 1 passed, 1 total",
+        "Tests:       16 passed, 16 total",
+        "Ran all test suites within paths \"src/customer/commercial-access.integration.spec.ts\"."
+      ]
+    },
+    {
+      "name": "backend-mgr01-pg.log",
+      "rawLog": "/tmp/vynic-auth-resume-lao0b94r/backend-mgr01-pg.log",
+      "sha256": "f1eaba37aa8261b70a4aeee2e3e35cf6c40ade0da41ac10933ff1667e3858b82",
+      "bytes": 53362,
+      "outcomeLines": [
+        "> pos_app_server@0.0.1 test",
+        "> jest --runInBand --runTestsByPath src/mobile/services/mgr01-table-layout.integration.spec.ts",
+        "Test Suites: 1 passed, 1 total",
+        "Tests:       19 passed, 19 total",
+        "Ran all test suites within paths \"src/mobile/services/mgr01-table-layout.integration.spec.ts\"."
+      ]
+    },
+    {
+      "name": "backend-platform-pg.log",
+      "rawLog": "/tmp/vynic-auth-resume-lao0b94r/backend-platform-pg.log",
+      "sha256": "fd686dd9bcda50977496fab132bc76926ed86d6b99ab411499d370a92e3df3a3",
+      "bytes": 320,
+      "outcomeLines": [
+        "> pos_app_server@0.0.1 test",
+        "> jest --runInBand --runTestsByPath src/platform/platform-control-plane.integration.spec.ts",
+        "Test Suites: 1 passed, 1 total",
+        "Tests:       43 passed, 43 total",
+        "Ran all test suites within paths \"src/platform/platform-control-plane.integration.spec.ts\"."
+      ]
+    },
+    {
+      "name": "backend-foundation-pg.log",
+      "rawLog": "/tmp/vynic-auth-resume-lao0b94r/backend-foundation-pg.log",
+      "sha256": "045a2e84bb97f121facf9cc3a8b8792da32a8923490a982994e6cc3204f2376e",
+      "bytes": 1010,
+      "outcomeLines": [
+        "> pos_app_server@0.0.1 test",
+        "> jest --runInBand --runTestsByPath src/edge-foundation/edge-foundation.integration.spec.ts",
+        "Test Suites: 1 passed, 1 total",
+        "Tests:       8 passed, 8 total",
+        "Ran all test suites within paths \"src/edge-foundation/edge-foundation.integration.spec.ts\"."
+      ]
+    },
+    {
+      "name": "inventory-subset-pg.log",
+      "rawLog": "/tmp/vynic-auth-resume-lao0b94r/inventory-subset-pg.log",
+      "sha256": "32bee414ce8cf632fdcbb02ebe2dd7e71c7aa7f2291b66322a985885e3088999",
+      "bytes": 703,
+      "outcomeLines": [
+        "> pos_app_server@0.0.1 test",
+        "> jest --runInBand --runTestsByPath src/inventory/receiving.integration.spec.ts src/inventory/sale-consumption.integration.spec.ts src/inventory/procurement-rework.integration.spec.ts src/inventory/procurement.integration.spec.ts src/inventory/catalog-cost.integration.spec.ts",
+        "Test Suites: 5 passed, 5 total",
+        "Tests:       53 passed, 53 total",
+        "Ran all test suites within paths \"src/inventory/receiving.integration.spec.ts\", \"src/inventory/sale-consumption.integration.spec.ts\", \"src/inventory/procurement-rework.integration.spec.ts\", \"src/inventory/procurement.integration.spec.ts\", \"src/inventory/catalog-cost.integration.spec.ts\"."
+      ]
+    },
+    {
+      "name": "backend-typecheck-final.log",
+      "rawLog": "/tmp/vynic-auth-resume-lao0b94r/backend-typecheck-final.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "outcomeLines": []
+    },
+    {
+      "name": "backend-build.log",
+      "rawLog": "/tmp/vynic-auth-resume-lao0b94r/backend-build.log",
+      "sha256": "54acc67ff6e9998ee00d3667a317176f1b6189016655735b6cf52c9c94c9e0e3",
+      "bytes": 44,
+      "outcomeLines": [
+        "> pos_app_server@0.0.1 build",
+        "> nest build"
+      ]
+    },
+    {
+      "name": "web-aggregate.log",
+      "rawLog": "/tmp/vynic-auth-resume-lao0b94r/web-aggregate.log",
+      "sha256": "6431e096d102fbf850ab35124cd81d7287ad185768fc24b31de6efab9e844ca6",
+      "bytes": 333,
+      "outcomeLines": [
+        "> vynic-website@0.1.0 test",
+        "> vitest run",
+        " Test Files  25 passed (25)"
+      ]
+    },
+    {
+      "name": "web-build.log",
+      "rawLog": "/tmp/vynic-auth-resume-lao0b94r/web-build.log",
+      "sha256": "aa90f5fc04626f723766b4ed65436e8a5141ca7ecd88ea30f389d3fba3300a31",
+      "bytes": 1810,
+      "outcomeLines": [
+        "> vynic-website@0.1.0 build",
+        "> tsc -b && vite build",
+        "✓ built in 297ms"
+      ]
+    },
+    {
+      "name": "flutter-aggregate-final.log",
+      "rawLog": "/tmp/vynic-auth-resume-lao0b94r/flutter-aggregate-final.log",
+      "sha256": "ef29791adebdb50504812173bbf9f92c4c888930485914f51739fdc8ea55efcd",
+      "bytes": 807399,
+      "outcomeLines": [
+        "01:39 +2584 ~16: All tests passed!"
+      ]
+    },
+    {
+      "name": "flutter-inventory-analyze.log",
+      "rawLog": "/tmp/vynic-auth-resume-lao0b94r/flutter-inventory-analyze.log",
+      "sha256": "e54f6263d7a6c6c4e00414de0f45bf92af379284cc17cb80d97b99804b2e2cfa",
+      "bytes": 96,
+      "outcomeLines": [
+        "No issues found! (ran in 1.3s)"
+      ]
+    },
+    {
+      "name": "backend-new-auth-lint.log",
+      "rawLog": "/tmp/vynic-auth-resume-lao0b94r/backend-new-auth-lint.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "outcomeLines": []
+    },
+    {
+      "name": "menu09-native-final.log",
+      "rawLog": "/tmp/vynic-auth-resume-lao0b94r/menu09-native-final.log",
+      "sha256": "345249dc7c7ef231687f2b7b28e4f4912d0089f1c777c7c70e69a329c6f2ae9f",
+      "bytes": 80,
+      "outcomeLines": [
+        "{\"status\": \"PASS\", \"nativePids\": [87301, 87367], \"backendPids\": [87241, 87325]}"
+      ]
+    },
+    {
+      "name": "diff-check-final.log",
+      "rawLog": "/tmp/vynic-auth-resume-lao0b94r/diff-check-final.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "outcomeLines": []
+    }
+  ],
+  "proof": {
+    "sourceHashes": "source-hashes.json",
+    "preservation": "preservation.json",
+    "manualSteps": "../../SAAS_PHASE2_CONTROL_PLANE.md",
+    "privateRawLogs": "/tmp/vynic-auth-resume-lao0b94r"
+  }
+}

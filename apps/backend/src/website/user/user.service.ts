@@ -29,39 +29,30 @@ export class UserService {
    *
    * WebsiteUser is one global identity, so the account itself is not
    * Venue-owned — but a booking is, and a restaurant's site shows only its own.
+   * Only the authenticated user binding grants ownership. Contact email is
+   * unverified text and must never claim a historical guest booking.
    */
   async getUserReservations(tenant: TenantContext, userId: string) {
     const user = await this.prisma.websiteUser.findUnique({
       where: { id: userId },
-      select: { email: true },
+      select: { id: true },
     });
     if (!user) throw new Error('User not found');
 
     const reservations = await this.prisma.websiteReservation.findMany({
       where: {
         venueId: tenant.venueId,
-        OR: [
-          { userId },
-          { AND: [{ userId: null }, { customerEmail: { not: null } }] },
-        ],
+        userId,
         status: { in: ['CONFIRMED', 'COMPLETED'] },
       },
       include: {
         tables: { include: { table: true } },
-        user: true,
       },
       orderBy: { date: 'desc' },
     });
 
-    const userReservations = reservations.filter(
-      (reservation) =>
-        reservation.userId === userId ||
-        (reservation.userId === null &&
-          reservation.customerEmail === user.email),
-    );
-
     return Promise.all(
-      userReservations.map(async (reservation) => {
+      reservations.map(async (reservation) => {
         let parsedMenuItems: Array<Record<string, unknown>> = [];
 
         if (reservation.menuItems) {
@@ -70,6 +61,7 @@ export class UserService {
               id: string;
               quantity: number;
               price?: number;
+              name?: string;
             }>;
 
             if (Array.isArray(menuItemsData) && menuItemsData.length > 0) {
@@ -86,8 +78,13 @@ export class UserService {
                 );
                 return {
                   ...reservationItem,
-                  name: dbItem?.nameEn || `Item ${reservationItem.id}`,
-                  price: dbItem?.price || reservationItem.price,
+                  // New bookings already contain the paid name/variant and price.
+                  // Catalog fallback only completes older snapshots missing them.
+                  name:
+                    reservationItem.name ??
+                    dbItem?.nameEn ??
+                    `Item ${reservationItem.id}`,
+                  price: reservationItem.price ?? dbItem?.price,
                 };
               });
             }

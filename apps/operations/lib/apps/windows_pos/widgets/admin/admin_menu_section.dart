@@ -1,3 +1,7 @@
+import 'package:vynic/apps/windows_pos/widgets/shared/pos_surface.dart';
+import 'package:vynic/core/services/pos/pos_input_settings.dart';
+import 'menu_item_form.dart';
+import 'package:vynic/core/ui/widgets/pos_dialog.dart';
 import 'package:vynic/core/widgets/pos_text.dart';
 import 'dart:async';
 import 'dart:io';
@@ -8,6 +12,9 @@ import 'package:flutter/services.dart';
 import 'package:vynic/core/models/menu_item_db.dart';
 import 'package:vynic/core/models/user.dart';
 import 'package:vynic/core/services/database_service.dart';
+import 'package:vynic/apps/windows_pos/widgets/admin/menu_sync_banner.dart';
+import 'package:vynic/core/services/menu/pos_menu_sync_service.dart';
+import 'package:vynic/core/services/sync/sync_events.dart';
 import 'package:vynic/core/utils/pos_feedback.dart';
 import 'package:vynic/core/widgets/pos_on_screen_text_field.dart';
 import 'package:vynic/apps/windows_pos/widgets/admin/shared/admin_design.dart';
@@ -28,13 +35,27 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
   static const Color _borderColor = AdminDesign.border;
   static const Color _textPrimary = AdminDesign.text;
   static const Color _textMuted = AdminDesign.muted;
-  static const double _priceStep = 0.5;
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
   int? _selectedCategoryIndex;
+  StreamSubscription<SyncEvent>? _menuProjection;
+
+  @override
+  void initState() {
+    super.initState();
+    // Cloud catch-up re-projects the operational menu; show it immediately.
+    _menuProjection = SyncHub.events.listen((event) {
+      if (mounted &&
+          event.type == SyncEventType.menu &&
+          event.action == PosMenuSyncService.projectedAction) {
+        setState(() {});
+      }
+    });
+  }
 
   @override
   void dispose() {
+    _menuProjection?.cancel();
     _searchController.dispose();
     super.dispose();
   }
@@ -67,129 +88,105 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
         .length;
     final kitchenDisabled = allRows.length - kitchenEnabled;
 
-    return SizedBox.expand(
-      child: Column(
-        children: [
-          Expanded(
-            child: SingleChildScrollView(
-              padding: EdgeInsets.fromLTRB(
-                isMobile ? 16 : 22,
-                isMobile ? 16 : 18,
-                isMobile ? 16 : 22,
-                18,
-              ),
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 1180),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildPageHeader(isMobile, categories.length),
-                    const SizedBox(height: 16),
-                    _buildKpiRow(
-                      totalItems: allRows.length,
-                      categories: categories.length,
-                      kitchenEnabled: kitchenEnabled,
-                      kitchenDisabled: kitchenDisabled,
-                    ),
-                    const SizedBox(height: 16),
-                    if (categories.isEmpty)
-                      const AdminEmptyState(
-                        icon: Icons.menu_book_outlined,
-                        title: 'მენიუ ცარიელია',
-                        message:
-                            'დაამატეთ პირველი კატეგორია და შემდეგ მასში პროდუქტები.',
-                      )
-                    else
-                      LayoutBuilder(
-                        builder: (context, constraints) {
-                          final showSidePanel = constraints.maxWidth >= 700;
-                          final compactTable = constraints.maxWidth < 1040;
-                          final categoryPanelWidth = constraints.maxWidth < 1120
-                              ? 240.0
-                              : 330.0;
-                          if (!showSidePanel) {
-                            return Column(
+    return ValueListenableBuilder<double>(
+      valueListenable: PosInputSettings.keyboardHeight,
+      builder: (context, keyboardHeight, _) => SizedBox.expand(
+        child: Column(
+          children: [
+            Expanded(
+              child: SingleChildScrollView(
+                padding: EdgeInsets.fromLTRB(
+                  isMobile ? 16 : 22,
+                  isMobile ? 16 : 18,
+                  isMobile ? 16 : 22,
+                  18 + keyboardHeight,
+                ),
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 1180),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildPageHeader(isMobile, categories.length),
+                      const SizedBox(height: 16),
+                      const MenuSyncBanner(),
+                      _buildKpiRow(
+                        totalItems: allRows.length,
+                        categories: categories.length,
+                        kitchenEnabled: kitchenEnabled,
+                        kitchenDisabled: kitchenDisabled,
+                      ),
+                      const SizedBox(height: 16),
+                      if (categories.isEmpty)
+                        const AdminEmptyState(
+                          icon: Icons.menu_book_outlined,
+                          title: 'მენიუ ცარიელია',
+                          message:
+                              'დაამატეთ პირველი კატეგორია და შემდეგ მასში პროდუქტები.',
+                        )
+                      else
+                        LayoutBuilder(
+                          builder: (context, constraints) {
+                            final showSidePanel = constraints.maxWidth >= 700;
+                            final compactTable = constraints.maxWidth < 1040;
+                            final categoryPanelWidth =
+                                constraints.maxWidth < 1120 ? 240.0 : 330.0;
+                            if (!showSidePanel) {
+                              return Column(
+                                children: [
+                                  _buildMenuTable(
+                                    rows: filteredRows,
+                                    compact: true,
+                                  ),
+                                  const SizedBox(height: 14),
+                                  _buildCategoryPanel(categories, allRows),
+                                ],
+                              );
+                            }
+                            return Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                _buildMenuTable(
-                                  rows: filteredRows,
-                                  compact: true,
+                                Expanded(
+                                  child: _buildMenuTable(
+                                    rows: filteredRows,
+                                    compact: compactTable,
+                                  ),
                                 ),
-                                const SizedBox(height: 14),
-                                _buildCategoryPanel(categories, allRows),
+                                const SizedBox(width: 14),
+                                SizedBox(
+                                  width: categoryPanelWidth,
+                                  child: _buildCategoryPanel(
+                                    categories,
+                                    allRows,
+                                  ),
+                                ),
                               ],
                             );
-                          }
-                          return Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Expanded(
-                                child: _buildMenuTable(
-                                  rows: filteredRows,
-                                  compact: compactTable,
-                                ),
-                              ),
-                              const SizedBox(width: 14),
-                              SizedBox(
-                                width: categoryPanelWidth,
-                                child: _buildCategoryPanel(categories, allRows),
-                              ),
-                            ],
-                          );
-                        },
-                      ),
-                  ],
+                          },
+                        ),
+                    ],
+                  ),
                 ),
               ),
             ),
-          ),
-          _buildBottomDock(categories),
-        ],
+            _buildBottomDock(categories),
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildPageHeader(bool isMobile, int categoryCount) {
-    return Row(
-      children: [
-        Container(
-          width: 44,
-          height: 44,
-          decoration: BoxDecoration(
-            color: AdminDesign.accent.withValues(alpha: 0.12),
-            borderRadius: BorderRadius.circular(AdminDesign.radius),
-          ),
-          child: const Icon(
-            Icons.restaurant_menu_outlined,
-            color: AdminDesign.accentDark,
-          ),
-        ),
-        const SizedBox(width: 13),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              PosText(
-                'მენიუ',
-                style: TextStyle(
-                  color: _textPrimary,
-                  fontSize: isMobile ? 23 : 27,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-              const SizedBox(height: 2),
-              const PosText(
-                'მართეთ კატეგორიები, პროდუქტები, ფასები და სამზარეულოს მარშრუტები.',
-                style: TextStyle(color: _textMuted, fontSize: 13),
-              ),
-            ],
-          ),
-        ),
-        if (!isMobile)
-          AdminStatusBadge(
-            icon: Icons.folder_outlined,
-            label: '$categoryCount კატეგორია',
-          ),
-      ],
+    return AdminSectionHeader(
+      icon: Icons.restaurant_menu_outlined,
+      title: 'მენიუ',
+      subtitle:
+          'მართეთ კატეგორიები, პროდუქტები, ფასები და სამზარეულოს მარშრუტები.',
+      badge: !isMobile
+          ? AdminStatusBadge(
+              icon: Icons.folder_outlined,
+              label: '$categoryCount კატეგორია',
+            )
+          : null,
     );
   }
 
@@ -463,7 +460,7 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
             dense: true,
             leading: Icon(Icons.delete_outline, color: AdminDesign.danger),
             title: PosText(
-              'წაშლა',
+              'არქივში გადატანა',
               style: TextStyle(color: AdminDesign.danger),
             ),
           ),
@@ -879,7 +876,7 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
   Future<void> _showCategoryManagementDialog(
     List<MenuCategoryDB> categories,
   ) async {
-    await showDialog<void>(
+    await showPosModal<void>(
       context: context,
       builder: (dialogContext) {
         final compact = MediaQuery.sizeOf(dialogContext).width < 620;
@@ -1001,7 +998,7 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
                                     PopupMenuItem(
                                       value: 'delete',
                                       child: PosText(
-                                        'წაშლა',
+                                        'არქივში გადატანა',
                                         style: TextStyle(
                                           color: AdminDesign.danger,
                                         ),
@@ -1095,7 +1092,7 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
                                                 PopupMenuItem(
                                                   value: 'delete',
                                                   child: PosText(
-                                                    'წაშლა',
+                                                    'არქივში გადატანა',
                                                     style: TextStyle(
                                                       color: AdminDesign.danger,
                                                     ),
@@ -1368,7 +1365,7 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
                 size: isMobile ? 20 : 24,
               ),
               onPressed: () => _confirmDeleteCategory(categoryIndex, nameEn),
-              tooltip: 'კატეგორიის წაშლა',
+              tooltip: 'კატეგორიის არქივში გადატანა',
               padding: isMobile ? EdgeInsets.zero : const EdgeInsets.all(8),
               constraints: isMobile ? const BoxConstraints() : null,
             ),
@@ -1553,7 +1550,7 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
                             subcategoryIndex,
                             subNameEn,
                           ),
-                          tooltip: 'ქვეკატეგორიის წაშლა',
+                          tooltip: 'ქვეკატეგორიის არქივში გადატანა',
                           padding: isMobile
                               ? EdgeInsets.zero
                               : const EdgeInsets.all(8),
@@ -1698,39 +1695,16 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
     );
   }
 
-  AlertDialog _menuFormAlertDialog({
+  Widget _menuFormAlertDialog({
     required String title,
     required Widget content,
     required List<Widget> actions,
-  }) {
-    final isMobile = !kIsWeb && (Platform.isAndroid || Platform.isIOS);
-    return AlertDialog(
-      backgroundColor: Colors.white,
-      surfaceTintColor: Colors.white,
-      insetPadding: isMobile
-          ? const EdgeInsets.symmetric(horizontal: 16, vertical: 24)
-          : const EdgeInsets.symmetric(horizontal: 40, vertical: 24),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(AdminDesign.radius),
-        side: const BorderSide(color: _borderColor),
-      ),
-      title: PosText(
-        title,
-        style: const TextStyle(
-          color: _textPrimary,
-          fontSize: 20,
-          fontWeight: FontWeight.w800,
-          letterSpacing: -0.3,
-        ),
-      ),
-      titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 8),
-      contentPadding: const EdgeInsets.fromLTRB(24, 0, 24, 8),
-      actionsPadding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
-      actionsAlignment: MainAxisAlignment.end,
-      content: content,
-      actions: actions,
-    );
-  }
+  }) => PosFormDialog(
+    title: title,
+    onClose: () => Navigator.of(context).pop(),
+    actions: actions,
+    child: content,
+  );
 
   Widget _dialogCancelButton({required VoidCallback onPressed}) {
     return TextButton(
@@ -1746,71 +1720,6 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
     );
   }
 
-  Widget _buildPriceInput({
-    required TextEditingController controller,
-    required StateSetter setState,
-  }) {
-    double parsePrice() {
-      final normalized = controller.text.replaceAll(',', '.');
-      return double.tryParse(normalized) ?? 0.0;
-    }
-
-    void updatePrice(double value) {
-      final sanitized = value < 0 ? 0 : value;
-      controller.text = sanitized.toStringAsFixed(2);
-      controller.selection = TextSelection.fromPosition(
-        TextPosition(offset: controller.text.length),
-      );
-    }
-
-    final buttonStyle = OutlinedButton.styleFrom(
-      foregroundColor: _textPrimary,
-      side: const BorderSide(color: _borderColor),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-    );
-
-    return Row(
-      children: [
-        SizedBox(
-          width: 48,
-          height: 48,
-          child: OutlinedButton(
-            style: buttonStyle,
-            onPressed: () => setState(() {
-              updatePrice(parsePrice() - _priceStep);
-            }),
-            child: const Icon(Icons.remove, size: 20),
-          ),
-        ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: PosOnScreenTextField(
-            controller: controller,
-            mode: PosInputMode.decimal,
-            inputFormatters: [
-              FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d{0,2}$')),
-            ],
-            decoration: _dialogInputDecoration('ფასი (₾)'),
-            onChanged: (value) => setState(() {}),
-          ),
-        ),
-        const SizedBox(width: 8),
-        SizedBox(
-          width: 48,
-          height: 48,
-          child: OutlinedButton(
-            style: buttonStyle,
-            onPressed: () => setState(() {
-              updatePrice(parsePrice() + _priceStep);
-            }),
-            child: const Icon(Icons.add, size: 20),
-          ),
-        ),
-      ],
-    );
-  }
-
-  // Dialog methods for menu management
   Future<void> _showAddCategoryDialog() async {
     final slugController = TextEditingController();
     final nameEnController = TextEditingController();
@@ -1820,7 +1729,7 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
     );
     bool sendToKitchenModified = false;
 
-    await showDialog(
+    await showPosModal(
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, setDialogState) => _menuFormAlertDialog(
@@ -1937,7 +1846,7 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
     );
     bool sendToKitchen = category.sendToKitchen;
 
-    await showDialog(
+    await showPosModal(
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, setDialogState) => _menuFormAlertDialog(
@@ -2032,16 +1941,16 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
   }
 
   Future<void> _confirmDeleteCategory(int index, String name) async {
-    final confirmed = await showDialog<bool>(
+    final confirmed = await showPosModal<bool>(
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: AdminDesign.text,
         title: const PosText(
-          'კატეგორიის წაშლა',
+          'კატეგორიის არქივში გადატანა',
           style: TextStyle(color: Colors.white),
         ),
         content: PosText(
-          'დარწმუნებული ხართ, რომ გსურთ „$name“ წაშლა?\nამ კატეგორიის ყველა პროდუქტიც წაიშლება.',
+          'დარწმუნებული ხართ, რომ გსურთ „$name“ არქივში გადატანა?\nამ კატეგორიის ყველა პროდუქტიც აქტიური მენიუდან მოიხსნება.',
           style: const TextStyle(color: Colors.white70),
         ),
         actions: [
@@ -2054,7 +1963,7 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
             style: ElevatedButton.styleFrom(
               backgroundColor: AdminDesign.danger,
             ),
-            child: const PosText('წაშლა'),
+            child: const PosText('არქივში გადატანა'),
           ),
         ],
       ),
@@ -2078,7 +1987,7 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
     final nameEnController = TextEditingController();
     final nameKaController = TextEditingController();
 
-    await showDialog(
+    await showPosModal(
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, setDialogState) => _menuFormAlertDialog(
@@ -2166,7 +2075,7 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
       text: subcategory.translationsKa['name'],
     );
 
-    await showDialog(
+    await showPosModal(
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, setDialogState) => _menuFormAlertDialog(
@@ -2247,16 +2156,16 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
     int subcategoryIndex,
     String name,
   ) async {
-    final confirmed = await showDialog<bool>(
+    final confirmed = await showPosModal<bool>(
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: AdminDesign.text,
         title: const PosText(
-          'ქვეკატეგორიის წაშლა',
+          'ქვეკატეგორიის არქივში გადატანა',
           style: TextStyle(color: Colors.white),
         ),
         content: PosText(
-          'დარწმუნებული ხართ, რომ გსურთ „$name“ წაშლა?\nამ ქვეკატეგორიის ყველა პროდუქტიც წაიშლება.',
+          'დარწმუნებული ხართ, რომ გსურთ „$name“ არქივში გადატანა?\nამ ქვეკატეგორიის ყველა პროდუქტიც აქტიური მენიუდან მოიხსნება.',
           style: const TextStyle(color: Colors.white70),
         ),
         actions: [
@@ -2269,7 +2178,7 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
             style: ElevatedButton.styleFrom(
               backgroundColor: AdminDesign.danger,
             ),
-            child: const PosText('წაშლა'),
+            child: const PosText('არქივში გადატანა'),
           ),
         ],
       ),
@@ -2289,538 +2198,103 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
     }
   }
 
-  Future<void> _showAddItemDialog(int categoryIndex) async {
-    final nameEnController = TextEditingController();
-    final nameKaController = TextEditingController();
-    final priceController = TextEditingController();
-    bool hasVariants = false;
-    List<MenuVariantDB> variants = [];
+  Future<void> _showItemForm({
+    required int categoryIndex,
+    int? subcategoryIndex,
+    int? itemIndex,
+    MenuItemDB? item,
+  }) async {
     final categories = DatabaseService.getAllMenuCategories();
     final category = categoryIndex < categories.length
         ? categories[categoryIndex]
         : null;
-    bool sendToKitchen = category?.sendToKitchen ?? true;
-
-    await showDialog(
+    final saved = await showPosModal<bool>(
       context: context,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setDialogState) => _menuFormAlertDialog(
-          title: 'ახალი პროდუქტი',
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                _buildDialogTextField(
-                  controller: nameEnController,
-                  label: 'სახელი (ინგლისური)',
-                  dialogSetState: setDialogState,
-                  enableTextKeyboard: true,
-                ),
-                const SizedBox(height: 16),
-                _buildDialogTextField(
-                  controller: nameKaController,
-                  label: 'სახელი (ქართული)',
-                  dialogSetState: setDialogState,
-                  enableTextKeyboard: true,
-                ),
-                const SizedBox(height: 16),
-                SwitchListTile(
-                  contentPadding: EdgeInsets.zero,
-                  title: const PosText(
-                    'პროდუქტი იგზავნება სამზარეულოში',
-                    style: TextStyle(
-                      color: _textPrimary,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  subtitle: PosText(
-                    category == null
-                        ? 'აკონტროლებს სამზარეულოში გაგზავნას'
-                        : 'ნაგულისხმევი: ${category.sendToKitchen ? 'ჩართული' : 'გამორთული'} (ამ კატეგორიის მიხედვით)',
-                    style: const TextStyle(color: _textMuted, fontSize: 12),
-                  ),
-                  activeThumbColor: _secondaryColor,
-                  value: sendToKitchen,
-                  onChanged: (value) {
-                    setDialogState(() {
-                      sendToKitchen = value;
-                    });
-                  },
-                ),
-                const SizedBox(height: 16),
-                SwitchListTile(
-                  contentPadding: EdgeInsets.zero,
-                  title: const PosText(
-                    'აქვს ვარიანტები?',
-                    style: TextStyle(
-                      color: _textPrimary,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  value: hasVariants,
-                  onChanged: (value) {
-                    setDialogState(() {
-                      hasVariants = value;
-                      if (!value) {
-                        variants.clear();
-                      }
-                    });
-                  },
-                  activeThumbColor: _secondaryColor,
-                ),
-                const SizedBox(height: 16),
-                if (!hasVariants)
-                  _buildPriceInput(
-                    controller: priceController,
-                    setState: setDialogState,
-                  )
-                else
-                  Column(
-                    children: [
-                      ...variants.asMap().entries.map((entry) {
-                        final idx = entry.key;
-                        final variant = entry.value;
-                        return ListTile(
-                          contentPadding: EdgeInsets.zero,
-                          title: PosText(
-                            '${variant.size}ml - ₾${variant.price.toStringAsFixed(2)}',
-                            style: const TextStyle(color: _textPrimary),
-                          ),
-                          trailing: IconButton(
-                            icon: const Icon(
-                              Icons.delete,
-                              color: AdminDesign.danger,
-                            ),
-                            onPressed: () {
-                              setDialogState(() {
-                                variants.removeAt(idx);
-                              });
-                            },
-                          ),
-                        );
-                      }),
-                      Align(
-                        alignment: Alignment.centerLeft,
-                        child: TextButton.icon(
-                          onPressed: () =>
-                              _showAddVariantDialog(context, (variant) {
-                                setDialogState(() {
-                                  variants.add(variant);
-                                });
-                              }),
-                          icon: const Icon(Icons.add),
-                          label: const PosText('ვარიანტის დამატება'),
-                          style: TextButton.styleFrom(
-                            foregroundColor: _secondaryColor,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-              ],
-            ),
-          ),
-          actions: [
-            _dialogCancelButton(onPressed: () => Navigator.of(context).pop()),
-            ElevatedButton(
-              onPressed: () async {
-                if (nameEnController.text.isNotEmpty &&
-                    nameKaController.text.isNotEmpty) {
-                  final success = await DatabaseService.addItemToCategory(
-                    categoryIndex: categoryIndex,
-                    nameEn: nameEnController.text,
-                    nameKa: nameKaController.text,
-                    price: hasVariants
-                        ? null
-                        : double.tryParse(priceController.text),
-                    variants: hasVariants && variants.isNotEmpty
-                        ? variants
-                        : null,
-                    sendToKitchen: sendToKitchen,
-                    actorId: widget.user.username,
-                  );
-                  if (!mounted) return;
-                  Navigator.of(context).pop();
-                  if (success) {
-                    setState(() {});
-                    unawaited(showSuccessToast(context, 'პროდუქტი დაემატა'));
-                  }
-                }
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: _secondaryColor,
-                foregroundColor: Colors.white,
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-              child: const PosText('დამატება'),
-            ),
-          ],
-        ),
+      barrierDismissible: false,
+      builder: (_) => MenuItemForm(
+        item: item,
+        defaultSendToKitchen: category?.sendToKitchen ?? true,
+        onAddVariant: _showAddVariantDialog,
+        onSave: (nameEn, nameKa, price, variants, kitchen) {
+          if (subcategoryIndex != null) {
+            if (itemIndex != null)
+              return DatabaseService.updateItemInSubcategory(
+                categoryIndex: categoryIndex,
+                subcategoryIndex: subcategoryIndex,
+                itemIndex: itemIndex,
+                nameEn: nameEn,
+                nameKa: nameKa,
+                price: price,
+                variants: variants,
+                sendToKitchen: kitchen,
+                actorId: widget.user.username,
+              );
+            return DatabaseService.addItemToSubcategory(
+              categoryIndex: categoryIndex,
+              subcategoryIndex: subcategoryIndex,
+              nameEn: nameEn,
+              nameKa: nameKa,
+              price: price,
+              variants: variants,
+              sendToKitchen: kitchen,
+              actorId: widget.user.username,
+            );
+          }
+          if (itemIndex != null)
+            return DatabaseService.updateItemInCategory(
+              categoryIndex: categoryIndex,
+              itemIndex: itemIndex,
+              nameEn: nameEn,
+              nameKa: nameKa,
+              price: price,
+              variants: variants,
+              sendToKitchen: kitchen,
+              actorId: widget.user.username,
+            );
+          return DatabaseService.addItemToCategory(
+            categoryIndex: categoryIndex,
+            nameEn: nameEn,
+            nameKa: nameKa,
+            price: price,
+            variants: variants,
+            sendToKitchen: kitchen,
+            actorId: widget.user.username,
+          );
+        },
+      ),
+    );
+    if (!mounted || saved != true) return;
+    setState(() {});
+    unawaited(
+      showSuccessToast(
+        context,
+        item == null ? 'პროდუქტი დაემატა' : 'პროდუქტი განახლდა',
       ),
     );
   }
+
+  Future<void> _showAddItemDialog(int categoryIndex) =>
+      _showItemForm(categoryIndex: categoryIndex);
 
   Future<void> _showAddItemToSubcategoryDialog(
     int categoryIndex,
     int subcategoryIndex,
-  ) async {
-    final nameEnController = TextEditingController();
-    final nameKaController = TextEditingController();
-    final priceController = TextEditingController();
-    bool hasVariants = false;
-    List<MenuVariantDB> variants = [];
-    final categories = DatabaseService.getAllMenuCategories();
-    final category = categoryIndex < categories.length
-        ? categories[categoryIndex]
-        : null;
-    bool sendToKitchen = category?.sendToKitchen ?? true;
-
-    await showDialog(
-      context: context,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setDialogState) => _menuFormAlertDialog(
-          title: 'ახალი პროდუქტი',
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                _buildDialogTextField(
-                  controller: nameEnController,
-                  label: 'სახელი (ინგლისური)',
-                  dialogSetState: setDialogState,
-                  enableTextKeyboard: true,
-                ),
-                const SizedBox(height: 16),
-                _buildDialogTextField(
-                  controller: nameKaController,
-                  label: 'სახელი (ქართული)',
-                  dialogSetState: setDialogState,
-                  enableTextKeyboard: true,
-                ),
-                const SizedBox(height: 16),
-                SwitchListTile(
-                  contentPadding: EdgeInsets.zero,
-                  title: const PosText(
-                    'პროდუქტი იგზავნება სამზარეულოში',
-                    style: TextStyle(
-                      color: _textPrimary,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  subtitle: PosText(
-                    category == null
-                        ? 'აკონტროლებს სამზარეულოში გაგზავნას'
-                        : 'ნაგულისხმევი: ${category.sendToKitchen ? 'ჩართული' : 'გამორთული'} (ამ კატეგორიის მიხედვით)',
-                    style: const TextStyle(color: _textMuted, fontSize: 12),
-                  ),
-                  activeThumbColor: _secondaryColor,
-                  value: sendToKitchen,
-                  onChanged: (value) {
-                    setDialogState(() {
-                      sendToKitchen = value;
-                    });
-                  },
-                ),
-                const SizedBox(height: 16),
-                SwitchListTile(
-                  contentPadding: EdgeInsets.zero,
-                  title: const PosText(
-                    'აქვს ვარიანტები?',
-                    style: TextStyle(
-                      color: _textPrimary,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  value: hasVariants,
-                  onChanged: (value) {
-                    setDialogState(() {
-                      hasVariants = value;
-                      if (!value) {
-                        variants.clear();
-                      }
-                    });
-                  },
-                  activeThumbColor: _secondaryColor,
-                ),
-                const SizedBox(height: 16),
-                if (!hasVariants)
-                  _buildPriceInput(
-                    controller: priceController,
-                    setState: setDialogState,
-                  )
-                else
-                  Column(
-                    children: [
-                      ...variants.asMap().entries.map((entry) {
-                        final idx = entry.key;
-                        final variant = entry.value;
-                        return ListTile(
-                          contentPadding: EdgeInsets.zero,
-                          title: PosText(
-                            '${variant.size}ml - ₾${variant.price.toStringAsFixed(2)}',
-                            style: const TextStyle(color: _textPrimary),
-                          ),
-                          trailing: IconButton(
-                            icon: const Icon(
-                              Icons.delete,
-                              color: AdminDesign.danger,
-                            ),
-                            onPressed: () {
-                              setDialogState(() {
-                                variants.removeAt(idx);
-                              });
-                            },
-                          ),
-                        );
-                      }),
-                      Align(
-                        alignment: Alignment.centerLeft,
-                        child: TextButton.icon(
-                          onPressed: () =>
-                              _showAddVariantDialog(context, (variant) {
-                                setDialogState(() {
-                                  variants.add(variant);
-                                });
-                              }),
-                          icon: const Icon(Icons.add),
-                          label: const PosText('ვარიანტის დამატება'),
-                          style: TextButton.styleFrom(
-                            foregroundColor: _secondaryColor,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-              ],
-            ),
-          ),
-          actions: [
-            _dialogCancelButton(onPressed: () => Navigator.of(context).pop()),
-            ElevatedButton(
-              onPressed: () async {
-                if (nameEnController.text.isNotEmpty &&
-                    nameKaController.text.isNotEmpty) {
-                  final success = await DatabaseService.addItemToSubcategory(
-                    categoryIndex: categoryIndex,
-                    subcategoryIndex: subcategoryIndex,
-                    nameEn: nameEnController.text,
-                    nameKa: nameKaController.text,
-                    price: hasVariants
-                        ? null
-                        : double.tryParse(priceController.text),
-                    variants: hasVariants && variants.isNotEmpty
-                        ? variants
-                        : null,
-                    sendToKitchen: sendToKitchen,
-                    actorId: widget.user.username,
-                  );
-                  if (!mounted) return;
-                  Navigator.of(context).pop();
-                  if (success) {
-                    setState(() {});
-                    unawaited(showSuccessToast(context, 'პროდუქტი დაემატა'));
-                  }
-                }
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: _secondaryColor,
-                foregroundColor: Colors.white,
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-              child: const PosText('დამატება'),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+  ) => _showItemForm(
+    categoryIndex: categoryIndex,
+    subcategoryIndex: subcategoryIndex,
+  );
 
   Future<void> _showEditSubcategoryItemDialog(
     int categoryIndex,
     int subcategoryIndex,
     int itemIndex,
     MenuItemDB item,
-  ) async {
-    final nameEnController = TextEditingController(
-      text: item.translationsEn['name'],
-    );
-    final nameKaController = TextEditingController(
-      text: item.translationsKa['name'],
-    );
-    final priceController = TextEditingController(
-      text: item.price?.toString() ?? '',
-    );
-    bool hasVariants = item.variants != null && item.variants!.isNotEmpty;
-    List<MenuVariantDB> variants = List.from(item.variants ?? []);
-    bool sendToKitchen = item.sendToKitchen;
-
-    await showDialog(
-      context: context,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setDialogState) => _menuFormAlertDialog(
-          title: 'პროდუქტის რედაქტირება',
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                _buildDialogTextField(
-                  controller: nameEnController,
-                  label: 'სახელი (ინგლისური)',
-                  dialogSetState: setDialogState,
-                  enableTextKeyboard: true,
-                ),
-                const SizedBox(height: 16),
-                _buildDialogTextField(
-                  controller: nameKaController,
-                  label: 'სახელი (ქართული)',
-                  dialogSetState: setDialogState,
-                  enableTextKeyboard: true,
-                ),
-                const SizedBox(height: 16),
-                SwitchListTile(
-                  contentPadding: EdgeInsets.zero,
-                  title: const PosText(
-                    'პროდუქტი იგზავნება სამზარეულოში',
-                    style: TextStyle(
-                      color: _textPrimary,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  subtitle: const PosText(
-                    'გამორთეთ ბარის პროდუქტებისთვის',
-                    style: TextStyle(color: _textMuted, fontSize: 12),
-                  ),
-                  activeThumbColor: _secondaryColor,
-                  value: sendToKitchen,
-                  onChanged: (value) {
-                    setDialogState(() {
-                      sendToKitchen = value;
-                    });
-                  },
-                ),
-                const SizedBox(height: 16),
-                SwitchListTile(
-                  contentPadding: EdgeInsets.zero,
-                  title: const PosText(
-                    'აქვს ვარიანტები?',
-                    style: TextStyle(
-                      color: _textPrimary,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  value: hasVariants,
-                  onChanged: (value) {
-                    setDialogState(() {
-                      hasVariants = value;
-                      if (!value) {
-                        variants.clear();
-                      }
-                    });
-                  },
-                  activeThumbColor: _secondaryColor,
-                ),
-                const SizedBox(height: 16),
-                if (!hasVariants)
-                  _buildPriceInput(
-                    controller: priceController,
-                    setState: setDialogState,
-                  )
-                else
-                  Column(
-                    children: [
-                      ...variants.asMap().entries.map((entry) {
-                        final idx = entry.key;
-                        final variant = entry.value;
-                        return ListTile(
-                          contentPadding: EdgeInsets.zero,
-                          title: PosText(
-                            '${variant.size}ml - ₾${variant.price.toStringAsFixed(2)}',
-                            style: const TextStyle(color: _textPrimary),
-                          ),
-                          trailing: IconButton(
-                            icon: const Icon(
-                              Icons.delete,
-                              color: AdminDesign.danger,
-                            ),
-                            onPressed: () {
-                              setDialogState(() {
-                                variants.removeAt(idx);
-                              });
-                            },
-                          ),
-                        );
-                      }),
-                      Align(
-                        alignment: Alignment.centerLeft,
-                        child: TextButton.icon(
-                          onPressed: () =>
-                              _showAddVariantDialog(context, (variant) {
-                                setDialogState(() {
-                                  variants.add(variant);
-                                });
-                              }),
-                          icon: const Icon(Icons.add),
-                          label: const PosText('ვარიანტის დამატება'),
-                          style: TextButton.styleFrom(
-                            foregroundColor: _secondaryColor,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-              ],
-            ),
-          ),
-          actions: [
-            _dialogCancelButton(onPressed: () => Navigator.of(context).pop()),
-            ElevatedButton(
-              onPressed: () async {
-                if (nameEnController.text.isNotEmpty &&
-                    nameKaController.text.isNotEmpty) {
-                  final success = await DatabaseService.updateItemInSubcategory(
-                    categoryIndex: categoryIndex,
-                    subcategoryIndex: subcategoryIndex,
-                    itemIndex: itemIndex,
-                    nameEn: nameEnController.text,
-                    nameKa: nameKaController.text,
-                    price: hasVariants
-                        ? null
-                        : double.tryParse(priceController.text),
-                    variants: hasVariants && variants.isNotEmpty
-                        ? variants
-                        : null,
-                    sendToKitchen: sendToKitchen,
-                    actorId: widget.user.username,
-                  );
-                  if (!mounted) return;
-                  Navigator.of(context).pop();
-                  if (success) {
-                    setState(() {});
-                    unawaited(showSuccessToast(context, 'პროდუქტი განახლდა'));
-                  }
-                }
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: _secondaryColor,
-                foregroundColor: Colors.white,
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-              child: const PosText('განახლება'),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+  ) => _showItemForm(
+    categoryIndex: categoryIndex,
+    subcategoryIndex: subcategoryIndex,
+    itemIndex: itemIndex,
+    item: item,
+  );
 
   Future<void> _confirmDeleteSubcategoryItem(
     int categoryIndex,
@@ -2828,16 +2302,16 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
     int itemIndex,
     String name,
   ) async {
-    final confirmed = await showDialog<bool>(
+    final confirmed = await showPosModal<bool>(
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: AdminDesign.text,
         title: const PosText(
-          'პროდუქტის წაშლა',
+          'პროდუქტის არქივში გადატანა',
           style: TextStyle(color: Colors.white),
         ),
         content: PosText(
-          'დარწმუნებული ხართ, რომ გსურთ „$name“ წაშლა?',
+          'დარწმუნებული ხართ, რომ გსურთ „$name“ არქივში გადატანა?',
           style: const TextStyle(color: Colors.white70),
         ),
         actions: [
@@ -2850,7 +2324,7 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
             style: ElevatedButton.styleFrom(
               backgroundColor: AdminDesign.danger,
             ),
-            child: const PosText('წაშლა'),
+            child: const PosText('არქივში გადატანა'),
           ),
         ],
       ),
@@ -2875,196 +2349,27 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
     int categoryIndex,
     int itemIndex,
     MenuItemDB item,
-  ) async {
-    final nameEnController = TextEditingController(
-      text: item.translationsEn['name'],
-    );
-    final nameKaController = TextEditingController(
-      text: item.translationsKa['name'],
-    );
-    final priceController = TextEditingController(
-      text: item.price?.toString() ?? '',
-    );
-    bool hasVariants = item.variants != null && item.variants!.isNotEmpty;
-    List<MenuVariantDB> variants = List.from(item.variants ?? []);
-    bool sendToKitchen = item.sendToKitchen;
-
-    await showDialog(
-      context: context,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setDialogState) => _menuFormAlertDialog(
-          title: 'პროდუქტის რედაქტირება',
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                _buildDialogTextField(
-                  controller: nameEnController,
-                  label: 'სახელი (ინგლისური)',
-                  dialogSetState: setDialogState,
-                  enableTextKeyboard: true,
-                ),
-                const SizedBox(height: 16),
-                _buildDialogTextField(
-                  controller: nameKaController,
-                  label: 'სახელი (ქართული)',
-                  dialogSetState: setDialogState,
-                  enableTextKeyboard: true,
-                ),
-                const SizedBox(height: 16),
-                SwitchListTile(
-                  contentPadding: EdgeInsets.zero,
-                  title: const PosText(
-                    'პროდუქტი იგზავნება სამზარეულოში',
-                    style: TextStyle(
-                      color: _textPrimary,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  subtitle: const PosText(
-                    'გამორთეთ ბარის პროდუქტებისთვის',
-                    style: TextStyle(color: _textMuted, fontSize: 12),
-                  ),
-                  activeThumbColor: _secondaryColor,
-                  value: sendToKitchen,
-                  onChanged: (value) {
-                    setDialogState(() {
-                      sendToKitchen = value;
-                    });
-                  },
-                ),
-                const SizedBox(height: 16),
-                SwitchListTile(
-                  contentPadding: EdgeInsets.zero,
-                  title: const PosText(
-                    'აქვს ვარიანტები?',
-                    style: TextStyle(
-                      color: _textPrimary,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  value: hasVariants,
-                  onChanged: (value) {
-                    setDialogState(() {
-                      hasVariants = value;
-                      if (!value) {
-                        variants.clear();
-                      }
-                    });
-                  },
-                  activeThumbColor: _secondaryColor,
-                ),
-                const SizedBox(height: 16),
-                if (!hasVariants)
-                  _buildPriceInput(
-                    controller: priceController,
-                    setState: setDialogState,
-                  )
-                else
-                  Column(
-                    children: [
-                      ...variants.asMap().entries.map((entry) {
-                        final idx = entry.key;
-                        final variant = entry.value;
-                        return ListTile(
-                          contentPadding: EdgeInsets.zero,
-                          title: PosText(
-                            '${variant.size}ml - ₾${variant.price.toStringAsFixed(2)}',
-                            style: const TextStyle(color: _textPrimary),
-                          ),
-                          trailing: IconButton(
-                            icon: const Icon(
-                              Icons.delete,
-                              color: AdminDesign.danger,
-                            ),
-                            onPressed: () {
-                              setDialogState(() {
-                                variants.removeAt(idx);
-                              });
-                            },
-                          ),
-                        );
-                      }),
-                      Align(
-                        alignment: Alignment.centerLeft,
-                        child: TextButton.icon(
-                          onPressed: () =>
-                              _showAddVariantDialog(context, (variant) {
-                                setDialogState(() {
-                                  variants.add(variant);
-                                });
-                              }),
-                          icon: const Icon(Icons.add),
-                          label: const PosText('ვარიანტის დამატება'),
-                          style: TextButton.styleFrom(
-                            foregroundColor: _secondaryColor,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-              ],
-            ),
-          ),
-          actions: [
-            _dialogCancelButton(onPressed: () => Navigator.of(context).pop()),
-            ElevatedButton(
-              onPressed: () async {
-                if (nameEnController.text.isNotEmpty &&
-                    nameKaController.text.isNotEmpty) {
-                  final success = await DatabaseService.updateItemInCategory(
-                    categoryIndex: categoryIndex,
-                    itemIndex: itemIndex,
-                    nameEn: nameEnController.text,
-                    nameKa: nameKaController.text,
-                    price: hasVariants
-                        ? null
-                        : double.tryParse(priceController.text),
-                    variants: hasVariants && variants.isNotEmpty
-                        ? variants
-                        : null,
-                    sendToKitchen: sendToKitchen,
-                    actorId: widget.user.username,
-                  );
-                  if (!mounted) return;
-                  Navigator.of(context).pop();
-                  if (success) {
-                    setState(() {});
-                    unawaited(showSuccessToast(context, 'პროდუქტი განახლდა'));
-                  }
-                }
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: _secondaryColor,
-                foregroundColor: Colors.white,
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-              child: const PosText('განახლება'),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+  ) => _showItemForm(
+    categoryIndex: categoryIndex,
+    itemIndex: itemIndex,
+    item: item,
+  );
 
   Future<void> _confirmDeleteItem(
     int categoryIndex,
     int itemIndex,
     String name,
   ) async {
-    final confirmed = await showDialog<bool>(
+    final confirmed = await showPosModal<bool>(
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: AdminDesign.text,
         title: const PosText(
-          'პროდუქტის წაშლა',
+          'პროდუქტის არქივში გადატანა',
           style: TextStyle(color: Colors.white),
         ),
         content: PosText(
-          'დარწმუნებული ხართ, რომ გსურთ „$name“ წაშლა?',
+          'დარწმუნებული ხართ, რომ გსურთ „$name“ არქივში გადატანა?',
           style: const TextStyle(color: Colors.white70),
         ),
         actions: [
@@ -3077,7 +2382,7 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
             style: ElevatedButton.styleFrom(
               backgroundColor: AdminDesign.danger,
             ),
-            child: const PosText('წაშლა'),
+            child: const PosText('არქივში გადატანა'),
           ),
         ],
       ),
@@ -3104,7 +2409,7 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
     final sizeController = TextEditingController();
     final priceController = TextEditingController();
 
-    showDialog(
+    showPosModal(
       context: parentContext,
       builder: (context) => _menuFormAlertDialog(
         title: 'ვარიანტის დამატება',
@@ -3215,52 +2520,10 @@ class _MenuKpiCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      height: 78,
-      padding: EdgeInsets.symmetric(
-        horizontal: compact ? 10 : 16,
-        vertical: 12,
-      ),
-      decoration: AdminDesign.panelDecoration(),
-      child: Row(
-        children: [
-          Container(
-            width: compact ? 40 : 48,
-            height: compact ? 40 : 48,
-            decoration: BoxDecoration(
-              color: data.color.withValues(alpha: 0.12),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(data.icon, color: data.color, size: compact ? 21 : 25),
-          ),
-          SizedBox(width: compact ? 8 : 12),
-          Expanded(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                PosText(
-                  data.label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: AdminDesign.muted,
-                    fontSize: compact ? 10 : 11,
-                  ),
-                ),
-                PosText(
-                  '${data.value}',
-                  style: const TextStyle(
-                    color: AdminDesign.text,
-                    fontSize: 22,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
+    return PosMetricCard(
+      label: data.label,
+      value: '${data.value}',
+      framed: false,
     );
   }
 }

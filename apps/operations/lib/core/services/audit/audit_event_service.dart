@@ -1,3 +1,4 @@
+import 'package:vynic/core/database/local_data_admission.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
@@ -10,18 +11,43 @@ class AuditEventService {
   static bool _isSyncing = false;
   static Timer? _syncTimer;
 
+  /// A journal owns this immutable event identity. A crash after append but
+  /// before its phase receipt must retain the same row (including sync ACK).
+  /// Unlike the ordinary best-effort logger, storage failure is propagated.
+  static Future<void> appendDurableOnce(AuditEventLog event) async {
+    final box = DatabaseService.getAuditLogBox();
+    final existing = box.get(event.id);
+    if (existing != null) {
+      final recorded = AuditEventLog.fromMap(
+        Map<String, dynamic>.from(existing),
+      );
+      if (recorded.action != event.action ||
+          recorded.userId != event.userId ||
+          recorded.entityType != event.entityType ||
+          recorded.entityId != event.entityId ||
+          recorded.createdAt != event.createdAt ||
+          recorded.deviceType != event.deviceType ||
+          jsonEncode(recorded.data) != jsonEncode(event.data)) {
+        throw StateError('Conflicting durable audit identity ${event.id}');
+      }
+    } else {
+      await box.put(event.id, event.toMap());
+    }
+    await box.flush();
+  }
+
   /// Initialize the background sync service.
   static void initialize() {
     if (_syncTimer != null) return;
 
     // Periodic sync attempt every 2 minutes
     _syncTimer = Timer.periodic(const Duration(minutes: 2), (_) {
-      unawaited(syncEvents());
+      LocalDataAdmission.afterMutation(() => unawaited(syncEvents()));
     });
 
     // Initial sync after startup
     Timer(const Duration(seconds: 10), () {
-      unawaited(syncEvents());
+      LocalDataAdmission.afterMutation(() => unawaited(syncEvents()));
     });
   }
 
@@ -43,6 +69,7 @@ class AuditEventService {
     String? entityType,
     String? entityId,
     Map<String, dynamic> data = const {},
+    bool requireDurability = false,
   }) async {
     final event = AuditEventLog(
       action: action,
@@ -60,10 +87,12 @@ class AuditEventService {
     try {
       final box = DatabaseService.getAuditLogBox();
       await box.put(event.id, event.toMap());
+      if (requireDurability) await box.flush();
 
       // Proactive debounced sync
-      unawaited(syncEvents());
+      LocalDataAdmission.afterMutation(() => unawaited(syncEvents()));
     } catch (e) {
+      if (requireDurability) rethrow;
       debugPrint(
         '[AuditEventService] CRITICAL: Failed to write audit event: $e',
       );

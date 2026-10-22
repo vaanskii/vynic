@@ -1,0 +1,13 @@
+{
+  "printstation.test.exe": "7513ba48ea11e95d87d4e32f51eb1fc100fcca7ca2b27b44c32911f4570fcbdd",
+  "printcluster.test.exe": "caf3dbed9471eb0976d4cc91a5e681828fe55f1c016867457dc2b51d0d5eb1f4",
+  "run-windows.ps1": "10c512b5754f010a7ec30b68944f0c9a76edcd0c65e202d862de40d0c82bf8c4",
+  "testdata/local_tcp.config.json": "5fb77a085478e13e841b4a9e504973fad13b54cb13260f809f2265f561fa6104",
+  "testdata/shared_usb.job.json": "31e2179da2e87ea1b13376dc7dcd41cbe23ff4dd1e6e377fa43c7ea3dca15f97",
+  "testdata/shared_tcp.job.json": "dfc155cc16c5f6b18c6ff80bff90c1994ae27040fb69d7afa1deaf4124bb1120",
+  "testdata/unknown_beep.config.json": "2f02b5d6b6fb0dda028d819e0fccc42957d51996e4d3c3673dff207d558230c7",
+  "testdata/local_tcp.job.json": "4b2a9926ba64c7a2e3123993fe1586a9adbdfd44323e4ef1a1a7c6775cb1382f",
+  "testdata/shared_tcp.config.json": "631484beb05a8d5e53b0049bda893813c2ce247c15de5c1d82ccc4620d0b89f1",
+  "testdata/unknown_beep.job.json": "beca2a55a0554f39fa8e5fef7b04ce3c90398778ac43471874229cb2c87c5120",
+  "testdata/shared_usb.config.json": "1c8e94daf8dbd24a2c13e7c8c8e1ebf660f3d6f3e5989bd43f7f33d8adcf2e2b"
+}

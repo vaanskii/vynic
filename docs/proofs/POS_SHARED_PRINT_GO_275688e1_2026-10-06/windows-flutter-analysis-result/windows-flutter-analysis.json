@@ -1,0 +1,19 @@
+﻿{
+    "status":  "PASS",
+    "failure":  null,
+    "sourceFiles":  898,
+    "sourceUnchanged":  true,
+    "analysisFiles":  59,
+    "analysisExitCode":  0,
+    "nativeDart":  "C:\\Users\\vaanskii\\develop\\flutter\\bin\\cache\\dart-sdk\\bin\\dart.exe",
+    "fixtureSHA256":  "f61d5b985d10356701bc4eb9974dd5762c9d31cdb7a6c6a65012bdda8fc4e231",
+    "previousAttempt":  "windows-flutter-result/windows-flutter-tests.json",
+    "previousTestExitCode":  0,
+    "productStarted":  false,
+    "installed":  false,
+    "serviceOperations":  false,
+    "driverOperations":  false,
+    "printJobsBefore":  0,
+    "printJobsAfter":  0,
+    "physicalJobs":  0
+}

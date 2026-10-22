@@ -10,6 +10,7 @@ import { FeatureKeys } from '../entitlements/feature-keys';
 import { FeatureGuard } from '../entitlements/feature.guard';
 import { VenueEntitlementsService } from '../entitlements/venue-entitlements.service';
 import { MenuService } from '../website/menu/menu.service';
+import { priceBookingCart } from '../website/payment/booking-pricing';
 import { PosReservationMirrorService } from '../pos/pos-reservation-mirror.service';
 import { ReservationService } from '../website/reservation/reservation.service';
 import { WebsitePosReservationBridgeService } from '../website/reservation/website-pos-reservation-bridge.service';
@@ -74,7 +75,20 @@ describeDatabase('Public website tenant isolation (PostgreSQL)', () => {
       prisma,
       // Payment is a separate concern; an order that returns nothing leaves the
       // booking PENDING, exactly as an unpaid booking is today.
-      { createOrder: () => Promise.resolve(null) } as never,
+      {
+        validateAndCalculateOrder: (
+          tenant: TenantContext,
+          data: { menuItems?: unknown },
+        ) => priceBookingCart(menu, tenant, data.menuItems),
+        preparePayment: () => Promise.resolve(null),
+        createOrder: () =>
+          Promise.resolve({
+            id: 'synthetic-tenant-bank-order',
+            _links: {
+              redirect: { href: 'https://bank.test.invalid/synthetic' },
+            },
+          }),
+      } as never,
       bridge,
     );
     users = new UserService(prisma);
@@ -84,6 +98,7 @@ describeDatabase('Public website tenant isolation (PostgreSQL)', () => {
       name,
       timezone: 'Asia/Tbilisi',
       currency: 'GEL',
+      subscription: { create: { status: 'ACTIVE' as const } },
     });
     await prisma.organization.create({
       data: {
@@ -168,6 +183,9 @@ describeDatabase('Public website tenant isolation (PostgreSQL)', () => {
   });
 
   afterAll(async () => {
+    await prisma.websiteReservationDayHold.deleteMany({
+      where: { venueId: { in: venueIds } },
+    });
     await prisma.websiteReservation.deleteMany({
       where: { venueId: { in: venueIds } },
     });

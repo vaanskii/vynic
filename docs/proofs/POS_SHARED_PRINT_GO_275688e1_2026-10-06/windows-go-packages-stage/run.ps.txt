@@ -1,0 +1,107 @@
+$ProgressPreference = 'SilentlyContinue'
+$ErrorActionPreference = 'Stop'
+Set-StrictMode -Version Latest
+$stage = '\\Mac\Home\Developer\vynic\docs\proofs\POS_SHARED_PRINT_GO_275688e1_2026-10-06\windows-go-packages-stage'
+$resultShare = '\\Mac\Home\Developer\vynic\docs\proofs\POS_SHARED_PRINT_GO_275688e1_2026-10-06\windows-go-packages-result'
+$base = Join-Path $env:LOCALAPPDATA 'VynicReadinessGoPackages\frozen-v2-dc50e6bc33bb'
+if ((Test-Path -LiteralPath $base) -or (Test-Path -LiteralPath $resultShare)) { throw 'Fresh qualification directory is occupied' }
+New-Item -ItemType Directory -Path $base | Out-Null
+$output = Join-Path $base 'output'
+New-Item -ItemType Directory -Path $output | Out-Null
+$source = Join-Path $base 'source'
+$binaryRoot = Join-Path $base 'binaries'
+$packages = [ordered]@{}
+$status = 'FAILED'
+$failure = $null
+$sourceBefore = $false
+$sourceAfter = $false
+$binaryBefore = $false
+$binaryAfter = $false
+$jobsBefore = $null
+$jobsAfter = $null
+$startUtc = [DateTime]::UtcNow.ToString('o')
+function Verify-Source([string]$root, $manifest) {
+  $entries = @($manifest.files.PSObject.Properties)
+  if ($entries.Count -ne 163 -or $manifest.count -ne 163) { throw 'Exact 163-file manifest required' }
+  $disk = @(Get-ChildItem -LiteralPath $root -Recurse -File -Force)
+  if ($disk.Count -ne 163) { throw 'Extracted source count differs from exact frozen snapshot' }
+  foreach ($entry in $entries) {
+    $p = Join-Path $root ($entry.Name.Replace('/', '\'))
+    $item = Get-Item -LiteralPath $p -Force
+    if (($item.Attributes -band [IO.FileAttributes]::ReparsePoint) -ne 0 -or $item.Length -ne $entry.Value.bytes -or (Get-FileHash -LiteralPath $p -Algorithm SHA256).Hash.ToLowerInvariant() -ne $entry.Value.sha256) { throw ('Source mismatch: ' + $entry.Name) }
+  }
+}
+function Verify-Binaries([string]$root, $manifest) {
+  $entries = @($manifest.files.PSObject.Properties)
+  if ($entries.Count -ne 7 -or $manifest.count -ne 7 -or @(Get-ChildItem -LiteralPath $root -File).Count -ne 7) { throw 'Exact seven binary manifest required' }
+  foreach ($entry in $entries) {
+    $p = Join-Path $root $entry.Name
+    if ((Get-Item -LiteralPath $p).Length -ne $entry.Value.bytes -or (Get-FileHash -LiteralPath $p -Algorithm SHA256).Hash.ToLowerInvariant() -ne $entry.Value.sha256) { throw ('Executable mismatch: ' + $entry.Name) }
+  }
+  if ((Get-FileHash -LiteralPath (Join-Path $base 'vynic_print_helper.exe') -Algorithm SHA256).Hash.ToLowerInvariant() -ne 'b720e1eedc77ab574d769865e39f71506a5f3ebc9d93ab5166bc3f112203019d') { throw 'Native helper pin mismatch' }
+}
+try {
+  $receipt = Get-Content -Raw (Join-Path $stage 'stage-receipt.json') | ConvertFrom-Json
+  foreach ($entry in $receipt.artifacts.PSObject.Properties) {
+    $p = Join-Path $stage $entry.Name
+    if ((Get-FileHash -LiteralPath $p -Algorithm SHA256).Hash.ToLowerInvariant() -ne $entry.Value.sha256 -or (Get-Item -LiteralPath $p).Length -ne $entry.Value.bytes) { throw ('Staged artifact mismatch: ' + $entry.Name) }
+    Copy-Item -LiteralPath $p -Destination (Join-Path $base $entry.Name)
+  }
+  Expand-Archive -LiteralPath (Join-Path $base 'source163.zip') -DestinationPath $source
+  Expand-Archive -LiteralPath (Join-Path $base 'packages7.zip') -DestinationPath $binaryRoot
+  $sourceManifest = Get-Content -Raw (Join-Path $base 'source-manifest.json') | ConvertFrom-Json
+  $binaryManifest = Get-Content -Raw (Join-Path $base 'binary-manifest.json') | ConvertFrom-Json
+  Verify-Source $source $sourceManifest
+  $sourceBefore = $true
+  Verify-Binaries $binaryRoot $binaryManifest
+  $binaryBefore = $true
+  Get-ChildItem -LiteralPath $source -Recurse -File -Force | ForEach-Object { $_.IsReadOnly = $true }
+  $env:VYNIC_PRINT_HELPER_TEST_PATH = Join-Path $base 'vynic_print_helper.exe'
+  $env:VYNIC_PRINT_HELPER_TEST_SHA256 = 'b720e1eedc77ab574d769865e39f71506a5f3ebc9d93ab5166bc3f112203019d'
+  $env:GOPROXY = 'off'
+  $env:GOTOOLCHAIN = 'local'
+  $env:HTTP_PROXY = 'http://127.0.0.1:9'
+  $env:HTTPS_PROXY = 'http://127.0.0.1:9'
+  $env:NO_PROXY = 'localhost,127.0.0.1,::1'
+  $jobsBefore = @(Get-CimInstance -ClassName Win32_PrintJob).Count
+  if ($jobsBefore -ne 0) { throw 'Existing spooler jobs prevent zero-job qualification' }
+  foreach ($name in @('store','server','printqueue','printhost','printcluster','printeligibility','printtransport')) {
+    $cwd = Join-Path $source ('apps\edge\internal\' + $name)
+    $exe = Join-Path $binaryRoot ($name + '.test.exe')
+    $stdout = Join-Path $output ($name + '.stdout.log')
+    $stderr = Join-Path $output ($name + '.stderr.log')
+    $timeout = if ($name -eq 'printcluster') { '10m' } else { '5m' }
+    $watch = [Diagnostics.Stopwatch]::StartNew()
+    Write-Output ('START ' + $name + ' ' + [DateTime]::UtcNow.ToString('o'))
+    try {
+      $p = Start-Process -FilePath $exe -ArgumentList @('-test.v',('-test.timeout=' + $timeout)) -WorkingDirectory $cwd -NoNewWindow -RedirectStandardOutput $stdout -RedirectStandardError $stderr -Wait -PassThru
+      $watch.Stop()
+      $packages[$name] = [ordered]@{ status=$(if ($p.ExitCode -eq 0) { 'PASS' } else { 'FAILED' }); exitCode=$p.ExitCode; elapsedMs=$watch.ElapsedMilliseconds; workingDirectory=$cwd; binarySHA256=(Get-FileHash -LiteralPath $exe -Algorithm SHA256).Hash.ToLowerInvariant(); arguments=@('-test.v',('-test.timeout=' + $timeout)); stdoutSHA256=(Get-FileHash -LiteralPath $stdout -Algorithm SHA256).Hash.ToLowerInvariant(); stderrSHA256=(Get-FileHash -LiteralPath $stderr -Algorithm SHA256).Hash.ToLowerInvariant() }
+      Write-Output ('END ' + $name + ' exit=' + $p.ExitCode + ' elapsedMs=' + $watch.ElapsedMilliseconds)
+    } catch {
+      $watch.Stop()
+      $packages[$name] = [ordered]@{ status='FAILED'; exitCode=$null; elapsedMs=$watch.ElapsedMilliseconds; workingDirectory=$cwd; failure=$_.ToString() }
+      Write-Output ('ERROR ' + $name + ' ' + $_.ToString())
+    }
+    if (@(Get-CimInstance -ClassName Win32_PrintJob).Count -ne 0) { throw 'Unexpected spooler jobs during nonphysical qualification' }
+  }
+  Verify-Source $source $sourceManifest
+  $sourceAfter = $true
+  Verify-Binaries $binaryRoot $binaryManifest
+  $binaryAfter = $true
+  $failed = @($packages.Values | Where-Object { $_.status -ne 'PASS' })
+  if ($packages.Count -ne 7 -or $failed.Count -ne 0) { throw 'One or more native package tests failed; see retained logs' }
+  $status = 'PASS'
+} catch {
+  $failure = $_.ToString()
+} finally {
+  try { $jobsAfter = @(Get-CimInstance -ClassName Win32_PrintJob).Count } catch { $failure = 'Unable to verify final spooler job count: ' + $_.ToString(); $status = 'FAILED' }
+  if ($jobsAfter -ne 0) { $status = 'FAILED'; $failure = 'Final spooler jobs were not zero: ' + $failure }
+  New-Item -ItemType Directory -Path $resultShare | Out-Null
+  Get-ChildItem -LiteralPath $output -File | Copy-Item -Destination $resultShare
+  $result = [ordered]@{ schema=1; status=$status; failure=$failure; startedUtc=$startUtc; completedUtc=[DateTime]::UtcNow.ToString('o'); guestBase=$base; guestArchitecture=$env:PROCESSOR_ARCHITECTURE; nativeWindows=$true; binaryArchitecture='amd64'; sourceReceiptSHA256='d694adbe1410f005d6285396f81a7126cdc7b9fb9f44b08a01f7f3c5e523330a'; compilerReceiptSHA256='57441bd7550ab4e0056ce34b36579ca56222ee5e58588bce9a7552963c79a404'; sourceFiles=163; packages=$packages; sourceBefore=$sourceBefore; sourceAfter=$sourceAfter; binaryBefore=$binaryBefore; binaryAfter=$binaryAfter; printJobsBefore=$jobsBefore; printJobsAfter=$jobsAfter; documentsSubmitted=0; validRAWCalls=0; serviceRegistrations=0; driverInstalls=0; productStarts=0; machineRestarts=0; VMSettingsChanges=0; persistentCredentialChanges=0; limitations=@('Frozen V2 163-file cohort only; future service/installer/RPC/UI source excluded.','Loopback synthetic transports and temporary test certificates/SQLite only.','Windows os.Process.Kill means TerminateProcess, not literal Unix SIGKILL.','Non-Windows queue SIGKILL/competing-process tests are excluded by build tags.','SCM registration, service installation, actual service restart, OS reboot/power loss and physical printer acceptance not run.','ACCEPTED or SUBMITTED never claims paper DELIVERED.') }
+  $json = $result | ConvertTo-Json -Depth 10
+  $json | Set-Content -Encoding UTF8 (Join-Path $resultShare 'windows-go-packages.json')
+  Write-Output $json
+}
+if ($status -ne 'PASS') { throw $failure }

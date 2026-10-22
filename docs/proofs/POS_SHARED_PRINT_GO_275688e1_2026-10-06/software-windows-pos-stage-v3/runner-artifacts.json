@@ -1,0 +1,46 @@
+{
+  "schema": 1,
+  "createdAtUtc": "2026-10-06T18:01:50.974899+00:00",
+  "sourceReceiptSHA256": "faaaec2f1ece4f8259353666000eb4c0d3aee6143e73ae7fdf90772a937b581b",
+  "executionStatus": "STAGED_NOT_EXECUTED",
+  "VMExecuted": false,
+  "changes": "Fresh frozen v2 application/test source; URI fixture-only2file delta. Runner uses fresh v3 paths/job and process-local UTF-8 output only. No OS encoding settings or other source edits.",
+  "assets": {
+    "analysis-selection.json": {
+      "sha256": "c194b204f6a956d79081acdaec508e2a217104c8a0dafd974b79637ad300490b",
+      "bytes": 3823
+    },
+    "build.ps.txt": {
+      "sha256": "b1261cebc6b55c17cee2c16f8d4bcd70af05c2d632188b1d0e0e0cc75df72120",
+      "bytes": 7133
+    },
+    "operational-proof-server-windows.test.exe": {
+      "sha256": "2c9370e4c4cfdb55094f63a26a2bf5b45bff43868a1a2c14a0f47c2654c70abb",
+      "bytes": 26370560
+    },
+    "printer-agent-server-windows.test.exe": {
+      "sha256": "f335745e38be573f5ec031478eab4b524a8069c811324ac2a5d39876b676e894",
+      "bytes": 25833472
+    },
+    "product-preparation.json": {
+      "sha256": "618794b28299e53b9a2c6910f9cfb262ec9fd1244f2901e03f1879c9b0754c9b",
+      "bytes": 2829
+    },
+    "source-manifest.json": {
+      "sha256": "5c109431d067276a007a9b50d26076117e6624c937051316db62c6bd30d592f3",
+      "bytes": 193018
+    },
+    "source.zip": {
+      "sha256": "c34f868986cb6015d43639a2cb20276660801ea8e16282eb5ce37060e5f96463",
+      "bytes": 5776304
+    },
+    "stage-receipt.json": {
+      "sha256": "781e3b50d6f5850af9bfc63e530dbc28937d80a5996bf2ff37b08e1fc0935f09",
+      "bytes": 1402
+    },
+    "test-selection.json": {
+      "sha256": "7bd71e5071e5da65b5d0d6316bf5548d4a55cfcb48aaf68464fa851b076540b0",
+      "bytes": 1917
+    }
+  }
+}

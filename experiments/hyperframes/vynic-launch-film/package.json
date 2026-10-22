@@ -1,0 +1,16 @@
+{
+  "name": "vynic-launch-film",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "npx --yes hyperframes@0.8.96 preview",
+    "check": "npx --yes hyperframes@0.8.96 check",
+    "tts": "node audio/tts.mjs",
+    "voice:review": "node audio/voice-review.mjs",
+    "audio": "node audio/music.mjs && node audio/sfx.mjs",
+    "render:master": "npx --yes hyperframes@0.8.96 render --docker --quality delivery --crf 12 --resolution landscape-4k --fps 30 --output renders/vynic-launch-master_2160p30.mp4",
+    "deliver": "tools/deliver.sh",
+    "render": "npm run render:master && npm run deliver",
+    "publish": "npx --yes hyperframes@0.8.96 publish"
+  }
+}

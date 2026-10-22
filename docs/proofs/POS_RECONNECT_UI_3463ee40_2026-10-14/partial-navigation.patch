@@ -1,0 +1,112 @@
+--- a/apps/operations/lib/apps/windows_pos/screens/pos_first_run.dart
++++ b/apps/operations/lib/apps/windows_pos/screens/pos_first_run.dart
+@@ -1,6 +1,7 @@
+ import 'package:flutter/material.dart';
+ import 'dart:io' show Platform;
+ import 'package:flutter/foundation.dart';
++import 'package:http/http.dart' as http;
+ import 'package:vynic/apps/windows_pos/widgets/update/pos_update_ui.dart';
+ import 'package:vynic/core/services/edge/pos_enrollment_service.dart';
+ import 'package:vynic/core/services/sync/api_config.dart';
+@@ -9,7 +10,9 @@
+ import 'pos_manager_registration_screen.dart';
+ 
+ class PosFirstRun extends StatefulWidget {
+-  const PosFirstRun({super.key});
++  const PosFirstRun({super.key, this.service, this.activationClient});
++  final PosEnrollmentService? service;
++  final http.Client? activationClient;
+   @override
+   State<PosFirstRun> createState() => _PosFirstRunState();
+ }
+@@ -17,8 +20,9 @@
+ class _PosFirstRunState extends State<PosFirstRun> {
+   final _code = TextEditingController();
+   final _address = TextEditingController(text: ApiConfig.baseUrl);
+-  final _service = PosEnrollmentService();
++  late final _service = widget.service ?? PosEnrollmentService();
+   bool _busy = false;
++  bool _reconnecting = false;
+   String? _error;
+   @override
+   void dispose() {
+@@ -32,7 +36,7 @@
+   Widget build(BuildContext context) {
+     // Existing configured restaurants retain local access even before fleet enrollment.
+     if (DatabaseService.isSetupComplete()) return const LoginScreen();
+-    if (!PosEnrollmentService.needsEnrollment) {
++    if (!PosEnrollmentService.needsEnrollment && !_reconnecting) {
+       return StreamBuilder<dynamic>(
+         stream: DatabaseService.userBox?.watch(),
+         builder: (context, snapshot) {
+@@ -59,11 +63,20 @@
+                       FilledButton(
+                         onPressed: () => Navigator.of(context).push(
+                           MaterialPageRoute<void>(
+-                            builder: (_) =>
+-                                const PosManagerRegistrationScreen(),
++                            builder: (_) => PosManagerRegistrationScreen(
++                              client: widget.activationClient,
++                            ),
+                           ),
+                         ),
+                         child: const Text('პირველი აქტივაცია'),
++                      ),
++                      const SizedBox(height: 12),
++                      OutlinedButton(
++                        onPressed: () => setState(() {
++                          _reconnecting = true;
++                          _error = null;
++                        }),
++                        child: const Text('POS-ის ხელახლა დაკავშირება'),
+                       ),
+                     ],
+                   ),
+@@ -94,6 +107,14 @@
+                   const Text(
+                     'შეიყვანეთ თქვენი რესტორნის გვერდზე მიღებული მოწყობილობის კოდი.',
+                   ),
++                  if (_reconnecting) ...[
++                    const SizedBox(height: 12),
++                    const Text(
++                      'ხელახალი დაკავშირება ცვლის ამ POS-ის წვდომას. '
++                      'გამოიყენეთ მოწყობილობის enrollment კოდი, '
++                      'და არა მენეჯერის აქტივაციის კოდი.',
++                    ),
++                  ],
+                   const SizedBox(height: 24),
+                   if (ApiConfig.allowDeveloperOverride)
+                     TextField(
+@@ -147,13 +168,31 @@
+                                   ? null
+                                   : result.message ??
+                                         'დაკავშირება ვერ მოხერხდა';
+-                              if (result.isConnected) _code.clear();
++                              if (result.isConnected) {
++                                _code.clear();
++                                _reconnecting = false;
++                              }
+                             });
+                           },
+                     child: Text(
+                       _busy ? 'უკავშირდება…' : 'მოწყობილობის დაკავშირება',
+                     ),
+                   ),
++                  if (_reconnecting) ...[
++                    const SizedBox(height: 12),
++                    OutlinedButton(
++                      onPressed: _busy
++                          ? null
++                          : () {
++                              _code.clear();
++                              setState(() {
++                                _reconnecting = false;
++                                _error = null;
++                              });
++                            },
++                      child: const Text('გაუქმება'),
++                    ),
++                  ],
+                 ],
+               ),
+             ),

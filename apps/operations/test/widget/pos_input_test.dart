@@ -65,7 +65,16 @@ void main() {
           ),
         ),
       );
-      expect(tester.widget<TextField>(find.byType(TextField)).readOnly, isTrue);
+      // The touch dock suppresses a platform keyboard, while hardware typing
+      // and the real field's blinking caret remain available.
+      expect(
+        tester.widget<TextField>(find.byType(TextField)).readOnly,
+        isFalse,
+      );
+      expect(
+        tester.widget<TextField>(find.byType(TextField)).keyboardType,
+        TextInputType.none,
+      );
       await tester.runAsync(() async {
         await tester.tap(find.byType(Switch));
         for (var i = 0; i < 100 && PosInputSettings.enabled.value; i++) {

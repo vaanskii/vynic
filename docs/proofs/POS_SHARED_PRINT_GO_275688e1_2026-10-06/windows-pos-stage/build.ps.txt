@@ -1,0 +1,85 @@
+$ErrorActionPreference='Stop'; $ProgressPreference='SilentlyContinue'
+Set-StrictMode -Version Latest
+$shared='\\Mac\Home\Developer\vynic\docs\proofs\POS_SHARED_PRINT_GO_275688e1_2026-10-06\windows-pos-stage'
+$results='\\Mac\Home\Developer\vynic\docs\proofs\POS_SHARED_PRINT_GO_275688e1_2026-10-06\windows-pos-result'
+$job=Join-Path $env:LOCALAPPDATA 'VynicReadinessNative\final535-20261006'
+if ((Test-Path -LiteralPath $job) -or (Test-Path -LiteralPath $results)) { throw 'Fresh POS build paths occupied' }
+New-Item -ItemType Directory -Path $job | Out-Null
+New-Item -ItemType Directory -Path $results | Out-Null
+$stage=Get-Content -Raw (Join-Path $shared 'stage-receipt.json') | ConvertFrom-Json
+$sourceArchive=Join-Path $shared 'source.zip'
+if ((Get-FileHash -LiteralPath $sourceArchive -Algorithm SHA256).Hash.ToLowerInvariant() -ne $stage.sourceZipSHA256) { throw 'POS source archive mismatch' }
+Copy-Item -LiteralPath $sourceArchive -Destination (Join-Path $job 'source.zip')
+Expand-Archive -LiteralPath (Join-Path $job 'source.zip') -DestinationPath $job
+$manifest=Get-Content -Raw (Join-Path $shared 'source-manifest.json') | ConvertFrom-Json
+function Assert-Source {
+  foreach($entry in $manifest.PSObject.Properties) {
+    $p=Join-Path $job $entry.Name
+    if ((Get-FileHash -LiteralPath $p -Algorithm SHA256).Hash.ToLowerInvariant() -ne $entry.Value.sha256 -or (Get-Item -LiteralPath $p).Length -ne $entry.Value.bytes) { throw ('Source mismatch: '+$entry.Name) }
+  }
+}
+function Hash-CachedFirebase {
+  $map=@{}
+  foreach($f in Get-ChildItem -LiteralPath $stage.firebaseSdk -Recurse -File) {
+    if ($f.Attributes -band [IO.FileAttributes]::ReparsePoint) { throw 'Cached SDK reparse file refused' }
+    $relative=$f.FullName.Substring($stage.firebaseSdk.Length+1).Replace([char]92,[char]47)
+    $map[$relative]=(Get-FileHash -LiteralPath $f.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
+  }
+  return $map
+}
+function Run-Checked([string]$label,[string]$program,[string[]]$arguments) {
+  $log=Join-Path $results ($label+'.log')
+  & $program @arguments *> $log
+  if ($LASTEXITCODE -ne 0) { throw ($label+' failed: '+$LASTEXITCODE) }
+}
+$status='FAILED';$failure=$null;$binaryHashes=@{};$archiveHash=$null
+$jobsBefore=@(Get-CimInstance -ClassName Win32_PrintJob)
+try {
+  Assert-Source
+  $firebaseHeader=Join-Path $stage.firebaseSdk 'include\firebase\version.h'
+  if ((Get-FileHash -LiteralPath $firebaseHeader -Algorithm SHA256).Hash.ToLowerInvariant() -ne $stage.firebaseVersionHeaderSha256) { throw 'Cached Firebase version pin mismatch' }
+  $sdkBefore=Hash-CachedFirebase
+  $sdkBefore | ConvertTo-Json -Depth 4 | Set-Content -Encoding UTF8 (Join-Path $results 'firebase-sdk-sha256-before.json')
+  $flutter=Join-Path $env:USERPROFILE 'develop\flutter\bin\flutter.bat'
+  $env:FLUTTER_SUPPRESS_ANALYTICS='true';$env:DART_SUPPRESS_ANALYTICS='true';$env:CI='true'
+  $env:HTTP_PROXY='http://127.0.0.1:9';$env:HTTPS_PROXY='http://127.0.0.1:9';$env:NO_PROXY='127.0.0.1,localhost,::1'
+  $env:FIREBASE_CPP_SDK_DIR=$stage.firebaseSdk
+  $op=Join-Path $job 'apps\operations';Set-Location -LiteralPath $op
+  Run-Checked 'offline-pub-get' $flutter @('pub','get','--offline','--enforce-lockfile')
+  Assert-Source
+  Run-Checked 'windows-pos-build' $flutter @('build','windows','--release','--no-pub','--target=lib/main_pos.dart','--dart-define=VYNIC_ENV=development','--dart-define=VYNIC_LOCAL_WINDOWS_LAB=true','--dart-define=VYNIC_API_URL=http://127.0.0.1:9')
+  Assert-Source
+  $sdkAfter=Hash-CachedFirebase
+  if ($sdkBefore.Count -ne $sdkAfter.Count) { throw 'Cached Firebase SDK file count changed' }
+  foreach($name in $sdkBefore.Keys) { if($sdkAfter[$name] -ne $sdkBefore[$name]) { throw 'Cached Firebase SDK changed' } }
+  $sdkAfter | ConvertTo-Json -Depth 4 | Set-Content -Encoding UTF8 (Join-Path $results 'firebase-sdk-sha256-after.json')
+  $release=Join-Path $op 'build\windows\x64\runner\Release'
+  $exe=Join-Path $release 'vynic_pos.exe'
+  if (@(Get-ChildItem -LiteralPath $release -Recurse -Force -Filter '.env*').Count -ne 0) { throw 'Forbidden environment asset' }
+  $raw=[IO.File]::ReadAllBytes($exe);$offset=[BitConverter]::ToInt32($raw,60)
+  if ([Text.Encoding]::ASCII.GetString($raw,$offset,4) -ne "PE`0`0" -or [BitConverter]::ToUInt16($raw,$offset+4) -ne 0x8664) { throw 'Wrong POS PE target' }
+  foreach($f in Get-ChildItem -LiteralPath $release -Recurse -File) {
+    if ($f.Attributes -band [IO.FileAttributes]::ReparsePoint) { throw 'Artifact reparse point refused' }
+    $relative=$f.FullName.Substring($release.Length+1).Replace([char]92,[char]47)
+    $binaryHashes[$relative]=(Get-FileHash -LiteralPath $f.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
+  }
+  Add-Type -AssemblyName System.IO.Compression.FileSystem
+  $zipPath=Join-Path $job 'native-pos-build.zip'
+  $zip=[IO.Compression.ZipFile]::Open($zipPath,[IO.Compression.ZipArchiveMode]::Create)
+  try {
+    foreach($relative in ($binaryHashes.Keys | Sort-Object)) {
+      $entry=$zip.CreateEntry($relative,[IO.Compression.CompressionLevel]::Optimal)
+      $input=[IO.File]::OpenRead((Join-Path $release $relative));$output=$entry.Open()
+      try { $input.CopyTo($output) } finally { $input.Dispose();$output.Dispose() }
+    }
+  } finally { $zip.Dispose() }
+  $archiveHash=(Get-FileHash -LiteralPath $zipPath -Algorithm SHA256).Hash.ToLowerInvariant()
+  Copy-Item -LiteralPath $zipPath -Destination $results
+  $binaryHashes | ConvertTo-Json -Depth 5 | Set-Content -Encoding UTF8 (Join-Path $results 'built-artifact-sha256.json')
+  $status='PASS'
+} catch { $failure=$_.ToString() } finally {
+  $jobsAfter=@(Get-CimInstance -ClassName Win32_PrintJob)
+  [ordered]@{status=$status;failure=$failure;job=$job;sourceFiles=@($manifest.PSObject.Properties).Count;sourceZipSHA256=$stage.sourceZipSHA256;sourceUnchanged=($status -eq 'PASS');firebaseSdk=$stage.firebaseSdk;firebaseVersion=$stage.firebaseVersion;target='windows-amd64';guestArchitecture=$env:PROCESSOR_ARCHITECTURE;artifactFiles=$binaryHashes.Count;archiveSha256=$archiveHash;portableZipEntries=$true;productStarted=$false;installed=$false;published=$false;signedRelease=$false;serviceOperations=$false;driverOperations=$false;printJobsBefore=$jobsBefore.Count;printJobsAfter=$jobsAfter.Count;physicalJobs=0} | ConvertTo-Json -Depth 5 | Set-Content -Encoding UTF8 (Join-Path $results 'windows-pos-build.json')
+}
+if ($status -ne 'PASS') { throw $failure }
+Write-Output 'POS_BUILD_PASS_898_SOURCE_HASHES_UNCHANGED_NO_PRODUCT_START'

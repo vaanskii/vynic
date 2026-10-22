@@ -1,0 +1,176 @@
+{
+  "success": true,
+  "numPassedTestSuites": 7,
+  "numFailedTestSuites": 0,
+  "numPendingTestSuites": 0,
+  "numPassedTests": 41,
+  "numFailedTests": 0,
+  "numPendingTests": 0,
+  "numTotalTests": 41,
+  "tests": [
+    {
+      "name": "WEB-07 Footer telephone matches the displayed restaurant number ka links to the visible phone, with no placeholder telephone",
+      "status": "passed"
+    },
+    {
+      "name": "WEB-07 Footer telephone matches the displayed restaurant number en links to the visible phone, with no placeholder telephone",
+      "status": "passed"
+    },
+    {
+      "name": "WEB-07 Footer telephone matches the displayed restaurant number ru links to the visible phone, with no placeholder telephone",
+      "status": "passed"
+    },
+    {
+      "name": "WEB-04 success redirect verifies actual server booking PENDING preserves the cart and never displays success",
+      "status": "passed"
+    },
+    {
+      "name": "WEB-04 success redirect verifies actual server booking REVIEW preserves the cart and never displays success",
+      "status": "passed"
+    },
+    {
+      "name": "WEB-04 success redirect verifies actual server booking FAILED preserves the cart and never displays success",
+      "status": "passed"
+    },
+    {
+      "name": "WEB-04 success redirect verifies actual server booking unknown preserves the cart and never displays success",
+      "status": "passed"
+    },
+    {
+      "name": "WEB-04 success redirect verifies actual server booking API error stays unconfirmed and a read retry can verify success",
+      "status": "passed"
+    },
+    {
+      "name": "WEB-04 success redirect verifies actual server booking missing identity cannot use redirect, browser history or stored checkout as proof",
+      "status": "passed"
+    },
+    {
+      "name": "WEB-04 success redirect verifies actual server booking CONFIRMED without successful response is not booking proof",
+      "status": "passed"
+    },
+    {
+      "name": "WEB-04 success redirect verifies actual server booking English return also preserves the cart while bank processing continues",
+      "status": "passed"
+    },
+    {
+      "name": "WEB-04 failure redirect verifies actual server booking PENDING preserves the cart and never displays success",
+      "status": "passed"
+    },
+    {
+      "name": "WEB-04 failure redirect verifies actual server booking REVIEW preserves the cart and never displays success",
+      "status": "passed"
+    },
+    {
+      "name": "WEB-04 failure redirect verifies actual server booking FAILED preserves the cart and never displays success",
+      "status": "passed"
+    },
+    {
+      "name": "WEB-04 failure redirect verifies actual server booking unknown preserves the cart and never displays success",
+      "status": "passed"
+    },
+    {
+      "name": "WEB-04 failure redirect verifies actual server booking API error stays unconfirmed and a read retry can verify success",
+      "status": "passed"
+    },
+    {
+      "name": "WEB-04 failure redirect verifies actual server booking missing identity cannot use redirect, browser history or stored checkout as proof",
+      "status": "passed"
+    },
+    {
+      "name": "WEB-04 failure redirect verifies actual server booking CONFIRMED without successful response is not booking proof",
+      "status": "passed"
+    },
+    {
+      "name": "WEB-04 failure redirect verifies actual server booking English return also preserves the cart while bank processing continues",
+      "status": "passed"
+    },
+    {
+      "name": "WEB-07 real bespoke components consume Host-bound public information confirmed payment uses shared contact; ready info never changes verified money status",
+      "status": "passed"
+    },
+    {
+      "name": "WEB-07 real bespoke components consume Host-bound public information confirmed payment uses shared contact; unavailable info never changes verified money status",
+      "status": "passed"
+    },
+    {
+      "name": "WEB-07 real bespoke components consume Host-bound public information confirmed payment uses shared contact; empty info never changes verified money status",
+      "status": "passed"
+    },
+    {
+      "name": "WEB-07 real bespoke components consume Host-bound public information renders owner-saved contact, map, seven-day hours and social links",
+      "status": "passed"
+    },
+    {
+      "name": "WEB-07 real bespoke components consume Host-bound public information weekday labels stay localized for ka even if browser Intl falls back to English",
+      "status": "passed"
+    },
+    {
+      "name": "WEB-07 real bespoke components consume Host-bound public information weekday labels stay localized for en even if browser Intl falls back to English",
+      "status": "passed"
+    },
+    {
+      "name": "WEB-07 real bespoke components consume Host-bound public information weekday labels stay localized for ru even if browser Intl falls back to English",
+      "status": "passed"
+    },
+    {
+      "name": "WEB-07 real bespoke components consume Host-bound public information email address characters cannot inject mail headers",
+      "status": "passed"
+    },
+    {
+      "name": "WEB-07 real bespoke components consume Host-bound public information owner edits become visible on the next focus refresh without a build or frontend IDs",
+      "status": "passed"
+    },
+    {
+      "name": "WEB-07 real bespoke components consume Host-bound public information actual Atmosphere gallery uses owner URLs/alt instead of its old static teaser",
+      "status": "passed"
+    },
+    {
+      "name": "WEB-07 real bespoke components consume Host-bound public information capability-off hours and gallery never fall back to static promises/photos",
+      "status": "passed"
+    },
+    {
+      "name": "WEB-07 real bespoke components consume Host-bound public information an intentional empty profile is not replaced with the old phone/address/map",
+      "status": "passed"
+    },
+    {
+      "name": "WEB-07 real bespoke components consume Host-bound public information network failure is visible, clears public fields, and retry reads the API",
+      "status": "passed"
+    },
+    {
+      "name": "WEB-07 real bespoke components consume Host-bound public information foreign cannot disclose another binding or substitute static business data",
+      "status": "passed"
+    },
+    {
+      "name": "WEB-07 real bespoke components consume Host-bound public information SAAS cannot disclose another binding or substitute static business data",
+      "status": "passed"
+    },
+    {
+      "name": "WEB-07 real bespoke components consume Host-bound public information SETUP_PENDING cannot disclose another binding or substitute static business data",
+      "status": "passed"
+    },
+    {
+      "name": "WEB-07 real bespoke components consume Host-bound public information schema2 cannot disclose another binding or substitute static business data",
+      "status": "passed"
+    },
+    {
+      "name": "WEB-07 real bespoke components consume Host-bound public information malformed map is an explicit read error without unsafe links/images",
+      "status": "passed"
+    },
+    {
+      "name": "WEB-07 real bespoke components consume Host-bound public information malformed social is an explicit read error without unsafe links/images",
+      "status": "passed"
+    },
+    {
+      "name": "WEB-07 real bespoke components consume Host-bound public information malformed gallery is an explicit read error without unsafe links/images",
+      "status": "passed"
+    },
+    {
+      "name": "WEB-07 real bespoke components consume Host-bound public information malformed duplicate-day is an explicit read error without unsafe links/images",
+      "status": "passed"
+    },
+    {
+      "name": "WEB-07 real bespoke components consume Host-bound public information an old request finishing after route refresh cannot overwrite the new public snapshot",
+      "status": "passed"
+    }
+  ]
+}

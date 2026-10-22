@@ -1,0 +1,23 @@
+{
+  "candidateIdentity": "POS02_ACCEPTANCE_db74149c_2026-10-02",
+  "baseCommit": "275688e1e5c5dc0e26e62705ab0c7670cf16d99a",
+  "baseSourceManifestSha256": "d194367f8fd0e2f6d9dcfea86f52d09cb605b32779b7904613b00466bd084de8",
+  "sourceManifestSha256": "db74149c4680d05e16a3a1f53906b269bf76be3d1d71e78796119633d15ff51a",
+  "sourceFileCount": 883,
+  "newPaths": [
+    "apps/operations/tool/pos02_acceptance_ledger.dart",
+    "apps/operations/test/support/pos02_acceptance_runner.dart",
+    "apps/operations/test/unit/pos02_acceptance_runner_test.dart",
+    "apps/operations/test/live/pos02_one_shot_acceptance_test.dart",
+    "apps/operations/tool/pos02_acceptance_ledger_probe.dart",
+    "apps/operations/tool/prove_pos02_acceptance_ledger.py",
+    "apps/operations/tool/pos02_acceptance_request.dart"
+  ],
+  "normalEntryPoint": "lib/main_pos.dart",
+  "standaloneEntry": "test/live/pos02_one_shot_acceptance_test.dart",
+  "physicalAllowance": 0,
+  "vm": "HELD",
+  "WindowsCurrentRevision": "PENDING_NOT_RUN",
+  "physicalAcceptance": "PENDING",
+  "milestoneDone": false
+}

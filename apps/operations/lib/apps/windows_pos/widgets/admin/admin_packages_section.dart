@@ -1,3 +1,4 @@
+import 'package:vynic/core/ui/widgets/pos_dialog.dart';
 import 'package:vynic/core/widgets/pos_on_screen_text_field.dart';
 import 'dart:async';
 
@@ -515,7 +516,7 @@ class _AdminPackagesSectionState extends State<AdminPackagesSection> {
         ? '+${difference.toStringAsFixed(2)} GEL'
         : '${difference.toStringAsFixed(2)} GEL';
 
-    await showDialog<void>(
+    await showPosModal<void>(
       context: context,
       builder: (dialogContext) {
         return AlertDialog(
@@ -648,7 +649,7 @@ class _AdminPackagesSectionState extends State<AdminPackagesSection> {
     );
     String? errorMessage;
 
-    final newName = await showDialog<String>(
+    final newName = await showPosModal<String>(
       context: context,
       barrierDismissible: false,
       builder: (dialogContext) {
@@ -851,7 +852,7 @@ class _AdminPackagesSectionState extends State<AdminPackagesSection> {
   }
 
   Future<void> _confirmDelete(Package pkg) async {
-    final confirmed = await showDialog<bool>(
+    final confirmed = await showPosModal<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
         backgroundColor: _cardColor,
@@ -949,7 +950,7 @@ class _AdminPackagesSectionState extends State<AdminPackagesSection> {
     final Set<String> selectedTables = <String>{};
     String? errorMessage;
 
-    final result = await showDialog<_PackageDeploymentResult>(
+    final result = await showPosModal<_PackageDeploymentResult>(
       context: context,
       barrierDismissible: false,
       builder: (dialogContext) {
@@ -985,7 +986,7 @@ class _AdminPackagesSectionState extends State<AdminPackagesSection> {
                 return true;
               }
 
-              final confirmed = await showDialog<bool>(
+              final confirmed = await showPosModal<bool>(
                 context: dialogContext,
                 barrierDismissible: false,
                 builder: (confirmContext) => AlertDialog(
@@ -1328,7 +1329,7 @@ class _AdminPackagesSectionState extends State<AdminPackagesSection> {
               .toList()
         : <String>[];
 
-    return showDialog<_PackageEditorResult>(
+    return showPosModal<_PackageEditorResult>(
       context: context,
       barrierDismissible: false,
       builder: (dialogContext) {
@@ -1517,7 +1518,7 @@ class _AdminPackagesSectionState extends State<AdminPackagesSection> {
                 return true;
               }
 
-              final confirmed = await showDialog<bool>(
+              final confirmed = await showPosModal<bool>(
                 context: dialogContext,
                 barrierDismissible: false,
                 builder: (confirmContext) => AlertDialog(
@@ -1955,7 +1956,7 @@ class _AdminPackagesSectionState extends State<AdminPackagesSection> {
     String selectedSubcategory = 'ყველა';
     final selectedQuantities = <String, int>{};
 
-    return showDialog<Map<String, int>>(
+    return showPosModal<Map<String, int>>(
       context: context,
       barrierDismissible: false,
       builder: (dialogContext) {
@@ -1967,7 +1968,7 @@ class _AdminPackagesSectionState extends State<AdminPackagesSection> {
                 return;
               }
 
-              final shouldClose = await showDialog<bool>(
+              final shouldClose = await showPosModal<bool>(
                 context: dialogContext,
                 barrierDismissible: false,
                 builder: (confirmContext) => AlertDialog(
@@ -2003,7 +2004,7 @@ class _AdminPackagesSectionState extends State<AdminPackagesSection> {
             }
 
             Future<void> openSelectedProductsModal() async {
-              await showDialog<void>(
+              await showPosModal<void>(
                 context: dialogContext,
                 barrierDismissible: false,
                 builder: (manageContext) {

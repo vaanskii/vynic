@@ -8,7 +8,7 @@ import { errorMessage, formatDateTime } from "../../format";
 import type { OverrideEffect } from "../../types";
 import { Button } from "../../components/Button";
 import { ConfirmDialog } from "../../components/ConfirmDialog";
-import { Input, Select } from "../../components/Form";
+import { Input } from "../../components/Form";
 import { Panel } from "../../components/Page";
 import { ErrorState, LoadingState } from "../../components/State";
 import { StatusBadge } from "../../components/StatusBadge";
@@ -23,6 +23,7 @@ const featureNames: Record<string, string> = {
   POS: "გაყიდვების სისტემა",
   PROFITABILITY: "მომგებიანობა",
   WEBSITE: "რესტორნის ვებგვერდი",
+  ONLINE_PAYMENTS: "ონლაინ გადახდები",
   NON_FISCAL_CLOSE: "არაფისკალური დახურვა",
 };
 const featureName = (feature: { key: string; name: string }) =>
@@ -47,8 +48,6 @@ export function VenueProductTab({ venueId }: { venueId: string }) {
     queryKey: ["features"],
     queryFn: platformApi.features,
   });
-  const [selectedPlanId, setSelectedPlanId] = useState("");
-  const [planConfirm, setPlanConfirm] = useState(false);
   const [pendingOverride, setPendingOverride] =
     useState<PendingOverride | null>(null);
   const [notes, setNotes] = useState<Record<string, string>>({});
@@ -57,12 +56,12 @@ export function VenueProductTab({ venueId }: { venueId: string }) {
     await queryClient.invalidateQueries({ queryKey: ["product", venueId] });
     await queryClient.invalidateQueries({ queryKey: ["venues"] });
   };
-  const assignPlan = useMutation({
-    mutationFn: () => platformApi.assignPlan(venueId, selectedPlanId),
+  const enableCloudMenu = useMutation({
+    mutationFn: (enabled: boolean) =>
+      platformApi.enableCloudMenu(venueId, enabled),
     onSuccess: async () => {
       await refresh();
-      setPlanConfirm(false);
-      setFeedback("პაკეტი განახლდა.");
+      setFeedback("მენიუს მართვის პარამეტრი განახლდა.");
     },
   });
   const override = useMutation({
@@ -102,7 +101,6 @@ export function VenueProductTab({ venueId }: { venueId: string }) {
     return <LoadingState label="ფუნქციები იტვირთება" />;
 
   const state = product.data;
-  const selected = selectedPlanId || state.plan?.id || "";
   const currentPlan = plans.data.find((plan) => plan.id === state.plan?.id);
   const planFeatures = new Set(
     currentPlan?.features.map(({ feature }) => feature.key) ?? [],
@@ -111,27 +109,42 @@ export function VenueProductTab({ venueId }: { venueId: string }) {
   const warnings = featureWarnings(state.effectiveFeatures);
   const pendingFeatures = new Set(state.effectiveFeatures);
   if (pendingOverride) {
-    const enabled = pendingOverride.effect === "INHERIT" ? planFeatures.has(pendingOverride.featureKey) : pendingOverride.effect === "ENABLED";
-    if (enabled) pendingFeatures.add(pendingOverride.featureKey); else pendingFeatures.delete(pendingOverride.featureKey);
-  }
-  const nextPlanFeatures = new Set(plans.data.find(plan => plan.id === selectedPlanId)?.features.map(({ feature }) => feature.key) ?? []);
-  for (const row of state.overrides) {
-    if (row.effect === "ENABLED") nextPlanFeatures.add(row.featureKey); else nextPlanFeatures.delete(row.featureKey);
+    const enabled =
+      pendingOverride.effect === "INHERIT"
+        ? planFeatures.has(pendingOverride.featureKey)
+        : pendingOverride.effect === "ENABLED";
+    if (enabled) pendingFeatures.add(pendingOverride.featureKey);
+    else pendingFeatures.delete(pendingOverride.featureKey);
   }
   return (
     <fieldset
       disabled={actor?.role !== "SUPER_ADMIN"}
       style={{ border: 0, padding: 0, minWidth: 0 }}
     >
-      {state.commercialAccess === false && (
+      {state.commercialStatus === "TRIAL" && (
         <p role="status" className="platform-callout">
-          ღრუბლოვანი სერვისების წვდომა შეჩერებულია. აღსადგენად გაააქტიურეთ გამოწერა.
+          {state.plan?.name} · TRIAL
         </p>
       )}
-      {warnings.length > 0 && <div role="status" className="platform-callout platform-feature-dependencies">
-        <strong>ფუნქციების დამოკიდებულებები</strong>
-        <ul>{warnings.map(warning => <li key={warning}>{warning}</li>)}</ul>
-      </div>}
+      {state.commercialAccess === false && (
+        <p role="status" className="platform-callout">
+          ღრუბლოვანი სერვისების წვდომა შეჩერებულია. აღსადგენად გაააქტიურეთ
+          გამოწერა.
+        </p>
+      )}
+      {warnings.length > 0 && (
+        <div
+          role="status"
+          className="platform-callout platform-feature-dependencies"
+        >
+          <strong>ფუნქციების დამოკიდებულებები</strong>
+          <ul>
+            {warnings.map((warning) => (
+              <li key={warning}>{warning}</li>
+            ))}
+          </ul>
+        </div>
+      )}
       {feedback ? (
         <div
           className="platform-feedback platform-feedback--success"
@@ -140,43 +153,63 @@ export function VenueProductTab({ venueId }: { venueId: string }) {
           {feedback}
         </div>
       ) : null}
-      <div className="platform-grid platform-grid--sidebar">
+      {state.menuManagement && (
         <Panel
-          title="მინიჭებული პაკეტი"
-          description="რესტორნისთვის შერჩეული პაკეტი."
+          title="მენიუს მართვა Dashboard-ში"
+          description="კატეგორიების, კერძებისა და ფასების დამატება და რედაქტირება. გამორთვა შენახულ მენიუს არ შლის და ვებგვერდზე მის ჩვენებას არ აჩერებს."
         >
-          <div className="platform-plan-control">
-            <div>
-              <strong>{state.plan?.name ?? "პაკეტი არჩეული არ არის"}</strong>
-              <span>
-                {state.planAssignedAt
-                  ? `მინიჭებულია ${formatDateTime(state.planAssignedAt)}`
-                  : "აირჩიეთ პაკეტი."}
-              </span>
-            </div>
-            <div>
-              <Select
-                aria-label="პაკეტი"
-                value={selected}
-                onChange={(event) => setSelectedPlanId(event.target.value)}
-              >
-                <option value="">აირჩიეთ პაკეტი</option>
-                {plans.data.map((plan) => (
-                  <option key={plan.id} value={plan.id}>
-                    {plan.name} ({plan.status})
-                  </option>
-                ))}
-              </Select>
-              <Button
-                tone="primary"
-                disabled={!selectedPlanId || selectedPlanId === state.plan?.id}
-                onClick={() => setPlanConfirm(true)}
-              >
-                პაკეტის შეცვლა
-              </Button>
-            </div>
+          <StatusBadge value={state.menuManagement.authority}>
+            მენიუს წყარო:{" "}
+            {state.menuManagement.authority === "CLOUD" ? "Cloud" : "POS"}
+          </StatusBadge>{" "}
+          <StatusBadge
+            value={state.menuManagement.enabled ? "ENABLED" : "DISABLED"}
+          >
+            {state.menuManagement.enabled ? "ჩართულია" : "გამორთულია"}
+          </StatusBadge>
+          {state.menuManagement.needsCloudAuthority && (
+            <p
+              className="platform-feedback platform-feedback--warning"
+              role="alert"
+            >
+              პაკეტი მხოლოდ ვებსაიტს მოიცავს, მაგრამ მენიუ ჯერ POS-ზეა მიბმული,
+              ამიტომ მის რედაქტირებას ვერავინ ახერხებს. ჩართეთ მენიუს მართვა
+              Dashboard-ში — მენიუ Cloud-ზე გადავა.
+            </p>
+          )}
+          <div className="platform-feature-actions">
+            <Button
+              tone={state.menuManagement.enabled ? "primary" : "secondary"}
+              disabled={
+                state.menuManagement.enabled ||
+                !state.menuManagement.canEnableCloud ||
+                enableCloudMenu.isPending
+              }
+              onClick={() => enableCloudMenu.mutate(true)}
+            >
+              ჩართვა
+            </Button>
+            <Button
+              tone={!state.menuManagement.enabled ? "danger" : "quiet"}
+              disabled={
+                !state.menuManagement.enabled || enableCloudMenu.isPending
+              }
+              onClick={() => enableCloudMenu.mutate(false)}
+            >
+              გამორთვა
+            </Button>
           </div>
+          {state.menuManagement.reason && (
+            <p role="status">{state.menuManagement.reason}</p>
+          )}
+          {enableCloudMenu.error && (
+            <p role="alert" className="platform-form-error">
+              {errorMessage(enableCloudMenu.error)}
+            </p>
+          )}
         </Panel>
+      )}
+      <div className="platform-section-gap">
         <Panel
           title="მოქმედი ფუნქციები"
           description="პაკეტისა და ინდივიდუალური პარამეტრების მიხედვით."
@@ -309,22 +342,12 @@ export function VenueProductTab({ venueId }: { venueId: string }) {
           <div>
             <strong>ვებგვერდის პარამეტრები შესამოწმებელია</strong>
             <p>
-              ვებგვერდის რეჟიმი და წვდომა ერთმანეთს არ შეესაბამება. გადაამოწმეთ ვებგვერდის პარამეტრები.
+              ვებგვერდის რეჟიმი და წვდომა ერთმანეთს არ შეესაბამება. გადაამოწმეთ
+              ვებგვერდის პარამეტრები.
             </p>
           </div>
         </div>
       ) : null}
-      <ConfirmDialog
-        georgian
-        open={planConfirm}
-        onOpenChange={setPlanConfirm}
-        title="შევცვალოთ პაკეტი?"
-        description={`მიმდინარე პაკეტს შეცვლის ${plans.data.find((plan) => plan.id === selectedPlanId)?.name ?? "შერჩეული პაკეტი"}. არსებული ინდივიდუალური პარამეტრები შენარჩუნდება. ${featureWarnings(nextPlanFeatures).join(" ")}`}
-        confirmLabel="პაკეტის მინიჭება"
-        pending={assignPlan.isPending}
-        error={assignPlan.error ? errorMessage(assignPlan.error) : undefined}
-        onConfirm={() => assignPlan.mutate()}
-      />
       <ConfirmDialog
         georgian
         open={Boolean(pendingOverride)}
@@ -335,7 +358,9 @@ export function VenueProductTab({ venueId }: { venueId: string }) {
         description={
           (pendingOverride?.effect === "INHERIT"
             ? "ინდივიდუალური პარამეტრი წაიშლება და ფუნქცია პაკეტის წესს დაუბრუნდება."
-            : "ინდივიდუალურ პარამეტრს პაკეტის წესზე უპირატესობა ექნება.") + " " + featureWarnings(pendingFeatures).join(" ")
+            : "ინდივიდუალურ პარამეტრს პაკეტის წესზე უპირატესობა ექნება.") +
+          " " +
+          featureWarnings(pendingFeatures).join(" ")
         }
         confirmLabel={
           pendingOverride?.effect === "INHERIT" ? "პაკეტის მიხედვით" : "შენახვა"

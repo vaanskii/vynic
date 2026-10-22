@@ -1,0 +1,14 @@
+{
+  "status": "PASS",
+  "populatedPreviousSchema": true,
+  "venues": 2,
+  "movements": 4,
+  "receipts": 2,
+  "payments": 1,
+  "allOriginalMovementFieldsUnchanged": true,
+  "allOriginalReceivingFieldsUnchanged": true,
+  "allPaymentFieldsUnchanged": true,
+  "d015FunctionByteIdentical": true,
+  "oneDefaultPerVenue": true,
+  "allOldDocumentsAndMovementsAssignedToOwnDefault": true
+}

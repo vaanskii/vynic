@@ -225,4 +225,37 @@ void main() {
       expect(declaration['expectedRevenue'], '0.30');
     },
   );
+  test(
+    'Cloud recovery only resets ACKs for genuine retained Sales on requested dates',
+    () async {
+      await DatabaseCore.salesBox!.add(retainedSale());
+      await DatabaseCore.salesBox!.add({
+        ...retainedSale(),
+        'date': '2026-09-03',
+        'orderId': 43,
+      });
+      await SaleLedgerSyncState.ensureSaleIdentities();
+      final all = DatabaseCore.salesBox!.values
+          .whereType<Map>()
+          .map((row) => Map<String, dynamic>.from(row))
+          .toList();
+      final ids = all.map((row) => row['posSaleId']).toList();
+      await SaleLedgerSyncState.acknowledgeResponse(
+        '{"saleLedgerAck":[{"posSaleId":"${ids[0]}","revision":1},{"posSaleId":"${ids[1]}","revision":1}]}',
+      );
+      expect(SaleLedgerSyncState.buildBatch(all), isEmpty);
+      expect(
+        await SaleLedgerSyncState.acknowledgeResponse(
+          '{"saleLedgerRetryDates":["2026-09-04","2099-01-01"]}',
+        ),
+        isTrue,
+      );
+      final replay = SaleLedgerSyncState.buildBatch(all);
+      expect(replay.single['posSaleId'], ids[0]);
+      expect(replay.single['revision'], 1);
+      expect(replay.single['createdBy'], 'waiter');
+      expect(replay.single['closedById'], 'manager');
+      expect(DatabaseCore.salesBox!.length, 2);
+    },
+  );
 }

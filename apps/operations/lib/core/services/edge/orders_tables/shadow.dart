@@ -1,3 +1,4 @@
+import 'package:vynic/core/database/local_data_admission.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'dart:developer' as developer;
@@ -41,6 +42,28 @@ class OrderTableShadow {
   }) async {
     final shadow = observer;
     if (shadow == null || Zone.current[_zoneKey] == true) return operation();
+    if (LocalDataAdmission.insideMutation) {
+      final value = await operation();
+      final frozenProposed = proposed().map((e) => e.deepCopy()).toList();
+      final frozenActual = actual().map((e) => e.deepCopy()).toList();
+      LocalDataAdmission.afterMutation(
+        () => unawaited(
+          observe<void>(
+            proposed: () => frozenProposed,
+            actual: () => frozenActual,
+            operation: () async {},
+          ).catchError(
+            (Object error, StackTrace stack) => developer.log(
+              'Deferred shadow failed',
+              error: error,
+              stackTrace: stack,
+              name: 'EdgeOrdersTablesShadow',
+            ),
+          ),
+        ),
+      );
+      return value;
+    }
     return runZoned(() async {
       CommitResult? result;
       try {

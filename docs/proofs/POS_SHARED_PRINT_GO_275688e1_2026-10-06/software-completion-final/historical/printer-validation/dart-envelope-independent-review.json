@@ -1,0 +1,55 @@
+{
+  "reviewer": "/root/multipos_architecture",
+  "verdict": "PASS_BOUNDED_DETACHED_DART_BRIDGE",
+  "sourceRoot": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/source",
+  "sources": [
+    {
+      "path": "apps/operations/lib/core/services/printing/shared_print_effect.dart",
+      "sha256": "24ff19465192af16488559d7f3636666e3cb4f800fd35f328379061697f70c78"
+    },
+    {
+      "path": "apps/operations/tool/shared_print_fixture.dart",
+      "sha256": "3de345853565e7ab1071d02b387836ff0293c030a9e4da3de6336c65501e63ea"
+    },
+    {
+      "path": "apps/operations/test/unit/shared_print_effect_test.dart",
+      "sha256": "59c7532611497b0b681de9928aff8563bc0670d90884c323bd828522ef9680d7"
+    }
+  ],
+  "closedFindings": [
+    "P2: failed/requeued same-attempt history cannot become a fresh shared print; exact pristine attempt and audit required.",
+    "P2: conditional requiresConfirmedOrderUuid is refused pending canonical atomic-condition integration.",
+    "P2: source route ID and revision must match pinned alias mapping; endpoint equality alone is insufficient.",
+    "Regression evidence corrected: valid sent/uncertain/copy/reprint/requeued jobs decode before bridge rejection."
+  ],
+  "remainingP1P2InReviewedScope": [],
+  "evidence": {
+    "testLog": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/printer-validation/dart-envelope-tests.jsonl",
+    "testLogSha256": "2cea119edcaaa1fcca996397b69cfefbebc0e349344b0e84685c9fb256169115",
+    "actualPassedTests": 7,
+    "doneSuccess": true,
+    "analysis": "Parent reports clean targeted 3-file analysis; not independently rerun.",
+    "independentFixtureExecution": "Cached Dart execution exited 0 and regenerated both exact byte-identical goldens.",
+    "goldens": [
+      {
+        "name": "tcp",
+        "sha256": "51eb907f6b32ad2088d0914c559ba8ad7b1bdd2c54c62fa2820b00ec53916889",
+        "independentRegeneration": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/review-dart-envelopes/tcp.json"
+      },
+      {
+        "name": "windowsSpooler",
+        "sha256": "f40373faa1cad1355db125d910b9dd2413fa010a5000554594e02dbc617213f7",
+        "independentRegeneration": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/review-dart-envelopes/windowsSpooler.json"
+      }
+    ],
+    "productionImports": "Source search found only synthetic tool and test import the bridge."
+  },
+  "limits": [
+    "Pure immutable freezing only; SharedPrintBinding construction is not authentication.",
+    "Caller IDs require durable upstream allocation/persistence; this seam supplies no migration receipt or dispatch.",
+    "No normal startup/Hive queue attachment or physical activation.",
+    "Queue admission/RPC authority/native helper/service lifecycle require separate review.",
+    "Actual printer model, independent gateway availability and automatic failover remain unqualified; no production or HA approval.",
+    "No physical printing, OS configuration, SCM registration, credentials, drivers or original repository edits performed."
+  ]
+}

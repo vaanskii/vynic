@@ -1,0 +1,81 @@
+{
+  "status": "COMPLETED_SOURCE_LOCAL_CANDIDATE",
+  "updatedAtUtc": "2026-10-14T10:24:05.304915+00:00",
+  "head": "3463ee406184fec7f53818416e11d0e5f5602c87",
+  "scope": [
+    "Stable nonsecret Host-resolved public Venue identity",
+    "Public artifact manifest + emitted HTML digest comparison",
+    "Operator expected build fingerprint and immutable change audit",
+    "Five distinct commercial/domain/renderer/binding/publication facts",
+    "Frontend monorepo build-context correction for shared imports"
+  ],
+  "implementedButNotYetQualified": [
+    "Public identity contract",
+    "Nullable expectedBuildId source migration",
+    "Manifest generator and Vankisi/SAAS build wiring",
+    "Runtime HTML/API/manifest observation with redirect refusal and bounded responses",
+    "Before/after observation context for concurrent binding/domain changes"
+  ],
+  "currentWork": "Regression tests and operator panel; current source must not be treated as qualified or deployed",
+  "productQuestion": "Pending human choice: CUSTOM status as tracking-only vs public ACTIVE gate; existing public admission is unchanged until decided",
+  "databaseMigrationAppliedToLive": false,
+  "deploymentOrPush": false,
+  "INV01F2": "UNAPPROVED_UNTOUCHED",
+  "POS02C": "Independent concurrent thread; not duplicated",
+  "privateWork": "/tmp/vynic-web05-identity-zr_eb9j3",
+  "qualifiedFocusedChecks": {
+    "runtimeLoopback": 21,
+    "manifestNode": 7,
+    "backendTypes": "PASS",
+    "frontendTypes": "PASS",
+    "migration": "75 fresh and populated 74->75; legacy values and 74 checksums preserved"
+  },
+  "publicStatusBehavior": "UNCHANGED; pending/error remain operator records pending separate approval",
+  "finishedFocusedResults": {
+    "manifestNode": 7,
+    "runtimeChecker": 21,
+    "operatorUi": 12,
+    "customPgHttp": 17,
+    "sdk": 6,
+    "schema": "PASS",
+    "migration": "75 fresh and populated 74->75 PASS",
+    "types": "backend and frontend PASS"
+  },
+  "newerExecutionEvidence": {
+    "custom-pg-http": {
+      "passed": 17,
+      "failed": 0,
+      "skipped": 0
+    },
+    "ui-focused": {
+      "passed": 12,
+      "failed": 0,
+      "skipped": 0
+    }
+  },
+  "running": null,
+  "fixtureRecovery": "Historical CUSTOM booking fixture adapted to different days without weakening whole-day guards; expired synthetic B Trial restored only inside the independent identity case",
+  "pendingRegressionRerun": "WEB07 suite rejected the initial disposable database name as intended; separate guarded WEB07 database created for final rerun",
+  "blocked": false,
+  "productionAccepted": false,
+  "execution": "RESUMED_MAC_CONNECTED",
+  "finishedSinceReconnect": {
+    "stockPageCleanupApplied": true,
+    "threeLocalCandidateBuilds": "PASS",
+    "nginxSyntax": "3 PASS",
+    "fullEmittedArtifactFingerprint": "Vankisi and SAAS PASS",
+    "artifactHttpClassification": "CUSTOM verified; wrong SAAS and Platform refused",
+    "frontendAggregate": 246,
+    "operatorUiScenarios": 13,
+    "web07PgRegression": 8,
+    "browserWidths": [
+      375,
+      768,
+      1440
+    ],
+    "browserErrorRetryAndSavedEvidenceInvalidation": "PASS",
+    "productionAccepted": false
+  },
+  "qualification": "qualification.json",
+  "cleanup": "Owned PG/preview stopped; tab and viewport cleaned; test containers removed"
+}

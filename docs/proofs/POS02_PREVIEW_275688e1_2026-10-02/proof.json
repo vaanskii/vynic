@@ -1,0 +1,100 @@
+{
+  "milestone": "POS-02",
+  "status": "PREVIEW_PREPARATION_VERIFIED_MILESTONE_NOT_DONE_UNCOMMITTED",
+  "createdAtUTC": "2026-10-02T19:57:38.591941+00:00",
+  "baseCommit": "275688e1e5c5dc0e26e62705ab0c7670cf16d99a",
+  "sourceFileCount": 870,
+  "sealedCandidateFileCountUnchanged": 867,
+  "newAuxiliaryFilesSha256": {
+    "apps/operations/tool/pos02_preview.dart": "1d567f63efbf3f9473b8aea7a6d410eb769be7bc3aee9214750986fe885edeb4",
+    "apps/operations/test/support/pos02_preview_harness.dart": "f2f739fdb38eca03b7c8771599d3db605606b43630ed6a867705851e965e3e3e",
+    "apps/operations/test/unit/pos02_preview_safety_test.dart": "1343a4a440f535c582c24612a304efb9670728bcb1f15005ae4ea708a34f9992"
+  },
+  "test": {
+    "distinctPassingChecks": 67,
+    "suiteCount": 4,
+    "newPreviewChecks": 17,
+    "existingPos02Checks": 50,
+    "skipped": 0,
+    "failed": 0,
+    "doneSuccess": true,
+    "executionPlatform": "macOS native Flutter test engine",
+    "physicalSockets": "injected mocks only"
+  },
+  "analysis": "NO_ISSUES",
+  "format": {
+    "files": 3,
+    "changes": 0
+  },
+  "macPreview": {
+    "compile": "PASS",
+    "architecture": "arm64",
+    "minimumMacOS": "12.0",
+    "entrypoint": "tool/pos02_preview.dart",
+    "endpoint": "",
+    "guiLaunch": "NOT_PERFORMED",
+    "archive": "mac-preview.zip"
+  },
+  "independentReview": {
+    "reviewer": "/root/pos02_review",
+    "remainingP1P2": 0,
+    "record": "independent-review.md"
+  },
+  "coreSoftwareEvidenceUnchanged": {
+    "acceptanceChecks": 788,
+    "nativeSigkillCheckpoints": 102,
+    "checkpoint": "../POS02_CHECKPOINT_275688e1_2026-10-02",
+    "checkpointChecksumSha256": "ef6f8acbc990e805e60137d2f6bb4e8372d5da501c6b0beeccfe062041caec82",
+    "workingTreeVerifier": "PASS"
+  },
+  "windows": {
+    "flutterCommandLocatedByUser": true,
+    "nativeEngine": "CORE50_PASS_USER_SUPPLIED_WINDOWS11_ARM_X64_ENGINE",
+    "existingPackageCache": "CORE50_OFFLINE_LOCKED_PASS_USER_SUPPLIED",
+    "desktopCppToolchain": "UNVERIFIED",
+    "coreSmoke": {
+      "checks": 50,
+      "suiteCount": 3,
+      "reportedExitCode": 0,
+      "provenance": "user transcript; not independently rerun",
+      "evidence": "../POS02_WINDOWS_SMOKE_275688e1_2026-10-02.json"
+    },
+    "preview17Execution": "NOT_PERFORMED",
+    "previewGuiLaunch": "NOT_PERFORMED",
+    "productionBuild": "NOT_PERFORMED",
+    "exeAvailable": false
+  },
+  "physicalAcceptance": {
+    "status": "PENDING",
+    "required": [
+      "manufacturer/model and kitchen/receipt role",
+      "connection, paper width and supported Windows/driver configuration",
+      "owner reconciliation policy",
+      "fresh explicitly approved physical acceptance window",
+      "actual supported-model paper and interruption acceptance"
+    ],
+    "initialBasicOutputBudgetTotalAcrossBothPrinters": "2-3; two initial text jobs user-reported working; exact slip count unknown; no further print",
+    "connectivityChecks": "USER_REPORTED_PASS; no print payload from Test-NetConnection",
+    "addressesNotContactedByAgent": [
+      "10.10.10.5",
+      "10.10.10.6"
+    ],
+    "userReportedTcpPort9100Reachable": [
+      "10.10.10.5",
+      "10.10.10.6"
+    ],
+    "initialAsciiPaperOutput": "USER_REPORTED_WORKING; individual counts/photos unreported; not candidate output",
+    "initialCutOnly": "USER_CONFIRMED_WORKING; parent issued one-time GS V 0, no additional text/feed; no model/count/photo inference"
+  },
+  "permissions": {
+    "vmOperationsPerformed": false,
+    "physicalConnectionsPerformed": false,
+    "normalPosLaunched": false,
+    "customerDataUsed": false,
+    "installsPerformed": false,
+    "pushDeployMergePerformed": false,
+    "commitCreated": false
+  },
+  "guide": "../../POS02_PREVIEW.md",
+  "updatedAtUTC": "2026-10-02T20:20:58.748992+00:00"
+}

@@ -1,0 +1,24 @@
+$ErrorActionPreference='Stop';$ProgressPreference='SilentlyContinue'
+$native='\\Mac\Home\Developer\vynic\docs\proofs\POS_WINDOWS_NATIVE_abf7e6b3_2026-10-06'
+$shared='\\Mac\Home\Developer\vynic\docs\proofs\POS_MANAGER_ITEMS_275688e1_2026-10-06'
+$stage=Get-Content -LiteralPath (Join-Path $native 'windows-stage.json') -Raw | ConvertFrom-Json
+$job=$stage.job;$op=Join-Path $job 'apps\operations'
+$original=Get-Content -LiteralPath (Join-Path $native 'prepared-source-v2-sha256.json') -Raw | ConvertFrom-Json
+foreach($e in $original.PSObject.Properties){if((Get-FileHash -LiteralPath (Join-Path $job $e.Name) -Algorithm SHA256).Hash.ToLowerInvariant() -ne $e.Value){throw ('Original source changed: '+$e.Name)}}
+$new=Get-Content -LiteralPath (Join-Path $shared 'manager-source-sha256.json') -Raw | ConvertFrom-Json
+foreach($e in $new.PSObject.Properties){if(Test-Path -LiteralPath (Join-Path $job $e.Name)){throw ('New Manager path already exists: '+$e.Name)}}
+Add-Type -AssemblyName System.IO.Compression.FileSystem
+[IO.Compression.ZipFile]::ExtractToDirectory((Join-Path $shared 'manager-source.zip'),$job)
+$manifest=Get-Content -LiteralPath (Join-Path $shared 'windows-input-source-sha256.json') -Raw | ConvertFrom-Json
+function Assert-Source {foreach($e in $manifest.PSObject.Properties){if((Get-FileHash -LiteralPath (Join-Path $job $e.Name) -Algorithm SHA256).Hash.ToLowerInvariant() -ne $e.Value){throw ('Manager candidate source mismatch: '+$e.Name)}}}
+Assert-Source
+$env:FLUTTER_SUPPRESS_ANALYTICS='true';$env:DART_SUPPRESS_ANALYTICS='true';$env:CI='true'
+$env:HTTP_PROXY='http://127.0.0.1:9';$env:HTTPS_PROXY='http://127.0.0.1:9';$env:NO_PROXY='127.0.0.1,localhost,::1'
+Set-Location -LiteralPath $op
+& $stage.flutter test --no-pub --reporter expanded test/unit/operational_manager_items_test.dart
+if($LASTEXITCODE -ne 0){throw ('Manager Windows tests failed: '+$LASTEXITCODE)}
+& $stage.flutter analyze --no-pub lib/core/services/edge/operational_proof/manager_items_planner.dart lib/core/services/edge/operational_proof/manager_items_adapter.dart test/unit/operational_manager_items_test.dart
+if($LASTEXITCODE -ne 0){throw ('Manager Windows analysis failed: '+$LASTEXITCODE)}
+Assert-Source
+[pscustomobject]@{job=$job;sourceFiles=@($manifest.PSObject.Properties).Count;newManagerSourceFiles=@($new.PSObject.Properties).Count;sourceUnchanged=$true;selectedSuite='test/unit/operational_manager_items_test.dart';analysisFiles=3;physicalJobs=0;installedProductStarted=$false;productionAttached=$false;sourceManifest='windows-input-source-sha256.json'} | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $shared 'windows-manager-tests.json') -Encoding UTF8
+Write-Output 'MANAGER_WINDOWS_TESTS_AND_ANALYSIS_OK_SOURCE_UNCHANGED_NO_PRODUCTION_ATTACHMENT'

@@ -1,0 +1,208 @@
+{
+  "schemaVersion": 1,
+  "status": "PASS_SOFTWARE_SOURCE_MAC_EXECUTION_AND_WINDOWS_CROSSBUILD_ONLY",
+  "createdAt": "2026-10-06T17:24:37.066904+00:00",
+  "sourceRoot": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/source",
+  "ownedManifest": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/metadata/printer-daemon-owned-source-manifest.json",
+  "ownedManifestSha256": "551a32eb428ca46726640a2c2f89701762a2460214a7eb1b682df9e4eea6f18e",
+  "ownedFiles": 21,
+  "checks": {
+    "unit": {
+      "topLevelTests": 33,
+      "subtests": 75,
+      "packagePasses": [
+        "vynic.local/edge/cmd/printer-agent",
+        "vynic.local/edge/internal/printerdaemon"
+      ],
+      "failuresOrSkips": []
+    },
+    "race": {
+      "topLevelTests": 33,
+      "subtests": 75,
+      "packagePasses": [
+        "vynic.local/edge/cmd/printer-agent",
+        "vynic.local/edge/internal/printerdaemon"
+      ],
+      "failuresOrSkips": []
+    }
+  },
+  "vet": "PASS",
+  "whitespaceAndFrozenSourceHashes": "PASS",
+  "windowsBuild": "amd64+arm64 actual executable and daemon/CLI test executable CROSSCOMPILE_ONLY",
+  "artifacts": [
+    {
+      "path": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/artifacts/printer-agent-darwin-arm64",
+      "bytes": 23660498,
+      "sha256": "1864f4d35d71fd75039551f7d525fb48a126add57aafe9a102def6a6b7fe2d5b"
+    },
+    {
+      "path": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/artifacts/printer-agent-darwin-arm64-race",
+      "bytes": 32810338,
+      "sha256": "6c609deff0500ab7f9fb4cf94bfddd7350645c019725a2baef9d6f845013e684"
+    },
+    {
+      "path": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/artifacts/printer-agent-test-windows-amd64.exe",
+      "bytes": 26291200,
+      "sha256": "6430ac4382313ee17b835efb393aeb2d096079f87b0b971095205ad3d86d9664"
+    },
+    {
+      "path": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/artifacts/printer-agent-test-windows-arm64.exe",
+      "bytes": 24656896,
+      "sha256": "ee4746602127533beae94045cbd6527acd33191e31c1ef16fc791e83e99c8c4c"
+    },
+    {
+      "path": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/artifacts/printer-agent-windows-amd64.exe",
+      "bytes": 24817152,
+      "sha256": "a5ef474a67d62326436c48e073731b59062cc104545032574af671dc70b882cc"
+    },
+    {
+      "path": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/artifacts/printer-agent-windows-arm64.exe",
+      "bytes": 23291392,
+      "sha256": "dbdd278544ba542a9161a9bb4fbe411b31a410789af0a0bb583d4a00a78bbf71"
+    },
+    {
+      "path": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/artifacts/printerdaemon-test-windows-amd64.exe",
+      "bytes": 26499584,
+      "sha256": "fdf5651a067fc704b9978b279d9eed84bacf1ad2de439b56774aede009da9d86"
+    },
+    {
+      "path": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/artifacts/printerdaemon-test-windows-arm64.exe",
+      "bytes": 24839168,
+      "sha256": "814889d794a24b2b01a4ad61b845fb45e2beede355b2fb82eee4e8c9499ba2be"
+    }
+  ],
+  "bundles": [
+    {
+      "architecture": "amd64",
+      "directory": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/artifacts/bundles/amd64",
+      "files": [
+        {
+          "name": "capability-profile.json",
+          "bytes": 175,
+          "sha256": "889ca206e624d88df360fddd23aa7400f81ffec00d222c1dc134b368926209f4"
+        },
+        {
+          "name": "manifest.json",
+          "bytes": 1772,
+          "sha256": "650360132e8f333c37f6ee6eb45a989fefd1ce5b9243d5066f0358b5bb6d4e8f"
+        },
+        {
+          "name": "vynic-print-helper.exe",
+          "bytes": 316416,
+          "sha256": "b720e1eedc77ab574d769865e39f71506a5f3ebc9d93ab5166bc3f112203019d"
+        },
+        {
+          "name": "vynic-printer-agent.exe",
+          "bytes": 24817152,
+          "sha256": "a5ef474a67d62326436c48e073731b59062cc104545032574af671dc70b882cc"
+        }
+      ],
+      "credentialsEmbedded": false,
+      "descriptorOnly": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/artifacts/bundle-descriptor-amd64.json"
+    },
+    {
+      "architecture": "arm64",
+      "directory": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/artifacts/bundles/arm64",
+      "files": [
+        {
+          "name": "capability-profile.json",
+          "bytes": 175,
+          "sha256": "889ca206e624d88df360fddd23aa7400f81ffec00d222c1dc134b368926209f4"
+        },
+        {
+          "name": "manifest.json",
+          "bytes": 1772,
+          "sha256": "d872b1c844451a169554bb6af99ba9e2a354cf70a8058f073377e90483aac3b9"
+        },
+        {
+          "name": "vynic-print-helper.exe",
+          "bytes": 291328,
+          "sha256": "99869fe8761ee48f1c66d30359dc837327dd3cc054ba60a1d80089916a6981f5"
+        },
+        {
+          "name": "vynic-printer-agent.exe",
+          "bytes": 23291392,
+          "sha256": "dbdd278544ba542a9161a9bb4fbe411b31a410789af0a0bb583d4a00a78bbf71"
+        }
+      ],
+      "credentialsEmbedded": false,
+      "descriptorOnly": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/artifacts/bundle-descriptor-arm64.json"
+    }
+  ],
+  "logs": [
+    {
+      "path": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/printer-daemon-v1/agent-build-inputs.json",
+      "bytes": 923669,
+      "sha256": "8265133677ed972e72c0e666e28002577b1b747ae7caa770acae787dfdface40"
+    },
+    {
+      "path": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/printer-daemon-v1/bundle-build.log",
+      "bytes": 5544,
+      "sha256": "0043dad05edecf51b21ac0a1b30468741bd12e7a77d918280bad20f6b3463529"
+    },
+    {
+      "path": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/printer-daemon-v1/bundle-inputs.json",
+      "bytes": 1649,
+      "sha256": "fecbb44b4c1a5ed7c2ace8f2ba56dd2253eb819364cfc3dd0dcb41f0d5580d82"
+    },
+    {
+      "path": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/printer-daemon-v1/module-graph.txt",
+      "bytes": 4838,
+      "sha256": "0183e7ef4147b0aad2a893b218b4e57acc3102a7d9dcfbc07037451a198bc095"
+    },
+    {
+      "path": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/printer-daemon-v1/race.jsonl",
+      "bytes": 103719,
+      "sha256": "e62cdf0f03ddd3417fd585980bdb6f501928dcfc861bb51b96ea2c23b3234e12"
+    },
+    {
+      "path": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/printer-daemon-v1/source-check.log",
+      "bytes": 117,
+      "sha256": "615d6146d5abb7cdc0c41df519ed5f2109d07fceb709f0f9461d01bd7c5c6944"
+    },
+    {
+      "path": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/printer-daemon-v1/unit.jsonl",
+      "bytes": 103713,
+      "sha256": "5577b0f76bf3f17c23ef77b9cd3958f20097cf6f09a70ca679af7d63958fc94e"
+    },
+    {
+      "path": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/printer-daemon-v1/vet.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/printer-daemon-v1/windows-build.log",
+      "bytes": 1914,
+      "sha256": "c49e2612f9a32ee827cc25fd2c91ea15b9f183fdead1fd2569141e6d85b0dfb2"
+    }
+  ],
+  "buildCommands": [
+    "go build -mod=readonly -trimpath -o artifacts/printer-agent-darwin-arm64 ./cmd/printer-agent",
+    "go build -mod=readonly -trimpath -race -o artifacts/printer-agent-darwin-arm64-race ./cmd/printer-agent",
+    "CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -mod=readonly -trimpath -o artifacts/printer-agent-windows-amd64.exe ./cmd/printer-agent",
+    "CGO_ENABLED=0 GOOS=windows GOARCH=arm64 go build -mod=readonly -trimpath -o artifacts/printer-agent-windows-arm64.exe ./cmd/printer-agent",
+    "VYNIC_PRINTER_AGENT_BINARY=<actual normal/race executable> go test -mod=readonly [-race] -count=1 -json ./internal/printerdaemon ./cmd/printer-agent",
+    "go vet -mod=readonly ./internal/printerdaemon ./cmd/printer-agent",
+    "CGO_ENABLED=0 GOOS=windows GOARCH=<arch> go test -mod=readonly -c -o <task-artifact.exe> <daemon/CLI package>",
+    "python3 packaging/windows/printer-agent/build-bundle.py --config <descriptor> --out <new-bundle>"
+  ],
+  "executedBoundaries": [
+    "actual nonprivileged foreground process+mTLS health/exclusive second instance/stop marker/process restart",
+    "temporary dedicated bound SQLite; STARTED becomes UNCERTAIN; spent beep UNCERTAIN never replayed; frozen envelopes exact",
+    "stop timeout retains original DB/host; unresolved startup/output/close failure retains owner/process",
+    "actual trusted SQL/marker/artifact failure drains and is visible",
+    "strict schemas/current client CA/purpose and independent Device/Go installation context",
+    "PlanOnly zero fake backend calls; future Apply fake backend exact stopped/manual argv; no actual SCM calls"
+  ],
+  "remainingBlockers": [
+    "new native Windows daemon/foreground/installer account lifecycle verification pending parent VM approval hold",
+    "SCM registration/start and selected service principal qualification not executed",
+    "production authoritative Device/Venue/current Device installation + signed terminal/origin and trusted route/profile provisioning bridge unavailable",
+    "shared authenticated LAN Raft membership/bootstrap/relay/claim-dispatch composition unavailable in daemon; shared held health is infrastructure only",
+    "business/Hive writer cutover and original writer removal not activated",
+    "physical/model/driver/rendering/downstream RAW fence and signed production cutover/release qualification pending"
+  ],
+  "noPhysicalJobs": true,
+  "noOriginalCheckoutWrites": true,
+  "noSCMAccountACLFirewallTrustDriverOperations": true
+}

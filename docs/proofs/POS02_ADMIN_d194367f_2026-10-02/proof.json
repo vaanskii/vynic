@@ -1,0 +1,62 @@
+{
+  "status": "PASS_SYNTHETIC_CANDIDATE",
+  "milestoneDone": false,
+  "candidateIdentity": "POS02_ADMIN_d194367f_2026-10-02",
+  "baseCommit": "275688e1e5c5dc0e26e62705ab0c7670cf16d99a",
+  "createdAtUtc": "2026-10-02T21:18:34.515058+00:00",
+  "sourceFileCount": 876,
+  "ownedRuntimePaths": 44,
+  "sourceManifestSha256": "d194367f8fd0e2f6d9dcfea86f52d09cb605b32779b7904613b00466bd084de8",
+  "sourceZipSha256": "11b1da1ac84fc9930397fb867ab8f5067cd21c2bbd97ae4a723e5f1609c99dc4",
+  "acceptance": {
+    "exitCode": 0,
+    "passingChecks": 855,
+    "suites": 72,
+    "logs": "logs.zip/admin-acceptance-tests.jsonl"
+  },
+  "focused": {
+    "passingChecks": 124,
+    "suites": 10,
+    "actualScreenRegressions": 2,
+    "screenTestsPass": true
+  },
+  "analyzer": {
+    "status": "PASS",
+    "log": "logs.zip/admin-analyze-final.log"
+  },
+  "format": {
+    "status": "PASS",
+    "ownedDartFiles": 43,
+    "log": "logs.zip/admin-format.log"
+  },
+  "nativeRecovery": {
+    "status": "PASS",
+    "sigkillRestartCheckpoints": 102,
+    "syntheticOnly": true,
+    "differentProcessRecovery": true,
+    "sourceBinding": "native-recovery.json"
+  },
+  "macBuild": {
+    "status": "PASS",
+    "entrypoint": "lib/main_pos.dart",
+    "mode": "debug",
+    "artifactDisplayName": "Vynic Manager.app",
+    "guiLaunched": false,
+    "log": "logs.zip/admin-build.log"
+  },
+  "review": "review.json",
+  "WindowsCurrentRevision": "PENDING_NOT_RUN",
+  "priorWindows50CheckEvidence": "../POS02_WINDOWS_SMOKE_275688e1_2026-10-02.json; earlier867-file candidate, user-reported",
+  "physicalAcceptance": "PENDING_SUPPORTED_MODEL_MATRIX",
+  "receiptAndPaperReconciliationOwnerPolicy": "UNCONFIGURED_PENDING_OWNER_DECISION",
+  "kitchenManualCopyPolicy": "EXPLICIT_USER_REQUEST_AUTHENTICATED_STAFF",
+  "oneShotAcceptanceRunner": "DEFERRED_NOT_IMPLEMENTED",
+  "conditionalLocalCommit": "NOT_ALLOWED_UNTIL_MILESTONE_DONE",
+  "nextMilestoneAfterPos02": "SEC-05",
+  "websiteExpansion": "DEFERRED_CONCURRENT_CLAUDE_OWNERSHIP_AND_RUNTIME_CONTRACT",
+  "initialFailedTestAttemptsPreserved": true,
+  "handoffScripts": "PASS_READ_ONLY_REVIEW / WINDOWS_UNEXECUTED",
+  "cachedLauncherSmoke": "cached-launcher-smoke.json; 16 macOS checks, not added to primary855 count",
+  "verifierNegativeCases": "PASS / truncated, duplicate, unexpected checkpoint IDs rejected",
+  "gitDiffCheck": "PASS"
+}

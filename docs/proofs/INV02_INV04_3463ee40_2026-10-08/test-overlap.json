@@ -1,0 +1,12 @@
+{
+  "backendAggregate": 858,
+  "inventoryFocused": 60,
+  "authPlatformFoundationPg": 141,
+  "existingInventoryCases": 53,
+  "newInventoryCases": 7,
+  "inventoryAuthPlatformOverlap": 0,
+  "inventoryAggregateOverlap": 7,
+  "extraAggregateOverlap": 0,
+  "distinctBackendPassedCases": 1052,
+  "comparisonIdentity": "repository file + assertion ordinal + full test name"
+}

@@ -1,27 +1,66 @@
 import { List, X } from "@phosphor-icons/react";
-import { useState } from "react";
+import { gsap } from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { motion, useReducedMotion } from "motion/react";
+import { useEffect, useRef, useState } from "react";
 import vynicLogo from "../../assets/vynic-logo.png";
+import { hasCustomerSession } from "../../customer/api";
 import { localeHref, useLocale } from "../../lib/i18n";
-import { Button } from "../ui/Button";
+import { ButtonLink } from "../ui/Button";
+import { curve, duration } from "../../lib/motion";
 
+gsap.registerPlugin(ScrollTrigger);
+
+const focusRing =
+  "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-vynic-plum";
+
+/**
+ * Vynic product navigation. Visitors can request access or sign in; an owner who is
+ * already signed in gets a direct way back to their dashboard.
+ */
 export function Navbar() {
   const [open, setOpen] = useState(false);
+  const headerRef = useRef<HTMLElement>(null);
+  const reduceMotion = useReducedMotion();
   const { copy, locale } = useLocale();
+
+  // A hairline shadow once the page has scrolled; written to the DOM directly.
+  useEffect(() => {
+    const header = headerRef.current;
+    if (!header) return;
+    const trigger = ScrollTrigger.create({
+      start: 12,
+      end: "max",
+      onToggle: (self) => {
+        header.dataset.scrolled = String(self.isActive);
+      },
+    });
+    header.dataset.scrolled = String(trigger.isActive);
+    return () => trigger.kill();
+  }, []);
+  const home = localeHref(locale);
+  const signedIn = hasCustomerSession();
   const navItems = [
-    {label: locale === "ka" ? "დაიწყე Vynic-ის გამოყენება" : "Get started", href: "/start"},
-    { label: copy.nav.product, href: "#product" },
-    { label: copy.nav.floorPlan, href: "#floor-plan" },
-    { label: copy.nav.reservations, href: "#reservations" },
-    { label: copy.nav.manager, href: "#manager" },
-    { label: copy.nav.contact, href: "#contact" },
+    { label: copy.nav.product, href: `${home}#product` },
+    { label: copy.nav.floorPlan, href: `${home}#floor-plan` },
+    { label: copy.nav.reservations, href: `${home}#reservations` },
+    { label: copy.nav.manager, href: `${home}#manager` },
+    { label: copy.nav.contact, href: `${home}#contact` },
   ];
+  const close = () => setOpen(false);
+  const primary = signedIn
+    ? { to: "/dashboard", label: copy.nav.dashboard }
+    : {
+        to: "/request-access",
+        label: locale === "ka" ? "გამოსცადე Vynic" : "Try Vynic",
+      };
 
   return (
-    <header className="sticky top-0 z-30 border-b border-vynic-border/80 bg-vynic-background/92 backdrop-blur-xl">
-      <nav className="mx-auto flex h-14 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
+    <header ref={headerRef} className="vynic-header sticky top-0 z-30 border-b border-vynic-border/80 bg-vynic-background/92 backdrop-blur-xl">
+      <nav className="mx-auto flex h-14 max-w-7xl items-center justify-between gap-3 px-4 sm:px-6 lg:px-8">
         <a
-          href={localeHref(locale)}
-          className="flex shrink-0 items-center gap-3 rounded-[8px] text-vynic-charcoal focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-vynic-plum"
+          href={home}
+          className={`flex shrink-0 items-center gap-3 rounded-[8px] text-vynic-charcoal ${focusRing}`}
           aria-label={copy.nav.homeLabel}
         >
           <img className="h-8 w-8 rounded-[8px]" src={vynicLogo} alt="" />
@@ -37,60 +76,80 @@ export function Navbar() {
             <a
               key={item.href}
               href={item.href}
-              className="whitespace-nowrap text-sm font-medium text-vynic-muted transition hover:text-vynic-charcoal focus-visible:rounded-[8px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-vynic-plum"
+              className={`vynic-nav-link whitespace-nowrap text-sm font-medium text-vynic-muted transition-colors duration-200 hover:text-vynic-charcoal focus-visible:rounded-[8px] ${focusRing}`}
             >
               {item.label}
             </a>
           ))}
         </div>
 
-        <div className="hidden shrink-0 items-center gap-4 xl:flex">
+        <div className="flex min-w-0 shrink-0 items-center gap-3 xl:gap-4">
           <a
             href={localeHref(locale === "en" ? "ka" : "en")}
-            className="rounded-[8px] font-vynic-mono text-xs font-semibold text-vynic-muted transition hover:text-vynic-plum focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-vynic-plum"
+            className={`hidden rounded-[8px] font-vynic-mono text-xs font-semibold text-vynic-muted transition hover:text-vynic-plum xl:inline ${focusRing}`}
             aria-label="English / ქართული"
           >
             {locale.toUpperCase()} / {copy.nav.languageLabel}
           </a>
-          <Button href="#contact" className="min-h-9 px-4 py-2">
-            {copy.nav.bookDemo}
-          </Button>
+          {!signedIn && (
+            <a href="/login" className={`text-sm ${focusRing}`}>
+              {copy.nav.login}
+            </a>
+          )}
+          <ButtonLink
+            to={primary.to}
+            className="min-h-9 px-3 py-2 sm:px-4"
+            iconClassName="hidden sm:block"
+          >
+            {primary.label}
+          </ButtonLink>
+          <button
+            className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-[8px] border border-vynic-border bg-vynic-surface text-vynic-charcoal transition hover:border-vynic-plum focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-vynic-plum xl:hidden"
+            type="button"
+            aria-label={open ? copy.nav.closeNav : copy.nav.openNav}
+            aria-expanded={open}
+            onClick={() => setOpen((value) => !value)}
+          >
+            {open ? (
+              <X size={20} weight="bold" />
+            ) : (
+              <List size={20} weight="bold" />
+            )}
+          </button>
         </div>
-
-        <button
-          className="inline-flex h-10 w-10 items-center justify-center rounded-[8px] border border-vynic-border bg-vynic-surface text-vynic-charcoal transition hover:border-vynic-plum focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-vynic-plum xl:hidden"
-          type="button"
-          aria-label={open ? copy.nav.closeNav : copy.nav.openNav}
-          aria-expanded={open}
-          onClick={() => setOpen((value) => !value)}
-        >
-          {open ? <X size={20} weight="bold" /> : <List size={20} weight="bold" />}
-        </button>
       </nav>
 
+      {/* Opens with a short settle; closes instantly so an in-page link
+          scrolls to the right place (the menu sits in the sticky header). */}
       {open ? (
-        <div className="border-t border-vynic-border bg-vynic-background px-4 py-4 xl:hidden">
+        <motion.div
+          key="mobile-nav"
+          className="border-t border-vynic-border bg-vynic-background px-4 py-4 xl:hidden"
+          initial={reduceMotion ? false : { opacity: 0, y: -8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: duration.base, ease: curve.out }}
+        >
           <div className="mx-auto grid max-w-7xl gap-2">
             {navItems.map((item) => (
               <a
                 key={item.href}
                 href={item.href}
                 className="rounded-[8px] px-3 py-3 text-base font-medium text-vynic-charcoal transition hover:bg-vynic-surface focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-vynic-plum"
-                onClick={() => setOpen(false)}
+                onClick={close}
               >
                 {item.label}
               </a>
             ))}
             <div className="mt-2 flex flex-wrap items-center gap-3 border-t border-vynic-border pt-4">
-              <a href={localeHref(locale === "en" ? "ka" : "en")} className="font-vynic-mono text-xs font-semibold text-vynic-muted">
+              <a
+                href={localeHref(locale === "en" ? "ka" : "en")}
+                className="font-vynic-mono text-xs font-semibold text-vynic-muted"
+              >
                 {locale.toUpperCase()} / {copy.nav.languageLabel}
               </a>
-              <Button href="#contact" onClick={() => setOpen(false)}>
-                {copy.nav.bookDemo}
-              </Button>
             </div>
           </div>
-        </div>
+        </motion.div>
       ) : null}
     </header>
   );

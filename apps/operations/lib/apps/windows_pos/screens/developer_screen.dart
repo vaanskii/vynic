@@ -82,6 +82,12 @@ class _DeveloperScreenState extends State<DeveloperScreen> {
   }
 
   Future<void> _savePrinterSettings() async {
+    if (!DeveloperAccess.can(DeveloperScope.printers)) {
+      unawaited(
+        showErrorToast(context, 'Developer printer access is required'),
+      );
+      return;
+    }
     setState(() => _isSavingPrinterSettings = true);
     try {
       await DatabaseService.savePrinterConfiguration(
@@ -102,6 +108,12 @@ class _DeveloperScreenState extends State<DeveloperScreen> {
   }
 
   Future<void> _testPrinterConnections() async {
+    if (!DeveloperAccess.can(DeveloperScope.printers)) {
+      unawaited(
+        showErrorToast(context, 'Developer printer access is required'),
+      );
+      return;
+    }
     setState(() => _isTestingPrinters = true);
     try {
       await PrinterService.initialize(forceReconnect: true);
@@ -118,8 +130,12 @@ class _DeveloperScreenState extends State<DeveloperScreen> {
   /// Locking — by the button, or by the token running out mid-session — closes
   /// the screen rather than leaving the tools on display behind a dead session.
   void _onAccessChanged() {
-    if (!mounted || DeveloperAccess.isUnlocked) return;
-    Navigator.of(context).maybePop();
+    if (!mounted) return;
+    if (!DeveloperAccess.isUnlocked) {
+      Navigator.of(context).maybePop();
+    } else {
+      setState(() {});
+    }
   }
 
   Future<void> _createBackupFile() async {
@@ -233,7 +249,9 @@ class _DeveloperScreenState extends State<DeveloperScreen> {
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
         children: [
           for (final entry in _sections.entries)
-            _buildMenuItem(entry.key, entry.value.icon, entry.value.label),
+            if (entry.key != 'printers' ||
+                DeveloperAccess.can(DeveloperScope.printers))
+              _buildMenuItem(entry.key, entry.value.icon, entry.value.label),
         ],
       ),
     );
@@ -288,6 +306,11 @@ class _DeveloperScreenState extends State<DeveloperScreen> {
       case 'errors':
         return const AdminErrorLogSection();
       case 'printers':
+        if (!DeveloperAccess.can(DeveloperScope.printers)) {
+          return const Center(
+            child: Text('Developer printer access is required'),
+          );
+        }
         return AdminPrintersSection(
           kitchenPrinterController: _kitchenPrinterController,
           receiptPrinterController: _receiptPrinterController,

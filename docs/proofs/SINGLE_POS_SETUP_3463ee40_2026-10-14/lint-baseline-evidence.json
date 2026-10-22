@@ -1,0 +1,29 @@
+{
+  "remaining": [
+    {
+      "file": "apps/backend/src/customer/customer.controller.ts",
+      "rule": "@typescript-eslint/no-base-to-string",
+      "line": 181,
+      "surroundingSourceUnchangedFromBaseline": true
+    },
+    {
+      "file": "apps/backend/src/customer/customer.controller.ts",
+      "rule": "@typescript-eslint/no-unnecessary-type-assertion",
+      "line": 213,
+      "surroundingSourceUnchangedFromBaseline": true
+    },
+    {
+      "file": "apps/backend/src/customer/customer.controller.ts",
+      "rule": "@typescript-eslint/no-unsafe-assignment",
+      "line": 261,
+      "surroundingSourceUnchangedFromBaseline": true
+    },
+    {
+      "file": "apps/backend/src/customer/customer.service.ts",
+      "rule": "@typescript-eslint/no-unused-vars",
+      "line": 8,
+      "surroundingSourceUnchangedFromBaseline": true
+    }
+  ],
+  "addedDiagnosticsInChangedImplementation": 0
+}

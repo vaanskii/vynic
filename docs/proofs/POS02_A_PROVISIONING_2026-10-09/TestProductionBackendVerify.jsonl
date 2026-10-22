@@ -1,0 +1,9 @@
+{"Time":"2026-10-09T21:32:09.00979+04:00","Action":"start","Package":"vynic.local/edge/internal/printerprovisioning"}
+{"Time":"2026-10-09T21:32:09.304408+04:00","Action":"run","Package":"vynic.local/edge/internal/printerprovisioning","Test":"TestProductionBackendVerify"}
+{"Time":"2026-10-09T21:32:09.304474+04:00","Action":"output","Package":"vynic.local/edge/internal/printerprovisioning","Test":"TestProductionBackendVerify","Output":"=== RUN   TestProductionBackendVerify\n"}
+{"Time":"2026-10-09T21:32:09.316839+04:00","Action":"output","Package":"vynic.local/edge/internal/printerprovisioning","Test":"TestProductionBackendVerify","Output":"    production_test.go:500: Real PostgreSQL/HTTP issuer -\u003e Go durable verification -\u003e mutual TLS -\u003e station authority -\u003e learned revocation: PASS\n"}
+{"Time":"2026-10-09T21:32:09.317824+04:00","Action":"output","Package":"vynic.local/edge/internal/printerprovisioning","Test":"TestProductionBackendVerify","Output":"--- PASS: TestProductionBackendVerify (0.01s)\n"}
+{"Time":"2026-10-09T21:32:09.317833+04:00","Action":"pass","Package":"vynic.local/edge/internal/printerprovisioning","Test":"TestProductionBackendVerify","Elapsed":0.01}
+{"Time":"2026-10-09T21:32:09.317849+04:00","Action":"output","Package":"vynic.local/edge/internal/printerprovisioning","Output":"PASS\n"}
+{"Time":"2026-10-09T21:32:09.318437+04:00","Action":"output","Package":"vynic.local/edge/internal/printerprovisioning","Output":"ok  \tvynic.local/edge/internal/printerprovisioning\t0.308s\n"}
+{"Time":"2026-10-09T21:32:09.318445+04:00","Action":"pass","Package":"vynic.local/edge/internal/printerprovisioning","Elapsed":0.309}

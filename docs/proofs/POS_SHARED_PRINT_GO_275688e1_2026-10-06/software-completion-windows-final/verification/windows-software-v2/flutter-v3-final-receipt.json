@@ -1,0 +1,335 @@
+{
+  "schema": 1,
+  "createdAtUtc": "2026-10-06T18:05:45.953182+00:00",
+  "status": "PASS_EXACT_FROZEN_V2_WINDOWS_39_68",
+  "sourceReceiptSHA256": "faaaec2f1ece4f8259353666000eb4c0d3aee6143e73ae7fdf90772a937b581b",
+  "runnerResult": {
+    "schema": 1,
+    "status": "PASS",
+    "failure": null,
+    "startedUtc": "2026-10-06T18:02:43.7383646Z",
+    "finishedUtc": "2026-10-06T18:04:50.3900283Z",
+    "SID": "S-1-5-21-611125631-3759947118-1641436196-1000",
+    "currentUser": "VANSKI\\vaanskii",
+    "job": "C:\\Users\\vaanskii\\AppData\\Local\\VynicReadinessNative\\software-1a63ebf3cde4-flutter",
+    "sourceReceiptSHA256": "faaaec2f1ece4f8259353666000eb4c0d3aee6143e73ae7fdf90772a937b581b",
+    "sourceFiles": 1109,
+    "sourceBefore": true,
+    "sourceAfter": true,
+    "testSuites": 39,
+    "analysisFiles": 68,
+    "testExitCode": 0,
+    "analysisExitCode": 0,
+    "fixtures": {
+      "operational-proof-server-windows.test.exe": {
+        "sha256": "2c9370e4c4cfdb55094f63a26a2bf5b45bff43868a1a2c14a0f47c2654c70abb",
+        "bytes": 26370560
+      },
+      "printer-agent-server-windows.test.exe": {
+        "sha256": "f335745e38be573f5ec031478eab4b524a8069c811324ac2a5d39876b676e894",
+        "bytes": 25833472
+      }
+    },
+    "guestArchitecture": "ARM64",
+    "fixtureArchitecture": "amd64",
+    "printJobsBefore": 0,
+    "printJobsAfter": 0,
+    "physicalJobs": 0,
+    "productStarted": false,
+    "installed": false,
+    "published": false,
+    "serviceOperations": false,
+    "driverOperations": false,
+    "VMSettingsChanged": false,
+    "persistentCredentialsChanged": false
+  },
+  "suiteCount": 39,
+  "visiblePassed": 623,
+  "hiddenPassed": 51,
+  "skipped": 0,
+  "errorEvents": 0,
+  "machineDone": {
+    "success": true,
+    "type": "done",
+    "time": 102405
+  },
+  "testDurationMs": 102405,
+  "allRequestedSuitesMatched": true,
+  "perSuite": [
+    {
+      "path": "C:/Users/vaanskii/AppData/Local/VynicReadinessNative/software-1a63ebf3cde4-flutter/source/apps/operations/test/unit/cancel_order_transaction_test.dart",
+      "visiblePassed": 11,
+      "hiddenPassed": 3
+    },
+    {
+      "path": "C:/Users/vaanskii/AppData/Local/VynicReadinessNative/software-1a63ebf3cde4-flutter/source/apps/operations/test/unit/cloud_printer_runtime_sync_test.dart",
+      "visiblePassed": 20,
+      "hiddenPassed": 1
+    },
+    {
+      "path": "C:/Users/vaanskii/AppData/Local/VynicReadinessNative/software-1a63ebf3cde4-flutter/source/apps/operations/test/unit/cloud_printer_runtime_test.dart",
+      "visiblePassed": 30,
+      "hiddenPassed": 1
+    },
+    {
+      "path": "C:/Users/vaanskii/AppData/Local/VynicReadinessNative/software-1a63ebf3cde4-flutter/source/apps/operations/test/unit/cluster_print_effect_test.dart",
+      "visiblePassed": 7,
+      "hiddenPassed": 1
+    },
+    {
+      "path": "C:/Users/vaanskii/AppData/Local/VynicReadinessNative/software-1a63ebf3cde4-flutter/source/apps/operations/test/unit/edge_device_credential_store_test.dart",
+      "visiblePassed": 8,
+      "hiddenPassed": 1
+    },
+    {
+      "path": "C:/Users/vaanskii/AppData/Local/VynicReadinessNative/software-1a63ebf3cde4-flutter/source/apps/operations/test/unit/escpos_capability_renderer_test.dart",
+      "visiblePassed": 24,
+      "hiddenPassed": 3
+    },
+    {
+      "path": "C:/Users/vaanskii/AppData/Local/VynicReadinessNative/software-1a63ebf3cde4-flutter/source/apps/operations/test/unit/escpos_long_check_test.dart",
+      "visiblePassed": 1,
+      "hiddenPassed": 1
+    },
+    {
+      "path": "C:/Users/vaanskii/AppData/Local/VynicReadinessNative/software-1a63ebf3cde4-flutter/source/apps/operations/test/unit/operational_manager_items_test.dart",
+      "visiblePassed": 19,
+      "hiddenPassed": 1
+    },
+    {
+      "path": "C:/Users/vaanskii/AppData/Local/VynicReadinessNative/software-1a63ebf3cde4-flutter/source/apps/operations/test/unit/operational_ordinary_planner_test.dart",
+      "visiblePassed": 20,
+      "hiddenPassed": 1
+    },
+    {
+      "path": "C:/Users/vaanskii/AppData/Local/VynicReadinessNative/software-1a63ebf3cde4-flutter/source/apps/operations/test/unit/operational_proof_client_test.dart",
+      "visiblePassed": 46,
+      "hiddenPassed": 1
+    },
+    {
+      "path": "C:/Users/vaanskii/AppData/Local/VynicReadinessNative/software-1a63ebf3cde4-flutter/source/apps/operations/test/unit/operational_proof_wire_test.dart",
+      "visiblePassed": 19,
+      "hiddenPassed": 1
+    },
+    {
+      "path": "C:/Users/vaanskii/AppData/Local/VynicReadinessNative/software-1a63ebf3cde4-flutter/source/apps/operations/test/unit/optional_printer_beep_test.dart",
+      "visiblePassed": 14,
+      "hiddenPassed": 1
+    },
+    {
+      "path": "C:/Users/vaanskii/AppData/Local/VynicReadinessNative/software-1a63ebf3cde4-flutter/source/apps/operations/test/unit/pos02_acceptance_runner_test.dart",
+      "visiblePassed": 52,
+      "hiddenPassed": 1
+    },
+    {
+      "path": "C:/Users/vaanskii/AppData/Local/VynicReadinessNative/software-1a63ebf3cde4-flutter/source/apps/operations/test/unit/pos02_backup_restore_test.dart",
+      "visiblePassed": 7,
+      "hiddenPassed": 1
+    },
+    {
+      "path": "C:/Users/vaanskii/AppData/Local/VynicReadinessNative/software-1a63ebf3cde4-flutter/source/apps/operations/test/unit/pos02_local_printers_test.dart",
+      "visiblePassed": 16,
+      "hiddenPassed": 1
+    },
+    {
+      "path": "C:/Users/vaanskii/AppData/Local/VynicReadinessNative/software-1a63ebf3cde4-flutter/source/apps/operations/test/unit/pos02_preview_safety_test.dart",
+      "visiblePassed": 18,
+      "hiddenPassed": 1
+    },
+    {
+      "path": "C:/Users/vaanskii/AppData/Local/VynicReadinessNative/software-1a63ebf3cde4-flutter/source/apps/operations/test/unit/pos02_print_delivery_test.dart",
+      "visiblePassed": 36,
+      "hiddenPassed": 1
+    },
+    {
+      "path": "C:/Users/vaanskii/AppData/Local/VynicReadinessNative/software-1a63ebf3cde4-flutter/source/apps/operations/test/unit/pos05_independent_ownership_test.dart",
+      "visiblePassed": 5,
+      "hiddenPassed": 1
+    },
+    {
+      "path": "C:/Users/vaanskii/AppData/Local/VynicReadinessNative/software-1a63ebf3cde4-flutter/source/apps/operations/test/unit/pos05_order_table_mutation_test.dart",
+      "visiblePassed": 4,
+      "hiddenPassed": 1
+    },
+    {
+      "path": "C:/Users/vaanskii/AppData/Local/VynicReadinessNative/software-1a63ebf3cde4-flutter/source/apps/operations/test/unit/pos05_ownership_recovery_test.dart",
+      "visiblePassed": 6,
+      "hiddenPassed": 1
+    },
+    {
+      "path": "C:/Users/vaanskii/AppData/Local/VynicReadinessNative/software-1a63ebf3cde4-flutter/source/apps/operations/test/unit/pos_update_readiness_test.dart",
+      "visiblePassed": 9,
+      "hiddenPassed": 1
+    },
+    {
+      "path": "C:/Users/vaanskii/AppData/Local/VynicReadinessNative/software-1a63ebf3cde4-flutter/source/apps/operations/test/unit/print_identity_credential_admission_test.dart",
+      "visiblePassed": 6,
+      "hiddenPassed": 1
+    },
+    {
+      "path": "C:/Users/vaanskii/AppData/Local/VynicReadinessNative/software-1a63ebf3cde4-flutter/source/apps/operations/test/unit/print_routing_plan_test.dart",
+      "visiblePassed": 4,
+      "hiddenPassed": 1
+    },
+    {
+      "path": "C:/Users/vaanskii/AppData/Local/VynicReadinessNative/software-1a63ebf3cde4-flutter/source/apps/operations/test/unit/printer_agent_client_test.dart",
+      "visiblePassed": 23,
+      "hiddenPassed": 1
+    },
+    {
+      "path": "C:/Users/vaanskii/AppData/Local/VynicReadinessNative/software-1a63ebf3cde4-flutter/source/apps/operations/test/unit/printer_agent_runtime_profile_test.dart",
+      "visiblePassed": 32,
+      "hiddenPassed": 1
+    },
+    {
+      "path": "C:/Users/vaanskii/AppData/Local/VynicReadinessNative/software-1a63ebf3cde4-flutter/source/apps/operations/test/unit/printer_capability_profile_test.dart",
+      "visiblePassed": 7,
+      "hiddenPassed": 1
+    },
+    {
+      "path": "C:/Users/vaanskii/AppData/Local/VynicReadinessNative/software-1a63ebf3cde4-flutter/source/apps/operations/test/unit/printer_destination_test.dart",
+      "visiblePassed": 4,
+      "hiddenPassed": 1
+    },
+    {
+      "path": "C:/Users/vaanskii/AppData/Local/VynicReadinessNative/software-1a63ebf3cde4-flutter/source/apps/operations/test/unit/printer_route_catalog_test.dart",
+      "visiblePassed": 27,
+      "hiddenPassed": 1
+    },
+    {
+      "path": "C:/Users/vaanskii/AppData/Local/VynicReadinessNative/software-1a63ebf3cde4-flutter/source/apps/operations/test/unit/receipt_service_fee_line_test.dart",
+      "visiblePassed": 19,
+      "hiddenPassed": 3
+    },
+    {
+      "path": "C:/Users/vaanskii/AppData/Local/VynicReadinessNative/software-1a63ebf3cde4-flutter/source/apps/operations/test/unit/routed_print_delivery_test.dart",
+      "visiblePassed": 11,
+      "hiddenPassed": 1
+    },
+    {
+      "path": "C:/Users/vaanskii/AppData/Local/VynicReadinessNative/software-1a63ebf3cde4-flutter/source/apps/operations/test/unit/runtime_config_test.dart",
+      "visiblePassed": 1,
+      "hiddenPassed": 1
+    },
+    {
+      "path": "C:/Users/vaanskii/AppData/Local/VynicReadinessNative/software-1a63ebf3cde4-flutter/source/apps/operations/test/unit/shared_print_effect_test.dart",
+      "visiblePassed": 7,
+      "hiddenPassed": 1
+    },
+    {
+      "path": "C:/Users/vaanskii/AppData/Local/VynicReadinessNative/software-1a63ebf3cde4-flutter/source/apps/operations/test/unit/windows_spooler_transport_test.dart",
+      "visiblePassed": 34,
+      "hiddenPassed": 1
+    },
+    {
+      "path": "C:/Users/vaanskii/AppData/Local/VynicReadinessNative/software-1a63ebf3cde4-flutter/source/apps/operations/test/widget/pos02_admin_printers_test.dart",
+      "visiblePassed": 9,
+      "hiddenPassed": 1
+    },
+    {
+      "path": "C:/Users/vaanskii/AppData/Local/VynicReadinessNative/software-1a63ebf3cde4-flutter/source/apps/operations/test/widget/pos02_kitchen_entry_points_test.dart",
+      "visiblePassed": 2,
+      "hiddenPassed": 3
+    },
+    {
+      "path": "C:/Users/vaanskii/AppData/Local/VynicReadinessNative/software-1a63ebf3cde4-flutter/source/apps/operations/test/widget/pos02_print_jobs_test.dart",
+      "visiblePassed": 9,
+      "hiddenPassed": 3
+    },
+    {
+      "path": "C:/Users/vaanskii/AppData/Local/VynicReadinessNative/software-1a63ebf3cde4-flutter/source/apps/operations/test/widget/printer_agent_status_card_test.dart",
+      "visiblePassed": 33,
+      "hiddenPassed": 1
+    },
+    {
+      "path": "C:/Users/vaanskii/AppData/Local/VynicReadinessNative/software-1a63ebf3cde4-flutter/source/apps/operations/test/widget/printer_route_configuration_test.dart",
+      "visiblePassed": 16,
+      "hiddenPassed": 1
+    },
+    {
+      "path": "C:/Users/vaanskii/AppData/Local/VynicReadinessNative/software-1a63ebf3cde4-flutter/source/apps/operations/test/widget/production_print_copy_test.dart",
+      "visiblePassed": 7,
+      "hiddenPassed": 3
+    }
+  ],
+  "actualManualTLSAndOfflineTest": {
+    "name": "manual card uses real profile and mTLS health then shows actual offline failure",
+    "result": "success",
+    "skipped": false
+  },
+  "actualSymlinkAndDirectoryEscapeTest": {
+    "name": "symlinked key or directory escape is refused",
+    "result": "success",
+    "skipped": false
+  },
+  "analysisExitCode": 0,
+  "analysisFiles": 68,
+  "analysisNoIssues": true,
+  "rawFiles": {
+    "analysis.log": {
+      "sha256": "45ea90c6c4d114d7eecfd9e580705b7b0b4e98d3c49c7270835c659537d3ee9a",
+      "bytes": 4096
+    },
+    "windows-software-flutter.json": {
+      "sha256": "756e1295ec39fc92ea78d05c236261cc57aa7c86d8f61850d90f5c450a32ae29",
+      "bytes": 1844
+    },
+    "flutter-tests.jsonl": {
+      "sha256": "e3169377d751af410325a114dcc5d824d1eadc5762e8594ad1c3f6284bd0bdd3",
+      "bytes": 1059032
+    },
+    "offline-pub-get.log": {
+      "sha256": "30229f9d0b6e8f121372205ec994858e2208d3f237440ee516b1058e6ad20a97",
+      "bytes": 3380
+    }
+  },
+  "rawResultDirectory": "/Users/vaanskii/Developer/vynic/docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/software-windows-flutter-result-v3",
+  "nonMachineRecordCount": 39,
+  "nonMachineRecords": [
+    "[{\"event\":\"test.startedProcess\",\"params\":{\"vmServiceUri\":null}}]",
+    "[{\"event\":\"test.startedProcess\",\"params\":{\"vmServiceUri\":null}}]",
+    "[{\"event\":\"test.startedProcess\",\"params\":{\"vmServiceUri\":null}}]",
+    "[{\"event\":\"test.startedProcess\",\"params\":{\"vmServiceUri\":null}}]",
+    "[{\"event\":\"test.startedProcess\",\"params\":{\"vmServiceUri\":null}}]",
+    "[{\"event\":\"test.startedProcess\",\"params\":{\"vmServiceUri\":null}}]",
+    "[{\"event\":\"test.startedProcess\",\"params\":{\"vmServiceUri\":null}}]",
+    "[{\"event\":\"test.startedProcess\",\"params\":{\"vmServiceUri\":null}}]",
+    "[{\"event\":\"test.startedProcess\",\"params\":{\"vmServiceUri\":null}}]",
+    "[{\"event\":\"test.startedProcess\",\"params\":{\"vmServiceUri\":null}}]",
+    "[{\"event\":\"test.startedProcess\",\"params\":{\"vmServiceUri\":null}}]",
+    "[{\"event\":\"test.startedProcess\",\"params\":{\"vmServiceUri\":null}}]",
+    "[{\"event\":\"test.startedProcess\",\"params\":{\"vmServiceUri\":null}}]",
+    "[{\"event\":\"test.startedProcess\",\"params\":{\"vmServiceUri\":null}}]",
+    "[{\"event\":\"test.startedProcess\",\"params\":{\"vmServiceUri\":null}}]",
+    "[{\"event\":\"test.startedProcess\",\"params\":{\"vmServiceUri\":null}}]",
+    "[{\"event\":\"test.startedProcess\",\"params\":{\"vmServiceUri\":null}}]",
+    "[{\"event\":\"test.startedProcess\",\"params\":{\"vmServiceUri\":null}}]",
+    "[{\"event\":\"test.startedProcess\",\"params\":{\"vmServiceUri\":null}}]",
+    "[{\"event\":\"test.startedProcess\",\"params\":{\"vmServiceUri\":null}}]",
+    "[{\"event\":\"test.startedProcess\",\"params\":{\"vmServiceUri\":null}}]",
+    "[{\"event\":\"test.startedProcess\",\"params\":{\"vmServiceUri\":null}}]",
+    "[{\"event\":\"test.startedProcess\",\"params\":{\"vmServiceUri\":null}}]",
+    "[{\"event\":\"test.startedProcess\",\"params\":{\"vmServiceUri\":null}}]",
+    "[{\"event\":\"test.startedProcess\",\"params\":{\"vmServiceUri\":null}}]",
+    "[{\"event\":\"test.startedProcess\",\"params\":{\"vmServiceUri\":null}}]",
+    "[{\"event\":\"test.startedProcess\",\"params\":{\"vmServiceUri\":null}}]",
+    "[{\"event\":\"test.startedProcess\",\"params\":{\"vmServiceUri\":null}}]",
+    "[{\"event\":\"test.startedProcess\",\"params\":{\"vmServiceUri\":null}}]",
+    "[{\"event\":\"test.startedProcess\",\"params\":{\"vmServiceUri\":null}}]",
+    "[{\"event\":\"test.startedProcess\",\"params\":{\"vmServiceUri\":null}}]",
+    "[{\"event\":\"test.startedProcess\",\"params\":{\"vmServiceUri\":null}}]",
+    "[{\"event\":\"test.startedProcess\",\"params\":{\"vmServiceUri\":null}}]",
+    "[{\"event\":\"test.startedProcess\",\"params\":{\"vmServiceUri\":null}}]",
+    "[{\"event\":\"test.startedProcess\",\"params\":{\"vmServiceUri\":null}}]",
+    "[{\"event\":\"test.startedProcess\",\"params\":{\"vmServiceUri\":null}}]",
+    "[{\"event\":\"test.startedProcess\",\"params\":{\"vmServiceUri\":null}}]",
+    "[{\"event\":\"test.startedProcess\",\"params\":{\"vmServiceUri\":null}}]",
+    "[{\"event\":\"test.startedProcess\",\"params\":{\"vmServiceUri\":null}}]"
+  ],
+  "supersededInitialFailureReceiptSHA256": "e75f84fcb038e216d89342720b430ceb445b5367a0bd5b625e3a34c523ee35d1",
+  "twoFixtureSourceReceiptSHA256": "3d4e1153371a2c6daf08e193c7fd46050ead59dfc265b4be3ac1eb26e325ab40",
+  "physicalTestsRun": false,
+  "SCMOperations": false,
+  "productStarted": false,
+  "VMSettingsChanged": false
+}

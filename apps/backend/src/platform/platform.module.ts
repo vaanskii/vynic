@@ -1,3 +1,18 @@
+import { PlatformWebsitePaymentReviewsController } from './platform-website-payment-reviews.controller';
+import { PlatformManagerVenueLinkController } from '../auth/manager-venue-link.controller';
+import { PlatformWebsiteDeliveriesController } from './platform-website-deliveries.controller';
+import { PrinterConfigurationController } from '../printer-provisioning/controller';
+import {
+  PlatformLocalToolsCapabilityController,
+  localDeletionControllers,
+} from './platform-local-tools.controller';
+import { WebsiteCoreModule } from '../website/core/website-core.module';
+import { CustomWebsiteModule } from '../website/custom/custom-website.module';
+import { PlatformCustomWebsiteController } from './platform-custom-website.controller';
+import { PlatformWebsiteCapabilitiesController } from './platform-website-capabilities.controller';
+import { WebsiteTenancyModule } from '../website/tenancy/website-tenancy.module';
+import { PlatformHostnameController } from './platform-hostname.controller';
+import { PlanCatalogService } from './plan-catalog.service';
 import {
   EdgeFoundationController,
   EdgeFoundationService,
@@ -7,6 +22,7 @@ import { PlatformCommercialService } from './platform-commercial.service';
 import { Module } from '@nestjs/common';
 import { AuthModule } from '../auth/auth.module';
 import { EdgeTransportModule } from '../edge/edge-transport.module';
+import { EnrollmentRateLimiter } from '../edge/enrollment-rate-limiter';
 import { EntitlementsModule } from '../entitlements/entitlements.module';
 import { PlatformAuditModule } from './platform-audit.module';
 import { PlatformAuthController } from './platform-auth.controller';
@@ -29,12 +45,24 @@ import { PlatformVenuesController } from './platform-venues.controller';
  */
 @Module({
   imports: [
+    WebsiteTenancyModule,
+    WebsiteCoreModule,
+    CustomWebsiteModule,
     AuthModule,
     EntitlementsModule,
     EdgeTransportModule,
     PlatformAuditModule,
   ],
   controllers: [
+    PlatformManagerVenueLinkController,
+    PlatformWebsitePaymentReviewsController,
+    PlatformWebsiteDeliveriesController,
+    PrinterConfigurationController,
+    PlatformLocalToolsCapabilityController,
+    ...localDeletionControllers(),
+    PlatformHostnameController,
+    PlatformCustomWebsiteController,
+    PlatformWebsiteCapabilitiesController,
     EdgeFoundationController,
     PlatformCommercialController,
     PlatformAuthController,
@@ -43,7 +71,11 @@ import { PlatformVenuesController } from './platform-venues.controller';
     PlatformCatalogController,
   ],
   providers: [
+    PlanCatalogService,
     EdgeFoundationService,
+    // Module-local like Customer's: Platform sign-in windows never share state
+    // with enrollment or owner sign-in.
+    EnrollmentRateLimiter,
     PlatformCommercialService,
     PlatformAuthService,
     PlatformAuthGuard,

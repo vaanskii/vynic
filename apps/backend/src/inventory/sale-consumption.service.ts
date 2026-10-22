@@ -1,6 +1,7 @@
 import { withOperationalAuthority } from '../edge/operational-authority';
 import type { EdgeDeviceContext } from '../edge/edge-device-context';
 import { presentMovement } from './receiving.service';
+import { historyPage, type HistoryQuery } from './history-page';
 import {
   BadRequestException,
   ConflictException,
@@ -99,6 +100,20 @@ export class SaleConsumptionService {
       throw new BadRequestException('Invalid consumption snapshot');
     if (snapshot.catalogGeneratedAt != null)
       instant(snapshot.catalogGeneratedAt);
+    // Validate nested shapes before deriving the lock set. Malformed input
+    // must remain a client error and cannot reach persistence or lock queries.
+    const itemIds: string[] = [
+      ...new Set<string>(
+        snapshot.lines.flatMap((rawLine: unknown) => {
+          const line = object(rawLine);
+          if (!Array.isArray(line.components) || line.components.length > 500)
+            throw new BadRequestException('Invalid components');
+          return line.components.map((rawComponent: unknown) =>
+            text(object(rawComponent).stockItemId, 'stockItemId'),
+          );
+        }),
+      ),
+    ].sort();
     const frozen = {
       posSaleId,
       closureId,
@@ -112,13 +127,6 @@ export class SaleConsumptionService {
         // Serialize the same durable identity across devices/processes, including
         // its first insertion; timestamps are never idempotency keys.
         await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtextextended(${tenant.venueId + ':' + posSaleId}, 0))`;
-        const itemIds: string[] = [
-          ...new Set<string>(
-            snapshot.lines.flatMap((l: any) =>
-              l.components.map((c: any) => String(c.stockItemId)),
-            ),
-          ),
-        ].sort();
         if (itemIds.length)
           await tx.$queryRaw(
             Prisma.sql`SELECT id FROM pos."StockItem" WHERE "venueId"=${tenant.venueId} AND id IN (${Prisma.join(itemIds)}) ORDER BY id FOR UPDATE`,
@@ -351,6 +359,57 @@ export class SaleConsumptionService {
       omit: { snapshot: true },
       include: { lines: { orderBy: { lineSeq: 'asc' } } },
     });
+  }
+
+  async page(tenant: TenantContext, query: HistoryQuery = {}) {
+    const page = historyPage('consumptions:' + tenant.venueId, query);
+    const rows = await this.prisma.saleConsumption.findMany({
+      where: {
+        venueId: tenant.venueId,
+        createdAt: { lt: page.createdBefore },
+        businessDate: {
+          gte: page.from ?? undefined,
+          lte: page.to ?? undefined,
+        },
+        ...(page.unmapped ? { lines: { some: { status: 'UNMAPPED' } } } : {}),
+        ...(page.cursor
+          ? {
+              OR: [
+                { closedAt: { lt: new Date(page.cursor.at) } },
+                {
+                  closedAt: new Date(page.cursor.at),
+                  id: { lt: page.cursor.id },
+                },
+              ],
+            }
+          : {}),
+      },
+      orderBy: [{ closedAt: 'desc' }, { id: 'desc' }],
+      take: page.limit + 1,
+      omit: { snapshot: true },
+      include: {
+        lines: {
+          orderBy: { lineSeq: 'asc' },
+          include: { components: { include: { movements: true } } },
+        },
+      },
+    });
+    const result = page.envelope(rows, (row) => row.closedAt);
+    return {
+      ...result,
+      items: result.items.map((row) => ({
+        ...row,
+        lines: row.lines.map((line) => ({
+          ...line,
+          components: line.components.map((component) => ({
+            ...component,
+            movements: component.movements.map(presentMovement),
+            baseQuantityPerUnit: component.baseQuantityPerUnit.toFixed(6),
+            totalBaseQuantity: component.totalBaseQuantity.toFixed(6),
+          })),
+        })),
+      })),
+    };
   }
 
   async detail(tenant: TenantContext, id: string) {

@@ -57,6 +57,7 @@ Future<void> _openBoxes() async {
   DatabaseCore.auditLogBox = await Hive.openBox('to_audit');
   DatabaseCore.errorLogBox = await Hive.openBox('to_errors');
   DatabaseCore.metaBox = await Hive.openBox('to_meta');
+  DatabaseCore.inventoryBox = await Hive.openBox('backup_inventory_fixture');
 }
 
 final DateTime _businessDate = DateTime(2026, 9, 3);
@@ -261,6 +262,9 @@ void main() {
     await DatabaseCore.reservationBox!.clear();
     await DatabaseCore.tableBox!.clear();
     await DatabaseCore.packageBox!.clear();
+    await DatabaseCore.auditLogBox!.clear();
+    await DatabaseCore.salesBox!.clear();
+    await DatabaseCore.metaBox!.clear();
   });
 
   group('a takeaway order with no reservation at all', () {
@@ -638,8 +642,8 @@ void main() {
           status: 'cancelled',
         );
         expect(DatabaseService.getOrder(order.orderId)!.status, 'cancelled');
-        expect(table.activeOrderId, isNull);
-        expect(table.isReserved, isFalse);
+        expect(DatabaseService.getTable('7', 'first')!.activeOrderId, isNull);
+        expect(DatabaseService.getTable('7', 'first')!.isReserved, isFalse);
         expect(DatabaseCore.reservationBox!.values, isEmpty);
       },
     );

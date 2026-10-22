@@ -88,6 +88,10 @@ void main() {
     }
     order.recalculateTotal(serviceFeeRate: 0);
     await DatabaseCore.orderBox!.put(orderId, order);
+    await DatabaseCore.tableBox!.put(
+      'first-1',
+      TableModel(tableNumber: '1', floor: 'first')..reserve('waiter', orderId),
+    );
     return order;
   }
 
@@ -222,7 +226,9 @@ void main() {
       order.customerName = 'Takeaway Guest';
       order.customerPhone = '+995555111222';
       order.pickupTime = '18:30';
-      await order.save();
+      // Construct the distinct Takeaway fixture before exercising closure.
+      await DatabaseCore.tableBox!.delete('first-1');
+      await DatabaseCore.orderBox!.put(order.orderId, order);
 
       expect(DatabaseCore.reservationBox!.values, isEmpty);
       final result = await CloseTableTransaction.run(
@@ -385,6 +391,9 @@ void main() {
       () async {
         final order = await seedOrder(itemTotal: 900);
         final closureId = ClosureJournalRepository.newClosureId();
+        // The real closer stamps identity before writing the Sale.
+        order.closureId = closureId;
+        await order.save();
 
         // Exactly the state a kill between the sale write and the journal
         // advance leaves behind: the sale exists, the journal still says

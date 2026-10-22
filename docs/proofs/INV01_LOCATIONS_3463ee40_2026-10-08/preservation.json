@@ -1,0 +1,22 @@
+{
+  "baselineFiles": 3751,
+  "changedBaselineFiles": [
+    "apps/backend/prisma/schema.prisma",
+    "apps/backend/src/inventory/inventory-audit.ts",
+    "apps/backend/src/inventory/inventory.service.ts",
+    "apps/backend/src/inventory/receiving.service.ts",
+    "apps/backend/src/local-tools/deletion-matrix.ts",
+    "apps/backend/src/mobile/mobile.controller.ts",
+    "docs/LOCAL_DATABASE_TOOLS.md",
+    "docs/agent-state/VYNIC_CODE_MAP.md",
+    "docs/agent-state/VYNIC_PROJECT_STATE.md",
+    "docs/audits/2026-09-29-f7bb982/MASTER_BACKLOG.md"
+  ],
+  "unchangedOtherBaselineFiles": 3741,
+  "unexpectedChanges": [],
+  "frozenExecutableFiles": 2173,
+  "executableFilesUnchangedDuringFinalChecks": true,
+  "headUnchanged": true,
+  "noEnvironmentFileChanged": true,
+  "noDependencyOrFlutterSourceChanged": true
+}

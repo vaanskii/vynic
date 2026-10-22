@@ -1,0 +1,8 @@
+{"Time":"2026-10-09T21:32:07.3844+04:00","Action":"start","Package":"vynic.local/edge/internal/printerprovisioning"}
+{"Time":"2026-10-09T21:32:07.962516+04:00","Action":"run","Package":"vynic.local/edge/internal/printerprovisioning","Test":"TestProductionBackendExport"}
+{"Time":"2026-10-09T21:32:07.962599+04:00","Action":"output","Package":"vynic.local/edge/internal/printerprovisioning","Test":"TestProductionBackendExport","Output":"=== RUN   TestProductionBackendExport\n"}
+{"Time":"2026-10-09T21:32:07.976117+04:00","Action":"output","Package":"vynic.local/edge/internal/printerprovisioning","Test":"TestProductionBackendExport","Output":"--- PASS: TestProductionBackendExport (0.01s)\n"}
+{"Time":"2026-10-09T21:32:07.97613+04:00","Action":"pass","Package":"vynic.local/edge/internal/printerprovisioning","Test":"TestProductionBackendExport","Elapsed":0.01}
+{"Time":"2026-10-09T21:32:07.976157+04:00","Action":"output","Package":"vynic.local/edge/internal/printerprovisioning","Output":"PASS\n"}
+{"Time":"2026-10-09T21:32:07.977072+04:00","Action":"output","Package":"vynic.local/edge/internal/printerprovisioning","Output":"ok  \tvynic.local/edge/internal/printerprovisioning\t0.592s\n"}
+{"Time":"2026-10-09T21:32:07.9771+04:00","Action":"pass","Package":"vynic.local/edge/internal/printerprovisioning","Elapsed":0.593}

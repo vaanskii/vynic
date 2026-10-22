@@ -1,0 +1,47 @@
+{
+  "verdict": "PASS actual Windows nonphysical helper and guard qualification",
+  "source_manifest_sha256": "638458ddc270fa3638c52f2a7bc491e6327bebbf2a46caba9fb451f64bae680f",
+  "source_zip_sha256": "1f318eab633481898c1c88f43dfbcda432ffdf7c3ec56ded69c4359195b8377f",
+  "exact_zip_source_count_verified": 34,
+  "guestArchitecture": "ARM64",
+  "binaryPEMachines": {
+    "printtransport-windows.test.exe": "0x8664",
+    "vynic_print_helper.exe": "0x8664"
+  },
+  "test_executable_sha256": "5ea12d153ce2ed408d0661595bd3c3afa41d7c969d81c1b87bdd956897f7d125",
+  "helper_sha256": "b720e1eedc77ab574d769865e39f71506a5f3ebc9d93ab5166bc3f112203019d",
+  "reviewed_evidence_sha256": {
+    "helper-build.log": "7562043ccd943d5abfc3958ccc09d5c0709634a7480d59ae66f374767566164c",
+    "helper-configure.log": "45085bee94529c5b09b060b68a33d011f94a5c0892942e4077e49c9958b404ca",
+    "channel-configure.log": "f567e5561198a477e182151a9558cb65058054b03fb038877d472a4fbd175e14",
+    "built-artifact-hashes.json": "f4fe6d6435da16c06c61b1bfe06380d748f0a248606d05f6f98a42e8db0179ec",
+    "helper-fake-tests.log": "2ed08798a108a990bd61d1ecc39b0d43368ad936ef18f71c81427bb85da844ec",
+    "channel-build.log": "2db37c7e45319cc20a0142ac09fa2fe980066eddf7e1d03ce39e3f45dd890b6f",
+    "go-transport-tests.log": "0ca3f907c594baf5b18d13af43b0cebca0375ad1bc16ddc5d02387716d3ab4e0",
+    "run-result.json": "ed8041ad08c963a585b305ffaac0ed281d4bb5d6ea6fc24d7ae341790ee931f9",
+    "channel-tests.log": "be34fb2ad6bd217a376f70cd8ce74431f88d768cfc38f0a0e5d8b4c626eb2f0c",
+    "receipt.json": "b43d105938213f0de63025f5c94908d8cd6f2fba3d6b955ac04a4e18f2b726de"
+  },
+  "results": {
+    "Go_top_level_tests_passed": 12,
+    "Go_skips": 0,
+    "parent_death_child_termination_fresh_guard_acquire": "PASS actual process lifecycle",
+    "unsupported_JOB_LIST": "PASS injected attribute refusal before process creation",
+    "stdin_EOF_no_inherited_parent_writer": "PASS",
+    "actual_helper_inventory_and_malformed_requests": "PASS one queue enumerated; no submission",
+    "helper_fake_protocol_assertions": 254,
+    "spooler_fake_assertions": 110,
+    "read_only_channel_assertions": 204,
+    "print_jobs_before_after": [
+      0,
+      0
+    ]
+  },
+  "limits": [
+    "Windows guest reports ARM64; reviewed binaries PE0x8664 (amd64), not native-arm64 runtime qualification",
+    "No physical document, paper/cutter/beep/printer-model qualification",
+    "No SCM registration, service-account inventory or driver installation/product startup",
+    "Parent-child containment does not retract already spooled bytes or fence shared RAW failover",
+    "Earlier blocked and failed-build attempts retained; this result supersedes only the NOT_RUN qualification state for this exact packet"
+  ]
+}

@@ -1,3 +1,4 @@
+import { applyOrderEditResult } from './order-edit-result';
 import {
   lockOperationalVenue,
   operationalDatabase,
@@ -43,6 +44,7 @@ export interface ClaimEdgeCommands {
 }
 
 export interface AcknowledgeEdgeCommand {
+  resultProjection?: unknown;
   commandId: string;
   status: EdgeCommandResultStatus;
   code?: string | null;
@@ -299,6 +301,7 @@ export class EdgeCommandService {
         venueId: true,
         deviceId: true,
         type: true,
+        payload: true,
         status: true,
         claimedByDeviceId: true,
       },
@@ -345,12 +348,38 @@ export class EdgeCommandService {
         ? EdgeCommandStatus.SUCCEEDED
         : EdgeCommandStatus.FAILED;
 
+    let resultProjection: any;
+    if (command.type === 'ORDER_EDIT' && status === EdgeCommandStatus.SUCCEEDED) {
+      if (ack.code !== 'order_edited') throw new BadRequestException('Invalid order edit result');
+      resultProjection = await applyOrderEditResult(this.prisma, device.venueId, command.payload, ack.resultProjection);
+    }
+
+    if (command.type === 'TABLE_REPAIR' && status === EdgeCommandStatus.SUCCEEDED) {
+      if (ack.code !== 'table_repaired')
+        throw new BadRequestException('Invalid table repair result');
+      const p = command.payload as Record<string, unknown>;
+      const projectedAt = typeof p.mirrorUpdatedAt === 'string' ? new Date(p.mirrorUpdatedAt) : null;
+      if (!projectedAt || !Number.isFinite(projectedAt.getTime()))
+        throw new BadRequestException('Invalid table repair projection identity');
+      // Compare the original snapshot identity. A delayed ACK must not clear
+      // a newer legitimate table owner; a later snapshot already wins.
+      await this.prisma.table.updateMany({
+        where: { id: p.tableId as string, venueId: device.venueId,
+          tableNumber: p.tableNumber as string, floor: p.floor as string,
+          isReserved: p.expectedIsReserved as boolean,
+          activeOrderId: p.expectedActiveOrderId as number | null,
+          updatedAt: projectedAt },
+        data: { isReserved: false, activeOrderId: null, currentBill: 0 },
+      });
+    }
+
     const updated = await this.prisma.edgeCommand.update({
       where: { id: command.id },
       data: {
         status,
         acknowledgedAt: new Date(),
         claimExpiresAt: null,
+        ...(resultProjection ? { resultProjection } : {}),
         resultCode: ack.code?.slice(0, 200) ?? null,
         resultDetail: ack.detail?.slice(0, 2000) ?? null,
       },

@@ -78,6 +78,7 @@ describeDb('SaaS Manager: real PostgreSQL, HTTP and Socket.IO', () => {
           name,
           timezone: 'Asia/Tbilisi',
           currency: 'GEL',
+          subscription: { create: { status: 'ACTIVE' } },
         },
       });
       venues.push(venue);
@@ -141,6 +142,7 @@ describeDb('SaaS Manager: real PostgreSQL, HTTP and Socket.IO', () => {
       imports: [PassportModule.register({ defaultStrategy: 'jwt' })],
       controllers: [AuthController, MobileController],
       providers: [
+        { provide: PrismaService, useValue: prisma },
         { provide: AuthService, useValue: auth },
         LoginThrottleService,
         { provide: ManagerTenantService, useValue: resolver },

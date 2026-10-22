@@ -1,0 +1,6 @@
+{
+  "ownedCluster": "/tmp/vynic-web03-5ct0zm85/pg",
+  "statusExitCode": 3,
+  "postmasterPidAbsent": true,
+  "liveServicesRestarted": false
+}

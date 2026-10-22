@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:typed_data';
 import 'dart:async';
 import 'dart:developer' as developer;
+import 'print_job.dart';
 
 /// Persistent TCP connection to a thermal printer
 /// Manages connection lifecycle, reconnection, and data transmission
@@ -71,27 +72,48 @@ class PrinterConnection {
   /// Send data to the printer
   /// Automatically reconnects if connection is lost
   /// Returns true if data was sent successfully, false otherwise
-  Future<bool> send(Uint8List data) async {
+  Future<PrintTransmissionResult> send(
+    Uint8List data, {
+    bool Function()? mayWrite,
+  }) async {
     if (_isDisposed) {
-      return false;
+      return const PrintTransmissionResult(
+        PrintTransmissionState.notSent,
+        'Persistent connection unavailable before write',
+      );
     }
 
     // Ensure connection is alive
     await connect();
 
     if (_socket == null) {
-      return false;
+      return const PrintTransmissionResult(
+        PrintTransmissionState.notSent,
+        'Persistent connection unavailable before write',
+      );
     }
 
+    if (mayWrite != null && !mayWrite()) {
+      return const PrintTransmissionResult(
+        PrintTransmissionState.uncertain,
+        'Venue or confirmed Order changed; delivery held without writing bytes',
+      );
+    }
     try {
       _socket!.add(data);
-      await _socket!.flush();
-      return true;
+      await _socket!.flush().timeout(const Duration(seconds: 8));
+      return const PrintTransmissionResult(
+        PrintTransmissionState.sent,
+        'TCP bytes sent; physical paper output is not confirmed',
+      );
     } catch (e) {
       // Connection might be dead, clean it up for next attempt
       _socket?.destroy();
       _socket = null;
-      return false;
+      return PrintTransmissionResult(
+        PrintTransmissionState.uncertain,
+        'Persistent transmission attempted; paper outcome unknown: $e',
+      );
     }
   }
 

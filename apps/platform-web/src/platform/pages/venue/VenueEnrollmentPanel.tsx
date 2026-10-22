@@ -38,8 +38,12 @@ export function VenueEnrollmentPanel({ venueId, venueName }: { venueId: string; 
     refetchInterval: (query) =>
       query.state.data?.some((row) => row.status === "PENDING") ? 4000 : false,
   });
+  const setupEligibility = useQuery({
+    queryKey: ["initial-manager-setup", venueId],
+    queryFn: () => platformApi.setupEligibility(venueId),
+  });
   const [createOpen, setCreateOpen] = useState(false);
-  const [form, setForm] = useState({ displayName: "", platform: "WINDOWS", ttlMinutes: "30" });
+  const [form, setForm] = useState({ displayName: "", platform: "WINDOWS", ttlMinutes: "30", initialManagerSetup: true });
   const [issued, setIssued] = useState<IssuedEnrollment | null>(null);
   const [copied, setCopied] = useState(false);
   const [cancelling, setCancelling] = useState<DeviceEnrollment | null>(null);
@@ -48,6 +52,7 @@ export function VenueEnrollmentPanel({ venueId, venueName }: { venueId: string; 
     await queryClient.invalidateQueries({ queryKey: ["enrollments", venueId] });
     await queryClient.invalidateQueries({ queryKey: ["devices", venueId] });
     await queryClient.invalidateQueries({ queryKey: ["audit"] });
+    await queryClient.invalidateQueries({ queryKey: ["initial-manager-setup", venueId] });
   };
 
   const create = useMutation({
@@ -56,6 +61,7 @@ export function VenueEnrollmentPanel({ venueId, venueName }: { venueId: string; 
         displayName: form.displayName,
         platform: form.platform,
         ttlMinutes: Number(form.ttlMinutes),
+        initialManagerSetup: setupEligibility.data?.eligible === true && form.initialManagerSetup,
       });
       setIssued(result);
       return result;
@@ -63,7 +69,7 @@ export function VenueEnrollmentPanel({ venueId, venueName }: { venueId: string; 
     onSuccess: async () => {
       await refresh();
       setCreateOpen(false);
-      setForm({ displayName: "", platform: "WINDOWS", ttlMinutes: "30" });
+      setForm({ displayName: "", platform: "WINDOWS", ttlMinutes: "30", initialManagerSetup: true });
     },
   });
 
@@ -120,16 +126,24 @@ export function VenueEnrollmentPanel({ venueId, venueName }: { venueId: string; 
       description="A one-time code will be shown once. Have the terminal in front of you before you continue."
       footer={<>
         <Button disabled={create.isPending} onClick={() => setCreateOpen(false)}>Cancel</Button>
-        <Button tone="primary" type="submit" form="create-enrollment" loading={create.isPending} loadingLabel="Creating…">Create enrollment code</Button>
+        <Button tone="primary" type="submit" form="create-enrollment" disabled={setupEligibility.isPending || !!setupEligibility.error} loading={create.isPending} loadingLabel="Creating…">Create enrollment code</Button>
       </>}
     >
-      <form id="create-enrollment" className="platform-form" onSubmit={(event) => { event.preventDefault(); if (!create.isPending) create.mutate(); }}>
+      <form id="create-enrollment" className="platform-form" onSubmit={(event) => { event.preventDefault(); if (!create.isPending && !setupEligibility.isPending && !setupEligibility.error) create.mutate(); }}>
         <Field label="Terminal name" hint="What this till will be called in the device list.">
           <Input value={form.displayName} onChange={(event) => setForm({ ...form, displayName: event.target.value })} required maxLength={200} autoFocus />
         </Field>
         <Field label="Platform">
           <Input value={form.platform} onChange={(event) => setForm({ ...form, platform: event.target.value.toUpperCase() })} required maxLength={32} />
         </Field>
+        {setupEligibility.isPending ? <LoadingState label="Checking first Manager setup" />
+          : setupEligibility.error ? <ErrorState error={errorMessage(setupEligibility.error)} retry={() => void setupEligibility.refetch()} />
+          : setupEligibility.data?.eligible ? <label className="platform-checkbox">
+          <input type="checkbox" name="initialManagerSetup" disabled={create.isPending} checked={form.initialManagerSetup}
+            onChange={(event) => setForm({ ...form, initialManagerSetup: event.target.checked })} />
+          Include first Manager setup on the Primary POS
+          <small>One code connects the POS and lets the first Manager choose a name and PIN. Uncheck for an additional POS.</small>
+        </label> : null}
         <Field label="Code valid for" hint="Shorter is safer. The code is single use whatever you pick.">
           <Select value={form.ttlMinutes} onChange={(event) => setForm({ ...form, ttlMinutes: event.target.value })}>
             <option value="15">15 minutes</option>
@@ -169,7 +183,8 @@ export function VenueEnrollmentPanel({ venueId, venueName }: { venueId: string; 
         <ol className="platform-steps">
           <li>On the POS, open <strong>Settings → Connection</strong>.</li>
           <li>Choose <strong>Connect this POS to Vynic</strong>.</li>
-          <li>Enter this server's address, then the code above.</li>
+          <li>Enter the code above. The released app already knows its server.</li>
+          {issued?.initialManagerSetup ? <li>On the Primary POS, choose the first Manager's name and PIN. No second activation code is needed.</li> : null}
           <li>This table shows <strong>Enrolled</strong> when the terminal has it.</li>
         </ol>
       </div> : null}

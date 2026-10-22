@@ -32,6 +32,7 @@ export class MenuSyncService {
       ? await db.menuCategory.findFirst({
           where: { venueId: tenant.venueId, posMenuCategoryId },
           select: {
+            retiredAt: true,
             id: true,
             posMenuCategoryId: true,
             slug: true,
@@ -49,6 +50,7 @@ export class MenuSyncService {
         ...(posMenuCategoryId ? { posMenuCategoryId: null } : {}),
       },
       select: {
+        retiredAt: true,
         id: true,
         posMenuCategoryId: true,
         slug: true,
@@ -59,6 +61,7 @@ export class MenuSyncService {
       },
     });
     const data = {
+      retiredAt: null,
       venueId: tenant.venueId,
       slug: category.slug,
       nameKa: category.nameKa,
@@ -69,6 +72,7 @@ export class MenuSyncService {
     };
     if (
       existing &&
+      !existing.retiredAt &&
       existing.slug === data.slug &&
       existing.nameKa === data.nameKa &&
       existing.nameEn === data.nameEn &&
@@ -98,6 +102,7 @@ export class MenuSyncService {
             category: { venueId: tenant.venueId },
           },
           select: {
+            retiredAt: true,
             id: true,
             categoryId: true,
             posMenuSubcategoryId: true,
@@ -115,6 +120,7 @@ export class MenuSyncService {
         ...(posMenuSubcategoryId ? { posMenuSubcategoryId: null } : {}),
       },
       select: {
+        retiredAt: true,
         id: true,
         categoryId: true,
         posMenuSubcategoryId: true,
@@ -125,6 +131,7 @@ export class MenuSyncService {
       },
     });
     const data = {
+      retiredAt: null,
       categoryId,
       slug: subcategory.slug,
       nameKa: subcategory.nameKa,
@@ -134,6 +141,7 @@ export class MenuSyncService {
     };
     if (
       existing &&
+      !existing.retiredAt &&
       existing.categoryId === data.categoryId &&
       existing.slug === data.slug &&
       existing.nameKa === data.nameKa &&
@@ -161,6 +169,7 @@ export class MenuSyncService {
       ? await db.menuItem.findFirst({
           where: { venueId: tenant.venueId, posMenuItemId },
           select: {
+            retiredAt: true,
             id: true,
             categoryId: true,
             subcategoryId: true,
@@ -182,6 +191,7 @@ export class MenuSyncService {
         ...(posMenuItemId ? { posMenuItemId: null } : {}),
       },
       select: {
+        retiredAt: true,
         id: true,
         categoryId: true,
         subcategoryId: true,
@@ -194,6 +204,7 @@ export class MenuSyncService {
       },
     });
     const data = {
+      retiredAt: null,
       venueId: tenant.venueId,
       categoryId: parent.categoryId,
       subcategoryId: parent.subcategoryId,
@@ -206,6 +217,7 @@ export class MenuSyncService {
     };
     if (
       existing &&
+      !existing.retiredAt &&
       existing.categoryId === data.categoryId &&
       existing.subcategoryId === data.subcategoryId &&
       existing.nameKa === data.nameKa &&
@@ -231,7 +243,13 @@ export class MenuSyncService {
     let existing = posMenuVariantId
       ? await db.menuItemVariant.findFirst({
           where: { menuItemId, posMenuVariantId },
-          select: { id: true, posMenuVariantId: true, size: true, price: true },
+          select: {
+            id: true,
+            retiredAt: true,
+            posMenuVariantId: true,
+            size: true,
+            price: true,
+          },
         })
       : null;
     existing ??= await db.menuItemVariant.findFirst({
@@ -240,9 +258,16 @@ export class MenuSyncService {
         size: variant.size,
         ...(posMenuVariantId ? { posMenuVariantId: null } : {}),
       },
-      select: { id: true, posMenuVariantId: true, size: true, price: true },
+      select: {
+        id: true,
+        retiredAt: true,
+        posMenuVariantId: true,
+        size: true,
+        price: true,
+      },
     });
     const data = {
+      retiredAt: null,
       menuItemId,
       size: variant.size,
       price: variant.price,
@@ -250,6 +275,7 @@ export class MenuSyncService {
     };
     if (
       existing &&
+      !existing.retiredAt &&
       existing.size === data.size &&
       existing.price === data.price &&
       (!posMenuVariantId || existing.posMenuVariantId === posMenuVariantId)
@@ -280,11 +306,13 @@ export class MenuSyncService {
       if (id) ids.add(id);
     }
     if (authoritativeIdentity) {
-      await db.menuItemVariant.deleteMany({
+      await db.menuItemVariant.updateMany({
         where: {
           menuItemId,
+          retiredAt: null,
           posMenuVariantId: this.staleOwnedIds(ids),
         },
+        data: { retiredAt: new Date() },
       });
     }
   }
@@ -294,7 +322,16 @@ export class MenuSyncService {
     tenant: TenantContext,
     menu: MenuCategorySync[],
     authoritativeIdentity: boolean,
-  ): Promise<void> {
+  ): Promise<boolean> {
+    await db.$queryRaw`SELECT "id" FROM "pos"."Venue" WHERE "id"=${tenant.venueId} FOR UPDATE`;
+    const venue = await db.venue.findUniqueOrThrow({
+      where: { id: tenant.venueId },
+    });
+    // A canonical (CLOUD) catalog is changed only through revisioned
+    // mutations (docs/CANONICAL_MENU_SYNC.md). A full POS snapshot is never a
+    // writer there: its menu is ignored rather than failing the whole snapshot,
+    // so Orders/Sales/audit keep syncing and omission never deletes.
+    if (venue.menuAuthority !== 'POS') return false;
     const categoryIds = new Set<string>();
     const subcategoryIds = new Set<string>();
     const itemIds = new Set<string>();
@@ -352,27 +389,43 @@ export class MenuSyncService {
       }
     }
 
-    if (!authoritativeIdentity) return;
+    if (!authoritativeIdentity) return true;
 
-    // Children first. Every predicate is Venue-scoped and only POS-claimed
+    // Retirement preserves delayed Sale recipes and presentation. Every predicate is Venue-scoped and only POS-claimed
     // rows are eligible. Unclaimed legacy/custom content is never inferred to
     // be deleted merely because its mutable name is absent.
-    await db.menuItem.deleteMany({
+    const retiredAt = new Date();
+    await db.menuItemVariant.updateMany({
+      where: {
+        retiredAt: null,
+        menuItem: {
+          venueId: tenant.venueId,
+          posMenuItemId: this.staleOwnedIds(itemIds),
+        },
+      },
+      data: { retiredAt },
+    });
+    await db.menuItem.updateMany({
       where: {
         venueId: tenant.venueId,
+        retiredAt: null,
         posMenuItemId: this.staleOwnedIds(itemIds),
       },
+      data: { retiredAt },
     });
-    await db.menuSubcategory.deleteMany({
+    await db.menuSubcategory.updateMany({
       where: {
         category: { venueId: tenant.venueId },
+        retiredAt: null,
         posMenuSubcategoryId: this.staleOwnedIds(subcategoryIds),
         items: { none: { posMenuItemId: null } },
       },
+      data: { retiredAt },
     });
-    await db.menuCategory.deleteMany({
+    await db.menuCategory.updateMany({
       where: {
         venueId: tenant.venueId,
+        retiredAt: null,
         posMenuCategoryId: this.staleOwnedIds(categoryIds),
         items: { none: { posMenuItemId: null } },
         subcategories: {
@@ -384,17 +437,22 @@ export class MenuSyncService {
           },
         },
       },
+      data: { retiredAt },
     });
+    return true;
   }
 
   async sync(
     tenant: TenantContext,
     menu: MenuCategorySync[],
     identityVersion?: number,
-  ): Promise<void> {
+  ): Promise<boolean> {
     console.log(`[SYNC] Syncing ${menu.length} categories...`);
-    await this.prisma.$transaction((db) =>
+    const applied = await this.prisma.$transaction((db) =>
       this.applySnapshot(db, tenant, menu, (identityVersion ?? 0) >= 1),
     );
+    if (!applied)
+      console.log('[SYNC] Canonical Cloud menu: snapshot menu ignored');
+    return applied;
   }
 }

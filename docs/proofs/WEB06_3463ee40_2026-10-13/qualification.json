@@ -1,0 +1,138 @@
+{
+  "status": "PASS_WEB06_READINESS_ONLY_NOT_DEPLOYED",
+  "qualifiedAtUtc": "2026-10-13T12:09:03.161765+00:00",
+  "head": "3463ee406184fec7f53818416e11d0e5f5602c87",
+  "uncommitted": true,
+  "selectedStep": "WEB-06 current BOG readiness after credential rotation",
+  "reproduction": {
+    "originalSourcePassed": 2,
+    "originalSourceFailed": 4,
+    "saasAndCustomBothReproduced": true,
+    "failure": "merchant r2 configured=true but website payment readiness/live=false"
+  },
+  "fix": "One safe greatest-revision status query shared by merchant status and website readiness",
+  "tests": {
+    "web06": {
+      "passed": 7,
+      "failed": 0,
+      "skipped": 0
+    },
+    "w1-regression": {
+      "passed": 8,
+      "failed": 0,
+      "skipped": 0
+    },
+    "website-regression": {
+      "passed": 23,
+      "failed": 0,
+      "skipped": 0
+    },
+    "backend-aggregate": {
+      "passed": 851,
+      "failed": 0,
+      "skipped": 775
+    },
+    "overlap": {
+      "additionalPgPassed": 38,
+      "aggregatePassedOverlap": 0,
+      "aggregateSkippedRunSeparately": 38,
+      "distinctBackendPassed": 889
+    }
+  },
+  "checks": [
+    {
+      "name": "web06",
+      "exitCode": 0,
+      "passed": 7,
+      "failed": 0,
+      "skipped": 0
+    },
+    {
+      "name": "w1-regression",
+      "exitCode": 0,
+      "passed": 8,
+      "failed": 0,
+      "skipped": 0
+    },
+    {
+      "name": "website-regression",
+      "exitCode": 0,
+      "passed": 23,
+      "failed": 0,
+      "skipped": 0
+    },
+    {
+      "name": "backend-aggregate",
+      "exitCode": 0,
+      "passed": 851,
+      "failed": 0,
+      "skipped": 775
+    },
+    {
+      "name": "backend-typecheck",
+      "exitCode": 0
+    },
+    {
+      "name": "backend-build",
+      "exitCode": 0
+    },
+    {
+      "name": "new-files-lint",
+      "exitCode": 0
+    },
+    {
+      "name": "format",
+      "exitCode": 0
+    },
+    {
+      "name": "contracts",
+      "exitCode": 0
+    }
+  ],
+  "lint": [
+    {
+      "path": "apps/backend/src/payment-integrations/payment-integrations.service.ts",
+      "beforeErrors": 0,
+      "beforeWarnings": 0,
+      "afterErrors": 0,
+      "afterWarnings": 0,
+      "addedDiagnostics": []
+    },
+    {
+      "path": "apps/backend/src/website/tenancy/website-capabilities.service.ts",
+      "beforeErrors": 0,
+      "beforeWarnings": 0,
+      "afterErrors": 0,
+      "afterWarnings": 0,
+      "addedDiagnostics": []
+    }
+  ],
+  "paymentMethodsPreserved": {
+    "requireEnabledCredentialsValidationAuditSaveDisableByteIdentical": true
+  },
+  "cleanup": {
+    "ownedCluster": "STOPPED",
+    "pgCtlStatusExit": 3,
+    "postmasterPidAbsent": true,
+    "realServicesChanged": false
+  },
+  "boundaries": {
+    "realProviderCalls": false,
+    "liveDataOrCredentialChanges": false,
+    "servicesRestarted": false,
+    "schemaMigrationsAdded": false,
+    "hardwareOrServiceInstallation": false,
+    "dnsTlsOrDeployment": false,
+    "committedOrPushed": false,
+    "inv01F2ChoicesSelected": false,
+    "printerSourceModified": false
+  },
+  "limitations": [
+    "This closes only WEB-06. WEB-01/03/04 and paid reservation/provider deployment acceptance remain open.",
+    "Backend aggregate opt-in skips remain; explicitly separate passing intersection is recorded.",
+    "No frontend/Flutter source changed, so no new UI/Flutter/native/hardware qualification is claimed.",
+    "POS-02.A/B and the independently completed POS-02.C planning checkpoint were reconciled and not duplicated.",
+    "INV01 F2 product decisions remain unresolved; no policy was invented."
+  ],
+  "privateLogs": "/tmp/vynic-web06-s6rjk5x9"
+}

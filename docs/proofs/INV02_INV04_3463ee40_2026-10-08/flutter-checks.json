@@ -1,0 +1,16 @@
+{
+  "label": "flutter-aggregate",
+  "exitCode": 0,
+  "command": [
+    "/opt/homebrew/bin/flutter",
+    "test",
+    "--no-pub",
+    "--reporter",
+    "expanded",
+    "--concurrency",
+    "2"
+  ],
+  "actualGoFixtures": true,
+  "actualMenu09Writer": true,
+  "ownedBackendPid": 7956
+}

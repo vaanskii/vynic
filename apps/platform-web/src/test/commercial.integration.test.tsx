@@ -1,14 +1,54 @@
 import { screen, within, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
-import { actor, ids, installApi, renderPlatform, product } from "./platform-test-utils";
+import {
+  actor,
+  ids,
+  installApi,
+  renderPlatform,
+  product,
+} from "./platform-test-utils";
 
 describe("Phase 2 commercial controls", () => {
+  it("directs initial registration to one POS setup code without issuing a second invitation", async () => {
+    const api = installApi((req) => {
+      if (req.url.pathname.endsWith("/product"))
+        return { body: { ...product, effectiveFeatures: ["POS", "MANAGER_APP"] } };
+      if (req.url.pathname.endsWith("/managers")) return { body: [] };
+      return undefined;
+    });
+    renderPlatform(`/venues/${ids.venue}/product`);
+    expect(await screen.findByRole("link", {
+      name: "პირველი POS-ის დაკავშირების კოდის შექმნა",
+    })).toHaveAttribute("href", `/venues/${ids.venue}/devices`);
+    expect(screen.getByText(/მომხმარებელს POS-ში მეორე კოდის შეყვანა აღარ დასჭირდება/)).toBeVisible();
+    expect(screen.queryByRole("button", {
+      name: "ერთჯერადი აქტივაციის კოდის მიღება",
+    })).not.toBeInTheDocument();
+    expect(screen.queryByLabelText("New PIN")).not.toBeInTheDocument();
+    expect(api.requests.filter((r) => r.method === "POST" &&
+      r.url.pathname.endsWith("/manager-activation"))).toHaveLength(0);
+  });
   it("creates a Manager, hides PIN after save, resets and disables; subscription requires confirmation", async () => {
-    let managers: any[] = [];
+    let managers: any[] = [
+      {
+        id: "initial",
+        username: "initial",
+        displayName: "Initial",
+        role: "MANAGER",
+        isActive: true,
+      },
+    ];
     let status = "ACTIVE";
     const api = installApi((req) => {
-      if (req.url.pathname.endsWith("/product")) return { body: { ...product, effectiveFeatures: ["POS", "MANAGER_APP"] } };
+      if (req.url.pathname.endsWith("/product"))
+        return {
+          body: { ...product, effectiveFeatures: ["POS", "MANAGER_APP"] },
+        };
+      if (req.url.pathname.endsWith("/subscription/actions")) {
+        status = "SUSPENDED";
+        return { body: {} };
+      }
       if (req.url.pathname.endsWith("/subscription")) {
         if (req.method === "PUT") status = String(req.body?.status);
         return {
@@ -42,7 +82,7 @@ describe("Phase 2 commercial controls", () => {
       return undefined;
     });
     const user = userEvent.setup();
-    renderPlatform(`/admin/venues/${ids.venue}/commercial`);
+    renderPlatform(`/venues/${ids.venue}/product`);
     await user.click(
       await screen.findByRole("button", { name: "Create Manager" }),
     );
@@ -74,16 +114,28 @@ describe("Phase 2 commercial controls", () => {
         api.requests.some((r) => r.url.pathname.endsWith("/disable")),
       ).toBe(true),
     );
-    await user.click(screen.getByRole("button", { name: "Suspend" }));
+    await user.click(screen.getByRole("link", { name: "Commercial" }));
+    await user.selectOptions(
+      await screen.findByLabelText("Commercial action"),
+      "SUSPEND",
+    );
+    await user.type(
+      screen.getByLabelText("Operator reason"),
+      "Requested by owner",
+    );
+    await user.click(screen.getByRole("button", { name: "Review change" }));
     expect(api.requests.filter((r) => r.method === "PUT")).toHaveLength(0);
     await user.click(
-      await screen.findByRole("button", { name: "Update subscription" }),
+      await screen.findByRole("button", { name: "Apply change" }),
     );
     expect(await screen.findByText("SUSPENDED")).toBeVisible();
   });
   it("shows support read access without commercial mutation controls", async () => {
     installApi((req) => {
-      if (req.url.pathname.endsWith("/product")) return { body: { ...product, effectiveFeatures: ["POS", "MANAGER_APP"] } };
+      if (req.url.pathname.endsWith("/product"))
+        return {
+          body: { ...product, effectiveFeatures: ["POS", "MANAGER_APP"] },
+        };
       if (req.url.pathname.endsWith("/auth/me"))
         return { body: { ...actor, role: "SUPPORT_READONLY" } };
       if (req.url.pathname.endsWith("/subscription"))
@@ -91,7 +143,7 @@ describe("Phase 2 commercial controls", () => {
       if (req.url.pathname.endsWith("/managers")) return { body: [] };
       return undefined;
     });
-    renderPlatform(`/admin/venues/${ids.venue}/commercial`);
+    renderPlatform(`/venues/${ids.venue}/product`);
     expect(await screen.findByText("No Manager accounts yet.")).toBeVisible();
     expect(
       screen.queryByRole("button", { name: "Create Manager" }),

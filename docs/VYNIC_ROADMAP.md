@@ -20,6 +20,28 @@ Designs referenced: [VYNIC_ARCHITECTURE_PLAN.md](VYNIC_ARCHITECTURE_PLAN.md) (§
 | P0-H | **Money type migration** (server Decimal + client Money helper) (§1) | P0-8 | both | Prisma Float→Decimal migration | none | all money columns Decimal; single rounding helper used by close/payment paths | tested migration + down |
 | P0-I | **Hygiene**: `npm audit fix`, remove dev.db & artifacts, error-swallow sweep in money paths (H-4) | S-5, S-10 | both | none | none | audit clean; `git ls-files` clean; money-path catches rethrow typed results | trivial |
 
+### POS-02 sequential printer integration
+
+Overall **NOT_DONE**. **POS-02.A DONE**: production-purpose Go identity,
+Device/Venue enrollment, signed station/controller configuration, stable authorized
+membership, durable verification and bounded offline revocation policy. Isolated
+real HTTP/PostgreSQL-to-Go and native Windows evidence:
+[POS02_A_PROVISIONING.md](POS02_A_PROVISIONING.md).
+
+**POS-02.B DONE**: authenticated Go TCP/TLS RPC and real Raft networking,
+client/voter separation, durable station receipts and controlled 1-to-3 expansion.
+Independent process/partition/crash and native Windows evidence:
+[POS02_B_PEER_TRANSPORT.md](POS02_B_PEER_TRANSPORT.md). Physical dispatch stays HELD.
+
+Current: **POS-02.C — Flutter/local Go admission and business routing** (in
+progress). Detached Flutter station planning and exact Go job interoperability
+are implemented; authenticated Flutter-origin registration, durable admission
+and normal business-call integration remain. See
+[POS02_C_FLUTTER_ADMISSION.md](POS02_C_FLUTTER_ADMISSION.md).
+POS-02.D controller receipts/recovery/reconciliation, POS-02.E Hive
+cutover/rollback/service lifecycle and final hardware qualification follow
+sequentially. No other master-plan milestone starts.
+
 ## P1 — Core launch (Vankisi go-live set)
 
 | # | Item | Notes |

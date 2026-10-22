@@ -1,0 +1,17 @@
+{
+  "populated77to78": "PASS_EXISTING_FIELDS_PRESERVED_NEW_DEFAULTS_ZERO_NULL",
+  "repeatMigration": "PASS_NO_OP",
+  "fresh78": "PASS",
+  "advancePostgres": {
+    "passed": 6,
+    "failed": 0,
+    "skipped": 0
+  },
+  "backendAggregate": {
+    "passed": 906,
+    "failed": 0,
+    "skipped": 901
+  },
+  "ownedCluster": "STOPPED",
+  "all77HistoricalMigrationsUnchanged": true
+}

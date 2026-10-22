@@ -1,0 +1,9 @@
+{
+  "unchangedSourceFiles": 235,
+  "binarySha256": {
+    "printeragent.test": "b4a3b2ed2c488606fcc332c8e4ea3f4d9dd10eface0a16f06bb4419e0cfb6a20",
+    "operational.test": "4091121c099af6f03f47946ca5fd8ab4d51fc824106997c6009c9557fa0cd08d"
+  },
+  "sourceProof": "MANAGER_PIN_ACTIVATION_CANDIDATE_3463ee40_2026-10-08",
+  "rebuilt": false
+}

@@ -1,0 +1,106 @@
+{
+  "status": "READ_ONLY_DIAGNOSIS_CONFIRMED",
+  "observedAt": "2026-10-14T11:27:10.676586+00:00",
+  "head": "3463ee406184fec7f53818416e11d0e5f5602c87",
+  "runtimeBackendFromUserLog": "http://api.vynic.localhost",
+  "storedSettingsOriginString": "http://api.vynic.localhost",
+  "settingsReadLimit": "Only allowed origin strings extracted from raw bytes; Hive was not opened or written. Runtime selection comes from user log.",
+  "routing": {
+    "api.vynic.localhostHealth": {
+      "status": 200,
+      "body": {
+        "status": "ok"
+      },
+      "dnsAddresses": [
+        "127.0.0.1",
+        "::1"
+      ],
+      "test": "Host-preserving Docker port 80 request"
+    },
+    "api.vyinc.localhostHealth": {
+      "status": 404,
+      "body": "404 page not found"
+    },
+    "direct127.0.0.1Port3000": {
+      "connection": "REFUSED"
+    },
+    "dartDebugger": {
+      "port": 52230,
+      "listenerProcess": "dart",
+      "pid": 16928,
+      "backendOrigin": false
+    }
+  },
+  "runningPos": {
+    "processName": "Vynic POS",
+    "pid": 16913,
+    "localCredentialPresent": true,
+    "publicLocalIdentity": {
+      "deviceId": "c664a865-19bc-425c-b1c0-3e026126adf0",
+      "installationId": "9d519316-f88f-4453-a09b-fcd167303758",
+      "venueId": "fc53c6c9-b8bf-40e2-8278-c0451bdfa2f1",
+      "enrolledAt": "2026-10-10T11:31:17.827Z",
+      "updatedAt": "2026-10-10T11:31:17.883013Z"
+    },
+    "dataDirectory": "/Users/vaanskii/Library/Containers/ge.vynic.pos/Data/Documents/Vpos_Data_vaanskiis_macbook_pro_local",
+    "ownershipEvidence": "PID16913 has this directory settings.hive open",
+    "credentialHandling": "Never emitted or sent; local file parsed in memory only to obtain public Device/Installation metadata."
+  },
+  "readOnlyDockerDatabase": {
+    "database": "vynic_local_prod",
+    "deviceCount": 0,
+    "venueCount": 1,
+    "localDeviceExists": false,
+    "localInstallationExists": false,
+    "localVenueExists": false,
+    "enrollmentCount": 0,
+    "unredeemedUnexpiredEnrollments": 0,
+    "managerActivationCount": 1,
+    "pendingUnexpiredManagerActivations": 1,
+    "queryMode": "BEGIN READ ONLY; SELECT metadata only; ROLLBACK"
+  },
+  "readOnlyNativeDatabase": {
+    "origin": "127.0.0.1:5432",
+    "database": "vynic",
+    "deviceCount": 0,
+    "sameDeviceExists": false,
+    "sameInstallationExists": false,
+    "sameVenueExists": false,
+    "queryMode": "BEGIN READ ONLY; SELECT metadata only; ROLLBACK"
+  },
+  "cause": "The running POS retains a credential for a Device/Venue absent from the currently selected Docker database. Device lookup fails; this is independent of hostname connectivity and entered activation code/PIN.",
+  "activationCheckOrder": [
+    "PosManagerRegistrationService sends existing device credential to /edge/manager-activation",
+    "ManagerActivationController is protected by EdgeDeviceGuard",
+    "EdgeDeviceGuard verifies server Device -> Venue before entering controller/service",
+    "Absent Device returns401 before ManagerActivationService validates activation code/PIN",
+    "Client maps401 to ambiguous code-or-POS-access message"
+  ],
+  "resetCausality": "Current absence is confirmed. Earlier reset is compatible with it, but the specific deletion event/cause has not been proven. Local enrollment file timestamp is2026-10-10. Do not claim reset causal proof.",
+  "recovery": {
+    "first": "Platform Admin issues POS enrollment for the current Venue; this is distinct from the Manager activation code.",
+    "address": "http://api.vynic.localhost",
+    "existingAuthenticatedUi": "POS Admin connection panel -> Re-enrol this POS, using the current Venue enrollment code. This creates/replaces credentials and requires explicit authorization if the assistant performs it.",
+    "loggedOutUiBlocker": "PosFirstRun treats mere local credential presence as connected and exposes only First Activation while no local Staff exist; this branch has no reconnect action. A small non-security recovery-navigation change can expose the existing enrollment form without clearing local data or credentials. It has not been implemented in this read-only diagnosis.",
+    "then": "Once valid POS enrollment succeeds, retry Manager activation on the POS using the authorized code and user-entered PIN. No activation request was submitted here."
+  },
+  "actionsNotPerformed": [
+    "No activation/code/PIN submitted",
+    "No credential generated, transmitted, rotated or revoked",
+    "No data reset, user/Device write or security setting changed",
+    "No live service restart/deployment",
+    "No OPS01 rejected continuation workaround"
+  ],
+  "ops01": "Paused at docs/proofs/OPS01_RESTORE_3463ee40_2026-10-14/checkpoint.json; auto-review rejected final continuation, no final recovery PASS claimed",
+  "nextDecision": "Authorize the small first-run reconnect navigation fix and, separately, authorized Platform Admin enrollment if the assistant is to perform credential changes.",
+  "runningDockerBackend": {
+    "databaseHost": "postgres",
+    "databasePort": "5432",
+    "database": "vynic_local_prod",
+    "deviceApiBaseUrl": "http://api.vynic.localhost",
+    "compiledManagerActivationControllerUsesEdgeDeviceGuard": true,
+    "compiledEdgeGuardRejectsInvalidOrRevokedCredential": true,
+    "readLimit": "Only URL host/port/database and compiled-source booleans emitted; no username/password/raw environment output"
+  },
+  "ops01TemporaryClusterStopped": true
+}

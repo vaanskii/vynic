@@ -1,0 +1,12 @@
+{
+  "existingRequestClientServiceFixtureUnchanged": [
+    "apps/platform-web/src/customer/AccessRequest.tsx",
+    "apps/backend/src/customer/onboarding-requests.ts",
+    "apps/backend/test/onboarding-app.fixture.ts"
+  ],
+  "footerByteIdentical": true,
+  "onlyNewBackendTypeChanged": "unknown -> Record<string, unknown> in test-only submit argument; erased at runtime",
+  "baselineBrowserFalseSuccess": true,
+  "baselineAPISubmissions": 0,
+  "browserSyntheticAcceptedRecords": 1
+}

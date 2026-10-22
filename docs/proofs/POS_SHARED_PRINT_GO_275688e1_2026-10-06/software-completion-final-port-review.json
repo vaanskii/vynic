@@ -1,0 +1,66 @@
+{
+  "reviewedAtUTC": "2026-10-06T17:49:14.905853+00:00",
+  "outcome": "PASS_BOUNDED_SOURCE_PORT_AND_PROOF_PRESERVATION",
+  "openP1P2Findings": [],
+  "packet": "/Users/vaanskii/Developer/vynic/docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/software-completion-final",
+  "checks": {
+    "checkedAtUTC": "2026-10-06T17:48:31.823761+00:00",
+    "reviewedPortPaths": 156,
+    "unrelatedPreimages": 666,
+    "qualifiedCohortFilesInBothCopies": 1109,
+    "preservedRuntimeDifferences": 5,
+    "preservedHistoricalDifferences": 7,
+    "packetArtifacts": 621,
+    "packetArtifactBytes": 217066473,
+    "packetSealSHA256": "f42021a776158e9d12ccf3a5cec7333f655a45e56a3d6050adc8a147a13faf65",
+    "earlierProofs": [
+      {
+        "directory": "POS_MULTI_TERMINAL_275688e1_2026-10-06",
+        "sealSHA256": "163473fcf3b8d05a80b1f39868a42c2a807222c808dac91c7ad659f3fcfe863c",
+        "artifacts": 69
+      },
+      {
+        "directory": "POS_WINDOWS_NATIVE_abf7e6b3_2026-10-06",
+        "sealSHA256": "9a209a98330f8e108cd53ab2d88c799b20511a3f5c0a4d2fee58a77ba16d5859",
+        "artifacts": 88
+      },
+      {
+        "directory": "POS_MANAGER_ITEMS_275688e1_2026-10-06",
+        "sealSHA256": "7365038dfb3aaa6d6485f19711d65b347fa8a30a3face4fd1b9c109327b1df71",
+        "artifacts": 23
+      }
+    ],
+    "repository": {
+      "head": "275688e1e5c5dc0e26e62705ab0c7670cf16d99a",
+      "branch": "codex/docker-deployment-foundation",
+      "stash": "9df454225caec647f67ad4f70ef6038dbbbe41d6",
+      "stagedFiles": ""
+    },
+    "gitDiffCheck": 0,
+    "reportSHA256": "0a70e7aa396839d7778636060c213c63cfd28ae61d1272d0df2a2ebc4a9f7a38"
+  },
+  "decisionPreservation": {
+    "portedSHA256": "9394ad499cf6ef01d0a2750f13cf23637d89842cf7b087ec50e681241a0e0db7",
+    "reconstructedOriginalSHA256": "391ad1e91b98fcafcd5f46964a4913db5d4e42feefc3e0a692ac314fb4a2f6fc",
+    "method": "Remove only the D034 section preceding the retained existing Maintenance section; reconstructed entire file matches the pre-port original SHA256.",
+    "originalD031AndAllExistingBytesPreserved": true,
+    "onlyDecisionChange": "Inserted D034"
+  },
+  "supportingEvidence": {
+    "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/final-port-independent-checks.json": "016dddfe5ec20482bd4966561a4ee0f8f74eb5193b4459d0bee4c8b7a3dd8609",
+    "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/reviewed-printer-port-manifest.json": "3e4347b0dd0688c2fe101101a7cf1acb24eeaa737a151db9b2ab370e8c707251",
+    "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/printer-port-receipt.json": "5c3a39e8f39d063c8a2abebd844b72c84c5c6915612d9d752c295a53c4811a29",
+    "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/final-integrated-independent-review.json": "0e741392af4be68bebfca793e696c882d67650176258aa259ba6cd91ec4f63d1",
+    "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/final-integrated-qualification.json": "ae81ebc6baaa8030c27efa92ca03cb92ad7046cb123c2d66a9dca5fbef91dcfd",
+    "/Users/vaanskii/Developer/vynic/docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/software-completion-final/workspace-final-preservation.json": "9c6f7b81ac5cc8e97053455d5d06eb435b75c1596dec8738b94dae4288a33414",
+    "/Users/vaanskii/Developer/vynic/docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/software-completion-final/ARTIFACTS.json": "f42021a776158e9d12ccf3a5cec7333f655a45e56a3d6050adc8a147a13faf65"
+  },
+  "scopeAndLimits": [
+    "Read-only independent rehash and repository metadata/diff verification; no tests, VM calls, source edits, service registration or physical printing performed by this review.",
+    "This receipt is outside the immutable 621-artifact final packet; the packet was not modified.",
+    "The qualified 1109-file isolated cohort differs from the dirty original workspace in five retained user-owned inputs; two additional historical log differences are excluded from that cohort and preserved. No exact dirty-workspace or committed-runtime qualification.",
+    "Production issuance/current authority, LAN cluster integration, complete operational writer/Hive cutover, downstream physical fencing and physical/service-account qualification remain held as documented in report 0a70e7aa396839d7778636060c213c63cfd28ae61d1272d0df2a2ebc4a9f7a38.",
+    "The immutable v1 packet records new Windows runtime as blocked at sealing. Parent reports a subsequently authorized identical retry succeeded; any resulting runtime evidence is a separate later cohort and is not reviewed or retrospectively claimed by this receipt.",
+    "HEAD, branch and stash identifiers and empty staged diff match pre-port records; this verifies repository state, not an unavailable byte-for-byte baseline of the Git index file."
+  ]
+}

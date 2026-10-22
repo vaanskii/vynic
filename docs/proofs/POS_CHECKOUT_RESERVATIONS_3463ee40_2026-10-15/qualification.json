@@ -1,0 +1,112 @@
+{
+  "status": "COMPLETE_SOURCE_QUALIFIED_WITH_EXPLICIT_RELEASE_GATES",
+  "recordedAtUtc": "2026-10-14T23:52:08.183428+00:00",
+  "workspace": "/Users/vaanskii/Developer/vynic",
+  "gitHead": "3463ee406184fec7f53818416e11d0e5f5602c87",
+  "committed": false,
+  "scope": "Eight approved POS checkout/reservation/estimate features and final right collapsible action panel correction",
+  "sourceHashManifest": "source-sha256.json",
+  "focusedFlutter": {
+    "passed": 76,
+    "failed": 0,
+    "log": "focused-final-tests.log"
+  },
+  "flutterAggregate": {
+    "exitCode": 0,
+    "counts": {
+      "passed": 2251,
+      "failed": 0,
+      "skipped": 3
+    },
+    "selectedFileCount": 188,
+    "excludedFileCount": 41,
+    "failureMessages": [],
+    "excludedCase": "actual Dart→Go mutual TLS loses ACK, flushes before send, reopens and retains other-origin receipts",
+    "excludedCaseReason": "No Go executable or precompiled VYNIC_OPERATIONAL_PROOF_GO_FIXTURE available on this executor; prior unfiltered run failed only this prerequisite"
+  },
+  "backendAggregate": {
+    "backendFinalWithOwnedPostgres": {
+      "passed": 918,
+      "failed": 0,
+      "skipped": 895
+    },
+    "ownedCluster": "STOPPED"
+  },
+  "reservationPostgres": {
+    "populated77to78": "PASS_EXISTING_FIELDS_PRESERVED_NEW_DEFAULTS_ZERO_NULL",
+    "repeatMigration": "PASS_NO_OP",
+    "fresh78": "PASS",
+    "advancePostgres": {
+      "passed": 6,
+      "failed": 0,
+      "skipped": 0
+    },
+    "backendAggregate": {
+      "passed": 906,
+      "failed": 0,
+      "skipped": 901
+    },
+    "ownedCluster": "STOPPED",
+    "all77HistoricalMigrationsUnchanged": true
+  },
+  "managerDeleteHttpPostgres": {
+    "httpPostgresManagerDelete": {
+      "passed": 6,
+      "failed": 0,
+      "skipped": 0
+    },
+    "ownedCluster": "STOPPED"
+  },
+  "staticChecks": {
+    "dartFormat": "PASS",
+    "targetedDartAnalysis": "PASS_NO_ISSUES_38_FILES",
+    "backendTypecheck": "PASS",
+    "backendNestBuild": "PASS",
+    "prismaGenerate": "PASS_6.19.3",
+    "prismaValidate": "PASS",
+    "gitDiffCheck": "PASS"
+  },
+  "preservation": {
+    "all77HistoricalMigrationsUnchanged": true,
+    "protectedGeneratedAdaptersMatchPreRunHead": {
+      "menu_item_db.g.dart": true,
+      "order.g.dart": true,
+      "package.g.dart": true,
+      "sale_record.g.dart": true,
+      "table.g.dart": true,
+      "user.g.dart": true
+    },
+    "authorizedDuplicateImportRemovalOnly": true,
+    "existingWorkingChangesAndStashesPreserved": true
+  },
+  "uiScreenshots": {
+    "docs/proofs/POS_CHECKOUT_RESERVATIONS_3463ee40_2026-10-15/ui/home-collapsed-1024x768.png": "e9f499e0f14d8a2047d16acef01c17cdc28da621141fb479478e19480552fc66",
+    "docs/proofs/POS_CHECKOUT_RESERVATIONS_3463ee40_2026-10-15/ui/home-collapsed-1440x900.png": "3f050f6506d8d94fee54aafc87768af3a8913e8ae2d759a5a18edeac12d4f680",
+    "docs/proofs/POS_CHECKOUT_RESERVATIONS_3463ee40_2026-10-15/ui/home-empty-1024x768.png": "f17c7321cfcb466b45819695faeb4c6c330ce84dde5ecca0e77af705cd751a0d",
+    "docs/proofs/POS_CHECKOUT_RESERVATIONS_3463ee40_2026-10-15/ui/home-expanded-1024x768.png": "f503af0da1fadd8851904382e69b121d0292c1e389d3d98c5e5b67eae7bbc571",
+    "docs/proofs/POS_CHECKOUT_RESERVATIONS_3463ee40_2026-10-15/ui/home-expanded-1440x900.png": "ccbc763eac14e23fab3dea07ff777c297c9bff90dfdecedc8953401d33fe764c"
+  },
+  "uiPixelReview": "All five actual Flutter screenshots inspected; collapsed/expanded 1024x768 + 1440x900, explicit empty saved layout. Synthetic data only. Georgian font rendered. Panel occupies its own column.",
+  "businessBehavior": {
+    "holdExpiry": "manual; no automatic expiration",
+    "cancelledAdvance": "original cash receipt retained; booking cannot be deleted",
+    "excessAdvance": "settlement refused without inventing refund/forfeit/transfer",
+    "estimateStores": "local POS drafts and Cloud Manager counted menus remain distinct stores"
+  },
+  "limitations": [
+    "One existing Dart-Go wire case excluded because Go/compiler fixture was unavailable; prior unfiltered run passed 2250, skipped 3 and failed only this prerequisite.",
+    "41 live/printer-related files excluded from Flutter aggregate; exact list retained.",
+    "895 backend cases remain skipped outside their opt-in fixture environments; all 12 new HTTP/PG cases were enabled in the final aggregate.",
+    "Windows/native hardware/cash acceptance and normal release/migration rollout remain separate; no live service restart, data change, install, push or deployment performed."
+  ],
+  "boundaries": {
+    "liveDataChanged": false,
+    "servicesRestarted": false,
+    "credentialsChanged": false,
+    "physicalPrinting": false,
+    "committed": false,
+    "pushed": false,
+    "deployed": false,
+    "ownedPostgresClusters": "STOPPED"
+  }
+}

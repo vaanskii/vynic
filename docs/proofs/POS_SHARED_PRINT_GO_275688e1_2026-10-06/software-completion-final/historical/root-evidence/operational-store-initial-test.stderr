@@ -1,0 +1,7 @@
+go: downloading modernc.org/sqlite v1.59.0
+go: downloading google.golang.org/grpc v1.79.3
+go: downloading golang.org/x/sys v0.47.0
+go: downloading modernc.org/libc v1.75.7
+go: downloading modernc.org/mathutil v1.7.1
+go: downloading modernc.org/memory v1.12.1
+go: downloading golang.org/x/text v0.32.0

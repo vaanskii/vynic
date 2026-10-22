@@ -140,6 +140,7 @@ void main() {
       );
       await t.pumpAndSettle();
       await chooseReceivingProduct(t);
+      await openReceivingOptions(t);
       await t.ensureVisible(find.byKey(const Key('receiving-price-mode-0')));
       await t.tap(find.text('მთლიანი თანხა').last);
       await t.pumpAndSettle();

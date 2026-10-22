@@ -1,0 +1,328 @@
+ M .env.docker.example
+ M .env.production.example
+ M apps/backend/prisma/schema.prisma
+ M apps/backend/src/auth/auth.module.ts
+ M apps/backend/src/customer/commercial-access.integration.spec.ts
+ M apps/backend/src/customer/customer-onboarding.integration.spec.ts
+ M apps/backend/src/customer/customer.controller.ts
+ M apps/backend/src/customer/customer.service.ts
+ M apps/backend/src/dev-origins.spec.ts
+ M apps/backend/src/dev-origins.ts
+ M apps/backend/src/edge-foundation/edge-foundation.integration.spec.ts
+ M apps/backend/src/entitlements/commercial-projection.ts
+ M apps/backend/src/inventory/inventory-audit.ts
+ M apps/backend/src/inventory/inventory-cost.service.ts
+ M apps/backend/src/inventory/inventory.service.ts
+ M apps/backend/src/inventory/receiving.service.ts
+ M apps/backend/src/inventory/sale-consumption.service.ts
+ M apps/backend/src/local-tools/deletion-matrix.ts
+ M apps/backend/src/mobile/mobile.controller.ts
+ M apps/backend/src/mobile/services/mgr01-table-layout.integration.spec.ts
+ M apps/backend/src/mobile/services/mobile-dashboard.service.ts
+ M apps/backend/src/mobile/services/mobile-users.service.spec.ts
+ M apps/backend/src/mobile/services/mobile-users.service.ts
+ M apps/backend/src/platform/platform-commercial.controller.ts
+ M apps/backend/src/platform/platform-commercial.service.ts
+ M apps/backend/src/platform/platform-control-plane.integration.spec.ts
+ M apps/backend/src/platform/platform-password.spec.ts
+ M apps/backend/src/platform/saas-phase2.integration.spec.ts
+ M apps/backend/src/pos/sync/application/ingest-pos-snapshot.characterization.spec.ts
+ M apps/backend/src/pos/sync/application/ingest-pos-snapshot.service.spec.ts
+ M apps/backend/src/pos/sync/snapshot/staff-sync.service.spec.ts
+ M apps/backend/src/pos/sync/snapshot/staff-sync.service.ts
+ M apps/backend/src/subscriptions/subscription.integration.spec.ts
+ M apps/backend/src/subscriptions/subscription.service.ts
+ M apps/backend/src/tenancy/manager-saas.integration.spec.ts
+ M apps/backend/src/website/custom/custom-website.integration.spec.ts
+ M apps/backend/src/website/provisioning/website-provisioning.integration.spec.ts
+ M apps/backend/src/website/provisioning/website-provisioning.ts
+ M apps/edge/go.mod
+ M apps/edge/go.sum
+ M apps/edge/internal/store/coordination_test.go
+ M apps/edge/internal/store/store.go
+ M apps/operations/lib/apps/mobile_app/presentation/screens/admin_screen/mobile_admin_screen.dart
+ M apps/operations/lib/apps/mobile_app/presentation/screens/admin_screen/tabs/mobile_admin_receiving.dart
+ M apps/operations/lib/apps/mobile_app/presentation/screens/admin_screen/tabs/mobile_admin_recipes.dart
+ M apps/operations/lib/apps/mobile_app/presentation/screens/consumption_history_screen.dart
+ M apps/operations/lib/apps/mobile_app/presentation/screens/financials_screen.dart
+ M apps/operations/lib/apps/windows_pos/screens/admin_screen.dart
+ M apps/operations/lib/apps/windows_pos/screens/developer_screen.dart
+ M apps/operations/lib/apps/windows_pos/screens/home_screen.dart
+ M apps/operations/lib/apps/windows_pos/screens/menu_screen.dart
+ M apps/operations/lib/apps/windows_pos/screens/order_detail_screen.dart
+ M apps/operations/lib/apps/windows_pos/screens/pos_first_run.dart
+ M apps/operations/lib/apps/windows_pos/screens/venue_setup_screen.dart
+ M apps/operations/lib/apps/windows_pos/widgets/admin/admin_close_day_section.dart
+ M apps/operations/lib/apps/windows_pos/widgets/admin/admin_reservations_section.dart
+ M apps/operations/lib/apps/windows_pos/widgets/admin/printers/admin_printers_section.dart
+ M apps/operations/lib/apps/windows_pos/widgets/home/home_calculator_page.dart
+ M apps/operations/lib/apps/windows_pos/widgets/home/home_reservations_section.dart
+ M apps/operations/lib/apps/windows_pos/widgets/home/home_take_away_section.dart
+ M apps/operations/lib/apps/windows_pos/widgets/home/home_x_report_helper.dart
+ M apps/operations/lib/core/database/database_core.dart
+ M apps/operations/lib/core/database/repositories/backup_repository.dart
+ M apps/operations/lib/core/database/repositories/order_table_mutation_repository.dart
+ M apps/operations/lib/core/database/repositories/settings_repository.dart
+ M apps/operations/lib/core/database/repositories/user_repository.dart
+ M apps/operations/lib/core/models/menu_recipe.dart
+ M apps/operations/lib/core/models/receiving.dart
+ M apps/operations/lib/core/services/auth/mobile_auth_service.dart
+ M apps/operations/lib/core/services/edge/edge_device_credential_store.dart
+ M apps/operations/lib/core/services/edge/inventory_projection_sync_service.dart
+ M apps/operations/lib/core/services/edge/pos_enrollment_service.dart
+ M apps/operations/lib/core/services/edge/runtime_config_sync.dart
+ M apps/operations/lib/core/services/manager_app/mobile_api_service.dart
+ M apps/operations/lib/core/services/pos/pos_command_applier.dart
+ M apps/operations/lib/core/services/pos/update/update_readiness.dart
+ M apps/operations/lib/core/services/printing/escpos_kitchen_renderer.dart
+ M apps/operations/lib/core/services/printing/escpos_receipt_renderer.dart
+ M apps/operations/lib/core/services/printing/escpos_report_renderer.dart
+ M apps/operations/lib/core/services/printing/print_queue.dart
+ M apps/operations/lib/core/services/printing/printer_connection.dart
+ M apps/operations/lib/core/services/printing/printer_service.dart
+ M apps/operations/lib/core/services/printing/printer_transport.dart
+ M apps/operations/lib/core/services/sync/api_config.dart
+ M apps/operations/test/unit/inventory_projection_sync_test.dart
+ M apps/operations/test/unit/manager_auth_test.dart
+ M apps/operations/test/unit/pos_enrollment_test.dart
+ M apps/operations/test/widget/admin_navigation_test.dart
+ M apps/operations/test/widget/manager_catalog_cost_test.dart
+ M apps/operations/test/widget/manager_login_screen_test.dart
+ M apps/operations/test/widget/pos_first_run_test.dart
+ M apps/operations/test/widget/venue_setup_test.dart
+ M apps/operations/windows/runner/CMakeLists.txt
+ M apps/operations/windows/runner/flutter_window.cpp
+ M apps/operations/windows/runner/flutter_window.h
+ M apps/platform-web/src/App.tsx
+ M apps/platform-web/src/components/layout/Navbar.tsx
+ M apps/platform-web/src/components/product/PosScreenReplica.tsx
+ M apps/platform-web/src/components/product/ProductLaunchMenu.tsx
+ M apps/platform-web/src/components/sections/FloorPlanSection.tsx
+ M apps/platform-web/src/components/sections/Hero.tsx
+ M apps/platform-web/src/components/sections/ProductTour.tsx
+ M apps/platform-web/src/components/ui/Button.tsx
+ M apps/platform-web/src/components/ui/Reveal.tsx
+ M apps/platform-web/src/components/ui/SectionHeading.tsx
+ M apps/platform-web/src/customer/OperationsSections.tsx
+ M apps/platform-web/src/customer/OwnerDashboard.tsx
+ M apps/platform-web/src/lib/motion.ts
+ M apps/platform-web/src/pages/HomePage.tsx
+ M apps/platform-web/src/platform/api.ts
+ M apps/platform-web/src/platform/pages/venue/SubscriptionPanel.tsx
+ M apps/platform-web/src/platform/pages/venue/VenueCommercialTab.tsx
+ M apps/platform-web/src/platform/pages/venue/VenueManagerAccess.tsx
+ M apps/platform-web/src/styles/index.css
+ M apps/platform-web/src/subscriptions/operator-actions.ts
+ M apps/platform-web/src/subscriptions/types.ts
+ M apps/platform-web/src/test/access-loading.test.tsx
+ M apps/platform-web/src/test/commercial-control-ux.test.tsx
+ M apps/platform-web/src/test/commercial.integration.test.tsx
+ M apps/platform-web/src/test/dashboard.test.tsx
+ M apps/platform-web/src/test/subscription-lifecycle.test.tsx
+ M compose.local.yaml
+ M compose.yaml
+ M deploy/traefik/routes.yml
+ M docs/CANONICAL_MENU_SYNC.md
+ M docs/COMMERCIAL_SUBSCRIPTION_LIFECYCLE.md
+ M docs/DEPLOYMENT.md
+ M docs/DEPLOYMENT_PROOF.md
+ M docs/LOCAL_DATABASE_TOOLS.md
+ M docs/SAAS_BUILD_RUNTIME_ONBOARDING.md
+ M docs/SAAS_PHASE2_CONTROL_PLANE.md
+ M docs/agent-state/VYNIC_CODE_MAP.md
+ M docs/agent-state/VYNIC_DECISIONS.md
+ M docs/agent-state/VYNIC_PROJECT_STATE.md
+ M packages/contracts/generated/edge_dart/lib/vynic_edge_contracts.dart
+ M packages/contracts/generated/go/go.mod
+ M packages/contracts/generated/go/go.sum
+ M scripts/docker.sh
+?? .claude/launch.json
+?? apps/backend/prisma/migrations/20261015120000_printer_runtime_preparation/
+?? apps/backend/prisma/migrations/20261016130000_manager_activation/
+?? apps/backend/prisma/migrations/20261017120000_inventory_locations/
+?? apps/backend/src/auth/manager-activation.controller.spec.ts
+?? apps/backend/src/auth/manager-activation.controller.ts
+?? apps/backend/src/auth/manager-activation.integration.spec.ts
+?? apps/backend/src/auth/manager-activation.service.ts
+?? apps/backend/src/customer/printer-runtime-config.spec.ts
+?? apps/backend/src/customer/printer-runtime-config.ts
+?? apps/backend/src/customer/printer-runtime-persistence.spec.ts
+?? apps/backend/src/customer/printer-runtime-persistence.ts
+?? apps/backend/src/inventory/history-page.ts
+?? apps/backend/src/inventory/inventory-locations.integration.spec.ts
+?? apps/backend/src/inventory/inventory-phase8.integration.spec.ts
+?? apps/backend/src/inventory/stock-locations.ts
+?? apps/backend/src/staff/staff-pin-policy.ts
+?? apps/backend/src/staff/staff-pin.integration.spec.ts
+?? apps/backend/test/inventory-location-process.fixture.ts
+?? apps/backend/test/inventory-phase8.fixture.ts
+?? apps/edge/cmd/printer-agent/
+?? apps/edge/internal/printcluster/
+?? apps/edge/internal/printeligibility/
+?? apps/edge/internal/printeragent/
+?? apps/edge/internal/printerdaemon/
+?? apps/edge/internal/printerprovisioning/
+?? apps/edge/internal/printhost/
+?? apps/edge/internal/printqueue/
+?? apps/edge/internal/printstation/
+?? apps/edge/internal/printtransport/
+?? apps/edge/internal/server/operational_proof.go
+?? apps/edge/internal/server/operational_proof_test.go
+?? apps/edge/internal/server/operational_wire.go
+?? apps/edge/internal/store/migrations/003_operational_coordination.sql
+?? apps/edge/internal/store/migrations/004_operational_entity_kinds.sql
+?? apps/edge/internal/store/migrations/005_shared_print_queue.sql
+?? apps/edge/internal/store/migrations/006_operational_terminal_origin.sql
+?? apps/edge/internal/store/operational.go
+?? apps/edge/internal/store/operational_authority.go
+?? apps/edge/internal/store/operational_origin.go
+?? apps/edge/internal/store/operational_queue_test.go
+?? apps/edge/internal/store/operational_status.go
+?? apps/edge/internal/store/operational_test.go
+?? apps/edge/native/
+?? apps/edge/packaging/
+?? apps/operations/lib/apps/mobile_app/presentation/screens/stock_movement_history_screen.dart
+?? apps/operations/lib/apps/mobile_app/presentation/widgets/inventory_history_view.dart
+?? apps/operations/lib/apps/mobile_app/presentation/widgets/inventory_movement_value.dart
+?? apps/operations/lib/apps/windows_pos/screens/pos_manager_registration_screen.dart
+?? apps/operations/lib/apps/windows_pos/widgets/admin/printers/additional_printers_section.dart
+?? apps/operations/lib/apps/windows_pos/widgets/admin/printers/printer_agent_status_card.dart
+?? apps/operations/lib/apps/windows_pos/widgets/shared/print_jobs.dart
+?? apps/operations/lib/core/database/repositories/print_job_repository.dart
+?? apps/operations/lib/core/models/inventory_history_page.dart
+?? apps/operations/lib/core/services/auth/manager_activation_service.dart
+?? apps/operations/lib/core/services/edge/operational_proof/
+?? apps/operations/lib/core/services/manager_app/inventory_history_export.dart
+?? apps/operations/lib/core/services/pos/order_confirmation_print.dart
+?? apps/operations/lib/core/services/printing/cloud_printer_runtime.dart
+?? apps/operations/lib/core/services/printing/cluster_print_effect.dart
+?? apps/operations/lib/core/services/printing/local_printer_catalog.dart
+?? apps/operations/lib/core/services/printing/optional_printer_beep.dart
+?? apps/operations/lib/core/services/printing/print_identity_admission.dart
+?? apps/operations/lib/core/services/printing/print_job.dart
+?? apps/operations/lib/core/services/printing/print_reconciliation.dart
+?? apps/operations/lib/core/services/printing/print_routing_plan.dart
+?? apps/operations/lib/core/services/printing/printer_agent_client.dart
+?? apps/operations/lib/core/services/printing/printer_agent_profile.dart
+?? apps/operations/lib/core/services/printing/printer_agent_runtime_profile.dart
+?? apps/operations/lib/core/services/printing/printer_capability_profile.dart
+?? apps/operations/lib/core/services/printing/printer_destination.dart
+?? apps/operations/lib/core/services/printing/shared_print_effect.dart
+?? apps/operations/lib/core/services/printing/windows_spooler_transport.dart
+?? apps/operations/test/live/native_ingress_live_test.dart
+?? apps/operations/test/live/pos02_one_shot_acceptance_test.dart
+?? apps/operations/test/live/pos02_process_recovery_test.dart
+?? apps/operations/test/support/pos02_acceptance_runner.dart
+?? apps/operations/test/support/pos02_developer_fixture.dart
+?? apps/operations/test/support/pos02_fixture.dart
+?? apps/operations/test/support/pos02_preview_harness.dart
+?? apps/operations/test/support/printer_agent_status_fixture.dart
+?? apps/operations/test/unit/cloud_printer_runtime_sync_test.dart
+?? apps/operations/test/unit/cloud_printer_runtime_test.dart
+?? apps/operations/test/unit/cluster_print_effect_test.dart
+?? apps/operations/test/unit/escpos_capability_renderer_test.dart
+?? apps/operations/test/unit/inventory_history_export_test.dart
+?? apps/operations/test/unit/manager_pin_delivery_test.dart
+?? apps/operations/test/unit/operational_manager_items_test.dart
+?? apps/operations/test/unit/operational_ordinary_planner_test.dart
+?? apps/operations/test/unit/operational_proof_client_test.dart
+?? apps/operations/test/unit/operational_proof_wire_test.dart
+?? apps/operations/test/unit/optional_printer_beep_test.dart
+?? apps/operations/test/unit/pos02_acceptance_runner_test.dart
+?? apps/operations/test/unit/pos02_backup_restore_test.dart
+?? apps/operations/test/unit/pos02_local_printers_test.dart
+?? apps/operations/test/unit/pos02_preview_safety_test.dart
+?? apps/operations/test/unit/pos02_print_delivery_test.dart
+?? apps/operations/test/unit/print_identity_credential_admission_test.dart
+?? apps/operations/test/unit/print_routing_plan_test.dart
+?? apps/operations/test/unit/printer_agent_client_test.dart
+?? apps/operations/test/unit/printer_agent_runtime_profile_test.dart
+?? apps/operations/test/unit/printer_capability_profile_test.dart
+?? apps/operations/test/unit/printer_destination_test.dart
+?? apps/operations/test/unit/printer_route_catalog_test.dart
+?? apps/operations/test/unit/routed_print_delivery_test.dart
+?? apps/operations/test/unit/shared_print_effect_test.dart
+?? apps/operations/test/unit/windows_spooler_transport_test.dart
+?? apps/operations/test/widget/inventory_phase8_test.dart
+?? apps/operations/test/widget/manager_activation_test.dart
+?? apps/operations/test/widget/pos02_admin_printers_test.dart
+?? apps/operations/test/widget/pos02_kitchen_entry_points_test.dart
+?? apps/operations/test/widget/pos02_print_jobs_test.dart
+?? apps/operations/test/widget/printer_agent_status_card_test.dart
+?? apps/operations/test/widget/printer_route_configuration_test.dart
+?? apps/operations/test/widget/production_print_copy_test.dart
+?? apps/operations/tool/cluster_print_fixture.dart
+?? apps/operations/tool/pos02_acceptance_ledger.dart
+?? apps/operations/tool/pos02_acceptance_ledger_probe.dart
+?? apps/operations/tool/pos02_acceptance_request.dart
+?? apps/operations/tool/pos02_preview.dart
+?? apps/operations/tool/prove_pos02_acceptance_ledger.py
+?? apps/operations/tool/prove_pos02_recovery.py
+?? apps/operations/tool/shared_print_fixture.dart
+?? apps/operations/windows/runner/windows_spooler.cpp
+?? apps/operations/windows/runner/windows_spooler.h
+?? apps/operations/windows/runner/windows_spooler_channel.cpp
+?? apps/operations/windows/runner/windows_spooler_channel.h
+?? apps/operations/windows/runner/windows_spooler_native.cpp
+?? apps/operations/windows/runner/windows_spooler_native.h
+?? apps/operations/windows/tests/CMakeLists.txt
+?? apps/operations/windows/tests/windows_spooler_channel_test.cpp
+?? apps/operations/windows/tests/windows_spooler_test.cpp
+?? apps/platform-web/src/components/home/
+?? apps/platform-web/src/components/motion/
+?? apps/platform-web/src/components/sections/PlatformStory.tsx
+?? apps/platform-web/src/pages/MarketingSite.tsx
+?? apps/platform-web/src/pages/SitePages.tsx
+?? apps/platform-web/src/test/site-motion.test.tsx
+?? compose.lan.yaml
+?? docs/INV01_LOCATIONS_TRANSFERS_CHECKPOINT.md
+?? docs/INV02_INV04_INVENTORY_PROVENANCE_HISTORY.md
+?? docs/POS02_ADMIN_REVISION.md
+?? docs/POS02_ONE_SHOT_ACCEPTANCE.md
+?? docs/POS02_PREVIEW.md
+?? docs/POS02_PRINT_DELIVERY.md
+?? docs/POS02_WINDOWS_INSTALLER_HANDOFF.md
+?? docs/POS_MULTI_TERMINAL_READINESS_PLAN.md
+?? docs/POS_MULTI_TERMINAL_WRITER_COVERAGE.md
+?? docs/POS_PRINTER_ARCHITECTURE_REPORT_2026-10-09.md
+?? docs/POS_PRINTER_IMPLEMENTATION_REPORT_2026-10-06.md
+?? docs/POS_SHARED_PRINT_ARCHITECTURE.md
+?? docs/VYNIC_PRINT_ARCHITECTURE.md
+?? docs/audits/2026-09-29-f7bb982/
+?? docs/audits/2026-10-04-readiness/
+?? docs/proofs/INV01_LOCATIONS_3463ee40_2026-10-08/
+?? docs/proofs/INV02_INV04_3463ee40_2026-10-08/
+?? docs/proofs/MANAGER_PIN_ACTIVATION_CANDIDATE_3463ee40_2026-10-08/
+?? docs/proofs/POS02_ACCEPTANCE_db74149c_2026-10-02/
+?? docs/proofs/POS02_ADMIN_d194367f_2026-10-02/
+?? docs/proofs/POS02_CANDIDATE_275688e1_2026-10-02.json
+?? docs/proofs/POS02_CHECKPOINT_275688e1_2026-10-02/
+?? docs/proofs/POS02_INSTALLER_SERVER_2026-10-03.json
+?? docs/proofs/POS02_LOGS_275688e1_2026-10-02.zip
+?? docs/proofs/POS02_NATIVE_275688e1_2026-10-02.json
+?? docs/proofs/POS02_PREVIEW_275688e1_2026-10-02/
+?? docs/proofs/POS02_PRINT_JOBS_640_2026-10-02.png
+?? docs/proofs/POS02_WINDOWS_CANDIDATE_275688e1_2026-10-02.json
+?? docs/proofs/POS02_WINDOWS_CANDIDATE_275688e1_2026-10-02.zip
+?? docs/proofs/POS02_WINDOWS_RECOVERY_2026-10-04/
+?? docs/proofs/POS02_WINDOWS_SMOKE_275688e1_2026-10-02.json
+?? docs/proofs/POS_MANAGER_ITEMS_275688e1_2026-10-06/
+?? docs/proofs/POS_MULTI_TERMINAL_275688e1_2026-10-06/
+?? docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/
+?? docs/proofs/POS_WINDOWS_NATIVE_abf7e6b3_2026-10-06/
+?? docs/proofs/PRINT_ARCHITECTURE_3463ee40_2026-10-09/
+?? experiments/
+?? packages/contracts/generated/edge_dart/lib/src/generated/vynic/edge/v1/operational_proof.pb.dart
+?? packages/contracts/generated/edge_dart/lib/src/generated/vynic/edge/v1/operational_proof.pbenum.dart
+?? packages/contracts/generated/edge_dart/lib/src/generated/vynic/edge/v1/operational_proof.pbgrpc.dart
+?? packages/contracts/generated/edge_dart/lib/src/generated/vynic/edge/v1/operational_proof.pbjson.dart
+?? packages/contracts/generated/edge_dart/lib/src/generated/vynic/edge/v1/printer_agent.pb.dart
+?? packages/contracts/generated/edge_dart/lib/src/generated/vynic/edge/v1/printer_agent.pbenum.dart
+?? packages/contracts/generated/edge_dart/lib/src/generated/vynic/edge/v1/printer_agent.pbgrpc.dart
+?? packages/contracts/generated/edge_dart/lib/src/generated/vynic/edge/v1/printer_agent.pbjson.dart
+?? packages/contracts/generated/go/vynic/edge/v1/operational_proof.pb.go
+?? packages/contracts/generated/go/vynic/edge/v1/operational_proof_grpc.pb.go
+?? packages/contracts/generated/go/vynic/edge/v1/printer_agent.pb.go
+?? packages/contracts/generated/go/vynic/edge/v1/printer_agent_grpc.pb.go
+?? packages/contracts/proto/vynic/edge/v1/operational_proof.proto
+?? packages/contracts/proto/vynic/edge/v1/printer_agent.proto

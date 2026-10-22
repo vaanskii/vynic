@@ -5,6 +5,9 @@ import type {
 } from "./types";
 import type {
   AuditEvent,
+  CustomWebsite,
+  CustomWebsiteCheck,
+  WebsiteCapability,
   Device,
   DeviceEnrollment,
   DeviceStatus,
@@ -70,10 +73,12 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
 
   if (response.status === 401) handleUnauthorized();
   if (!response.ok) {
-    const payload = (await response.json().catch(() => null)) as { message?: string | string[];
-    }
-      | null;
-    const details = Array.isArray(payload?.message) ? payload.message : undefined;
+    const payload = (await response.json().catch(() => null)) as {
+      message?: string | string[];
+    } | null;
+    const details = Array.isArray(payload?.message)
+      ? payload.message
+      : undefined;
     const message =
       (typeof payload?.message === "string" && payload.message) ||
       details?.[0] ||
@@ -86,6 +91,18 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
 
 const json = (value: object) => JSON.stringify(value);
 
+export const localToolsApi = {
+  capability: () => request<{ enabled: boolean }>("/platform/developer-tools"),
+  remove: (kind: "venue" | "organization", id: string, confirmation: string) =>
+    request<{ mediaCleanup: { failures: string[] } }>(
+      `/platform/developer-tools/${kind === "venue" ? "venues" : "organizations"}/${encodeURIComponent(id)}/delete`,
+      {
+        method: "POST",
+        body: json({ confirmation }),
+      },
+    ),
+};
+
 export const authApi = {
   login: (email: string, password: string) =>
     request<LoginResult>("/platform/auth/login", {
@@ -96,15 +113,68 @@ export const authApi = {
 };
 
 export const platformApi = {
+  hostnameRequests: (venueId: string) =>
+    request<import("../customer/HostnameRequest").HostnameRequestRow[]>(
+      `/platform/venues/${venueId}/hostname-requests`,
+    ),
+  reviewHostname: (
+    venueId: string,
+    id: string,
+    status: string,
+    reason: string,
+  ) =>
+    request(`/platform/venues/${venueId}/hostname-requests/${id}/review`, {
+      method: "POST",
+      body: JSON.stringify({ status, reason }),
+    }),
+  websitePaymentReviews: (venueId: string, offset = 0) =>
+    request<import("./types").WebsitePaymentReviewPage>(
+      `/platform/venues/${venueId}/website-payment-reviews?offset=${offset}`,
+    ),
+  websiteDeliveries: (venueId: string, offset = 0) =>
+    request<import("./types").WebsiteDeliveryPage>(
+      `/platform/venues/${venueId}/website-deliveries?offset=${offset}`,
+    ),
+  paymentStatus: (venueId: string) =>
+    request<{ configured: boolean; entitled: boolean }>(
+      `/platform/venues/${venueId}/payments/bog`,
+    ),
+  subscriptionAction: (id: string, body: Record<string, unknown>) =>
+    request(`/platform/venues/${id}/subscription/actions`, {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+  subscriptionQuote: (id: string, body: Record<string, unknown>) =>
+    request<import("../subscriptions/types").BillingQuote>(
+      `/platform/venues/${id}/subscription/quote`,
+      { method: "POST", body: JSON.stringify(body) },
+    ),
+  subscriptionPayment: (id: string, body: Record<string, unknown>) =>
+    request(`/platform/venues/${id}/subscription/manual-success`, {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
   subscription: (id: string) =>
-    request<VenueSubscription | null>(`/platform/venues/${id}/subscription`),
-  setSubscription: (id: string, body: Partial<VenueSubscription>) =>
+    request<
+      | (VenueSubscription &
+          import("../subscriptions/types").SubscriptionDetail)
+      | null
+    >(`/platform/venues/${id}/subscription`),
+  setSubscription: (
+    id: string,
+    body: Partial<VenueSubscription> & { planId?: string },
+  ) =>
     request<VenueSubscription>(`/platform/venues/${id}/subscription`, {
       method: "PUT",
       body: json(body),
     }),
   managers: (id: string) =>
     request<ManagerAccess[]>(`/platform/venues/${id}/managers`),
+  managerActivation: (id: string) =>
+    request<{ code: string; expiresAt: string; venueCode: string }>(
+      `/platform/venues/${id}/manager-activation`,
+      { method: "POST", body: json({}) },
+    ),
   managerAccess: (
     id: string,
     action: "create" | "reset" | "disable",
@@ -144,13 +214,15 @@ export const platformApi = {
       method: "PATCH",
       body: json({ name }),
     }),
-  venues: (options: { limit?: number; offset?: number; organizationId?: string } = {},
+  venues: (
+    options: { limit?: number; offset?: number; organizationId?: string } = {},
   ) => {
     const search = new URLSearchParams({
       limit: String(options.limit ?? 50),
       offset: String(options.offset ?? 0),
     });
-    if (options.organizationId) search.set("organizationId", options.organizationId);
+    if (options.organizationId)
+      search.set("organizationId", options.organizationId);
     return request<Page<Venue>>(`/platform/venues?${search}`);
   },
   venue: (id: string) => request<Venue>(`/platform/venues/${id}`),
@@ -159,17 +231,37 @@ export const platformApi = {
     name: string;
     timezone: string;
     currency: string;
-  }) => request<Venue>("/platform/venues", { method: "POST", body: json(input) }),
-  updateVenue: (id: string, input: { name: string; timezone: string; currency: string },
+  }) =>
+    request<Venue>("/platform/venues", { method: "POST", body: json(input) }),
+  updateVenue: (
+    id: string,
+    input: { name: string; timezone: string; currency: string },
   ) =>
-    request<Venue>(`/platform/venues/${id}`, { method: "PATCH", body: json(input),
+    request<Venue>(`/platform/venues/${id}`, {
+      method: "PATCH",
+      body: json(input),
     }),
   setVenueStatus: (id: string, status: VenueStatus) =>
     request<Venue>(`/platform/venues/${id}/status`, {
       method: "PUT",
       body: json({ status }),
     }),
+  savePlan: (id: string | undefined, body: object) =>
+    request<Plan>(`/platform/plans${id ? `/${id}` : ""}`, {
+      method: id ? "PUT" : "POST",
+      body: json(body),
+    }),
   plans: () => request<Plan[]>("/platform/plans"),
+  ensureWebsitePlan: () =>
+    request<Plan[]>("/platform/plans/website-only", {
+      method: "POST",
+      body: json({}),
+    }),
+  enableCloudMenu: (venueId: string, enabled: boolean) =>
+    request<ProductState>(`/platform/venues/${venueId}/menu-management/cloud`, {
+      method: "PUT",
+      body: json({ enabled }),
+    }),
   features: () => request<Feature[]>("/platform/features"),
   product: (venueId: string) =>
     request<ProductState>(`/platform/venues/${venueId}/product`),
@@ -184,21 +276,53 @@ export const platformApi = {
     effect: OverrideEffect,
     note?: string,
   ) =>
-    request<ProductState>(`/platform/venues/${venueId}/features/${featureKey}`, {
-      method: "PUT",
-      body: json({ effect, note }),
-    },
+    request<ProductState>(
+      `/platform/venues/${venueId}/features/${featureKey}`,
+      {
+        method: "PUT",
+        body: json({ effect, note }),
+      },
     ),
   clearFeatureOverride: (venueId: string, featureKey: string) =>
-    request<ProductState>(`/platform/venues/${venueId}/features/${featureKey}`, {
-      method: "DELETE",
-    },
+    request<ProductState>(
+      `/platform/venues/${venueId}/features/${featureKey}`,
+      {
+        method: "DELETE",
+      },
     ),
   setWebsiteMode: (venueId: string, mode: WebsiteMode) =>
     request<WebsiteAccess>(`/platform/venues/${venueId}/website`, {
       method: "PUT",
       body: json({ mode }),
     }),
+  customWebsite: (venueId: string) =>
+    request<CustomWebsite>(`/platform/venues/${venueId}/custom-website`),
+  updateCustomWebsite: (
+    venueId: string,
+    body: Partial<
+      Pick<CustomWebsite, "siteKey" | "statusNote" | "expectedBuildId">
+    > & {
+      status?: Exclude<CustomWebsite["status"], "NOT_CONFIGURED">;
+    },
+  ) =>
+    request<CustomWebsite>(`/platform/venues/${venueId}/custom-website`, {
+      method: "PUT",
+      body: json(body),
+    }),
+  websiteCapabilities: (venueId: string) =>
+    request<WebsiteCapability[]>(
+      `/platform/venues/${venueId}/website-capabilities`,
+    ),
+  setWebsiteCapability: (venueId: string, key: string, enabled: boolean) =>
+    request<WebsiteCapability[]>(
+      `/platform/venues/${venueId}/website-capabilities/${key}`,
+      { method: "PUT", body: json({ enabled }) },
+    ),
+  checkCustomWebsite: (venueId: string) =>
+    request<CustomWebsiteCheck>(
+      `/platform/venues/${venueId}/custom-website/check`,
+      { method: "POST" },
+    ),
   domains: (venueId: string) =>
     request<VenueDomain[]>(`/platform/venues/${venueId}/domains`),
   registerDomain: (venueId: string, hostname: string) =>
@@ -206,22 +330,41 @@ export const platformApi = {
       method: "POST",
       body: json({ hostname }),
     }),
+  renameDomain: (
+    venueId: string,
+    domainId: string,
+    hostname: string,
+    expectedHostname: string,
+    reason: string,
+  ) =>
+    request<VenueDomain>(`/platform/venues/${venueId}/domains/${domainId}`, {
+      method: "PATCH",
+      body: json({ hostname, expectedHostname, reason }),
+    }),
   setDomainStatus: (venueId: string, domainId: string, status: DomainStatus) =>
-    request<VenueDomain>(`/platform/venues/${venueId}/domains/${domainId}/status`, {
-      method: "PUT",
-      body: json({ status }),
-    },
+    request<VenueDomain>(
+      `/platform/venues/${venueId}/domains/${domainId}/status`,
+      {
+        method: "PUT",
+        body: json({ status }),
+      },
     ),
   releaseDomain: (venueId: string, domainId: string) =>
-    request<{ released: string }>(`/platform/venues/${venueId}/domains/${domainId}`, {
-      method: "DELETE",
-    },
+    request<{ released: string }>(
+      `/platform/venues/${venueId}/domains/${domainId}`,
+      {
+        method: "DELETE",
+      },
     ),
   enrollments: (venueId: string) =>
     request<DeviceEnrollment[]>(`/platform/venues/${venueId}/enrollments`),
+  setupEligibility: (venueId: string) => request<{ eligible: boolean; reason: string | null }>(`/platform/venues/${venueId}/initial-manager-setup`),
+  managerLinks: (venueId: string) => request<{ id: string; status: string; expiresAt: string; consumedAt: string | null; cancelledAt: string | null }[]>(`/platform/venues/${venueId}/manager-links`),
+  issueManagerLink: (venueId: string) => request<{ id: string; code: string; expiresAt: string }>(`/platform/venues/${venueId}/manager-links`, { method: "POST", body: json({}) }),
+  cancelManagerLink: (venueId: string, id: string) => request(`/platform/venues/${venueId}/manager-links/${id}/cancel`, { method: "POST", body: json({}) }),
   createEnrollment: (
     venueId: string,
-    input: { displayName: string; platform: string; ttlMinutes?: number },
+    input: { displayName: string; platform: string; ttlMinutes?: number; initialManagerSetup?: boolean },
   ) =>
     request<IssuedEnrollment>(`/platform/venues/${venueId}/enrollments`, {
       method: "POST",
@@ -280,7 +423,9 @@ export const platformApi = {
       `/platform/venues/${venueId}/test-command/${commandId}`,
     ),
   audit: (limit = 50, offset = 0, targetId?: string, venueId?: string) => {
-    const search = new URLSearchParams({ limit: String(limit), offset: String(offset),
+    const search = new URLSearchParams({
+      limit: String(limit),
+      offset: String(offset),
     });
     if (targetId) search.set("targetId", targetId);
     if (venueId) search.set("venueId", venueId);
@@ -288,6 +433,13 @@ export const platformApi = {
   },
 };
 
-export function platformOnboardingApi(path: string, body?: unknown): Promise<any> {
-  return request(`/platform/onboarding/${path}`, body === undefined ? {} : {method:'PUT',body:JSON.stringify(body)});
+export function platformOnboardingApi(
+  path: string,
+  body?: unknown,
+  method = "PUT",
+): Promise<any> {
+  return request(
+    `/platform/onboarding/${path}`,
+    body === undefined ? {} : { method, body: JSON.stringify(body) },
+  );
 }

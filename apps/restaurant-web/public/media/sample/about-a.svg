@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 1000" role="img" aria-label="Bread by hand">
+  <rect width="800" height="1000" fill="#3a2e23"/>
+  <g fill="#e9dcc4" opacity="0.35">
+    <circle cx="200" cy="333" r="166"/>
+    <rect x="400" y="250" width="266" height="500"/>
+  </g>
+  <text x="50%" y="92%" text-anchor="middle" font-family="serif" font-size="71" fill="#e9dcc4">Bread by hand</text>
+</svg>

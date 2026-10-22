@@ -1,0 +1,324 @@
+{
+  "schema": 1,
+  "startedAtUtc": "2026-10-06T17:22:17.720567+00:00",
+  "sourceReceiptSHA256": "193e4800e5d0733a30bc6c8d4ac993590219363941e69a787bba5ac3681c8f68",
+  "sourceFiles": 1109,
+  "sourceRoot": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/final-cohort",
+  "compiler": "go version go1.26.8 darwin/arm64",
+  "status": "PASS_COMPILE_ONLY",
+  "artifacts": {
+    "arm64/printeragent": {
+      "command": [
+        "go",
+        "test",
+        "-mod=readonly",
+        "-c",
+        "-o",
+        "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/windows-software-go-build/arm64/printeragent.test.exe",
+        "./internal/printeragent"
+      ],
+      "environmentOverrides": {
+        "GOOS": "windows",
+        "GOARCH": "arm64",
+        "CGO_ENABLED": "0",
+        "GOPROXY": "off",
+        "GOTOOLCHAIN": "local"
+      },
+      "exitCode": 0,
+      "elapsedSeconds": 1.423726,
+      "path": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/windows-software-go-build/arm64/printeragent.test.exe",
+      "sourceReceiptSHA256": "193e4800e5d0733a30bc6c8d4ac993590219363941e69a787bba5ac3681c8f68",
+      "sha256": "819805381857dcd326f309ceba894b2bf43b62b0db037e5da7c347925ab5acb3",
+      "bytes": 24239104,
+      "PEMachine": "0xaa64",
+      "architecture": "arm64",
+      "executed": false,
+      "buildInfo": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/windows-software-go-build/arm64/printeragent.test.exe: go1.26.8\n\tpath\tvynic.local/edge/internal/printeragent.test\n\tmod\tvynic.local/edge\t(devel)\t\n\tbuild\t-buildmode=exe\n\tbuild\t-compiler=gc\n\tbuild\tCGO_ENABLED=0\n\tbuild\tGOARCH=arm64\n\tbuild\tGOOS=windows\n\tbuild\tGOARM64=v8.0\n",
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "arm64/printerdaemon": {
+      "command": [
+        "go",
+        "test",
+        "-mod=readonly",
+        "-c",
+        "-o",
+        "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/windows-software-go-build/arm64/printerdaemon.test.exe",
+        "./internal/printerdaemon"
+      ],
+      "environmentOverrides": {
+        "GOOS": "windows",
+        "GOARCH": "arm64",
+        "CGO_ENABLED": "0",
+        "GOPROXY": "off",
+        "GOTOOLCHAIN": "local"
+      },
+      "exitCode": 0,
+      "elapsedSeconds": 0.751358,
+      "path": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/windows-software-go-build/arm64/printerdaemon.test.exe",
+      "sourceReceiptSHA256": "193e4800e5d0733a30bc6c8d4ac993590219363941e69a787bba5ac3681c8f68",
+      "sha256": "c6f897daba8b4bea905b53c79d98e9a22547a37c8afe477d6260c0e9bcfc3067",
+      "bytes": 24839168,
+      "PEMachine": "0xaa64",
+      "architecture": "arm64",
+      "executed": false,
+      "buildInfo": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/windows-software-go-build/arm64/printerdaemon.test.exe: go1.26.8\n\tpath\tvynic.local/edge/internal/printerdaemon.test\n\tmod\tvynic.local/edge\t(devel)\t\n\tbuild\t-buildmode=exe\n\tbuild\t-compiler=gc\n\tbuild\tCGO_ENABLED=0\n\tbuild\tGOARCH=arm64\n\tbuild\tGOOS=windows\n\tbuild\tGOARM64=v8.0\n",
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "arm64/printerprovisioning": {
+      "command": [
+        "go",
+        "test",
+        "-mod=readonly",
+        "-c",
+        "-o",
+        "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/windows-software-go-build/arm64/printerprovisioning.test.exe",
+        "./internal/printerprovisioning"
+      ],
+      "environmentOverrides": {
+        "GOOS": "windows",
+        "GOARCH": "arm64",
+        "CGO_ENABLED": "0",
+        "GOPROXY": "off",
+        "GOTOOLCHAIN": "local"
+      },
+      "exitCode": 0,
+      "elapsedSeconds": 0.590451,
+      "path": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/windows-software-go-build/arm64/printerprovisioning.test.exe",
+      "sourceReceiptSHA256": "193e4800e5d0733a30bc6c8d4ac993590219363941e69a787bba5ac3681c8f68",
+      "sha256": "17e46e4f457f476969508c529a0856810c187104fc4b56c80c31935e6dcd3693",
+      "bytes": 22199808,
+      "PEMachine": "0xaa64",
+      "architecture": "arm64",
+      "executed": false,
+      "buildInfo": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/windows-software-go-build/arm64/printerprovisioning.test.exe: go1.26.8\n\tpath\tvynic.local/edge/internal/printerprovisioning.test\n\tmod\tvynic.local/edge\t(devel)\t\n\tbuild\t-buildmode=exe\n\tbuild\t-compiler=gc\n\tbuild\tCGO_ENABLED=0\n\tbuild\tGOARCH=arm64\n\tbuild\tGOOS=windows\n\tbuild\tGOARM64=v8.0\n",
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "arm64/printer-agent-command": {
+      "command": [
+        "go",
+        "test",
+        "-mod=readonly",
+        "-c",
+        "-o",
+        "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/windows-software-go-build/arm64/printer-agent-command.test.exe",
+        "./cmd/printer-agent"
+      ],
+      "environmentOverrides": {
+        "GOOS": "windows",
+        "GOARCH": "arm64",
+        "CGO_ENABLED": "0",
+        "GOPROXY": "off",
+        "GOTOOLCHAIN": "local"
+      },
+      "exitCode": 0,
+      "elapsedSeconds": 0.65816,
+      "path": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/windows-software-go-build/arm64/printer-agent-command.test.exe",
+      "sourceReceiptSHA256": "193e4800e5d0733a30bc6c8d4ac993590219363941e69a787bba5ac3681c8f68",
+      "sha256": "7e94116cea1e326d3a77a7fce976e9a9ed93c2288850d0495f13a729bdf9d1cf",
+      "bytes": 24657408,
+      "PEMachine": "0xaa64",
+      "architecture": "arm64",
+      "executed": false,
+      "buildInfo": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/windows-software-go-build/arm64/printer-agent-command.test.exe: go1.26.8\n\tpath\tvynic.local/edge/cmd/printer-agent\n\tmod\tvynic.local/edge\t(devel)\t\n\tdep\tgithub.com/dustin/go-humanize\tv1.0.1\th1:GzkhY7T5VNhEkwH0PVJgjz+fX1rhBrR7pRT3mDkpeCY=\n\tdep\tgithub.com/gofrs/flock\tv0.12.1\th1:MTLVXXHf8ekldpJk3AKicLij9MdwOWkZ+a/jHHZby9E=\n\tdep\tgithub.com/google/uuid\tv1.6.0\th1:NIvaJDMOsjHA8n1jAhLSgzrAzy1Hgr+hNrb57e+94F0=\n\tdep\tgithub.com/mattn/go-isatty\tv0.0.24\th1:tGZZoVgT/KiqK1c8ocVLeDS8BSWMRd47J3Lbz7vsReI=\n\tdep\tgithub.com/ncruces/go-strftime\tv1.0.0\th1:HMFp8mLCTPp341M/ZnA4qaf7ZlsbTc+miZjCLOFAw7w=\n\tdep\tgithub.com/remyoudompheng/bigfft\tv0.0.0-20230129092748-24d4a6f8daec\th1:W09IVJc94icq4NjY3clb7Lk8O1qJ8BdBEF8z0ibU0rE=\n\tdep\tgolang.org/x/net\tv0.58.0\th1:ynWG7rqYi4ccpTEuPZ2QGWHktVEM9DMCj9yzDE0Q7To=\n\tdep\tgolang.org/x/sys\tv0.48.0\th1:bbX/i/6MgT9BVLM9RT1thmxL04yeTAhbEz4SyadbXoo=\n\tdep\tgolang.org/x/text\tv0.41.0\th1:vz/seA0lnX87Othu2f/0L24RcgrXD9/YFTSuGjj3rH8=\n\tdep\tgoogle.golang.org/genproto/googleapis/rpc\tv0.0.0-20260526163538-3dc84a4a5aaa\th1:mZHHdPZl0dbGHCflZgAq/Q468DWVFcU2whhB2KAo8fk=\n\tdep\tgoogle.golang.org/grpc\tv1.83.2\th1:EManeRomTObA0BU7I8vXgg/78uE5MJ9M8B39EX2WscU=\n\tdep\tgoogle.golang.org/protobuf\tv1.36.12\th1:pJOKDDOyeXErUroCihFAd5LQuwXBSpVnKGrj5o/fwxc=\n\tdep\tmodernc.org/libc\tv1.75.7\th1:o3DTP9/0p9pKmY2WCKQaySW6wIiZhNM7wc2lUoyhfew=\n\tdep\tmodernc.org/mathutil\tv1.7.1\th1:GCZVGXdaN8gTqB1Mf/usp1Y/hSqgI2vAGGP4jZMCxOU=\n\tdep\tmodernc.org/memory\tv1.12.1\th1:nFMiWrpStgZczNl6XI9GnIk/rWhYIyHGUaR04pGbp9g=\n\tdep\tmodernc.org/sqlite\tv1.59.0\th1:X1es1GpqBlS/5T+vbM4HLUdaa8OtQx468DF2vrx+38A=\n\tdep\tvynic.local/contracts/go\tv0.0.0\n\t=>\t../../packages/contracts/generated/go\t(devel)\t\n\t\n\tbuild\t-buildmode=exe\n\tbuild\t-compiler=gc\n\tbuild\tCGO_ENABLED=0\n\tbuild\tGOARCH=arm64\n\tbuild\tGOOS=windows\n\tbuild\tGOARM64=v8.0\n",
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "arm64/printer-agent": {
+      "command": [
+        "go",
+        "build",
+        "-mod=readonly",
+        "-o",
+        "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/windows-software-go-build/arm64/printer-agent.exe",
+        "./cmd/printer-agent"
+      ],
+      "environmentOverrides": {
+        "GOOS": "windows",
+        "GOARCH": "arm64",
+        "CGO_ENABLED": "0",
+        "GOPROXY": "off",
+        "GOTOOLCHAIN": "local"
+      },
+      "exitCode": 0,
+      "elapsedSeconds": 0.485254,
+      "path": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/windows-software-go-build/arm64/printer-agent.exe",
+      "sourceReceiptSHA256": "193e4800e5d0733a30bc6c8d4ac993590219363941e69a787bba5ac3681c8f68",
+      "sha256": "3b2fec42f5ebb56321825537e8aa3efe951f1071f7b40e22c2bc7185d1f68fcd",
+      "bytes": 23383552,
+      "PEMachine": "0xaa64",
+      "architecture": "arm64",
+      "executed": false,
+      "buildInfo": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/windows-software-go-build/arm64/printer-agent.exe: go1.26.8\n\tpath\tvynic.local/edge/cmd/printer-agent\n\tmod\tvynic.local/edge\t(devel)\t\n\tdep\tgithub.com/dustin/go-humanize\tv1.0.1\th1:GzkhY7T5VNhEkwH0PVJgjz+fX1rhBrR7pRT3mDkpeCY=\n\tdep\tgithub.com/gofrs/flock\tv0.12.1\th1:MTLVXXHf8ekldpJk3AKicLij9MdwOWkZ+a/jHHZby9E=\n\tdep\tgithub.com/google/uuid\tv1.6.0\th1:NIvaJDMOsjHA8n1jAhLSgzrAzy1Hgr+hNrb57e+94F0=\n\tdep\tgithub.com/mattn/go-isatty\tv0.0.24\th1:tGZZoVgT/KiqK1c8ocVLeDS8BSWMRd47J3Lbz7vsReI=\n\tdep\tgithub.com/ncruces/go-strftime\tv1.0.0\th1:HMFp8mLCTPp341M/ZnA4qaf7ZlsbTc+miZjCLOFAw7w=\n\tdep\tgithub.com/remyoudompheng/bigfft\tv0.0.0-20230129092748-24d4a6f8daec\th1:W09IVJc94icq4NjY3clb7Lk8O1qJ8BdBEF8z0ibU0rE=\n\tdep\tgolang.org/x/net\tv0.58.0\th1:ynWG7rqYi4ccpTEuPZ2QGWHktVEM9DMCj9yzDE0Q7To=\n\tdep\tgolang.org/x/sys\tv0.48.0\th1:bbX/i/6MgT9BVLM9RT1thmxL04yeTAhbEz4SyadbXoo=\n\tdep\tgolang.org/x/text\tv0.41.0\th1:vz/seA0lnX87Othu2f/0L24RcgrXD9/YFTSuGjj3rH8=\n\tdep\tgoogle.golang.org/genproto/googleapis/rpc\tv0.0.0-20260526163538-3dc84a4a5aaa\th1:mZHHdPZl0dbGHCflZgAq/Q468DWVFcU2whhB2KAo8fk=\n\tdep\tgoogle.golang.org/grpc\tv1.83.2\th1:EManeRomTObA0BU7I8vXgg/78uE5MJ9M8B39EX2WscU=\n\tdep\tgoogle.golang.org/protobuf\tv1.36.12\th1:pJOKDDOyeXErUroCihFAd5LQuwXBSpVnKGrj5o/fwxc=\n\tdep\tmodernc.org/libc\tv1.75.7\th1:o3DTP9/0p9pKmY2WCKQaySW6wIiZhNM7wc2lUoyhfew=\n\tdep\tmodernc.org/mathutil\tv1.7.1\th1:GCZVGXdaN8gTqB1Mf/usp1Y/hSqgI2vAGGP4jZMCxOU=\n\tdep\tmodernc.org/memory\tv1.12.1\th1:nFMiWrpStgZczNl6XI9GnIk/rWhYIyHGUaR04pGbp9g=\n\tdep\tmodernc.org/sqlite\tv1.59.0\th1:X1es1GpqBlS/5T+vbM4HLUdaa8OtQx468DF2vrx+38A=\n\tdep\tvynic.local/contracts/go\tv0.0.0\n\t=>\t../../packages/contracts/generated/go\t(devel)\t\n\t\n\tbuild\t-buildmode=exe\n\tbuild\t-compiler=gc\n\tbuild\tCGO_ENABLED=0\n\tbuild\tGOARCH=arm64\n\tbuild\tGOOS=windows\n\tbuild\tGOARM64=v8.0\n",
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "amd64/printeragent": {
+      "command": [
+        "go",
+        "test",
+        "-mod=readonly",
+        "-c",
+        "-o",
+        "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/windows-software-go-build/amd64/printeragent.test.exe",
+        "./internal/printeragent"
+      ],
+      "environmentOverrides": {
+        "GOOS": "windows",
+        "GOARCH": "amd64",
+        "CGO_ENABLED": "0",
+        "GOPROXY": "off",
+        "GOTOOLCHAIN": "local"
+      },
+      "exitCode": 0,
+      "elapsedSeconds": 1.213408,
+      "path": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/windows-software-go-build/amd64/printeragent.test.exe",
+      "sourceReceiptSHA256": "193e4800e5d0733a30bc6c8d4ac993590219363941e69a787bba5ac3681c8f68",
+      "sha256": "f335745e38be573f5ec031478eab4b524a8069c811324ac2a5d39876b676e894",
+      "bytes": 25833472,
+      "PEMachine": "0x8664",
+      "architecture": "amd64",
+      "executed": false,
+      "buildInfo": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/windows-software-go-build/amd64/printeragent.test.exe: go1.26.8\n\tpath\tvynic.local/edge/internal/printeragent.test\n\tmod\tvynic.local/edge\t(devel)\t\n\tbuild\t-buildmode=exe\n\tbuild\t-compiler=gc\n\tbuild\tCGO_ENABLED=0\n\tbuild\tGOARCH=amd64\n\tbuild\tGOOS=windows\n\tbuild\tGOAMD64=v1\n",
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "amd64/printerdaemon": {
+      "command": [
+        "go",
+        "test",
+        "-mod=readonly",
+        "-c",
+        "-o",
+        "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/windows-software-go-build/amd64/printerdaemon.test.exe",
+        "./internal/printerdaemon"
+      ],
+      "environmentOverrides": {
+        "GOOS": "windows",
+        "GOARCH": "amd64",
+        "CGO_ENABLED": "0",
+        "GOPROXY": "off",
+        "GOTOOLCHAIN": "local"
+      },
+      "exitCode": 0,
+      "elapsedSeconds": 0.750802,
+      "path": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/windows-software-go-build/amd64/printerdaemon.test.exe",
+      "sourceReceiptSHA256": "193e4800e5d0733a30bc6c8d4ac993590219363941e69a787bba5ac3681c8f68",
+      "sha256": "6a0e7f245115c6a6324094498db679eccd17f97e91bcb50772c3bc74d4fad8d3",
+      "bytes": 26499584,
+      "PEMachine": "0x8664",
+      "architecture": "amd64",
+      "executed": false,
+      "buildInfo": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/windows-software-go-build/amd64/printerdaemon.test.exe: go1.26.8\n\tpath\tvynic.local/edge/internal/printerdaemon.test\n\tmod\tvynic.local/edge\t(devel)\t\n\tbuild\t-buildmode=exe\n\tbuild\t-compiler=gc\n\tbuild\tCGO_ENABLED=0\n\tbuild\tGOARCH=amd64\n\tbuild\tGOOS=windows\n\tbuild\tGOAMD64=v1\n",
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "amd64/printerprovisioning": {
+      "command": [
+        "go",
+        "test",
+        "-mod=readonly",
+        "-c",
+        "-o",
+        "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/windows-software-go-build/amd64/printerprovisioning.test.exe",
+        "./internal/printerprovisioning"
+      ],
+      "environmentOverrides": {
+        "GOOS": "windows",
+        "GOARCH": "amd64",
+        "CGO_ENABLED": "0",
+        "GOPROXY": "off",
+        "GOTOOLCHAIN": "local"
+      },
+      "exitCode": 0,
+      "elapsedSeconds": 0.603698,
+      "path": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/windows-software-go-build/amd64/printerprovisioning.test.exe",
+      "sourceReceiptSHA256": "193e4800e5d0733a30bc6c8d4ac993590219363941e69a787bba5ac3681c8f68",
+      "sha256": "e1794bc75a77288fd4aa0e93b432faefd0f81ae55e9c1208a09763fd04f55aa2",
+      "bytes": 23554048,
+      "PEMachine": "0x8664",
+      "architecture": "amd64",
+      "executed": false,
+      "buildInfo": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/windows-software-go-build/amd64/printerprovisioning.test.exe: go1.26.8\n\tpath\tvynic.local/edge/internal/printerprovisioning.test\n\tmod\tvynic.local/edge\t(devel)\t\n\tbuild\t-buildmode=exe\n\tbuild\t-compiler=gc\n\tbuild\tCGO_ENABLED=0\n\tbuild\tGOARCH=amd64\n\tbuild\tGOOS=windows\n\tbuild\tGOAMD64=v1\n",
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "amd64/printer-agent-command": {
+      "command": [
+        "go",
+        "test",
+        "-mod=readonly",
+        "-c",
+        "-o",
+        "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/windows-software-go-build/amd64/printer-agent-command.test.exe",
+        "./cmd/printer-agent"
+      ],
+      "environmentOverrides": {
+        "GOOS": "windows",
+        "GOARCH": "amd64",
+        "CGO_ENABLED": "0",
+        "GOPROXY": "off",
+        "GOTOOLCHAIN": "local"
+      },
+      "exitCode": 0,
+      "elapsedSeconds": 0.710382,
+      "path": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/windows-software-go-build/amd64/printer-agent-command.test.exe",
+      "sourceReceiptSHA256": "193e4800e5d0733a30bc6c8d4ac993590219363941e69a787bba5ac3681c8f68",
+      "sha256": "53ec669a58ff50860ca79d3cf77716787fcf172656b7e9e2e40ff16eb504336b",
+      "bytes": 26290688,
+      "PEMachine": "0x8664",
+      "architecture": "amd64",
+      "executed": false,
+      "buildInfo": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/windows-software-go-build/amd64/printer-agent-command.test.exe: go1.26.8\n\tpath\tvynic.local/edge/cmd/printer-agent\n\tmod\tvynic.local/edge\t(devel)\t\n\tdep\tgithub.com/dustin/go-humanize\tv1.0.1\th1:GzkhY7T5VNhEkwH0PVJgjz+fX1rhBrR7pRT3mDkpeCY=\n\tdep\tgithub.com/gofrs/flock\tv0.12.1\th1:MTLVXXHf8ekldpJk3AKicLij9MdwOWkZ+a/jHHZby9E=\n\tdep\tgithub.com/google/uuid\tv1.6.0\th1:NIvaJDMOsjHA8n1jAhLSgzrAzy1Hgr+hNrb57e+94F0=\n\tdep\tgithub.com/mattn/go-isatty\tv0.0.24\th1:tGZZoVgT/KiqK1c8ocVLeDS8BSWMRd47J3Lbz7vsReI=\n\tdep\tgithub.com/ncruces/go-strftime\tv1.0.0\th1:HMFp8mLCTPp341M/ZnA4qaf7ZlsbTc+miZjCLOFAw7w=\n\tdep\tgithub.com/remyoudompheng/bigfft\tv0.0.0-20230129092748-24d4a6f8daec\th1:W09IVJc94icq4NjY3clb7Lk8O1qJ8BdBEF8z0ibU0rE=\n\tdep\tgolang.org/x/net\tv0.58.0\th1:ynWG7rqYi4ccpTEuPZ2QGWHktVEM9DMCj9yzDE0Q7To=\n\tdep\tgolang.org/x/sys\tv0.48.0\th1:bbX/i/6MgT9BVLM9RT1thmxL04yeTAhbEz4SyadbXoo=\n\tdep\tgolang.org/x/text\tv0.41.0\th1:vz/seA0lnX87Othu2f/0L24RcgrXD9/YFTSuGjj3rH8=\n\tdep\tgoogle.golang.org/genproto/googleapis/rpc\tv0.0.0-20260526163538-3dc84a4a5aaa\th1:mZHHdPZl0dbGHCflZgAq/Q468DWVFcU2whhB2KAo8fk=\n\tdep\tgoogle.golang.org/grpc\tv1.83.2\th1:EManeRomTObA0BU7I8vXgg/78uE5MJ9M8B39EX2WscU=\n\tdep\tgoogle.golang.org/protobuf\tv1.36.12\th1:pJOKDDOyeXErUroCihFAd5LQuwXBSpVnKGrj5o/fwxc=\n\tdep\tmodernc.org/libc\tv1.75.7\th1:o3DTP9/0p9pKmY2WCKQaySW6wIiZhNM7wc2lUoyhfew=\n\tdep\tmodernc.org/mathutil\tv1.7.1\th1:GCZVGXdaN8gTqB1Mf/usp1Y/hSqgI2vAGGP4jZMCxOU=\n\tdep\tmodernc.org/memory\tv1.12.1\th1:nFMiWrpStgZczNl6XI9GnIk/rWhYIyHGUaR04pGbp9g=\n\tdep\tmodernc.org/sqlite\tv1.59.0\th1:X1es1GpqBlS/5T+vbM4HLUdaa8OtQx468DF2vrx+38A=\n\tdep\tvynic.local/contracts/go\tv0.0.0\n\t=>\t../../packages/contracts/generated/go\t(devel)\t\n\t\n\tbuild\t-buildmode=exe\n\tbuild\t-compiler=gc\n\tbuild\tCGO_ENABLED=0\n\tbuild\tGOARCH=amd64\n\tbuild\tGOOS=windows\n\tbuild\tGOAMD64=v1\n",
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "amd64/printer-agent": {
+      "command": [
+        "go",
+        "build",
+        "-mod=readonly",
+        "-o",
+        "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/windows-software-go-build/amd64/printer-agent.exe",
+        "./cmd/printer-agent"
+      ],
+      "environmentOverrides": {
+        "GOOS": "windows",
+        "GOARCH": "amd64",
+        "CGO_ENABLED": "0",
+        "GOPROXY": "off",
+        "GOTOOLCHAIN": "local"
+      },
+      "exitCode": 0,
+      "elapsedSeconds": 0.458003,
+      "path": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/windows-software-go-build/amd64/printer-agent.exe",
+      "sourceReceiptSHA256": "193e4800e5d0733a30bc6c8d4ac993590219363941e69a787bba5ac3681c8f68",
+      "sha256": "313dc380a02603cb57e667eb33eee6884717c3cb68e0d7a74081d2c660f8702a",
+      "bytes": 24911360,
+      "PEMachine": "0x8664",
+      "architecture": "amd64",
+      "executed": false,
+      "buildInfo": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/windows-software-go-build/amd64/printer-agent.exe: go1.26.8\n\tpath\tvynic.local/edge/cmd/printer-agent\n\tmod\tvynic.local/edge\t(devel)\t\n\tdep\tgithub.com/dustin/go-humanize\tv1.0.1\th1:GzkhY7T5VNhEkwH0PVJgjz+fX1rhBrR7pRT3mDkpeCY=\n\tdep\tgithub.com/gofrs/flock\tv0.12.1\th1:MTLVXXHf8ekldpJk3AKicLij9MdwOWkZ+a/jHHZby9E=\n\tdep\tgithub.com/google/uuid\tv1.6.0\th1:NIvaJDMOsjHA8n1jAhLSgzrAzy1Hgr+hNrb57e+94F0=\n\tdep\tgithub.com/mattn/go-isatty\tv0.0.24\th1:tGZZoVgT/KiqK1c8ocVLeDS8BSWMRd47J3Lbz7vsReI=\n\tdep\tgithub.com/ncruces/go-strftime\tv1.0.0\th1:HMFp8mLCTPp341M/ZnA4qaf7ZlsbTc+miZjCLOFAw7w=\n\tdep\tgithub.com/remyoudompheng/bigfft\tv0.0.0-20230129092748-24d4a6f8daec\th1:W09IVJc94icq4NjY3clb7Lk8O1qJ8BdBEF8z0ibU0rE=\n\tdep\tgolang.org/x/net\tv0.58.0\th1:ynWG7rqYi4ccpTEuPZ2QGWHktVEM9DMCj9yzDE0Q7To=\n\tdep\tgolang.org/x/sys\tv0.48.0\th1:bbX/i/6MgT9BVLM9RT1thmxL04yeTAhbEz4SyadbXoo=\n\tdep\tgolang.org/x/text\tv0.41.0\th1:vz/seA0lnX87Othu2f/0L24RcgrXD9/YFTSuGjj3rH8=\n\tdep\tgoogle.golang.org/genproto/googleapis/rpc\tv0.0.0-20260526163538-3dc84a4a5aaa\th1:mZHHdPZl0dbGHCflZgAq/Q468DWVFcU2whhB2KAo8fk=\n\tdep\tgoogle.golang.org/grpc\tv1.83.2\th1:EManeRomTObA0BU7I8vXgg/78uE5MJ9M8B39EX2WscU=\n\tdep\tgoogle.golang.org/protobuf\tv1.36.12\th1:pJOKDDOyeXErUroCihFAd5LQuwXBSpVnKGrj5o/fwxc=\n\tdep\tmodernc.org/libc\tv1.75.7\th1:o3DTP9/0p9pKmY2WCKQaySW6wIiZhNM7wc2lUoyhfew=\n\tdep\tmodernc.org/mathutil\tv1.7.1\th1:GCZVGXdaN8gTqB1Mf/usp1Y/hSqgI2vAGGP4jZMCxOU=\n\tdep\tmodernc.org/memory\tv1.12.1\th1:nFMiWrpStgZczNl6XI9GnIk/rWhYIyHGUaR04pGbp9g=\n\tdep\tmodernc.org/sqlite\tv1.59.0\th1:X1es1GpqBlS/5T+vbM4HLUdaa8OtQx468DF2vrx+38A=\n\tdep\tvynic.local/contracts/go\tv0.0.0\n\t=>\t../../packages/contracts/generated/go\t(devel)\t\n\t\n\tbuild\t-buildmode=exe\n\tbuild\t-compiler=gc\n\tbuild\tCGO_ENABLED=0\n\tbuild\tGOARCH=amd64\n\tbuild\tGOOS=windows\n\tbuild\tGOAMD64=v1\n",
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  },
+  "executed": false,
+  "VMExecution": "NOT RUN: automatic approval review rejected current continuation preflight; no VM command issued by this compiler",
+  "limits": "Compile-only cached official SDK/modules; no source/runtime/proof/credential changes, no SCM/product/physical calls",
+  "completedAtUtc": "2026-10-06T17:22:26.215075+00:00",
+  "sourceBeforeAfterUnchanged": true,
+  "artifactCount": 10,
+  "requiredWindowsRuntimeEnvironment": {
+    "VYNIC_PRINTER_AGENT_BINARY": "Extracted matching-architecture printer-agent.exe; daemon process fixture must not skip"
+  },
+  "requiredWorkingDirectories": {
+    "printeragent": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/final-cohort/apps/edge/internal/printeragent",
+    "printerdaemon": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/final-cohort/apps/edge/internal/printerdaemon",
+    "printerprovisioning": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/final-cohort/apps/edge/internal/printerprovisioning",
+    "printer-agent-command": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/final-cohort/apps/edge/cmd/printer-agent"
+  }
+}

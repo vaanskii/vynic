@@ -1,0 +1,5 @@
+$ErrorActionPreference='Stop'; $ProgressPreference='SilentlyContinue'
+$p=Join-Path $env:LOCALAPPDATA 'Pub\Cache\hosted\pub.dev\flutter_local_notifications_windows-3.0.0\src\CMakeLists.txt'
+Get-Content -LiteralPath $p
+$pattern=Join-Path $env:LOCALAPPDATA 'VynicLocalReleaseBuild\*\apps\operations\build\windows\x64\plugins\flutter_local_notifications_windows\shared\*'
+Get-ChildItem -Path $pattern -ErrorAction SilentlyContinue | Select-Object Name,FullName

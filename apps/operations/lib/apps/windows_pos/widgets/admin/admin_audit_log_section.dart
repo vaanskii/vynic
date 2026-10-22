@@ -1,3 +1,5 @@
+import 'package:vynic/core/ui/pos_theme.dart';
+import 'package:vynic/core/ui/widgets/pos_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:vynic/apps/windows_pos/widgets/admin/admin_surface.dart';
 import 'package:hive_flutter/hive_flutter.dart';
@@ -322,6 +324,7 @@ class AdminAuditLogSection extends StatelessWidget {
                                       ),
                                     ),
                                     style: const TextStyle(
+                                      fontFamily: PosTheme.fontFamily,
                                       color: _text,
                                       fontWeight: FontWeight.w600,
                                       fontSize: 13,
@@ -691,7 +694,7 @@ class AdminAuditLogSection extends StatelessWidget {
                     horizontal: 12,
                     vertical: 8,
                   ),
-                  textStyle: const TextStyle(
+                  textStyle: Theme.of(context).textTheme.labelLarge?.copyWith(
                     fontSize: 12,
                     fontWeight: FontWeight.w700,
                   ),
@@ -768,7 +771,7 @@ class AdminAuditLogSection extends StatelessWidget {
     BuildContext context,
     AuditReport report,
   ) async {
-    await showDialog<void>(
+    await showPosModal<void>(
       context: context,
       barrierColor: Colors.black45,
       builder: (context) {

@@ -33,6 +33,7 @@ import 'package:vynic/core/database/repositories/sales_repository.dart';
 import 'package:vynic/core/database/repositories/error_log_repository.dart';
 import 'package:vynic/core/database/repositories/menu_repository.dart';
 import 'package:vynic/core/database/repositories/order_repository.dart';
+import 'package:vynic/core/database/repositories/order_table_mutation_repository.dart';
 import 'package:vynic/core/database/repositories/settings_repository.dart';
 import 'package:vynic/core/database/repositories/table_repository.dart';
 import 'package:vynic/core/database/repositories/user_repository.dart';
@@ -109,6 +110,8 @@ class DatabaseService {
     required bool includeServiceFee,
     required double serviceFeeRate,
     String? displayName,
+    String? customerName,
+    String? customerPhone,
   }) => QuickOrderRepository.saveQuickOrderDraft(
     createdBy: createdBy,
     items: items,
@@ -116,6 +119,8 @@ class DatabaseService {
     includeServiceFee: includeServiceFee,
     serviceFeeRate: serviceFeeRate,
     displayName: displayName,
+    customerName: customerName,
+    customerPhone: customerPhone,
   );
 
   static Future<QuickOrderDraft> updateQuickOrderDraft({
@@ -126,6 +131,9 @@ class DatabaseService {
     required bool includeServiceFee,
     required double serviceFeeRate,
     String? displayName,
+    String? customerName,
+    String? customerPhone,
+    bool replaceCustomerDetails = false,
   }) => QuickOrderRepository.updateQuickOrderDraft(
     id: id,
     createdBy: createdBy,
@@ -134,6 +142,9 @@ class DatabaseService {
     includeServiceFee: includeServiceFee,
     serviceFeeRate: serviceFeeRate,
     displayName: displayName,
+    customerName: customerName,
+    customerPhone: customerPhone,
+    replaceCustomerDetails: replaceCustomerDetails,
   );
 
   static Future<void> deleteQuickOrderDraft(String id) =>
@@ -519,7 +530,14 @@ class DatabaseService {
   static Future<void> freeTable({
     required String tableNumber,
     required String floor,
-  }) => TableRepository.freeTable(tableNumber: tableNumber, floor: floor);
+    int? expectedOrderId,
+    String? expectedReservationId,
+  }) => TableRepository.freeTable(
+    tableNumber: tableNumber,
+    floor: floor,
+    expectedOrderId: expectedOrderId,
+    expectedReservationId: expectedReservationId,
+  );
 
   // Public helper to fetch reservation by ID (used by UI overlays)
   static Reservation? findReservationById(String reservationId) =>
@@ -534,6 +552,12 @@ class DatabaseService {
   static Future<void> syncTableReservationsForCurrentDate() =>
       TableRepository.syncTableReservationsForCurrentDate();
 
+  static List<Map<String, dynamic>> getOrderTableIntegrityReport() =>
+      OrderTableMutationRepository.integrityReport();
+
+  static void assertOrderTableRollbackSafe() =>
+      OrderTableMutationRepository.assertRollbackSafe();
+
   // ========== ORDER MANAGEMENT ==========
 
   static Future<Order> createOrder({
@@ -543,6 +567,8 @@ class DatabaseService {
     required List<OrderItem> items,
     bool? includeServiceFee,
     AuditSource source = AuditSource.pos,
+    String? requestId,
+    String? expectedBusinessDate,
   }) => OrderRepository.createOrder(
     tableNumbers: tableNumbers,
     floor: floor,
@@ -550,6 +576,8 @@ class DatabaseService {
     items: items,
     includeServiceFee: includeServiceFee,
     source: source,
+    requestId: requestId,
+    expectedBusinessDate: expectedBusinessDate,
   );
 
   static Future<Order> createTakeAwayOrder({
@@ -560,6 +588,8 @@ class DatabaseService {
     required List<OrderItem> items,
     required String createdBy,
     AuditSource source = AuditSource.pos,
+    String? requestId,
+    String? expectedBusinessDate,
   }) => OrderRepository.createTakeAwayOrder(
     customerName: customerName,
     customerPhone: customerPhone,
@@ -568,6 +598,8 @@ class DatabaseService {
     items: items,
     createdBy: createdBy,
     source: source,
+    requestId: requestId,
+    expectedBusinessDate: expectedBusinessDate,
   );
 
   static Future<Order?> upsertMobileTakeawayOrder({
@@ -577,6 +609,9 @@ class DatabaseService {
     required String waiterName,
     required List<OrderItem> items,
     double? totalAmount,
+    String? requestId,
+    bool createOnly = false,
+    String? expectedBusinessDate,
   }) => OrderRepository.upsertMobileTakeawayOrder(
     posOrderId: posOrderId,
     customerName: customerName,
@@ -584,6 +619,9 @@ class DatabaseService {
     waiterName: waiterName,
     items: items,
     totalAmount: totalAmount,
+    requestId: requestId,
+    createOnly: createOnly,
+    expectedBusinessDate: expectedBusinessDate,
   );
 
   static Future<Order?> upsertMobileDineInOrder({
@@ -594,6 +632,9 @@ class DatabaseService {
     required List<OrderItem> items,
     int guestCount = 0,
     double? totalAmount,
+    String? requestId,
+    bool createOnly = false,
+    String? expectedBusinessDate,
   }) => OrderRepository.upsertMobileDineInOrder(
     posOrderId: posOrderId,
     tableNumbers: tableNumbers,
@@ -602,6 +643,9 @@ class DatabaseService {
     items: items,
     guestCount: guestCount,
     totalAmount: totalAmount,
+    requestId: requestId,
+    createOnly: createOnly,
+    expectedBusinessDate: expectedBusinessDate,
   );
 
   static Future<Order> createOrderForPackage({
@@ -611,6 +655,8 @@ class DatabaseService {
     required int guestCount,
     required String createdBy,
     AuditSource source = AuditSource.pos,
+    String? requestId,
+    String? expectedBusinessDate,
   }) => OrderRepository.createOrderForPackage(
     package: package,
     tableNumbers: tableNumbers,
@@ -618,6 +664,8 @@ class DatabaseService {
     guestCount: guestCount,
     createdBy: createdBy,
     source: source,
+    requestId: requestId,
+    expectedBusinessDate: expectedBusinessDate,
   );
 
   static Order? getOrder(int orderId) => OrderRepository.getOrder(orderId);
@@ -647,6 +695,8 @@ class DatabaseService {
     required AuditSource source,
     String? reason,
     String? approvedBy,
+    Order? expectedOrder,
+    String? requestId,
   }) => CancelOrderTransaction.run(
     orderId: orderId,
     actorId: actorId,
@@ -654,6 +704,8 @@ class DatabaseService {
     source: source,
     reason: reason,
     approvedBy: approvedBy,
+    expectedOrder: expectedOrder,
+    requestId: requestId,
   );
 
   static Future<void> addItemToOrder({
@@ -1063,8 +1115,13 @@ class DatabaseService {
   static Future<void> setCloseReceiptServiceFeeLineVisible(bool visible) =>
       SettingsRepository.setCloseReceiptServiceFeeLineVisible(visible);
 
-  static Future<File> createDataBackup({String? targetFilePath}) =>
-      BackupRepository.createDataBackup(targetFilePath: targetFilePath);
+  static Future<File> createDataBackup({
+    String? targetFilePath,
+    String? password,
+  }) => BackupRepository.createDataBackup(
+    targetFilePath: targetFilePath,
+    password: password,
+  );
 
   static List<Map<String, dynamic>> exportMenu() =>
       BackupRepository.exportMenu();
@@ -1114,7 +1171,12 @@ class DatabaseService {
   static Future<String> createReservationFromJson(
     Map<String, dynamic> json, {
     AuditSource source = AuditSource.manager,
-  }) => BackupRepository.createReservationFromJson(json, source: source);
+    bool requireDurability = false,
+  }) => BackupRepository.createReservationFromJson(
+    json,
+    source: source,
+    requireDurability: requireDurability,
+  );
 
   static Map<String, dynamic>? getReservationById(String reservationId) =>
       BackupRepository.getReservationById(reservationId);
@@ -1135,6 +1197,8 @@ class DatabaseService {
     String actorId = 'unknown',
     String? actorName,
     AuditSource source = AuditSource.pos,
+    String? password,
+    bool allowLegacyIncomplete = false,
   }) => BackupRepository.restoreDataBackupFromFile(
     backupFile,
     clearExisting: clearExisting,
@@ -1142,6 +1206,8 @@ class DatabaseService {
     actorId: actorId,
     actorName: actorName,
     source: source,
+    password: password,
+    allowLegacyIncomplete: allowLegacyIncomplete,
   );
 
   static Future<void> restoreDataBackupFromJson(
@@ -1151,6 +1217,8 @@ class DatabaseService {
     String actorId = 'unknown',
     String? actorName,
     AuditSource source = AuditSource.pos,
+    String? password,
+    bool allowLegacyIncomplete = false,
   }) => BackupRepository.restoreDataBackupFromJson(
     jsonString,
     clearExisting: clearExisting,
@@ -1158,6 +1226,8 @@ class DatabaseService {
     actorId: actorId,
     actorName: actorName,
     source: source,
+    password: password,
+    allowLegacyIncomplete: allowLegacyIncomplete,
   );
 
   // Close current day and move to next date
@@ -1166,11 +1236,16 @@ class DatabaseService {
     String actorId = 'unknown',
     String? actorName,
     AuditSource source = AuditSource.pos,
+    String? expectedBusinessDate,
   }) => CloseDayTransaction.run(
     actorId: actorId,
     actorName: actorName,
     source: source,
+    expectedBusinessDate: expectedBusinessDate,
   );
+
+  static String? get closeDayFailureReason =>
+      CloseDayTransaction.lastFailureReason;
 
   // Get date in Georgian format
   static String getGeorgianFormattedDate(DateTime date) =>
@@ -1191,6 +1266,7 @@ class DatabaseService {
     List<OrderItem>? saleItems,
     double? subtotalAmount,
     Map<String, dynamic>? finalTransaction,
+    Order? expectedOrder,
   }) => CloseTableTransaction.run(
     orderId: orderId,
     money: money,
@@ -1203,6 +1279,7 @@ class DatabaseService {
     saleItems: saleItems,
     subtotalAmount: subtotalAmount,
     finalTransaction: finalTransaction,
+    expectedOrder: expectedOrder,
   );
 
   /// Writes a sale record directly.
@@ -1446,6 +1523,8 @@ class DatabaseService {
     bool isTakeAway = false,
     int? linkedOrderId,
     String status = 'pending',
+    double advanceAmount = 0,
+    String? id,
     AuditSource source = AuditSource.pos,
   }) => ReservationRepository.createReservation(
     customerName: customerName,
@@ -1461,6 +1540,8 @@ class DatabaseService {
     isTakeAway: isTakeAway,
     linkedOrderId: linkedOrderId,
     status: status,
+    advanceAmount: advanceAmount,
+    id: id,
     source: source,
   );
 
@@ -1554,6 +1635,7 @@ class DatabaseService {
     String actorId = 'system',
     String? actorName,
     AuditSource source = AuditSource.pos,
+    bool requireDurability = false,
     String? reason,
   }) => ReservationRepository.updateReservationStatus(
     reservationId,
@@ -1561,6 +1643,7 @@ class DatabaseService {
     actorId: actorId,
     actorName: actorName,
     source: source,
+    requireDurability: requireDurability,
     reason: reason,
   );
 
@@ -1636,12 +1719,14 @@ class DatabaseService {
     String? actorName,
     AuditSource source = AuditSource.pos,
     String? reason,
+    bool propagateErrors = false,
   }) => ReservationRepository.deleteReservation(
     reservationId,
     actorId: actorId,
     actorName: actorName,
     source: source,
     reason: reason,
+    propagateErrors: propagateErrors,
   );
 
   static bool areTablesAvailableForReservation({

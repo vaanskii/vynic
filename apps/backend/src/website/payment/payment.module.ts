@@ -1,12 +1,17 @@
 import { Module, forwardRef } from '@nestjs/common';
+import { WebsiteAuthModule } from '../auth/auth.module';
 import { WebsiteMenuModule } from '../menu/menu.module';
 import { WebsiteReservationModule } from '../reservation/reservation.module';
 import { WebsiteTenancyModule } from '../tenancy/website-tenancy.module';
 import { BogController } from './payment.controller';
 import { BogService } from './payment.service';
 
+import { PaymentIntegrationsModule } from '../../payment-integrations/payment-integrations.module';
+
 @Module({
   imports: [
+    PaymentIntegrationsModule,
+    WebsiteAuthModule,
     WebsiteMenuModule,
     WebsiteTenancyModule,
     forwardRef(() => WebsiteReservationModule),

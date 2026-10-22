@@ -1,14 +1,20 @@
 {
   "contractVersion": 2,
   "description": "Cloud -> Edge work envelope and result. The Edge pulls with its Device credential; Cloud never dials a restaurant LAN.",
-  "compatibleContractVersions": [2, 1],
+  "compatibleContractVersions": [
+    2,
+    1
+  ],
   "limits": {
     "defaultBatchSize": 20,
     "maxBatchSize": 50,
     "claimLeaseSeconds": 120,
     "maxAttempts": 10
   },
-  "resultStatuses": ["SUCCEEDED", "FAILED"],
+  "resultStatuses": [
+    "SUCCEEDED",
+    "FAILED"
+  ],
   "commandTypes": [
     {
       "type": "NOOP",
@@ -18,7 +24,6 @@
       "idempotency": "Nothing happens, so nothing can happen twice.",
       "payload": {}
     },
-
     {
       "type": "ORDER_UPDATE",
       "idempotent": true,
@@ -40,7 +45,9 @@
       "repeatAfterInterruption": true,
       "description": "Remove an order from the POS and release the tables it held.",
       "idempotency": "The goal state is 'this order is gone'. An order already absent satisfies it, so a redelivery succeeds rather than reporting a missing order.",
-      "payload": { "posOrderId": "int" }
+      "payload": {
+        "posOrderId": "int"
+      }
     },
     {
       "type": "ORDER_STATUS_UPDATE",
@@ -48,7 +55,10 @@
       "repeatAfterInterruption": true,
       "description": "Set an order's status.",
       "idempotency": "Assignment. The same status written twice is the same status.",
-      "payload": { "posOrderId": "int", "status": "string" }
+      "payload": {
+        "posOrderId": "int",
+        "status": "string"
+      }
     },
     {
       "type": "TAKEAWAY_ORDER_UPSERT",
@@ -88,11 +98,12 @@
       "idempotent": true,
       "repeatAfterInterruption": false,
       "description": "Print an order's customer pre-bill on the POS receipt printer.",
-      "idempotency": "Not naturally idempotent — paper is a side effect the world keeps. Safety comes from the local execution journal: a command already recorded as succeeded is acknowledged again without printing. A command interrupted mid-execution is NOT reprinted automatically, because the honest answer to 'did the paper come out' is unknown and a silent second check is worse than a reported failure.",
-      "payload": { "posOrderId": "int" },
+      "idempotency": "Not naturally idempotent \u2014 paper is a side effect the world keeps. Safety comes from the local execution journal: a command already recorded as succeeded is acknowledged again without printing. A command interrupted mid-execution is NOT reprinted automatically, because the honest answer to 'did the paper come out' is unknown and a silent second check is worse than a reported failure.",
+      "payload": {
+        "posOrderId": "int"
+      },
       "failure": "order_not_found; printer failures surface from the local print service."
     },
-
     {
       "type": "RESERVATION_CREATE",
       "idempotent": true,
@@ -120,7 +131,10 @@
       "repeatAfterInterruption": true,
       "description": "Set a reservation's status.",
       "idempotency": "Assignment.",
-      "payload": { "reservationId": "string", "status": "string" }
+      "payload": {
+        "reservationId": "string",
+        "status": "string"
+      }
     },
     {
       "type": "RESERVATION_DELETE",
@@ -128,7 +142,9 @@
       "repeatAfterInterruption": true,
       "description": "Remove a reservation from the POS.",
       "idempotency": "The goal state is 'this reservation is gone'; already absent satisfies it.",
-      "payload": { "reservationId": "string" }
+      "payload": {
+        "reservationId": "string"
+      }
     },
     {
       "type": "RESERVATION_CHECK_PRINT",
@@ -136,7 +152,10 @@
       "repeatAfterInterruption": false,
       "description": "Print a reservation's kitchen check on the POS kitchen printer.",
       "idempotency": "Journal-guarded, exactly as ORDER_CHECK_PRINT. An interrupted print is not repeated automatically.",
-      "payload": { "reservationId": "string", "requestedBy": "string?" },
+      "payload": {
+        "reservationId": "string",
+        "requestedBy": "string?"
+      },
       "failure": "reservation_not_found."
     },
     {
@@ -155,7 +174,6 @@
         "language": "string?, ka|en"
       }
     },
-
     {
       "type": "EXPENSE_CREATE",
       "idempotent": true,
@@ -172,14 +190,20 @@
         "businessDate": "string?, YYYY-MM-DD"
       }
     },
-
     {
       "type": "STAFF_CREATE",
       "idempotent": true,
       "repeatAfterInterruption": true,
       "description": "Add a staff user to the POS.",
       "idempotency": "The goal state is 'this username exists with this role and PIN'. Cloud has already refused a duplicate username before enqueueing, so a username that exists locally means the command has landed before; the handler reconciles the role and PIN and succeeds. Platform-managed commands carry staffId, platformAction and platformRevision. Persist the greatest successfully applied revision; ignore older delivery. Platform disable retains the local Staff row and prevents subsequent PIN login, including the last Manager. Requires the Phase 2 POS build before Platform access administration is enabled.",
-      "payload": {"username": "string", "pinCode": "string", "role": "string", "staffId": "string?, Cloud Staff identity for Platform-managed access", "platformAction": "string?, create|reset|disable", "platformRevision": "int?, monotonic Platform Staff revision; older revisions must be ignored"}
+      "payload": {
+        "username": "string",
+        "pinCode": "string",
+        "role": "string",
+        "staffId": "string?, Cloud Staff identity for Platform-managed access",
+        "platformAction": "string?, create|reset|disable",
+        "platformRevision": "int?, monotonic Platform Staff revision; older revisions must be ignored"
+      }
     },
     {
       "type": "STAFF_PIN_UPDATE",
@@ -187,7 +211,10 @@
       "repeatAfterInterruption": true,
       "description": "Set a staff user's PIN.",
       "idempotency": "Assignment. The same PIN written twice is the same PIN.",
-      "payload": { "username": "string", "pinCode": "string" }
+      "payload": {
+        "username": "string",
+        "pinCode": "string"
+      }
     },
     {
       "type": "STAFF_ROLE_UPDATE",
@@ -195,7 +222,10 @@
       "repeatAfterInterruption": true,
       "description": "Set a staff user's role.",
       "idempotency": "Assignment.",
-      "payload": { "username": "string", "role": "string" }
+      "payload": {
+        "username": "string",
+        "role": "string"
+      }
     },
     {
       "type": "STAFF_RENAME",
@@ -203,7 +233,10 @@
       "repeatAfterInterruption": true,
       "description": "Rename a staff user.",
       "idempotency": "The goal state is 'newUsername exists and oldUsername does not'. A redelivery finds exactly that and succeeds without touching anything.",
-      "payload": { "oldUsername": "string", "newUsername": "string" }
+      "payload": {
+        "oldUsername": "string",
+        "newUsername": "string"
+      }
     },
     {
       "type": "STAFF_DELETE",
@@ -211,7 +244,63 @@
       "repeatAfterInterruption": true,
       "description": "Remove a staff user from the POS.",
       "idempotency": "The goal state is 'this username is gone'; already absent satisfies it. Platform-managed commands carry staffId, platformAction and platformRevision. Persist the greatest successfully applied revision; ignore older delivery. Platform disable retains the local Staff row and prevents subsequent PIN login, including the last Manager. Requires the Phase 2 POS build before Platform access administration is enabled.",
-      "payload": {"username": "string", "staffId": "string?, Cloud Staff identity for Platform-managed access", "platformAction": "string?, create|reset|disable", "platformRevision": "int?, monotonic Platform Staff revision; older revisions must be ignored"}
+      "payload": {
+        "username": "string",
+        "staffId": "string?, Cloud Staff identity for Platform-managed access",
+        "platformAction": "string?, create|reset|disable",
+        "platformRevision": "int?, monotonic Platform Staff revision; older revisions must be ignored"
+      }
+    },
+    {
+      "description": "Release a ghost table only when canonical identity and observed state match and no live Order or Reservation owns it. Edge only; Cloud updates through the authoritative snapshot.",
+      "idempotent": true,
+      "idempotency": "Immutable command identity, flushed repair intent, table/audit effects and retained receipt. Completed replay never clears later occupancy.",
+      "payload": {
+        "tableId": "canonical physical table UUID",
+        "tableNumber": "legacy table number",
+        "floor": "legacy floor key",
+        "expectedIsReserved": "bool",
+        "expectedActiveOrderId": "int|null",
+        "actorStaffId": "authenticated Manager Staff UUID",
+        "actorUsername": "authenticated Manager username",
+        "mirrorUpdatedAt": "string, server-owned original Cloud snapshot timestamp; ACK projection CAS only, excluded from local business request fingerprint"
+      },
+      "failure": "table_not_found; table_busy; stale_table; canonical_table_identity_required; repair_required",
+      "type": "TABLE_REPAIR",
+      "repeatAfterInterruption": true
+    },
+    {
+      "type": "ORDER_EDIT",
+      "idempotent": true,
+      "repeatAfterInterruption": true,
+      "description": "Apply a guarded Manager edit on the selected POS through one recoverable Order/audit intent. Edge only; Cloud mirrors only a validated POS result.",
+      "idempotency": "Immutable request and exact POS baseline; durable business receipt survives transport pruning and returns the original result after later edits. Interrupted storage remains unresolved until recovery.",
+      "payload": {
+        "request": "{posOrderId, expectedFingerprint, items: frozen stable-line array, includeServiceFee, customServiceFeePercentage}",
+        "baseline": "version 1 POS-owned canonical order image string and SHA-256 fingerprint, orderUuid, effectiveServiceFeePercent",
+        "businessDate": "YYYY-MM-DD",
+        "actorStaffId": "authenticated Manager Staff UUID",
+        "actorUsername": "authenticated Manager username",
+        "mirrorUpdatedAt": "original Cloud row revision for ACK CAS",
+        "mirrorTables": "original table identities/revisions for ACK CAS"
+      },
+      "failure": "invalid_order_edit_request; stale_order; stale_date; closed_order; repair_required; service_fee_unavailable"
+    },
+    {
+      "type": "MANAGER_OPERATION",
+      "idempotent": true,
+      "repeatAfterInterruption": true,
+      "description": "Guarded Manager create/cancel/reservation request. Edge only; older POS registries must refuse before effects. Queue admission is not completion.",
+      "idempotency": "Immutable Staff-scoped request and command identity. Order effects use retained POS05 receipts; interrupted standalone reservation work reports retained uncertainty without automatic reexecution.",
+      "payload": {
+        "operationType": "one of the existing non-print Order/Reservation operation spellings",
+        "managerOperation": "{requestId, kind, frozen body, allocated reference reply}",
+        "businessDate": "frozen YYYY-MM-DD for Order creates",
+        "actorStaffId": "server-owned current Staff UUID",
+        "actorUsername": "server-owned current Staff username"
+      },
+      "failure": "unsupported_command_type; stale_date; order_id_conflict; manager_operation_outcome_unknown; explicit domain rejection. Storage recovery receives no false terminal ACK."
     }
-  ]
+  ],
+  "resultProjection": "Optional POS-owned versioned result. ORDER_EDIT requires its frozen order image, fingerprint and effective fee percentage; other commands omit it."
 }

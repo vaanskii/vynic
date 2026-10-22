@@ -1,0 +1,85 @@
+{
+  "status": "SOFTWARE_PREPARATION_PASS_MILESTONE_NOT_DONE",
+  "milestoneDone": false,
+  "candidateIdentity": "POS02_ACCEPTANCE_db74149c_2026-10-02",
+  "createdAtUtc": "2026-10-02T22:26:55.372281+00:00",
+  "baseCommit": "275688e1e5c5dc0e26e62705ab0c7670cf16d99a",
+  "sourceManifestSha256": "db74149c4680d05e16a3a1f53906b269bf76be3d1d71e78796119633d15ff51a",
+  "sourceFileCount": 883,
+  "sourceZipSha256": "6947ed4d955d5b3555c15f0cb8e1062191203bebe95d3c3cffe9bb38fd955c9e",
+  "base876Unchanged": true,
+  "integrated44Unchanged": true,
+  "acceptance": {
+    "exitCode": 0,
+    "distinctPassing": 895,
+    "passingSuites": 73,
+    "discoveredSuites": 74,
+    "physicalEntrySkippedByDefault": true,
+    "log": "runner-acceptance-final.jsonl",
+    "sourceVerifiedBeforeAfter": true
+  },
+  "newRunnerChecks": 40,
+  "nativeFakeEntrySmoke": {
+    "exitCode": 0,
+    "physicalAllowance": 0,
+    "sourceVerifiedBeforeAfter": true,
+    "realConnections": 0
+  },
+  "nativeBudgetRecovery": {
+    "checkpoints": 4,
+    "crossProcessLockChecks": 4,
+    "noRefund": true,
+    "sourceVerifiedBeforeAfter": true,
+    "physicalOrHiveActions": false
+  },
+  "inheritedProductRecovery": {
+    "checkpoints": 102,
+    "basis": "unchanged sealed Admin runtime; imported proof separately marked as inherited"
+  },
+  "analyzer": {
+    "status": "PASS",
+    "files": 6,
+    "issues": 0
+  },
+  "format": {
+    "status": "PASS",
+    "files": 6,
+    "changed": 0,
+    "evidence": "Existing cached Dart formatter --output=none --set-exit-if-changed exited 0, six files, zero changes"
+  },
+  "developmentBuild": {
+    "status": "PASS",
+    "platform": "macos",
+    "mode": "debug",
+    "entrypoint": "lib/main_pos.dart",
+    "artifactName": "Vynic Manager.app",
+    "launched": false
+  },
+  "independentReview": {
+    "remainingP1P2": [],
+    "executedTestsOrDevices": false,
+    "assembledPackage": "PASS"
+  },
+  "exploratoryBroadRun": {
+    "status": "FAILED",
+    "passing": 1824,
+    "failedChecks": 13,
+    "affectedSuites": [
+      "edge_transport_end_to_end_test.dart",
+      "inventory_projection_sync_test.dart",
+      "manager_login_screen_test.dart",
+      "menu09_client_gate_test.dart"
+    ],
+    "scope": "outside established POS02 acceptance set; no full-repository green claim",
+    "logsRetained": true
+  },
+  "WindowsCurrentRevision": "PENDING_NOT_RUN",
+  "physicalAcceptance": "PENDING",
+  "physicalAllowance": 0,
+  "receiptPaperRetryPolicy": "UNCONFIGURED_OWNER_DECISION",
+  "vm": "HELD",
+  "commit": "NOT_REQUESTED_UNTIL_DONE_GATES",
+  "newMilestones": "STOP_WAIT_FOR_USER",
+  "publishedInstaller": "old POS1.0.13/release14; stopped server; expired feed; new candidate unpublished",
+  "gitDiffCheck": "PASS"
+}

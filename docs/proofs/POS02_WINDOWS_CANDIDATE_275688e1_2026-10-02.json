@@ -1,0 +1,8 @@
+{
+  "archive": "docs/proofs/POS02_WINDOWS_CANDIDATE_275688e1_2026-10-02.zip",
+  "sha256": "6142021ae4e2164487356a0a422e0a050feb2fb206fc5cd4c9f1175818afe733",
+  "sourceFileCount": 867,
+  "profile": "UNCOMMITTED_POS02_275688e1_PLUS_32_AUTHORED_TASK_FILES",
+  "testIsolation": "owned temporary Hive; explicit synthetic socket only; real HTTP blocked; normal POS not started",
+  "workingTreeOrPolicyChanges": "NONE"
+}

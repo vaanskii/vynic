@@ -1,0 +1,53 @@
+{
+  "schema": 1,
+  "reviewedAtUtc": "2026-10-06T17:06:13.898636+00:00",
+  "verdict": "PASS_BOUNDED_AUTHENTICATED_HELD_INFRASTRUCTURE_RPC",
+  "openP1": [],
+  "openP2": [],
+  "manifest": {
+    "path": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/metadata/printer-agent-owned-source-manifest.json",
+    "sha256": "ed7394dbb31b1a61addf1c6fe76421e4c6868ecfc0e538990a6584f1a1b19b3e"
+  },
+  "sourceFilesIndependentlyRehashed": 14,
+  "validationReceipt": {
+    "path": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/metadata/printer-agent-validation-receipt.json",
+    "sha256": "895e48d1308d394d27b80b3fa9069ac5172f669d6d2b19ac1773d1c07b8bfca7"
+  },
+  "generationReceipt": {
+    "path": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/metadata/printer-agent-generation-receipt.json",
+    "sha256": "05393b30548c988482972c6be063394f55d1fbd5ee594fa2e00dc62797c2d261"
+  },
+  "verifiedEvidence": {
+    "logsRehashed": 14,
+    "artifactsRehashed": 2,
+    "generatedOutputsRehashed": 6,
+    "goRaceTopLevelPass": 7,
+    "goRacePassRecords": 37,
+    "goFixtureEntrySkip": 1,
+    "goFixtureExecutedFromActualDartProcessTest": true,
+    "dartPass": 23,
+    "analysisFiles": 3,
+    "analysisIssues": 0,
+    "formatChanges": 0,
+    "actualWindowsExecutionClaimed": false
+  },
+  "reviewedBoundaries": [
+    "TLS1.3 mutual authentication, exact current client CA/DER pin/purpose/host/client URI and protocol/reader checks each RPC, local revocation rechecked on established channel.",
+    "Private copy of pinned server leaf/key and per-RPC server-leaf validity checks; empty Dart trust roots and exact supplied DER/time/SNI callback retain no alternate trusted-leaf path.",
+    "Loopback-only explicit listener and bounded typed messages, unknown-field and enum rejection, exact host pins and required HELD states/reasons.",
+    "SubmitLocal requires exact frozen byte digest/request/job/pins and optional candidate validation; success path is unconditionally FailedPrecondition HELD_PROVISIONING. GetLocalResult likewise held. No writer/result receipt/physical path.",
+    "Graceful server Stop fences calls and retains actual active-handler lifetime after caller timeout; no forced resource release.",
+    "Readonly POS currentDeviceInstallationId explicitly distinct from Go service pins.installationId; actual cross-language fixture deliberately unequal.",
+    "Six outputs official generator check/no diff; previous generated source preserved except additive nongenerated barrel export."
+  ],
+  "closedP2": [
+    "Established TLS channel could outlive server leaf expiry; per-RPC immutable server validity fence and regression now close it.",
+    "Nil-able health/candidate implementations reject before use.",
+    "No inferred POS-to-Go installation equivalence remains."
+  ],
+  "limits": [
+    "Authority bridge document accurately describes missing real issuer, server-owned current Device/Venue/installations/terminal/origin registration, persistent rollback/revocation source and authoritative routes/cutover. Candidate validation is not that deployment.",
+    "Health is retained infrastructure observation only; no daemon provisioning, SCM service account, joined Raft replica, business writer integration or physical acceptance qualified.",
+    "Full new daemon/installer composition and final combined cohort are separately reviewed; this receipt is the 14-file local RPC/client boundary."
+  ]
+}

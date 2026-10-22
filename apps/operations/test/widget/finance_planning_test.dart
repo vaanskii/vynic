@@ -13,6 +13,7 @@ final payroll = <String, dynamic>{
   'today': '2026-09-15',
   'businessDate': '2026-09-14',
   'periodMonth': '2026-09',
+  'totals': {'expected': '1560.00', 'paid': '800.00', 'remaining': '760.00'},
   'staff': [
     {
       'id': 'giorgi',
@@ -155,6 +156,30 @@ void main() {
       'MaterialIcons',
     )..addFont(rootBundle.load('fonts/MaterialIcons-Regular.otf'))).load();
   });
+  testWidgets(
+    'obligation summary never turns an invalid server amount into zero',
+    (t) async {
+      await t.pumpWidget(
+        qa.app(
+          FinancePlanningScreen(
+            obligations: true,
+            read: (_) async => {
+              ...obligations,
+              'cycles': [
+                {
+                  ...(obligations['cycles'] as List).first,
+                  'remainingToPay': 'invalid',
+                },
+              ],
+            },
+          ),
+        ),
+      );
+      await t.pumpAndSettle();
+      expect(find.text('მიუწვდომელია'), findsOneWidget);
+      expect(t.takeException(), isNull);
+    },
+  );
   for (final width in [360.0, 768.0, 1280.0]) {
     testWidgets(
       'Payroll detail, exact payment, rule and daily entry at $width',
@@ -175,8 +200,8 @@ void main() {
         );
         await t.pumpAndSettle();
         await tapVisible(t, find.text('გიორგი გრძელი გვარით'));
-        expect(find.text('დარიცხული: 1500.00 ₾'), findsOneWidget);
-        expect(find.text('გადახდილი: 800.00 ₾'), findsOneWidget);
+        expect(find.text('1500.00 ₾'), findsOneWidget);
+        expect(find.text('800.00 ₾'), findsNWidgets(2));
         expect(t.takeException(), isNull);
         await qa.screenshot(t, 'payroll-$width');
         await tapVisible(t, find.text('გადახდის დაფიქსირება').first);
@@ -372,20 +397,24 @@ void main() {
         ),
       );
       await t.pumpAndSettle();
-      expect(find.text('დღიური მიზანი: 75.00 ₾'), findsOneWidget);
+      expect(find.text('რეკომენდებული დღიური'), findsNWidgets(2));
+      expect(find.text('75.00 ₾'), findsOneWidget);
+      expect(find.text('4500.00 ₾'), findsOneWidget);
+      expect(find.text('2300.00 ₾'), findsOneWidget);
       expect(t.takeException(), isNull);
       await qa.screenshot(t, 'obligations-$width');
-      await tapVisible(t, find.text('თანხის გადადება').first);
+      await tapVisible(t, find.text('გადადება').first);
       expect(find.text('გადადებული თანხა ჯერ ხარჯი არ არის.'), findsOneWidget);
       expect(find.byKey(const Key('finance-paymentDate')), findsNothing);
       await t.enterText(find.byKey(const Key('finance-amount')), '100.00');
       await tapVisible(t, find.byKey(const Key('finance-save')));
       expect(paths.last, 'cycles/c/reserves');
-      await tapVisible(t, find.text('გადახდის დაფიქსირება').first);
+      await tapVisible(t, find.text('გადახდა').first);
       expect(find.byKey(const Key('finance-paymentDate')), findsOneWidget);
       await t.enterText(find.byKey(const Key('finance-amount')), '100.00');
       await tapVisible(t, find.byKey(const Key('finance-save')));
       expect(paths.last, 'cycles/c/payments');
+      await tapVisible(t, find.text('დეტალები და ისტორია').first);
       await tapVisible(t, find.text('რედაქტირება').first);
       expect(
         t
@@ -415,7 +444,8 @@ void main() {
         ),
       );
       await t.pumpAndSettle();
-      expect(find.text('დღეს გადასადები: 165.91 ₾'), findsOneWidget);
+      expect(find.text('დღეს გადასადები'), findsOneWidget);
+      expect(find.text('165.91 ₾'), findsOneWidget);
       await tapVisible(t, find.byKey(const Key('planning-payrollRemaining')));
       await tapVisible(
         t,

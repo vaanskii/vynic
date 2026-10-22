@@ -1,4 +1,6 @@
 import 'package:vynic/core/services/pos/update/tracked_box.dart';
+import 'package:vynic/core/services/pos/update/update_readiness.dart';
+import 'package:vynic/core/database/repositories/order_table_mutation_repository.dart';
 import 'package:hive/hive.dart';
 import 'order_status.dart';
 import 'package:uuid/uuid.dart';
@@ -94,6 +96,16 @@ class OrderItem extends HiveObject with UpdateTrackedHiveObject {
 
 @HiveType(typeId: 4)
 class Order extends HiveObject with UpdateTrackedHiveObject {
+  /// Ephemeral authenticated POS baseline for Manager edits; no Hive schema change.
+  Map<String, dynamic>? managerEditProjection;
+
+  /// Expected persisted image carried by an editable read. These are runtime
+  /// handles only; no adapter field or Hive version is added.
+  Map<String, dynamic>? mutationBaseline;
+  Object? mutationKey;
+
+  @override
+  Future<void> save() => OrderTableMutationRepository.saveOrder(this);
   @HiveField(0)
   int orderId;
 
@@ -451,108 +463,149 @@ class Order extends HiveObject with UpdateTrackedHiveObject {
   /// What the guest consumed: the balance still due plus the advance already
   /// taken. This is the value of the sale, and it does not move when a
   /// deposit is collected earlier.
-  double get grossAmount =>
-      double.parse((totalAmount + effectiveAdvanceAmount).toStringAsFixed(2));
-
-  // Toggle service fee
-  void toggleServiceFee({double? serviceFeeRate}) {
-    includeServiceFee = !includeServiceFee;
-    recalculateTotal(serviceFeeRate: serviceFeeRate);
-    updatedAt = _resolveTimestamp();
-    save();
+  double get grossAmount {
+    // A displayed balance is clamped at zero. Adding an excess deposit back
+    // would inflate the sale, so recover that boundary through the existing
+    // price calculation with the deposit removed.
+    if (totalAmount.abs() < 0.005 && effectiveAdvanceAmount > 0) {
+      final beforeAdvance = clone()..advanceAmount = 0;
+      beforeAdvance.managerEditProjection = managerEditProjection;
+      beforeAdvance.recalculateTotal();
+      return beforeAdvance.totalAmount;
+    }
+    return double.parse(
+      (totalAmount + effectiveAdvanceAmount).toStringAsFixed(2),
+    );
   }
 
-  // Set discount amount
-  void setDiscount(double amount, {double? serviceFeeRate}) {
-    discountAmount = amount;
-    recalculateTotal(serviceFeeRate: serviceFeeRate);
-    updatedAt = _resolveTimestamp();
-    save();
+  void _adopt(Order other) {
+    orderId = other.orderId;
+    tableNumbers = other.tableNumbers;
+    floor = other.floor;
+    items = other.items;
+    totalAmount = other.totalAmount;
+    createdAt = other.createdAt;
+    createdBy = other.createdBy;
+    status = other.status;
+    updatedAt = other.updatedAt;
+    includeServiceFee = other.includeServiceFee;
+    paymentMethod = other.paymentMethod;
+    closedAt = other.closedAt;
+    discountAmount = other.discountAmount;
+    packageId = other.packageId;
+    packageName = other.packageName;
+    packagePrice = other.packagePrice;
+    packageItems = other.packageItems;
+    packageUnitPrice = other.packageUnitPrice;
+    packageGuestCount = other.packageGuestCount;
+    manualAdjustmentAmount = other.manualAdjustmentAmount;
+    openedByUserId = other.openedByUserId;
+    customServiceFeePercentage = other.customServiceFeePercentage;
+    closureId = other.closureId;
+    advanceAmount = other.advanceAmount;
+    advanceCollectedOn = other.advanceCollectedOn;
+    advanceReceiptId = other.advanceReceiptId;
+    customerName = other.customerName;
+    customerPhone = other.customerPhone;
+    pickupTime = other.pickupTime;
+    orderUuid = other.orderUuid;
+    edgeRevision = other.edgeRevision;
+    mutationBaseline = other.mutationBaseline;
+    mutationKey = other.mutationKey;
   }
 
-  /// Sets the advance already collected against this order.
-  ///
-  /// [collectedOn] is the business date the money was taken, which the
-  /// closure needs because it is often not the date the order closes on.
-  void setAdvance(
+  Future<void> _edit(String operation, Future<void> Function(Order) apply) {
+    final frozen = clone();
+    frozen.mutationBaseline = OrderTableMutationRepository.image(this);
+    if (mutationBaseline != null)
+      frozen.mutationBaseline = Map.of(mutationBaseline!);
+    return UpdateReadiness.mutate(operation, () async {
+      OrderTableMutationRepository.requireFresh(frozen);
+      await apply(frozen);
+      await frozen.save();
+      _adopt(frozen);
+    });
+  }
+
+  Future<void> toggleServiceFee({double? serviceFeeRate}) =>
+      _edit('toggleServiceFee', (d) async {
+        d.includeServiceFee = !d.includeServiceFee;
+        d.recalculateTotal(serviceFeeRate: serviceFeeRate);
+        d.updatedAt = _resolveTimestamp();
+      });
+  Future<void> setDiscount(double amount, {double? serviceFeeRate}) =>
+      _edit('setDiscount', (d) async {
+        d.discountAmount = amount;
+        d.recalculateTotal(serviceFeeRate: serviceFeeRate);
+        d.updatedAt = _resolveTimestamp();
+      });
+  Future<void> setAdvance(
     double amount, {
     required String collectedOn,
     String? receiptId,
     double? serviceFeeRate,
-  }) {
-    advanceAmount = double.parse(amount.toStringAsFixed(2));
-    if (advanceAmount <= 0) {
-      advanceAmount = 0.0;
-      advanceCollectedOn = null;
-      advanceReceiptId = null;
+  }) => _edit('setAdvance', (d) async {
+    d.advanceAmount = double.parse(amount.toStringAsFixed(2));
+    if (d.advanceAmount <= 0) {
+      d.advanceAmount = 0;
+      d.advanceCollectedOn = null;
+      d.advanceReceiptId = null;
     } else {
-      advanceCollectedOn = collectedOn;
-      advanceReceiptId = receiptId ?? advanceReceiptId;
+      d.advanceCollectedOn = collectedOn;
+      d.advanceReceiptId = receiptId ?? d.advanceReceiptId;
     }
-    recalculateTotal(serviceFeeRate: serviceFeeRate);
-    updatedAt = _resolveTimestamp();
-    save();
-  }
-
-  void setManualAdjustment(double amount, {double? serviceFeeRate}) {
-    manualAdjustmentAmount = double.parse(amount.toStringAsFixed(2));
-    recalculateTotal(serviceFeeRate: serviceFeeRate);
-    updatedAt = _resolveTimestamp();
-    save();
-  }
-
-  // Update order status
-  void updateStatus(String newStatus) {
-    status = newStatus;
-    updatedAt = _resolveTimestamp();
-    save();
-  }
-
-  /// Typed view of [status]. Storage stays the raw `String` field (Hive
-  /// field 7, unchanged) — this is a computed read/write wrapper, not a new
-  /// source of truth. See `core/models/order_status.dart`.
+    d.recalculateTotal(serviceFeeRate: serviceFeeRate);
+    d.updatedAt = _resolveTimestamp();
+  });
+  Future<void> setManualAdjustment(double amount, {double? serviceFeeRate}) =>
+      _edit('setManualAdjustment', (d) async {
+        d.manualAdjustmentAmount = double.parse(amount.toStringAsFixed(2));
+        d.recalculateTotal(serviceFeeRate: serviceFeeRate);
+        d.updatedAt = _resolveTimestamp();
+      });
+  Future<void> updateStatus(String newStatus) =>
+      _edit('updateStatus', (d) async {
+        d.status = newStatus;
+        d.updatedAt = _resolveTimestamp();
+      });
   OrderStatus get statusEnum => OrderStatus.fromStorage(status);
   set statusEnum(OrderStatus value) => status = value.storageValue;
 
-  // Add item to order
-  void addItem(OrderItem item) {
-    // Check if item already exists
-    final existingIndex = items.indexWhere((i) => i.itemKey == item.itemKey);
-    if (existingIndex != -1) {
-      items[existingIndex].quantity += item.quantity;
-      items[existingIndex].total =
-          items[existingIndex].unitPrice * items[existingIndex].quantity;
-    } else {
-      items.add(item);
-    }
-    recalculateTotal();
-    updatedAt = _resolveTimestamp();
-    save();
-  }
-
-  // Remove item from order
-  void removeItem(String itemKey) {
-    items.removeWhere((item) => item.itemKey == itemKey);
-    recalculateTotal();
-    updatedAt = _resolveTimestamp();
-    save();
-  }
-
-  // Update item quantity
-  void updateItemQuantity(String itemKey, int newQuantity) {
-    final index = items.indexWhere((i) => i.itemKey == itemKey);
-    if (index != -1) {
-      if (newQuantity <= 0) {
-        removeItem(itemKey);
+  Future<void> addItem(OrderItem item) {
+    final incoming = item.clone();
+    return _edit('addItem', (d) async {
+      final index = d.items.indexWhere((i) => i.itemKey == incoming.itemKey);
+      if (index != -1) {
+        d.items[index].quantity += incoming.quantity;
+        d.items[index].total =
+            d.items[index].unitPrice * d.items[index].quantity;
       } else {
-        items[index].quantity = newQuantity;
-        items[index].total = items[index].unitPrice * newQuantity;
-        recalculateTotal();
-        updatedAt = _resolveTimestamp();
-        save();
+        d.items.add(incoming);
       }
-    }
+      d.recalculateTotal();
+      d.updatedAt = _resolveTimestamp();
+    });
   }
+
+  Future<void> removeItem(String itemKey) => _edit('removeItem', (d) async {
+    d.items.removeWhere((i) => i.itemKey == itemKey);
+    d.recalculateTotal();
+    d.updatedAt = _resolveTimestamp();
+  });
+  Future<void> updateItemQuantity(String itemKey, int newQuantity) =>
+      _edit('updateItemQuantity', (d) async {
+        final index = d.items.indexWhere((i) => i.itemKey == itemKey);
+        if (index != -1) {
+          if (newQuantity <= 0) {
+            d.items.removeAt(index);
+          } else {
+            d.items[index].quantity = newQuantity;
+            d.items[index].total = d.items[index].unitPrice * newQuantity;
+          }
+          d.recalculateTotal();
+          d.updatedAt = _resolveTimestamp();
+        }
+      });
 
   double getEffectiveServiceFeePercentage({double? globalDefaultPercentage}) {
     final custom = customServiceFeePercentage;
@@ -592,6 +645,12 @@ class Order extends HiveObject with UpdateTrackedHiveObject {
       return serviceFeeRate >= 0 ? serviceFeeRate : 0;
     }
 
+    final projectedRate = managerEditProjection?['effectiveServiceFeePercent'];
+    if (projectedRate is num &&
+        projectedRate.isFinite &&
+        projectedRate >= 0 &&
+        projectedRate <= 100)
+      return projectedRate.toDouble() / 100;
     return _resolveDefaultServiceFeeRate();
   }
 

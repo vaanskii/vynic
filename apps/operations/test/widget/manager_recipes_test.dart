@@ -196,6 +196,25 @@ Map<String, dynamic> _component({
   'baseQuantityPerUnit': baseQuantity,
 };
 
+Future<void> expandIngredient(WidgetTester tester, int index) async {
+  final field = find.byKey(Key('recipe-component-quantity-$index'));
+  if (field.evaluate().isEmpty) {
+    final row = find.byWidgetPredicate(
+      (w) =>
+          w is ExpansionTile &&
+          w.key.toString().contains('recipe-component-editor-') &&
+          w.key.toString().contains('-$index'),
+    );
+    await tester.ensureVisible(row);
+    await tester.tap(
+      find.descendant(of: row, matching: find.byType(ListTile)).first,
+    );
+    await tester.pumpAndSettle();
+  }
+  await tester.ensureVisible(field);
+  await tester.pumpAndSettle();
+}
+
 void main() {
   group('the Recipes list', () {
     testWidgets('is Menu-oriented and flags what is not configured', (
@@ -328,12 +347,14 @@ void main() {
 
       expect(find.byKey(const Key('recipe-editor')), findsOneWidget);
       // The selling price is context, and read-only.
+      await openRecipeContext(tester);
       expect(find.text('გასაყიდი ფასი: 4.00 ₾'), findsOneWidget);
       expect(find.text('1 გაყიდვა = მარაგიდან'), findsOneWidget);
       // A direct link has no ingredient list to grow.
       expect(find.byKey(const Key('recipe-add-component')), findsNothing);
       expect(find.byKey(const Key('recipe-yield')), findsNothing);
 
+      await expandIngredient(tester, 0);
       await tester.enterText(
         find.byKey(const Key('recipe-component-quantity-0')),
         '1',
@@ -383,6 +404,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.byKey(const Key('recipe-yield')), findsNothing);
+      await expandIngredient(tester, 0);
       expect(find.widgetWithText(TextField, '1'), findsOneWidget);
       // A configured card offers a way to stop applying it.
       expect(find.byKey(const Key('recipe-disable')), findsOneWidget);
@@ -408,10 +430,12 @@ void main() {
       );
       await tester.pumpAndSettle();
 
+      await expandIngredient(tester, 0);
       await tester.tap(find.byKey(const Key('recipe-component-unit-0')));
       await tester.pumpAndSettle();
       await tester.tap(find.text('მლ').last);
       await tester.pumpAndSettle();
+      await expandIngredient(tester, 0);
       await tester.enterText(
         find.byKey(const Key('recipe-component-quantity-0')),
         '500',
@@ -444,6 +468,7 @@ void main() {
       );
       await tester.pumpAndSettle();
 
+      await expandIngredient(tester, 0);
       await tester.tap(find.byKey(const Key('recipe-component-unit-0')));
       await tester.pumpAndSettle();
       // The item is bought in 30 L kegs; that is procurement, not a pour.
@@ -475,12 +500,14 @@ void main() {
 
       await tester.tap(find.text('რამდენიმე ინგრედიენტის დამატება'));
       await tester.pumpAndSettle();
-      expect(find.text('რამდენიმე პორციაზე მომზადება'), findsOneWidget);
+      expect(find.byKey(const Key('recipe-yield')), findsOneWidget);
 
+      await expandIngredient(tester, 0);
       await tester.tap(find.byKey(const Key('recipe-component-unit-0')));
       await tester.pumpAndSettle();
       await tester.tap(find.text('გ').last);
       await tester.pumpAndSettle();
+      await expandIngredient(tester, 0);
       await tester.enterText(
         find.byKey(const Key('recipe-component-quantity-0')),
         '35',
@@ -491,6 +518,7 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.text('Flour').last);
       await tester.pumpAndSettle();
+      await expandIngredient(tester, 1);
       await tester.enterText(
         find.byKey(const Key('recipe-component-quantity-1')),
         '25',
@@ -528,16 +556,17 @@ void main() {
 
       await tester.tap(find.text('რამდენიმე ინგრედიენტის დამატება'));
       await tester.pumpAndSettle();
+      await expandIngredient(tester, 0);
       await tester.tap(find.byKey(const Key('recipe-component-unit-0')));
       await tester.pumpAndSettle();
       await tester.tap(find.text('კგ').last);
       await tester.pumpAndSettle();
+      await expandIngredient(tester, 0);
       await tester.enterText(
         find.byKey(const Key('recipe-component-quantity-0')),
         '3.5',
       );
-      await tester.ensureVisible(find.text('რამდენიმე პორციაზე მომზადება'));
-      await tester.tap(find.text('რამდენიმე პორციაზე მომზადება'));
+      await tester.ensureVisible(find.byKey(const Key('recipe-yield')));
       await tester.pumpAndSettle();
       await tester.enterText(find.byKey(const Key('recipe-yield')), '100');
       await tester.pumpAndSettle();
@@ -573,6 +602,7 @@ void main() {
 
       await tester.tap(find.text('რამდენიმე ინგრედიენტის დამატება'));
       await tester.pumpAndSettle();
+      await expandIngredient(tester, 0);
       await tester.enterText(
         find.byKey(const Key('recipe-component-quantity-0')),
         '1',
@@ -581,6 +611,7 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.text('Beef').last);
       await tester.pumpAndSettle();
+      await expandIngredient(tester, 1);
       await tester.enterText(
         find.byKey(const Key('recipe-component-quantity-1')),
         '2',
@@ -620,6 +651,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Pizza · 45.0'), findsOneWidget);
+      await expandIngredient(tester, 0);
       await tester.enterText(
         find.byKey(const Key('recipe-component-quantity-0')),
         '0.32',
@@ -679,6 +711,7 @@ void main() {
       // A Menu Item and a Stock Item are never the same identity.
       expect(created.id, isNot('menu-juice'));
 
+      await expandIngredient(tester, 0);
       await tester.enterText(
         find.byKey(const Key('recipe-component-quantity-0')),
         '1',
@@ -830,6 +863,8 @@ void main() {
       await tester.pumpAndSettle();
 
       await openInventorySection(tester, 'stockItems');
+      await tester.pumpAndSettle();
+      await tester.tap(find.byTooltip('მოქმედებები').first);
       await tester.pumpAndSettle();
       await tester.tap(find.text('რედაქტირება').first);
       await tester.pumpAndSettle();

@@ -1,0 +1,23 @@
+{
+  "name": "@vynic/website-client",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Shared, framework-agnostic client for CUSTOM restaurant frontends over the Vynic public website API.",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "types": "./src/index.ts",
+  "scripts": {
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "test:manifest": "node --test scripts/manifest.node-tests.mjs"
+  },
+  "devDependencies": {
+    "typescript": "~5.9.3",
+    "vitest": "^4.1.11"
+  },
+  "overrides": {
+    "source-map-js": "1.2.2"
+  }
+}

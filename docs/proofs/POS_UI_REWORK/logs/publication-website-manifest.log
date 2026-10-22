@@ -1,0 +1,19 @@
+
+> @vynic/website-client@0.1.0 test:manifest
+> node --test scripts/manifest.node-tests.mjs
+
+✔ same emitted files produce the same fingerprint, including a repeated manifest write (5.185417ms)
+✔ a changed emitted index.html changes the artifact fingerprint (2.158333ms)
+✔ a changed emitted assets/app.js changes the artifact fingerprint (1.794458ms)
+✔ a changed emitted public-image.jpg changes the artifact fingerprint (2.091542ms)
+✔ same files with different renderer/key cannot claim the same build (2.116666ms)
+✔ private config and filesystem paths cannot enter public metadata or the fingerprint (1.543583ms)
+✔ invalid identities, missing HTML and symlinks fail rather than creating a plausible manifest (1.500709ms)
+ℹ tests 7
+ℹ suites 0
+ℹ pass 7
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 48.87425

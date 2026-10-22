@@ -47,12 +47,15 @@ class _SalesTabState extends State<_SalesTab>
     if (_loading) return const _AdminLoading();
     if (_error != null) return _ErrorWidget(onRetry: _load);
     final monthDt = DateTime.tryParse('$_monthKey-01') ?? DateTime.now();
-    final monthLabel = DateFormat('MMMM yyyy').format(monthDt);
+    final monthLabel = DateFormat('MM.yyyy').format(monthDt);
 
     final monthTotal = _rows.fold<double>(
       0,
       (s, r) => s + ((r['totalRevenue'] as num?)?.toDouble() ?? 0),
     );
+    final availableDays = _rows
+        .where((row) => row['available'] != false)
+        .length;
 
     return RefreshIndicator(
       color: AdminTheme.primary,
@@ -64,6 +67,10 @@ class _SalesTabState extends State<_SalesTab>
         ),
         padding: _adminScrollPadding(context),
         children: [
+          if (_rows.any((row) => row['available'] == false))
+            const ManagerHelpCallout(
+              'ზოგი დღის მონაცემები მიუწვდომელია. ჯამი მხოლოდ ხელმისაწვდომ დღეებს მოიცავს.',
+            ),
           _AdminMonthNav(
             label: 'გაყიდვები • $monthLabel',
             onPrev: _prevMonth,
@@ -73,7 +80,7 @@ class _SalesTabState extends State<_SalesTab>
             SizedBox(height: 10),
             _AdminHeroMetric(
               label: 'თვის შემოსავალი',
-              value: _adminGel(monthTotal),
+              value: availableDays == 0 ? '—' : _adminGel(monthTotal),
               subtitle: '$monthLabel · ${_rows.length} დღე',
               accent: AdminTheme.good,
             ),
@@ -114,6 +121,11 @@ class _SalesTabState extends State<_SalesTab>
   }
 
   Widget _buildDayCard(Map<String, dynamic> row) {
+    if (row['available'] == false) {
+      return ManagerHelpCallout(
+        '${row['date']} · დღის გაყიდვების მონაცემები მიუწვდომელია.',
+      );
+    }
     final showNonFiscal = ManagerEntitlements.has(FeatureKeys.nonFiscalClose);
     final date = (row['date'] ?? '').toString();
     final totalRevenue = (row['totalRevenue'] as num?)?.toDouble() ?? 0;
@@ -152,20 +164,88 @@ class _SalesTabState extends State<_SalesTab>
           data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
           child: ExpansionTile(
             key: PageStorageKey<String>('admin-sales-$date'),
-            tilePadding: const EdgeInsets.fromLTRB(14, 2, 14, 2),
+            tilePadding: const EdgeInsets.symmetric(
+              horizontal: 18,
+              vertical: 10,
+            ),
             childrenPadding: const EdgeInsets.fromLTRB(14, 0, 14, 12),
             iconColor: AdminTheme.primary,
             collapsedIconColor: AdminTheme.textDim,
-            title: Text(
-              date,
-              style: TextStyle(
-                fontWeight: FontWeight.w700,
-                color: AdminTheme.text,
-              ),
-            ),
-            subtitle: Text(
-              'დახურული $closedOrders / გაუქმებული $cancelledOrders / სულ $totalOrders • ${_adminGel(totalRevenue)}\nხარჯი: ${_adminGel(totalExpenses)} • მოგება: ${_adminGel(profit)}${showNonFiscal ? '\nარაფისკალური დახურული: ${_adminGel(nonFiscalAmount)}' : ''}',
-              style: TextStyle(fontSize: 12, color: AdminTheme.textMuted),
+            title: LayoutBuilder(
+              builder: (context, box) {
+                final summary = Text(
+                  'დახურული $closedOrders / გაუქმებული $cancelledOrders / სულ $totalOrders',
+                  style: TextStyle(fontSize: 12, color: AdminTheme.textMuted),
+                );
+                Widget metric(String label, String value) => Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      label,
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: AdminTheme.textMuted,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      value,
+                      style: TextStyle(
+                        fontWeight: FontWeight.w700,
+                        color: AdminTheme.text,
+                      ),
+                    ),
+                  ],
+                );
+                final day = Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      date,
+                      style: TextStyle(
+                        fontWeight: FontWeight.w700,
+                        color: AdminTheme.text,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    summary,
+                  ],
+                );
+                if (box.maxWidth >= 760)
+                  return Row(
+                    children: [
+                      Expanded(flex: 3, child: day),
+                      Expanded(
+                        flex: 2,
+                        child: metric('შემოსავალი', _adminGel(totalRevenue)),
+                      ),
+                      Expanded(
+                        flex: 2,
+                        child: metric('ხარჯი', _adminGel(totalExpenses)),
+                      ),
+                      Expanded(
+                        flex: 2,
+                        child: metric('მოგება', _adminGel(profit)),
+                      ),
+                    ],
+                  );
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    day,
+                    const SizedBox(height: 10),
+                    Wrap(
+                      spacing: 20,
+                      runSpacing: 8,
+                      children: [
+                        metric('შემოსავალი', _adminGel(totalRevenue)),
+                        metric('ხარჯი', _adminGel(totalExpenses)),
+                        metric('მოგება', _adminGel(profit)),
+                      ],
+                    ),
+                  ],
+                );
+              },
             ),
             children: [
               if (showNonFiscal && nonFiscalAmount > 0)
@@ -400,7 +480,7 @@ class _SalesTabState extends State<_SalesTab>
     required List<Map<String, dynamic>> items,
     required int? orderId,
   }) async {
-    await showModalBottomSheet<void>(
+    await showManagerModal<void>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,

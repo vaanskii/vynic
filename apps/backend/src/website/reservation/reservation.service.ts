@@ -1,4 +1,14 @@
 import {
+  applyWebsitePaymentObservation,
+  expireWebsiteHolds,
+} from './website-booking-state';
+import {
+  WEBSITE_PAYMENT_WINDOW_MS,
+  type WebsitePaymentEvidence,
+} from '../payment/bog-payment-facts';
+import { lockOperationalVenue } from '../../edge/operational-authority';
+import { captureWebsiteDeliveryIntent } from './website-delivery-intent';
+import {
   BadRequestException,
   Injectable,
   Inject,
@@ -8,6 +18,7 @@ import {
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { PrismaService } from '../../shared/prisma/prisma.service';
 import { BogService } from '../payment/payment.service';
+import { bookingIntent, claimedBookingTotal } from './booking-request';
 import {
   WebsitePosReservationBridgeService,
   normalizeMapReservationStatus,
@@ -110,27 +121,17 @@ export class ReservationService {
 
   async createReservation(
     tenant: TenantContext,
-    data: {
-      selectedTables: string[];
-      selectedDate: string;
-      selectedTime: string;
-      menuItems?: Array<{ id: string; quantity: number; price: number }>;
-      totalAmount?: number;
-      customerName?: string;
-      customerEmail?: string;
-      customerPhone?: string;
-      userId?: string;
-      notes?: string;
-      language?: string;
-      numberOfGuests?: number;
-    },
+    input: unknown,
+    authenticatedUserId?: string,
   ) {
+    const data = bookingIntent(input);
     // Scoped by Venue, so a table belonging to another restaurant simply is not
     // found — a booking can never reach across the tenant boundary.
     const tables = await this.prisma.websiteTable.findMany({
       where: {
         venueId: tenant.venueId,
         websiteTableNumber: { in: data.selectedTables },
+        isActive: true,
       },
     });
 
@@ -145,56 +146,150 @@ export class ReservationService {
       );
     }
 
-    const available = await this.posBridge.areWebsiteTablesAvailable(
-      tenant,
-      tables,
-      data.selectedDate,
-    );
-    if (!available) {
-      throw new BadRequestException(
-        'One or more selected tables are already booked on this date',
-      );
-    }
-
     const numberOfGuests =
       data.numberOfGuests ??
       tables.reduce((sum, table) => sum + table.capacity, 0);
 
-    const reservation = await this.prisma.websiteReservation.create({
-      data: {
-        venueId: tenant.venueId,
-        date: new Date(dayBounds(data.selectedDate).start),
-        timeSlot: data.selectedTime,
-        customerName: data.customerName,
-        customerEmail: data.customerEmail,
-        customerPhone: data.customerPhone,
-        userId: data.userId,
-        notes: data.notes,
-        status: 'PENDING',
-        totalAmount: data.totalAmount || 0,
-        numberOfGuests,
-        menuItems: data.menuItems ? JSON.stringify(data.menuItems) : null,
-        tables: {
-          create: tables.map((table) => ({ tableId: table.id })),
-        },
-      },
-      include: {
-        tables: { include: { table: true } },
-        user: true,
-      },
-    });
+    const priced = await this.bogService.validateAndCalculateOrder(
+      tenant,
+      data,
+    );
+    const paymentIntegrationId = await this.bogService.preparePayment(tenant);
+    const tableCodes = tables.map((table) =>
+      encodeTableCode(table.posFloor, table.posTableNumber),
+    );
+    if (new Set(tableCodes).size !== tables.length)
+      throw new BadRequestException(
+        'The same physical table was selected more than once',
+      );
+    const reservation = await this.prisma.$transaction(
+      async (tx) => {
+        await lockOperationalVenue(tx, tenant.venueId);
+        await expireWebsiteHolds(tx, tenant.venueId, new Date());
+        const conflict = await tx.websiteReservationDayHold.findFirst({
+          where: {
+            venueId: tenant.venueId,
+            serviceDate: data.selectedDate,
+            tableCode: { in: tableCodes },
+            status: { in: ['HELD', 'CONFIRMED'] },
+          },
+        });
+        const available =
+          !conflict &&
+          (await this.posBridge.areWebsiteTablesAvailable(
+            tenant,
+            tables,
+            data.selectedDate,
+            undefined,
+            tx,
+          ));
+        if (!available)
+          throw new BadRequestException(
+            'One or more selected tables are already booked on this date',
+          );
+        const windowStartedAt = new Date();
+        const created = await tx.websiteReservation.create({
+          data: {
+            paymentIntegrationId,
+            venueId: tenant.venueId,
+            date: new Date(dayBounds(data.selectedDate).start),
+            timeSlot: data.selectedTime,
+            customerName: data.customerName,
+            customerEmail: data.customerEmail,
+            customerPhone: data.customerPhone,
+            userId: authenticatedUserId,
+            notes: data.notes,
+            status: 'PENDING',
+            paymentState: 'PENDING',
+            paymentExpectedMinor: String(priced.payment.amountMinor),
+            paymentCurrency: priced.payment.currency,
+            holdState: 'HELD',
+            paymentWindowStartedAt: windowStartedAt,
+            holdExpiresAt: new Date(
+              windowStartedAt.getTime() + WEBSITE_PAYMENT_WINDOW_MS,
+            ),
+            nextPaymentCheckAt: new Date(Date.now() + 60_000),
+            totalAmount: priced.totalAmount,
+            numberOfGuests,
+            menuItems: JSON.stringify(priced.menuItems),
+            dayHolds: {
+              create: tableCodes.map((tableCode) => ({
+                serviceDate: data.selectedDate,
+                tableCode,
+              })),
+            },
+            tables: {
+              create: tables.map((table) => ({ tableId: table.id })),
+            },
+          },
+          include: {
+            tables: { include: { table: true } },
+            user: true,
+          },
+        });
 
-    const bogOrder = await this.bogService.createOrder(
-      reservation.id,
-      reservation.totalAmount || 0,
-      data.language || 'en',
+        return created;
+      },
+      { maxWait: 10_000, timeout: 30_000 },
     );
 
-    if (bogOrder?.id) {
-      await this.prisma.websiteReservation.update({
-        where: { id: reservation.id },
-        data: { paymentId: bogOrder.id },
+    let bogOrder: Awaited<ReturnType<BogService['createOrder']>>;
+    try {
+      bogOrder = await this.bogService.createOrder(
+        tenant,
+        paymentIntegrationId,
+        reservation.id,
+        priced.payment,
+        data.language || 'en',
+      );
+      await this.prisma.$transaction(async (tx) => {
+        await lockOperationalVenue(tx, tenant.venueId);
+        const current = await tx.websiteReservation.findUniqueOrThrow({
+          where: { id: reservation.id, venueId: tenant.venueId },
+        });
+        if (current.paymentId && current.paymentId !== bogOrder.id)
+          throw new BadRequestException('Payment reference mismatch');
+        await tx.websiteReservation.update({
+          where: { id: reservation.id },
+          data: { paymentId: bogOrder.id },
+        });
       });
+    } catch (error) {
+      await this.prisma.$transaction(async (tx) => {
+        await lockOperationalVenue(tx, tenant.venueId);
+        if (error instanceof BadRequestException) {
+          // Release only a still-unbound hold. A callback may already have
+          // pinned a bank identity before the create reply arrives.
+          const failed = await tx.websiteReservation.updateMany({
+            where: { id: reservation.id, paymentId: null, holdState: 'HELD' },
+            data: {
+              paymentState: 'DECLINED',
+              status: 'FAILED',
+              holdState: 'RELEASED',
+              nextPaymentCheckAt: null,
+            },
+          });
+          if (failed.count)
+            await tx.websiteReservationDayHold.updateMany({
+              where: {
+                reservationId: reservation.id,
+                venueId: tenant.venueId,
+                status: 'HELD',
+              },
+              data: { status: 'RELEASED' },
+            });
+        } else {
+          // A lost provider reply does not prove that no order exists.
+          await tx.websiteReservation.updateMany({
+            where: { id: reservation.id, paymentId: null },
+            data: {
+              paymentState: 'REVIEW',
+              paymentReviewReason: 'order_creation_outcome_unknown',
+            },
+          });
+        }
+      });
+      throw error;
     }
 
     return {
@@ -216,11 +311,19 @@ export class ReservationService {
           posFloor: rt.table.posFloor,
           capacity: rt.table.capacity,
         })),
-        menuItems: data.menuItems || [],
+        menuItems: priced.menuItems,
         totalAmount: reservation.totalAmount,
         status: reservation.status,
         notes: reservation.notes,
         numberOfGuests,
+      },
+      validation: {
+        serverCalculatedTotal: priced.totalAmount,
+        subtotal: priced.subtotal,
+        serviceFee: priced.serviceFee,
+        validatedItems: priced.menuItems,
+        priceManipulationDetected:
+          claimedBookingTotal(input) !== priced.totalAmount,
       },
       paymentUrl: bogOrder?._links?.redirect?.href,
     };
@@ -309,7 +412,12 @@ export class ReservationService {
       });
     }
 
-    return results;
+    // Anonymous visitors need occupancy, not other guests' names or phones.
+    return results.map((row) => ({
+      ...row,
+      customerName: null,
+      customerPhone: null,
+    }));
   }
 
   private serializeWebsiteReservationForMap(reservation: {
@@ -352,84 +460,90 @@ export class ReservationService {
     paymentStatus: string,
     paymentDescription: string,
     paymentId: string,
+    evidence?: WebsitePaymentEvidence,
   ) {
-    const confirmedStatuses = [
-      'completed',
-      'partial_completed',
-      'auth_requested',
-    ];
-    const failedStatuses = ['rejected', 'refunded', 'refunded_partially'];
-    const normalized = paymentStatus.toLowerCase();
-    const status = confirmedStatuses.includes(normalized)
-      ? 'CONFIRMED'
-      : failedStatuses.includes(normalized)
-        ? 'FAILED'
-        : 'PENDING';
-
-    const existing = await this.prisma.websiteReservation.findUnique({
+    void paymentStatus; // Financial status comes from verified provider facts.
+    void paymentDescription;
+    // Payment identity supplies the tenant; no host/client tenant is trusted.
+    const identity = await this.prisma.websiteReservation.findUnique({
       where: { id: reservationId },
-      include: {
-        tables: { include: { table: true } },
-        venue: { select: { organizationId: true } },
-      },
+      select: { venueId: true },
     });
-    if (!existing) {
+    if (!identity)
       throw new BadRequestException(`Reservation ${reservationId} not found`);
-    }
-
-    const tenant: TenantContext = {
-      venueId: existing.venueId,
-      organizationId: existing.venue.organizationId,
-    };
-
-    const updated = await this.prisma.websiteReservation.update({
-      where: { id: reservationId },
-      data: {
-        paymentStatus,
-        notes: paymentDescription,
-        paymentId,
-        status,
-      },
-      include: { tables: { include: { table: true } } },
-    });
-
-    if (status === 'CONFIRMED' && !existing.posReservationId) {
-      try {
-        await this.posBridge.pushConfirmedReservationToPos(tenant, updated);
-      } catch (error) {
-        // The booking and its payment are already persisted above, and this is
-        // a payment-provider callback: throwing here fails a callback about
-        // money that has already moved, which unbooks nothing and only makes
-        // the provider retry into the same failure.
-        //
-        // Reaching the POS is no longer part of it either — the reservation is
-        // recorded as an Edge command the terminal claims when it is next
-        // online, so an offline restaurant is not a failed booking. What can
-        // still land here is a genuine conflict, such as the tables having been
-        // taken between the booking and the payment clearing, and that is a
-        // situation for a person rather than for a retry.
-        this.logger.error(
-          `Website reservation ${reservationId} was paid and confirmed but ` +
-            `could not be handed to the POS: ${(error as Error).message}`,
+    const { updated, tenant, cancelId } = await this.prisma.$transaction(
+      async (tx) => {
+        const venue = await lockOperationalVenue(tx, identity.venueId);
+        await tx.$queryRaw`SELECT id FROM website.reservations WHERE id=${reservationId} AND "venueId"=${venue.id} FOR UPDATE`;
+        const existing = await tx.websiteReservation.findUniqueOrThrow({
+          where: { id: reservationId, venueId: venue.id },
+          include: { tables: { include: { table: true } } },
+        });
+        if (
+          !paymentId ||
+          !existing.paymentIntegrationId ||
+          (existing.paymentId && existing.paymentId !== paymentId)
+        ) {
+          throw new BadRequestException('Payment reference mismatch');
+        }
+        await expireWebsiteHolds(tx, venue.id, new Date());
+        const current = await tx.websiteReservation.findUniqueOrThrow({
+          where: { id: reservationId, venueId: venue.id },
+          include: { tables: { include: { table: true } } },
+        });
+        const updated = await applyWebsitePaymentObservation(
+          tx,
+          current,
+          paymentId,
+          evidence ?? {
+            source: 'RECONCILE',
+            observedAt: new Date(),
+            receipt: null,
+          },
         );
-      }
-    }
-
-    if (status === 'FAILED' && existing.posReservationId) {
-      await this.posBridge.cancelPosReservation(
-        tenant,
-        existing.posReservationId,
+        // Money outcome and durable handoff cannot commit independently. Historical
+        // POS links are deliberately not replayed: their outcome is unknown.
+        await captureWebsiteDeliveryIntent(
+          tx,
+          updated,
+          existing.status !== 'CONFIRMED' && updated.status === 'CONFIRMED',
+        );
+        const cancel = await tx.websiteReservationDeliveryIntent.findUnique({
+          where: {
+            venueId_reservationId_kind: {
+              venueId: venue.id,
+              reservationId,
+              kind: 'CANCEL',
+            },
+          },
+        });
+        return {
+          updated,
+          tenant: { venueId: venue.id, organizationId: venue.organizationId },
+          cancelId: cancel?.proposedPosReservationId ?? null,
+        };
+      },
+    );
+    // Best-effort wake-up only. A crash here is recovered by the intent worker.
+    try {
+      if (updated.status === 'CONFIRMED' && !updated.posReservationId)
+        await this.posBridge.pushConfirmedReservationToPos(tenant, updated);
+      if (updated.status === 'FAILED' && cancelId)
+        await this.posBridge.cancelPosReservation(tenant, cancelId);
+    } catch {
+      this.logger.error(
+        `Website reservation ${reservationId}: durable POS handoff pending; worker will reconcile`,
       );
     }
-
     return updated;
   }
 
   async getPaymentIdByReservationId(
     reservationId: string,
+    venueId: string,
   ): Promise<string | null> {
     const reservation = await this.prisma.websiteReservation.findUnique({
-      where: { id: reservationId },
+      where: { id: reservationId, venueId },
       select: { paymentId: true },
     });
     return reservation?.paymentId || null;
@@ -437,19 +551,80 @@ export class ReservationService {
 
   @Cron(CronExpression.EVERY_MINUTE)
   async cleanupExpiredPendingReservations() {
-    const cutOff = new Date(Date.now() - 10 * 60 * 1000);
-    const expired = await this.prisma.websiteReservation.findMany({
-      where: { status: 'PENDING', createdAt: { lt: cutOff } },
+    const venues = await this.prisma.websiteReservation.findMany({
+      where: { holdState: 'HELD', holdExpiresAt: { lte: new Date() } },
+      distinct: ['venueId'],
+      select: { venueId: true },
+      take: 100,
     });
-
-    if (expired.length === 0) return;
-
+    for (const row of venues)
+      await this.prisma.$transaction(async (tx) => {
+        await lockOperationalVenue(tx, row.venueId);
+        await expireWebsiteHolds(tx, row.venueId, new Date());
+      });
+    // Preserve the prior legacy pending timeout without inventing old holds or prices.
     await this.prisma.websiteReservation.updateMany({
-      where: { status: 'PENDING', createdAt: { lt: cutOff } },
+      where: {
+        status: 'PENDING',
+        holdState: null,
+        createdAt: { lt: new Date(Date.now() - WEBSITE_PAYMENT_WINDOW_MS) },
+      },
       data: {
         status: 'FAILED',
-        notes: 'Automatically expired due to timeout',
+        paymentState: 'REVIEW',
+        paymentReviewReason: 'historical_payment_snapshot_missing',
       },
     });
+  }
+
+  @Cron(CronExpression.EVERY_MINUTE)
+  async reconcileOutstandingPayments() {
+    const rows = await this.prisma.websiteReservation.findMany({
+      where: {
+        OR: [
+          { paymentId: { not: null } },
+          { paymentObservations: { some: { source: 'CALLBACK' } } },
+        ],
+        nextPaymentCheckAt: { lte: new Date() },
+      },
+      orderBy: [{ nextPaymentCheckAt: 'asc' }, { id: 'asc' }],
+      take: 30,
+      select: {
+        id: true,
+        paymentId: true,
+        paymentObservations: {
+          where: { source: 'CALLBACK' },
+          orderBy: { createdAt: 'desc' },
+          take: 1,
+          select: { paymentId: true },
+        },
+      },
+    });
+    for (const row of rows) {
+      const paymentId = row.paymentId ?? row.paymentObservations[0]?.paymentId;
+      if (!paymentId) continue;
+      try {
+        const receipt = await this.bogService.getPaymentDetailsForReservation(
+          row.id,
+          paymentId,
+        );
+        await this.updateReservationPaymentStatus(row.id, '', '', paymentId, {
+          source: 'RECONCILE',
+          observedAt: new Date(),
+          receipt,
+        });
+      } catch {
+        await this.prisma.websiteReservation.updateMany({
+          where: { id: row.id, nextPaymentCheckAt: { lte: new Date() } },
+          data: {
+            paymentReviewReason: 'provider_receipt_unavailable',
+            nextPaymentCheckAt: new Date(Date.now() + 5 * 60_000),
+          },
+        });
+        this.logger.warn(
+          `Website payment ${row.id}: receipt reconciliation unavailable; operator review retained`,
+        );
+      }
+    }
   }
 }

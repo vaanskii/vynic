@@ -1,0 +1,190 @@
+{
+  "status": "PASS_SOFTWARE_PACKAGING",
+  "scope": "independent Mac source/reachable-build-input review, fake-sender race+actual held foreground checks, reproducible AMD64/native ARM64 bundle checks",
+  "ownedSourceManifest": {
+    "path": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/metadata/printer-daemon-owned-source-manifest.json",
+    "bytes": 4328,
+    "sha256": "551a32eb428ca46726640a2c2f89701762a2460214a7eb1b682df9e4eea6f18e"
+  },
+  "ownedFilesVerified": 21,
+  "localSourceInputsUnchanged": 158,
+  "allReachableBuildInputsRehashed": {
+    "manifest": {
+      "path": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/printer-daemon-v1/agent-build-inputs.json",
+      "bytes": 923669,
+      "sha256": "8265133677ed972e72c0e666e28002577b1b747ae7caa770acae787dfdface40"
+    },
+    "uniqueFiles": 1914,
+    "targets": [
+      {
+        "target": "windows/amd64",
+        "packages": 355,
+        "files": 1814
+      },
+      {
+        "target": "windows/arm64",
+        "packages": 354,
+        "files": 1797
+      }
+    ]
+  },
+  "tests": {
+    "race": {
+      "path": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/printer-daemon-independent/race-authorized.jsonl",
+      "bytes": 103740,
+      "sha256": "cd4f145ebebc32fe13e06c492c43ec405d23ae524686704e97cd506ec934af9a"
+    },
+    "stderr": {
+      "path": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/printer-daemon-independent/race-authorized.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "byPackage": {
+      "vynic.local/edge/cmd/printer-agent": {
+        "topLevel": 7,
+        "subtests": 6
+      },
+      "vynic.local/edge/internal/printerdaemon": {
+        "topLevel": 26,
+        "subtests": 69
+      }
+    },
+    "failed": 0,
+    "skipped": 0,
+    "dataRace": false,
+    "actualForegroundBinary": {
+      "path": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/artifacts/printer-agent-darwin-arm64-race",
+      "bytes": 32810338,
+      "sha256": "6c609deff0500ab7f9fb4cf94bfddd7350645c019725a2baef9d6f845013e684"
+    },
+    "sandboxAttempt": {
+      "retainedLog": {
+        "path": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/printer-daemon-independent/race.jsonl",
+        "bytes": 99536,
+        "sha256": "276b454fd908511b5229d26b9161d12533a8cad54097454677db7fcdfbf59e91"
+      },
+      "classification": "localhost bind denied by default sandbox; identical authorized synthetic rerun passed"
+    }
+  },
+  "agentBuildAndBundleReproduction": {
+    "path": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/printer-daemon-independent/bundle-reproduction.json",
+    "bytes": 1089,
+    "sha256": "c7b8e7a2e0e6845a5340baec0728666ee064a3e16da69ab052192985eb3ca26b"
+  },
+  "bundles": [
+    {
+      "architecture": "amd64",
+      "manifest": {
+        "path": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/artifacts/bundles/amd64/manifest.json",
+        "bytes": 1772,
+        "sha256": "650360132e8f333c37f6ee6eb45a989fefd1ce5b9243d5066f0358b5bb6d4e8f"
+      },
+      "descriptor": {
+        "path": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/artifacts/bundle-descriptor-amd64.json",
+        "bytes": 2758,
+        "sha256": "b638fa27cfb6716f8e277e5c098da820e257e76ea5137193dc140288aed13199"
+      },
+      "artifacts": [
+        {
+          "path": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/artifacts/bundles/amd64/vynic-printer-agent.exe",
+          "bytes": 24817152,
+          "sha256": "a5ef474a67d62326436c48e073731b59062cc104545032574af671dc70b882cc",
+          "machine": "0x8664",
+          "imports": [
+            "kernel32.dll"
+          ]
+        },
+        {
+          "path": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/artifacts/bundles/amd64/vynic-print-helper.exe",
+          "bytes": 316416,
+          "sha256": "b720e1eedc77ab574d769865e39f71506a5f3ebc9d93ab5166bc3f112203019d",
+          "machine": "0x8664",
+          "imports": [
+            "WINSPOOL.DRV",
+            "KERNEL32.dll"
+          ]
+        },
+        {
+          "path": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/artifacts/bundles/amd64/capability-profile.json",
+          "bytes": 175,
+          "sha256": "889ca206e624d88df360fddd23aa7400f81ffec00d222c1dc134b368926209f4"
+        }
+      ],
+      "reproductions": 2,
+      "identicalOutputFilesEach": 4,
+      "descriptorPurpose": "bundle-only unprovisioned fixture; absent production TLS/state; not a runnable installation config"
+    },
+    {
+      "architecture": "arm64",
+      "manifest": {
+        "path": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/artifacts/bundles/arm64/manifest.json",
+        "bytes": 1772,
+        "sha256": "d872b1c844451a169554bb6af99ba9e2a354cf70a8058f073377e90483aac3b9"
+      },
+      "descriptor": {
+        "path": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/artifacts/bundle-descriptor-arm64.json",
+        "bytes": 2758,
+        "sha256": "7391218181b405aee702fd0327e9e5d5bccb6928c94faef199457937747524e5"
+      },
+      "artifacts": [
+        {
+          "path": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/artifacts/bundles/arm64/vynic-printer-agent.exe",
+          "bytes": 23291392,
+          "sha256": "dbdd278544ba542a9161a9bb4fbe411b31a410789af0a0bb583d4a00a78bbf71",
+          "machine": "0xaa64",
+          "imports": [
+            "kernel32.dll"
+          ]
+        },
+        {
+          "path": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/artifacts/bundles/arm64/vynic-print-helper.exe",
+          "bytes": 291328,
+          "sha256": "99869fe8761ee48f1c66d30359dc837327dd3cc054ba60a1d80089916a6981f5",
+          "machine": "0xaa64",
+          "imports": [
+            "WINSPOOL.DRV",
+            "KERNEL32.dll"
+          ]
+        },
+        {
+          "path": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/artifacts/bundles/arm64/capability-profile.json",
+          "bytes": 175,
+          "sha256": "889ca206e624d88df360fddd23aa7400f81ffec00d222c1dc134b368926209f4"
+        }
+      ],
+      "reproductions": 2,
+      "identicalOutputFilesEach": 4,
+      "descriptorPurpose": "bundle-only unprovisioned fixture; absent production TLS/state; not a runnable installation config"
+    }
+  ],
+  "reviewFindings": {
+    "p1": [],
+    "p2": [],
+    "resolvedDuringDraft": [
+      "future sc create argv validates exact12 via shared tested guard",
+      "PE architecture uses same frozen hash-verified bytes",
+      "nested manifest negatives preserve exact4-file cardinality",
+      "negative foreground child runs are bounded and wait exact process"
+    ]
+  },
+  "boundaries": {
+    "physicalEligible": false,
+    "selectedServicePrincipalQualified": false,
+    "newWindowsDaemonExecution": "NOT_RUN_VM_HOLD",
+    "previousWindowsHelperQualification": "separate preserved AMD64 and native ARM64 current-user receipts; selected SCM identity and hardware pending",
+    "foregroundFixture": "synthetic task-only state/certificates; false physical sender; no physical scheduler start",
+    "productionCredentialsEmbedded": false,
+    "scmRegistrationRun": false,
+    "driverAccountAclFirewallTrustChanges": false
+  },
+  "supportingNativeInputs": {
+    "path": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/native-helper-bundle-inputs.json",
+    "bytes": 1818,
+    "sha256": "724b1c5bcc7ac0ced22f57fa34d631a697ebb9ebd1019488650808a33b28a2d8"
+  },
+  "nativeArm64IndependentReview": {
+    "path": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/native-arm64-independent-review.json",
+    "bytes": 1655,
+    "sha256": "3529aa893d6a583e421d6c68bacfa91e14156444d2c6d90d4190fc4063d3ee7a"
+  }
+}

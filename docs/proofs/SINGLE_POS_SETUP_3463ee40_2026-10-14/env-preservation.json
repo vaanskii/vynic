@@ -1,0 +1,34 @@
+{
+  "files": [
+    {
+      "file": "apps/operations/.env",
+      "originalByteCount": 2937,
+      "existingBytesPreservedExactly": true,
+      "appendedKeys": [
+        "VYNIC_ENV",
+        "VYNIC_API_URL"
+      ],
+      "publicOnly": true,
+      "finalAppendedBlockValidated": true,
+      "originalComparison": "Verified at append time; no original env copy retained in proof or private snapshots"
+    },
+    {
+      "file": "apps/operations/.env.example",
+      "originalByteCount": 823,
+      "existingBytesPreservedExactly": true,
+      "appendedKeys": [
+        "VYNIC_ENV",
+        "VYNIC_API_URL"
+      ],
+      "publicOnly": true,
+      "finalAppendedBlockValidated": true,
+      "originalComparison": "Verified at append time; no original env copy retained in proof or private snapshots"
+    }
+  ],
+  "valuesWereNotLogged": true,
+  "onlyPublicKeysPassedToFlutterBuild": [
+    "VYNIC_ENV",
+    "VYNIC_API_URL"
+  ],
+  "updatedAt": "2026-10-14T14:12:40.088712+00:00"
+}

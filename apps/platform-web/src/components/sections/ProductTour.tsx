@@ -43,13 +43,8 @@ export function ProductTour() {
             start: "top 56px",
             end: () => `+=${Math.round((serviceTour.length - 1) * window.innerHeight * 1.18)}`,
             pin: stage,
-            scrub: 1.15,
-            snap: {
-              snapTo: 1 / (serviceTour.length - 1),
-              duration: { min: 0.45, max: 1.05 },
-              delay: 0.18,
-              ease: "sine.inOut",
-            },
+            // No snap: the browser's own scrolling stays in control.
+            scrub: 0.8,
             invalidateOnRefresh: true,
             onUpdate: (self) => {
               const slideIndex = Math.min(

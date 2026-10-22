@@ -1,0 +1,29 @@
+{
+  "baselineFiles": 3721,
+  "changedBaselineFiles": [
+    "apps/backend/src/entitlements/commercial-projection.ts",
+    "apps/backend/src/inventory/inventory-cost.service.ts",
+    "apps/backend/src/inventory/inventory.service.ts",
+    "apps/backend/src/inventory/receiving.service.ts",
+    "apps/backend/src/inventory/sale-consumption.service.ts",
+    "apps/backend/src/mobile/mobile.controller.ts",
+    "apps/backend/src/mobile/services/mobile-dashboard.service.ts",
+    "apps/operations/lib/apps/mobile_app/presentation/screens/admin_screen/mobile_admin_screen.dart",
+    "apps/operations/lib/apps/mobile_app/presentation/screens/admin_screen/tabs/mobile_admin_receiving.dart",
+    "apps/operations/lib/apps/mobile_app/presentation/screens/admin_screen/tabs/mobile_admin_recipes.dart",
+    "apps/operations/lib/apps/mobile_app/presentation/screens/consumption_history_screen.dart",
+    "apps/operations/lib/apps/mobile_app/presentation/screens/financials_screen.dart",
+    "apps/operations/lib/core/models/menu_recipe.dart",
+    "apps/operations/lib/core/models/receiving.dart",
+    "apps/operations/lib/core/services/manager_app/mobile_api_service.dart",
+    "apps/operations/test/widget/manager_catalog_cost_test.dart",
+    "docs/agent-state/VYNIC_CODE_MAP.md",
+    "docs/agent-state/VYNIC_PROJECT_STATE.md",
+    "docs/audits/2026-09-29-f7bb982/MASTER_BACKLOG.md"
+  ],
+  "unchangedOtherBaselineFiles": 3702,
+  "unexpectedChanges": [],
+  "frozenExecutableFilesVerified": 2164,
+  "headUnchanged": true,
+  "environmentFilesExcluded": true
+}

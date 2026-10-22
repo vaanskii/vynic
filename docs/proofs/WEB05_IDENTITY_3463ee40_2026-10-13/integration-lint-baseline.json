@@ -1,0 +1,1769 @@
+{
+  "before": [
+    {
+      "rule": "@typescript-eslint/no-unsafe-return",
+      "message": "Unsafe return of a value of type `any`.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-call",
+      "message": "Unsafe call of an `any` typed value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-require-imports",
+      "message": "A `require()` style import is forbidden.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .randomUUID on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-argument",
+      "message": "Unsafe argument of type `any` assigned to a parameter of type `App`.",
+      "severity": 1
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-call",
+      "message": "Unsafe call of an `any` typed value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .getHttpServer on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-assignment",
+      "message": "Unsafe assignment of an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .id on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-assignment",
+      "message": "Unsafe assignment of an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .id on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-assignment",
+      "message": "Unsafe assignment of an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .id on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-assignment",
+      "message": "Unsafe assignment of an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .id on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-assignment",
+      "message": "Unsafe assignment of an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .id on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-assignment",
+      "message": "Unsafe assignment of an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .id on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/require-await",
+      "message": "Async method 'resolve' has no 'await' expression.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-assignment",
+      "message": "Unsafe assignment of an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-call",
+      "message": "Unsafe call of an `any` typed value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .use on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-call",
+      "message": "Unsafe call of an `any` typed value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .init on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/require-await",
+      "message": "Async arrow function has no 'await' expression.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-argument",
+      "message": "Unsafe argument of type `any` assigned to a parameter of type `WithImplicitCoercion<string>`.",
+      "severity": 1
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-call",
+      "message": "Unsafe call of an `any` typed value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .headers on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .external_order_id on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-call",
+      "message": "Unsafe call of an `any` typed value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .close on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .id on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .id on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .id on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-assignment",
+      "message": "Unsafe assignment of an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .id on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .id on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .id on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .id on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .readiness on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .id on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .id on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-argument",
+      "message": "Unsafe argument of type `any` assigned to a parameter of type `string`.",
+      "severity": 1
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .id on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .id on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-assignment",
+      "message": "Unsafe assignment of an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .id on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-call",
+      "message": "Unsafe call of an `any` typed value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .domains on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-return",
+      "message": "Unsafe return of a value of type `any`.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .hostname on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-assignment",
+      "message": "Unsafe assignment of an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-call",
+      "message": "Unsafe call of an `any` typed value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .audit on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-return",
+      "message": "Unsafe return of a value of type `any`.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .action on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-call",
+      "message": "Unsafe call of an `any` typed value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .audit on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .actor on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-assignment",
+      "message": "Unsafe assignment of an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-assignment",
+      "message": "Unsafe assignment of an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .id on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-argument",
+      "message": "Unsafe argument of type `any` assigned to a parameter of type `string`.",
+      "severity": 1
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .id on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .site on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .id on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .organizationId on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .id on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .id on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .id on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .id on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-argument",
+      "message": "Unsafe argument of type `any` assigned to a parameter of type `string`.",
+      "severity": 1
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-argument",
+      "message": "Unsafe argument of type `any` assigned to a parameter of type `string`.",
+      "severity": 1
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-argument",
+      "message": "Unsafe argument of type `any` assigned to a parameter of type `string`.",
+      "severity": 1
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .capabilities on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .id on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .id on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-assignment",
+      "message": "Unsafe assignment of an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .reservation_id on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .id on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-assignment",
+      "message": "Unsafe assignment of an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .reservation_id on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .id on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .id on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-assignment",
+      "message": "Unsafe assignment of an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-call",
+      "message": "Unsafe call of an `any` typed value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .includes on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .external_order_id on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access [2] on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access [1] on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-assignment",
+      "message": "Unsafe assignment of an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-assignment",
+      "message": "Unsafe assignment of an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .id on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-assignment",
+      "message": "Unsafe assignment of an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .id on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-assignment",
+      "message": "Unsafe assignment of an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-assignment",
+      "message": "Unsafe assignment of an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .length on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-assignment",
+      "message": "Unsafe assignment of an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .length on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-assignment",
+      "message": "Unsafe assignment of an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .id on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .id on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .id on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .id on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-assignment",
+      "message": "Unsafe assignment of an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .id on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-assignment",
+      "message": "Unsafe assignment of an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .id on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-return",
+      "message": "Unsafe return of a value of type `any`.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-assignment",
+      "message": "Unsafe assignment of an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-assignment",
+      "message": "Unsafe assignment of an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-assignment",
+      "message": "Unsafe assignment of an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .effectiveFeatures on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .menuManagement on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-assignment",
+      "message": "Unsafe assignment of an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-assignment",
+      "message": "Unsafe assignment of an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .menuManagement on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-return",
+      "message": "Unsafe return of a value of type `any`.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .menuManagement on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .menu on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-return",
+      "message": "Unsafe return of a value of type `any`.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .id on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .id on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-assignment",
+      "message": "Unsafe assignment of an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .localFrontend on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-call",
+      "message": "Unsafe call of an `any` typed value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .domains on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-return",
+      "message": "Unsafe return of a value of type `any`.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .hostname on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .localFrontend on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .id on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-assignment",
+      "message": "Unsafe assignment of an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-assignment",
+      "message": "Unsafe assignment of an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .localFrontend on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-argument",
+      "message": "Unsafe argument of type `any` assigned to a parameter of type `string`.",
+      "severity": 1
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .checkedAt on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .message on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .localFrontend on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-assignment",
+      "message": "Unsafe assignment of an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .localFrontend on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-assignment",
+      "message": "Unsafe assignment of an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .api on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .api on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .id on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-argument",
+      "message": "Unsafe argument of type `any` assigned to a parameter of type `string`.",
+      "severity": 1
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .id on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-assignment",
+      "message": "Unsafe assignment of an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .id on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .id on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-assignment",
+      "message": "Unsafe assignment of an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .hostname on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-assignment",
+      "message": "Unsafe assignment of an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .shared on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-call",
+      "message": "Unsafe call of an `any` typed value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .capabilities on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .key on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-assignment",
+      "message": "Unsafe assignment of an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-call",
+      "message": "Unsafe call of an `any` typed value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .map on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-return",
+      "message": "Unsafe return of a value of type `any`.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .key on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-call",
+      "message": "Unsafe call of an `any` typed value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .find on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .key on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-assignment",
+      "message": "Unsafe assignment of an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .id on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .shared on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .id on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-assignment",
+      "message": "Unsafe assignment of an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .revision on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .content on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .info on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .id on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .id on an `any` value.",
+      "severity": 2
+    }
+  ],
+  "after": [
+    {
+      "rule": "@typescript-eslint/no-unsafe-return",
+      "message": "Unsafe return of a value of type `any`.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-call",
+      "message": "Unsafe call of an `any` typed value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-require-imports",
+      "message": "A `require()` style import is forbidden.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .randomUUID on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-argument",
+      "message": "Unsafe argument of type `any` assigned to a parameter of type `App`.",
+      "severity": 1
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-call",
+      "message": "Unsafe call of an `any` typed value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .getHttpServer on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-assignment",
+      "message": "Unsafe assignment of an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .id on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-assignment",
+      "message": "Unsafe assignment of an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .id on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-assignment",
+      "message": "Unsafe assignment of an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .id on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-assignment",
+      "message": "Unsafe assignment of an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .id on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-assignment",
+      "message": "Unsafe assignment of an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .id on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-assignment",
+      "message": "Unsafe assignment of an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .id on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/require-await",
+      "message": "Async method 'resolve' has no 'await' expression.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-assignment",
+      "message": "Unsafe assignment of an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-call",
+      "message": "Unsafe call of an `any` typed value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .use on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-call",
+      "message": "Unsafe call of an `any` typed value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .init on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/require-await",
+      "message": "Async arrow function has no 'await' expression.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-argument",
+      "message": "Unsafe argument of type `any` assigned to a parameter of type `WithImplicitCoercion<string>`.",
+      "severity": 1
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-call",
+      "message": "Unsafe call of an `any` typed value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .headers on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .external_order_id on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-call",
+      "message": "Unsafe call of an `any` typed value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .close on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .id on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .id on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .id on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-assignment",
+      "message": "Unsafe assignment of an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .id on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .id on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .id on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .id on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .readiness on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .id on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .id on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-argument",
+      "message": "Unsafe argument of type `any` assigned to a parameter of type `string`.",
+      "severity": 1
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .id on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .id on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-assignment",
+      "message": "Unsafe assignment of an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .id on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-call",
+      "message": "Unsafe call of an `any` typed value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .domains on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-return",
+      "message": "Unsafe return of a value of type `any`.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .hostname on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-assignment",
+      "message": "Unsafe assignment of an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-call",
+      "message": "Unsafe call of an `any` typed value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .audit on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-return",
+      "message": "Unsafe return of a value of type `any`.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .action on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-call",
+      "message": "Unsafe call of an `any` typed value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .audit on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .actor on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-assignment",
+      "message": "Unsafe assignment of an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-assignment",
+      "message": "Unsafe assignment of an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .id on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-argument",
+      "message": "Unsafe argument of type `any` assigned to a parameter of type `string`.",
+      "severity": 1
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .id on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .site on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .id on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .organizationId on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .id on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .id on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .id on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .id on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-argument",
+      "message": "Unsafe argument of type `any` assigned to a parameter of type `string`.",
+      "severity": 1
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-argument",
+      "message": "Unsafe argument of type `any` assigned to a parameter of type `string`.",
+      "severity": 1
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-argument",
+      "message": "Unsafe argument of type `any` assigned to a parameter of type `string`.",
+      "severity": 1
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .capabilities on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .id on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .id on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-assignment",
+      "message": "Unsafe assignment of an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .reservation_id on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .id on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-assignment",
+      "message": "Unsafe assignment of an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .reservation_id on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .id on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .id on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-assignment",
+      "message": "Unsafe assignment of an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-call",
+      "message": "Unsafe call of an `any` typed value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .includes on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .external_order_id on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access [2] on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access [1] on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-assignment",
+      "message": "Unsafe assignment of an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-assignment",
+      "message": "Unsafe assignment of an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .id on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-assignment",
+      "message": "Unsafe assignment of an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .id on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-assignment",
+      "message": "Unsafe assignment of an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-assignment",
+      "message": "Unsafe assignment of an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .length on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-assignment",
+      "message": "Unsafe assignment of an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .length on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-assignment",
+      "message": "Unsafe assignment of an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .id on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .id on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .id on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .id on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-assignment",
+      "message": "Unsafe assignment of an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .id on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-assignment",
+      "message": "Unsafe assignment of an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .id on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-return",
+      "message": "Unsafe return of a value of type `any`.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-assignment",
+      "message": "Unsafe assignment of an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-assignment",
+      "message": "Unsafe assignment of an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-assignment",
+      "message": "Unsafe assignment of an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .effectiveFeatures on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .menuManagement on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-assignment",
+      "message": "Unsafe assignment of an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-assignment",
+      "message": "Unsafe assignment of an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .menuManagement on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-return",
+      "message": "Unsafe return of a value of type `any`.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .menuManagement on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .menu on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-return",
+      "message": "Unsafe return of a value of type `any`.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .id on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .id on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-assignment",
+      "message": "Unsafe assignment of an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .localFrontend on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-call",
+      "message": "Unsafe call of an `any` typed value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .domains on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-return",
+      "message": "Unsafe return of a value of type `any`.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .hostname on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .localFrontend on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .id on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-assignment",
+      "message": "Unsafe assignment of an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-assignment",
+      "message": "Unsafe assignment of an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .localFrontend on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-argument",
+      "message": "Unsafe argument of type `any` assigned to a parameter of type `string`.",
+      "severity": 1
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .checkedAt on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .message on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .localFrontend on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-assignment",
+      "message": "Unsafe assignment of an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .localFrontend on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-assignment",
+      "message": "Unsafe assignment of an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .api on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .api on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .id on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-argument",
+      "message": "Unsafe argument of type `any` assigned to a parameter of type `string`.",
+      "severity": 1
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .id on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-assignment",
+      "message": "Unsafe assignment of an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .id on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .id on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-assignment",
+      "message": "Unsafe assignment of an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .hostname on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-assignment",
+      "message": "Unsafe assignment of an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .shared on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-call",
+      "message": "Unsafe call of an `any` typed value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .capabilities on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .key on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-assignment",
+      "message": "Unsafe assignment of an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-call",
+      "message": "Unsafe call of an `any` typed value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .map on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-return",
+      "message": "Unsafe return of a value of type `any`.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .key on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-call",
+      "message": "Unsafe call of an `any` typed value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .find on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .key on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-assignment",
+      "message": "Unsafe assignment of an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .id on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .shared on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .id on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-assignment",
+      "message": "Unsafe assignment of an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .revision on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .content on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .info on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .id on an `any` value.",
+      "severity": 2
+    },
+    {
+      "rule": "@typescript-eslint/no-unsafe-member-access",
+      "message": "Unsafe member access .id on an `any` value.",
+      "severity": 2
+    }
+  ],
+  "sameInheritedDiagnostics": true,
+  "errors": 167,
+  "warnings": 9
+}

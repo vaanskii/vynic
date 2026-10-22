@@ -1,4 +1,5 @@
 import 'package:vynic/core/database/database_core.dart';
+import 'package:vynic/core/database/local_venue_binding.dart';
 import 'runtime_config_sync.dart';
 import 'dart:async';
 import 'dart:io';
@@ -10,6 +11,7 @@ import 'package:vynic/core/services/edge/edge_device_credential_store.dart';
 import 'package:vynic/core/services/edge/edge_enrollment_client.dart';
 import 'package:vynic/core/services/edge/edge_transport_service.dart';
 import 'package:vynic/core/services/edge/inventory_projection_sync_service.dart';
+import 'package:vynic/core/services/menu/pos_menu_sync_service.dart';
 import 'package:vynic/core/services/sync/api_config.dart';
 
 /// How far an enrollment attempt got.
@@ -131,12 +133,20 @@ class PosEnrollmentService {
 
     // The credential first: it is issued once, and it is the only part of this
     // that cannot simply be entered again.
-    final persisted = await EdgeDeviceCredentialStore.saveEnrollment(
-      rawCredential: result.credential!,
-      venueId: result.venueId ?? '',
-      venueName: result.venueName ?? '',
-      enrolledAt: result.enrolledAt,
-    );
+    final bool persisted;
+    try {
+      persisted = await EdgeDeviceCredentialStore.saveEnrollment(
+        rawCredential: result.credential!,
+        venueId: result.venueId!,
+        venueName: result.venueName ?? '',
+        enrolledAt: result.enrolledAt,
+      );
+    } on LocalVenueMismatch catch (error) {
+      return PosEnrollmentResult(
+        PosEnrollmentStatus.conflict,
+        message: error.message,
+      );
+    }
     if (!persisted) {
       return const PosEnrollmentResult(
         PosEnrollmentStatus.notPersisted,
@@ -166,6 +176,7 @@ class PosEnrollmentService {
     unawaited(EdgeTransportService.instance().start());
     unawaited(InventoryProjectionSyncService.instance().start());
     unawaited(RuntimeConfigSync.instance.start());
+    unawaited(PosMenuSyncService.instance.start());
 
     return PosEnrollmentResult(
       PosEnrollmentStatus.connected,
@@ -202,7 +213,11 @@ class PosEnrollmentService {
 
   static bool _isLoopback(String url) {
     final host = Uri.tryParse(url)?.host.toLowerCase() ?? '';
-    return host == 'localhost' || host == '127.0.0.1' || host == '::1';
+    // `*.localhost` (api.vynic.localhost) names the machine asking, like localhost.
+    return host == 'localhost' ||
+        host.endsWith('.localhost') ||
+        host == '127.0.0.1' ||
+        host == '::1';
   }
 
   static PosEnrollmentStatus _map(EdgeEnrollmentOutcome outcome) {
@@ -211,6 +226,7 @@ class PosEnrollmentService {
         return PosEnrollmentStatus.connected;
       case EdgeEnrollmentOutcome.unreachable:
         return PosEnrollmentStatus.unreachable;
+      case EdgeEnrollmentOutcome.updateRequired:
       case EdgeEnrollmentOutcome.rejected:
         return PosEnrollmentStatus.rejected;
       case EdgeEnrollmentOutcome.conflict:
@@ -227,6 +243,8 @@ class PosEnrollmentService {
       case EdgeEnrollmentOutcome.unreachable:
         return 'Nothing answered at $url. Check the address and that the '
             'terminal is on the same network as the server.';
+      case EdgeEnrollmentOutcome.updateRequired:
+        return 'განაახლეთ Vynic POS. რესტორნის მონაცემები არ შეცვლილა.';
       case EdgeEnrollmentOutcome.rejected:
         return 'That enrollment code was not accepted. Check it, or ask for a '
             'new one.';

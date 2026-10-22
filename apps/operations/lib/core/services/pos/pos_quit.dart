@@ -7,6 +7,7 @@ import 'package:vynic/core/services/auth/session_lock.dart';
 import 'package:vynic/core/services/edge/edge_command_journal.dart';
 import 'package:vynic/core/services/edge/edge_transport_service.dart';
 import 'package:vynic/core/services/edge/inventory_projection_sync_service.dart';
+import 'package:vynic/core/services/menu/pos_menu_sync_service.dart';
 import 'package:vynic/core/services/edge/orders_tables/coordinator.dart';
 import 'package:vynic/core/services/edge/runtime_config_sync.dart';
 import 'package:vynic/core/services/printing/printer_service.dart';
@@ -31,6 +32,7 @@ class PosQuit {
         EdgeTransportService.instance().shutdown(),
         InventoryProjectionSyncService.instance().shutdown(),
         RuntimeConfigSync.instance.shutdown(),
+        PosMenuSyncService.instance.shutdown(),
         ManagerSyncService.shutdown(),
       ]);
       PrinterService.dispose();

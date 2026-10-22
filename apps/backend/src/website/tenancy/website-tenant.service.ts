@@ -4,9 +4,9 @@ import { VenueDomainStatus, VenueStatus, WebsiteMode } from '@prisma/client';
 import { PrismaService } from '../../shared/prisma/prisma.service';
 import type { WebsiteTenantContext } from './website-tenant-context';
 import {
-  isLocalDevelopmentHost,
+  authoritativeRequestHost,
+  isAnonymousLocalHost,
   normalizeHostname,
-  requestHostnames,
 } from './website-host';
 
 /**
@@ -97,36 +97,39 @@ export class WebsiteTenantService {
   /**
    * The Venue for an incoming request, from its host alone.
    *
+   * One host is authoritative (see `authoritativeRequestHost`); there is no
+   * fallback from one header to another.
+   *
    * The development fallback below exists because local work happens on
    * `localhost`, a LAN address or a loopback literal, none of which is a
    * registered domain. It is transitional, it is gated on NODE_ENV, and it
-   * applies only to addresses that cannot exist as public hostnames — so
-   * production still fails closed on an unknown host.
+   * applies only to anonymous local addresses — never to a named
+   * `*.localhost` site or a public name — so production, and any unregistered
+   * named host, still fail closed.
    */
   async resolveRequest(request: {
     headers: Record<string, string | string[] | undefined>;
   }): Promise<WebsiteTenantContext | null> {
-    const candidates = requestHostnames(request.headers, {
+    const hostname = authoritativeRequestHost(request.headers, {
       trustForwardedHost: this.trustsForwardedHost,
     });
+    if (!hostname) return null;
 
-    for (const hostname of candidates) {
-      const resolved = await this.resolveByHostname(hostname);
-      if (resolved) return resolved;
-    }
+    const resolved = await this.resolveByHostname(hostname);
+    if (resolved) return resolved;
 
     if (this.isProduction) return null;
-    if (!candidates.some(isLocalDevelopmentHost)) return null;
+    if (!isAnonymousLocalHost(hostname)) return null;
 
     const developmentHost =
       normalizeHostname(this.config.get<string>('WEBSITE_DEV_HOST')) ??
       BOOTSTRAP_WEBSITE_HOST;
-    const resolved = await this.resolveByHostname(developmentHost);
-    if (resolved) {
+    const fallback = await this.resolveByHostname(developmentHost);
+    if (fallback) {
       this.logger.debug(
-        `Development host ${candidates[0]} resolved via ${developmentHost}`,
+        `Development host ${hostname} resolved via ${developmentHost}`,
       );
     }
-    return resolved;
+    return fallback;
   }
 }

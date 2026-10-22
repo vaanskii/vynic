@@ -1,0 +1,30 @@
+{
+  "check": "tenant-regression",
+  "result": {
+    "passed": 20,
+    "failed": 0,
+    "skipped": 0
+  },
+  "passedCases": [
+    "Public website tenant isolation (PostgreSQL) the host resolves the tenant gives each hostname its own Venue and Organization",
+    "Public website tenant isolation (PostgreSQL) the host resolves the tenant serves no Venue for an unregistered host",
+    "Public website tenant isolation (PostgreSQL) the host resolves the tenant stops serving a disabled domain and resumes when re-enabled",
+    "Public website tenant isolation (PostgreSQL) the host resolves the tenant refuses to let one hostname name two Venues",
+    "Public website tenant isolation (PostgreSQL) Venue A website cannot see Venue B reads only its own menu, despite the same category slug",
+    "Public website tenant isolation (PostgreSQL) Venue A website cannot see Venue B cannot price a cart from another Venue menu item",
+    "Public website tenant isolation (PostgreSQL) Venue A website cannot see Venue B lets both Venues publish the same website table number",
+    "Public website tenant isolation (PostgreSQL) Venue A website cannot see Venue B refuses a duplicate website table number inside one Venue",
+    "Public website tenant isolation (PostgreSQL) bookings belong to the Venue that took them creates a booking against the resolved Venue only",
+    "Public website tenant isolation (PostgreSQL) bookings belong to the Venue that took them cannot book a table that belongs to another Venue",
+    "Public website tenant isolation (PostgreSQL) bookings belong to the Venue that took them keeps each Venue booking list to itself",
+    "Public website tenant isolation (PostgreSQL) bookings belong to the Venue that took them blocks a slot only on the Venue that booked it",
+    "Public website tenant isolation (PostgreSQL) bookings belong to the Venue that took them shows a customer only the bookings made at this restaurant",
+    "Public website tenant isolation (PostgreSQL) bookings belong to the Venue that took them lets two Venues carry the same POS reservation id",
+    "Public website tenant isolation (PostgreSQL) bookings belong to the Venue that took them resolves the payment tenant from the booking, not from a host",
+    "Public website tenant isolation (PostgreSQL) WEBSITE entitlement is held by the website Venues and not by the POS-only one",
+    "Public website tenant isolation (PostgreSQL) WEBSITE entitlement denies the website product to the POS-only Venue",
+    "Public website tenant isolation (PostgreSQL) WEBSITE entitlement reports the effective mode as NONE for an unentitled Venue",
+    "Public website tenant isolation (PostgreSQL) WEBSITE entitlement treats CUSTOM and SAAS the same way at the tenant boundary",
+    "Public website tenant isolation (PostgreSQL) keeps POS sync working for the Venue that never bought a website"
+  ]
+}

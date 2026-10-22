@@ -1,3 +1,9 @@
+import '../widgets/manager_design_components.dart';
+import 'package:vynic/apps/mobile_app/presentation/widgets/manager_modal.dart';
+import 'package:vynic/core/services/manager_app/manager_data_read.dart';
+import 'package:vynic/apps/mobile_app/presentation/widgets/manager_data_status.dart';
+import 'package:vynic/core/services/manager_app/manager_operation_request.dart';
+import 'package:vynic/apps/mobile_app/presentation/widgets/manager_operations_panel.dart';
 import 'package:vynic/apps/mobile_app/theme/manager_theme.dart';
 import 'package:vynic/apps/mobile_app/presentation/widgets/mobile_glass_ui.dart';
 import 'dart:async';
@@ -37,9 +43,27 @@ class StaffPerformanceScreen extends StatefulWidget {
 }
 
 class _StaffPerformanceScreenState extends State<StaffPerformanceScreen> {
+  Map<String, ManagerReadStatus> _displayReads = {};
+  int _readGeneration = 0;
+  void _readFailed(Object error, String key) {
+    final previous = _displayReads[key];
+    final failure = error is ManagerReadFailure
+        ? error.status
+        : ManagerReadStatus(key: key, error: 'მონაცემები ვერ განახლდა.');
+    _displayReads = {
+      ..._displayReads,
+      key: previous?.fetchedAt == null || previous?.query != failure.query
+          ? failure
+          : previous!.failed(
+              failure.error ?? 'მონაცემები ვერ განახლდა.',
+              location: 'memory',
+            ),
+    };
+  }
+
   final DateFormat _dateFmt = DateFormat('yyyy-MM-dd');
-  final DateFormat _prettyFmt = DateFormat('EEE, d MMM');
-  final DateFormat _groupFmt = DateFormat('EEEE, d MMMM');
+  final DateFormat _prettyFmt = DateFormat('dd.MM.yyyy');
+  final DateFormat _groupFmt = DateFormat('dd.MM.yyyy');
   DateTime _selectedDate = DateTime.now();
 
   List<Map<String, dynamic>> _reservations = [];
@@ -49,9 +73,15 @@ class _StaffPerformanceScreenState extends State<StaffPerformanceScreen> {
   String? _error;
   int _lastRealtimeTick = 0;
 
+  String? _operationScope;
   @override
   void initState() {
     super.initState();
+    try {
+      _operationScope = MobileApiService.tableRepairScope;
+    } catch (_) {
+      _operationScope = null;
+    }
     _selectedDate = _businessNow();
     _loadReservations();
     _lastRealtimeTick = MonitoringSocketService.updateCounter.value;
@@ -109,12 +139,23 @@ class _StaffPerformanceScreenState extends State<StaffPerformanceScreen> {
   }
 
   Future<void> _loadReservations() async {
+    final generation = ++_readGeneration;
+    final query =
+        '/mobile/reservations${_showAll ? '' : '?date=${_dateFmt.format(_selectedDate)}'}';
+    if (mounted && _displayReads['reservations']?.query != query) {
+      setState(() {
+        _reservations = [];
+        _displayReads = {};
+        _isLoading = true;
+      });
+    }
     try {
       final rows = _showAll
           ? await MobileApiService.getReservations()
           : await MobileApiService.getReservations(
               date: _dateFmt.format(_selectedDate),
             );
+      if (!mounted || generation != _readGeneration) return;
       rows.sort((a, b) {
         if (_showAll) {
           final d = _dateKey(a).compareTo(_dateKey(b));
@@ -130,14 +171,16 @@ class _StaffPerformanceScreenState extends State<StaffPerformanceScreen> {
       });
       if (mounted) {
         setState(() {
+          _displayReads = {'reservations': MobileApiService.statusFor(rows)!};
           _reservations = rows;
           _isLoading = false;
           _error = null;
         });
       }
-    } catch (_) {
-      if (mounted) {
+    } catch (e) {
+      if (mounted && generation == _readGeneration) {
         setState(() {
+          _readFailed(e, 'reservations');
           _isLoading = false;
           _error = 'სერვერთან კავშირი ვერ დამყარდა';
         });
@@ -164,17 +207,23 @@ class _StaffPerformanceScreenState extends State<StaffPerformanceScreen> {
     ManagerToast.showSnackBar(context, msg, isError: error);
   }
 
-  Future<void> _updateStatus(String id, String status) async {
-    await MobileApiService.updateReservationStatus(
+  Future<ManagerOperationResult> _updateStatus(String id, String status) async {
+    final result = await MobileApiService.updateReservationStatus(
       reservationId: id,
+      expectedScope: _operationScope,
       status: status,
     );
-    await _loadReservations();
+    if (result.isDone) await _loadReservations();
+    return result;
   }
 
-  Future<void> _deleteReservation(String id) async {
-    await MobileApiService.deleteReservation(id);
-    await _loadReservations();
+  Future<ManagerOperationResult> _deleteReservation(String id) async {
+    final result = await MobileApiService.deleteReservation(
+      id,
+      expectedScope: _operationScope,
+    );
+    if (result.isDone) await _loadReservations();
+    return result;
   }
 
   Future<void> _pickReservationDate() async {
@@ -184,7 +233,7 @@ class _StaffPerformanceScreenState extends State<StaffPerformanceScreen> {
         : _selectedDate;
     if (!kIsWeb && Platform.isIOS) {
       DateTime temp = initial;
-      await showModalBottomSheet<void>(
+      await showManagerModal<void>(
         context: context,
         backgroundColor: MobileGlassTheme.data.surfaceCard,
         builder: (ctx) => SafeArea(
@@ -231,7 +280,11 @@ class _StaffPerformanceScreenState extends State<StaffPerformanceScreen> {
                 ),
                 Expanded(
                   child: CupertinoTheme(
-                    data: const CupertinoThemeData(brightness: Brightness.dark),
+                    data: CupertinoThemeData(
+                      brightness: MobileGlassTheme.data.isDark
+                          ? Brightness.dark
+                          : Brightness.light,
+                    ),
                     child: CupertinoDatePicker(
                       mode: CupertinoDatePickerMode.date,
                       minimumDate: DateTime(
@@ -261,8 +314,10 @@ class _StaffPerformanceScreenState extends State<StaffPerformanceScreen> {
       lastDate: businessDate.add(const Duration(days: 365)),
       initialDate: initial,
       builder: (ctx, child) => Theme(
-        data: ThemeData.dark().copyWith(
-          colorScheme: ColorScheme.dark(primary: MobileGlassTheme.primary),
+        data: Theme.of(context).copyWith(
+          colorScheme: Theme.of(
+            context,
+          ).colorScheme.copyWith(primary: MobileGlassTheme.primary),
         ),
         child: child!,
       ),
@@ -303,6 +358,7 @@ class _StaffPerformanceScreenState extends State<StaffPerformanceScreen> {
     final changed = await Navigator.of(context).push<bool>(
       ReservationDetailScreen.route(
         row: row,
+        operationScope: _operationScope,
         onUpdateStatus: _updateStatus,
         onDelete: _deleteReservation,
       ),
@@ -338,14 +394,20 @@ class _StaffPerformanceScreenState extends State<StaffPerformanceScreen> {
             },
           )
           .toList();
-      await MobileApiService.createWalkInOrder(
+      final result = await MobileApiService.createWalkInOrder(
+        expectedScope: _operationScope,
+        newRequest: true,
         tableNumbers: tables,
         floor: floor,
         waiterName: widget.user.username,
         items: items,
       );
-      await _loadReservations();
-      _toast('Walk-in შეიქმნა');
+      if (!mounted ||
+          _operationScope == null ||
+          !MobileApiService.isCurrentTableRepairScope(_operationScope!))
+        return;
+      if (result.isDone) await _loadReservations();
+      _toast(result.message, error: result.delivery.name == 'failed');
     } catch (_) {
       _toast('walk-in ვერ შეიქმნა', error: true);
     } finally {
@@ -378,7 +440,7 @@ class _StaffPerformanceScreenState extends State<StaffPerformanceScreen> {
     String? selectedFloor;
     final selectedTables = <String>{};
 
-    return showModalBottomSheet<Map<String, dynamic>>(
+    return showManagerModal<Map<String, dynamic>>(
       context: context,
       isScrollControlled: true,
       backgroundColor: MobileGlassTheme.data.surfaceCard,
@@ -423,7 +485,7 @@ class _StaffPerformanceScreenState extends State<StaffPerformanceScreen> {
                             selectedFloor == t.floor;
                         final disabled =
                             selectedFloor != null && selectedFloor != t.floor;
-                        return GestureDetector(
+                        return InkWell(
                           onTap: disabled
                               ? null
                               : () {
@@ -461,7 +523,7 @@ class _StaffPerformanceScreenState extends State<StaffPerformanceScreen> {
                               '${floorLabel(t.floor)} • ${t.tableNumber}',
                               style: TextStyle(
                                 color: isSel
-                                    ? Colors.white
+                                    ? MobileGlassTheme.onPrimary
                                     : MobileGlassTheme.textPrimary.withValues(
                                         alpha: disabled ? 0.35 : 0.85,
                                       ),
@@ -494,8 +556,8 @@ class _StaffPerformanceScreenState extends State<StaffPerformanceScreen> {
                         ),
                         child: Text(
                           'დადასტურება',
-                          style: const TextStyle(
-                            color: Colors.white,
+                          style: TextStyle(
+                            color: MobileGlassTheme.onPrimary,
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
                           ),
@@ -515,33 +577,41 @@ class _StaffPerformanceScreenState extends State<StaffPerformanceScreen> {
   // ── Build ──────────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.transparent,
-      body: Stack(
-        children: [
-          Positioned(
-            top: -100,
-            right: -50,
-            child: _GlowOrb(color: MobileGlassTheme.primary, size: 300),
+    return ManagerDataBoundary(
+      reads: _displayReads,
+      blocks: const {'reservations'},
+      onRefresh: _loadReservations,
+      child: ManagerOperationBoundary(
+        scope: _operationScope,
+        child: Scaffold(
+          backgroundColor: Colors.transparent,
+          body: Stack(
+            children: [
+              Positioned(
+                top: -100,
+                right: -50,
+                child: _GlowOrb(color: MobileGlassTheme.primary, size: 300),
+              ),
+              Positioned(
+                top: 320,
+                left: -100,
+                child: _GlowOrb(color: Color(0xFF0EA5E9), size: 240),
+              ),
+              SafeArea(
+                bottom: false,
+                child: _isLoading
+                    ? Center(
+                        child: CircularProgressIndicator(
+                          color: MobileGlassTheme.primary,
+                        ),
+                      )
+                    : _error != null
+                    ? _buildError()
+                    : _buildContent(),
+              ),
+            ],
           ),
-          Positioned(
-            top: 320,
-            left: -100,
-            child: _GlowOrb(color: Color(0xFF0EA5E9), size: 240),
-          ),
-          SafeArea(
-            bottom: false,
-            child: _isLoading
-                ? Center(
-                    child: CircularProgressIndicator(
-                      color: MobileGlassTheme.primary,
-                    ),
-                  )
-                : _error != null
-                ? _buildError()
-                : _buildContent(),
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -575,142 +645,186 @@ class _StaffPerformanceScreenState extends State<StaffPerformanceScreen> {
     ),
   );
 
-  Widget _buildContent() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        _buildHeader(),
-        Expanded(
-          child: RefreshIndicator(
-            color: MobileGlassTheme.primary,
-            backgroundColor: MobileGlassTheme.data.surfaceCard,
-            onRefresh: _loadReservations,
-            child: ListView(
-              physics: const AlwaysScrollableScrollPhysics(
-                parent: BouncingScrollPhysics(),
-              ),
-              padding: const EdgeInsets.fromLTRB(20, 4, 20, 120),
-              children: [
-                _buildModeToggle(),
-                SizedBox(height: 14),
-                _buildStatsCard(),
-                SizedBox(height: 16),
-                if (!_showAll) ...[_buildDateBar(), SizedBox(height: 12)],
-                _buildWalkInButton(),
-                SizedBox(height: 16),
-                if (_reservations.isEmpty)
-                  _buildEmpty()
-                else if (_showAll)
-                  ..._buildGroupedList()
-                else
-                  ..._reservations.map(_buildReservationCard),
-              ],
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildHeader() {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(24, 20, 20, 14),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+  Widget _buildContent() => Center(
+    child: ConstrainedBox(
+      constraints: const BoxConstraints(maxWidth: 1424),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text(
-            'რეზერვები',
-            style: TextStyle(
-              color: MobileGlassTheme.textPrimary,
-              fontSize: 32,
-              fontWeight: FontWeight.bold,
-              letterSpacing: -0.5,
-            ),
-          ),
-          _GlassCircleButton(
-            icon: Icons.add_rounded,
-            filled: true,
-            onTap: _openCreate,
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildModeToggle() {
-    return Container(
-      padding: const EdgeInsets.all(4),
-      decoration: BoxDecoration(
-        color: MobileGlassTheme.surface(0.05),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: MobileGlassTheme.data.borderSubtle),
-      ),
-      child: Row(
-        children: [
-          _togglePill('დღე', Icons.today_rounded, !_showAll, () {
-            if (!_showAll) return;
-            setState(() {
-              _showAll = false;
-              _isLoading = true;
-            });
-            unawaited(_loadReservations());
-          }),
-          _togglePill('ყველა', Icons.event_note_rounded, _showAll, () {
-            if (_showAll) return;
-            setState(() {
-              _showAll = true;
-              _isLoading = true;
-            });
-            unawaited(_loadReservations());
-          }),
-        ],
-      ),
-    );
-  }
-
-  Widget _togglePill(
-    String label,
-    IconData icon,
-    bool selected,
-    VoidCallback onTap,
-  ) {
-    return Expanded(
-      child: GestureDetector(
-        onTap: onTap,
-        behavior: HitTestBehavior.opaque,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 220),
-          curve: Curves.easeOutCubic,
-          padding: const EdgeInsets.symmetric(vertical: 10),
-          decoration: BoxDecoration(
-            color: selected ? MobileGlassTheme.primary : Colors.transparent,
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                icon,
-                size: 17,
-                color: selected ? Colors.white : MobileGlassTheme.textSecondary,
-              ),
-              SizedBox(width: 7),
-              Text(
-                label,
-                style: TextStyle(
-                  color: selected
-                      ? Colors.white
-                      : MobileGlassTheme.textSecondary,
-                  fontWeight: FontWeight.w600,
-                  fontSize: 14,
+          _buildHeader(),
+          Expanded(
+            child: RefreshIndicator(
+              color: MobileGlassTheme.primary,
+              onRefresh: _loadReservations,
+              child: ListView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: EdgeInsets.fromLTRB(
+                  MediaQuery.sizeOf(context).width < 700 ? 20 : 32,
+                  4,
+                  MediaQuery.sizeOf(context).width < 700 ? 20 : 32,
+                  32,
                 ),
+                children: [
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: _buildModeToggle(),
+                  ),
+                  const SizedBox(height: 20),
+                  if (!_showAll) ...[
+                    _buildDateBar(),
+                    const SizedBox(height: 22),
+                  ],
+                  _buildStatsCard(),
+                  const SizedBox(height: 20),
+                  ManagerPanel(
+                    padding: MediaQuery.sizeOf(context).width < 700 ? 16 : 24,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        ManagerSectionHeading(
+                          _showAll
+                              ? 'ყველა რეზერვაცია'
+                              : '${_prettyFmt.format(_selectedDate)} · სტუმრები',
+                        ),
+                        if (MediaQuery.sizeOf(context).width >= 900)
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 10),
+                            child: Row(
+                              children: [
+                                SizedBox(
+                                  width: 90,
+                                  child: Text(
+                                    'დრო',
+                                    style: managerDesignText(
+                                      context,
+                                      10,
+                                      muted: true,
+                                    ),
+                                  ),
+                                ),
+                                Expanded(
+                                  flex: 3,
+                                  child: Text(
+                                    'სტუმარი',
+                                    style: managerDesignText(
+                                      context,
+                                      10,
+                                      muted: true,
+                                    ),
+                                  ),
+                                ),
+                                Expanded(
+                                  child: Text(
+                                    'რაოდენობა',
+                                    style: managerDesignText(
+                                      context,
+                                      10,
+                                      muted: true,
+                                    ),
+                                  ),
+                                ),
+                                Expanded(
+                                  child: Text(
+                                    'მაგიდა',
+                                    style: managerDesignText(
+                                      context,
+                                      10,
+                                      muted: true,
+                                    ),
+                                  ),
+                                ),
+                                SizedBox(
+                                  width: 158,
+                                  child: Text(
+                                    'სტატუსი',
+                                    style: managerDesignText(
+                                      context,
+                                      10,
+                                      muted: true,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        if (_reservations.isEmpty)
+                          _buildEmpty()
+                        else if (_showAll)
+                          ..._buildGroupedList()
+                        else
+                          ..._reservations.map(_buildReservationCard),
+                      ],
+                    ),
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
-        ),
+        ],
       ),
-    );
-  }
+    ),
+  );
+
+  Widget _buildHeader() => Padding(
+    padding: const EdgeInsets.fromLTRB(24, 24, 24, 20),
+    child: LayoutBuilder(
+      builder: (context, constraints) {
+        final title = Text(
+          'რეზერვაციები',
+          style: TextStyle(
+            color: MobileGlassTheme.textPrimary,
+            fontSize: constraints.maxWidth < 700 ? 25 : 30,
+            fontWeight: FontWeight.w600,
+          ),
+        );
+        final actions = Wrap(
+          spacing: 10,
+          runSpacing: 10,
+          children: [
+            FilledButton.icon(
+              key: const Key('manager-new-reservation'),
+              onPressed: _openCreate,
+              icon: const Icon(Icons.add_rounded, size: 20),
+              label: const Text('ახალი რეზერვაცია'),
+            ),
+            OutlinedButton.icon(
+              key: const Key('manager-walk-in'),
+              onPressed: _isSubmitting ? null : _startWalkInFlow,
+              icon: const Icon(Icons.directions_walk_rounded, size: 20),
+              label: Text(
+                _isSubmitting ? 'მუშავდება…' : 'სტუმარი რეზერვაციის გარეშე',
+              ),
+            ),
+          ],
+        );
+        return constraints.maxWidth >= 1000
+            ? Row(
+                children: [
+                  Expanded(child: title),
+                  const SizedBox(width: 20),
+                  actions,
+                ],
+              )
+            : Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [title, const SizedBox(height: 18), actions],
+              );
+      },
+    ),
+  );
+
+  Widget _buildModeToggle() => ManagerSegments(
+    labels: const ['დღე', 'ყველა'],
+    selected: _showAll ? 1 : 0,
+    onSelect: (value) {
+      if (_showAll == (value == 1)) return;
+      setState(() {
+        _showAll = value == 1;
+        _isLoading = true;
+      });
+      unawaited(_loadReservations());
+    },
+  );
 
   List<Widget> _buildGroupedList() {
     final widgets = <Widget>[];
@@ -837,47 +951,31 @@ class _StaffPerformanceScreenState extends State<StaffPerformanceScreen> {
       lastLabel = 'შემდეგი';
     }
 
-    return _GlassCard(
-      child: Row(
-        children: [
-          Expanded(child: _stat('$total', 'სულ', MobileGlassTheme.accentText)),
-          _divider(),
-          Expanded(
-            child: _stat('$confirmed', 'დადასტ.', MobileGlassTheme.good),
-          ),
-          _divider(),
-          Expanded(
-            child: _stat('$guests', 'სტუმარი', MobileGlassTheme.textPrimary),
-          ),
-          _divider(),
-          Expanded(child: _stat(lastValue, lastLabel, MobileGlassTheme.warn)),
-        ],
-      ),
-    );
-  }
-
-  Widget _divider() =>
-      Container(width: 1, height: 36, color: MobileGlassTheme.border(0.12));
-
-  Widget _stat(String value, String label, Color color) {
-    return Column(
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
       children: [
-        FittedBox(
-          fit: BoxFit.scaleDown,
-          child: Text(
-            value,
-            style: TextStyle(
-              color: color,
-              fontSize: 22,
-              fontWeight: FontWeight.w800,
+        for (final metric in [
+          ('$total რეზერვაცია', MobileGlassTheme.primary),
+          ('$confirmed დადასტურებული', MobileGlassTheme.good),
+          ('$guests სტუმარი', MobileGlassTheme.textSecondary),
+          ('$lastLabel · $lastValue', MobileGlassTheme.warn),
+        ])
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+            decoration: BoxDecoration(
+              color: metric.$2.withValues(alpha: .08),
+              borderRadius: BorderRadius.circular(6),
+            ),
+            child: Text(
+              metric.$1,
+              style: managerDesignText(
+                context,
+                11,
+                weight: FontWeight.w500,
+              ).copyWith(color: metric.$2),
             ),
           ),
-        ),
-        SizedBox(height: 4),
-        Text(
-          label,
-          style: TextStyle(color: MobileGlassTheme.textSecondary, fontSize: 11),
-        ),
       ],
     );
   }
@@ -908,12 +1006,15 @@ class _StaffPerformanceScreenState extends State<StaffPerformanceScreen> {
                   size: 18,
                 ),
                 SizedBox(width: 10),
-                Text(
-                  _prettyFmt.format(_selectedDate),
-                  style: TextStyle(
-                    color: MobileGlassTheme.textPrimary,
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
+                Flexible(
+                  child: Text(
+                    _prettyFmt.format(_selectedDate),
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: MobileGlassTheme.textPrimary,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
                 SizedBox(width: 6),
@@ -932,36 +1033,6 @@ class _StaffPerformanceScreenState extends State<StaffPerformanceScreen> {
           onTap: () => _shiftDay(1),
         ),
       ],
-    );
-  }
-
-  Widget _buildWalkInButton() {
-    return _GlassCard(
-      onTap: _isSubmitting ? null : _startWalkInFlow,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.directions_walk_rounded,
-            color: _isSubmitting
-                ? MobileGlassTheme.textSecondary
-                : MobileGlassTheme.good,
-            size: 20,
-          ),
-          SizedBox(width: 8),
-          Text(
-            _isSubmitting ? 'მუშავდება...' : 'Walk-in შეკვეთა',
-            style: TextStyle(
-              color: _isSubmitting
-                  ? MobileGlassTheme.textSecondary
-                  : MobileGlassTheme.textPrimary,
-              fontWeight: FontWeight.w600,
-              fontSize: 14,
-            ),
-          ),
-        ],
-      ),
     );
   }
 
@@ -989,7 +1060,7 @@ class _StaffPerformanceScreenState extends State<StaffPerformanceScreen> {
             ),
             SizedBox(height: 6),
             Text(
-              'დაამატე ახალი + ღილაკით',
+              'აირჩიეთ „ახალი რეზერვაცია“',
               style: TextStyle(
                 color: MobileGlassTheme.textSecondary,
                 fontSize: 13,
@@ -1002,191 +1073,152 @@ class _StaffPerformanceScreenState extends State<StaffPerformanceScreen> {
   }
 
   Widget _buildReservationCard(Map<String, dynamic> row) {
-    final status = (row['status'] ?? 'pending').toString();
-    final meta = _statusMeta(status);
-    final name = (row['customerName'] ?? 'უსახელო').toString();
-    final time = (row['reservationTime'] ?? '').toString();
-    final guests = (row['numberOfGuests'] ?? 0).toString();
-    final tables = (row['tableNumbers'] is List)
-        ? (row['tableNumbers'] as List).join(', ')
-        : '';
-
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: _GlassCard(
-        onTap: () => _openDetail(row),
-        child: Row(
-          children: [
-            Container(
-              width: 4,
-              height: 46,
-              decoration: BoxDecoration(
-                color: meta.color,
-                borderRadius: BorderRadius.circular(4),
-              ),
-            ),
-            SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
+    final meta = _statusMeta('${row['status'] ?? 'pending'}');
+    final name = '${row['customerName'] ?? 'უსახელო'}';
+    final time = '${row['reservationTime'] ?? '—'}';
+    final guests = '${row['numberOfGuests'] ?? '—'}';
+    final tables = (row['tableNumbers'] as List? ?? const []).join(', ');
+    final small = MediaQuery.sizeOf(context).width < 900;
+    final status = Container(
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+      decoration: BoxDecoration(
+        color: meta.color.withValues(alpha: .08),
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Text(
+        meta.label,
+        style: managerDesignText(
+          context,
+          11,
+          weight: FontWeight.w500,
+        ).copyWith(color: meta.color),
+      ),
+    );
+    return Column(
+      children: [
+        const Divider(height: 1),
+        InkWell(
+          onTap: () => _openDetail(row),
+          borderRadius: BorderRadius.circular(8),
+          child: Padding(
+            padding: EdgeInsets.symmetric(vertical: small ? 12 : 22),
+            child: Row(
+              children: [
+                if (small)
+                  Container(
+                    width: 52,
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    decoration: BoxDecoration(
+                      color: managerThemeOf(context).scaffoldBackground,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      time,
+                      textAlign: TextAlign.center,
+                      style: managerDesignText(
+                        context,
+                        12,
+                        weight: FontWeight.w500,
+                      ),
+                    ),
+                  )
+                else
+                  SizedBox(
+                    width: 90,
+                    child: Text(
+                      time,
+                      style: managerDesignText(
+                        context,
+                        15,
+                        weight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                if (small) const SizedBox(width: 12),
+                Expanded(
+                  flex: 3,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Expanded(
-                        child: Text(
-                          name,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            color: MobileGlassTheme.textPrimary,
-                            fontSize: 16,
-                            fontWeight: FontWeight.w700,
-                          ),
+                      Text(
+                        name,
+                        style: managerDesignText(
+                          context,
+                          small ? 12 : 13,
+                          weight: FontWeight.w500,
                         ),
                       ),
-                      if (time.isNotEmpty)
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            color: MobileGlassTheme.surface(0.08),
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: Text(
-                            time,
-                            style: TextStyle(
-                              color: MobileGlassTheme.textPrimary,
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
+                      const SizedBox(height: 5),
+                      Text(
+                        small
+                            ? '$guests სტუმარი · მაგიდა ${tables.isEmpty ? '—' : tables}'
+                            : '${row['customerPhone'] ?? ''}',
+                        style: managerDesignText(context, 10, muted: true),
+                      ),
+                      if (small) ...[const SizedBox(height: 6), status],
                     ],
                   ),
-                  SizedBox(height: 6),
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.groups_rounded,
-                        size: 14,
-                        color: MobileGlassTheme.textSecondary,
-                      ),
-                      SizedBox(width: 4),
-                      Text(
-                        '$guests',
-                        style: TextStyle(
-                          color: MobileGlassTheme.textSecondary,
-                          fontSize: 12,
-                        ),
-                      ),
-                      if (tables.isNotEmpty) ...[
-                        SizedBox(width: 12),
-                        Icon(
-                          Icons.table_bar_rounded,
-                          size: 14,
-                          color: MobileGlassTheme.textSecondary,
-                        ),
-                        SizedBox(width: 4),
-                        Flexible(
-                          child: Text(
-                            tables,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              color: MobileGlassTheme.textSecondary,
-                              fontSize: 12,
-                            ),
-                          ),
-                        ),
-                      ],
-                      const Spacer(),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 3,
-                        ),
-                        decoration: BoxDecoration(
-                          color: meta.color.withValues(alpha: 0.15),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Text(
-                          meta.label,
-                          style: TextStyle(
-                            color: meta.color,
-                            fontSize: 11,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ],
+                ),
+                if (!small) ...[
+                  Expanded(
+                    child: Text(
+                      '$guests სტუმარი',
+                      style: managerDesignText(context, 12, muted: true),
+                    ),
+                  ),
+                  Expanded(
+                    child: Text(
+                      tables.isEmpty ? '—' : tables,
+                      style: managerDesignText(context, 12),
+                    ),
+                  ),
+                  SizedBox(
+                    width: 138,
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: status,
+                    ),
                   ),
                 ],
-              ),
+                Icon(
+                  Icons.chevron_right,
+                  size: 20,
+                  color: MobileGlassTheme.textSecondary,
+                ),
+              ],
             ),
-            SizedBox(width: 8),
-            Icon(
-              Icons.chevron_right_rounded,
-              color: MobileGlassTheme.muted(0.4),
-            ),
-          ],
+          ),
         ),
-      ),
+      ],
     );
   }
 }
 
 /// ── shared dark glass widgets ───────────────────────────────────────────
 class _GlassCard extends StatelessWidget {
+  const _GlassCard({required this.child, this.padding, this.onTap});
   final Widget child;
   final EdgeInsetsGeometry? padding;
   final VoidCallback? onTap;
-  const _GlassCard({required this.child, this.padding, this.onTap});
-
   @override
   Widget build(BuildContext context) {
     final theme = MobileGlassTheme.of(context);
-    final radius = BorderRadius.circular(22);
-    Widget card = Container(
-      padding: padding ?? const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: theme.useGlassCards
-            ? MobileGlassTheme.surface(0.04)
-            : theme.heroCardBackground,
+    final radius = BorderRadius.circular(18);
+    return Material(
+      color: theme.surfaceCard,
+      shape: RoundedRectangleBorder(
         borderRadius: radius,
-        border: Border.all(color: theme.cardBorder, width: 1),
-        boxShadow: theme.isDark
-            ? null
-            : [
-                BoxShadow(
-                  color: theme.cardShadow,
-                  blurRadius: 16,
-                  offset: const Offset(0, 6),
-                ),
-              ],
+        side: BorderSide(color: theme.cardBorder),
       ),
-      child: child,
-    );
-    if (theme.useGlassCards) {
-      card = ClipRRect(
-        borderRadius: radius,
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
-          child: card,
-        ),
-      );
-    } else {
-      card = ClipRRect(borderRadius: radius, child: card);
-    }
-    if (onTap != null) {
-      card = GestureDetector(
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
         onTap: onTap,
-        behavior: HitTestBehavior.opaque,
-        child: card,
-      );
-    }
-    return card;
+        child: Padding(
+          padding: padding ?? const EdgeInsets.all(18),
+          child: child,
+        ),
+      ),
+    );
   }
 }
 
@@ -1194,12 +1226,10 @@ class _GlassCircleButton extends StatelessWidget {
   const _GlassCircleButton({
     required this.icon,
     required this.onTap,
-    this.filled = false,
     this.dim = false,
   });
   final IconData icon;
   final VoidCallback onTap;
-  final bool filled;
   final bool dim;
 
   @override
@@ -1211,14 +1241,12 @@ class _GlassCircleButton extends StatelessWidget {
       alignment: Alignment.center,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: filled ? theme.primary : theme.headerButtonBackground,
-        border: Border.all(color: filled ? theme.primary : theme.cardBorder),
+        color: theme.headerButtonBackground,
+        border: Border.all(color: theme.cardBorder),
       ),
       child: Icon(
         icon,
-        color: filled
-            ? Colors.white
-            : (dim ? theme.textSecondary : theme.textPrimary),
+        color: dim ? theme.textSecondary : theme.textPrimary,
         size: 20,
       ),
     );
@@ -1232,34 +1260,14 @@ class _GlassCircleButton extends StatelessWidget {
     } else {
       btn = ClipOval(child: btn);
     }
-    return GestureDetector(
-      onTap: onTap,
-      behavior: HitTestBehavior.opaque,
-      child: btn,
-    );
+    return InkWell(onTap: onTap, child: btn);
   }
 }
 
 class _GlowOrb extends StatelessWidget {
+  const _GlowOrb({required this.color, required this.size});
   final Color color;
   final double size;
-  const _GlowOrb({required this.color, required this.size});
-
   @override
-  Widget build(BuildContext context) {
-    return IgnorePointer(
-      child: Container(
-        width: size,
-        height: size,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          color: color.withValues(alpha: 0.15),
-        ),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 80, sigmaY: 80),
-          child: Container(color: Colors.transparent),
-        ),
-      ),
-    );
-  }
+  Widget build(BuildContext context) => const SizedBox.shrink();
 }

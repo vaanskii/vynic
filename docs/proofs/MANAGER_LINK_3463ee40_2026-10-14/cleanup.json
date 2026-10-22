@@ -1,0 +1,9 @@
+{
+  "ownedCluster": "STOPPED",
+  "port": 62055,
+  "portClosed": true,
+  "postmasterPidAbsent": true,
+  "testRunnerWireTemporaryDirectoryRemoved": true,
+  "liveServicesChanged": false,
+  "ops01Retried": false
+}

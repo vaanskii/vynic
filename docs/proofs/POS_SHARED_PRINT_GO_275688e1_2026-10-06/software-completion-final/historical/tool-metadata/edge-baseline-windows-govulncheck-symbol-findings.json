@@ -1,0 +1,4239 @@
+{
+  "config": {
+    "protocol_version": "v1.0.0",
+    "scanner_name": "govulncheck",
+    "scanner_version": "v1.8.0",
+    "db": "https://vuln.go.dev",
+    "db_last_modified": "2026-10-01T20:24:15Z",
+    "go_version": "go1.26.8",
+    "scan_level": "symbol",
+    "scan_mode": "source"
+  },
+  "findings": [
+    {
+      "osv": "GO-2026-6061",
+      "fixed_version": "v1.82.1",
+      "trace": [
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3"
+        }
+      ]
+    },
+    {
+      "osv": "GO-2026-6348",
+      "fixed_version": "v1.83.1",
+      "trace": [
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3"
+        }
+      ]
+    },
+    {
+      "osv": "GO-2026-6441",
+      "fixed_version": "v1.83.1",
+      "trace": [
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3"
+        }
+      ]
+    },
+    {
+      "osv": "GO-2026-6443",
+      "fixed_version": "v1.82.2",
+      "trace": [
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3"
+        }
+      ]
+    },
+    {
+      "osv": "GO-2026-4918",
+      "fixed_version": "v0.53.0",
+      "trace": [
+        {
+          "module": "golang.org/x/net",
+          "version": "v0.48.0"
+        }
+      ]
+    },
+    {
+      "osv": "GO-2026-5025",
+      "fixed_version": "v0.55.0",
+      "trace": [
+        {
+          "module": "golang.org/x/net",
+          "version": "v0.48.0"
+        }
+      ]
+    },
+    {
+      "osv": "GO-2026-5026",
+      "fixed_version": "v0.55.0",
+      "trace": [
+        {
+          "module": "golang.org/x/net",
+          "version": "v0.48.0"
+        }
+      ]
+    },
+    {
+      "osv": "GO-2026-5027",
+      "fixed_version": "v0.55.0",
+      "trace": [
+        {
+          "module": "golang.org/x/net",
+          "version": "v0.48.0"
+        }
+      ]
+    },
+    {
+      "osv": "GO-2026-5028",
+      "fixed_version": "v0.55.0",
+      "trace": [
+        {
+          "module": "golang.org/x/net",
+          "version": "v0.48.0"
+        }
+      ]
+    },
+    {
+      "osv": "GO-2026-5029",
+      "fixed_version": "v0.55.0",
+      "trace": [
+        {
+          "module": "golang.org/x/net",
+          "version": "v0.48.0"
+        }
+      ]
+    },
+    {
+      "osv": "GO-2026-5030",
+      "fixed_version": "v0.55.0",
+      "trace": [
+        {
+          "module": "golang.org/x/net",
+          "version": "v0.48.0"
+        }
+      ]
+    },
+    {
+      "osv": "GO-2026-5942",
+      "fixed_version": "v0.56.0",
+      "trace": [
+        {
+          "module": "golang.org/x/net",
+          "version": "v0.48.0"
+        }
+      ]
+    },
+    {
+      "osv": "GO-2026-5970",
+      "fixed_version": "v0.39.0",
+      "trace": [
+        {
+          "module": "golang.org/x/text",
+          "version": "v0.32.0"
+        }
+      ]
+    },
+    {
+      "osv": "GO-2026-6348",
+      "fixed_version": "v1.83.1",
+      "trace": [
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc/mem"
+        }
+      ]
+    },
+    {
+      "osv": "GO-2026-6061",
+      "fixed_version": "v1.82.1",
+      "trace": [
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc/internal/transport"
+        }
+      ]
+    },
+    {
+      "osv": "GO-2026-6348",
+      "fixed_version": "v1.83.1",
+      "trace": [
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc/internal/transport"
+        }
+      ]
+    },
+    {
+      "osv": "GO-2026-6443",
+      "fixed_version": "v1.82.2",
+      "trace": [
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc/internal/transport"
+        }
+      ]
+    },
+    {
+      "osv": "GO-2026-4918",
+      "fixed_version": "v0.53.0",
+      "trace": [
+        {
+          "module": "golang.org/x/net",
+          "version": "v0.48.0",
+          "package": "golang.org/x/net/http2"
+        }
+      ]
+    },
+    {
+      "osv": "GO-2026-5026",
+      "fixed_version": "v0.55.0",
+      "trace": [
+        {
+          "module": "golang.org/x/net",
+          "version": "v0.48.0",
+          "package": "golang.org/x/net/idna"
+        }
+      ]
+    },
+    {
+      "osv": "GO-2026-5970",
+      "fixed_version": "v0.39.0",
+      "trace": [
+        {
+          "module": "golang.org/x/text",
+          "version": "v0.32.0",
+          "package": "golang.org/x/text/unicode/norm"
+        }
+      ]
+    },
+    {
+      "osv": "GO-2026-6061",
+      "fixed_version": "v1.82.1",
+      "trace": [
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc/internal/transport",
+          "function": "Close",
+          "receiver": "*ClientStream",
+          "position": {
+            "filename": "internal/transport/client_stream.go",
+            "offset": 2421,
+            "line": 67,
+            "column": 24
+          }
+        },
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc",
+          "function": "finish",
+          "receiver": "*csAttempt",
+          "position": {
+            "filename": "stream.go",
+            "offset": 40531,
+            "line": 1232,
+            "column": 26
+          }
+        },
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc",
+          "function": "finish",
+          "receiver": "*clientStream",
+          "position": {
+            "filename": "stream.go",
+            "offset": 35610,
+            "line": 1081,
+            "column": 20
+          }
+        },
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc",
+          "function": "RecvMsg",
+          "receiver": "*clientStream",
+          "position": {
+            "filename": "stream.go",
+            "offset": 34238,
+            "line": 1033,
+            "column": 12
+          }
+        },
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc",
+          "function": "Recv",
+          "receiver": "*GenericClientStream[vynic.local/contracts/go/vynic/edge/v1.AuthenticatedRequest, vynic.local/contracts/go/vynic/edge/v1.StatusResponse]",
+          "position": {
+            "filename": "stream_interfaces.go",
+            "offset": 8475,
+            "line": 185,
+            "column": 34
+          }
+        },
+        {
+          "module": "vynic.local/edge",
+          "package": "vynic.local/edge/cmd/terminal-sim",
+          "function": "run$1",
+          "position": {
+            "filename": "cmd/terminal-sim/main.go",
+            "offset": 4309,
+            "line": 135,
+            "column": 28
+          }
+        },
+        {
+          "module": "vynic.local/edge",
+          "package": "vynic.local/edge/cmd/terminal-sim",
+          "function": "run",
+          "position": {
+            "filename": "cmd/terminal-sim/main.go",
+            "offset": 4581,
+            "line": 149,
+            "column": 12
+          }
+        },
+        {
+          "module": "vynic.local/edge",
+          "package": "vynic.local/edge/cmd/terminal-sim",
+          "function": "main",
+          "position": {
+            "filename": "cmd/terminal-sim/main.go",
+            "offset": 4855,
+            "line": 159,
+            "column": 15
+          }
+        }
+      ]
+    },
+    {
+      "osv": "GO-2026-6061",
+      "fixed_version": "v1.82.1",
+      "trace": [
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc/internal/transport",
+          "function": "Drain",
+          "receiver": "*http2Server",
+          "position": {
+            "filename": "internal/transport/http2_server.go",
+            "offset": 43007,
+            "line": 1360,
+            "column": 23
+          }
+        },
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc",
+          "function": "drainAllServerTransportsLocked",
+          "receiver": "*Server",
+          "position": {
+            "filename": "server.go",
+            "offset": 64149,
+            "line": 2009,
+            "column": 13
+          }
+        },
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc",
+          "function": "stop",
+          "receiver": "*Server",
+          "position": {
+            "filename": "server.go",
+            "offset": 63221,
+            "line": 1967,
+            "column": 35
+          }
+        },
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc",
+          "function": "GracefulStop",
+          "receiver": "*Server",
+          "position": {
+            "filename": "server.go",
+            "offset": 62795,
+            "line": 1948,
+            "column": 8
+          }
+        },
+        {
+          "module": "vynic.local/edge",
+          "package": "vynic.local/edge/internal/server",
+          "function": "Serve$1",
+          "position": {
+            "filename": "internal/server/server.go",
+            "offset": 6139,
+            "line": 166,
+            "column": 18
+          }
+        },
+        {
+          "module": "vynic.local/edge",
+          "package": "vynic.local/edge/internal/server",
+          "function": "Serve",
+          "receiver": "*Server",
+          "position": {
+            "filename": "internal/server/server.go",
+            "offset": 6012,
+            "line": 161,
+            "column": 2
+          }
+        }
+      ]
+    },
+    {
+      "osv": "GO-2026-6061",
+      "fixed_version": "v1.82.1",
+      "trace": [
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc/internal/transport",
+          "function": "NewHTTP2Client",
+          "position": {
+            "filename": "internal/transport/http2_client.go",
+            "offset": 6975,
+            "line": 207,
+            "column": 6
+          }
+        },
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc",
+          "function": "createTransport",
+          "receiver": "*addrConn",
+          "position": {
+            "filename": "clientconn.go",
+            "offset": 53621,
+            "line": 1518,
+            "column": 40
+          }
+        },
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc",
+          "function": "tryAllAddrs",
+          "receiver": "*addrConn",
+          "position": {
+            "filename": "clientconn.go",
+            "offset": 51869,
+            "line": 1465,
+            "column": 28
+          }
+        },
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc",
+          "function": "resetTransportAndUnlock",
+          "receiver": "*addrConn",
+          "position": {
+            "filename": "clientconn.go",
+            "offset": 48006,
+            "line": 1348,
+            "column": 26
+          }
+        },
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc",
+          "function": "connect",
+          "receiver": "*addrConn",
+          "position": {
+            "filename": "clientconn.go",
+            "offset": 36532,
+            "line": 997,
+            "column": 28
+          }
+        },
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc",
+          "function": "Connect",
+          "receiver": "*acBalancerWrapper",
+          "position": {
+            "filename": "balancer_wrapper.go",
+            "offset": 11995,
+            "line": 350,
+            "column": 2
+          }
+        },
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc/balancer/pickfirst",
+          "function": "requestConnectionLocked",
+          "receiver": "*pickfirstBalancer",
+          "position": {
+            "filename": "balancer/pickfirst/pickfirst.go",
+            "offset": 20141,
+            "line": 563,
+            "column": 22
+          }
+        },
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc/balancer/pickfirst",
+          "function": "startFirstPassLocked",
+          "receiver": "*pickfirstBalancer",
+          "position": {
+            "filename": "balancer/pickfirst/pickfirst.go",
+            "offset": 14593,
+            "line": 405,
+            "column": 27
+          }
+        },
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc/balancer/pickfirst",
+          "function": "ExitIdle",
+          "receiver": "*pickfirstBalancer",
+          "position": {
+            "filename": "balancer/pickfirst/pickfirst.go",
+            "offset": 14323,
+            "line": 394,
+            "column": 25
+          }
+        },
+        {
+          "module": "stdlib",
+          "version": "v1.26.8",
+          "package": "sync",
+          "function": "OnceFunc$1$1",
+          "position": {
+            "filename": "src/sync/oncefunc.go",
+            "offset": 842,
+            "line": 33,
+            "column": 7
+          }
+        },
+        {
+          "module": "stdlib",
+          "version": "v1.26.8",
+          "package": "sync",
+          "function": "doSlow",
+          "receiver": "*Once",
+          "position": {
+            "filename": "src/sync/once.go",
+            "offset": 2517,
+            "line": 78,
+            "column": 4
+          }
+        },
+        {
+          "module": "stdlib",
+          "version": "v1.26.8",
+          "package": "sync",
+          "function": "Do",
+          "receiver": "*Once",
+          "position": {
+            "filename": "src/sync/once.go",
+            "offset": 2390,
+            "line": 69,
+            "column": 11
+          }
+        },
+        {
+          "module": "stdlib",
+          "version": "v1.26.8",
+          "package": "crypto/elliptic",
+          "function": "P256",
+          "position": {
+            "filename": "src/crypto/elliptic/elliptic.go",
+            "offset": 8333,
+            "line": 254,
+            "column": 13
+          }
+        },
+        {
+          "module": "vynic.local/edge",
+          "package": "vynic.local/edge/internal/store",
+          "function": "Init",
+          "receiver": "*Store",
+          "position": {
+            "filename": "internal/store/identity.go",
+            "offset": 907,
+            "line": 45,
+            "column": 49
+          }
+        }
+      ]
+    },
+    {
+      "osv": "GO-2026-6061",
+      "fixed_version": "v1.82.1",
+      "trace": [
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc/internal/transport",
+          "function": "Write",
+          "receiver": "*ClientStream",
+          "position": {
+            "filename": "internal/transport/client_stream.go",
+            "offset": 2714,
+            "line": 80,
+            "column": 24
+          }
+        },
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc",
+          "function": "CloseSend$1",
+          "position": {
+            "filename": "stream.go",
+            "offset": 34477,
+            "line": 1045,
+            "column": 26
+          }
+        },
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc",
+          "function": "withRetry",
+          "receiver": "*clientStream",
+          "position": {
+            "filename": "stream.go",
+            "offset": 28229,
+            "line": 824,
+            "column": 22
+          }
+        },
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc",
+          "function": "SendMsg",
+          "receiver": "*clientStream",
+          "position": {
+            "filename": "stream.go",
+            "offset": 33106,
+            "line": 990,
+            "column": 20
+          }
+        },
+        {
+          "module": "../../packages/contracts/generated/go",
+          "package": "vynic.local/contracts/go/vynic/edge/v1",
+          "function": "WatchStatus",
+          "receiver": "*foundationClient",
+          "position": {
+            "filename": "vynic/edge/v1/foundation_grpc.pb.go",
+            "offset": 3401,
+            "line": 85,
+            "column": 34
+          }
+        },
+        {
+          "module": "vynic.local/edge",
+          "package": "vynic.local/edge/cmd/terminal-sim",
+          "function": "run$1",
+          "position": {
+            "filename": "cmd/terminal-sim/main.go",
+            "offset": 4221,
+            "line": 130,
+            "column": 37
+          }
+        },
+        {
+          "module": "vynic.local/edge",
+          "package": "vynic.local/edge/cmd/terminal-sim",
+          "function": "run",
+          "position": {
+            "filename": "cmd/terminal-sim/main.go",
+            "offset": 4581,
+            "line": 149,
+            "column": 12
+          }
+        },
+        {
+          "module": "vynic.local/edge",
+          "package": "vynic.local/edge/cmd/terminal-sim",
+          "function": "main",
+          "position": {
+            "filename": "cmd/terminal-sim/main.go",
+            "offset": 4855,
+            "line": 159,
+            "column": 15
+          }
+        }
+      ]
+    },
+    {
+      "osv": "GO-2026-6348",
+      "fixed_version": "v1.83.1",
+      "trace": [
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc/internal/transport",
+          "function": "ReadMessageHeader",
+          "receiver": "*Stream",
+          "position": {
+            "filename": "internal/transport/transport.go",
+            "offset": 10885,
+            "line": 359,
+            "column": 18
+          }
+        },
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc",
+          "function": "recvMsg",
+          "receiver": "*parser",
+          "position": {
+            "filename": "rpc_util.go",
+            "offset": 22982,
+            "line": 772,
+            "column": 30
+          }
+        },
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc",
+          "function": "recvAndDecompress",
+          "position": {
+            "filename": "rpc_util.go",
+            "offset": 28423,
+            "line": 931,
+            "column": 34
+          }
+        },
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc",
+          "function": "recv",
+          "position": {
+            "filename": "rpc_util.go",
+            "offset": 31695,
+            "line": 1014,
+            "column": 32
+          }
+        },
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc",
+          "function": "recvMsg",
+          "receiver": "*csAttempt",
+          "position": {
+            "filename": "stream.go",
+            "offset": 38464,
+            "line": 1173,
+            "column": 16
+          }
+        },
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc",
+          "function": "RecvMsg$1",
+          "position": {
+            "filename": "stream.go",
+            "offset": 33845,
+            "line": 1020,
+            "column": 19
+          }
+        },
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc",
+          "function": "withRetry",
+          "receiver": "*clientStream",
+          "position": {
+            "filename": "stream.go",
+            "offset": 28229,
+            "line": 824,
+            "column": 22
+          }
+        },
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc",
+          "function": "SendMsg",
+          "receiver": "*clientStream",
+          "position": {
+            "filename": "stream.go",
+            "offset": 33106,
+            "line": 990,
+            "column": 20
+          }
+        },
+        {
+          "module": "../../packages/contracts/generated/go",
+          "package": "vynic.local/contracts/go/vynic/edge/v1",
+          "function": "WatchStatus",
+          "receiver": "*foundationClient",
+          "position": {
+            "filename": "vynic/edge/v1/foundation_grpc.pb.go",
+            "offset": 3401,
+            "line": 85,
+            "column": 34
+          }
+        },
+        {
+          "module": "vynic.local/edge",
+          "package": "vynic.local/edge/cmd/terminal-sim",
+          "function": "run$1",
+          "position": {
+            "filename": "cmd/terminal-sim/main.go",
+            "offset": 4221,
+            "line": 130,
+            "column": 37
+          }
+        },
+        {
+          "module": "vynic.local/edge",
+          "package": "vynic.local/edge/cmd/terminal-sim",
+          "function": "run",
+          "position": {
+            "filename": "cmd/terminal-sim/main.go",
+            "offset": 4581,
+            "line": 149,
+            "column": 12
+          }
+        },
+        {
+          "module": "vynic.local/edge",
+          "package": "vynic.local/edge/cmd/terminal-sim",
+          "function": "main",
+          "position": {
+            "filename": "cmd/terminal-sim/main.go",
+            "offset": 4855,
+            "line": 159,
+            "column": 15
+          }
+        }
+      ]
+    },
+    {
+      "osv": "GO-2026-6061",
+      "fixed_version": "v1.82.1",
+      "trace": [
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc/internal/transport",
+          "function": "RecvCompress",
+          "receiver": "*ClientStream",
+          "position": {
+            "filename": "internal/transport/client_stream.go",
+            "offset": 3754,
+            "line": 110,
+            "column": 24
+          }
+        },
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc",
+          "function": "recvMsg",
+          "receiver": "*csAttempt",
+          "position": {
+            "filename": "stream.go",
+            "offset": 37650,
+            "line": 1155,
+            "column": 42
+          }
+        },
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc",
+          "function": "RecvMsg$1",
+          "position": {
+            "filename": "stream.go",
+            "offset": 33845,
+            "line": 1020,
+            "column": 19
+          }
+        },
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc",
+          "function": "withRetry",
+          "receiver": "*clientStream",
+          "position": {
+            "filename": "stream.go",
+            "offset": 28229,
+            "line": 824,
+            "column": 22
+          }
+        },
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc",
+          "function": "SendMsg",
+          "receiver": "*clientStream",
+          "position": {
+            "filename": "stream.go",
+            "offset": 33106,
+            "line": 990,
+            "column": 20
+          }
+        },
+        {
+          "module": "../../packages/contracts/generated/go",
+          "package": "vynic.local/contracts/go/vynic/edge/v1",
+          "function": "WatchStatus",
+          "receiver": "*foundationClient",
+          "position": {
+            "filename": "vynic/edge/v1/foundation_grpc.pb.go",
+            "offset": 3401,
+            "line": 85,
+            "column": 34
+          }
+        },
+        {
+          "module": "vynic.local/edge",
+          "package": "vynic.local/edge/cmd/terminal-sim",
+          "function": "run$1",
+          "position": {
+            "filename": "cmd/terminal-sim/main.go",
+            "offset": 4221,
+            "line": 130,
+            "column": 37
+          }
+        },
+        {
+          "module": "vynic.local/edge",
+          "package": "vynic.local/edge/cmd/terminal-sim",
+          "function": "run",
+          "position": {
+            "filename": "cmd/terminal-sim/main.go",
+            "offset": 4581,
+            "line": 149,
+            "column": 12
+          }
+        },
+        {
+          "module": "vynic.local/edge",
+          "package": "vynic.local/edge/cmd/terminal-sim",
+          "function": "main",
+          "position": {
+            "filename": "cmd/terminal-sim/main.go",
+            "offset": 4855,
+            "line": 159,
+            "column": 15
+          }
+        }
+      ]
+    },
+    {
+      "osv": "GO-2026-6348",
+      "fixed_version": "v1.83.1",
+      "trace": [
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc/internal/transport",
+          "function": "NewServerTransport",
+          "position": {
+            "filename": "internal/transport/http2_server.go",
+            "offset": 5245,
+            "line": 149,
+            "column": 6
+          }
+        },
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc",
+          "function": "newHTTP2Transport",
+          "receiver": "*Server",
+          "position": {
+            "filename": "server.go",
+            "offset": 34182,
+            "line": 1019,
+            "column": 41
+          }
+        },
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc",
+          "function": "handleRawConn",
+          "receiver": "*Server",
+          "position": {
+            "filename": "server.go",
+            "offset": 32751,
+            "line": 976,
+            "column": 27
+          }
+        },
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc",
+          "function": "Serve$3",
+          "position": {
+            "filename": "server.go",
+            "offset": 32325,
+            "line": 960,
+            "column": 19
+          }
+        },
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc",
+          "function": "Serve",
+          "receiver": "*Server",
+          "position": {
+            "filename": "server.go",
+            "offset": 32295,
+            "line": 959,
+            "column": 3
+          }
+        },
+        {
+          "module": "vynic.local/edge",
+          "package": "vynic.local/edge/internal/server",
+          "function": "Serve",
+          "receiver": "*Server",
+          "position": {
+            "filename": "internal/server/server.go",
+            "offset": 6196,
+            "line": 171,
+            "column": 15
+          }
+        }
+      ]
+    },
+    {
+      "osv": "GO-2026-6348",
+      "fixed_version": "v1.83.1",
+      "trace": [
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc/internal/transport",
+          "function": "Read",
+          "receiver": "*ClientStream",
+          "position": {
+            "filename": "internal/transport/client_stream.go",
+            "offset": 2210,
+            "line": 58,
+            "column": 24
+          }
+        },
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc",
+          "function": "recvMsg",
+          "receiver": "*parser",
+          "position": {
+            "filename": "rpc_util.go",
+            "offset": 23530,
+            "line": 787,
+            "column": 23
+          }
+        },
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc",
+          "function": "recvAndDecompress",
+          "position": {
+            "filename": "rpc_util.go",
+            "offset": 28423,
+            "line": 931,
+            "column": 34
+          }
+        },
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc",
+          "function": "recv",
+          "position": {
+            "filename": "rpc_util.go",
+            "offset": 31695,
+            "line": 1014,
+            "column": 32
+          }
+        },
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc",
+          "function": "recvMsg",
+          "receiver": "*csAttempt",
+          "position": {
+            "filename": "stream.go",
+            "offset": 38464,
+            "line": 1173,
+            "column": 16
+          }
+        },
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc",
+          "function": "RecvMsg$1",
+          "position": {
+            "filename": "stream.go",
+            "offset": 33845,
+            "line": 1020,
+            "column": 19
+          }
+        },
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc",
+          "function": "withRetry",
+          "receiver": "*clientStream",
+          "position": {
+            "filename": "stream.go",
+            "offset": 28229,
+            "line": 824,
+            "column": 22
+          }
+        },
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc",
+          "function": "SendMsg",
+          "receiver": "*clientStream",
+          "position": {
+            "filename": "stream.go",
+            "offset": 33106,
+            "line": 990,
+            "column": 20
+          }
+        },
+        {
+          "module": "../../packages/contracts/generated/go",
+          "package": "vynic.local/contracts/go/vynic/edge/v1",
+          "function": "WatchStatus",
+          "receiver": "*foundationClient",
+          "position": {
+            "filename": "vynic/edge/v1/foundation_grpc.pb.go",
+            "offset": 3401,
+            "line": 85,
+            "column": 34
+          }
+        },
+        {
+          "module": "vynic.local/edge",
+          "package": "vynic.local/edge/cmd/terminal-sim",
+          "function": "run$1",
+          "position": {
+            "filename": "cmd/terminal-sim/main.go",
+            "offset": 4221,
+            "line": 130,
+            "column": 37
+          }
+        },
+        {
+          "module": "vynic.local/edge",
+          "package": "vynic.local/edge/cmd/terminal-sim",
+          "function": "run",
+          "position": {
+            "filename": "cmd/terminal-sim/main.go",
+            "offset": 4581,
+            "line": 149,
+            "column": 12
+          }
+        },
+        {
+          "module": "vynic.local/edge",
+          "package": "vynic.local/edge/cmd/terminal-sim",
+          "function": "main",
+          "position": {
+            "filename": "cmd/terminal-sim/main.go",
+            "offset": 4855,
+            "line": 159,
+            "column": 15
+          }
+        }
+      ]
+    },
+    {
+      "osv": "GO-2026-6443",
+      "fixed_version": "v1.82.2",
+      "trace": [
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc/internal/transport",
+          "function": "HandleStreams",
+          "receiver": "*http2Server",
+          "position": {
+            "filename": "internal/transport/http2_server.go",
+            "offset": 20931,
+            "line": 631,
+            "column": 23
+          }
+        },
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc",
+          "function": "serveStreams",
+          "receiver": "*Server",
+          "position": {
+            "filename": "server.go",
+            "offset": 35381,
+            "line": 1058,
+            "column": 18
+          }
+        },
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc",
+          "function": "handleRawConn$1",
+          "position": {
+            "filename": "server.go",
+            "offset": 33022,
+            "line": 992,
+            "column": 17
+          }
+        },
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc",
+          "function": "handleRawConn",
+          "receiver": "*Server",
+          "position": {
+            "filename": "server.go",
+            "offset": 32994,
+            "line": 991,
+            "column": 2
+          }
+        },
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc",
+          "function": "Serve$3",
+          "position": {
+            "filename": "server.go",
+            "offset": 32325,
+            "line": 960,
+            "column": 19
+          }
+        },
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc",
+          "function": "Serve",
+          "receiver": "*Server",
+          "position": {
+            "filename": "server.go",
+            "offset": 32295,
+            "line": 959,
+            "column": 3
+          }
+        },
+        {
+          "module": "vynic.local/edge",
+          "package": "vynic.local/edge/internal/server",
+          "function": "Serve",
+          "receiver": "*Server",
+          "position": {
+            "filename": "internal/server/server.go",
+            "offset": 6196,
+            "line": 171,
+            "column": 15
+          }
+        }
+      ]
+    },
+    {
+      "osv": "GO-2026-6061",
+      "fixed_version": "v1.82.1",
+      "trace": [
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc/internal/transport",
+          "function": "NewStream",
+          "receiver": "*http2Client",
+          "position": {
+            "filename": "internal/transport/http2_client.go",
+            "offset": 26668,
+            "line": 748,
+            "column": 23
+          }
+        },
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc",
+          "function": "newStream",
+          "receiver": "*csAttempt",
+          "position": {
+            "filename": "stream.go",
+            "offset": 19680,
+            "line": 551,
+            "column": 33
+          }
+        },
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc",
+          "function": "newClientStreamWithParams$2",
+          "position": {
+            "filename": "stream.go",
+            "offset": 14422,
+            "line": 387,
+            "column": 24
+          }
+        },
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc",
+          "function": "withRetry",
+          "receiver": "*clientStream",
+          "position": {
+            "filename": "stream.go",
+            "offset": 28229,
+            "line": 824,
+            "column": 22
+          }
+        },
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc",
+          "function": "SendMsg",
+          "receiver": "*clientStream",
+          "position": {
+            "filename": "stream.go",
+            "offset": 33106,
+            "line": 990,
+            "column": 20
+          }
+        },
+        {
+          "module": "../../packages/contracts/generated/go",
+          "package": "vynic.local/contracts/go/vynic/edge/v1",
+          "function": "WatchStatus",
+          "receiver": "*foundationClient",
+          "position": {
+            "filename": "vynic/edge/v1/foundation_grpc.pb.go",
+            "offset": 3401,
+            "line": 85,
+            "column": 34
+          }
+        },
+        {
+          "module": "vynic.local/edge",
+          "package": "vynic.local/edge/cmd/terminal-sim",
+          "function": "run$1",
+          "position": {
+            "filename": "cmd/terminal-sim/main.go",
+            "offset": 4221,
+            "line": 130,
+            "column": 37
+          }
+        },
+        {
+          "module": "vynic.local/edge",
+          "package": "vynic.local/edge/cmd/terminal-sim",
+          "function": "run",
+          "position": {
+            "filename": "cmd/terminal-sim/main.go",
+            "offset": 4581,
+            "line": 149,
+            "column": 12
+          }
+        },
+        {
+          "module": "vynic.local/edge",
+          "package": "vynic.local/edge/cmd/terminal-sim",
+          "function": "main",
+          "position": {
+            "filename": "cmd/terminal-sim/main.go",
+            "offset": 4855,
+            "line": 159,
+            "column": 15
+          }
+        }
+      ]
+    },
+    {
+      "osv": "GO-2026-6061",
+      "fixed_version": "v1.82.1",
+      "trace": [
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc/internal/transport",
+          "function": "Header",
+          "receiver": "*ClientStream",
+          "position": {
+            "filename": "internal/transport/client_stream.go",
+            "offset": 4255,
+            "line": 125,
+            "column": 24
+          }
+        },
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc",
+          "function": "Header$1",
+          "position": {
+            "filename": "stream.go",
+            "offset": 29302,
+            "line": 865,
+            "column": 36
+          }
+        },
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc",
+          "function": "withRetry",
+          "receiver": "*clientStream",
+          "position": {
+            "filename": "stream.go",
+            "offset": 28229,
+            "line": 824,
+            "column": 22
+          }
+        },
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc",
+          "function": "SendMsg",
+          "receiver": "*clientStream",
+          "position": {
+            "filename": "stream.go",
+            "offset": 33106,
+            "line": 990,
+            "column": 20
+          }
+        },
+        {
+          "module": "../../packages/contracts/generated/go",
+          "package": "vynic.local/contracts/go/vynic/edge/v1",
+          "function": "WatchStatus",
+          "receiver": "*foundationClient",
+          "position": {
+            "filename": "vynic/edge/v1/foundation_grpc.pb.go",
+            "offset": 3401,
+            "line": 85,
+            "column": 34
+          }
+        },
+        {
+          "module": "vynic.local/edge",
+          "package": "vynic.local/edge/cmd/terminal-sim",
+          "function": "run$1",
+          "position": {
+            "filename": "cmd/terminal-sim/main.go",
+            "offset": 4221,
+            "line": 130,
+            "column": 37
+          }
+        },
+        {
+          "module": "vynic.local/edge",
+          "package": "vynic.local/edge/cmd/terminal-sim",
+          "function": "run",
+          "position": {
+            "filename": "cmd/terminal-sim/main.go",
+            "offset": 4581,
+            "line": 149,
+            "column": 12
+          }
+        },
+        {
+          "module": "vynic.local/edge",
+          "package": "vynic.local/edge/cmd/terminal-sim",
+          "function": "main",
+          "position": {
+            "filename": "cmd/terminal-sim/main.go",
+            "offset": 4855,
+            "line": 159,
+            "column": 15
+          }
+        }
+      ]
+    },
+    {
+      "osv": "GO-2026-6061",
+      "fixed_version": "v1.82.1",
+      "trace": [
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc/internal/transport",
+          "function": "GracefulClose",
+          "receiver": "*http2Client",
+          "position": {
+            "filename": "internal/transport/http2_client.go",
+            "offset": 37225,
+            "line": 1075,
+            "column": 23
+          }
+        },
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc",
+          "function": "tearDown",
+          "receiver": "*addrConn",
+          "position": {
+            "filename": "clientconn.go",
+            "offset": 59607,
+            "line": 1696,
+            "column": 23
+          }
+        },
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc",
+          "function": "Close$2",
+          "position": {
+            "filename": "clientconn.go",
+            "offset": 43588,
+            "line": 1226,
+            "column": 15
+          }
+        },
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc",
+          "function": "Close",
+          "receiver": "*ClientConn",
+          "position": {
+            "filename": "clientconn.go",
+            "offset": 43531,
+            "line": 1224,
+            "column": 3
+          }
+        },
+        {
+          "module": "vynic.local/edge",
+          "package": "vynic.local/edge/cmd/terminal-sim",
+          "function": "run",
+          "position": {
+            "filename": "cmd/terminal-sim/main.go",
+            "offset": 2970,
+            "line": 95,
+            "column": 2
+          }
+        },
+        {
+          "module": "vynic.local/edge",
+          "package": "vynic.local/edge/cmd/terminal-sim",
+          "function": "main",
+          "position": {
+            "filename": "cmd/terminal-sim/main.go",
+            "offset": 4855,
+            "line": 159,
+            "column": 15
+          }
+        }
+      ]
+    },
+    {
+      "osv": "GO-2026-6348",
+      "fixed_version": "v1.83.1",
+      "trace": [
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc/internal/transport",
+          "function": "NewHTTP2Client",
+          "position": {
+            "filename": "internal/transport/http2_client.go",
+            "offset": 6975,
+            "line": 207,
+            "column": 6
+          }
+        },
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc",
+          "function": "createTransport",
+          "receiver": "*addrConn",
+          "position": {
+            "filename": "clientconn.go",
+            "offset": 53621,
+            "line": 1518,
+            "column": 40
+          }
+        },
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc",
+          "function": "tryAllAddrs",
+          "receiver": "*addrConn",
+          "position": {
+            "filename": "clientconn.go",
+            "offset": 51869,
+            "line": 1465,
+            "column": 28
+          }
+        },
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc",
+          "function": "resetTransportAndUnlock",
+          "receiver": "*addrConn",
+          "position": {
+            "filename": "clientconn.go",
+            "offset": 48006,
+            "line": 1348,
+            "column": 26
+          }
+        },
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc",
+          "function": "connect",
+          "receiver": "*addrConn",
+          "position": {
+            "filename": "clientconn.go",
+            "offset": 36532,
+            "line": 997,
+            "column": 28
+          }
+        },
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc",
+          "function": "Connect",
+          "receiver": "*acBalancerWrapper",
+          "position": {
+            "filename": "balancer_wrapper.go",
+            "offset": 11995,
+            "line": 350,
+            "column": 2
+          }
+        },
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc/balancer/pickfirst",
+          "function": "requestConnectionLocked",
+          "receiver": "*pickfirstBalancer",
+          "position": {
+            "filename": "balancer/pickfirst/pickfirst.go",
+            "offset": 20141,
+            "line": 563,
+            "column": 22
+          }
+        },
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc/balancer/pickfirst",
+          "function": "startFirstPassLocked",
+          "receiver": "*pickfirstBalancer",
+          "position": {
+            "filename": "balancer/pickfirst/pickfirst.go",
+            "offset": 14593,
+            "line": 405,
+            "column": 27
+          }
+        },
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc/balancer/pickfirst",
+          "function": "ExitIdle",
+          "receiver": "*pickfirstBalancer",
+          "position": {
+            "filename": "balancer/pickfirst/pickfirst.go",
+            "offset": 14323,
+            "line": 394,
+            "column": 25
+          }
+        },
+        {
+          "module": "stdlib",
+          "version": "v1.26.8",
+          "package": "sync",
+          "function": "OnceFunc$1$1",
+          "position": {
+            "filename": "src/sync/oncefunc.go",
+            "offset": 842,
+            "line": 33,
+            "column": 7
+          }
+        },
+        {
+          "module": "stdlib",
+          "version": "v1.26.8",
+          "package": "sync",
+          "function": "doSlow",
+          "receiver": "*Once",
+          "position": {
+            "filename": "src/sync/once.go",
+            "offset": 2517,
+            "line": 78,
+            "column": 4
+          }
+        },
+        {
+          "module": "stdlib",
+          "version": "v1.26.8",
+          "package": "sync",
+          "function": "Do",
+          "receiver": "*Once",
+          "position": {
+            "filename": "src/sync/once.go",
+            "offset": 2390,
+            "line": 69,
+            "column": 11
+          }
+        },
+        {
+          "module": "stdlib",
+          "version": "v1.26.8",
+          "package": "crypto/elliptic",
+          "function": "P256",
+          "position": {
+            "filename": "src/crypto/elliptic/elliptic.go",
+            "offset": 8333,
+            "line": 254,
+            "column": 13
+          }
+        },
+        {
+          "module": "vynic.local/edge",
+          "package": "vynic.local/edge/internal/store",
+          "function": "Init",
+          "receiver": "*Store",
+          "position": {
+            "filename": "internal/store/identity.go",
+            "offset": 907,
+            "line": 45,
+            "column": 49
+          }
+        }
+      ]
+    },
+    {
+      "osv": "GO-2026-6348",
+      "fixed_version": "v1.83.1",
+      "trace": [
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc/internal/transport",
+          "function": "NewStream",
+          "receiver": "*http2Client",
+          "position": {
+            "filename": "internal/transport/http2_client.go",
+            "offset": 26668,
+            "line": 748,
+            "column": 23
+          }
+        },
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc",
+          "function": "newStream",
+          "receiver": "*csAttempt",
+          "position": {
+            "filename": "stream.go",
+            "offset": 19680,
+            "line": 551,
+            "column": 33
+          }
+        },
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc",
+          "function": "newClientStreamWithParams$2",
+          "position": {
+            "filename": "stream.go",
+            "offset": 14422,
+            "line": 387,
+            "column": 24
+          }
+        },
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc",
+          "function": "withRetry",
+          "receiver": "*clientStream",
+          "position": {
+            "filename": "stream.go",
+            "offset": 28229,
+            "line": 824,
+            "column": 22
+          }
+        },
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc",
+          "function": "SendMsg",
+          "receiver": "*clientStream",
+          "position": {
+            "filename": "stream.go",
+            "offset": 33106,
+            "line": 990,
+            "column": 20
+          }
+        },
+        {
+          "module": "../../packages/contracts/generated/go",
+          "package": "vynic.local/contracts/go/vynic/edge/v1",
+          "function": "WatchStatus",
+          "receiver": "*foundationClient",
+          "position": {
+            "filename": "vynic/edge/v1/foundation_grpc.pb.go",
+            "offset": 3401,
+            "line": 85,
+            "column": 34
+          }
+        },
+        {
+          "module": "vynic.local/edge",
+          "package": "vynic.local/edge/cmd/terminal-sim",
+          "function": "run$1",
+          "position": {
+            "filename": "cmd/terminal-sim/main.go",
+            "offset": 4221,
+            "line": 130,
+            "column": 37
+          }
+        },
+        {
+          "module": "vynic.local/edge",
+          "package": "vynic.local/edge/cmd/terminal-sim",
+          "function": "run",
+          "position": {
+            "filename": "cmd/terminal-sim/main.go",
+            "offset": 4581,
+            "line": 149,
+            "column": 12
+          }
+        },
+        {
+          "module": "vynic.local/edge",
+          "package": "vynic.local/edge/cmd/terminal-sim",
+          "function": "main",
+          "position": {
+            "filename": "cmd/terminal-sim/main.go",
+            "offset": 4855,
+            "line": 159,
+            "column": 15
+          }
+        }
+      ]
+    },
+    {
+      "osv": "GO-2026-6348",
+      "fixed_version": "v1.83.1",
+      "trace": [
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc/internal/transport",
+          "function": "Read",
+          "receiver": "*ServerStream",
+          "position": {
+            "filename": "internal/transport/server_stream.go",
+            "offset": 1679,
+            "line": 56,
+            "column": 24
+          }
+        },
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc",
+          "function": "recvMsg",
+          "receiver": "*parser",
+          "position": {
+            "filename": "rpc_util.go",
+            "offset": 23530,
+            "line": 787,
+            "column": 23
+          }
+        },
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc",
+          "function": "recvAndDecompress",
+          "position": {
+            "filename": "rpc_util.go",
+            "offset": 28423,
+            "line": 931,
+            "column": 34
+          }
+        },
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc",
+          "function": "recv",
+          "position": {
+            "filename": "rpc_util.go",
+            "offset": 31695,
+            "line": 1014,
+            "column": 32
+          }
+        },
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc",
+          "function": "recvMsg",
+          "receiver": "*csAttempt",
+          "position": {
+            "filename": "stream.go",
+            "offset": 38464,
+            "line": 1173,
+            "column": 16
+          }
+        },
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc",
+          "function": "RecvMsg$1",
+          "position": {
+            "filename": "stream.go",
+            "offset": 33845,
+            "line": 1020,
+            "column": 19
+          }
+        },
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc",
+          "function": "withRetry",
+          "receiver": "*clientStream",
+          "position": {
+            "filename": "stream.go",
+            "offset": 28229,
+            "line": 824,
+            "column": 22
+          }
+        },
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc",
+          "function": "SendMsg",
+          "receiver": "*clientStream",
+          "position": {
+            "filename": "stream.go",
+            "offset": 33106,
+            "line": 990,
+            "column": 20
+          }
+        },
+        {
+          "module": "../../packages/contracts/generated/go",
+          "package": "vynic.local/contracts/go/vynic/edge/v1",
+          "function": "WatchStatus",
+          "receiver": "*foundationClient",
+          "position": {
+            "filename": "vynic/edge/v1/foundation_grpc.pb.go",
+            "offset": 3401,
+            "line": 85,
+            "column": 34
+          }
+        },
+        {
+          "module": "vynic.local/edge",
+          "package": "vynic.local/edge/cmd/terminal-sim",
+          "function": "run$1",
+          "position": {
+            "filename": "cmd/terminal-sim/main.go",
+            "offset": 4221,
+            "line": 130,
+            "column": 37
+          }
+        },
+        {
+          "module": "vynic.local/edge",
+          "package": "vynic.local/edge/cmd/terminal-sim",
+          "function": "run",
+          "position": {
+            "filename": "cmd/terminal-sim/main.go",
+            "offset": 4581,
+            "line": 149,
+            "column": 12
+          }
+        },
+        {
+          "module": "vynic.local/edge",
+          "package": "vynic.local/edge/cmd/terminal-sim",
+          "function": "main",
+          "position": {
+            "filename": "cmd/terminal-sim/main.go",
+            "offset": 4855,
+            "line": 159,
+            "column": 15
+          }
+        }
+      ]
+    },
+    {
+      "osv": "GO-2026-6061",
+      "fixed_version": "v1.82.1",
+      "trace": [
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc/internal/transport",
+          "function": "Write",
+          "receiver": "*ServerStream",
+          "position": {
+            "filename": "internal/transport/server_stream.go",
+            "offset": 2044,
+            "line": 70,
+            "column": 24
+          }
+        },
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc",
+          "function": "SendMsg",
+          "receiver": "*serverStream",
+          "position": {
+            "filename": "stream.go",
+            "offset": 57531,
+            "line": 1765,
+            "column": 22
+          }
+        },
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc",
+          "function": "Send",
+          "receiver": "*GenericServerStream[vynic.local/contracts/go/vynic/edge/v1.AuthenticatedRequest, vynic.local/contracts/go/vynic/edge/v1.StatusResponse]",
+          "position": {
+            "filename": "stream_interfaces.go",
+            "offset": 9771,
+            "line": 219,
+            "column": 31
+          }
+        },
+        {
+          "module": "vynic.local/edge",
+          "package": "vynic.local/edge/internal/server",
+          "function": "WatchStatus",
+          "receiver": "*Server",
+          "position": {
+            "filename": "internal/server/server.go",
+            "offset": 5039,
+            "line": 136,
+            "column": 24
+          }
+        }
+      ]
+    },
+    {
+      "osv": "GO-2026-6348",
+      "fixed_version": "v1.83.1",
+      "trace": [
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc/mem",
+          "function": "NewBuffer",
+          "position": {
+            "filename": "mem/buffers.go",
+            "offset": 3447,
+            "line": 103,
+            "column": 6
+          }
+        },
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc/encoding/proto",
+          "function": "Marshal",
+          "receiver": "*codecV2",
+          "position": {
+            "filename": "encoding/proto/proto.go",
+            "offset": 2396,
+            "line": 79,
+            "column": 36
+          }
+        },
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc",
+          "function": "encode",
+          "position": {
+            "filename": "rpc_util.go",
+            "offset": 24017,
+            "line": 804,
+            "column": 21
+          }
+        },
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc",
+          "function": "prepareMsg",
+          "position": {
+            "filename": "stream.go",
+            "offset": 61890,
+            "line": 1892,
+            "column": 20
+          }
+        },
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc",
+          "function": "SendMsg",
+          "receiver": "*serverStream",
+          "position": {
+            "filename": "stream.go",
+            "offset": 56923,
+            "line": 1744,
+            "column": 43
+          }
+        },
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc",
+          "function": "Send",
+          "receiver": "*GenericServerStream[vynic.local/contracts/go/vynic/edge/v1.AuthenticatedRequest, vynic.local/contracts/go/vynic/edge/v1.StatusResponse]",
+          "position": {
+            "filename": "stream_interfaces.go",
+            "offset": 9771,
+            "line": 219,
+            "column": 31
+          }
+        },
+        {
+          "module": "vynic.local/edge",
+          "package": "vynic.local/edge/internal/server",
+          "function": "WatchStatus",
+          "receiver": "*Server",
+          "position": {
+            "filename": "internal/server/server.go",
+            "offset": 5039,
+            "line": 136,
+            "column": 24
+          }
+        }
+      ]
+    },
+    {
+      "osv": "GO-2026-6348",
+      "fixed_version": "v1.83.1",
+      "trace": [
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc/mem",
+          "function": "IsBelowBufferPoolingThreshold",
+          "position": {
+            "filename": "mem/buffers.go",
+            "offset": 2304,
+            "line": 70,
+            "column": 6
+          }
+        },
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc/encoding/proto",
+          "function": "Marshal",
+          "receiver": "*codecV2",
+          "position": {
+            "filename": "encoding/proto/proto.go",
+            "offset": 2044,
+            "line": 66,
+            "column": 38
+          }
+        },
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc",
+          "function": "encode",
+          "position": {
+            "filename": "rpc_util.go",
+            "offset": 24017,
+            "line": 804,
+            "column": 21
+          }
+        },
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc",
+          "function": "prepareMsg",
+          "position": {
+            "filename": "stream.go",
+            "offset": 61890,
+            "line": 1892,
+            "column": 20
+          }
+        },
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc",
+          "function": "SendMsg",
+          "receiver": "*serverStream",
+          "position": {
+            "filename": "stream.go",
+            "offset": 56923,
+            "line": 1744,
+            "column": 43
+          }
+        },
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc",
+          "function": "Send",
+          "receiver": "*GenericServerStream[vynic.local/contracts/go/vynic/edge/v1.AuthenticatedRequest, vynic.local/contracts/go/vynic/edge/v1.StatusResponse]",
+          "position": {
+            "filename": "stream_interfaces.go",
+            "offset": 9771,
+            "line": 219,
+            "column": 31
+          }
+        },
+        {
+          "module": "vynic.local/edge",
+          "package": "vynic.local/edge/internal/server",
+          "function": "WatchStatus",
+          "receiver": "*Server",
+          "position": {
+            "filename": "internal/server/server.go",
+            "offset": 5039,
+            "line": 136,
+            "column": 24
+          }
+        }
+      ]
+    },
+    {
+      "osv": "GO-2026-6061",
+      "fixed_version": "v1.82.1",
+      "trace": [
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc/internal/transport",
+          "function": "WriteStatus",
+          "receiver": "*ServerStream",
+          "position": {
+            "filename": "internal/transport/server_stream.go",
+            "offset": 2306,
+            "line": 76,
+            "column": 24
+          }
+        },
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc",
+          "function": "SendMsg$1",
+          "position": {
+            "filename": "stream.go",
+            "offset": 56165,
+            "line": 1726,
+            "column": 20
+          }
+        },
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc",
+          "function": "SendMsg",
+          "receiver": "*serverStream",
+          "position": {
+            "filename": "stream.go",
+            "offset": 55763,
+            "line": 1711,
+            "column": 2
+          }
+        },
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc",
+          "function": "Send",
+          "receiver": "*GenericServerStream[vynic.local/contracts/go/vynic/edge/v1.AuthenticatedRequest, vynic.local/contracts/go/vynic/edge/v1.StatusResponse]",
+          "position": {
+            "filename": "stream_interfaces.go",
+            "offset": 9771,
+            "line": 219,
+            "column": 31
+          }
+        },
+        {
+          "module": "vynic.local/edge",
+          "package": "vynic.local/edge/internal/server",
+          "function": "WatchStatus",
+          "receiver": "*Server",
+          "position": {
+            "filename": "internal/server/server.go",
+            "offset": 5039,
+            "line": 136,
+            "column": 24
+          }
+        }
+      ]
+    },
+    {
+      "osv": "GO-2026-6061",
+      "fixed_version": "v1.82.1",
+      "trace": [
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc/internal/transport",
+          "function": "Read",
+          "receiver": "*ClientStream",
+          "position": {
+            "filename": "internal/transport/client_stream.go",
+            "offset": 2210,
+            "line": 58,
+            "column": 24
+          }
+        },
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc",
+          "function": "recvMsg",
+          "receiver": "*parser",
+          "position": {
+            "filename": "rpc_util.go",
+            "offset": 23530,
+            "line": 787,
+            "column": 23
+          }
+        },
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc",
+          "function": "recvAndDecompress",
+          "position": {
+            "filename": "rpc_util.go",
+            "offset": 28423,
+            "line": 931,
+            "column": 34
+          }
+        },
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc",
+          "function": "recv",
+          "position": {
+            "filename": "rpc_util.go",
+            "offset": 31695,
+            "line": 1014,
+            "column": 32
+          }
+        },
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc",
+          "function": "recvMsg",
+          "receiver": "*csAttempt",
+          "position": {
+            "filename": "stream.go",
+            "offset": 38464,
+            "line": 1173,
+            "column": 16
+          }
+        },
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc",
+          "function": "RecvMsg$1",
+          "position": {
+            "filename": "stream.go",
+            "offset": 33845,
+            "line": 1020,
+            "column": 19
+          }
+        },
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc",
+          "function": "withRetry",
+          "receiver": "*clientStream",
+          "position": {
+            "filename": "stream.go",
+            "offset": 28229,
+            "line": 824,
+            "column": 22
+          }
+        },
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc",
+          "function": "SendMsg",
+          "receiver": "*clientStream",
+          "position": {
+            "filename": "stream.go",
+            "offset": 33106,
+            "line": 990,
+            "column": 20
+          }
+        },
+        {
+          "module": "../../packages/contracts/generated/go",
+          "package": "vynic.local/contracts/go/vynic/edge/v1",
+          "function": "WatchStatus",
+          "receiver": "*foundationClient",
+          "position": {
+            "filename": "vynic/edge/v1/foundation_grpc.pb.go",
+            "offset": 3401,
+            "line": 85,
+            "column": 34
+          }
+        },
+        {
+          "module": "vynic.local/edge",
+          "package": "vynic.local/edge/cmd/terminal-sim",
+          "function": "run$1",
+          "position": {
+            "filename": "cmd/terminal-sim/main.go",
+            "offset": 4221,
+            "line": 130,
+            "column": 37
+          }
+        },
+        {
+          "module": "vynic.local/edge",
+          "package": "vynic.local/edge/cmd/terminal-sim",
+          "function": "run",
+          "position": {
+            "filename": "cmd/terminal-sim/main.go",
+            "offset": 4581,
+            "line": 149,
+            "column": 12
+          }
+        },
+        {
+          "module": "vynic.local/edge",
+          "package": "vynic.local/edge/cmd/terminal-sim",
+          "function": "main",
+          "position": {
+            "filename": "cmd/terminal-sim/main.go",
+            "offset": 4855,
+            "line": 159,
+            "column": 15
+          }
+        }
+      ]
+    },
+    {
+      "osv": "GO-2026-6348",
+      "fixed_version": "v1.83.1",
+      "trace": [
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc/mem",
+          "function": "MaterializeToBuffer",
+          "receiver": "BufferSlice",
+          "position": {
+            "filename": "mem/buffer_slice.go",
+            "offset": 3298,
+            "line": 105,
+            "column": 22
+          }
+        },
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc",
+          "function": "compress",
+          "position": {
+            "filename": "rpc_util.go",
+            "offset": 25690,
+            "line": 848,
+            "column": 32
+          }
+        },
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc",
+          "function": "prepareMsg",
+          "position": {
+            "filename": "stream.go",
+            "offset": 61982,
+            "line": 1896,
+            "column": 31
+          }
+        },
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc",
+          "function": "SendMsg",
+          "receiver": "*serverStream",
+          "position": {
+            "filename": "stream.go",
+            "offset": 56923,
+            "line": 1744,
+            "column": 43
+          }
+        },
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc",
+          "function": "Send",
+          "receiver": "*GenericServerStream[vynic.local/contracts/go/vynic/edge/v1.AuthenticatedRequest, vynic.local/contracts/go/vynic/edge/v1.StatusResponse]",
+          "position": {
+            "filename": "stream_interfaces.go",
+            "offset": 9771,
+            "line": 219,
+            "column": 31
+          }
+        },
+        {
+          "module": "vynic.local/edge",
+          "package": "vynic.local/edge/internal/server",
+          "function": "WatchStatus",
+          "receiver": "*Server",
+          "position": {
+            "filename": "internal/server/server.go",
+            "offset": 5039,
+            "line": 136,
+            "column": 24
+          }
+        }
+      ]
+    },
+    {
+      "osv": "GO-2026-6348",
+      "fixed_version": "v1.83.1",
+      "trace": [
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc/mem",
+          "function": "ReadAll",
+          "position": {
+            "filename": "mem/buffer_slice.go",
+            "offset": 7210,
+            "line": 249,
+            "column": 6
+          }
+        },
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc",
+          "function": "decompress",
+          "position": {
+            "filename": "rpc_util.go",
+            "offset": 30757,
+            "line": 991,
+            "column": 26
+          }
+        },
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc",
+          "function": "recvAndDecompress",
+          "position": {
+            "filename": "rpc_util.go",
+            "offset": 28890,
+            "line": 947,
+            "column": 24
+          }
+        },
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc",
+          "function": "recv",
+          "position": {
+            "filename": "rpc_util.go",
+            "offset": 31695,
+            "line": 1014,
+            "column": 32
+          }
+        },
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc",
+          "function": "recvMsg",
+          "receiver": "*csAttempt",
+          "position": {
+            "filename": "stream.go",
+            "offset": 38464,
+            "line": 1173,
+            "column": 16
+          }
+        },
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc",
+          "function": "RecvMsg$1",
+          "position": {
+            "filename": "stream.go",
+            "offset": 33845,
+            "line": 1020,
+            "column": 19
+          }
+        },
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc",
+          "function": "withRetry",
+          "receiver": "*clientStream",
+          "position": {
+            "filename": "stream.go",
+            "offset": 28229,
+            "line": 824,
+            "column": 22
+          }
+        },
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc",
+          "function": "SendMsg",
+          "receiver": "*clientStream",
+          "position": {
+            "filename": "stream.go",
+            "offset": 33106,
+            "line": 990,
+            "column": 20
+          }
+        },
+        {
+          "module": "../../packages/contracts/generated/go",
+          "package": "vynic.local/contracts/go/vynic/edge/v1",
+          "function": "WatchStatus",
+          "receiver": "*foundationClient",
+          "position": {
+            "filename": "vynic/edge/v1/foundation_grpc.pb.go",
+            "offset": 3401,
+            "line": 85,
+            "column": 34
+          }
+        },
+        {
+          "module": "vynic.local/edge",
+          "package": "vynic.local/edge/cmd/terminal-sim",
+          "function": "run$1",
+          "position": {
+            "filename": "cmd/terminal-sim/main.go",
+            "offset": 4221,
+            "line": 130,
+            "column": 37
+          }
+        },
+        {
+          "module": "vynic.local/edge",
+          "package": "vynic.local/edge/cmd/terminal-sim",
+          "function": "run",
+          "position": {
+            "filename": "cmd/terminal-sim/main.go",
+            "offset": 4581,
+            "line": 149,
+            "column": 12
+          }
+        },
+        {
+          "module": "vynic.local/edge",
+          "package": "vynic.local/edge/cmd/terminal-sim",
+          "function": "main",
+          "position": {
+            "filename": "cmd/terminal-sim/main.go",
+            "offset": 4855,
+            "line": 159,
+            "column": 15
+          }
+        }
+      ]
+    },
+    {
+      "osv": "GO-2026-6061",
+      "fixed_version": "v1.82.1",
+      "trace": [
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc/internal/transport",
+          "function": "Read",
+          "receiver": "*ServerStream",
+          "position": {
+            "filename": "internal/transport/server_stream.go",
+            "offset": 1679,
+            "line": 56,
+            "column": 24
+          }
+        },
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc",
+          "function": "recvMsg",
+          "receiver": "*parser",
+          "position": {
+            "filename": "rpc_util.go",
+            "offset": 23530,
+            "line": 787,
+            "column": 23
+          }
+        },
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc",
+          "function": "recvAndDecompress",
+          "position": {
+            "filename": "rpc_util.go",
+            "offset": 28423,
+            "line": 931,
+            "column": 34
+          }
+        },
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc",
+          "function": "recv",
+          "position": {
+            "filename": "rpc_util.go",
+            "offset": 31695,
+            "line": 1014,
+            "column": 32
+          }
+        },
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc",
+          "function": "recvMsg",
+          "receiver": "*csAttempt",
+          "position": {
+            "filename": "stream.go",
+            "offset": 38464,
+            "line": 1173,
+            "column": 16
+          }
+        },
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc",
+          "function": "RecvMsg$1",
+          "position": {
+            "filename": "stream.go",
+            "offset": 33845,
+            "line": 1020,
+            "column": 19
+          }
+        },
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc",
+          "function": "withRetry",
+          "receiver": "*clientStream",
+          "position": {
+            "filename": "stream.go",
+            "offset": 28229,
+            "line": 824,
+            "column": 22
+          }
+        },
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc",
+          "function": "SendMsg",
+          "receiver": "*clientStream",
+          "position": {
+            "filename": "stream.go",
+            "offset": 33106,
+            "line": 990,
+            "column": 20
+          }
+        },
+        {
+          "module": "../../packages/contracts/generated/go",
+          "package": "vynic.local/contracts/go/vynic/edge/v1",
+          "function": "WatchStatus",
+          "receiver": "*foundationClient",
+          "position": {
+            "filename": "vynic/edge/v1/foundation_grpc.pb.go",
+            "offset": 3401,
+            "line": 85,
+            "column": 34
+          }
+        },
+        {
+          "module": "vynic.local/edge",
+          "package": "vynic.local/edge/cmd/terminal-sim",
+          "function": "run$1",
+          "position": {
+            "filename": "cmd/terminal-sim/main.go",
+            "offset": 4221,
+            "line": 130,
+            "column": 37
+          }
+        },
+        {
+          "module": "vynic.local/edge",
+          "package": "vynic.local/edge/cmd/terminal-sim",
+          "function": "run",
+          "position": {
+            "filename": "cmd/terminal-sim/main.go",
+            "offset": 4581,
+            "line": 149,
+            "column": 12
+          }
+        },
+        {
+          "module": "vynic.local/edge",
+          "package": "vynic.local/edge/cmd/terminal-sim",
+          "function": "main",
+          "position": {
+            "filename": "cmd/terminal-sim/main.go",
+            "offset": 4855,
+            "line": 159,
+            "column": 15
+          }
+        }
+      ]
+    },
+    {
+      "osv": "GO-2026-6348",
+      "fixed_version": "v1.83.1",
+      "trace": [
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc/internal/transport",
+          "function": "Close",
+          "receiver": "*ClientStream",
+          "position": {
+            "filename": "internal/transport/client_stream.go",
+            "offset": 2421,
+            "line": 67,
+            "column": 24
+          }
+        },
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc",
+          "function": "finish",
+          "receiver": "*csAttempt",
+          "position": {
+            "filename": "stream.go",
+            "offset": 40531,
+            "line": 1232,
+            "column": 26
+          }
+        },
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc",
+          "function": "finish",
+          "receiver": "*clientStream",
+          "position": {
+            "filename": "stream.go",
+            "offset": 35610,
+            "line": 1081,
+            "column": 20
+          }
+        },
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc",
+          "function": "RecvMsg",
+          "receiver": "*clientStream",
+          "position": {
+            "filename": "stream.go",
+            "offset": 34238,
+            "line": 1033,
+            "column": 12
+          }
+        },
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc",
+          "function": "Recv",
+          "receiver": "*GenericClientStream[vynic.local/contracts/go/vynic/edge/v1.AuthenticatedRequest, vynic.local/contracts/go/vynic/edge/v1.StatusResponse]",
+          "position": {
+            "filename": "stream_interfaces.go",
+            "offset": 8475,
+            "line": 185,
+            "column": 34
+          }
+        },
+        {
+          "module": "vynic.local/edge",
+          "package": "vynic.local/edge/cmd/terminal-sim",
+          "function": "run$1",
+          "position": {
+            "filename": "cmd/terminal-sim/main.go",
+            "offset": 4309,
+            "line": 135,
+            "column": 28
+          }
+        },
+        {
+          "module": "vynic.local/edge",
+          "package": "vynic.local/edge/cmd/terminal-sim",
+          "function": "run",
+          "position": {
+            "filename": "cmd/terminal-sim/main.go",
+            "offset": 4581,
+            "line": 149,
+            "column": 12
+          }
+        },
+        {
+          "module": "vynic.local/edge",
+          "package": "vynic.local/edge/cmd/terminal-sim",
+          "function": "main",
+          "position": {
+            "filename": "cmd/terminal-sim/main.go",
+            "offset": 4855,
+            "line": 159,
+            "column": 15
+          }
+        }
+      ]
+    },
+    {
+      "osv": "GO-2026-6348",
+      "fixed_version": "v1.83.1",
+      "trace": [
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc/internal/transport",
+          "function": "Header",
+          "receiver": "*ClientStream",
+          "position": {
+            "filename": "internal/transport/client_stream.go",
+            "offset": 4255,
+            "line": 125,
+            "column": 24
+          }
+        },
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc",
+          "function": "Header$1",
+          "position": {
+            "filename": "stream.go",
+            "offset": 29302,
+            "line": 865,
+            "column": 36
+          }
+        },
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc",
+          "function": "withRetry",
+          "receiver": "*clientStream",
+          "position": {
+            "filename": "stream.go",
+            "offset": 28229,
+            "line": 824,
+            "column": 22
+          }
+        },
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc",
+          "function": "SendMsg",
+          "receiver": "*clientStream",
+          "position": {
+            "filename": "stream.go",
+            "offset": 33106,
+            "line": 990,
+            "column": 20
+          }
+        },
+        {
+          "module": "../../packages/contracts/generated/go",
+          "package": "vynic.local/contracts/go/vynic/edge/v1",
+          "function": "WatchStatus",
+          "receiver": "*foundationClient",
+          "position": {
+            "filename": "vynic/edge/v1/foundation_grpc.pb.go",
+            "offset": 3401,
+            "line": 85,
+            "column": 34
+          }
+        },
+        {
+          "module": "vynic.local/edge",
+          "package": "vynic.local/edge/cmd/terminal-sim",
+          "function": "run$1",
+          "position": {
+            "filename": "cmd/terminal-sim/main.go",
+            "offset": 4221,
+            "line": 130,
+            "column": 37
+          }
+        },
+        {
+          "module": "vynic.local/edge",
+          "package": "vynic.local/edge/cmd/terminal-sim",
+          "function": "run",
+          "position": {
+            "filename": "cmd/terminal-sim/main.go",
+            "offset": 4581,
+            "line": 149,
+            "column": 12
+          }
+        },
+        {
+          "module": "vynic.local/edge",
+          "package": "vynic.local/edge/cmd/terminal-sim",
+          "function": "main",
+          "position": {
+            "filename": "cmd/terminal-sim/main.go",
+            "offset": 4855,
+            "line": 159,
+            "column": 15
+          }
+        }
+      ]
+    },
+    {
+      "osv": "GO-2026-6348",
+      "fixed_version": "v1.83.1",
+      "trace": [
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc/internal/transport",
+          "function": "Close",
+          "receiver": "*http2Server",
+          "position": {
+            "filename": "internal/transport/http2_server.go",
+            "offset": 40446,
+            "line": 1269,
+            "column": 23
+          }
+        },
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc",
+          "function": "closeServerTransportsLocked",
+          "receiver": "*Server",
+          "position": {
+            "filename": "server.go",
+            "offset": 63928,
+            "line": 1999,
+            "column": 12
+          }
+        },
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc",
+          "function": "stop",
+          "receiver": "*Server",
+          "position": {
+            "filename": "server.go",
+            "offset": 63265,
+            "line": 1969,
+            "column": 32
+          }
+        },
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc",
+          "function": "GracefulStop",
+          "receiver": "*Server",
+          "position": {
+            "filename": "server.go",
+            "offset": 62795,
+            "line": 1948,
+            "column": 8
+          }
+        },
+        {
+          "module": "vynic.local/edge",
+          "package": "vynic.local/edge/internal/server",
+          "function": "Serve$1",
+          "position": {
+            "filename": "internal/server/server.go",
+            "offset": 6139,
+            "line": 166,
+            "column": 18
+          }
+        },
+        {
+          "module": "vynic.local/edge",
+          "package": "vynic.local/edge/internal/server",
+          "function": "Serve",
+          "receiver": "*Server",
+          "position": {
+            "filename": "internal/server/server.go",
+            "offset": 6012,
+            "line": 161,
+            "column": 2
+          }
+        }
+      ]
+    },
+    {
+      "osv": "GO-2026-6348",
+      "fixed_version": "v1.83.1",
+      "trace": [
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc/internal/transport",
+          "function": "Close",
+          "receiver": "*http2Client",
+          "position": {
+            "filename": "internal/transport/http2_client.go",
+            "offset": 34381,
+            "line": 997,
+            "column": 23
+          }
+        },
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc",
+          "function": "tearDown",
+          "receiver": "*addrConn",
+          "position": {
+            "filename": "clientconn.go",
+            "offset": 60089,
+            "line": 1705,
+            "column": 15
+          }
+        },
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc",
+          "function": "Close$2",
+          "position": {
+            "filename": "clientconn.go",
+            "offset": 43588,
+            "line": 1226,
+            "column": 15
+          }
+        },
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc",
+          "function": "Close",
+          "receiver": "*ClientConn",
+          "position": {
+            "filename": "clientconn.go",
+            "offset": 43531,
+            "line": 1224,
+            "column": 3
+          }
+        },
+        {
+          "module": "vynic.local/edge",
+          "package": "vynic.local/edge/cmd/terminal-sim",
+          "function": "run",
+          "position": {
+            "filename": "cmd/terminal-sim/main.go",
+            "offset": 2970,
+            "line": 95,
+            "column": 2
+          }
+        },
+        {
+          "module": "vynic.local/edge",
+          "package": "vynic.local/edge/cmd/terminal-sim",
+          "function": "main",
+          "position": {
+            "filename": "cmd/terminal-sim/main.go",
+            "offset": 4855,
+            "line": 159,
+            "column": 15
+          }
+        }
+      ]
+    },
+    {
+      "osv": "GO-2026-6061",
+      "fixed_version": "v1.82.1",
+      "trace": [
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc/internal/transport",
+          "function": "TrailersOnly",
+          "receiver": "*ClientStream",
+          "position": {
+            "filename": "internal/transport/client_stream.go",
+            "offset": 4632,
+            "line": 138,
+            "column": 24
+          }
+        },
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc",
+          "function": "shouldRetry",
+          "receiver": "*csAttempt",
+          "position": {
+            "filename": "stream.go",
+            "offset": 24752,
+            "line": 712,
+            "column": 37
+          }
+        },
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc",
+          "function": "retryLocked",
+          "receiver": "*clientStream",
+          "position": {
+            "filename": "stream.go",
+            "offset": 27045,
+            "line": 785,
+            "column": 44
+          }
+        },
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc",
+          "function": "withRetry",
+          "receiver": "*clientStream",
+          "position": {
+            "filename": "stream.go",
+            "offset": 29063,
+            "line": 854,
+            "column": 27
+          }
+        },
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc",
+          "function": "SendMsg",
+          "receiver": "*clientStream",
+          "position": {
+            "filename": "stream.go",
+            "offset": 33106,
+            "line": 990,
+            "column": 20
+          }
+        },
+        {
+          "module": "../../packages/contracts/generated/go",
+          "package": "vynic.local/contracts/go/vynic/edge/v1",
+          "function": "WatchStatus",
+          "receiver": "*foundationClient",
+          "position": {
+            "filename": "vynic/edge/v1/foundation_grpc.pb.go",
+            "offset": 3401,
+            "line": 85,
+            "column": 34
+          }
+        },
+        {
+          "module": "vynic.local/edge",
+          "package": "vynic.local/edge/cmd/terminal-sim",
+          "function": "run$1",
+          "position": {
+            "filename": "cmd/terminal-sim/main.go",
+            "offset": 4221,
+            "line": 130,
+            "column": 37
+          }
+        },
+        {
+          "module": "vynic.local/edge",
+          "package": "vynic.local/edge/cmd/terminal-sim",
+          "function": "run",
+          "position": {
+            "filename": "cmd/terminal-sim/main.go",
+            "offset": 4581,
+            "line": 149,
+            "column": 12
+          }
+        },
+        {
+          "module": "vynic.local/edge",
+          "package": "vynic.local/edge/cmd/terminal-sim",
+          "function": "main",
+          "position": {
+            "filename": "cmd/terminal-sim/main.go",
+            "offset": 4855,
+            "line": 159,
+            "column": 15
+          }
+        }
+      ]
+    },
+    {
+      "osv": "GO-2026-6348",
+      "fixed_version": "v1.83.1",
+      "trace": [
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc/internal/transport",
+          "function": "TrailersOnly",
+          "receiver": "*ClientStream",
+          "position": {
+            "filename": "internal/transport/client_stream.go",
+            "offset": 4632,
+            "line": 138,
+            "column": 24
+          }
+        },
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc",
+          "function": "shouldRetry",
+          "receiver": "*csAttempt",
+          "position": {
+            "filename": "stream.go",
+            "offset": 24752,
+            "line": 712,
+            "column": 37
+          }
+        },
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc",
+          "function": "retryLocked",
+          "receiver": "*clientStream",
+          "position": {
+            "filename": "stream.go",
+            "offset": 27045,
+            "line": 785,
+            "column": 44
+          }
+        },
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc",
+          "function": "withRetry",
+          "receiver": "*clientStream",
+          "position": {
+            "filename": "stream.go",
+            "offset": 29063,
+            "line": 854,
+            "column": 27
+          }
+        },
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc",
+          "function": "SendMsg",
+          "receiver": "*clientStream",
+          "position": {
+            "filename": "stream.go",
+            "offset": 33106,
+            "line": 990,
+            "column": 20
+          }
+        },
+        {
+          "module": "../../packages/contracts/generated/go",
+          "package": "vynic.local/contracts/go/vynic/edge/v1",
+          "function": "WatchStatus",
+          "receiver": "*foundationClient",
+          "position": {
+            "filename": "vynic/edge/v1/foundation_grpc.pb.go",
+            "offset": 3401,
+            "line": 85,
+            "column": 34
+          }
+        },
+        {
+          "module": "vynic.local/edge",
+          "package": "vynic.local/edge/cmd/terminal-sim",
+          "function": "run$1",
+          "position": {
+            "filename": "cmd/terminal-sim/main.go",
+            "offset": 4221,
+            "line": 130,
+            "column": 37
+          }
+        },
+        {
+          "module": "vynic.local/edge",
+          "package": "vynic.local/edge/cmd/terminal-sim",
+          "function": "run",
+          "position": {
+            "filename": "cmd/terminal-sim/main.go",
+            "offset": 4581,
+            "line": 149,
+            "column": 12
+          }
+        },
+        {
+          "module": "vynic.local/edge",
+          "package": "vynic.local/edge/cmd/terminal-sim",
+          "function": "main",
+          "position": {
+            "filename": "cmd/terminal-sim/main.go",
+            "offset": 4855,
+            "line": 159,
+            "column": 15
+          }
+        }
+      ]
+    },
+    {
+      "osv": "GO-2026-6348",
+      "fixed_version": "v1.83.1",
+      "trace": [
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc/internal/transport",
+          "function": "HandleStreams",
+          "receiver": "*http2Server",
+          "position": {
+            "filename": "internal/transport/http2_server.go",
+            "offset": 20931,
+            "line": 631,
+            "column": 23
+          }
+        },
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc",
+          "function": "serveStreams",
+          "receiver": "*Server",
+          "position": {
+            "filename": "server.go",
+            "offset": 35381,
+            "line": 1058,
+            "column": 18
+          }
+        },
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc",
+          "function": "handleRawConn$1",
+          "position": {
+            "filename": "server.go",
+            "offset": 33022,
+            "line": 992,
+            "column": 17
+          }
+        },
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc",
+          "function": "handleRawConn",
+          "receiver": "*Server",
+          "position": {
+            "filename": "server.go",
+            "offset": 32994,
+            "line": 991,
+            "column": 2
+          }
+        },
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc",
+          "function": "Serve$3",
+          "position": {
+            "filename": "server.go",
+            "offset": 32325,
+            "line": 960,
+            "column": 19
+          }
+        },
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc",
+          "function": "Serve",
+          "receiver": "*Server",
+          "position": {
+            "filename": "server.go",
+            "offset": 32295,
+            "line": 959,
+            "column": 3
+          }
+        },
+        {
+          "module": "vynic.local/edge",
+          "package": "vynic.local/edge/internal/server",
+          "function": "Serve",
+          "receiver": "*Server",
+          "position": {
+            "filename": "internal/server/server.go",
+            "offset": 6196,
+            "line": 171,
+            "column": 15
+          }
+        }
+      ]
+    },
+    {
+      "osv": "GO-2026-6348",
+      "fixed_version": "v1.83.1",
+      "trace": [
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc/internal/transport",
+          "function": "RecvCompress",
+          "receiver": "*ClientStream",
+          "position": {
+            "filename": "internal/transport/client_stream.go",
+            "offset": 3754,
+            "line": 110,
+            "column": 24
+          }
+        },
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc",
+          "function": "recvMsg",
+          "receiver": "*csAttempt",
+          "position": {
+            "filename": "stream.go",
+            "offset": 37650,
+            "line": 1155,
+            "column": 42
+          }
+        },
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc",
+          "function": "RecvMsg$1",
+          "position": {
+            "filename": "stream.go",
+            "offset": 33845,
+            "line": 1020,
+            "column": 19
+          }
+        },
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc",
+          "function": "withRetry",
+          "receiver": "*clientStream",
+          "position": {
+            "filename": "stream.go",
+            "offset": 28229,
+            "line": 824,
+            "column": 22
+          }
+        },
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc",
+          "function": "SendMsg",
+          "receiver": "*clientStream",
+          "position": {
+            "filename": "stream.go",
+            "offset": 33106,
+            "line": 990,
+            "column": 20
+          }
+        },
+        {
+          "module": "../../packages/contracts/generated/go",
+          "package": "vynic.local/contracts/go/vynic/edge/v1",
+          "function": "WatchStatus",
+          "receiver": "*foundationClient",
+          "position": {
+            "filename": "vynic/edge/v1/foundation_grpc.pb.go",
+            "offset": 3401,
+            "line": 85,
+            "column": 34
+          }
+        },
+        {
+          "module": "vynic.local/edge",
+          "package": "vynic.local/edge/cmd/terminal-sim",
+          "function": "run$1",
+          "position": {
+            "filename": "cmd/terminal-sim/main.go",
+            "offset": 4221,
+            "line": 130,
+            "column": 37
+          }
+        },
+        {
+          "module": "vynic.local/edge",
+          "package": "vynic.local/edge/cmd/terminal-sim",
+          "function": "run",
+          "position": {
+            "filename": "cmd/terminal-sim/main.go",
+            "offset": 4581,
+            "line": 149,
+            "column": 12
+          }
+        },
+        {
+          "module": "vynic.local/edge",
+          "package": "vynic.local/edge/cmd/terminal-sim",
+          "function": "main",
+          "position": {
+            "filename": "cmd/terminal-sim/main.go",
+            "offset": 4855,
+            "line": 159,
+            "column": 15
+          }
+        }
+      ]
+    },
+    {
+      "osv": "GO-2026-6061",
+      "fixed_version": "v1.82.1",
+      "trace": [
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc/internal/transport",
+          "function": "Close",
+          "receiver": "*http2Client",
+          "position": {
+            "filename": "internal/transport/http2_client.go",
+            "offset": 34381,
+            "line": 997,
+            "column": 23
+          }
+        },
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc",
+          "function": "tearDown",
+          "receiver": "*addrConn",
+          "position": {
+            "filename": "clientconn.go",
+            "offset": 60089,
+            "line": 1705,
+            "column": 15
+          }
+        },
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc",
+          "function": "Close$2",
+          "position": {
+            "filename": "clientconn.go",
+            "offset": 43588,
+            "line": 1226,
+            "column": 15
+          }
+        },
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc",
+          "function": "Close",
+          "receiver": "*ClientConn",
+          "position": {
+            "filename": "clientconn.go",
+            "offset": 43531,
+            "line": 1224,
+            "column": 3
+          }
+        },
+        {
+          "module": "vynic.local/edge",
+          "package": "vynic.local/edge/cmd/terminal-sim",
+          "function": "run",
+          "position": {
+            "filename": "cmd/terminal-sim/main.go",
+            "offset": 2970,
+            "line": 95,
+            "column": 2
+          }
+        },
+        {
+          "module": "vynic.local/edge",
+          "package": "vynic.local/edge/cmd/terminal-sim",
+          "function": "main",
+          "position": {
+            "filename": "cmd/terminal-sim/main.go",
+            "offset": 4855,
+            "line": 159,
+            "column": 15
+          }
+        }
+      ]
+    },
+    {
+      "osv": "GO-2026-6061",
+      "fixed_version": "v1.82.1",
+      "trace": [
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc/internal/transport",
+          "function": "NewServerTransport",
+          "position": {
+            "filename": "internal/transport/http2_server.go",
+            "offset": 5245,
+            "line": 149,
+            "column": 6
+          }
+        },
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc",
+          "function": "newHTTP2Transport",
+          "receiver": "*Server",
+          "position": {
+            "filename": "server.go",
+            "offset": 34182,
+            "line": 1019,
+            "column": 41
+          }
+        },
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc",
+          "function": "handleRawConn",
+          "receiver": "*Server",
+          "position": {
+            "filename": "server.go",
+            "offset": 32751,
+            "line": 976,
+            "column": 27
+          }
+        },
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc",
+          "function": "Serve$3",
+          "position": {
+            "filename": "server.go",
+            "offset": 32325,
+            "line": 960,
+            "column": 19
+          }
+        },
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc",
+          "function": "Serve",
+          "receiver": "*Server",
+          "position": {
+            "filename": "server.go",
+            "offset": 32295,
+            "line": 959,
+            "column": 3
+          }
+        },
+        {
+          "module": "vynic.local/edge",
+          "package": "vynic.local/edge/internal/server",
+          "function": "Serve",
+          "receiver": "*Server",
+          "position": {
+            "filename": "internal/server/server.go",
+            "offset": 6196,
+            "line": 171,
+            "column": 15
+          }
+        }
+      ]
+    },
+    {
+      "osv": "GO-2026-6061",
+      "fixed_version": "v1.82.1",
+      "trace": [
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc/internal/transport",
+          "function": "ReadMessageHeader",
+          "receiver": "*Stream",
+          "position": {
+            "filename": "internal/transport/transport.go",
+            "offset": 10885,
+            "line": 359,
+            "column": 18
+          }
+        },
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc",
+          "function": "recvMsg",
+          "receiver": "*parser",
+          "position": {
+            "filename": "rpc_util.go",
+            "offset": 22982,
+            "line": 772,
+            "column": 30
+          }
+        },
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc",
+          "function": "recvAndDecompress",
+          "position": {
+            "filename": "rpc_util.go",
+            "offset": 28423,
+            "line": 931,
+            "column": 34
+          }
+        },
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc",
+          "function": "recv",
+          "position": {
+            "filename": "rpc_util.go",
+            "offset": 31695,
+            "line": 1014,
+            "column": 32
+          }
+        },
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc",
+          "function": "recvMsg",
+          "receiver": "*csAttempt",
+          "position": {
+            "filename": "stream.go",
+            "offset": 38464,
+            "line": 1173,
+            "column": 16
+          }
+        },
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc",
+          "function": "RecvMsg$1",
+          "position": {
+            "filename": "stream.go",
+            "offset": 33845,
+            "line": 1020,
+            "column": 19
+          }
+        },
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc",
+          "function": "withRetry",
+          "receiver": "*clientStream",
+          "position": {
+            "filename": "stream.go",
+            "offset": 28229,
+            "line": 824,
+            "column": 22
+          }
+        },
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc",
+          "function": "SendMsg",
+          "receiver": "*clientStream",
+          "position": {
+            "filename": "stream.go",
+            "offset": 33106,
+            "line": 990,
+            "column": 20
+          }
+        },
+        {
+          "module": "../../packages/contracts/generated/go",
+          "package": "vynic.local/contracts/go/vynic/edge/v1",
+          "function": "WatchStatus",
+          "receiver": "*foundationClient",
+          "position": {
+            "filename": "vynic/edge/v1/foundation_grpc.pb.go",
+            "offset": 3401,
+            "line": 85,
+            "column": 34
+          }
+        },
+        {
+          "module": "vynic.local/edge",
+          "package": "vynic.local/edge/cmd/terminal-sim",
+          "function": "run$1",
+          "position": {
+            "filename": "cmd/terminal-sim/main.go",
+            "offset": 4221,
+            "line": 130,
+            "column": 37
+          }
+        },
+        {
+          "module": "vynic.local/edge",
+          "package": "vynic.local/edge/cmd/terminal-sim",
+          "function": "run",
+          "position": {
+            "filename": "cmd/terminal-sim/main.go",
+            "offset": 4581,
+            "line": 149,
+            "column": 12
+          }
+        },
+        {
+          "module": "vynic.local/edge",
+          "package": "vynic.local/edge/cmd/terminal-sim",
+          "function": "main",
+          "position": {
+            "filename": "cmd/terminal-sim/main.go",
+            "offset": 4855,
+            "line": 159,
+            "column": 15
+          }
+        }
+      ]
+    },
+    {
+      "osv": "GO-2026-6061",
+      "fixed_version": "v1.82.1",
+      "trace": [
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc/internal/transport",
+          "function": "HandleStreams",
+          "receiver": "*http2Server",
+          "position": {
+            "filename": "internal/transport/http2_server.go",
+            "offset": 20931,
+            "line": 631,
+            "column": 23
+          }
+        },
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc",
+          "function": "serveStreams",
+          "receiver": "*Server",
+          "position": {
+            "filename": "server.go",
+            "offset": 35381,
+            "line": 1058,
+            "column": 18
+          }
+        },
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc",
+          "function": "handleRawConn$1",
+          "position": {
+            "filename": "server.go",
+            "offset": 33022,
+            "line": 992,
+            "column": 17
+          }
+        },
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc",
+          "function": "handleRawConn",
+          "receiver": "*Server",
+          "position": {
+            "filename": "server.go",
+            "offset": 32994,
+            "line": 991,
+            "column": 2
+          }
+        },
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc",
+          "function": "Serve$3",
+          "position": {
+            "filename": "server.go",
+            "offset": 32325,
+            "line": 960,
+            "column": 19
+          }
+        },
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc",
+          "function": "Serve",
+          "receiver": "*Server",
+          "position": {
+            "filename": "server.go",
+            "offset": 32295,
+            "line": 959,
+            "column": 3
+          }
+        },
+        {
+          "module": "vynic.local/edge",
+          "package": "vynic.local/edge/internal/server",
+          "function": "Serve",
+          "receiver": "*Server",
+          "position": {
+            "filename": "internal/server/server.go",
+            "offset": 6196,
+            "line": 171,
+            "column": 15
+          }
+        }
+      ]
+    },
+    {
+      "osv": "GO-2026-6348",
+      "fixed_version": "v1.83.1",
+      "trace": [
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc/internal/transport",
+          "function": "GracefulClose",
+          "receiver": "*http2Client",
+          "position": {
+            "filename": "internal/transport/http2_client.go",
+            "offset": 37225,
+            "line": 1075,
+            "column": 23
+          }
+        },
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc",
+          "function": "tearDown",
+          "receiver": "*addrConn",
+          "position": {
+            "filename": "clientconn.go",
+            "offset": 59607,
+            "line": 1696,
+            "column": 23
+          }
+        },
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc",
+          "function": "Close$2",
+          "position": {
+            "filename": "clientconn.go",
+            "offset": 43588,
+            "line": 1226,
+            "column": 15
+          }
+        },
+        {
+          "module": "google.golang.org/grpc",
+          "version": "v1.79.3",
+          "package": "google.golang.org/grpc",
+          "function": "Close",
+          "receiver": "*ClientConn",
+          "position": {
+            "filename": "clientconn.go",
+            "offset": 43531,
+            "line": 1224,
+            "column": 3
+          }
+        },
+        {
+          "module": "vynic.local/edge",
+          "package": "vynic.local/edge/cmd/terminal-sim",
+          "function": "run",
+          "position": {
+            "filename": "cmd/terminal-sim/main.go",
+            "offset": 2970,
+            "line": 95,
+            "column": 2
+          }
+        },
+        {
+          "module": "vynic.local/edge",
+          "package": "vynic.local/edge/cmd/terminal-sim",
+          "function": "main",
+          "position": {
+            "filename": "cmd/terminal-sim/main.go",
+            "offset": 4855,
+            "line": 159,
+            "column": 15
+          }
+        }
+      ]
+    }
+  ],
+  "byAdvisory": {
+    "GO-2026-6061": {
+      "symbol": 17,
+      "package": 1,
+      "total": 19
+    },
+    "GO-2026-6348": {
+      "symbol": 18,
+      "package": 2,
+      "total": 21
+    },
+    "GO-2026-6441": {
+      "symbol": 0,
+      "package": 0,
+      "total": 1
+    },
+    "GO-2026-6443": {
+      "symbol": 1,
+      "package": 1,
+      "total": 3
+    },
+    "GO-2026-4918": {
+      "symbol": 0,
+      "package": 1,
+      "total": 2
+    },
+    "GO-2026-5025": {
+      "symbol": 0,
+      "package": 0,
+      "total": 1
+    },
+    "GO-2026-5026": {
+      "symbol": 0,
+      "package": 1,
+      "total": 2
+    },
+    "GO-2026-5027": {
+      "symbol": 0,
+      "package": 0,
+      "total": 1
+    },
+    "GO-2026-5028": {
+      "symbol": 0,
+      "package": 0,
+      "total": 1
+    },
+    "GO-2026-5029": {
+      "symbol": 0,
+      "package": 0,
+      "total": 1
+    },
+    "GO-2026-5030": {
+      "symbol": 0,
+      "package": 0,
+      "total": 1
+    },
+    "GO-2026-5942": {
+      "symbol": 0,
+      "package": 0,
+      "total": 1
+    },
+    "GO-2026-5970": {
+      "symbol": 0,
+      "package": 1,
+      "total": 2
+    }
+  }
+}

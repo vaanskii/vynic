@@ -1,0 +1,365 @@
+{
+  "mode": "FOCUSED_BEFORE_TO_CURRENT_WHITESPACE_CHECK",
+  "files": [
+    {
+      "path": "apps/backend/prisma/migrations/20261015120000_printer_runtime_preparation/migration.sql",
+      "exitCode": 1,
+      "whitespaceClean": true
+    },
+    {
+      "path": "apps/backend/prisma/schema.prisma",
+      "exitCode": 1,
+      "whitespaceClean": true
+    },
+    {
+      "path": "apps/backend/src/customer/customer.controller.ts",
+      "exitCode": 1,
+      "whitespaceClean": true
+    },
+    {
+      "path": "apps/backend/src/customer/customer.service.ts",
+      "exitCode": 1,
+      "whitespaceClean": true
+    },
+    {
+      "path": "apps/backend/src/customer/printer-runtime-config.spec.ts",
+      "exitCode": 1,
+      "whitespaceClean": true
+    },
+    {
+      "path": "apps/backend/src/customer/printer-runtime-config.ts",
+      "exitCode": 1,
+      "whitespaceClean": true
+    },
+    {
+      "path": "apps/backend/src/customer/printer-runtime-persistence.spec.ts",
+      "exitCode": 1,
+      "whitespaceClean": true
+    },
+    {
+      "path": "apps/backend/src/customer/printer-runtime-persistence.ts",
+      "exitCode": 1,
+      "whitespaceClean": true
+    },
+    {
+      "path": "apps/operations/lib/apps/windows_pos/widgets/admin/printers/additional_printers_section.dart",
+      "exitCode": 1,
+      "whitespaceClean": true
+    },
+    {
+      "path": "apps/operations/lib/apps/windows_pos/widgets/shared/print_jobs.dart",
+      "exitCode": 1,
+      "whitespaceClean": true
+    },
+    {
+      "path": "apps/operations/lib/core/database/repositories/backup_repository.dart",
+      "exitCode": 1,
+      "whitespaceClean": true
+    },
+    {
+      "path": "apps/operations/lib/core/database/repositories/order_table_mutation_repository.dart",
+      "exitCode": 1,
+      "whitespaceClean": true
+    },
+    {
+      "path": "apps/operations/lib/core/database/repositories/print_job_repository.dart",
+      "exitCode": 1,
+      "whitespaceClean": true
+    },
+    {
+      "path": "apps/operations/lib/core/services/edge/edge_device_credential_store.dart",
+      "exitCode": 1,
+      "whitespaceClean": true
+    },
+    {
+      "path": "apps/operations/lib/core/services/edge/operational_proof/client.dart",
+      "exitCode": 1,
+      "whitespaceClean": true
+    },
+    {
+      "path": "apps/operations/lib/core/services/edge/operational_proof/domain.dart",
+      "exitCode": 1,
+      "whitespaceClean": true
+    },
+    {
+      "path": "apps/operations/lib/core/services/edge/operational_proof/frame_store.dart",
+      "exitCode": 1,
+      "whitespaceClean": true
+    },
+    {
+      "path": "apps/operations/lib/core/services/edge/operational_proof/intent_adapter.dart",
+      "exitCode": 1,
+      "whitespaceClean": true
+    },
+    {
+      "path": "apps/operations/lib/core/services/edge/operational_proof/ordinary_planner.dart",
+      "exitCode": 1,
+      "whitespaceClean": true
+    },
+    {
+      "path": "apps/operations/lib/core/services/edge/operational_proof/planning_view.dart",
+      "exitCode": 1,
+      "whitespaceClean": true
+    },
+    {
+      "path": "apps/operations/lib/core/services/edge/runtime_config_sync.dart",
+      "exitCode": 1,
+      "whitespaceClean": true
+    },
+    {
+      "path": "apps/operations/lib/core/services/pos/update/update_readiness.dart",
+      "exitCode": 1,
+      "whitespaceClean": true
+    },
+    {
+      "path": "apps/operations/lib/core/services/printing/cloud_printer_runtime.dart",
+      "exitCode": 1,
+      "whitespaceClean": true
+    },
+    {
+      "path": "apps/operations/lib/core/services/printing/escpos_kitchen_renderer.dart",
+      "exitCode": 1,
+      "whitespaceClean": true
+    },
+    {
+      "path": "apps/operations/lib/core/services/printing/escpos_receipt_renderer.dart",
+      "exitCode": 1,
+      "whitespaceClean": true
+    },
+    {
+      "path": "apps/operations/lib/core/services/printing/escpos_report_renderer.dart",
+      "exitCode": 1,
+      "whitespaceClean": true
+    },
+    {
+      "path": "apps/operations/lib/core/services/printing/local_printer_catalog.dart",
+      "exitCode": 1,
+      "whitespaceClean": true
+    },
+    {
+      "path": "apps/operations/lib/core/services/printing/optional_printer_beep.dart",
+      "exitCode": 1,
+      "whitespaceClean": true
+    },
+    {
+      "path": "apps/operations/lib/core/services/printing/print_identity_admission.dart",
+      "exitCode": 1,
+      "whitespaceClean": true
+    },
+    {
+      "path": "apps/operations/lib/core/services/printing/print_job.dart",
+      "exitCode": 1,
+      "whitespaceClean": true
+    },
+    {
+      "path": "apps/operations/lib/core/services/printing/print_queue.dart",
+      "exitCode": 1,
+      "whitespaceClean": true
+    },
+    {
+      "path": "apps/operations/lib/core/services/printing/print_reconciliation.dart",
+      "exitCode": 1,
+      "whitespaceClean": true
+    },
+    {
+      "path": "apps/operations/lib/core/services/printing/print_routing_plan.dart",
+      "exitCode": 1,
+      "whitespaceClean": true
+    },
+    {
+      "path": "apps/operations/lib/core/services/printing/printer_capability_profile.dart",
+      "exitCode": 1,
+      "whitespaceClean": true
+    },
+    {
+      "path": "apps/operations/lib/core/services/printing/printer_destination.dart",
+      "exitCode": 1,
+      "whitespaceClean": true
+    },
+    {
+      "path": "apps/operations/lib/core/services/printing/printer_service.dart",
+      "exitCode": 1,
+      "whitespaceClean": true
+    },
+    {
+      "path": "apps/operations/lib/core/services/printing/windows_spooler_transport.dart",
+      "exitCode": 1,
+      "whitespaceClean": true
+    },
+    {
+      "path": "apps/operations/test/support/pos02_preview_harness.dart",
+      "exitCode": 1,
+      "whitespaceClean": true
+    },
+    {
+      "path": "apps/operations/test/unit/cloud_printer_runtime_sync_test.dart",
+      "exitCode": 1,
+      "whitespaceClean": true
+    },
+    {
+      "path": "apps/operations/test/unit/cloud_printer_runtime_test.dart",
+      "exitCode": 1,
+      "whitespaceClean": true
+    },
+    {
+      "path": "apps/operations/test/unit/escpos_capability_renderer_test.dart",
+      "exitCode": 1,
+      "whitespaceClean": true
+    },
+    {
+      "path": "apps/operations/test/unit/operational_ordinary_planner_test.dart",
+      "exitCode": 1,
+      "whitespaceClean": true
+    },
+    {
+      "path": "apps/operations/test/unit/operational_proof_client_test.dart",
+      "exitCode": 1,
+      "whitespaceClean": true
+    },
+    {
+      "path": "apps/operations/test/unit/optional_printer_beep_test.dart",
+      "exitCode": 1,
+      "whitespaceClean": true
+    },
+    {
+      "path": "apps/operations/test/unit/pos02_acceptance_runner_test.dart",
+      "exitCode": 1,
+      "whitespaceClean": true
+    },
+    {
+      "path": "apps/operations/test/unit/pos02_preview_safety_test.dart",
+      "exitCode": 1,
+      "whitespaceClean": true
+    },
+    {
+      "path": "apps/operations/test/unit/print_identity_credential_admission_test.dart",
+      "exitCode": 1,
+      "whitespaceClean": true
+    },
+    {
+      "path": "apps/operations/test/unit/print_routing_plan_test.dart",
+      "exitCode": 1,
+      "whitespaceClean": true
+    },
+    {
+      "path": "apps/operations/test/unit/printer_capability_profile_test.dart",
+      "exitCode": 1,
+      "whitespaceClean": true
+    },
+    {
+      "path": "apps/operations/test/unit/printer_destination_test.dart",
+      "exitCode": 1,
+      "whitespaceClean": true
+    },
+    {
+      "path": "apps/operations/test/unit/printer_route_catalog_test.dart",
+      "exitCode": 1,
+      "whitespaceClean": true
+    },
+    {
+      "path": "apps/operations/test/unit/routed_print_delivery_test.dart",
+      "exitCode": 1,
+      "whitespaceClean": true
+    },
+    {
+      "path": "apps/operations/test/unit/windows_spooler_transport_test.dart",
+      "exitCode": 1,
+      "whitespaceClean": true
+    },
+    {
+      "path": "apps/operations/test/widget/printer_route_configuration_test.dart",
+      "exitCode": 1,
+      "whitespaceClean": true
+    },
+    {
+      "path": "apps/operations/test/widget/production_print_copy_test.dart",
+      "exitCode": 1,
+      "whitespaceClean": true
+    },
+    {
+      "path": "apps/operations/tool/pos02_acceptance_request.dart",
+      "exitCode": 1,
+      "whitespaceClean": true
+    },
+    {
+      "path": "apps/operations/windows/runner/CMakeLists.txt",
+      "exitCode": 1,
+      "whitespaceClean": true
+    },
+    {
+      "path": "apps/operations/windows/runner/flutter_window.cpp",
+      "exitCode": 1,
+      "whitespaceClean": true
+    },
+    {
+      "path": "apps/operations/windows/runner/flutter_window.h",
+      "exitCode": 1,
+      "whitespaceClean": true
+    },
+    {
+      "path": "apps/operations/windows/runner/windows_spooler.cpp",
+      "exitCode": 1,
+      "whitespaceClean": true
+    },
+    {
+      "path": "apps/operations/windows/runner/windows_spooler.h",
+      "exitCode": 1,
+      "whitespaceClean": true
+    },
+    {
+      "path": "apps/operations/windows/runner/windows_spooler_channel.cpp",
+      "exitCode": 1,
+      "whitespaceClean": true
+    },
+    {
+      "path": "apps/operations/windows/runner/windows_spooler_channel.h",
+      "exitCode": 1,
+      "whitespaceClean": true
+    },
+    {
+      "path": "apps/operations/windows/tests/CMakeLists.txt",
+      "exitCode": 1,
+      "whitespaceClean": true
+    },
+    {
+      "path": "apps/operations/windows/tests/windows_spooler_test.cpp",
+      "exitCode": 1,
+      "whitespaceClean": true
+    },
+    {
+      "path": "docs/POS_MULTI_TERMINAL_READINESS_PLAN.md",
+      "exitCode": 1,
+      "whitespaceClean": true
+    },
+    {
+      "path": "docs/POS_MULTI_TERMINAL_WRITER_COVERAGE.md",
+      "exitCode": 1,
+      "whitespaceClean": true
+    },
+    {
+      "path": "docs/agent-state/VYNIC_CODE_MAP.md",
+      "exitCode": 1,
+      "whitespaceClean": true
+    },
+    {
+      "path": "docs/agent-state/VYNIC_PROJECT_STATE.md",
+      "exitCode": 1,
+      "whitespaceClean": true
+    },
+    {
+      "path": "docs/audits/2026-09-29-f7bb982/MASTER_BACKLOG.md",
+      "exitCode": 1,
+      "whitespaceClean": true
+    },
+    {
+      "path": "docs/audits/2026-09-29-f7bb982/VYNIC_MASTER_STABILIZATION_AND_RELEASE_PLAN_2026-09-29.md",
+      "exitCode": 1,
+      "whitespaceClean": true
+    },
+    {
+      "path": "docs/audits/2026-10-04-readiness/READINESS_AUDIT.md",
+      "exitCode": 1,
+      "whitespaceClean": true
+    }
+  ]
+}

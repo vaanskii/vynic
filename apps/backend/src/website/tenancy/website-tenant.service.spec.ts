@@ -154,6 +154,32 @@ describe('WebsiteTenantService.resolveRequest', () => {
     ).resolves.toBeNull();
   });
 
+  it('never serves an unregistered named *.localhost site as the bootstrap Venue', async () => {
+    const { service } = makeService(rows, { NODE_ENV: 'development' });
+    await expect(
+      service.resolveRequest({
+        headers: { host: 'custom-z.vynic.localhost:5176' },
+      }),
+    ).resolves.toBeNull();
+  });
+
+  it('treats a present trusted forwarded host as the only authority', async () => {
+    const { service } = makeService(rows, {
+      NODE_ENV: 'production',
+      TRUST_PROXY_HOST: 'true',
+    });
+    // An unregistered forwarded name must not fall back to the direct Host.
+    await expect(
+      service.resolveRequest({
+        headers: { host: 'a.test', 'x-forwarded-host': 'unknown.test' },
+      }),
+    ).resolves.toBeNull();
+    // Without a forwarded header the direct Host still decides.
+    await expect(
+      service.resolveRequest({ headers: { host: 'a.test' } }),
+    ).resolves.toMatchObject({ tenant: { venueId: 'venue-a' } });
+  });
+
   it('lets the development fallback host be configured', async () => {
     const { service } = makeService(rows, {
       NODE_ENV: 'development',

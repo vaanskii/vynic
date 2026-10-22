@@ -1,3 +1,6 @@
+import { requestTableRepair } from './manager-table-repair';
+import { randomUUID } from 'node:crypto';
+import type { ManagerAuthContext } from '../../auth/manager-auth-context';
 import { financialPayments } from '../../finance/financial-summary';
 import {
   BadRequestException,
@@ -29,12 +32,8 @@ import {
 } from '../util/mobile-date.util';
 import { settingIdentity } from '../../tenancy/tenant-identity';
 import type { TenantContext } from '../../tenancy/tenant-context';
+import { managerSource } from './manager-data-freshness';
 import { MobileSaleLedgerService } from './mobile-sale-ledger.service';
-
-const MANAGER_TABLE_LAYOUT: Record<string, Set<string>> = {
-  first: new Set(['1', '2', '3', '4', '5', '6', '7', '8', '9']),
-  second: new Set(['1', '2', '3', '4']),
-};
 
 export interface DashboardResponse {
   todayRevenue: number;
@@ -61,7 +60,7 @@ export interface DashboardResponse {
   occupiedTables: number;
   reservedTables: number;
   freeTables: number;
-  snapshotAt: string;
+  snapshotAt: string | null;
   financialProvenance?: string;
   financialWarning?: string | null;
   tbcRevenue?: number;
@@ -78,6 +77,15 @@ export interface StaffRankEntry {
 }
 
 export interface FinancialsResponse {
+  businessDate: string;
+  metricDefinitions?: {
+    revenue: string;
+    collected: string;
+    outflows: string;
+    difference: string;
+    realizedProfitAvailable: false;
+    completeCashflowAvailable: false;
+  };
   procurement: Awaited<ReturnType<typeof procurementSummary>>;
   otherExpenses: string;
   salaryPayments: string;
@@ -102,6 +110,7 @@ export interface FinancialsResponse {
     amount: number;
     paymentType: string;
     createdAt: string;
+    canDelete: boolean;
   }[];
   financialProvenance?: string;
   financialWarning?: string | null;
@@ -132,64 +141,35 @@ export class MobileDashboardService {
     private readonly saleLedger?: MobileSaleLedgerService,
   ) {}
 
-  private normalizeManagerTableNumber(raw: unknown, floor: string): string {
-    const trimmed = String(raw ?? '').trim();
-    if (!trimmed) return '';
-    const withoutLabel = trimmed
-      .replace(/^table\s*/i, '')
-      .replace(/^vip zone\s*/i, '')
-      .trim();
-    const parsed = Number.parseInt(withoutLabel, 10);
-    if (Number.isFinite(parsed) && floor === 'second' && parsed > 10) {
-      return String(parsed - 10);
-    }
-    return withoutLabel;
-  }
-
-  private isManagerPhysicalTable(table: any): boolean {
-    const floor = String(table.floor ?? '')
-      .trim()
-      .toLowerCase();
-    const allowed = MANAGER_TABLE_LAYOUT[floor];
-    if (!allowed) return false;
-    return allowed.has(
-      this.normalizeManagerTableNumber(table.tableNumber, floor),
-    );
+  private isManagerPhysicalTable(table: {
+    tableKind?: string | null;
+  }): boolean {
+    // NULL preserves visibility for clients predating explicit classification.
+    return table.tableKind !== 'VIRTUAL';
   }
 
   private managerTableSort(a: any, b: any): number {
-    const floorRank = (floor: unknown) =>
-      String(floor ?? '')
-        .trim()
-        .toLowerCase() === 'second'
-        ? 1
-        : 0;
-    const floorDiff = floorRank(a.floor) - floorRank(b.floor);
-    if (floorDiff !== 0) return floorDiff;
-
-    const aFloor = String(a.floor ?? '')
-      .trim()
-      .toLowerCase();
-    const bFloor = String(b.floor ?? '')
-      .trim()
-      .toLowerCase();
-    const aNum = Number.parseInt(
-      this.normalizeManagerTableNumber(a.tableNumber, aFloor),
-      10,
-    );
-    const bNum = Number.parseInt(
-      this.normalizeManagerTableNumber(b.tableNumber, bFloor),
-      10,
-    );
-    if (Number.isFinite(aNum) && Number.isFinite(bNum)) {
-      return aNum - bNum;
-    }
-    return String(a.tableNumber ?? '').localeCompare(
-      String(b.tableNumber ?? ''),
+    const floorOrder =
+      (a.floorSortOrder ?? Number.MAX_SAFE_INTEGER) -
+      (b.floorSortOrder ?? Number.MAX_SAFE_INTEGER);
+    if (floorOrder !== 0) return floorOrder;
+    const floor = String(a.floor).localeCompare(String(b.floor), undefined, {
+      numeric: true,
+    });
+    if (floor !== 0) return floor;
+    const tableOrder =
+      (a.tableSortOrder ?? Number.MAX_SAFE_INTEGER) -
+      (b.tableSortOrder ?? Number.MAX_SAFE_INTEGER);
+    return (
+      tableOrder ||
+      String(a.tableNumber).localeCompare(String(b.tableNumber), undefined, {
+        numeric: true,
+      })
     );
   }
 
   async getDashboard(tenant: TenantContext): Promise<DashboardResponse> {
+    const source = await managerSource(this.prisma, tenant, 'dashboard');
     // Use the business date set by the POS (stored in Setting).
     // Falls back to calendar today if not yet set (first-run / no POS connected).
     const businessDateSetting = await (this.prisma as any).setting.findUnique({
@@ -231,6 +211,7 @@ export class MobileDashboardService {
           currentBill: true,
           isReserved: true,
           activeOrderId: true,
+          tableKind: true,
         },
       }),
       this.prisma.order.findMany({
@@ -238,12 +219,6 @@ export class MobileDashboardService {
           venueId: tenant.venueId,
           ...businessDateWhere(todayDateKey),
           status: { notIn: ['closed', 'cancelled', 'paid'] },
-          NOT: {
-            OR: [
-              { floor: { contains: 'takeaway', mode: 'insensitive' } },
-              { floor: { contains: 'take away', mode: 'insensitive' } },
-            ],
-          },
         },
         select: { posOrderId: true, totalAmount: true, businessDate: true },
       }),
@@ -279,7 +254,6 @@ export class MobileDashboardService {
       });
     }
 
-    const openPosOrderIds = new Set<number>();
     const openPayableByPosOrderId = new Map<number, number>();
     for (const table of physicalTables) {
       if (table.activeOrderId == null) continue;
@@ -292,15 +266,13 @@ export class MobileDashboardService {
       const payable = bill > 0 ? bill : linked.totalAmount;
       const previous = openPayableByPosOrderId.get(posId) ?? 0;
       openPayableByPosOrderId.set(posId, Math.max(previous, payable));
-      openPosOrderIds.add(posId);
     }
     const openTablesPayable = Array.from(
       openPayableByPosOrderId.values(),
     ).reduce((sum, amount) => sum + amount, 0);
 
     const occupiedTables = physicalTables.filter(
-      (t: any) =>
-        t.activeOrderId != null && openPosOrderIds.has(Number(t.activeOrderId)),
+      (t: any) => t.activeOrderId != null,
     ).length;
     const reservedTables = physicalTables.filter(
       (t: any) => t.isReserved && t.activeOrderId == null,
@@ -443,7 +415,7 @@ export class MobileDashboardService {
       occupiedTables,
       reservedTables,
       freeTables,
-      snapshotAt: new Date().toISOString(),
+      snapshotAt: source.sourceUpdatedAt,
       ...(ledger
         ? {
             financialProvenance: ledger.provenance,
@@ -465,10 +437,15 @@ export class MobileDashboardService {
       .filter((t: any) => this.isManagerPhysicalTable(t))
       .sort((a: any, b: any) => this.managerTableSort(a, b))
       .map((t: any) => {
-        const occupied = !!(t.isReserved || t.activeOrderId);
+        const occupied = t.isReserved || t.activeOrderId != null;
         return {
           id: t.id,
-          tableNumber: this.normalizeManagerTableNumber(t.tableNumber, t.floor),
+          tableNumber: t.tableNumber,
+          tableKind: t.tableKind ?? null,
+          tableLabel: t.tableLabel ?? null,
+          floorLabel: t.floorLabel ?? null,
+          tableSortOrder: t.tableSortOrder ?? null,
+          floorSortOrder: t.floorSortOrder ?? null,
           floor: t.floor,
           isReserved: occupied,
           isOccupied: occupied,
@@ -480,45 +457,26 @@ export class MobileDashboardService {
   }
 
   async freeTable(
-    tenant: TenantContext,
+    actor: ManagerAuthContext,
     tableNumber: string,
     floor: string,
-    monitoringSocketId?: string,
+    requestId: unknown,
   ) {
-    const updated = await (this.prisma as any).table.updateMany({
-      where: {
-        venueId: tenant.venueId,
-        tableNumber,
-        floor,
-      },
-      data: { isReserved: false, activeOrderId: null, currentBill: 0 },
-    });
-    if (updated.count === 0)
-      return { success: false, error: 'table_not_found' };
-    this.mutationSupport.registerMobileMutationEchoGuard(tenant, undefined, {
+    return requestTableRepair(
+      this.prisma,
+      actor,
       tableNumber,
       floor,
-    });
-    this.gateway.broadcastUpdate(
-      tenant,
-      'data_updated',
-      {
-        type: 'tables',
-        action: 'freed',
-        tableNumber,
-        floor,
-      },
-      this.mutationSupport.wsExcludeOpts(monitoringSocketId),
+      requestId,
     );
-    return { success: true };
   }
 
-  async getStaffPerformance(tenant: TenantContext): Promise<StaffRankEntry[]> {
-    void tenant;
-    // Per-waiter Sale attribution is not present in the authoritative summary
-    // mirror yet. Raw Orders include open/internal/restored states and net
-    // payable values, so an empty unavailable result is the only honest value.
-    return [];
+  async getStaffPerformance(
+    tenant: TenantContext,
+    query: { from?: string; to?: string } = {},
+  ): Promise<StaffRankEntry[]> {
+    const ledger = this.saleLedger ?? new MobileSaleLedgerService(this.prisma);
+    return ledger.getStaffPerformance(tenant, query);
   }
 
   async getFinancials(tenant: TenantContext): Promise<FinancialsResponse> {
@@ -544,6 +502,7 @@ export class MobileDashboardService {
           category: true,
           paymentType: true,
           createdAt: true,
+          posExpenseId: true,
         },
         orderBy: { createdAt: 'desc' },
       }),
@@ -621,6 +580,14 @@ export class MobileDashboardService {
 
     return {
       procurement,
+      metricDefinitions: {
+        revenue: 'FISCAL_SALE_VALUE_INCLUDING_APPLIED_ADVANCE',
+        collected: 'SALE_CLOSE_PAYMENTS_EXCLUDING_APPLIED_ADVANCE',
+        outflows: 'RECORDED_EXPENSES_AND_SUPPLIER_PAYROLL_OBLIGATION_PAYMENTS',
+        difference: 'REVENUE_MINUS_RECORDED_OUTFLOWS',
+        realizedProfitAvailable: false,
+        completeCashflowAvailable: false,
+      },
       otherExpenses: otherExpenses.toFixed(2),
       salaryPayments: salaryPayments.toFixed(2),
       legacySalaryPayments: legacySalaryPayments.toFixed(2),
@@ -634,6 +601,7 @@ export class MobileDashboardService {
         .toFixed(2),
       ...actual,
       totalOutflows: totalOutflows.toFixed(2),
+      businessDate: currentBusinessDate,
       revenue: r(revenue),
       expenses: r(totalExp),
       profit: new Prisma.Decimal(revenue).minus(totalOutflows).toNumber(),
@@ -654,6 +622,7 @@ export class MobileDashboardService {
         amount: r(Number(e.amount)),
         paymentType: e.paymentType,
         createdAt: e.createdAt.toISOString(),
+        canDelete: !isSalaryCategory(e.category) && e.posExpenseId === null,
       })),
       ...(ledger
         ? {
@@ -719,39 +688,56 @@ export class MobileDashboardService {
       now.getSeconds(),
       now.getMilliseconds(),
     );
-    const created = await this.prisma.expense.create({
-      data: {
-        venueId: tenant.venueId,
-        description,
-        amount,
-        category,
-        paymentType,
-        createdAt,
+    // Use the same identity before dispatch and when the POS echoes the record
+    // back through snapshot ingestion's (Venue, posExpenseId) uniqueness key.
+    const id = randomUUID();
+    const { created, posDelivery } = await this.prisma.$transaction(
+      async (tx) => {
+        await tx.$queryRaw`SELECT "id" FROM "pos"."Venue" WHERE "id"=${tenant.venueId} FOR UPDATE`;
+        const created = await tx.expense.create({
+          data: {
+            id,
+            venueId: tenant.venueId,
+            posExpenseId: id,
+            businessDate: currentBusinessDate,
+            description,
+            amount,
+            category,
+            paymentType,
+            createdAt,
+          },
+          select: {
+            id: true,
+            description: true,
+            category: true,
+            amount: true,
+            paymentType: true,
+            createdAt: true,
+          },
+        });
+        // Cloud allocates the expense id, and the POS upserts on it — so a
+        // redelivered command updates the one record instead of adding a second
+        // expense to a restaurant's day.
+        const posDelivery = await this.posCommands.recordCloudMutation(
+          tx,
+          tenant,
+          {
+            type: EdgeCommandTypes.EXPENSE_CREATE,
+            payload: {
+              id: created.id,
+              description: created.description,
+              category: created.category,
+              amount: Number(created.amount),
+              paymentType: created.paymentType,
+              createdAt: created.createdAt.toISOString(),
+              businessDate: currentBusinessDate,
+            },
+          },
+        );
+        return { created, posDelivery };
       },
-      select: {
-        id: true,
-        description: true,
-        category: true,
-        amount: true,
-        paymentType: true,
-        createdAt: true,
-      },
-    });
-    // Cloud allocates the expense id, and the POS upserts on it — so a
-    // redelivered command updates the one record instead of adding a second
-    // expense to a restaurant's day.
-    const posDelivery = await this.posCommands.dispatch(tenant, {
-      type: EdgeCommandTypes.EXPENSE_CREATE,
-      payload: {
-        id: created.id,
-        description: created.description,
-        category: created.category,
-        amount: Number(created.amount),
-        paymentType: created.paymentType,
-        createdAt: created.createdAt.toISOString(),
-        businessDate: currentBusinessDate,
-      },
-    });
+    );
+    this.posCommands.kickRecordedDelivery(tenant, posDelivery);
     return {
       posDelivery,
       id: created.id,
@@ -774,8 +760,12 @@ export class MobileDashboardService {
       throw new BadRequestException(
         'ძველი ხელფასის ისტორია მხოლოდ წაკითხვისთვისაა',
       );
+    if (existing?.posExpenseId != null)
+      throw new BadRequestException(
+        'ხარჯი ინახება POS-ში და აქედან ვერ წაიშლება',
+      );
     const deleted = await this.prisma.expense.deleteMany({
-      where: { id, venueId: tenant.venueId },
+      where: { id, venueId: tenant.venueId, posExpenseId: null },
     });
     if (deleted.count === 0) {
       throw new NotFoundException('Expense not found');

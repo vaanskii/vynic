@@ -123,6 +123,14 @@ class InventoryFakeDb {
 
   /** Enough of `groupBy` for the derived-balance read. */
   readonly stockMovement = {
+    findFirst: ({ where }: any) =>
+      Promise.resolve(
+        this.movements.find(
+          (row) =>
+            row.venueId === where.venueId &&
+            row.stockItemId === where.stockItemId,
+        ) ?? null,
+      ),
     groupBy: ({ where }: any) => {
       const wanted: string[] | null = where.stockItemId?.in ?? null;
       const totals = new Map<string, Prisma.Decimal>();
@@ -178,6 +186,10 @@ class InventoryFakeDb {
 
   $transaction<T>(callback: (tx: this) => Promise<T>) {
     return callback(this);
+  }
+
+  $queryRaw() {
+    return Promise.resolve([]);
   }
 }
 

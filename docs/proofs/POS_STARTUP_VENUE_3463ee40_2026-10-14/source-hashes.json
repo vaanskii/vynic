@@ -1,0 +1,10 @@
+{
+  "apps/operations/lib/core/services/edge/edge_device_credential_store.dart": "5d11aadce1f472bea97131ba7a6518aac9c171862a8a0d2f44e24814f0aeb385",
+  "apps/operations/lib/core/services/menu/menu_local_store.dart": "a08313badb297eb8e75830ada10da90c8e4a55a370fee34dde6b0136271d87fd",
+  "apps/operations/lib/startup_pos.dart": "d44e3cc1ffb04cc0a9bf690e75291fb0775b26d78503ea5aba20a701d814716d",
+  "apps/operations/test/unit/edge_device_credential_store_test.dart": "d5f25f0107251de33a22757f530c06af58b4aafac762c53021a5f348137f3e5c",
+  "apps/operations/test/unit/pos_startup_venue_test.dart": "e9472c017c22b76eea05f1c3675c49736c52ae1994d5b62f4f28461e2ffbb6eb",
+  "docs/POS_LOCAL_VENUE_STARTUP.md": "e9ff44fdb00ae412b0cb6248e801ed7ae8476012f7e73e68e4b430e5b3fbe223",
+  "docs/agent-state/VYNIC_PROJECT_STATE.md": "6da4c845929e1ea7d8467a4a6781d78f299b8a7faba7e50515e0d8f522762a90",
+  "docs/agent-state/VYNIC_CODE_MAP.md": "92f34a4394f7f62cc00106a8b4d59c13abc040fa221175684c13226f1d41d703"
+}

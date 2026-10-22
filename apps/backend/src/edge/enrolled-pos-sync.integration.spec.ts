@@ -18,6 +18,7 @@ import { StaffSyncService } from '../pos/sync/snapshot/staff-sync.service';
 import { TableSyncService } from '../pos/sync/snapshot/table-sync.service';
 import { DeviceEnrollmentService } from './device-enrollment.service';
 import { EnrollmentRateLimiter } from './enrollment-rate-limiter';
+import { grantTrialPlan } from '../../test/commercial-access.fixture';
 
 const databaseUrl = process.env.TENANT_INTEGRATION_DATABASE_URL;
 const describeDatabase = databaseUrl ? describe : describe.skip;
@@ -92,6 +93,9 @@ describeDatabase('An enrolled POS pushing to the backend (PostgreSQL)', () => {
     organizationId = organization.id;
     venueAId = organization.venues.find((v) => v.name === 'Venue A')!.id;
     venueBId = organization.venues.find((v) => v.name === 'Venue B')!.id;
+    // Both restaurants hold POS, so enrollment is the only thing separating them.
+    await grantTrialPlan(prisma, venueAId, 'POS');
+    await grantTrialPlan(prisma, venueBId, 'POS');
 
     // Enroll a terminal into Venue A exactly the way an operator would, then
     // authenticate as it. Everything below runs on what that produced.

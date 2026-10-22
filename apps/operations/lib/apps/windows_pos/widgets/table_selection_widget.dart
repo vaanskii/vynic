@@ -63,6 +63,14 @@ class TableSelectionWidgetState extends State<TableSelectionWidget> {
       DatabaseService.getRestaurantTableLayout();
   String? selectedTable;
   final Set<String> _selectedTables = {};
+  bool _multiSelectionMode = false;
+  bool get multiSelectionMode => _multiSelectionMode;
+
+  void toggleMultiSelectionMode() {
+    setState(() => _multiSelectionMode = !_multiSelectionMode);
+    widget.onSelectionChanged?.call();
+  }
+
   final Set<String> _focusedReservedTables = {};
   int _currentFloor = 1; // Track current floor (1 or 2)
   List<TableModel> _tables = [];
@@ -362,6 +370,10 @@ class TableSelectionWidgetState extends State<TableSelectionWidget> {
     // already picked one table), a further tap just adds/removes from that
     // set — it must not discard progress or auto-navigate. Only a tap from a
     // completely clean slate takes the fast, single-tap-opens-the-table path.
+    if (_multiSelectionMode) {
+      _handleTableLongPress(tableId);
+      return;
+    }
     final buildingMultiSelect =
         _selectedTables.isNotEmpty && !_selectedTables.contains(tableId);
     // Tapping any already-selected table (whether it's the only one or one of
@@ -502,6 +514,7 @@ class TableSelectionWidgetState extends State<TableSelectionWidget> {
   // Public method to clear all selections
   void clearSelection() {
     setState(() {
+      _multiSelectionMode = false;
       _selectedTables.clear();
       _focusedReservedTables.clear();
       selectedTable = null;
@@ -594,11 +607,48 @@ class TableSelectionWidgetState extends State<TableSelectionWidget> {
         final scaledHeight = content.height * scale;
         final clusters = _buildTableClusters(objects);
 
+        if (objects.isEmpty && _currentTableDefinitions.isEmpty) {
+          return const SizedBox.expand(
+            key: Key('home-floor-plan-viewport'),
+            child: ColoredBox(
+              color: VynicFloorTokens.canvas,
+              child: Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.table_restaurant_outlined,
+                      size: 32,
+                      color: VynicFloorTokens.textMuted,
+                    ),
+                    SizedBox(height: 12),
+                    Text(
+                      'ამ სართულზე მაგიდები არ არის',
+                      style: TextStyle(
+                        fontSize: 15,
+                        color: VynicFloorTokens.textMuted,
+                      ),
+                    ),
+                    SizedBox(height: 6),
+                    Text(
+                      'მაგიდების განლაგება მართვის ცენტრში დაამატეთ',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: VynicFloorTokens.textMuted,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        }
         return Align(
           alignment: Alignment.topCenter,
           child: Container(
-            width: scaledWidth,
-            height: scaledHeight,
+            key: const Key('home-floor-plan-viewport'),
+            width: constraints.maxWidth,
+            height: constraints.maxHeight,
             clipBehavior: Clip.antiAlias,
             decoration: BoxDecoration(
               // Off-white against the white panel, with its own hairline —
@@ -622,17 +672,23 @@ class TableSelectionWidgetState extends State<TableSelectionWidget> {
             child: Stack(
               clipBehavior: Clip.none,
               children: [
+                if (widget.showFloorPlanGrid)
+                  const Positioned.fill(
+                    child: IgnorePointer(
+                      child: CustomPaint(painter: _ViewportFloorGrid()),
+                    ),
+                  ),
                 Positioned(
-                  left: -content.left * scale,
-                  top: -content.top * scale,
+                  left:
+                      (constraints.maxWidth - scaledWidth) / 2 -
+                      content.left * scale,
+                  top:
+                      (constraints.maxHeight - scaledHeight) / 2 -
+                      content.top * scale,
                   width: canvasWidth * scale,
                   height: canvasHeight * scale,
                   child: Stack(
                     children: [
-                      if (widget.showFloorPlanGrid)
-                        Positioned.fill(
-                          child: CustomPaint(painter: FloorPlanGridPainter()),
-                        ),
                       // Chairs get their own layer: table tiles are positioned
                       // widgets that clip to their own box, and seat marks sit
                       // just outside it.
@@ -1833,4 +1889,15 @@ Rect floorPlanContentBounds(List<RestaurantLayoutObject> objects, Size canvas) {
     return full;
   }
   return bounds;
+}
+
+/// View-only grid fills the available surface. Saved objects retain the same
+/// uniform scale and relative coordinates inside their translated inner stack.
+class _ViewportFloorGrid extends CustomPainter {
+  const _ViewportFloorGrid();
+  @override
+  void paint(Canvas canvas, Size size) =>
+      FloorPlanGridPainter().paint(canvas, size);
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

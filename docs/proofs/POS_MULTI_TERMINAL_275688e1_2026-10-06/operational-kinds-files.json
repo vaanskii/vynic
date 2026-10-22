@@ -1,0 +1,66 @@
+{
+  "sourceRoot": "/tmp/vynic-readiness-20261006-a2nbcprb/source",
+  "ownedFiles": [
+    {
+      "path": "apps/edge/internal/store/operational.go",
+      "beforeSha256": "0fbb7a53c9075628e0a5a4db9267bc98c407366b390d63a17b07d93097bfe807",
+      "afterSha256": "7ad40c1a4644d7c40a9708dd810e063e33bad420a856f687cc291b8069c5ebcd",
+      "bytes": 22601
+    },
+    {
+      "path": "apps/edge/internal/store/operational_test.go",
+      "beforeSha256": "d3f75f26c3be0c76d8816082d6fcd642e325bc22b4c1f665a69de8117ae8071f",
+      "afterSha256": "450cd8c16d7d7c475e66d3317a095e49c39110bb8248a0105131d5a3e62ae686",
+      "bytes": 49397
+    },
+    {
+      "path": "apps/edge/internal/store/store.go",
+      "beforeSha256": "1e48e56755253515abc5bdbb3ad24872b093f3b8e6d181c12411a53d8fe6bcc5",
+      "afterSha256": "1986e88ef3625fab25855c7d6f6ebc90a5f793a16a2632c0afc8d04728c81e11",
+      "bytes": 5639
+    },
+    {
+      "path": "apps/edge/internal/store/migrations/004_operational_entity_kinds.sql",
+      "beforeSha256": null,
+      "afterSha256": "c9878fdbae27a3455f979c68569a1c669a8d1d98a835de2c05f896b1c8319aad",
+      "bytes": 3391
+    },
+    {
+      "path": "packages/contracts/proto/vynic/edge/v1/operational_proof.proto",
+      "beforeSha256": "a67399dd0c28fe8f9b0c42468f26818a330d91085d4fcdc3678b3e546b233e9c",
+      "afterSha256": "a4ce64509caf85ef262cf0fe07d909d55b9bacd23c9e9612e95c32686324e454",
+      "bytes": 5789
+    }
+  ],
+  "patch": {
+    "path": "/tmp/vynic-readiness-20261006-a2nbcprb/windows-runner-fix/operational-kinds-schema4.patch",
+    "sha256": "6ca9ad04efbd280b94c9159f838ae8e900881f588f6bc4f73cfac96f7e8634ec",
+    "bytes": 23541
+  },
+  "verification": {
+    "SQLite": "PASS: 8 standalone tests; 7 new-kind SQL variants; 9 schema-drift variants; 14 rejected immutable operations",
+    "Go": "UNCOMPILED / UNRUN; absent SDK; no gofmt or install",
+    "Wire": "UNVERIFIED; canonical proto only; generated output untouched",
+    "Whitespace": "PASS: git diff --no-index --check for all five owned files, empty output (exit 1 means differences)",
+    "GitStatus": "Export has no .git; source patch compared to saved task baseline",
+    "OriginalMigration003": "UNCHANGED SHA-256 47e6dcf89410b3c3eb28d9e54f50541556e722ee6d515d63242204322e3537ac",
+    "Rollback": "BLOCKED for older Edge; no downgrade; old binary rejection theoretical, not executed"
+  },
+  "artifacts": [
+    {
+      "path": "/tmp/vynic-readiness-20261006-a2nbcprb/windows-runner-fix/operational-schema4-proof.py",
+      "sha256": "de4d0f1753d1afc85466d437e08203d46e4be7e13ff973d59ba057cf066bd9a4",
+      "bytes": 20544
+    },
+    {
+      "path": "/tmp/vynic-readiness-20261006-a2nbcprb/windows-runner-fix/operational-schema4-proof.log",
+      "sha256": "d32e9da3e166c88871d1cde5f812ac0394c1c76c255a15849c9b0123d855c78b",
+      "bytes": 1104
+    },
+    {
+      "path": "/tmp/vynic-readiness-20261006-a2nbcprb/windows-runner-fix/operational-schema4-receipt.json",
+      "sha256": "7f8561948dca77c1e23eefae4991bea8e5812244a3d0689e404deeea3cf1fa51",
+      "bytes": 2643
+    }
+  ]
+}

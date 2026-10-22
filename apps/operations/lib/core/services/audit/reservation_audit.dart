@@ -66,6 +66,7 @@ abstract final class ReservationAuditAction {
       case ReservationStatus.completed:
         return complete;
       case ReservationStatus.pending:
+      case ReservationStatus.hold:
       case ReservationStatus.preparing:
       case ReservationStatus.inProgress:
       case ReservationStatus.unknown:
@@ -90,6 +91,7 @@ abstract final class ReservationAudit {
     String? newStatus,
     String? reason,
     Map<String, dynamic> extra = const {},
+    bool requireDurability = false,
   }) async {
     final actor = actorId.trim().isEmpty ? 'unknown' : actorId.trim();
     final name = (actorName == null || actorName.trim().isEmpty)
@@ -97,6 +99,7 @@ abstract final class ReservationAudit {
         : actorName.trim();
     await AuditEventService.logEvent(
       action: action,
+      requireDurability: requireDurability,
       userId: actor,
       entityType: GlobalAuditEntity.reservation,
       entityId: reservation.id,
@@ -133,6 +136,11 @@ abstract final class ReservationAudit {
       if (reservation.linkedOrderId != null)
         'linkedOrderId': reservation.linkedOrderId,
       'preOrderItemCount': reservation.preOrderItems?.length ?? 0,
+      if (reservation.advanceAmount > 0) ...{
+        'advanceAmount': reservation.advanceAmount,
+        'advanceCollectedOn': reservation.advanceCollectedOn,
+        'advanceReceiptId': reservation.advanceReceiptId,
+      },
     };
   }
 }

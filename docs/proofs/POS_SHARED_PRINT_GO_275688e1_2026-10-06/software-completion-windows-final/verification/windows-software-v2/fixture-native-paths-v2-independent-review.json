@@ -1,0 +1,34 @@
+{
+  "reviewedAtUTC": "2026-10-06T17:57:32.183130+00:00",
+  "outcome": "PASS_SOURCE_ONLY_APPROVED_FOR_FROZEN_REVERIFICATION",
+  "openP1P2": [],
+  "cohortFilesCompared": 1109,
+  "unchangedFiles": 1107,
+  "changes": {
+    "apps/operations/test/unit/printer_agent_runtime_profile_test.dart": {
+      "oldSHA256": "d4f7c08db3c086704f4fa480970fa3676693534ec29ad12b78a2849f8bc165d2",
+      "newSHA256": "2418752a45d5fdbf1ee764071ba79869d76d4696a1ff4444ab62cdccf7db9a21"
+    },
+    "apps/operations/test/widget/printer_agent_status_card_test.dart": {
+      "oldSHA256": "540c5df33fbf5e4efc67fd5a807a0322b2eb461e134bb15ff328cdcbf9f6243f",
+      "newSHA256": "114da755f85c962c9cd73576fbd6d60331c2f29b17bbb26cdfaf10ea5e9277cf"
+    }
+  },
+  "review": [
+    "Only two test files change. Builtin File.fromUri(directory.uri.resolve(child)).path joins controlled fixture components into native paths. No dependency metadata or production code changes.",
+    "Production strict _requireAbsolute and credential containment checks remain byte-identical. Relative profile/key literal negatives remain unchanged. Symlinked-leaf and directory-escape fixtures still create real links and assert refusals; paths now reach those checks instead of failing separator canonicality prematurely.",
+    "All test/assertion call counts and underlying expectations remain. Real manual card still uses actual readonly profile, pinned mTLS child process, stop marker and subsequent offline failure; no mocks replace that integration.",
+    "All1109 old source and final-cohort files remain exact old hashes. Entire621-artifact v1 packet rehashed unchanged."
+  ],
+  "evidence": {
+    "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/windows-software-v2/fixture-native-paths-v2-final-source-receipt.json": "3d4e1153371a2c6daf08e193c7fd46050ead59dfc265b4be3ac1eb26e325ab40",
+    "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/windows-software-v2/fixture-native-paths-v2-final.patch": "a16668bc600ab79d50df087400f6d901026af6afe3ccc999a26b81fecba64e8d",
+    "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/final-cohort-source.json": "193e4800e5d0733a30bc6c8d4ac993590219363941e69a787bba5ac3681c8f68",
+    "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/windows-software-v2/flutter-first-failed-receipt.json": "e75f84fcb038e216d89342720b430ceb445b5367a0bd5b625e3a34c523ee35d1"
+  },
+  "limitations": [
+    "No tests, VM calls or source edits performed by reviewer. Source approval permits freeze and reverification only; no Windows PASS is claimed.",
+    "Retained first Windows failure remains real:611 visible successes plus12 visible failures,51 hidden successes; no reinterpretation as a pass.",
+    "Parent/owner must run new exact-cohort validation. Production activation, physical dispatch, SCM/account qualification and operational writer cutover remain held."
+  ]
+}

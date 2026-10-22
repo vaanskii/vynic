@@ -349,14 +349,19 @@ class CurrentRecipeCost {
     required this.status,
     this.total,
     this.components = const [],
+    this.includesReconstructedHistory = false,
   });
   final String status;
   final String? total;
   final List<CurrentCostComponent> components;
+  final bool includesReconstructedHistory;
   factory CurrentRecipeCost.fromJson(Map<String, dynamic> json) =>
       CurrentRecipeCost(
         status: json['status'] as String,
         total: json['total'] as String?,
+        includesReconstructedHistory:
+            (json['provenance'] as Map?)?['includesReconstructedHistory'] ==
+            true,
         components: (json['components'] as List? ?? [])
             .map(
               (row) =>
@@ -373,12 +378,14 @@ class CurrentCostComponent {
     required this.baseUnit,
     this.unitCost,
     this.cost,
+    this.status,
   });
   final String name;
   final String quantity;
   final InventoryUnit baseUnit;
   final String? unitCost;
   final String? cost;
+  final String? status;
   factory CurrentCostComponent.fromJson(Map<String, dynamic> json) =>
       CurrentCostComponent(
         name: json['stockItemName'] as String,
@@ -386,5 +393,6 @@ class CurrentCostComponent {
         baseUnit: InventoryUnit.parse(json['baseUnit'] as String),
         unitCost: json['weightedUnitCost'] as String?,
         cost: json['cost'] as String?,
+        status: json['status'] as String?,
       );
 }

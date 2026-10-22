@@ -1,9 +1,10 @@
+import 'manager_design_components.dart';
 import 'package:vynic/apps/mobile_app/presentation/widgets/mobile_glass_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:vynic/core/models/order.dart';
 import 'package:vynic/core/services/pos/pos_change_highlight_service.dart';
 
-/// Full-screen cart panel for order editing (dark glass).
+/// Connected cart panel retaining the guarded order-edit callbacks.
 class MobileOrderDetailPanel extends StatelessWidget {
   const MobileOrderDetailPanel({
     super.key,
@@ -34,8 +35,8 @@ class MobileOrderDetailPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      color: MobileGlassTheme.bg,
+    return ManagerPanel(
+      padding: 16,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -163,104 +164,56 @@ class MobileOrderDetailPanel extends StatelessWidget {
       item.itemKey,
       item.itemName,
     );
-    return MobileGlassCard(
-      padding: const EdgeInsets.all(12),
-      radius: 14,
-      borderColor: highlighted
-          ? MobileGlassTheme.highlightBorder.withValues(alpha: 0.65)
-          : MobileGlassTheme.border(),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 10),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  item.itemName,
-                  style: TextStyle(
-                    fontWeight: FontWeight.w700,
-                    fontSize: 15,
-                    color: highlighted
-                        ? MobileGlassTheme.warn
-                        : MobileGlassTheme.textPrimary,
-                  ),
-                ),
-                SizedBox(height: 4),
-                Text(
-                  '${item.unitPrice.toStringAsFixed(1)} ₾ × ${item.quantity}',
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: MobileGlassTheme.muted(),
-                  ),
-                ),
-                if (item.comment != null && item.comment!.isNotEmpty)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 4),
-                    child: Text(
-                      item.comment!,
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontStyle: FontStyle.italic,
-                        color: MobileGlassTheme.muted(0.45),
-                      ),
-                    ),
-                  ),
-              ],
-            ),
+          Text(
+            item.itemName,
+            style: managerDesignText(
+              context,
+              13,
+              weight: FontWeight.w500,
+            ).copyWith(color: highlighted ? MobileGlassTheme.warn : null),
           ),
+          const SizedBox(height: 4),
+          Text(
+            '${item.unitPrice.toStringAsFixed(2)} ₾ × ${item.quantity}',
+            style: managerDesignText(context, 11, muted: true),
+          ),
+          if (item.comment?.isNotEmpty == true)
+            Text(
+              item.comment!,
+              style: managerDesignText(context, 11, muted: true),
+            ),
           Row(
-            mainAxisSize: MainAxisSize.min,
             children: [
               _qtyBtn(Icons.remove_rounded, () => onQtyDelta(index, -1)),
               SizedBox(
                 width: 32,
-                child: Text(
-                  '${item.quantity}',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
-                    color: MobileGlassTheme.textPrimary,
-                  ),
-                ),
+                child: Text('${item.quantity}', textAlign: TextAlign.center),
               ),
               _qtyBtn(Icons.add_rounded, () => onQtyDelta(index, 1)),
-            ],
-          ),
-          SizedBox(width: 8),
-          SizedBox(
-            width: 68,
-            child: Text(
-              '${item.total.toStringAsFixed(2)} ₾',
-              textAlign: TextAlign.end,
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                color: highlighted
-                    ? MobileGlassTheme.warn
-                    : MobileGlassTheme.good,
+              const Spacer(),
+              Text(
+                '${item.total.toStringAsFixed(2)} ₾',
+                style: managerDesignText(context, 13, weight: FontWeight.w500),
               ),
-            ),
+            ],
           ),
         ],
       ),
     );
   }
 
-  Widget _qtyBtn(IconData icon, VoidCallback onTap) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(8),
-      child: Container(
-        padding: const EdgeInsets.all(6),
-        decoration: BoxDecoration(
-          color: MobileGlassTheme.primary.withValues(alpha: 0.15),
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Icon(icon, size: 18, color: MobileGlassTheme.primary),
-      ),
-    );
-  }
+  Widget _qtyBtn(IconData icon, VoidCallback onTap) => IconButton(
+    onPressed: onTap,
+    icon: Icon(icon, size: 18, color: MobileGlassTheme.primary),
+    tooltip: icon == Icons.add_rounded
+        ? 'რაოდენობის გაზრდა'
+        : 'რაოდენობის შემცირება',
+  );
 
   Widget _buildFooter(BuildContext context) {
     return Container(

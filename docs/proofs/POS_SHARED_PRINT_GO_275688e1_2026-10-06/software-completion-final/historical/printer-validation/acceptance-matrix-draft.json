@@ -1,0 +1,1325 @@
+{
+  "case_list_source": "Exact ordered 18-case list supplied by parent from user message at 14:45 UTC; English wording/compact literals are parent supplied, not a verbatim Georgian quote.",
+  "cases": [
+    {
+      "acceptance_observed_status": "not-run",
+      "boundary_limits": [
+        "Actual leader process death with durable-majority accepted jobs and surviving replica results is pending.",
+        "Physical dispatch after failover requires positively excluding the old writer; no lease expiry grants that right."
+      ],
+      "case": "Leader process dies",
+      "number": 1,
+      "parent_provided_case_literal": "leaderprocessdies",
+      "physical_acceptance": {
+        "actual_Windows_OS_restart_observed": false,
+        "observed_status": "not-run",
+        "paper_DELIVERED_observed": false,
+        "physical_documents": 0
+      },
+      "software_counterpart": {
+        "cluster_integration_observed_status": "not-run",
+        "cluster_note": "No printcluster receipt accepted in this draft; standalone primitives are not replicated topology PASS.",
+        "observed": "No recorded printcluster leader-process failure/election receipt. Standalone executor SIGKILL recovery is a related passed primitive, not a Raft leader test.",
+        "observed_status": "not-run",
+        "qualification": "exact scenario not executed/verified",
+        "verified_related_test_refs": [
+          "Q_CRASH_BEFORE_SEND",
+          "Q_CRASH_IN_FAKE_SEND",
+          "Q_PROCESS_EXCLUSION"
+        ]
+      }
+    },
+    {
+      "acceptance_observed_status": "not-run",
+      "boundary_limits": [
+        "Physical host disappearance/partition and surviving voter behavior are untested.",
+        "A missing heartbeat does not prove a paused old RAW sender cannot resume."
+      ],
+      "case": "Leader machine disappears",
+      "number": 2,
+      "parent_provided_case_literal": "leadermachine disappears",
+      "physical_acceptance": {
+        "actual_Windows_OS_restart_observed": false,
+        "observed_status": "not-run",
+        "paper_DELIVERED_observed": false,
+        "physical_documents": 0
+      },
+      "software_counterpart": {
+        "cluster_integration_observed_status": "not-run",
+        "cluster_note": "No printcluster receipt accepted in this draft; standalone primitives are not replicated topology PASS.",
+        "observed": "No real machine loss, power-off or multi-host disappearance test was performed.",
+        "observed_status": "not-run",
+        "qualification": "exact scenario not executed/verified",
+        "verified_related_test_refs": []
+      }
+    },
+    {
+      "acceptance_observed_status": "not-run",
+      "boundary_limits": [
+        "No actual Raft peer partition or physical printer was used.",
+        "Lease/quorum confirmation is not downstream RAW fencing; counterexample intentionally bypasses CheckPhysical."
+      ],
+      "case": "Leader loses peers while still seeing printer",
+      "number": 3,
+      "parent_provided_case_literal": "leaderlosespeers stillseesprinter",
+      "physical_acceptance": {
+        "actual_Windows_OS_restart_observed": false,
+        "observed_status": "not-run",
+        "paper_DELIVERED_observed": false,
+        "physical_documents": 0
+      },
+      "software_counterpart": {
+        "cluster_integration_observed_status": "not-run",
+        "cluster_note": "No printcluster receipt accepted in this draft; standalone primitives are not replicated topology PASS.",
+        "observed": "Bounded proof gate rejects logical eligibility after injected quorum loss and always denies shared physical dispatch. A real loopback expected-unsafe bypass demonstrates the stale RAW sender can still reach the receiver.",
+        "observed_status": "passed",
+        "qualification": "bounded partial counterpart only",
+        "verified_related_test_refs": [
+          "E_LOGICAL_MINORITY_DENIAL",
+          "E_RAW_PAUSE_RESUME",
+          "E_BUFFER_AFTER_CLOSE",
+          "H_SHARED_PHYSICAL_DENIAL"
+        ]
+      }
+    },
+    {
+      "acceptance_observed_status": "not-run",
+      "boundary_limits": [
+        "No physical printer/network cable failure or unchanged live quorum was exercised.",
+        "Shared cluster-specific printer failure behavior awaits its receipt."
+      ],
+      "case": "Leader sees peers while printer disappears",
+      "number": 4,
+      "parent_provided_case_literal": "leaderseespeers printerdisappears",
+      "physical_acceptance": {
+        "actual_Windows_OS_restart_observed": false,
+        "observed_status": "not-run",
+        "paper_DELIVERED_observed": false,
+        "physical_documents": 0
+      },
+      "software_counterpart": {
+        "cluster_integration_observed_status": "not-run",
+        "cluster_note": "No printcluster receipt accepted in this draft; standalone primitives are not replicated topology PASS.",
+        "observed": "Injected TCP refusal before Write is notSent; attempted partial Write is uncertain and is performed once. Standalone held P1 does not block P2. This is a transport/executor counterpart, not a live leader topology.",
+        "observed_status": "passed",
+        "qualification": "bounded partial counterpart only",
+        "verified_related_test_refs": [
+          "T_REFUSED_BEFORE_WRITE",
+          "T_PARTIAL_WRITE_UNCERTAIN",
+          "Q_STALLED_P1_P2_PROGRESS"
+        ]
+      }
+    },
+    {
+      "acceptance_observed_status": "not-run",
+      "boundary_limits": [
+        "Actual durable quorum/election/committed-index evidence must arrive before PASS.",
+        "New logical leadership cannot authorize RAW output without qualified downstream fencing."
+      ],
+      "case": "Majority elects a new leader",
+      "number": 5,
+      "parent_provided_case_literal": "majorityelectsnewleader",
+      "physical_acceptance": {
+        "actual_Windows_OS_restart_observed": false,
+        "observed_status": "not-run",
+        "paper_DELIVERED_observed": false,
+        "physical_documents": 0
+      },
+      "software_counterpart": {
+        "cluster_integration_observed_status": "not-run",
+        "cluster_note": "No printcluster receipt accepted in this draft; standalone primitives are not replicated topology PASS.",
+        "observed": "No verified printcluster election receipt is available in this draft.",
+        "observed_status": "not-run",
+        "qualification": "exact scenario not executed/verified",
+        "verified_related_test_refs": []
+      }
+    },
+    {
+      "acceptance_observed_status": "not-run",
+      "boundary_limits": [
+        "MajorityConfirmed is an isolated proof seam, not an authenticated production consensus adapter.",
+        "Actual minority node RPC/dispatch behavior is pending printcluster tests."
+      ],
+      "case": "Minority attempts to print",
+      "number": 6,
+      "parent_provided_case_literal": "minorityattemptsprint",
+      "physical_acceptance": {
+        "actual_Windows_OS_restart_observed": false,
+        "observed_status": "not-run",
+        "paper_DELIVERED_observed": false,
+        "physical_documents": 0
+      },
+      "software_counterpart": {
+        "cluster_integration_observed_status": "not-run",
+        "cluster_note": "No printcluster receipt accepted in this draft; standalone primitives are not replicated topology PASS.",
+        "observed": "An injected minority/quorum-loss evidence condition refuses logical eligibility; the physical gate refuses even majority-confirmed logical evidence.",
+        "observed_status": "passed",
+        "qualification": "bounded partial counterpart only",
+        "verified_related_test_refs": [
+          "E_LOGICAL_MINORITY_DENIAL",
+          "E_STALE_GENERATION_DENIAL",
+          "H_SHARED_PHYSICAL_DENIAL"
+        ]
+      }
+    },
+    {
+      "acceptance_observed_status": "not-run",
+      "boundary_limits": [
+        "The process kill is real; the Sender is synthetic and opens no printer TCP socket.",
+        "Conservative STARTED recovery cannot assume no byte escaped in a production crash."
+      ],
+      "case": "Crash before TCP Write",
+      "number": 7,
+      "parent_provided_case_literal": "crashbeforeTCPwrite",
+      "physical_acceptance": {
+        "actual_Windows_OS_restart_observed": false,
+        "observed_status": "not-run",
+        "paper_DELIVERED_observed": false,
+        "physical_documents": 0
+      },
+      "software_counterpart": {
+        "cluster_integration_observed_status": "not-run",
+        "cluster_note": "No printcluster receipt accepted in this draft; standalone primitives are not replicated topology PASS.",
+        "observed": "Actual SIGKILL immediately after durable STARTED and before fake Send records zero original send calls; restart retains UNCERTAIN with no automatic replay.",
+        "observed_status": "passed",
+        "qualification": "bounded partial counterpart only",
+        "verified_related_test_refs": [
+          "Q_CRASH_BEFORE_SEND"
+        ]
+      }
+    },
+    {
+      "acceptance_observed_status": "not-run",
+      "boundary_limits": [
+        "Integrated real-process crash during actual kernel TCP write remains not-run.",
+        "No physical partial receipt, printer buffer state or safe replay was established."
+      ],
+      "case": "Crash during TCP Write",
+      "number": 8,
+      "parent_provided_case_literal": "crashduringTCPwrite",
+      "physical_acceptance": {
+        "actual_Windows_OS_restart_observed": false,
+        "observed_status": "not-run",
+        "paper_DELIVERED_observed": false,
+        "physical_documents": 0
+      },
+      "software_counterpart": {
+        "cluster_integration_observed_status": "not-run",
+        "cluster_note": "No printcluster receipt accepted in this draft; standalone primitives are not replicated topology PASS.",
+        "observed": "Related passing components cover actual SIGKILL inside a fake Send and injected partial/canceled TCP Write. No single test kills a real process while a real TCP Write is in progress.",
+        "observed_status": "not-run",
+        "qualification": "exact scenario not executed/verified",
+        "verified_related_test_refs": [
+          "Q_CRASH_IN_FAKE_SEND",
+          "T_PARTIAL_WRITE_UNCERTAIN",
+          "T_CANCEL_INFLIGHT"
+        ]
+      }
+    },
+    {
+      "acceptance_observed_status": "not-run",
+      "boundary_limits": [
+        "submitted is transport acceptance, not paper DELIVERED.",
+        "No physical delivery acknowledgement or exactly-once paper guarantee exists.",
+        "Integrated actual TCP write followed by process kill before durable disposition is not-run."
+      ],
+      "case": "Crash after TCP Write before DELIVERED",
+      "number": 9,
+      "parent_provided_case_literal": "crashafterTCPwrite beforeDELIVERED",
+      "physical_acceptance": {
+        "actual_Windows_OS_restart_observed": false,
+        "observed_status": "not-run",
+        "paper_DELIVERED_observed": false,
+        "physical_documents": 0
+      },
+      "software_counterpart": {
+        "cluster_integration_observed_status": "not-run",
+        "cluster_note": "No printcluster receipt accepted in this draft; standalone primitives are not replicated topology PASS.",
+        "observed": "Fake Send interruption and durable primary settlement/reconstruction passed; a fake connection full Write returns submitted. These separate checks do not observe physical delivery or a real TCP-write-to-ledger crash window.",
+        "observed_status": "not-run",
+        "qualification": "exact scenario not executed/verified",
+        "verified_related_test_refs": [
+          "Q_CRASH_IN_FAKE_SEND",
+          "Q_CRASH_POST_PRIMARY_RECORD",
+          "T_COMPLETE_WRITE_SUBMITTED",
+          "H_RECONSTRUCTION_UNCERTAIN"
+        ]
+      }
+    },
+    {
+      "acceptance_observed_status": "not-run",
+      "boundary_limits": [
+        "Concurrent same-job fan-in with immutable end-to-end identity/provenance and durable-majority admission awaits printcluster receipt.",
+        "Do not substitute three distinct client jobs for this case."
+      ],
+      "case": "Same job submitted from 2, 3 or 4 POS clients",
+      "number": 10,
+      "parent_provided_case_literal": "samejobsubmittedfrom2/3/4POS",
+      "physical_acceptance": {
+        "actual_Windows_OS_restart_observed": false,
+        "observed_status": "not-run",
+        "paper_DELIVERED_observed": false,
+        "physical_documents": 0
+      },
+      "software_counterpart": {
+        "cluster_integration_observed_status": "not-run",
+        "cluster_note": "No printcluster receipt accepted in this draft; standalone primitives are not replicated topology PASS.",
+        "observed": "Exact same-origin lost-ACK retry returns one immutable receipt/job. The three-relay fixture submits different jobs from each origin; it does not test identical-job fan-in from 2/3/4 POS clients.",
+        "observed_status": "not-run",
+        "qualification": "exact scenario not executed/verified",
+        "verified_related_test_refs": [
+          "Q_RECEIPT_RETRY",
+          "Q_THREE_RELAYS_ONE_STOPPED"
+        ]
+      }
+    },
+    {
+      "acceptance_observed_status": "not-run",
+      "boundary_limits": [
+        "No actual SHARED cluster/printer connectivity loss was exercised.",
+        "Primary UNCERTAIN remains held; no expiry-only takeover or automatic replay."
+      ],
+      "case": "One SHARED printer is offline",
+      "number": 11,
+      "parent_provided_case_literal": "oneSHAREDprinteroffline",
+      "physical_acceptance": {
+        "actual_Windows_OS_restart_observed": false,
+        "observed_status": "not-run",
+        "paper_DELIVERED_observed": false,
+        "physical_documents": 0
+      },
+      "software_counterpart": {
+        "cluster_integration_observed_status": "not-run",
+        "cluster_note": "No printcluster receipt accepted in this draft; standalone primitives are not replicated topology PASS.",
+        "observed": "Standalone LOCAL/qualified-executor proof holds a stalled or UNCERTAIN P1 while continuing admission. This passes the isolation primitive, not the complete VENUE_SHARED offline-printer case.",
+        "observed_status": "passed",
+        "qualification": "bounded partial counterpart only",
+        "verified_related_test_refs": [
+          "Q_STALLED_P1_P2_PROGRESS",
+          "H_P1_P2_BUSINESS_DRAIN",
+          "H_RECONSTRUCTION_UNCERTAIN"
+        ]
+      }
+    },
+    {
+      "acceptance_observed_status": "not-run",
+      "boundary_limits": [
+        "The second printer is a fake Sender, not paper output or a shared Raft dispatch.",
+        "End-to-end physical SHARED printer concurrency remains unqualified."
+      ],
+      "case": "Second SHARED printer continues working",
+      "number": 12,
+      "parent_provided_case_literal": "secondSHAREDprinterworks",
+      "physical_acceptance": {
+        "actual_Windows_OS_restart_observed": false,
+        "observed_status": "not-run",
+        "paper_DELIVERED_observed": false,
+        "physical_documents": 0
+      },
+      "software_counterpart": {
+        "cluster_integration_observed_status": "not-run",
+        "cluster_note": "No printcluster receipt accepted in this draft; standalone primitives are not replicated topology PASS.",
+        "observed": "A second physical UUID queue in the synthetic executor continues and the actual SQLite business+PRINT admission commits while P1 is stalled/uncertain.",
+        "observed_status": "passed",
+        "qualification": "bounded partial counterpart only",
+        "verified_related_test_refs": [
+          "Q_STALLED_P1_P2_PROGRESS",
+          "H_P1_P2_BUSINESS_DRAIN",
+          "H_RECONSTRUCTION_UNCERTAIN"
+        ]
+      }
+    },
+    {
+      "acceptance_observed_status": "not-run",
+      "boundary_limits": [
+        "Actual replicated queue admission/election/majority durability remains pending.",
+        "An independent executor still being alive is a different topology from automatic POS-owned RAW failover."
+      ],
+      "case": "Queue jobs from the remaining replicas",
+      "number": 13,
+      "parent_provided_case_literal": "queuefromremainingreplicas",
+      "physical_acceptance": {
+        "actual_Windows_OS_restart_observed": false,
+        "observed_status": "not-run",
+        "paper_DELIVERED_observed": false,
+        "physical_documents": 0
+      },
+      "software_counterpart": {
+        "cluster_integration_observed_status": "not-run",
+        "cluster_note": "No printcluster receipt accepted in this draft; standalone primitives are not replicated topology PASS.",
+        "observed": "Three separate loopback relay-service databases forward to a fourth fixed executor database; after one relay stops, two admit new jobs. They are not replicas and prove no surviving replicated majority.",
+        "observed_status": "not-run",
+        "qualification": "exact scenario not executed/verified",
+        "verified_related_test_refs": [
+          "Q_THREE_RELAYS_ONE_STOPPED"
+        ]
+      }
+    },
+    {
+      "acceptance_observed_status": "not-run",
+      "boundary_limits": [
+        "Must verify the third node stores the full durable queue, participates in quorum and supports the requested surviving-node scenario.",
+        "No witness-only or UI-role substitution is accepted as a FULL replica."
+      ],
+      "case": "Two POS hosts plus a third FULL replica",
+      "number": 14,
+      "parent_provided_case_literal": "2POS+thirdFULLreplica",
+      "physical_acceptance": {
+        "actual_Windows_OS_restart_observed": false,
+        "observed_status": "not-run",
+        "paper_DELIVERED_observed": false,
+        "physical_documents": 0
+      },
+      "software_counterpart": {
+        "cluster_integration_observed_status": "not-run",
+        "cluster_note": "No printcluster receipt accepted in this draft; standalone primitives are not replicated topology PASS.",
+        "observed": "No verified 2POS+third FULL voter execution receipt is available. Static shared-membership pin validation is only related source/test evidence.",
+        "observed_status": "not-run",
+        "qualification": "exact scenario not executed/verified",
+        "verified_related_test_refs": [
+          "H_SHARED_PINS"
+        ]
+      }
+    },
+    {
+      "acceptance_observed_status": "not-run",
+      "boundary_limits": [
+        "Actual 3voter election/admission/recovery result must be source-identified.",
+        "Three services in one process/OS do not qualify three physical computers."
+      ],
+      "case": "Three POS hosts",
+      "number": 15,
+      "parent_provided_case_literal": "3POS",
+      "physical_acceptance": {
+        "actual_Windows_OS_restart_observed": false,
+        "observed_status": "not-run",
+        "paper_DELIVERED_observed": false,
+        "physical_documents": 0
+      },
+      "software_counterpart": {
+        "cluster_integration_observed_status": "not-run",
+        "cluster_note": "No printcluster receipt accepted in this draft; standalone primitives are not replicated topology PASS.",
+        "observed": "The passing three-relay fixture is not a three-voter replicated queue. No verified printcluster 3POS receipt is available.",
+        "observed_status": "not-run",
+        "qualification": "exact scenario not executed/verified",
+        "verified_related_test_refs": [
+          "Q_THREE_RELAYS_ONE_STOPPED"
+        ]
+      }
+    },
+    {
+      "acceptance_observed_status": "not-run",
+      "boundary_limits": [
+        "Client forwarding must preserve IDs and must not silently change membership/quorum.",
+        "No physical four-host availability or downstream RAW fencing qualification exists."
+      ],
+      "case": "Four POS hosts: three voters plus one client",
+      "number": 16,
+      "parent_provided_case_literal": "4POS3voters+client",
+      "physical_acceptance": {
+        "actual_Windows_OS_restart_observed": false,
+        "observed_status": "not-run",
+        "paper_DELIVERED_observed": false,
+        "physical_documents": 0
+      },
+      "software_counterpart": {
+        "cluster_integration_observed_status": "not-run",
+        "cluster_note": "No printcluster receipt accepted in this draft; standalone primitives are not replicated topology PASS.",
+        "observed": "No verified three-voter-plus-client printcluster receipt is available.",
+        "observed_status": "not-run",
+        "qualification": "exact scenario not executed/verified",
+        "verified_related_test_refs": []
+      }
+    },
+    {
+      "acceptance_observed_status": "not-run",
+      "boundary_limits": [
+        "Static no-cluster dependency validation is not empirical cluster-outage acceptance.",
+        "No LOCAL physical output was qualified."
+      ],
+      "case": "LOCAL printing is unaffected by cluster failure",
+      "number": 17,
+      "parent_provided_case_literal": "LOCALunaffectedclusterfailure",
+      "physical_acceptance": {
+        "actual_Windows_OS_restart_observed": false,
+        "observed_status": "not-run",
+        "paper_DELIVERED_observed": false,
+        "physical_documents": 0
+      },
+      "software_counterpart": {
+        "cluster_integration_observed_status": "not-run",
+        "cluster_note": "No printcluster receipt accepted in this draft; standalone primitives are not replicated topology PASS.",
+        "observed": "LOCAL configuration is allowed without cluster pins, but no test explicitly injects a cluster outage while observing LOCAL progress.",
+        "observed_status": "not-run",
+        "qualification": "exact scenario not executed/verified",
+        "verified_related_test_refs": [
+          "H_LOCAL_PINS"
+        ]
+      }
+    },
+    {
+      "acceptance_observed_status": "not-run",
+      "boundary_limits": [
+        "Same-process reconstruction is not a Windows service restart or OS reboot/power-loss test.",
+        "Windows host adapters were crosscompiled only in reviewed host receipt; no SCM install/runtime/reboot was performed.",
+        "v2 owner race/source hashes and final bounded independent review passed; neither executes a Windows SCM service restart or OS reboot."
+      ],
+      "case": "Service restart / Windows restart",
+      "number": 18,
+      "parent_provided_case_literal": "servicere/Windowsrestart",
+      "physical_acceptance": {
+        "actual_Windows_OS_restart_observed": false,
+        "observed_status": "not-run",
+        "paper_DELIVERED_observed": false,
+        "physical_documents": 0
+      },
+      "software_counterpart": {
+        "cluster_integration_observed_status": "not-run",
+        "cluster_note": "No printcluster receipt accepted in this draft; standalone primitives are not replicated topology PASS.",
+        "observed": "Verified v2 Store/Scheduler close/reopen preserves STARTED as UNCERTAIN with zero replay; service-control model detects trusted host runtime stop without SCM command and retains ownership through actual drain. It also preserves Running on caller cancellation. These are passing bounded software checks, not an actual Windows service/OS restart.",
+        "observed_status": "not-run",
+        "qualification": "exact scenario not executed/verified",
+        "review_ref": "H_V2_REVIEW",
+        "verified_related_test_refs": [
+          "H_RECONSTRUCTION_UNCERTAIN",
+          "H_SERVICE_STOP_MODEL",
+          "Q_WAIT_STOP_LIFETIME",
+          "T_HELPER_ORIGINAL_LIFETIME",
+          "H_RUNTIME_STOP_WITHOUT_SCM",
+          "H_CALLER_CANCEL_STAYS_RUNNING"
+        ]
+      }
+    }
+  ],
+  "draft": true,
+  "draft_revision": 3,
+  "evidence_registry": {
+    "E_LOG": {
+      "bytes": 5116,
+      "path": "printer-validation/eligibility-tests.jsonl",
+      "sha256": "877ddc307a264522e7f11c92c34df4d95ef16d103ebf8d6a3fca4747e6bb3c4d"
+    },
+    "E_REVIEW": {
+      "bytes": 1270,
+      "path": "printer-validation/eligibility-independent-review.json",
+      "sha256": "90f394ca50abb40450b3b995e73701bf408cd274e2e65b5a0b8c32c26dfb4b48"
+    },
+    "H_V1_LOG": {
+      "bytes": 22914,
+      "path": "printhost-verification/race.jsonl",
+      "sha256": "8629655db4dd46dacae684e09b99b7a6be7a9fce6e09359b7c4636801b3ce281"
+    },
+    "H_V1_MANIFEST": {
+      "bytes": 996,
+      "path": "printhost-verification/owned-source.sha256",
+      "sha256": "44ef5a532142ebd5e77bfd4c156cccb2e15f893b801500648ce3ddd603cbcf8d"
+    },
+    "H_V1_RECEIPT": {
+      "bytes": 6815,
+      "path": "printhost-verification/checkpoint.json",
+      "sha256": "1bae740d20ac6edd03897b83a8f859029030b14ba8fc7c60148de224ea0af24a"
+    },
+    "H_V2_LOG": {
+      "bytes": 28573,
+      "path": "printhost-verification/v2/race.jsonl",
+      "sha256": "d57c2445be135d6bc27d3126b20b9a682256f1a7901c4b423a06c2e394a314dd"
+    },
+    "H_V2_MANIFEST": {
+      "bytes": 996,
+      "path": "printhost-verification/v2/owned-source.sha256",
+      "sha256": "24b268003a61ca59bf98e64da1cc833691c68ccbc344047245ad337917ece1d5"
+    },
+    "H_V2_RECEIPT": {
+      "bytes": 8394,
+      "path": "printhost-verification/v2/checkpoint.json",
+      "sha256": "01f4790194077feaeed3cf479e79001395211a0923e1765169de9f2997116362"
+    },
+    "H_V2_REVIEW": {
+      "bytes": 2862,
+      "path": "printer-validation/printhost-independent-review.json",
+      "sha256": "f3738a4f11ae9813f13daf45f9faffdf1c0d292f413e1920aa7d93caba79f1e7"
+    },
+    "Q_LOG": {
+      "bytes": 64004,
+      "path": "printqueue-tests-go-race.jsonl",
+      "sha256": "99a7a555532303ddea3ff9c8b3ef3afefe84b1923b98b04dd79233fdb017e98d"
+    },
+    "Q_MANIFEST": {
+      "bytes": 2832,
+      "path": "shared-printqueue-owned-sha256.json",
+      "sha256": "31760c3b9df3913c241d8f8e9aaffc3b032f7d34c661b1374dfa0c5a63781795"
+    },
+    "Q_RECEIPT": {
+      "bytes": 5303,
+      "path": "shared-printqueue-validation-receipt.json",
+      "sha256": "5b704c751f3c7a0c11f294aba6a028f57a63fc4e66f842b6582afdbc579f756b"
+    },
+    "Q_REVIEW": {
+      "bytes": 4107,
+      "path": "printer-validation/queue-independent-review.json",
+      "sha256": "458cfa099b9054cc96adcfafcb5d0dfe9b03ed179f705f66c219827d860cd2bc"
+    },
+    "T_FINAL_DELTA_REVIEW": {
+      "bytes": 798,
+      "path": "printer-validation/transport-final-delta-review.json",
+      "sha256": "048ccbaead5e563faebee58250e4db0e9eec45d46a9d12c7bbb8b6fb0524db2c"
+    },
+    "T_FINAL_SOURCE_MANIFEST": {
+      "bytes": 6871,
+      "path": "printtransport-source-manifest.json",
+      "sha256": "237deec3436b5cfa9983cc53ab4b52b4e9c2dcce0a9ca592efb8b26938160bda"
+    },
+    "T_LOG": {
+      "bytes": 23639,
+      "path": "printer-validation/transport-independent-race.jsonl",
+      "sha256": "64bebccec9bbafe23021eb1f06c0ac4c806acbb7330c4ae23128e77cda55ba17"
+    },
+    "T_REVIEW": {
+      "bytes": 4890,
+      "path": "printer-validation/transport-independent-review.json",
+      "sha256": "0cf5d47e067f040757a2a32281ae06e4c7e54e5fc9ee5171fc55046df4b578a9"
+    }
+  },
+  "expected_unsafe_counterexamples": [
+    {
+      "assertion_observed_status": "passed",
+      "conclusion": "Unsafe lease-only design is demonstrated; the implemented proof gate correctly denies physical dispatch. This is not HA or real-printer qualification.",
+      "expected_unsafe": true,
+      "id": "RAW_PAUSE_RESUME",
+      "intentionally_bypasses_CheckPhysical": true,
+      "modeled_exclusive_RAW_writer_property_observed_status": "failed",
+      "observed": "Real loopback receiver gets new-owner byte B, then paused old-owner byte A after it resumes despite elapsed lease/safety intervals.",
+      "physical": false,
+      "synthetic": true,
+      "system_failure_claim": false,
+      "test_ref": "E_RAW_PAUSE_RESUME"
+    },
+    {
+      "assertion_observed_status": "passed",
+      "conclusion": "Socket close does not establish that previously queued bytes cannot arrive; no physical printer buffer was characterized.",
+      "expected_unsafe": true,
+      "id": "BUFFERED_BYTES_AFTER_CLOSE",
+      "modeled_socket_close_retracts_queued_bytes_property_observed_status": "failed",
+      "observed": "Real loopback receiver reads SYNTHETIC bytes after the sender socket closes.",
+      "physical": false,
+      "synthetic": true,
+      "system_failure_claim": false,
+      "test_ref": "E_BUFFER_AFTER_CLOSE"
+    }
+  ],
+  "format": "vynic.printer-acceptance-evidence-draft.v1",
+  "global_boundaries": [
+    "Transport submitted is not paper DELIVERED.",
+    "Service-process death/reconstruction is not Windows OS reboot or machine power loss.",
+    "No physical printing or physical printer loss/restoration tests were performed for these receipts.",
+    "No new printcluster tests are marked PASS without actual source-identified execution receipts.",
+    "Quorum/lease evidence alone cannot fence a paused old RAW TCP writer or retract already-buffered bytes.",
+    "No lease-only automatic takeover, replay of UNCERTAIN primary, production activation or system configuration change is qualified."
+  ],
+  "host_receipt_note": "v1 artifacts preserved as historical evidence; relevant host test records use verified v2 receipt/log/source hashes plus final independent bounded review. Windows crossbuild is not execution.",
+  "method": "Read-only receipt review, independently parsed passing Go JSON event records, SHA256 verification of claimed logs and recorded source manifests; no tests rerun and no source/docs/original edits for this matrix.",
+  "pending_evidence": [
+    {
+      "area": "printcluster",
+      "needed": "Frozen source manifest + actual unit/race/topology/crash execution receipts, exact test names and source hashes.",
+      "observed_status": "not-run",
+      "requested_from": "dependency_reachability"
+    },
+    {
+      "area": "physical and Windows OS restart",
+      "needed": "Separately authorized hardware/SCM/service-account/model/fencing and OS reboot/power-loss acceptance; none performed here.",
+      "observed_status": "not-run"
+    }
+  ],
+  "recorded_at_utc": "2026-10-06T15:17:44.893538+00:00",
+  "source_hashes": {
+    "apps/edge/internal/printeligibility/gate.go": {
+      "current_sha256": "72ad434093c2fe9f9c97de623e0a6bb436e96ca7167565023519f1664e29a48c",
+      "historical_evidence_only": false,
+      "matches_current": true,
+      "recorded_sha256": "72ad434093c2fe9f9c97de623e0a6bb436e96ca7167565023519f1664e29a48c"
+    },
+    "apps/edge/internal/printeligibility/gate_test.go": {
+      "current_sha256": "8470d2132bd9e5f7c6c897bae551dce302b0eb673d2441fe41382df8f0e85004",
+      "historical_evidence_only": false,
+      "matches_current": true,
+      "recorded_sha256": "8470d2132bd9e5f7c6c897bae551dce302b0eb673d2441fe41382df8f0e85004"
+    },
+    "apps/edge/internal/printhost/INSTALLATION_PLAN.md": {
+      "current_sha256": "e8c13f715dd280f762ba0c2eee954b0e3200b87c0dcedc40ce94bbc7f3aacd46",
+      "historical_evidence_only": false,
+      "latest_verified_manifest_ref": "H_V2_MANIFEST",
+      "matches_current": true,
+      "prior_verified_sha256": "e8c13f715dd280f762ba0c2eee954b0e3200b87c0dcedc40ce94bbc7f3aacd46",
+      "recorded_sha256": "e8c13f715dd280f762ba0c2eee954b0e3200b87c0dcedc40ce94bbc7f3aacd46"
+    },
+    "apps/edge/internal/printhost/host.go": {
+      "current_sha256": "55eafb67ed59aef51fbfb5181b22be010a265833bbd523140b8b855b3662bfe4",
+      "historical_evidence_only": false,
+      "latest_verified_manifest_ref": "H_V2_MANIFEST",
+      "matches_current": true,
+      "prior_verified_sha256": "6fb62c5211dfac2ed2f553a692e788839a0d8a16f83fb9a905bc064662fd6d3d",
+      "recorded_sha256": "55eafb67ed59aef51fbfb5181b22be010a265833bbd523140b8b855b3662bfe4"
+    },
+    "apps/edge/internal/printhost/host_test.go": {
+      "current_sha256": "03c2253726ef07528a1f93ff561c04cd834afeb95573e0dc5c414e3aabbf13fb",
+      "historical_evidence_only": false,
+      "latest_verified_manifest_ref": "H_V2_MANIFEST",
+      "matches_current": true,
+      "prior_verified_sha256": "03c2253726ef07528a1f93ff561c04cd834afeb95573e0dc5c414e3aabbf13fb",
+      "recorded_sha256": "03c2253726ef07528a1f93ff561c04cd834afeb95573e0dc5c414e3aabbf13fb"
+    },
+    "apps/edge/internal/printhost/pins.go": {
+      "current_sha256": "9e94a889f56e947cebc3f4b8f663d04fc9dbd5c4b7b1af957246b8a6808b3a8d",
+      "historical_evidence_only": false,
+      "latest_verified_manifest_ref": "H_V2_MANIFEST",
+      "matches_current": true,
+      "prior_verified_sha256": "9e94a889f56e947cebc3f4b8f663d04fc9dbd5c4b7b1af957246b8a6808b3a8d",
+      "recorded_sha256": "9e94a889f56e947cebc3f4b8f663d04fc9dbd5c4b7b1af957246b8a6808b3a8d"
+    },
+    "apps/edge/internal/printhost/proof_composition.go": {
+      "current_sha256": "1a05166b0731b4670b2ce5329893561df386b9955eabcbf825f6d0b92c4b1d35",
+      "historical_evidence_only": false,
+      "latest_verified_manifest_ref": "H_V2_MANIFEST",
+      "matches_current": true,
+      "prior_verified_sha256": "1a05166b0731b4670b2ce5329893561df386b9955eabcbf825f6d0b92c4b1d35",
+      "recorded_sha256": "1a05166b0731b4670b2ce5329893561df386b9955eabcbf825f6d0b92c4b1d35"
+    },
+    "apps/edge/internal/printhost/queue_lifecycle_test.go": {
+      "current_sha256": "a2bae11d7234158ef94f239fad4ac8f92c3ed9a1d93f75b577939f5aac7b3fc9",
+      "historical_evidence_only": false,
+      "latest_verified_manifest_ref": "H_V2_MANIFEST",
+      "matches_current": true,
+      "prior_verified_sha256": "a2bae11d7234158ef94f239fad4ac8f92c3ed9a1d93f75b577939f5aac7b3fc9",
+      "recorded_sha256": "a2bae11d7234158ef94f239fad4ac8f92c3ed9a1d93f75b577939f5aac7b3fc9"
+    },
+    "apps/edge/internal/printhost/service.go": {
+      "current_sha256": "1a242519ede401c8954dbfe3941e483834e2b7e3416c9b263bd5de61ceea1937",
+      "historical_evidence_only": false,
+      "latest_verified_manifest_ref": "H_V2_MANIFEST",
+      "matches_current": true,
+      "prior_verified_sha256": "3c398cd6bd73663a859af52d9b05bd79bdc60ff1412ff1374a075637cdbef759",
+      "recorded_sha256": "1a242519ede401c8954dbfe3941e483834e2b7e3416c9b263bd5de61ceea1937"
+    },
+    "apps/edge/internal/printhost/service_test.go": {
+      "current_sha256": "2c0bb78ea73507e3c6fa3a3f38df5de4d2d166ae3e5b3facd82a73cab0a4e51e",
+      "historical_evidence_only": false,
+      "latest_verified_manifest_ref": "H_V2_MANIFEST",
+      "matches_current": true,
+      "prior_verified_sha256": "5b6f67984f7176f726028ff1eff8516ac645b181f2f2cf26c4fa33dc092fe9b2",
+      "recorded_sha256": "2c0bb78ea73507e3c6fa3a3f38df5de4d2d166ae3e5b3facd82a73cab0a4e51e"
+    },
+    "apps/edge/internal/printhost/service_windows.go": {
+      "current_sha256": "2701581e0d34f98b96449c12a9eb1ad5c9936b6cad050cb7a1aa56ade4d76fee",
+      "historical_evidence_only": false,
+      "latest_verified_manifest_ref": "H_V2_MANIFEST",
+      "matches_current": true,
+      "prior_verified_sha256": "2701581e0d34f98b96449c12a9eb1ad5c9936b6cad050cb7a1aa56ade4d76fee",
+      "recorded_sha256": "2701581e0d34f98b96449c12a9eb1ad5c9936b6cad050cb7a1aa56ade4d76fee"
+    },
+    "apps/edge/internal/printqueue/atomic_test.go": {
+      "current_sha256": "c08336fea3436945cce4d3cdba7dd42eec0888527acc9465a1cd200ce64d3c31",
+      "historical_evidence_only": false,
+      "matches_current": true,
+      "recorded_sha256": "c08336fea3436945cce4d3cdba7dd42eec0888527acc9465a1cd200ce64d3c31"
+    },
+    "apps/edge/internal/printqueue/crash_unix_test.go": {
+      "current_sha256": "2f8e544f1d3d3e988a291fc8aa5f30f43f724089b0c693d4adbc0e22e004aacf",
+      "historical_evidence_only": false,
+      "matches_current": true,
+      "recorded_sha256": "2f8e544f1d3d3e988a291fc8aa5f30f43f724089b0c693d4adbc0e22e004aacf"
+    },
+    "apps/edge/internal/printqueue/queue_test.go": {
+      "current_sha256": "94e518d9e9d45e1ab33c94c85138dab0acd5ea4266c01f7e169be5e27bc51f6b",
+      "historical_evidence_only": false,
+      "matches_current": true,
+      "recorded_sha256": "94e518d9e9d45e1ab33c94c85138dab0acd5ea4266c01f7e169be5e27bc51f6b"
+    },
+    "apps/edge/internal/printqueue/relay_test.go": {
+      "current_sha256": "461fecdc579447f719d5a96432bb392464db52bdbc7a78abafc62b9855a01eae",
+      "historical_evidence_only": false,
+      "matches_current": true,
+      "recorded_sha256": "461fecdc579447f719d5a96432bb392464db52bdbc7a78abafc62b9855a01eae"
+    },
+    "apps/edge/internal/printqueue/review_test.go": {
+      "current_sha256": "2fe38f3b959c29a35b1eef20d906c1839d7da17310c5e187d010a4d075e3e32e",
+      "historical_evidence_only": false,
+      "matches_current": true,
+      "recorded_sha256": "2fe38f3b959c29a35b1eef20d906c1839d7da17310c5e187d010a4d075e3e32e"
+    },
+    "apps/edge/internal/printqueue/state.go": {
+      "current_sha256": "e8fe7a2133b28750c666177d4da42fbb805cf28b0a9206604553db3ac48d2c99",
+      "historical_evidence_only": false,
+      "matches_current": true,
+      "recorded_sha256": "e8fe7a2133b28750c666177d4da42fbb805cf28b0a9206604553db3ac48d2c99"
+    },
+    "apps/edge/internal/printqueue/store.go": {
+      "current_sha256": "7cb4255b3a6e7ccab29f918b7050db79231773ab970592221abfaf2bc4f98280",
+      "historical_evidence_only": false,
+      "matches_current": true,
+      "recorded_sha256": "7cb4255b3a6e7ccab29f918b7050db79231773ab970592221abfaf2bc4f98280"
+    },
+    "apps/edge/internal/printqueue/testdata/dart_tcp.json": {
+      "current_sha256": "51eb907f6b32ad2088d0914c559ba8ad7b1bdd2c54c62fa2820b00ec53916889",
+      "historical_evidence_only": false,
+      "matches_current": true,
+      "recorded_sha256": "51eb907f6b32ad2088d0914c559ba8ad7b1bdd2c54c62fa2820b00ec53916889"
+    },
+    "apps/edge/internal/printqueue/testdata/dart_windowsSpooler.json": {
+      "current_sha256": "f40373faa1cad1355db125d910b9dd2413fa010a5000554594e02dbc617213f7",
+      "historical_evidence_only": false,
+      "matches_current": true,
+      "recorded_sha256": "f40373faa1cad1355db125d910b9dd2413fa010a5000554594e02dbc617213f7"
+    },
+    "apps/edge/internal/printqueue/types.go": {
+      "current_sha256": "11b947eafa08ed481e5d9f4cb71fbf45063c6c15c03f94e6db56f9b7ec41ea25",
+      "historical_evidence_only": false,
+      "matches_current": true,
+      "recorded_sha256": "11b947eafa08ed481e5d9f4cb71fbf45063c6c15c03f94e6db56f9b7ec41ea25"
+    },
+    "apps/edge/internal/printqueue/worker.go": {
+      "current_sha256": "afa6beeddac7bce886e3c5d5576ca9416f281e7d707dd18c50c7cf2cab30006f",
+      "historical_evidence_only": false,
+      "matches_current": true,
+      "recorded_sha256": "afa6beeddac7bce886e3c5d5576ca9416f281e7d707dd18c50c7cf2cab30006f"
+    },
+    "apps/edge/internal/printtransport/guard.go": {
+      "current_sha256": "d46cbaa04bbb9e5a21966c43794f6d63be1d8418aa6315089694613993b3ae87",
+      "historical_evidence_only": false,
+      "matches_current": true,
+      "recorded_sha256": "d46cbaa04bbb9e5a21966c43794f6d63be1d8418aa6315089694613993b3ae87"
+    },
+    "apps/edge/internal/printtransport/guard_other.go": {
+      "current_sha256": "dd0cc72fe6c3de335dd563a7ff9a7b95870d52654a8f68809d906d661a8288e5",
+      "historical_evidence_only": false,
+      "matches_current": true,
+      "recorded_sha256": "dd0cc72fe6c3de335dd563a7ff9a7b95870d52654a8f68809d906d661a8288e5"
+    },
+    "apps/edge/internal/printtransport/guard_windows.go": {
+      "current_sha256": "414f50c210190c303da0ef0727b7c0e5e01d3fe89e4c12c4b777eb77f42b4b3f",
+      "historical_evidence_only": false,
+      "matches_current": true,
+      "recorded_sha256": "414f50c210190c303da0ef0727b7c0e5e01d3fe89e4c12c4b777eb77f42b4b3f"
+    },
+    "apps/edge/internal/printtransport/helper.go": {
+      "current_sha256": "344d1fb146346d8ab25dbdea8e3c1aaec7017e7d6517b84f9addae86a7c03185",
+      "historical_evidence_only": false,
+      "matches_current": true,
+      "recorded_sha256": "344d1fb146346d8ab25dbdea8e3c1aaec7017e7d6517b84f9addae86a7c03185"
+    },
+    "apps/edge/internal/printtransport/helper_other.go": {
+      "current_sha256": "39314257c720573695d8db34d02fa74eb08b58c388f5500c453f48e1ea3b22b3",
+      "historical_evidence_only": false,
+      "matches_current": true,
+      "recorded_sha256": "39314257c720573695d8db34d02fa74eb08b58c388f5500c453f48e1ea3b22b3"
+    },
+    "apps/edge/internal/printtransport/helper_test.go": {
+      "current_sha256": "0d4a5ccd85664fb1c7ce28337de60e5f422ddd5708fce9ebcde467e37e563d99",
+      "historical_evidence_only": false,
+      "matches_current": true,
+      "recorded_sha256": "0d4a5ccd85664fb1c7ce28337de60e5f422ddd5708fce9ebcde467e37e563d99"
+    },
+    "apps/edge/internal/printtransport/helper_windows.go": {
+      "current_sha256": "562135704cee8202560b58e642c0746c4c4b854beddc44cfa49a1022b242964b",
+      "historical_evidence_only": true,
+      "matches_current": false,
+      "recorded_sha256": "0785a60beac6c9e0c6f910f8b0058ebea2931aa5123ab450a9b12d1cf2e7ae1e"
+    },
+    "apps/edge/internal/printtransport/helper_windows_test.go": {
+      "current_sha256": "feb123a3e952a62e5116024d5b434e2b72be7ccdc71e1b327211931ed3e8ce13",
+      "historical_evidence_only": true,
+      "matches_current": false,
+      "recorded_sha256": "95eab72ee57a42d5913f8a532cc60a7c32cb2187114c4b81c6ea0214c8bca251"
+    },
+    "apps/edge/internal/printtransport/protocol.go": {
+      "current_sha256": "982b068c3011f2dd6dc490af838f7a2b97d38afe9fa20729040772842dd3be29",
+      "historical_evidence_only": false,
+      "matches_current": true,
+      "recorded_sha256": "982b068c3011f2dd6dc490af838f7a2b97d38afe9fa20729040772842dd3be29"
+    },
+    "apps/edge/internal/printtransport/router.go": {
+      "current_sha256": "754bdca3212b3c145c46ab91371259e796a7858a271322386c7ad33e59788cfe",
+      "historical_evidence_only": false,
+      "matches_current": true,
+      "recorded_sha256": "754bdca3212b3c145c46ab91371259e796a7858a271322386c7ad33e59788cfe"
+    },
+    "apps/edge/internal/printtransport/tcp.go": {
+      "current_sha256": "18df0eaff557bfd2285e270fa519e66d1115924d5c7b86bfaa8618a009cd1d2f",
+      "historical_evidence_only": false,
+      "matches_current": true,
+      "recorded_sha256": "18df0eaff557bfd2285e270fa519e66d1115924d5c7b86bfaa8618a009cd1d2f"
+    },
+    "apps/edge/internal/printtransport/tcp_test.go": {
+      "current_sha256": "6588d48b0f00be575789adf9b26349d50f7102f7d9faf01f51ce1b2ab665e9d4",
+      "historical_evidence_only": false,
+      "matches_current": true,
+      "recorded_sha256": "6588d48b0f00be575789adf9b26349d50f7102f7d9faf01f51ce1b2ab665e9d4"
+    },
+    "apps/edge/internal/printtransport/transport.go": {
+      "current_sha256": "e6ad771e28315311052c60cd108e097ffc557d0075d8fc3db9aa4f14673b06aa",
+      "historical_evidence_only": false,
+      "matches_current": true,
+      "recorded_sha256": "e6ad771e28315311052c60cd108e097ffc557d0075d8fc3db9aa4f14673b06aa"
+    },
+    "apps/edge/internal/store/migrations/005_shared_print_queue.sql": {
+      "current_sha256": "35834d0ffe04dda47f4abade9ac393296652c3bba85f822be1a2759722ed69fc",
+      "historical_evidence_only": false,
+      "matches_current": true,
+      "recorded_sha256": "35834d0ffe04dda47f4abade9ac393296652c3bba85f822be1a2759722ed69fc"
+    },
+    "apps/edge/native/print_helper/CMakeLists.txt": {
+      "current_sha256": "c9dc30418926ff8eb24b9cf54eec2e620b4d1e3b7943b8bd4ee146d6730945cc",
+      "historical_evidence_only": false,
+      "matches_current": true,
+      "recorded_sha256": "c9dc30418926ff8eb24b9cf54eec2e620b4d1e3b7943b8bd4ee146d6730945cc"
+    },
+    "apps/edge/native/print_helper/README.md": {
+      "current_sha256": "c3d4be526b028c064a5896b93531c1c85e808b6f8717bc370e9e2ed0c314b8be",
+      "historical_evidence_only": false,
+      "matches_current": true,
+      "recorded_sha256": "c3d4be526b028c064a5896b93531c1c85e808b6f8717bc370e9e2ed0c314b8be"
+    },
+    "apps/edge/native/print_helper/main_windows.cpp": {
+      "current_sha256": "1edb8b42e709083f9f1b61a5008d2393fbfaa82987541a3a92563659ccfadf50",
+      "historical_evidence_only": false,
+      "matches_current": true,
+      "recorded_sha256": "1edb8b42e709083f9f1b61a5008d2393fbfaa82987541a3a92563659ccfadf50"
+    },
+    "apps/edge/native/print_helper/protocol.cpp": {
+      "current_sha256": "526046639db53d383d143c70a2401baa8454255c3fe1d0d896e11709fbb5d9bb",
+      "historical_evidence_only": false,
+      "matches_current": true,
+      "recorded_sha256": "526046639db53d383d143c70a2401baa8454255c3fe1d0d896e11709fbb5d9bb"
+    },
+    "apps/edge/native/print_helper/protocol.h": {
+      "current_sha256": "9825f57f4524265463f3021afe77a751816b52fabad3653440d271376f0019a7",
+      "historical_evidence_only": false,
+      "matches_current": true,
+      "recorded_sha256": "9825f57f4524265463f3021afe77a751816b52fabad3653440d271376f0019a7"
+    },
+    "apps/edge/native/print_helper/protocol_test.cpp": {
+      "current_sha256": "84dcfd6446ad0534c9322ca508ee8dcee864ddae2a3a84f66cb50a32b9dae711",
+      "historical_evidence_only": false,
+      "matches_current": true,
+      "recorded_sha256": "84dcfd6446ad0534c9322ca508ee8dcee864ddae2a3a84f66cb50a32b9dae711"
+    },
+    "apps/edge/native/print_helper/qualify_windows.ps1": {
+      "current_sha256": "1b1c47f22fc768743a94d1eff9e0d970b7a0c5e0face062fe90ebe65e6a75c78",
+      "historical_evidence_only": false,
+      "matches_current": true,
+      "recorded_sha256": "1b1c47f22fc768743a94d1eff9e0d970b7a0c5e0face062fe90ebe65e6a75c78"
+    },
+    "apps/edge/native/print_helper/session.cpp": {
+      "current_sha256": "8011075a2b6667d30e881f7561fc428fb5f147c822b1ba4308e071fd10c0f083",
+      "historical_evidence_only": false,
+      "matches_current": true,
+      "recorded_sha256": "8011075a2b6667d30e881f7561fc428fb5f147c822b1ba4308e071fd10c0f083"
+    },
+    "apps/edge/native/print_helper/session.h": {
+      "current_sha256": "0e1f72e7597b93ff6a95013ee1a78561684f4896c1f34468162bf4d510ff443f",
+      "historical_evidence_only": false,
+      "matches_current": true,
+      "recorded_sha256": "0e1f72e7597b93ff6a95013ee1a78561684f4896c1f34468162bf4d510ff443f"
+    },
+    "apps/operations/windows/runner/CMakeLists.txt": {
+      "current_sha256": "56018eee14758aa2ebffe3f5ffb88e19c716dc2b48e3d7010b9b8b352aeae3b2",
+      "historical_evidence_only": false,
+      "matches_current": true,
+      "recorded_sha256": "56018eee14758aa2ebffe3f5ffb88e19c716dc2b48e3d7010b9b8b352aeae3b2"
+    },
+    "apps/operations/windows/runner/windows_spooler_channel.cpp": {
+      "current_sha256": "b05bccf184bd523ddc6ebcabe837443428daf6b9c8d5503f5d9a1a60dc32b221",
+      "historical_evidence_only": false,
+      "matches_current": true,
+      "recorded_sha256": "b05bccf184bd523ddc6ebcabe837443428daf6b9c8d5503f5d9a1a60dc32b221"
+    },
+    "apps/operations/windows/runner/windows_spooler_native.cpp": {
+      "current_sha256": "c2b6f8d07c55b5cebbe32b3e597b5ff4a5b40bebd6c2b4a73fa1e1dd90ad5527",
+      "historical_evidence_only": false,
+      "matches_current": true,
+      "recorded_sha256": "c2b6f8d07c55b5cebbe32b3e597b5ff4a5b40bebd6c2b4a73fa1e1dd90ad5527"
+    },
+    "apps/operations/windows/runner/windows_spooler_native.h": {
+      "current_sha256": "82564a1481807b2a40d184c4adcde115189b284484fb752a4ba272fb6cf51610",
+      "historical_evidence_only": false,
+      "matches_current": true,
+      "recorded_sha256": "82564a1481807b2a40d184c4adcde115189b284484fb752a4ba272fb6cf51610"
+    }
+  },
+  "source_root": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/source",
+  "status_meanings": {
+    "failed": "A named safety property was observed violated; expected-unsafe demonstrations can pass their test assertion while failing that modeled property.",
+    "not-run": "The exact scenario has no qualifying execution receipt; code/configuration plans, crosscompilation and related tests do not promote it to PASS.",
+    "passed": "Only the expressly bounded software check named in the record was observed passing. Partial software PASS never means the whole user acceptance or paper delivery passed."
+  },
+  "summary": {
+    "actual_Windows_OS_restart_tests": 0,
+    "bounded_software_counterpart_passed": 6,
+    "case_count": 18,
+    "exact_software_counterpart_not_run": 12,
+    "expected_unsafe_modeled_property_failures": 2,
+    "full_acceptance_failed": 0,
+    "full_acceptance_not_run": 18,
+    "full_acceptance_passed": 0,
+    "physical_documents": 0,
+    "verified_go_test_fail_events_in_loaded_logs": 0
+  },
+  "verified_test_records": {
+    "E_BUFFER_AFTER_CLOSE": {
+      "current_source_matches_verified_receipt": true,
+      "event_elapsed_seconds": 0,
+      "event_time": "2026-10-06T18:55:05.268552+04:00",
+      "execution": "synthetic macOS; no physical printer",
+      "log_ref": "E_LOG",
+      "observed_status": "passed",
+      "package": "vynic.local/edge/internal/printeligibility",
+      "record_line": 21,
+      "source_declaration_line_current": 205,
+      "source_file": "apps/edge/internal/printeligibility/gate_test.go",
+      "source_sha256_at_verified_receipt": "8470d2132bd9e5f7c6c897bae551dce302b0eb673d2441fe41382df8f0e85004",
+      "test_name": "TestBufferedTCPBytesSurviveSenderSocketClose"
+    },
+    "E_LOGICAL_MINORITY_DENIAL": {
+      "current_source_matches_verified_receipt": true,
+      "event_elapsed_seconds": 0,
+      "event_time": "2026-10-06T18:55:05.267159+04:00",
+      "execution": "synthetic macOS; no physical printer",
+      "log_ref": "E_LOG",
+      "observed_status": "passed",
+      "package": "vynic.local/edge/internal/printeligibility",
+      "record_line": 5,
+      "source_declaration_line_current": 35,
+      "source_file": "apps/edge/internal/printeligibility/gate_test.go",
+      "source_sha256_at_verified_receipt": "8470d2132bd9e5f7c6c897bae551dce302b0eb673d2441fe41382df8f0e85004",
+      "test_name": "TestLeaseAndBootEvidenceCannotAuthorizeSharedPhysicalDispatch"
+    },
+    "E_RAW_PAUSE_RESUME": {
+      "current_source_matches_verified_receipt": true,
+      "event_elapsed_seconds": 0,
+      "event_time": "2026-10-06T18:55:05.268172+04:00",
+      "execution": "synthetic macOS; no physical printer",
+      "log_ref": "E_LOG",
+      "observed_status": "passed",
+      "package": "vynic.local/edge/internal/printeligibility",
+      "record_line": 17,
+      "source_declaration_line_current": 119,
+      "source_file": "apps/edge/internal/printeligibility/gate_test.go",
+      "source_sha256_at_verified_receipt": "8470d2132bd9e5f7c6c897bae551dce302b0eb673d2441fe41382df8f0e85004",
+      "test_name": "TestExpectedUnsafeLeaseOnlyRAWPausedSenderCounterexample"
+    },
+    "E_STALE_GENERATION_DENIAL": {
+      "current_source_matches_verified_receipt": true,
+      "event_elapsed_seconds": 0,
+      "event_time": "2026-10-06T18:55:05.267215+04:00",
+      "execution": "synthetic macOS; no physical printer",
+      "log_ref": "E_LOG",
+      "observed_status": "passed",
+      "package": "vynic.local/edge/internal/printeligibility",
+      "record_line": 9,
+      "source_declaration_line_current": 67,
+      "source_file": "apps/edge/internal/printeligibility/gate_test.go",
+      "source_sha256_at_verified_receipt": "8470d2132bd9e5f7c6c897bae551dce302b0eb673d2441fe41382df8f0e85004",
+      "test_name": "TestGenerationHighWaterSurvivesQuorumLossAndClockRegression"
+    },
+    "H_CALLER_CANCEL_STAYS_RUNNING": {
+      "current_source_matches_verified_receipt": true,
+      "event_elapsed_seconds": 0.05,
+      "event_time": "2026-10-06T19:11:23.54999+04:00",
+      "execution": "synthetic macOS service control, no SCM/Windows OS/physical printer",
+      "log_ref": "H_V2_LOG",
+      "observed_status": "passed",
+      "package": "vynic.local/edge/internal/printhost",
+      "record_line": 121,
+      "source_declaration_line_current": 163,
+      "source_file": "apps/edge/internal/printhost/service_test.go",
+      "source_sha256_at_verified_receipt": "2c0bb78ea73507e3c6fa3a3f38df5de4d2d166ae3e5b3facd82a73cab0a4e51e",
+      "test_name": "TestControlServiceCallerCancellationKeepsRunning"
+    },
+    "H_LOCAL_PINS": {
+      "current_source_matches_verified_receipt": true,
+      "event_elapsed_seconds": 0,
+      "event_time": "2026-10-06T19:11:23.550224+04:00",
+      "execution": "synthetic macOS; no physical printer",
+      "log_ref": "H_V2_LOG",
+      "observed_status": "passed",
+      "package": "vynic.local/edge/internal/printhost",
+      "record_line": 129,
+      "source_declaration_line_current": 262,
+      "source_file": "apps/edge/internal/printhost/service_test.go",
+      "source_sha256_at_verified_receipt": "2c0bb78ea73507e3c6fa3a3f38df5de4d2d166ae3e5b3facd82a73cab0a4e51e",
+      "supersedes_log_ref": "H_V1_LOG",
+      "test_name": "TestLocalAgentMayCoLocateButSharedPinsRequireStableMembership"
+    },
+    "H_P1_P2_BUSINESS_DRAIN": {
+      "current_source_matches_verified_receipt": true,
+      "event_elapsed_seconds": 0.36,
+      "event_time": "2026-10-06T19:11:22.994493+04:00",
+      "execution": "synthetic macOS; no physical printer",
+      "log_ref": "H_V2_LOG",
+      "observed_status": "passed",
+      "package": "vynic.local/edge/internal/printhost",
+      "record_line": 85,
+      "source_declaration_line_current": 163,
+      "source_file": "apps/edge/internal/printhost/queue_lifecycle_test.go",
+      "source_sha256_at_verified_receipt": "a2bae11d7234158ef94f239fad4ac8f92c3ed9a1d93f75b577939f5aac7b3fc9",
+      "supersedes_log_ref": "H_V1_LOG",
+      "test_name": "TestActualQueueP1StallAllowsP2BusinessAndPrintAndDrainsBeep"
+    },
+    "H_RECONSTRUCTION_UNCERTAIN": {
+      "current_source_matches_verified_receipt": true,
+      "event_elapsed_seconds": 0.31,
+      "event_time": "2026-10-06T19:11:23.303867+04:00",
+      "execution": "synthetic macOS; no physical printer",
+      "log_ref": "H_V2_LOG",
+      "observed_status": "passed",
+      "package": "vynic.local/edge/internal/printhost",
+      "record_line": 89,
+      "source_declaration_line_current": 274,
+      "source_file": "apps/edge/internal/printhost/queue_lifecycle_test.go",
+      "source_sha256_at_verified_receipt": "a2bae11d7234158ef94f239fad4ac8f92c3ed9a1d93f75b577939f5aac7b3fc9",
+      "supersedes_log_ref": "H_V1_LOG",
+      "test_name": "TestRecoveredStartedRemainsUncertainWithoutReplay"
+    },
+    "H_RUNTIME_STOP_WITHOUT_SCM": {
+      "current_source_matches_verified_receipt": true,
+      "event_elapsed_seconds": 0,
+      "event_time": "2026-10-06T19:11:23.498937+04:00",
+      "execution": "synthetic macOS service control, no SCM/Windows OS/physical printer",
+      "log_ref": "H_V2_LOG",
+      "observed_status": "passed",
+      "package": "vynic.local/edge/internal/printhost",
+      "record_line": 109,
+      "source_declaration_line_current": 82,
+      "source_file": "apps/edge/internal/printhost/service_test.go",
+      "source_sha256_at_verified_receipt": "2c0bb78ea73507e3c6fa3a3f38df5de4d2d166ae3e5b3facd82a73cab0a4e51e",
+      "test_name": "TestControlServiceObservesTrustedRuntimeFailureWithoutSCMCommand"
+    },
+    "H_SERVICE_STOP_MODEL": {
+      "current_source_matches_verified_receipt": true,
+      "event_elapsed_seconds": 0,
+      "event_time": "2026-10-06T19:11:23.498488+04:00",
+      "execution": "synthetic macOS; no physical printer",
+      "log_ref": "H_V2_LOG",
+      "observed_status": "passed",
+      "package": "vynic.local/edge/internal/printhost",
+      "record_line": 97,
+      "source_declaration_line_current": 28,
+      "source_file": "apps/edge/internal/printhost/service_test.go",
+      "source_sha256_at_verified_receipt": "2c0bb78ea73507e3c6fa3a3f38df5de4d2d166ae3e5b3facd82a73cab0a4e51e",
+      "supersedes_log_ref": "H_V1_LOG",
+      "test_name": "TestControlServiceKeepsStopPendingUntilActualDrain"
+    },
+    "H_SHARED_PHYSICAL_DENIAL": {
+      "current_source_matches_verified_receipt": true,
+      "event_elapsed_seconds": 0,
+      "event_time": "2026-10-06T19:11:22.583138+04:00",
+      "execution": "synthetic macOS; no physical printer",
+      "log_ref": "H_V2_LOG",
+      "observed_status": "passed",
+      "package": "vynic.local/edge/internal/printhost",
+      "record_line": 45,
+      "source_declaration_line_current": 115,
+      "source_file": "apps/edge/internal/printhost/host_test.go",
+      "source_sha256_at_verified_receipt": "03c2253726ef07528a1f93ff561c04cd834afeb95573e0dc5c414e3aabbf13fb",
+      "supersedes_log_ref": "H_V1_LOG",
+      "test_name": "TestSharedPhysicalSenderRemainsHeld"
+    },
+    "H_SHARED_PINS": {
+      "current_source_matches_verified_receipt": true,
+      "event_elapsed_seconds": 0,
+      "event_time": "2026-10-06T19:11:22.63505+04:00",
+      "execution": "synthetic macOS; no physical printer",
+      "log_ref": "H_V2_LOG",
+      "observed_status": "passed",
+      "package": "vynic.local/edge/internal/printhost",
+      "record_line": 77,
+      "source_declaration_line_current": 368,
+      "source_file": "apps/edge/internal/printhost/host_test.go",
+      "source_sha256_at_verified_receipt": "03c2253726ef07528a1f93ff561c04cd834afeb95573e0dc5c414e3aabbf13fb",
+      "supersedes_log_ref": "H_V1_LOG",
+      "test_name": "TestSharedClusterPinsAreExplicitAndImmutable"
+    },
+    "Q_CRASH_BEFORE_SEND": {
+      "current_source_matches_verified_receipt": true,
+      "event_elapsed_seconds": 0.15,
+      "event_time": "2026-10-06T18:55:40.531462+04:00",
+      "execution": "synthetic macOS; no physical printer",
+      "log_ref": "Q_LOG",
+      "observed_status": "passed",
+      "package": "vynic.local/edge/internal/printqueue",
+      "record_line": 57,
+      "source_declaration_line_current": 89,
+      "source_file": "apps/edge/internal/printqueue/crash_unix_test.go",
+      "source_sha256_at_verified_receipt": "2f8e544f1d3d3e988a291fc8aa5f30f43f724089b0c693d4adbc0e22e004aacf",
+      "test_name": "TestActualSIGKILLDurabilityAndNoReplay/startedFlushed"
+    },
+    "Q_CRASH_IN_FAKE_SEND": {
+      "current_source_matches_verified_receipt": true,
+      "event_elapsed_seconds": 0.16,
+      "event_time": "2026-10-06T18:55:40.687588+04:00",
+      "execution": "synthetic macOS; no physical printer",
+      "log_ref": "Q_LOG",
+      "observed_status": "passed",
+      "package": "vynic.local/edge/internal/printqueue",
+      "record_line": 62,
+      "source_declaration_line_current": 89,
+      "source_file": "apps/edge/internal/printqueue/crash_unix_test.go",
+      "source_sha256_at_verified_receipt": "2f8e544f1d3d3e988a291fc8aa5f30f43f724089b0c693d4adbc0e22e004aacf",
+      "test_name": "TestActualSIGKILLDurabilityAndNoReplay/primaryNativeNoACK"
+    },
+    "Q_CRASH_POST_PRIMARY_RECORD": {
+      "current_source_matches_verified_receipt": true,
+      "event_elapsed_seconds": 0.16,
+      "event_time": "2026-10-06T18:55:40.849033+04:00",
+      "execution": "synthetic macOS; no physical printer",
+      "log_ref": "Q_LOG",
+      "observed_status": "passed",
+      "package": "vynic.local/edge/internal/printqueue",
+      "record_line": 67,
+      "source_declaration_line_current": 89,
+      "source_file": "apps/edge/internal/printqueue/crash_unix_test.go",
+      "source_sha256_at_verified_receipt": "2f8e544f1d3d3e988a291fc8aa5f30f43f724089b0c693d4adbc0e22e004aacf",
+      "test_name": "TestActualSIGKILLDurabilityAndNoReplay/primaryFlushed"
+    },
+    "Q_PROCESS_EXCLUSION": {
+      "current_source_matches_verified_receipt": true,
+      "event_elapsed_seconds": 0.13,
+      "event_time": "2026-10-06T18:55:41.814665+04:00",
+      "execution": "synthetic macOS; no physical printer",
+      "log_ref": "Q_LOG",
+      "observed_status": "passed",
+      "package": "vynic.local/edge/internal/printqueue",
+      "record_line": 99,
+      "source_declaration_line_current": 218,
+      "source_file": "apps/edge/internal/printqueue/crash_unix_test.go",
+      "source_sha256_at_verified_receipt": "2f8e544f1d3d3e988a291fc8aa5f30f43f724089b0c693d4adbc0e22e004aacf",
+      "test_name": "TestCompetingProcessCannotRecoverOrSubmit"
+    },
+    "Q_RECEIPT_RETRY": {
+      "current_source_matches_verified_receipt": true,
+      "event_elapsed_seconds": 0.1,
+      "event_time": "2026-10-06T18:55:41.92184+04:00",
+      "execution": "synthetic macOS; no physical printer",
+      "log_ref": "Q_LOG",
+      "observed_status": "passed",
+      "package": "vynic.local/edge/internal/printqueue",
+      "record_line": 159,
+      "source_declaration_line_current": 266,
+      "source_file": "apps/edge/internal/printqueue/queue_test.go",
+      "source_sha256_at_verified_receipt": "94e518d9e9d45e1ab33c94c85138dab0acd5ea4266c01f7e169be5e27bc51f6b",
+      "test_name": "TestAliasEndpointAndFrozenRetry"
+    },
+    "Q_STALLED_P1_P2_PROGRESS": {
+      "current_source_matches_verified_receipt": true,
+      "event_elapsed_seconds": 0.14,
+      "event_time": "2026-10-06T18:55:42.143024+04:00",
+      "execution": "synthetic macOS; no physical printer",
+      "log_ref": "Q_LOG",
+      "observed_status": "passed",
+      "package": "vynic.local/edge/internal/printqueue",
+      "record_line": 167,
+      "source_declaration_line_current": 332,
+      "source_file": "apps/edge/internal/printqueue/queue_test.go",
+      "source_sha256_at_verified_receipt": "94e518d9e9d45e1ab33c94c85138dab0acd5ea4266c01f7e169be5e27bc51f6b",
+      "test_name": "TestFIFOAndIndependentPrinterDuringLostACK"
+    },
+    "Q_THREE_RELAYS_ONE_STOPPED": {
+      "current_source_matches_verified_receipt": true,
+      "event_elapsed_seconds": 0.43,
+      "event_time": "2026-10-06T18:55:43.472076+04:00",
+      "execution": "synthetic macOS; no physical printer",
+      "log_ref": "Q_LOG",
+      "observed_status": "passed",
+      "package": "vynic.local/edge/internal/printqueue",
+      "record_line": 208,
+      "source_declaration_line_current": 24,
+      "source_file": "apps/edge/internal/printqueue/relay_test.go",
+      "source_sha256_at_verified_receipt": "461fecdc579447f719d5a96432bb392464db52bdbc7a78abafc62b9855a01eae",
+      "test_name": "TestThreeIndependentRelaysToTwoPrinterExecutor"
+    },
+    "Q_WAIT_STOP_LIFETIME": {
+      "current_source_matches_verified_receipt": true,
+      "event_elapsed_seconds": 0.13,
+      "event_time": "2026-10-06T18:55:42.39337+04:00",
+      "execution": "synthetic macOS; no physical printer",
+      "log_ref": "Q_LOG",
+      "observed_status": "passed",
+      "package": "vynic.local/edge/internal/printqueue",
+      "record_line": 175,
+      "source_declaration_line_current": 455,
+      "source_file": "apps/edge/internal/printqueue/queue_test.go",
+      "source_sha256_at_verified_receipt": "94e518d9e9d45e1ab33c94c85138dab0acd5ea4266c01f7e169be5e27bc51f6b",
+      "test_name": "TestStopTimeoutRetainsLifetimeAndRestartIsConservative"
+    },
+    "T_CANCEL_INFLIGHT": {
+      "current_source_matches_verified_receipt": true,
+      "event_elapsed_seconds": 0,
+      "event_time": "2026-10-06T19:02:39.24173+04:00",
+      "execution": "synthetic macOS; no physical printer",
+      "log_ref": "T_LOG",
+      "observed_status": "passed",
+      "package": "vynic.local/edge/internal/printtransport",
+      "record_line": 109,
+      "source_declaration_line_current": 174,
+      "source_file": "apps/edge/internal/printtransport/tcp_test.go",
+      "source_sha256_at_verified_receipt": "6588d48b0f00be575789adf9b26349d50f7102f7d9faf01f51ce1b2ab665e9d4",
+      "test_name": "TestCancelWriteRemainsUncertainAndGuardBusy"
+    },
+    "T_COMPLETE_WRITE_SUBMITTED": {
+      "current_source_matches_verified_receipt": true,
+      "event_elapsed_seconds": 0,
+      "event_time": "2026-10-06T19:02:39.240263+04:00",
+      "execution": "synthetic macOS; no physical printer",
+      "log_ref": "T_LOG",
+      "observed_status": "passed",
+      "package": "vynic.local/edge/internal/printtransport",
+      "record_line": 75,
+      "source_declaration_line_current": 77,
+      "source_file": "apps/edge/internal/printtransport/tcp_test.go",
+      "source_sha256_at_verified_receipt": "6588d48b0f00be575789adf9b26349d50f7102f7d9faf01f51ce1b2ab665e9d4",
+      "test_name": "TestTCPFailureBoundariesAndOneWrite/accepted"
+    },
+    "T_HELPER_ORIGINAL_LIFETIME": {
+      "current_source_matches_verified_receipt": true,
+      "event_elapsed_seconds": 0,
+      "event_time": "2026-10-06T19:02:39.239278+04:00",
+      "execution": "synthetic macOS; no physical printer",
+      "log_ref": "T_LOG",
+      "observed_status": "passed",
+      "package": "vynic.local/edge/internal/printtransport",
+      "record_line": 37,
+      "source_declaration_line_current": 132,
+      "source_file": "apps/edge/internal/printtransport/helper_test.go",
+      "source_sha256_at_verified_receipt": "0d4a5ccd85664fb1c7ce28337de60e5f422ddd5708fce9ebcde467e37e563d99",
+      "test_name": "TestHelperTimeoutRetainsOriginalLifetimeAndGuard"
+    },
+    "T_PARTIAL_WRITE_UNCERTAIN": {
+      "current_source_matches_verified_receipt": true,
+      "event_elapsed_seconds": 0,
+      "event_time": "2026-10-06T19:02:39.239992+04:00",
+      "execution": "synthetic macOS; no physical printer",
+      "log_ref": "T_LOG",
+      "observed_status": "passed",
+      "package": "vynic.local/edge/internal/printtransport",
+      "record_line": 63,
+      "source_declaration_line_current": 77,
+      "source_file": "apps/edge/internal/printtransport/tcp_test.go",
+      "source_sha256_at_verified_receipt": "6588d48b0f00be575789adf9b26349d50f7102f7d9faf01f51ce1b2ab665e9d4",
+      "test_name": "TestTCPFailureBoundariesAndOneWrite/partial_error"
+    },
+    "T_REFUSED_BEFORE_WRITE": {
+      "current_source_matches_verified_receipt": true,
+      "event_elapsed_seconds": 0,
+      "event_time": "2026-10-06T19:02:39.239699+04:00",
+      "execution": "synthetic macOS; no physical printer",
+      "log_ref": "T_LOG",
+      "observed_status": "passed",
+      "package": "vynic.local/edge/internal/printtransport",
+      "record_line": 51,
+      "source_declaration_line_current": 77,
+      "source_file": "apps/edge/internal/printtransport/tcp_test.go",
+      "source_sha256_at_verified_receipt": "6588d48b0f00be575789adf9b26349d50f7102f7d9faf01f51ce1b2ab665e9d4",
+      "test_name": "TestTCPFailureBoundariesAndOneWrite/dial"
+    }
+  }
+}

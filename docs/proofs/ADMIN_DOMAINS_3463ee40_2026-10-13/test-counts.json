@@ -1,0 +1,38 @@
+{
+  "backendAggregate": {
+    "passed": 851,
+    "failed": 0,
+    "skipped": 768
+  },
+  "adminDomains": {
+    "passed": 20,
+    "failed": 0,
+    "skipped": 0
+  },
+  "provisioning": {
+    "passed": 14,
+    "failed": 0,
+    "skipped": 0
+  },
+  "controlPlane": {
+    "passed": 43,
+    "failed": 0,
+    "skipped": 0
+  },
+  "websiteCore": {
+    "passed": 23,
+    "failed": 0,
+    "skipped": 0
+  },
+  "webAggregate": {
+    "passed": 170,
+    "failed": 0,
+    "skipped": 0
+  },
+  "overlap": {
+    "additionalPgPassed": 100,
+    "aggregatePassedOverlap": 0,
+    "aggregateSkippedRunSeparately": 100,
+    "distinctBackendPassed": 951
+  }
+}

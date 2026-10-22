@@ -4,8 +4,25 @@
 
 User-reported detection: **Trojan:Win32/Bearfoos.A!ml**, Severe, against
 `%LOCALAPPDATA%\Vynic\bin\VynicSetup.exe`. This is an Antivirus detection, not
-SmartScreen publisher reputation. Classification is **unresolved**. Neither a
-native rewrite nor a successful build proves a false positive or a clean scan.
+SmartScreen publisher reputation. Classification of that original artifact is
+**unresolved**: its exact hash was never captured, so the preserved sample cannot
+be proven to be the detected bytes and nothing was submitted to Microsoft.
+
+The native replacement is **scanned clean on Windows** (2026-09-22, lab VM,
+Defender platform 4.18.26080.4, engine 1.1.26080.3, security intelligence
+1.459.317.0, real-time protection on, remediation untouched):
+
+| Artifact | SHA-256 | Result |
+| --- | --- | --- |
+| Downloaded `VynicSetup.exe` 1.0.8.0 over lab HTTPS (`networks/10.10.10.3`) | `2189d75f…d0216`, matches the Mac build byte-for-byte | `MpCmdRun -Scan -ScanType 3`: no threats |
+| Installed `%LOCALAPPDATA%\Vynic\bin\VynicSetup.exe` 1.0.7.0 (primary-origin build of 2026-09-20 20:18) | `63f2b25a…6e90` | no threats; POS 1.0.12, Edge 1.0.1 and the Setup host were running |
+
+`Get-MpThreatDetection` records no detection after 2026-09-20; the three recorded
+events (17:24, 18:10) all predate the native rewrite and match the PowerShell-era
+Setup. Install, update to POS 1.0.12, repair and the Setup host have since run on
+this VM without a detection. This clears the native builds for lab use; it does
+not explain the original detection, and it is not SmartScreen/publisher
+reputation, which still requires Authenticode signing.
 
 The affected Windows file's SHA-256, Defender platform/engine/signature versions,
 detection event and Microsoft submission verdict have not been supplied. The Mac
@@ -140,6 +157,24 @@ SHA-256:
 This recorded 1.0.2.0 artifact is Windows amd64, GUI subsystem, `asInvoker`, 25,947,648 bytes, version 1.0.2.0,
 and **unsigned**. No external certificate is configured. It has not been scanned
 by Defender or executed on Windows in this review.
+
+Rebuilt from committed source `e92978c` (native UI, wizard, update offer,
+shortcuts, updater retention all landed) as Setup **1.0.8.0**, unsigned,
+26,046,464 bytes, GUI subsystem, `asInvoker`. The build is reproducible: the
+review copy and the `10.10.10.3` LAN profile are byte-identical. Each served
+copy embeds its own distribution JSON, so the three hashes differ by design:
+
+| Served as | SHA-256 |
+| --- | --- |
+| `https://10.10.10.3:8443/networks/10.10.10.3/VynicSetup.exe` = `security-review/native/VynicSetup-1.0.8.0.exe` | `2189d75fc41418e0de94ac82f8ed2f6d04de583430d530c5eda60b9ed30d0216` |
+| `https://10.10.10.3:8443/VynicSetup.exe` (primary origin) | `a23432b5955abb26c946dbc0fb9a0ee43a16bdeb83ffedb54b55bd888a357d91` |
+| `https://172.20.10.2:8443/networks/172.20.10.2/VynicSetup.exe` | `2c28cce1598fcd7aa0c2d21fe31039c78d461988fde25adf28972ca88e0c93f2` |
+
+Mac validation for this build: `go mod verify`, `go test -race ./...` (all
+packages), Windows amd64 `go vet` and cross-compiled Windows-only tests, lab
+tooling tests, and HTTPS verification of the served `10.10.10.3` bytes. The
+1.0.8.0 artifacts have not been executed or scanned on Windows; the retest below
+is the next step and its result decides Phase B progress.
 
 Separate Edge test artifact (not activated/published as a replacement baseline):
 `/Users/vaanskii/VynicLocalReleases/security-review/native/VynicEdge.exe`

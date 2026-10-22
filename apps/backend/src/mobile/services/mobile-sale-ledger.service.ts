@@ -6,8 +6,8 @@ import {
 import { Prisma } from '@prisma/client';
 import type { TenantContext } from '../../tenancy/tenant-context';
 import { PrismaService } from '../../prisma.service';
+import { isBusinessDate } from '../util/mobile-date.util';
 
-const DATE = /^\d{4}-\d{2}-\d{2}$/;
 const REVENUE_WHERE = {
   isFiscal: true,
   isCancelled: false,
@@ -15,6 +15,31 @@ const REVENUE_WHERE = {
 } as const;
 
 type Provenance = 'LEDGER_COMPLETE' | 'LEGACY_FALLBACK' | 'PARTIAL';
+
+type ProductRow = {
+  menuItemId: string | null;
+  variantId: string | null;
+  name: string;
+  variantName: string | null;
+  quantity: bigint;
+  revenue: Prisma.Decimal;
+};
+
+export type StaffAttribution = 'creator' | 'closer';
+
+/** POS records names, not server Staff IDs. Never resolve a historical name
+ * through today's mutable staff directory or turn a closer into a waiter. */
+function recordedActor(value: unknown) {
+  const name = typeof value === 'string' ? value.trim() : '';
+  const known = !!name && !['unknown', 'system'].includes(name.toLowerCase());
+  return {
+    staffId: known ? name : null,
+    staffName: known ? name : 'Unknown / system',
+    identityBasis: known ? 'RECORDED_POS_USERNAME' : 'UNKNOWN',
+    identityStable: false,
+    attributionReliable: false,
+  };
+}
 
 function money(value: unknown): string {
   return new Prisma.Decimal((value as any) ?? 0).toFixed(2);
@@ -26,10 +51,20 @@ function add(a: string, b: unknown): string {
 
 function parseDate(value: string | undefined, fallback: string): string {
   const result = value ?? fallback;
-  if (!DATE.test(result) || Number.isNaN(Date.parse(`${result}T00:00:00Z`))) {
+  if (!isBusinessDate(result)) {
     throw new BadRequestException('Dates must use YYYY-MM-DD');
   }
   return result;
+}
+
+function pageLimit(
+  value: string | number | undefined,
+  fallback: number,
+): number {
+  const limit = Number(value ?? fallback);
+  if (!Number.isSafeInteger(limit))
+    throw new BadRequestException('Limit must be an integer');
+  return Math.min(100, Math.max(1, limit));
 }
 
 function enumerateDates(from: string, to: string): string[] {
@@ -143,6 +178,21 @@ export class MobileSaleLedgerService {
         businessDate: day.businessDate,
         result: day.reconciliation,
       })),
+    };
+  }
+
+  private async detailProvenance(tenant: TenantContext, dates: string[]) {
+    const source = await this.provenance(tenant, dates);
+    return {
+      ...source,
+      provenance:
+        source.provenance === 'LEDGER_COMPLETE'
+          ? ('LEDGER_COMPLETE' as const)
+          : ('PARTIAL' as const),
+      warning:
+        source.provenance === 'LEDGER_COMPLETE'
+          ? null
+          : 'Detailed Sale records are incomplete for this period. Aggregate-only history cannot supply product quantities or staff attribution.',
     };
   }
 
@@ -321,7 +371,7 @@ export class MobileSaleLedgerService {
     },
   ) {
     const range = await this.range(tenant, query.from, query.to);
-    const take = Math.min(100, Math.max(1, Number(query.limit ?? 30)));
+    const take = pageLimit(query.limit, 30);
     let cursor: { closedAt: Date; id: string } | null = null;
     if (query.cursor) {
       try {
@@ -395,7 +445,7 @@ export class MobileSaleLedgerService {
     const hasMore = rows.length > take;
     const page = rows.slice(0, take);
     const last = page.at(-1);
-    const source = await this.provenance(tenant, range.dates);
+    const source = await this.detailProvenance(tenant, range.dates);
     return {
       ...range,
       ...source,
@@ -457,7 +507,7 @@ export class MobileSaleLedgerService {
     query: { from?: string; to?: string; limit?: string | number },
   ) {
     const range = await this.range(tenant, query.from, query.to);
-    const limit = Math.min(100, Math.max(1, Number(query.limit ?? 20)));
+    const limit = pageLimit(query.limit, 20);
     const selection = Prisma.sql`
       SELECT
         line."menuItemId",
@@ -482,13 +532,13 @@ export class MobileSaleLedgerService {
         CASE WHEN line."menuItemId" IS NULL THEN line."itemName" ELSE '' END,
         CASE WHEN line."menuItemId" IS NULL THEN COALESCE(line."variantName", '') ELSE '' END
     `;
-    const byRevenueRows = await this.prisma.$queryRaw<any[]>(
+    const byRevenueRows = await this.prisma.$queryRaw<ProductRow[]>(
       Prisma.sql`${selection} ${grouped} ORDER BY SUM(line."lineTotal") DESC LIMIT ${limit}`,
     );
-    const byQuantityRows = await this.prisma.$queryRaw<any[]>(
+    const byQuantityRows = await this.prisma.$queryRaw<ProductRow[]>(
       Prisma.sql`${selection} ${grouped} ORDER BY SUM(line."quantity") DESC, SUM(line."lineTotal") DESC LIMIT ${limit}`,
     );
-    const serializeProduct = (row: any) => ({
+    const serializeProduct = (row: ProductRow) => ({
       menuItemId: row.menuItemId,
       variantId: row.variantId,
       name: row.name,
@@ -497,7 +547,7 @@ export class MobileSaleLedgerService {
       revenue: money(row.revenue),
       manual: row.menuItemId == null,
     });
-    const source = await this.provenance(tenant, range.dates);
+    const source = await this.detailProvenance(tenant, range.dates);
     return {
       ...range,
       ...source,
@@ -506,46 +556,171 @@ export class MobileSaleLedgerService {
     };
   }
 
-  async getStaff(tenant: TenantContext, query: { from?: string; to?: string }) {
+  async getStaff(
+    tenant: TenantContext,
+    query: { from?: string; to?: string; attribution?: string },
+  ) {
+    const attribution = query.attribution ?? 'closer';
+    if (attribution !== 'creator' && attribution !== 'closer')
+      throw new BadRequestException('Attribution must be creator or closer');
     const range = await this.range(tenant, query.from, query.to);
-    const rows = await (this.prisma as any).cloudSale.groupBy({
-      by: ['closedById'],
-      where: {
-        venueId: tenant.venueId,
-        businessDate: { gte: range.from, lte: range.to },
-        ...REVENUE_WHERE,
-      },
-      _sum: { gross: true },
-      _count: { _all: true },
-    });
-    const source = await this.provenance(tenant, range.dates);
+    return this.staffForRange(tenant, range, attribution);
+  }
+
+  /** All-time detail is complete only when declared days and the retained
+   * POS summary agree. A summary alone never supplies employee attribution. */
+  async getRecordedStaffHistory(tenant: TenantContext) {
+    const [saleDates, days, summary] = await Promise.all([
+      this.prisma.cloudSale.findMany({
+        where: { venueId: tenant.venueId },
+        distinct: ['businessDate'],
+        select: { businessDate: true },
+      }),
+      this.prisma.saleLedgerDay.findMany({
+        where: { venueId: tenant.venueId },
+        select: { businessDate: true },
+      }),
+      this.prisma.setting.findUnique({
+        where: {
+          venueId_key: {
+            venueId: tenant.venueId,
+            key: 'salesSummary:all_time',
+          },
+        },
+      }),
+    ]);
+    const dates = [
+      ...new Set([...saleDates, ...days].map((row) => row.businessDate)),
+    ].sort();
+    const current = await this.currentDate(tenant);
+    const range = {
+      from: dates.at(0) ?? current,
+      to: dates.at(-1) ?? current,
+      dates,
+    };
+    const result = await this.staffForRange(tenant, range, 'creator');
+    let matches = false;
+    if (
+      summary &&
+      dates.length > 0 &&
+      result.provenance === 'LEDGER_COMPLETE'
+    ) {
+      try {
+        const raw: unknown = JSON.parse(summary.value);
+        if (
+          raw !== null &&
+          typeof raw === 'object' &&
+          'totalRevenue' in raw &&
+          typeof raw.totalRevenue === 'number' &&
+          Number.isFinite(raw.totalRevenue) &&
+          'orderCount' in raw &&
+          typeof raw.orderCount === 'number' &&
+          Number.isSafeInteger(raw.orderCount)
+        ) {
+          const revenue = result.staff.reduce(
+            (sum, row) => sum.plus(row.revenue),
+            new Prisma.Decimal(0),
+          );
+          const count = result.staff.reduce(
+            (sum, row) => sum + row.saleCount,
+            0,
+          );
+          matches =
+            revenue.equals(raw.totalRevenue) && count === raw.orderCount;
+        }
+      } catch {
+        // Malformed aggregate evidence cannot establish all-time completeness.
+        matches = false;
+      }
+    }
+    return {
+      ...result,
+      provenance: matches ? ('LEDGER_COMPLETE' as const) : ('PARTIAL' as const),
+      warning: matches
+        ? null
+        : 'All-time staff results cover retained detailed Sales only; complete day coverage and agreement with the POS retained-history summary are not established.',
+    };
+  }
+
+  private async staffForRange(
+    tenant: TenantContext,
+    range: { from: string; to: string; dates: string[] },
+    attribution: StaffAttribution,
+  ) {
+    // The column is chosen from two constants, never interpolated client SQL.
+    const actor =
+      attribution === 'creator'
+        ? Prisma.sql`sale."createdBy"`
+        : Prisma.sql`sale."closedById"`;
+    const rows = await this.prisma.$queryRaw<
+      Array<{
+        actor: string | null;
+        revenue: Prisma.Decimal;
+        saleCount: bigint;
+      }>
+    >(Prisma.sql`
+      SELECT ${actor} AS "actor", SUM(sale."gross") AS "revenue",
+        COUNT(*)::bigint AS "saleCount"
+      FROM "pos"."CloudSale" sale
+      WHERE sale."venueId" = ${tenant.venueId}
+        AND sale."businessDate" >= ${range.from}
+        AND sale."businessDate" <= ${range.to}
+        AND sale."isFiscal" = true
+        AND sale."isCancelled" = false
+        AND sale."restoredToOrder" = false
+      GROUP BY ${actor}
+      ORDER BY SUM(sale."gross") DESC, ${actor} ASC NULLS LAST
+    `);
+    const source = await this.detailProvenance(tenant, range.dates);
     return {
       ...range,
       ...source,
-      staff: rows
-        .map((row: any) => {
-          const saleCount = Number(row._count._all ?? 0);
-          const revenue = money(row._sum.gross);
-          return {
-            staffId: row.closedById,
-            staffName: row.closedById ?? 'Unknown / system',
-            attributionReliable: row.closedById != null,
-            revenue,
-            saleCount,
-            averageSale: saleCount
-              ? new Prisma.Decimal(revenue).dividedBy(saleCount).toFixed(2)
-              : '0.00',
-          };
-        })
-        .sort((a: any, b: any) =>
-          new Prisma.Decimal(b.revenue).comparedTo(a.revenue),
-        ),
+      attribution,
+      attributionBasis: 'RECORDED_POS_USERNAME' as const,
+      attributionWarning:
+        'Names are frozen POS records. Renamed or reused usernames cannot prove a stable employee identity.',
+      staff: rows.map((row) => {
+        const saleCount = Number(row.saleCount);
+        const revenue = money(row.revenue);
+        return {
+          ...recordedActor(row.actor),
+          revenue,
+          saleCount,
+          averageSale: saleCount
+            ? new Prisma.Decimal(revenue).dividedBy(saleCount).toFixed(2)
+            : '0.00',
+        };
+      }),
     };
+  }
+
+  async getStaffPerformance(
+    tenant: TenantContext,
+    query: { from?: string; to?: string } = {},
+  ) {
+    const result = await this.getStaff(tenant, {
+      ...query,
+      attribution: 'creator',
+    });
+    return result.staff.map((row, index) => ({
+      rank: index + 1,
+      waiterName: row.staffName,
+      totalSales: Number(row.revenue),
+      orderCount: row.saleCount,
+      avgOrderValue: Number(row.averageSale),
+      staffId: row.staffId,
+      identityBasis: row.identityBasis,
+      identityStable: row.identityStable,
+    }));
   }
 
   private serializeSale(sale: any) {
     return {
       ...sale,
+      attribution: {
+        creator: recordedActor((sale as { createdBy?: unknown }).createdBy),
+        closer: recordedActor(sale.closedById),
+      },
       gross: money(sale.gross),
       subtotal: sale.subtotal == null ? undefined : money(sale.subtotal),
       serviceFee: sale.serviceFee == null ? undefined : money(sale.serviceFee),

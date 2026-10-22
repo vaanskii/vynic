@@ -1,0 +1,4127 @@
+{
+  "schema": 2,
+  "recordedAtUtc": "2026-10-06T18:11:29.493559+00:00",
+  "status": "PASS_BOUNDED_ACTUAL_WINDOWS_PACKAGES_AND_SHIPPED_FOREGROUND_CLI",
+  "rawResult": {
+    "path": "/Users/vaanskii/Developer/vynic/docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/windows-software-go-packages-result-v2/windows-software-go-packages.json",
+    "sha256": "f08745536b0304271af665d544e7ac42a6cfeb3044655cf10ff4f6dc9a5be957",
+    "bytes": 15623
+  },
+  "stageReceipt": {
+    "path": "/Users/vaanskii/Developer/vynic/docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/windows-software-go-packages-stage-v2/stage-receipt.json",
+    "sha256": "6004c62c195e96b4ba9f54e065b9c1e887924054c0168ca7e2c49b854ba2b4f4",
+    "bytes": 4447
+  },
+  "sourceReceipt": {
+    "path": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/final-cohort-v2-source.json",
+    "sha256": "faaaec2f1ece4f8259353666000eb4c0d3aee6143e73ae7fdf90772a937b581b",
+    "bytes": 208681
+  },
+  "launchReceipt": {
+    "path": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/windows-go-execution-v2-launch.json",
+    "sha256": "61a5e84314565a4c428df5efe9c213c7c42fcafb9fd4ce7c35c1bc0213abf580",
+    "bytes": 2533
+  },
+  "launchLog": {
+    "path": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/windows-go-execution-v2-prlctl.log",
+    "sha256": "c6ae945a555a3c6280622901606a6c0a906ce2390abea2fe6ea149c920e589b8",
+    "bytes": 417889
+  },
+  "independentReview": {
+    "path": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/windows-software-v2/go-runtime-independent-review.json",
+    "sha256": "e711f5cb0f03a4b53c7581a92243d8814d77dc83b30b85c2048be2820e327dd0",
+    "bytes": 8677
+  },
+  "currentUser": "VANSKI\\vaanskii",
+  "currentSID": "S-1-5-21-611125631-3759947118-1641436196-1000",
+  "guestArchitecture": "ARM64",
+  "nativeARM64AndEmulatedAmd64": true,
+  "packages": {
+    "arm64/printerprovisioning": {
+      "status": "PASS",
+      "topLevelPass": 12,
+      "passRecords": 112,
+      "subtestPass": 100,
+      "failRecords": 0,
+      "skipRecords": [],
+      "stdout": {
+        "path": "/Users/vaanskii/Developer/vynic/docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/windows-software-go-packages-result-v2/arm64-printerprovisioning.stdout.log",
+        "sha256": "88e4bb10c67f18642f4621fabc499d3e25f39a52cda9b2074c80d6eb195e65c6",
+        "bytes": 18107
+      },
+      "stderr": {
+        "path": "/Users/vaanskii/Developer/vynic/docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/windows-software-go-packages-result-v2/arm64-printerprovisioning.stderr.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "records": [
+        {
+          "status": "PASS",
+          "test": "TestOptionalServerAdapterReadsCurrentStateEveryAttempt",
+          "elapsedSeconds": 0.01,
+          "logLine": 2,
+          "topLevel": true
+        },
+        {
+          "status": "PASS",
+          "test": "TestAdapterConstructorFreezeAndFailurePropagation",
+          "elapsedSeconds": 0.0,
+          "logLine": 4,
+          "topLevel": true
+        },
+        {
+          "status": "PASS",
+          "test": "TestAdapterRejectsChangedPinsAndExportedJobMutation",
+          "elapsedSeconds": 0.05,
+          "logLine": 11,
+          "topLevel": true
+        },
+        {
+          "status": "PASS",
+          "test": "TestAdapterRejectsChangedPinsAndExportedJobMutation/scope",
+          "elapsedSeconds": 0.01,
+          "logLine": 12,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestAdapterRejectsChangedPinsAndExportedJobMutation/cluster",
+          "elapsedSeconds": 0.01,
+          "logLine": 13,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestAdapterRejectsChangedPinsAndExportedJobMutation/profile",
+          "elapsedSeconds": 0.01,
+          "logLine": 14,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestAdapterRejectsChangedPinsAndExportedJobMutation/host",
+          "elapsedSeconds": 0.01,
+          "logLine": 15,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestAdapterRejectsChangedPinsAndExportedJobMutation/revision",
+          "elapsedSeconds": 0.01,
+          "logLine": 16,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestConcurrentValidationRetainsImmutableGrantAndJob",
+          "elapsedSeconds": 0.01,
+          "logLine": 18,
+          "topLevel": true
+        },
+        {
+          "status": "PASS",
+          "test": "TestStrictSignedAndBodyJSONRejectsAliasesAndUnknownFields",
+          "elapsedSeconds": 0.1,
+          "logLine": 38,
+          "topLevel": true
+        },
+        {
+          "status": "PASS",
+          "test": "TestStrictSignedAndBodyJSONRejectsAliasesAndUnknownFields/wrapperUnknown",
+          "elapsedSeconds": 0.01,
+          "logLine": 39,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestStrictSignedAndBodyJSONRejectsAliasesAndUnknownFields/wrapperCase",
+          "elapsedSeconds": 0.01,
+          "logLine": 40,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestStrictSignedAndBodyJSONRejectsAliasesAndUnknownFields/wrapperDuplicate",
+          "elapsedSeconds": 0.0,
+          "logLine": 41,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestStrictSignedAndBodyJSONRejectsAliasesAndUnknownFields/wrapperNull",
+          "elapsedSeconds": 0.0,
+          "logLine": 42,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestStrictSignedAndBodyJSONRejectsAliasesAndUnknownFields/wrapperInvalidBase64",
+          "elapsedSeconds": 0.0,
+          "logLine": 43,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestStrictSignedAndBodyJSONRejectsAliasesAndUnknownFields/wrapperTrailing",
+          "elapsedSeconds": 0.01,
+          "logLine": 44,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestStrictSignedAndBodyJSONRejectsAliasesAndUnknownFields/bodyUnknown",
+          "elapsedSeconds": 0.0,
+          "logLine": 45,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestStrictSignedAndBodyJSONRejectsAliasesAndUnknownFields/bodyCase",
+          "elapsedSeconds": 0.01,
+          "logLine": 46,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestStrictSignedAndBodyJSONRejectsAliasesAndUnknownFields/bodyDuplicate",
+          "elapsedSeconds": 0.01,
+          "logLine": 47,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestStrictSignedAndBodyJSONRejectsAliasesAndUnknownFields/nestedCase",
+          "elapsedSeconds": 0.0,
+          "logLine": 48,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestStrictSignedAndBodyJSONRejectsAliasesAndUnknownFields/nestedEscapedDuplicate",
+          "elapsedSeconds": 0.0,
+          "logLine": 49,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestStrictSignedAndBodyJSONRejectsAliasesAndUnknownFields/nestedUnknown",
+          "elapsedSeconds": 0.01,
+          "logLine": 50,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestStrictSignedAndBodyJSONRejectsAliasesAndUnknownFields/bodyTrailing",
+          "elapsedSeconds": 0.01,
+          "logLine": 51,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestStrictSignedAndBodyJSONRejectsAliasesAndUnknownFields/bodyInvalidUTF8",
+          "elapsedSeconds": 0.01,
+          "logLine": 52,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestStrictSignedAndBodyJSONRejectsAliasesAndUnknownFields/bodyVersion",
+          "elapsedSeconds": 0.01,
+          "logLine": 53,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestStrictSignedAndBodyJSONRejectsAliasesAndUnknownFields/fractionGeneration",
+          "elapsedSeconds": 0.0,
+          "logLine": 54,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestStrictSignedAndBodyJSONRejectsAliasesAndUnknownFields/oversizedGrant",
+          "elapsedSeconds": 0.01,
+          "logLine": 55,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestStrictSignedAndBodyJSONRejectsAliasesAndUnknownFields/oversizedBody",
+          "elapsedSeconds": 0.01,
+          "logLine": 56,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestCompleteFrozenIdentityAndRouteCannotRetarget",
+          "elapsedSeconds": 0.13,
+          "logLine": 81,
+          "topLevel": true
+        },
+        {
+          "status": "PASS",
+          "test": "TestCompleteFrozenIdentityAndRouteCannotRetarget/venue",
+          "elapsedSeconds": 0.01,
+          "logLine": 82,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestCompleteFrozenIdentityAndRouteCannotRetarget/device",
+          "elapsedSeconds": 0.0,
+          "logLine": 83,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestCompleteFrozenIdentityAndRouteCannotRetarget/installation",
+          "elapsedSeconds": 0.01,
+          "logLine": 84,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestCompleteFrozenIdentityAndRouteCannotRetarget/host",
+          "elapsedSeconds": 0.01,
+          "logLine": 85,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestCompleteFrozenIdentityAndRouteCannotRetarget/epoch",
+          "elapsedSeconds": 0.0,
+          "logLine": 86,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestCompleteFrozenIdentityAndRouteCannotRetarget/terminal",
+          "elapsedSeconds": 0.01,
+          "logLine": 87,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestCompleteFrozenIdentityAndRouteCannotRetarget/origin",
+          "elapsedSeconds": 0.01,
+          "logLine": 88,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestCompleteFrozenIdentityAndRouteCannotRetarget/physical",
+          "elapsedSeconds": 0.01,
+          "logLine": 89,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestCompleteFrozenIdentityAndRouteCannotRetarget/alias",
+          "elapsedSeconds": 0.0,
+          "logLine": 90,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestCompleteFrozenIdentityAndRouteCannotRetarget/routeRevision",
+          "elapsedSeconds": 0.01,
+          "logLine": 91,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestCompleteFrozenIdentityAndRouteCannotRetarget/configRevision",
+          "elapsedSeconds": 0.01,
+          "logLine": 92,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestCompleteFrozenIdentityAndRouteCannotRetarget/bindingRevision",
+          "elapsedSeconds": 0.0,
+          "logLine": 93,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestCompleteFrozenIdentityAndRouteCannotRetarget/registryRevision",
+          "elapsedSeconds": 0.01,
+          "logLine": 94,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestCompleteFrozenIdentityAndRouteCannotRetarget/IP",
+          "elapsedSeconds": 0.01,
+          "logLine": 95,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestCompleteFrozenIdentityAndRouteCannotRetarget/IPAlias",
+          "elapsedSeconds": 0.01,
+          "logLine": 96,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestCompleteFrozenIdentityAndRouteCannotRetarget/port",
+          "elapsedSeconds": 0.0,
+          "logLine": 97,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestCompleteFrozenIdentityAndRouteCannotRetarget/profileDimension",
+          "elapsedSeconds": 0.01,
+          "logLine": 98,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestCompleteFrozenIdentityAndRouteCannotRetarget/profileUnknownLanguage",
+          "elapsedSeconds": 0.01,
+          "logLine": 99,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestCompleteFrozenIdentityAndRouteCannotRetarget/profileReorder",
+          "elapsedSeconds": 0.01,
+          "logLine": 100,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestCompleteFrozenIdentityAndRouteCannotRetarget/changedPrimaryWithoutHash",
+          "elapsedSeconds": 0.01,
+          "logLine": 101,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestCompleteFrozenIdentityAndRouteCannotRetarget/windows/queue",
+          "elapsedSeconds": 0.01,
+          "logLine": 102,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestCompleteFrozenIdentityAndRouteCannotRetarget/windows/driver",
+          "elapsedSeconds": 0.01,
+          "logLine": 103,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestCompleteFrozenIdentityAndRouteCannotRetarget/windows/port",
+          "elapsedSeconds": 0.0,
+          "logLine": 104,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestSignedConfigurationBytesAndHashesAreExact",
+          "elapsedSeconds": 0.03,
+          "logLine": 111,
+          "topLevel": true
+        },
+        {
+          "status": "PASS",
+          "test": "TestSignedConfigurationBytesAndHashesAreExact/reorderedConfiguration",
+          "elapsedSeconds": 0.01,
+          "logLine": 112,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestSignedConfigurationBytesAndHashesAreExact/routeUnknown",
+          "elapsedSeconds": 0.0,
+          "logLine": 113,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestSignedConfigurationBytesAndHashesAreExact/routeCase",
+          "elapsedSeconds": 0.0,
+          "logLine": 114,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestSignedConfigurationBytesAndHashesAreExact/destinationCase",
+          "elapsedSeconds": 0.01,
+          "logLine": 115,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestSignedConfigurationBytesAndHashesAreExact/destinationDuplicate",
+          "elapsedSeconds": 0.0,
+          "logLine": 116,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestStrictJobKeysAndZeroValueCannotProduceAJob",
+          "elapsedSeconds": 0.01,
+          "logLine": 118,
+          "topLevel": true
+        },
+        {
+          "status": "PASS",
+          "test": "TestCandidatePreservesCompleteFrozenBytesAndNeverAdmits",
+          "elapsedSeconds": 0.02,
+          "logLine": 124,
+          "topLevel": true
+        },
+        {
+          "status": "PASS",
+          "test": "TestCandidatePreservesCompleteFrozenBytesAndNeverAdmits/tcp/LOCAL",
+          "elapsedSeconds": 0.01,
+          "logLine": 125,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestCandidatePreservesCompleteFrozenBytesAndNeverAdmits/tcp/VENUE_SHARED",
+          "elapsedSeconds": 0.01,
+          "logLine": 126,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestCandidatePreservesCompleteFrozenBytesAndNeverAdmits/windowsSpooler/LOCAL",
+          "elapsedSeconds": 0.01,
+          "logLine": 127,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestCandidatePreservesCompleteFrozenBytesAndNeverAdmits/windowsSpooler/VENUE_SHARED",
+          "elapsedSeconds": 0.01,
+          "logLine": 128,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestPinnedIssuerAndPrinterOnlySignatureDomain",
+          "elapsedSeconds": 0.04,
+          "logLine": 139,
+          "topLevel": true
+        },
+        {
+          "status": "PASS",
+          "test": "TestPinnedIssuerAndPrinterOnlySignatureDomain/wrongIssuer",
+          "elapsedSeconds": 0.0,
+          "logLine": 140,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestPinnedIssuerAndPrinterOnlySignatureDomain/bodyWhitespaceTamper",
+          "elapsedSeconds": 0.0,
+          "logLine": 141,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestPinnedIssuerAndPrinterOnlySignatureDomain/noDomain",
+          "elapsedSeconds": 0.0,
+          "logLine": 142,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestPinnedIssuerAndPrinterOnlySignatureDomain/oldProofDomain",
+          "elapsedSeconds": 0.0,
+          "logLine": 143,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestPinnedIssuerAndPrinterOnlySignatureDomain/FOUNDATION_ONLY",
+          "elapsedSeconds": 0.01,
+          "logLine": 144,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestPinnedIssuerAndPrinterOnlySignatureDomain/ISOLATED_PROOF",
+          "elapsedSeconds": 0.01,
+          "logLine": 145,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestPinnedIssuerAndPrinterOnlySignatureDomain/VYNIC_OPERATIONAL_PROOF",
+          "elapsedSeconds": 0.0,
+          "logLine": 146,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestPinnedIssuerAndPrinterOnlySignatureDomain/printer",
+          "elapsedSeconds": 0.01,
+          "logLine": 147,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestPinnedIssuerAndPrinterOnlySignatureDomain/#00",
+          "elapsedSeconds": 0.01,
+          "logLine": 148,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestLifetimeGenerationRevocationAndTrustedStateFailClosed",
+          "elapsedSeconds": 0.11,
+          "logLine": 169,
+          "topLevel": true
+        },
+        {
+          "status": "PASS",
+          "test": "TestLifetimeGenerationRevocationAndTrustedStateFailClosed/expired",
+          "elapsedSeconds": 0.0,
+          "logLine": 170,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestLifetimeGenerationRevocationAndTrustedStateFailClosed/futureIssue",
+          "elapsedSeconds": 0.01,
+          "logLine": 171,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestLifetimeGenerationRevocationAndTrustedStateFailClosed/futureNotBefore",
+          "elapsedSeconds": 0.0,
+          "logLine": 172,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestLifetimeGenerationRevocationAndTrustedStateFailClosed/zeroIssue",
+          "elapsedSeconds": 0.01,
+          "logLine": 173,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestLifetimeGenerationRevocationAndTrustedStateFailClosed/reversedWindow",
+          "elapsedSeconds": 0.0,
+          "logLine": 174,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestLifetimeGenerationRevocationAndTrustedStateFailClosed/policyLifetimeExceeded",
+          "elapsedSeconds": 0.01,
+          "logLine": 175,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestLifetimeGenerationRevocationAndTrustedStateFailClosed/oldGeneration",
+          "elapsedSeconds": 0.0,
+          "logLine": 176,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestLifetimeGenerationRevocationAndTrustedStateFailClosed/futureGeneration",
+          "elapsedSeconds": 0.01,
+          "logLine": 177,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestLifetimeGenerationRevocationAndTrustedStateFailClosed/revokedCurrent",
+          "elapsedSeconds": 0.0,
+          "logLine": 178,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestLifetimeGenerationRevocationAndTrustedStateFailClosed/differentCurrentGrant",
+          "elapsedSeconds": 0.01,
+          "logLine": 179,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestLifetimeGenerationRevocationAndTrustedStateFailClosed/differentCurrentBodyHash",
+          "elapsedSeconds": 0.0,
+          "logLine": 180,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestLifetimeGenerationRevocationAndTrustedStateFailClosed/unpersistedGeneration",
+          "elapsedSeconds": 0.0,
+          "logLine": 181,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestLifetimeGenerationRevocationAndTrustedStateFailClosed/rollbackCurrentGeneration",
+          "elapsedSeconds": 0.0,
+          "logLine": 182,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestLifetimeGenerationRevocationAndTrustedStateFailClosed/missingIssuerPin",
+          "elapsedSeconds": 0.01,
+          "logLine": 183,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestLifetimeGenerationRevocationAndTrustedStateFailClosed/missingCurrentStateHash",
+          "elapsedSeconds": 0.01,
+          "logLine": 184,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestLifetimeGenerationRevocationAndTrustedStateFailClosed/missingClock",
+          "elapsedSeconds": 0.01,
+          "logLine": 185,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestLifetimeGenerationRevocationAndTrustedStateFailClosed/missingLifetimePolicy",
+          "elapsedSeconds": 0.01,
+          "logLine": 186,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestLifetimeGenerationRevocationAndTrustedStateFailClosed/unknownScope",
+          "elapsedSeconds": 0.01,
+          "logLine": 187,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestLifetimeGenerationRevocationAndTrustedStateFailClosed/localWithCluster",
+          "elapsedSeconds": 0.01,
+          "logLine": 188,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestSignedWrongContextAndAuthenticatedDERRefused",
+          "elapsedSeconds": 0.12,
+          "logLine": 207,
+          "topLevel": true
+        },
+        {
+          "status": "PASS",
+          "test": "TestSignedWrongContextAndAuthenticatedDERRefused/venueId",
+          "elapsedSeconds": 0.01,
+          "logLine": 208,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestSignedWrongContextAndAuthenticatedDERRefused/deviceId",
+          "elapsedSeconds": 0.01,
+          "logLine": 209,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestSignedWrongContextAndAuthenticatedDERRefused/installationId",
+          "elapsedSeconds": 0.01,
+          "logLine": 210,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestSignedWrongContextAndAuthenticatedDERRefused/hostId",
+          "elapsedSeconds": 0.01,
+          "logLine": 211,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestSignedWrongContextAndAuthenticatedDERRefused/authorityEpoch",
+          "elapsedSeconds": 0.01,
+          "logLine": 212,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestSignedWrongContextAndAuthenticatedDERRefused/terminalId",
+          "elapsedSeconds": 0.01,
+          "logLine": 213,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestSignedWrongContextAndAuthenticatedDERRefused/originInstallationId",
+          "elapsedSeconds": 0.01,
+          "logLine": 214,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestSignedWrongContextAndAuthenticatedDERRefused/clientId",
+          "elapsedSeconds": 0.01,
+          "logLine": 215,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestSignedWrongContextAndAuthenticatedDERRefused/clientCertificateSha256",
+          "elapsedSeconds": 0.01,
+          "logLine": 216,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestSignedWrongContextAndAuthenticatedDERRefused/wrongObservedClient",
+          "elapsedSeconds": 0.01,
+          "logLine": 217,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestSignedWrongContextAndAuthenticatedDERRefused/wrongDER",
+          "elapsedSeconds": 0.01,
+          "logLine": 218,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestSignedWrongContextAndAuthenticatedDERRefused/emptyDER",
+          "elapsedSeconds": 0.01,
+          "logLine": 219,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestSignedWrongContextAndAuthenticatedDERRefused/invalidPinnedDER",
+          "elapsedSeconds": 0.01,
+          "logLine": 220,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestSignedWrongContextAndAuthenticatedDERRefused/expiredLeaf",
+          "elapsedSeconds": 0.01,
+          "logLine": 221,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestSignedWrongContextAndAuthenticatedDERRefused/signedSharedOnLocal",
+          "elapsedSeconds": 0.01,
+          "logLine": 222,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestSignedWrongContextAndAuthenticatedDERRefused/wrongSharedMembership",
+          "elapsedSeconds": 0.01,
+          "logLine": 223,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestSignedWrongContextAndAuthenticatedDERRefused/wrongSharedCluster",
+          "elapsedSeconds": 0.01,
+          "logLine": 224,
+          "topLevel": false
+        }
+      ],
+      "observed": {
+        "status": "PASS",
+        "exitCode": 0,
+        "elapsedMs": 1048,
+        "workingDirectory": "C:\\Users\\vaanskii\\AppData\\Local\\VynicReadinessPrinterAgent\\software-v2-d6f8ecef582b\\source\\apps\\edge\\internal\\printerprovisioning",
+        "binarySHA256": "17e46e4f457f476969508c529a0856810c187104fc4b56c80c31935e6dcd3693",
+        "packagedCLISHA256": "dbdd278544ba542a9161a9bb4fbe411b31a410789af0a0bb583d4a00a78bbf71",
+        "arguments": [
+          "-test.v",
+          "-test.timeout=10m"
+        ],
+        "stdoutSHA256": "88e4bb10c67f18642f4621fabc499d3e25f39a52cda9b2074c80d6eb195e65c6",
+        "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "sourceTests": [
+        {
+          "path": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/final-cohort-v2/apps/edge/internal/printerprovisioning/adapter_test.go",
+          "sha256": "06ae3fd6c64e4b59d77ec0f60f77a959284ebbd5f7960c400e8e40c3bd8985a1",
+          "bytes": 5287
+        },
+        {
+          "path": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/final-cohort-v2/apps/edge/internal/printerprovisioning/binding_test.go",
+          "sha256": "6486e030b7174098cd08c221733f4624bbb94ad787780705d61ef44de413ad5a",
+          "bytes": 9040
+        },
+        {
+          "path": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/final-cohort-v2/apps/edge/internal/printerprovisioning/validate_test.go",
+          "sha256": "30a507944cb7a4acd18456961b833f58240fb117c38d85ef6e1303a029848a5e",
+          "bytes": 12283
+        }
+      ]
+    },
+    "arm64/printeragent": {
+      "status": "PASS",
+      "topLevelPass": 7,
+      "passRecords": 37,
+      "subtestPass": 30,
+      "failRecords": 0,
+      "skipRecords": [
+        {
+          "status": "SKIP",
+          "test": "TestPrinterAgentProcess",
+          "elapsedSeconds": 0.0,
+          "logLine": 77,
+          "topLevel": true,
+          "classification": "fixture-entry-only",
+          "reason": "Standalone isolated cross-language fixture entry needs VYNIC_PRINTER_AGENT_FIXTURE_DIR; ordinary package tests execute the actual loopback server. The separately qualified Windows Flutter packet uses this entry as its actual Go fixture."
+        }
+      ],
+      "stdout": {
+        "path": "/Users/vaanskii/Developer/vynic/docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/windows-software-go-packages-result-v2/arm64-printeragent.stdout.log",
+        "sha256": "f1ad5e89b405cb6916f42dc476a04dc0c5e428c8d686dc9c4b8ecf30f3d15052",
+        "bytes": 6099
+      },
+      "stderr": {
+        "path": "/Users/vaanskii/Developer/vynic/docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/windows-software-go-packages-result-v2/arm64-printeragent.stderr.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "records": [
+        {
+          "status": "PASS",
+          "test": "TestAuthenticatedHealthStrictHeldBytesAndZeroQueueWrites",
+          "elapsedSeconds": 0.04,
+          "logLine": 14,
+          "topLevel": true
+        },
+        {
+          "status": "PASS",
+          "test": "TestAuthenticatedHealthStrictHeldBytesAndZeroQueueWrites/wrongHash",
+          "elapsedSeconds": 0.0,
+          "logLine": 15,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestAuthenticatedHealthStrictHeldBytesAndZeroQueueWrites/changedExactBytes",
+          "elapsedSeconds": 0.0,
+          "logLine": 16,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestAuthenticatedHealthStrictHeldBytesAndZeroQueueWrites/wrongJob",
+          "elapsedSeconds": 0.0,
+          "logLine": 17,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestAuthenticatedHealthStrictHeldBytesAndZeroQueueWrites/unknownWire",
+          "elapsedSeconds": 0.0,
+          "logLine": 18,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestAuthenticatedHealthStrictHeldBytesAndZeroQueueWrites/venueId",
+          "elapsedSeconds": 0.0,
+          "logLine": 19,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestAuthenticatedHealthStrictHeldBytesAndZeroQueueWrites/deviceId",
+          "elapsedSeconds": 0.0,
+          "logLine": 20,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestAuthenticatedHealthStrictHeldBytesAndZeroQueueWrites/installationId",
+          "elapsedSeconds": 0.0,
+          "logLine": 21,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestAuthenticatedHealthStrictHeldBytesAndZeroQueueWrites/authorityEpoch",
+          "elapsedSeconds": 0.0,
+          "logLine": 22,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestAuthenticatedHealthStrictHeldBytesAndZeroQueueWrites/routeRevision",
+          "elapsedSeconds": 0.0,
+          "logLine": 23,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestAuthenticatedHealthStrictHeldBytesAndZeroQueueWrites/configRevision",
+          "elapsedSeconds": 0.0,
+          "logLine": 24,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestAuthenticatedHealthStrictHeldBytesAndZeroQueueWrites/bindingRevision",
+          "elapsedSeconds": 0.0,
+          "logLine": 25,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestAuthenticatedHealthStrictHeldBytesAndZeroQueueWrites/registryRevision",
+          "elapsedSeconds": 0.0,
+          "logLine": 26,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestFreshMutualTLSClientScopePinRevocationAndProtocol",
+          "elapsedSeconds": 0.03,
+          "logLine": 41,
+          "topLevel": true
+        },
+        {
+          "status": "PASS",
+          "test": "TestFreshMutualTLSClientScopePinRevocationAndProtocol/oldVersion",
+          "elapsedSeconds": 0.0,
+          "logLine": 42,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestFreshMutualTLSClientScopePinRevocationAndProtocol/oldReader",
+          "elapsedSeconds": 0.0,
+          "logLine": 43,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestFreshMutualTLSClientScopePinRevocationAndProtocol/unknownCap",
+          "elapsedSeconds": 0.0,
+          "logLine": 44,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestFreshMutualTLSClientScopePinRevocationAndProtocol/unknownNestedWire",
+          "elapsedSeconds": 0.0,
+          "logLine": 45,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestFreshMutualTLSClientScopePinRevocationAndProtocol/wrongHost",
+          "elapsedSeconds": 0.0,
+          "logLine": 46,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestFreshMutualTLSClientScopePinRevocationAndProtocol/foreignClient",
+          "elapsedSeconds": 0.0,
+          "logLine": 47,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestFreshMutualTLSClientScopePinRevocationAndProtocol/wrongCA",
+          "elapsedSeconds": 0.0,
+          "logLine": 48,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestFreshMutualTLSClientScopePinRevocationAndProtocol/reissuedUnpinned",
+          "elapsedSeconds": 0.0,
+          "logLine": 49,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestFreshMutualTLSClientScopePinRevocationAndProtocol/wrongHost#01",
+          "elapsedSeconds": 0.0,
+          "logLine": 50,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestFreshMutualTLSClientScopePinRevocationAndProtocol/duplicatePurpose",
+          "elapsedSeconds": 0.0,
+          "logLine": 51,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestFreshMutualTLSClientScopePinRevocationAndProtocol/extraDNS",
+          "elapsedSeconds": 0.0,
+          "logLine": 52,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestFreshMutualTLSClientScopePinRevocationAndProtocol/encodedURI",
+          "elapsedSeconds": 0.0,
+          "logLine": 53,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestFreshMutualTLSClientScopePinRevocationAndProtocol/wrongEKU",
+          "elapsedSeconds": 0.0,
+          "logLine": 54,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestCandidateReceivesFreshCopiedDERAndNeverAdmits",
+          "elapsedSeconds": 0.02,
+          "logLine": 56,
+          "topLevel": true
+        },
+        {
+          "status": "PASS",
+          "test": "TestLostHealthACKReconnectHasNoAdmissionOrOptimisticReceipt",
+          "elapsedSeconds": 0.02,
+          "logLine": 58,
+          "topLevel": true
+        },
+        {
+          "status": "PASS",
+          "test": "TestStopTimeoutRetainsActualHealthHandlerAndFencesNewRPC",
+          "elapsedSeconds": 0.04,
+          "logLine": 60,
+          "topLevel": true
+        },
+        {
+          "status": "PASS",
+          "test": "TestConstructorPreflightAndChangedHealthFailClosed",
+          "elapsedSeconds": 0.02,
+          "logLine": 67,
+          "topLevel": true
+        },
+        {
+          "status": "PASS",
+          "test": "TestConstructorPreflightAndChangedHealthFailClosed/wrongServerName",
+          "elapsedSeconds": 0.0,
+          "logLine": 68,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestConstructorPreflightAndChangedHealthFailClosed/extraServerURI",
+          "elapsedSeconds": 0.0,
+          "logLine": 69,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestConstructorPreflightAndChangedHealthFailClosed/wrongEKU",
+          "elapsedSeconds": 0.0,
+          "logLine": 70,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestConstructorPreflightAndChangedHealthFailClosed/expired",
+          "elapsedSeconds": 0.0,
+          "logLine": 71,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestConstructorPreflightAndChangedHealthFailClosed/notYetValid",
+          "elapsedSeconds": 0.0,
+          "logLine": 72,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestEstablishedChannelServerExpiryAndTypedNilHealthSource",
+          "elapsedSeconds": 0.02,
+          "logLine": 74,
+          "topLevel": true
+        },
+        {
+          "status": "SKIP",
+          "test": "TestPrinterAgentProcess",
+          "elapsedSeconds": 0.0,
+          "logLine": 77,
+          "topLevel": true,
+          "classification": "fixture-entry-only",
+          "reason": "Standalone isolated cross-language fixture entry needs VYNIC_PRINTER_AGENT_FIXTURE_DIR; ordinary package tests execute the actual loopback server. The separately qualified Windows Flutter packet uses this entry as its actual Go fixture."
+        }
+      ],
+      "observed": {
+        "status": "PASS",
+        "exitCode": 0,
+        "elapsedMs": 1053,
+        "workingDirectory": "C:\\Users\\vaanskii\\AppData\\Local\\VynicReadinessPrinterAgent\\software-v2-d6f8ecef582b\\source\\apps\\edge\\internal\\printeragent",
+        "binarySHA256": "819805381857dcd326f309ceba894b2bf43b62b0db037e5da7c347925ab5acb3",
+        "packagedCLISHA256": "dbdd278544ba542a9161a9bb4fbe411b31a410789af0a0bb583d4a00a78bbf71",
+        "arguments": [
+          "-test.v",
+          "-test.timeout=10m"
+        ],
+        "stdoutSHA256": "f1ad5e89b405cb6916f42dc476a04dc0c5e428c8d686dc9c4b8ecf30f3d15052",
+        "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "sourceTests": [
+        {
+          "path": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/final-cohort-v2/apps/edge/internal/printeragent/server_test.go",
+          "sha256": "505a664b20b1d64a396dd824ee40568e344b0b59ca43a5c3977f305663afc3e2",
+          "bytes": 24635
+        }
+      ]
+    },
+    "arm64/printerdaemon": {
+      "status": "PASS",
+      "topLevelPass": 26,
+      "passRecords": 95,
+      "subtestPass": 69,
+      "failRecords": 0,
+      "skipRecords": [],
+      "stdout": {
+        "path": "/Users/vaanskii/Developer/vynic/docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/windows-software-go-packages-result-v2/arm64-printerdaemon.stdout.log",
+        "sha256": "49cd26559a0e0b6a4aae9313a6c57d7fc123c4b5fe259cb045cc2049954e8efc",
+        "bytes": 16020
+      },
+      "stderr": {
+        "path": "/Users/vaanskii/Developer/vynic/docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/windows-software-go-packages-result-v2/arm64-printerdaemon.stderr.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "records": [
+        {
+          "status": "PASS",
+          "test": "TestConfigStrictNestedSchemaAndHeldProfile",
+          "elapsedSeconds": 0.11,
+          "logLine": 19,
+          "topLevel": true
+        },
+        {
+          "status": "PASS",
+          "test": "TestConfigStrictNestedSchemaAndHeldProfile/duplicate-case-client",
+          "elapsedSeconds": 0.0,
+          "logLine": 20,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestConfigStrictNestedSchemaAndHeldProfile/null-client-id",
+          "elapsedSeconds": 0.0,
+          "logLine": 21,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestConfigStrictNestedSchemaAndHeldProfile/null-helper-protocol",
+          "elapsedSeconds": 0.0,
+          "logLine": 22,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestConfigStrictNestedSchemaAndHeldProfile/old-reader",
+          "elapsedSeconds": 0.0,
+          "logLine": 23,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestConfigStrictNestedSchemaAndHeldProfile/old-schema",
+          "elapsedSeconds": 0.0,
+          "logLine": 24,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestConfigStrictNestedSchemaAndHeldProfile/aliased-client",
+          "elapsedSeconds": 0.0,
+          "logLine": 25,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestConfigStrictNestedSchemaAndHeldProfile/null-qualification",
+          "elapsedSeconds": 0.0,
+          "logLine": 26,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestConfigStrictNestedSchemaAndHeldProfile/unknown-role",
+          "elapsedSeconds": 0.0,
+          "logLine": 27,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestConfigStrictNestedSchemaAndHeldProfile/non-loopback",
+          "elapsedSeconds": 0.0,
+          "logLine": 28,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestConfigStrictNestedSchemaAndHeldProfile/relative-state",
+          "elapsedSeconds": 0.0,
+          "logLine": 29,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestConfigStrictNestedSchemaAndHeldProfile/missing-pins-key",
+          "elapsedSeconds": 0.0,
+          "logLine": 30,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestConfigStrictNestedSchemaAndHeldProfile/alias-pins-key",
+          "elapsedSeconds": 0.0,
+          "logLine": 31,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestConfigStrictNestedSchemaAndHeldProfile/alias-qualification",
+          "elapsedSeconds": 0.0,
+          "logLine": 32,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestConfigStrictNestedSchemaAndHeldProfile/dispatch-enabled",
+          "elapsedSeconds": 0.0,
+          "logLine": 33,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestConfigStrictNestedSchemaAndHeldProfile/unknown-root",
+          "elapsedSeconds": 0.0,
+          "logLine": 34,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestConfigStrictNestedSchemaAndHeldProfile/null-client",
+          "elapsedSeconds": 0.0,
+          "logLine": 35,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestConfigStrictNestedSchemaAndHeldProfile/role-scope-mismatch",
+          "elapsedSeconds": 0.0,
+          "logLine": 36,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestPreflightRejectsWrongRootIdentityRoleAndSchemaWithoutReset",
+          "elapsedSeconds": 0.83,
+          "logLine": 44,
+          "topLevel": true
+        },
+        {
+          "status": "PASS",
+          "test": "TestPreflightRejectsWrongRootIdentityRoleAndSchemaWithoutReset/missing-marker",
+          "elapsedSeconds": 0.14,
+          "logLine": 45,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestPreflightRejectsWrongRootIdentityRoleAndSchemaWithoutReset/marker-installation",
+          "elapsedSeconds": 0.14,
+          "logLine": 46,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestPreflightRejectsWrongRootIdentityRoleAndSchemaWithoutReset/old-schema",
+          "elapsedSeconds": 0.15,
+          "logLine": 47,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestPreflightRejectsWrongRootIdentityRoleAndSchemaWithoutReset/foreign-installation",
+          "elapsedSeconds": 0.16,
+          "logLine": 48,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestPreflightRejectsWrongRootIdentityRoleAndSchemaWithoutReset/wrong-executable",
+          "elapsedSeconds": 0.1,
+          "logLine": 49,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestPreflightRejectsWrongRootIdentityRoleAndSchemaWithoutReset/driver-rendered-profile",
+          "elapsedSeconds": 0.14,
+          "logLine": 50,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestCanonicalLocalPathsAndReparseRefusal",
+          "elapsedSeconds": 0.14,
+          "logLine": 52,
+          "topLevel": true
+        },
+        {
+          "status": "PASS",
+          "test": "TestSQLiteReadOnlyURIPreservesLocalDriveAndEscapesPath",
+          "elapsedSeconds": 0.0,
+          "logLine": 54,
+          "topLevel": true
+        },
+        {
+          "status": "PASS",
+          "test": "TestClientProfileExactNestedPinsAndDistinctDeviceInstallation",
+          "elapsedSeconds": 0.11,
+          "logLine": 60,
+          "topLevel": true
+        },
+        {
+          "status": "PASS",
+          "test": "TestClientProfileExactNestedPinsAndDistinctDeviceInstallation/alias-pin",
+          "elapsedSeconds": 0.01,
+          "logLine": 61,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestClientProfileExactNestedPinsAndDistinctDeviceInstallation/null-pin",
+          "elapsedSeconds": 0.0,
+          "logLine": 62,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestClientProfileExactNestedPinsAndDistinctDeviceInstallation/missing-pos-installation",
+          "elapsedSeconds": 0.0,
+          "logLine": 63,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestClientProfileExactNestedPinsAndDistinctDeviceInstallation/null-pos-installation",
+          "elapsedSeconds": 0.0,
+          "logLine": 64,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestClientProfileRejectsUnrelatedCAAndExtraSANOrPurpose",
+          "elapsedSeconds": 0.62,
+          "logLine": 73,
+          "topLevel": true
+        },
+        {
+          "status": "PASS",
+          "test": "TestClientProfileRejectsUnrelatedCAAndExtraSANOrPurpose/foreign-ca",
+          "elapsedSeconds": 0.09,
+          "logLine": 74,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestClientProfileRejectsUnrelatedCAAndExtraSANOrPurpose/dns",
+          "elapsedSeconds": 0.09,
+          "logLine": 75,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestClientProfileRejectsUnrelatedCAAndExtraSANOrPurpose/ip",
+          "elapsedSeconds": 0.09,
+          "logLine": 76,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestClientProfileRejectsUnrelatedCAAndExtraSANOrPurpose/email",
+          "elapsedSeconds": 0.09,
+          "logLine": 77,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestClientProfileRejectsUnrelatedCAAndExtraSANOrPurpose/dual-purpose",
+          "elapsedSeconds": 0.09,
+          "logLine": 78,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestClientProfileRejectsUnrelatedCAAndExtraSANOrPurpose/no-digital-signature",
+          "elapsedSeconds": 0.09,
+          "logLine": 79,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestClientProfileRejectsUnrelatedCAAndExtraSANOrPurpose/no-basic-constraints",
+          "elapsedSeconds": 0.08,
+          "logLine": 80,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestDaemonActualMTLSHealthAndMutatingRPCRemainHeld",
+          "elapsedSeconds": 0.34,
+          "logLine": 82,
+          "topLevel": true
+        },
+        {
+          "status": "PASS",
+          "test": "TestDaemonStopDeadlineRetainsOriginalAdmissionDBAndOwner",
+          "elapsedSeconds": 0.52,
+          "logLine": 84,
+          "topLevel": true
+        },
+        {
+          "status": "PASS",
+          "test": "TestDaemonBindFailureClosesActualStorageBeforeRestart",
+          "elapsedSeconds": 0.23,
+          "logLine": 86,
+          "topLevel": true
+        },
+        {
+          "status": "PASS",
+          "test": "TestDaemonTrustedArtifactChangeLatchesDrainAndVisibleError",
+          "elapsedSeconds": 0.84,
+          "logLine": 91,
+          "topLevel": true
+        },
+        {
+          "status": "PASS",
+          "test": "TestDaemonTrustedArtifactChangeLatchesDrainAndVisibleError/helper",
+          "elapsedSeconds": 0.28,
+          "logLine": 92,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestDaemonTrustedArtifactChangeLatchesDrainAndVisibleError/profile",
+          "elapsedSeconds": 0.28,
+          "logLine": 93,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestDaemonTrustedArtifactChangeLatchesDrainAndVisibleError/state-marker",
+          "elapsedSeconds": 0.28,
+          "logLine": 94,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestDaemonUnexpectedListenerExitDrainsAndPreservesFailure",
+          "elapsedSeconds": 0.29,
+          "logLine": 96,
+          "topLevel": true
+        },
+        {
+          "status": "PASS",
+          "test": "TestDaemonCallerCancellationDoesNotStopHealthyHost",
+          "elapsedSeconds": 0.29,
+          "logLine": 98,
+          "topLevel": true
+        },
+        {
+          "status": "PASS",
+          "test": "TestDaemonUnresolvedStartupCleanupRetainsDBAndHostOwner",
+          "elapsedSeconds": 0.24,
+          "logLine": 100,
+          "topLevel": true
+        },
+        {
+          "status": "PASS",
+          "test": "TestDaemonActualSQLiteRecoveryNeverReplaysStartedOrSpentBeep",
+          "elapsedSeconds": 0.52,
+          "logLine": 102,
+          "topLevel": true
+        },
+        {
+          "status": "PASS",
+          "test": "TestSharedHeldReportsInfrastructureWithoutSharedPhysicalAuthority",
+          "elapsedSeconds": 0.28,
+          "logLine": 104,
+          "topLevel": true
+        },
+        {
+          "status": "PASS",
+          "test": "TestInstallerDefaultsPlanOnlyZeroExternalCalls",
+          "elapsedSeconds": 0.1,
+          "logLine": 106,
+          "topLevel": true
+        },
+        {
+          "status": "PASS",
+          "test": "TestFutureExplicitApplySourceBuildsExactStoppedManualCreate",
+          "elapsedSeconds": 0.1,
+          "logLine": 108,
+          "topLevel": true
+        },
+        {
+          "status": "PASS",
+          "test": "TestFutureApplySourceRefusesChangedInputsPrincipalAndService",
+          "elapsedSeconds": 1.0,
+          "logLine": 120,
+          "topLevel": true
+        },
+        {
+          "status": "PASS",
+          "test": "TestFutureApplySourceRefusesChangedInputsPrincipalAndService/missing-reviewed-hash",
+          "elapsedSeconds": 0.09,
+          "logLine": 121,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestFutureApplySourceRefusesChangedInputsPrincipalAndService/not-admin",
+          "elapsedSeconds": 0.1,
+          "logLine": 122,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestFutureApplySourceRefusesChangedInputsPrincipalAndService/wrong-sid",
+          "elapsedSeconds": 0.1,
+          "logLine": 123,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestFutureApplySourceRefusesChangedInputsPrincipalAndService/existing-mismatch",
+          "elapsedSeconds": 0.1,
+          "logLine": 124,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestFutureApplySourceRefusesChangedInputsPrincipalAndService/non-System32",
+          "elapsedSeconds": 0.1,
+          "logLine": 125,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestFutureApplySourceRefusesChangedInputsPrincipalAndService/changed-config",
+          "elapsedSeconds": 0.09,
+          "logLine": 126,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestFutureApplySourceRefusesChangedInputsPrincipalAndService/changed-helper",
+          "elapsedSeconds": 0.1,
+          "logLine": 127,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestFutureApplySourceRefusesChangedInputsPrincipalAndService/changed-client",
+          "elapsedSeconds": 0.11,
+          "logLine": 128,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestFutureApplySourceRefusesChangedInputsPrincipalAndService/changed-qualification",
+          "elapsedSeconds": 0.1,
+          "logLine": 129,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestFutureApplySourceRefusesChangedInputsPrincipalAndService/shared-role",
+          "elapsedSeconds": 0.1,
+          "logLine": 130,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestFutureApplySourcePreservesExactExistingService",
+          "elapsedSeconds": 0.1,
+          "logLine": 132,
+          "topLevel": true
+        },
+        {
+          "status": "PASS",
+          "test": "TestServicePrincipalRequiresItsOwnQualifiedInventoryAndNeverSystem",
+          "elapsedSeconds": 0.11,
+          "logLine": 138,
+          "topLevel": true
+        },
+        {
+          "status": "PASS",
+          "test": "TestServicePrincipalRequiresItsOwnQualifiedInventoryAndNeverSystem/system",
+          "elapsedSeconds": 0.0,
+          "logLine": 139,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestServicePrincipalRequiresItsOwnQualifiedInventoryAndNeverSystem/unqualified",
+          "elapsedSeconds": 0.0,
+          "logLine": 140,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestServicePrincipalRequiresItsOwnQualifiedInventoryAndNeverSystem/wrong-inventory",
+          "elapsedSeconds": 0.0,
+          "logLine": 141,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestServicePrincipalRequiresItsOwnQualifiedInventoryAndNeverSystem/wrong-role",
+          "elapsedSeconds": 0.0,
+          "logLine": 142,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestBundlePinsExactBytesArchitectureAndContainsNoCredentials",
+          "elapsedSeconds": 0.29,
+          "logLine": 146,
+          "topLevel": true
+        },
+        {
+          "status": "PASS",
+          "test": "TestBundlePinsExactBytesArchitectureAndContainsNoCredentials/amd64",
+          "elapsedSeconds": 0.1,
+          "logLine": 147,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestBundlePinsExactBytesArchitectureAndContainsNoCredentials/arm64",
+          "elapsedSeconds": 0.1,
+          "logLine": 148,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestBundleAndPlanRejectNestedAliasesAndNulls",
+          "elapsedSeconds": 0.12,
+          "logLine": 158,
+          "topLevel": true
+        },
+        {
+          "status": "PASS",
+          "test": "TestBundleAndPlanRejectNestedAliasesAndNulls/bundle-pin-alias",
+          "elapsedSeconds": 0.0,
+          "logLine": 159,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestBundleAndPlanRejectNestedAliasesAndNulls/bundle-pin-null",
+          "elapsedSeconds": 0.0,
+          "logLine": 160,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestBundleAndPlanRejectNestedAliasesAndNulls/artifact-alias",
+          "elapsedSeconds": 0.0,
+          "logLine": 161,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestBundleAndPlanRejectNestedAliasesAndNulls/artifact-null",
+          "elapsedSeconds": 0.0,
+          "logLine": 162,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestBundleAndPlanRejectNestedAliasesAndNulls/plan-alias",
+          "elapsedSeconds": 0.0,
+          "logLine": 163,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestBundleAndPlanRejectNestedAliasesAndNulls/plan-pin-null",
+          "elapsedSeconds": 0.0,
+          "logLine": 164,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestBundleAndPlanRejectNestedAliasesAndNulls/plan-artifact-null",
+          "elapsedSeconds": 0.0,
+          "logLine": 165,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestBundleAndPlanRejectNestedAliasesAndNulls/plan-principal-alias",
+          "elapsedSeconds": 0.0,
+          "logLine": 166,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestWindowsBackendUsesExactBoundedCreateArgv",
+          "elapsedSeconds": 0.1,
+          "logLine": 168,
+          "topLevel": true
+        },
+        {
+          "status": "PASS",
+          "test": "TestActualForegroundExecutableHealthExclusiveStopRestartAndRetention",
+          "elapsedSeconds": 1.03,
+          "logLine": 171,
+          "topLevel": true
+        },
+        {
+          "status": "PASS",
+          "test": "TestActualForegroundExecutableRejectsWrongPinsRootRoleWithoutReset",
+          "elapsedSeconds": 0.22,
+          "logLine": 179,
+          "topLevel": true
+        },
+        {
+          "status": "PASS",
+          "test": "TestActualForegroundExecutableRejectsWrongPinsRootRoleWithoutReset/pins",
+          "elapsedSeconds": 0.09,
+          "logLine": 180,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestActualForegroundExecutableRejectsWrongPinsRootRoleWithoutReset/root",
+          "elapsedSeconds": 0.01,
+          "logLine": 181,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestActualForegroundExecutableRejectsWrongPinsRootRoleWithoutReset/role",
+          "elapsedSeconds": 0.01,
+          "logLine": 182,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestActualForegroundExecutableRejectsWrongPinsRootRoleWithoutReset/old-reader",
+          "elapsedSeconds": 0.01,
+          "logLine": 183,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestActualForegroundExecutableRejectsWrongPinsRootRoleWithoutReset/outside-stop-marker",
+          "elapsedSeconds": 0.01,
+          "logLine": 184,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestActualForegroundExecutableTrustedStorageAndArtifactFailuresDrain",
+          "elapsedSeconds": 0.92,
+          "logLine": 190,
+          "topLevel": true
+        },
+        {
+          "status": "PASS",
+          "test": "TestActualForegroundExecutableTrustedStorageAndArtifactFailuresDrain/helper",
+          "elapsedSeconds": 0.31,
+          "logLine": 191,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestActualForegroundExecutableTrustedStorageAndArtifactFailuresDrain/marker",
+          "elapsedSeconds": 0.3,
+          "logLine": 192,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestActualForegroundExecutableTrustedStorageAndArtifactFailuresDrain/queue-table",
+          "elapsedSeconds": 0.31,
+          "logLine": 193,
+          "topLevel": false
+        }
+      ],
+      "observed": {
+        "status": "PASS",
+        "exitCode": 0,
+        "elapsedMs": 10129,
+        "workingDirectory": "C:\\Users\\vaanskii\\AppData\\Local\\VynicReadinessPrinterAgent\\software-v2-d6f8ecef582b\\source\\apps\\edge\\internal\\printerdaemon",
+        "binarySHA256": "c6f897daba8b4bea905b53c79d98e9a22547a37c8afe477d6260c0e9bcfc3067",
+        "packagedCLISHA256": "dbdd278544ba542a9161a9bb4fbe411b31a410789af0a0bb583d4a00a78bbf71",
+        "arguments": [
+          "-test.v",
+          "-test.timeout=10m"
+        ],
+        "stdoutSHA256": "49cd26559a0e0b6a4aae9313a6c57d7fc123c4b5fe259cb045cc2049954e8efc",
+        "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "sourceTests": [
+        {
+          "path": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/final-cohort-v2/apps/edge/internal/printerdaemon/config_test.go",
+          "sha256": "be77e7a6def6ede1bc5590d68e93ae42ea26a1d76b33e34cdbd172f0917874f4",
+          "bytes": 9447
+        },
+        {
+          "path": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/final-cohort-v2/apps/edge/internal/printerdaemon/daemon_test.go",
+          "sha256": "a923c379e554b55ba9553cc9bc89cdfd0055ab891164acfc9379632f53f18906",
+          "bytes": 15315
+        },
+        {
+          "path": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/final-cohort-v2/apps/edge/internal/printerdaemon/fixture_test.go",
+          "sha256": "1c5cf0fd4ce2e3afcbd87befe346e0172adf829e077119c4195043fd337ef500",
+          "bytes": 11541
+        },
+        {
+          "path": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/final-cohort-v2/apps/edge/internal/printerdaemon/installer_test.go",
+          "sha256": "a1d871ba121ab285c57fa343b8e5b4bfaab8aef2b5d28011403cdfa7c8c2160b",
+          "bytes": 12720
+        },
+        {
+          "path": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/final-cohort-v2/apps/edge/internal/printerdaemon/process_test.go",
+          "sha256": "226b604bac6fc8015b38dcf2e673201d8ea798de818029603c3e71601f909e2e",
+          "bytes": 8396
+        }
+      ]
+    },
+    "arm64/printer-agent-command": {
+      "status": "PASS",
+      "topLevelPass": 7,
+      "passRecords": 13,
+      "subtestPass": 6,
+      "failRecords": 0,
+      "skipRecords": [],
+      "stdout": {
+        "path": "/Users/vaanskii/Developer/vynic/docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/windows-software-go-packages-result-v2/arm64-printer-agent-command.stdout.log",
+        "sha256": "8a532adfae0cfe2b158d33e658b117a665969753d8233460d9669b38ad2f990c",
+        "bytes": 1829
+      },
+      "stderr": {
+        "path": "/Users/vaanskii/Developer/vynic/docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/windows-software-go-packages-result-v2/arm64-printer-agent-command.stderr.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "records": [
+        {
+          "status": "PASS",
+          "test": "TestCLIRejectsEmptyUnknownAndActivationArguments",
+          "elapsedSeconds": 0.0,
+          "logLine": 2,
+          "topLevel": true
+        },
+        {
+          "status": "PASS",
+          "test": "TestEveryForegroundExitDrainsAndPreservesOriginalFailure",
+          "elapsedSeconds": 0.0,
+          "logLine": 7,
+          "topLevel": true
+        },
+        {
+          "status": "PASS",
+          "test": "TestEveryForegroundExitDrainsAndPreservesOriginalFailure/startup",
+          "elapsedSeconds": 0.0,
+          "logLine": 8,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestEveryForegroundExitDrainsAndPreservesOriginalFailure/announce",
+          "elapsedSeconds": 0.0,
+          "logLine": 9,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestEveryForegroundExitDrainsAndPreservesOriginalFailure/wait",
+          "elapsedSeconds": 0.0,
+          "logLine": 10,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestForegroundHeldChild",
+          "elapsedSeconds": 0.0,
+          "logLine": 12,
+          "topLevel": true
+        },
+        {
+          "status": "PASS",
+          "test": "TestEveryForegroundExitRetainsProcessOnUnresolvedClose",
+          "elapsedSeconds": 0.19,
+          "logLine": 17,
+          "topLevel": true
+        },
+        {
+          "status": "PASS",
+          "test": "TestEveryForegroundExitRetainsProcessOnUnresolvedClose/startup",
+          "elapsedSeconds": 0.06,
+          "logLine": 18,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestEveryForegroundExitRetainsProcessOnUnresolvedClose/announce",
+          "elapsedSeconds": 0.06,
+          "logLine": 19,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestEveryForegroundExitRetainsProcessOnUnresolvedClose/wait",
+          "elapsedSeconds": 0.06,
+          "logLine": 20,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestForegroundLocalShutdownMarkerUsesNormalContextDrain",
+          "elapsedSeconds": 0.11,
+          "logLine": 22,
+          "topLevel": true
+        },
+        {
+          "status": "PASS",
+          "test": "TestMalformedShutdownMarkerReportsFailure",
+          "elapsedSeconds": 0.11,
+          "logLine": 24,
+          "topLevel": true
+        },
+        {
+          "status": "PASS",
+          "test": "TestCLIPlanOnlyDoesNotInvokeUnsupportedPlatformBackend",
+          "elapsedSeconds": 0.0,
+          "logLine": 26,
+          "topLevel": true
+        }
+      ],
+      "observed": {
+        "status": "PASS",
+        "exitCode": 0,
+        "elapsedMs": 1035,
+        "workingDirectory": "C:\\Users\\vaanskii\\AppData\\Local\\VynicReadinessPrinterAgent\\software-v2-d6f8ecef582b\\source\\apps\\edge\\cmd\\printer-agent",
+        "binarySHA256": "7e94116cea1e326d3a77a7fce976e9a9ed93c2288850d0495f13a729bdf9d1cf",
+        "packagedCLISHA256": "dbdd278544ba542a9161a9bb4fbe411b31a410789af0a0bb583d4a00a78bbf71",
+        "arguments": [
+          "-test.v",
+          "-test.timeout=10m"
+        ],
+        "stdoutSHA256": "8a532adfae0cfe2b158d33e658b117a665969753d8233460d9669b38ad2f990c",
+        "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "sourceTests": [
+        {
+          "path": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/final-cohort-v2/apps/edge/cmd/printer-agent/main_test.go",
+          "sha256": "3079dfd644659e1b8e364e7e4cf407ab76f24ec10a0b11d0dd832ab49fc82f5a",
+          "bytes": 5406
+        }
+      ]
+    },
+    "amd64/printerprovisioning": {
+      "status": "PASS",
+      "topLevelPass": 12,
+      "passRecords": 112,
+      "subtestPass": 100,
+      "failRecords": 0,
+      "skipRecords": [],
+      "stdout": {
+        "path": "/Users/vaanskii/Developer/vynic/docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/windows-software-go-packages-result-v2/amd64-printerprovisioning.stdout.log",
+        "sha256": "82f467e9e80649e2c148c7402b0c14ee40361d4360055ba584410d0b6da45127",
+        "bytes": 18107
+      },
+      "stderr": {
+        "path": "/Users/vaanskii/Developer/vynic/docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/windows-software-go-packages-result-v2/amd64-printerprovisioning.stderr.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "records": [
+        {
+          "status": "PASS",
+          "test": "TestOptionalServerAdapterReadsCurrentStateEveryAttempt",
+          "elapsedSeconds": 0.02,
+          "logLine": 2,
+          "topLevel": true
+        },
+        {
+          "status": "PASS",
+          "test": "TestAdapterConstructorFreezeAndFailurePropagation",
+          "elapsedSeconds": 0.01,
+          "logLine": 4,
+          "topLevel": true
+        },
+        {
+          "status": "PASS",
+          "test": "TestAdapterRejectsChangedPinsAndExportedJobMutation",
+          "elapsedSeconds": 0.04,
+          "logLine": 11,
+          "topLevel": true
+        },
+        {
+          "status": "PASS",
+          "test": "TestAdapterRejectsChangedPinsAndExportedJobMutation/scope",
+          "elapsedSeconds": 0.01,
+          "logLine": 12,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestAdapterRejectsChangedPinsAndExportedJobMutation/cluster",
+          "elapsedSeconds": 0.01,
+          "logLine": 13,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestAdapterRejectsChangedPinsAndExportedJobMutation/profile",
+          "elapsedSeconds": 0.01,
+          "logLine": 14,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestAdapterRejectsChangedPinsAndExportedJobMutation/host",
+          "elapsedSeconds": 0.01,
+          "logLine": 15,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestAdapterRejectsChangedPinsAndExportedJobMutation/revision",
+          "elapsedSeconds": 0.01,
+          "logLine": 16,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestConcurrentValidationRetainsImmutableGrantAndJob",
+          "elapsedSeconds": 0.01,
+          "logLine": 18,
+          "topLevel": true
+        },
+        {
+          "status": "PASS",
+          "test": "TestStrictSignedAndBodyJSONRejectsAliasesAndUnknownFields",
+          "elapsedSeconds": 0.14,
+          "logLine": 38,
+          "topLevel": true
+        },
+        {
+          "status": "PASS",
+          "test": "TestStrictSignedAndBodyJSONRejectsAliasesAndUnknownFields/wrapperUnknown",
+          "elapsedSeconds": 0.01,
+          "logLine": 39,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestStrictSignedAndBodyJSONRejectsAliasesAndUnknownFields/wrapperCase",
+          "elapsedSeconds": 0.01,
+          "logLine": 40,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestStrictSignedAndBodyJSONRejectsAliasesAndUnknownFields/wrapperDuplicate",
+          "elapsedSeconds": 0.01,
+          "logLine": 41,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestStrictSignedAndBodyJSONRejectsAliasesAndUnknownFields/wrapperNull",
+          "elapsedSeconds": 0.0,
+          "logLine": 42,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestStrictSignedAndBodyJSONRejectsAliasesAndUnknownFields/wrapperInvalidBase64",
+          "elapsedSeconds": 0.01,
+          "logLine": 43,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestStrictSignedAndBodyJSONRejectsAliasesAndUnknownFields/wrapperTrailing",
+          "elapsedSeconds": 0.01,
+          "logLine": 44,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestStrictSignedAndBodyJSONRejectsAliasesAndUnknownFields/bodyUnknown",
+          "elapsedSeconds": 0.0,
+          "logLine": 45,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestStrictSignedAndBodyJSONRejectsAliasesAndUnknownFields/bodyCase",
+          "elapsedSeconds": 0.01,
+          "logLine": 46,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestStrictSignedAndBodyJSONRejectsAliasesAndUnknownFields/bodyDuplicate",
+          "elapsedSeconds": 0.01,
+          "logLine": 47,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestStrictSignedAndBodyJSONRejectsAliasesAndUnknownFields/nestedCase",
+          "elapsedSeconds": 0.01,
+          "logLine": 48,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestStrictSignedAndBodyJSONRejectsAliasesAndUnknownFields/nestedEscapedDuplicate",
+          "elapsedSeconds": 0.01,
+          "logLine": 49,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestStrictSignedAndBodyJSONRejectsAliasesAndUnknownFields/nestedUnknown",
+          "elapsedSeconds": 0.01,
+          "logLine": 50,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestStrictSignedAndBodyJSONRejectsAliasesAndUnknownFields/bodyTrailing",
+          "elapsedSeconds": 0.01,
+          "logLine": 51,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestStrictSignedAndBodyJSONRejectsAliasesAndUnknownFields/bodyInvalidUTF8",
+          "elapsedSeconds": 0.01,
+          "logLine": 52,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestStrictSignedAndBodyJSONRejectsAliasesAndUnknownFields/bodyVersion",
+          "elapsedSeconds": 0.01,
+          "logLine": 53,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestStrictSignedAndBodyJSONRejectsAliasesAndUnknownFields/fractionGeneration",
+          "elapsedSeconds": 0.01,
+          "logLine": 54,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestStrictSignedAndBodyJSONRejectsAliasesAndUnknownFields/oversizedGrant",
+          "elapsedSeconds": 0.01,
+          "logLine": 55,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestStrictSignedAndBodyJSONRejectsAliasesAndUnknownFields/oversizedBody",
+          "elapsedSeconds": 0.01,
+          "logLine": 56,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestCompleteFrozenIdentityAndRouteCannotRetarget",
+          "elapsedSeconds": 0.14,
+          "logLine": 81,
+          "topLevel": true
+        },
+        {
+          "status": "PASS",
+          "test": "TestCompleteFrozenIdentityAndRouteCannotRetarget/venue",
+          "elapsedSeconds": 0.01,
+          "logLine": 82,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestCompleteFrozenIdentityAndRouteCannotRetarget/device",
+          "elapsedSeconds": 0.01,
+          "logLine": 83,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestCompleteFrozenIdentityAndRouteCannotRetarget/installation",
+          "elapsedSeconds": 0.01,
+          "logLine": 84,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestCompleteFrozenIdentityAndRouteCannotRetarget/host",
+          "elapsedSeconds": 0.01,
+          "logLine": 85,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestCompleteFrozenIdentityAndRouteCannotRetarget/epoch",
+          "elapsedSeconds": 0.0,
+          "logLine": 86,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestCompleteFrozenIdentityAndRouteCannotRetarget/terminal",
+          "elapsedSeconds": 0.01,
+          "logLine": 87,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestCompleteFrozenIdentityAndRouteCannotRetarget/origin",
+          "elapsedSeconds": 0.01,
+          "logLine": 88,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestCompleteFrozenIdentityAndRouteCannotRetarget/physical",
+          "elapsedSeconds": 0.01,
+          "logLine": 89,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestCompleteFrozenIdentityAndRouteCannotRetarget/alias",
+          "elapsedSeconds": 0.01,
+          "logLine": 90,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestCompleteFrozenIdentityAndRouteCannotRetarget/routeRevision",
+          "elapsedSeconds": 0.01,
+          "logLine": 91,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestCompleteFrozenIdentityAndRouteCannotRetarget/configRevision",
+          "elapsedSeconds": 0.01,
+          "logLine": 92,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestCompleteFrozenIdentityAndRouteCannotRetarget/bindingRevision",
+          "elapsedSeconds": 0.01,
+          "logLine": 93,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestCompleteFrozenIdentityAndRouteCannotRetarget/registryRevision",
+          "elapsedSeconds": 0.01,
+          "logLine": 94,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestCompleteFrozenIdentityAndRouteCannotRetarget/IP",
+          "elapsedSeconds": 0.01,
+          "logLine": 95,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestCompleteFrozenIdentityAndRouteCannotRetarget/IPAlias",
+          "elapsedSeconds": 0.01,
+          "logLine": 96,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestCompleteFrozenIdentityAndRouteCannotRetarget/port",
+          "elapsedSeconds": 0.01,
+          "logLine": 97,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestCompleteFrozenIdentityAndRouteCannotRetarget/profileDimension",
+          "elapsedSeconds": 0.01,
+          "logLine": 98,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestCompleteFrozenIdentityAndRouteCannotRetarget/profileUnknownLanguage",
+          "elapsedSeconds": 0.0,
+          "logLine": 99,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestCompleteFrozenIdentityAndRouteCannotRetarget/profileReorder",
+          "elapsedSeconds": 0.01,
+          "logLine": 100,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestCompleteFrozenIdentityAndRouteCannotRetarget/changedPrimaryWithoutHash",
+          "elapsedSeconds": 0.01,
+          "logLine": 101,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestCompleteFrozenIdentityAndRouteCannotRetarget/windows/queue",
+          "elapsedSeconds": 0.01,
+          "logLine": 102,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestCompleteFrozenIdentityAndRouteCannotRetarget/windows/driver",
+          "elapsedSeconds": 0.01,
+          "logLine": 103,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestCompleteFrozenIdentityAndRouteCannotRetarget/windows/port",
+          "elapsedSeconds": 0.01,
+          "logLine": 104,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestSignedConfigurationBytesAndHashesAreExact",
+          "elapsedSeconds": 0.04,
+          "logLine": 111,
+          "topLevel": true
+        },
+        {
+          "status": "PASS",
+          "test": "TestSignedConfigurationBytesAndHashesAreExact/reorderedConfiguration",
+          "elapsedSeconds": 0.01,
+          "logLine": 112,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestSignedConfigurationBytesAndHashesAreExact/routeUnknown",
+          "elapsedSeconds": 0.01,
+          "logLine": 113,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestSignedConfigurationBytesAndHashesAreExact/routeCase",
+          "elapsedSeconds": 0.01,
+          "logLine": 114,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestSignedConfigurationBytesAndHashesAreExact/destinationCase",
+          "elapsedSeconds": 0.01,
+          "logLine": 115,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestSignedConfigurationBytesAndHashesAreExact/destinationDuplicate",
+          "elapsedSeconds": 0.01,
+          "logLine": 116,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestStrictJobKeysAndZeroValueCannotProduceAJob",
+          "elapsedSeconds": 0.01,
+          "logLine": 118,
+          "topLevel": true
+        },
+        {
+          "status": "PASS",
+          "test": "TestCandidatePreservesCompleteFrozenBytesAndNeverAdmits",
+          "elapsedSeconds": 0.02,
+          "logLine": 124,
+          "topLevel": true
+        },
+        {
+          "status": "PASS",
+          "test": "TestCandidatePreservesCompleteFrozenBytesAndNeverAdmits/tcp/LOCAL",
+          "elapsedSeconds": 0.01,
+          "logLine": 125,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestCandidatePreservesCompleteFrozenBytesAndNeverAdmits/tcp/VENUE_SHARED",
+          "elapsedSeconds": 0.01,
+          "logLine": 126,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestCandidatePreservesCompleteFrozenBytesAndNeverAdmits/windowsSpooler/LOCAL",
+          "elapsedSeconds": 0.01,
+          "logLine": 127,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestCandidatePreservesCompleteFrozenBytesAndNeverAdmits/windowsSpooler/VENUE_SHARED",
+          "elapsedSeconds": 0.01,
+          "logLine": 128,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestPinnedIssuerAndPrinterOnlySignatureDomain",
+          "elapsedSeconds": 0.04,
+          "logLine": 139,
+          "topLevel": true
+        },
+        {
+          "status": "PASS",
+          "test": "TestPinnedIssuerAndPrinterOnlySignatureDomain/wrongIssuer",
+          "elapsedSeconds": 0.0,
+          "logLine": 140,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestPinnedIssuerAndPrinterOnlySignatureDomain/bodyWhitespaceTamper",
+          "elapsedSeconds": 0.0,
+          "logLine": 141,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestPinnedIssuerAndPrinterOnlySignatureDomain/noDomain",
+          "elapsedSeconds": 0.0,
+          "logLine": 142,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestPinnedIssuerAndPrinterOnlySignatureDomain/oldProofDomain",
+          "elapsedSeconds": 0.0,
+          "logLine": 143,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestPinnedIssuerAndPrinterOnlySignatureDomain/FOUNDATION_ONLY",
+          "elapsedSeconds": 0.01,
+          "logLine": 144,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestPinnedIssuerAndPrinterOnlySignatureDomain/ISOLATED_PROOF",
+          "elapsedSeconds": 0.01,
+          "logLine": 145,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestPinnedIssuerAndPrinterOnlySignatureDomain/VYNIC_OPERATIONAL_PROOF",
+          "elapsedSeconds": 0.01,
+          "logLine": 146,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestPinnedIssuerAndPrinterOnlySignatureDomain/printer",
+          "elapsedSeconds": 0.01,
+          "logLine": 147,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestPinnedIssuerAndPrinterOnlySignatureDomain/#00",
+          "elapsedSeconds": 0.01,
+          "logLine": 148,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestLifetimeGenerationRevocationAndTrustedStateFailClosed",
+          "elapsedSeconds": 0.12,
+          "logLine": 169,
+          "topLevel": true
+        },
+        {
+          "status": "PASS",
+          "test": "TestLifetimeGenerationRevocationAndTrustedStateFailClosed/expired",
+          "elapsedSeconds": 0.01,
+          "logLine": 170,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestLifetimeGenerationRevocationAndTrustedStateFailClosed/futureIssue",
+          "elapsedSeconds": 0.01,
+          "logLine": 171,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestLifetimeGenerationRevocationAndTrustedStateFailClosed/futureNotBefore",
+          "elapsedSeconds": 0.01,
+          "logLine": 172,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestLifetimeGenerationRevocationAndTrustedStateFailClosed/zeroIssue",
+          "elapsedSeconds": 0.01,
+          "logLine": 173,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestLifetimeGenerationRevocationAndTrustedStateFailClosed/reversedWindow",
+          "elapsedSeconds": 0.01,
+          "logLine": 174,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestLifetimeGenerationRevocationAndTrustedStateFailClosed/policyLifetimeExceeded",
+          "elapsedSeconds": 0.01,
+          "logLine": 175,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestLifetimeGenerationRevocationAndTrustedStateFailClosed/oldGeneration",
+          "elapsedSeconds": 0.01,
+          "logLine": 176,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestLifetimeGenerationRevocationAndTrustedStateFailClosed/futureGeneration",
+          "elapsedSeconds": 0.01,
+          "logLine": 177,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestLifetimeGenerationRevocationAndTrustedStateFailClosed/revokedCurrent",
+          "elapsedSeconds": 0.01,
+          "logLine": 178,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestLifetimeGenerationRevocationAndTrustedStateFailClosed/differentCurrentGrant",
+          "elapsedSeconds": 0.01,
+          "logLine": 179,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestLifetimeGenerationRevocationAndTrustedStateFailClosed/differentCurrentBodyHash",
+          "elapsedSeconds": 0.01,
+          "logLine": 180,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestLifetimeGenerationRevocationAndTrustedStateFailClosed/unpersistedGeneration",
+          "elapsedSeconds": 0.0,
+          "logLine": 181,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestLifetimeGenerationRevocationAndTrustedStateFailClosed/rollbackCurrentGeneration",
+          "elapsedSeconds": 0.0,
+          "logLine": 182,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestLifetimeGenerationRevocationAndTrustedStateFailClosed/missingIssuerPin",
+          "elapsedSeconds": 0.0,
+          "logLine": 183,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestLifetimeGenerationRevocationAndTrustedStateFailClosed/missingCurrentStateHash",
+          "elapsedSeconds": 0.01,
+          "logLine": 184,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestLifetimeGenerationRevocationAndTrustedStateFailClosed/missingClock",
+          "elapsedSeconds": 0.0,
+          "logLine": 185,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestLifetimeGenerationRevocationAndTrustedStateFailClosed/missingLifetimePolicy",
+          "elapsedSeconds": 0.0,
+          "logLine": 186,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestLifetimeGenerationRevocationAndTrustedStateFailClosed/unknownScope",
+          "elapsedSeconds": 0.01,
+          "logLine": 187,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestLifetimeGenerationRevocationAndTrustedStateFailClosed/localWithCluster",
+          "elapsedSeconds": 0.0,
+          "logLine": 188,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestSignedWrongContextAndAuthenticatedDERRefused",
+          "elapsedSeconds": 0.12,
+          "logLine": 207,
+          "topLevel": true
+        },
+        {
+          "status": "PASS",
+          "test": "TestSignedWrongContextAndAuthenticatedDERRefused/venueId",
+          "elapsedSeconds": 0.01,
+          "logLine": 208,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestSignedWrongContextAndAuthenticatedDERRefused/deviceId",
+          "elapsedSeconds": 0.01,
+          "logLine": 209,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestSignedWrongContextAndAuthenticatedDERRefused/installationId",
+          "elapsedSeconds": 0.01,
+          "logLine": 210,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestSignedWrongContextAndAuthenticatedDERRefused/hostId",
+          "elapsedSeconds": 0.01,
+          "logLine": 211,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestSignedWrongContextAndAuthenticatedDERRefused/authorityEpoch",
+          "elapsedSeconds": 0.01,
+          "logLine": 212,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestSignedWrongContextAndAuthenticatedDERRefused/terminalId",
+          "elapsedSeconds": 0.01,
+          "logLine": 213,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestSignedWrongContextAndAuthenticatedDERRefused/originInstallationId",
+          "elapsedSeconds": 0.01,
+          "logLine": 214,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestSignedWrongContextAndAuthenticatedDERRefused/clientId",
+          "elapsedSeconds": 0.01,
+          "logLine": 215,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestSignedWrongContextAndAuthenticatedDERRefused/clientCertificateSha256",
+          "elapsedSeconds": 0.01,
+          "logLine": 216,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestSignedWrongContextAndAuthenticatedDERRefused/wrongObservedClient",
+          "elapsedSeconds": 0.01,
+          "logLine": 217,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestSignedWrongContextAndAuthenticatedDERRefused/wrongDER",
+          "elapsedSeconds": 0.01,
+          "logLine": 218,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestSignedWrongContextAndAuthenticatedDERRefused/emptyDER",
+          "elapsedSeconds": 0.01,
+          "logLine": 219,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestSignedWrongContextAndAuthenticatedDERRefused/invalidPinnedDER",
+          "elapsedSeconds": 0.0,
+          "logLine": 220,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestSignedWrongContextAndAuthenticatedDERRefused/expiredLeaf",
+          "elapsedSeconds": 0.01,
+          "logLine": 221,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestSignedWrongContextAndAuthenticatedDERRefused/signedSharedOnLocal",
+          "elapsedSeconds": 0.01,
+          "logLine": 222,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestSignedWrongContextAndAuthenticatedDERRefused/wrongSharedMembership",
+          "elapsedSeconds": 0.01,
+          "logLine": 223,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestSignedWrongContextAndAuthenticatedDERRefused/wrongSharedCluster",
+          "elapsedSeconds": 0.0,
+          "logLine": 224,
+          "topLevel": false
+        }
+      ],
+      "observed": {
+        "status": "PASS",
+        "exitCode": 0,
+        "elapsedMs": 1084,
+        "workingDirectory": "C:\\Users\\vaanskii\\AppData\\Local\\VynicReadinessPrinterAgent\\software-v2-d6f8ecef582b\\source\\apps\\edge\\internal\\printerprovisioning",
+        "binarySHA256": "e1794bc75a77288fd4aa0e93b432faefd0f81ae55e9c1208a09763fd04f55aa2",
+        "packagedCLISHA256": "a5ef474a67d62326436c48e073731b59062cc104545032574af671dc70b882cc",
+        "arguments": [
+          "-test.v",
+          "-test.timeout=10m"
+        ],
+        "stdoutSHA256": "82f467e9e80649e2c148c7402b0c14ee40361d4360055ba584410d0b6da45127",
+        "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "sourceTests": [
+        {
+          "path": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/final-cohort-v2/apps/edge/internal/printerprovisioning/adapter_test.go",
+          "sha256": "06ae3fd6c64e4b59d77ec0f60f77a959284ebbd5f7960c400e8e40c3bd8985a1",
+          "bytes": 5287
+        },
+        {
+          "path": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/final-cohort-v2/apps/edge/internal/printerprovisioning/binding_test.go",
+          "sha256": "6486e030b7174098cd08c221733f4624bbb94ad787780705d61ef44de413ad5a",
+          "bytes": 9040
+        },
+        {
+          "path": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/final-cohort-v2/apps/edge/internal/printerprovisioning/validate_test.go",
+          "sha256": "30a507944cb7a4acd18456961b833f58240fb117c38d85ef6e1303a029848a5e",
+          "bytes": 12283
+        }
+      ]
+    },
+    "amd64/printeragent": {
+      "status": "PASS",
+      "topLevelPass": 7,
+      "passRecords": 37,
+      "subtestPass": 30,
+      "failRecords": 0,
+      "skipRecords": [
+        {
+          "status": "SKIP",
+          "test": "TestPrinterAgentProcess",
+          "elapsedSeconds": 0.0,
+          "logLine": 77,
+          "topLevel": true,
+          "classification": "fixture-entry-only",
+          "reason": "Standalone isolated cross-language fixture entry needs VYNIC_PRINTER_AGENT_FIXTURE_DIR; ordinary package tests execute the actual loopback server. The separately qualified Windows Flutter packet uses this entry as its actual Go fixture."
+        }
+      ],
+      "stdout": {
+        "path": "/Users/vaanskii/Developer/vynic/docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/windows-software-go-packages-result-v2/amd64-printeragent.stdout.log",
+        "sha256": "22d623b85629b212b42e77d3e24e4c3a0a81a4e4cacb3a793e6e166bfe47d09d",
+        "bytes": 6099
+      },
+      "stderr": {
+        "path": "/Users/vaanskii/Developer/vynic/docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/windows-software-go-packages-result-v2/amd64-printeragent.stderr.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "records": [
+        {
+          "status": "PASS",
+          "test": "TestAuthenticatedHealthStrictHeldBytesAndZeroQueueWrites",
+          "elapsedSeconds": 0.22,
+          "logLine": 14,
+          "topLevel": true
+        },
+        {
+          "status": "PASS",
+          "test": "TestAuthenticatedHealthStrictHeldBytesAndZeroQueueWrites/wrongHash",
+          "elapsedSeconds": 0.0,
+          "logLine": 15,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestAuthenticatedHealthStrictHeldBytesAndZeroQueueWrites/changedExactBytes",
+          "elapsedSeconds": 0.0,
+          "logLine": 16,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestAuthenticatedHealthStrictHeldBytesAndZeroQueueWrites/wrongJob",
+          "elapsedSeconds": 0.0,
+          "logLine": 17,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestAuthenticatedHealthStrictHeldBytesAndZeroQueueWrites/unknownWire",
+          "elapsedSeconds": 0.0,
+          "logLine": 18,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestAuthenticatedHealthStrictHeldBytesAndZeroQueueWrites/venueId",
+          "elapsedSeconds": 0.0,
+          "logLine": 19,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestAuthenticatedHealthStrictHeldBytesAndZeroQueueWrites/deviceId",
+          "elapsedSeconds": 0.0,
+          "logLine": 20,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestAuthenticatedHealthStrictHeldBytesAndZeroQueueWrites/installationId",
+          "elapsedSeconds": 0.0,
+          "logLine": 21,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestAuthenticatedHealthStrictHeldBytesAndZeroQueueWrites/authorityEpoch",
+          "elapsedSeconds": 0.0,
+          "logLine": 22,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestAuthenticatedHealthStrictHeldBytesAndZeroQueueWrites/routeRevision",
+          "elapsedSeconds": 0.0,
+          "logLine": 23,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestAuthenticatedHealthStrictHeldBytesAndZeroQueueWrites/configRevision",
+          "elapsedSeconds": 0.0,
+          "logLine": 24,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestAuthenticatedHealthStrictHeldBytesAndZeroQueueWrites/bindingRevision",
+          "elapsedSeconds": 0.0,
+          "logLine": 25,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestAuthenticatedHealthStrictHeldBytesAndZeroQueueWrites/registryRevision",
+          "elapsedSeconds": 0.0,
+          "logLine": 26,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestFreshMutualTLSClientScopePinRevocationAndProtocol",
+          "elapsedSeconds": 0.05,
+          "logLine": 41,
+          "topLevel": true
+        },
+        {
+          "status": "PASS",
+          "test": "TestFreshMutualTLSClientScopePinRevocationAndProtocol/wrongHost",
+          "elapsedSeconds": 0.01,
+          "logLine": 42,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestFreshMutualTLSClientScopePinRevocationAndProtocol/foreignClient",
+          "elapsedSeconds": 0.0,
+          "logLine": 43,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestFreshMutualTLSClientScopePinRevocationAndProtocol/oldVersion",
+          "elapsedSeconds": 0.0,
+          "logLine": 44,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestFreshMutualTLSClientScopePinRevocationAndProtocol/oldReader",
+          "elapsedSeconds": 0.0,
+          "logLine": 45,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestFreshMutualTLSClientScopePinRevocationAndProtocol/unknownCap",
+          "elapsedSeconds": 0.0,
+          "logLine": 46,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestFreshMutualTLSClientScopePinRevocationAndProtocol/unknownNestedWire",
+          "elapsedSeconds": 0.0,
+          "logLine": 47,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestFreshMutualTLSClientScopePinRevocationAndProtocol/wrongCA",
+          "elapsedSeconds": 0.0,
+          "logLine": 48,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestFreshMutualTLSClientScopePinRevocationAndProtocol/reissuedUnpinned",
+          "elapsedSeconds": 0.0,
+          "logLine": 49,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestFreshMutualTLSClientScopePinRevocationAndProtocol/wrongHost#01",
+          "elapsedSeconds": 0.0,
+          "logLine": 50,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestFreshMutualTLSClientScopePinRevocationAndProtocol/duplicatePurpose",
+          "elapsedSeconds": 0.01,
+          "logLine": 51,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestFreshMutualTLSClientScopePinRevocationAndProtocol/extraDNS",
+          "elapsedSeconds": 0.0,
+          "logLine": 52,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestFreshMutualTLSClientScopePinRevocationAndProtocol/encodedURI",
+          "elapsedSeconds": 0.0,
+          "logLine": 53,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestFreshMutualTLSClientScopePinRevocationAndProtocol/wrongEKU",
+          "elapsedSeconds": 0.0,
+          "logLine": 54,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestCandidateReceivesFreshCopiedDERAndNeverAdmits",
+          "elapsedSeconds": 0.03,
+          "logLine": 56,
+          "topLevel": true
+        },
+        {
+          "status": "PASS",
+          "test": "TestLostHealthACKReconnectHasNoAdmissionOrOptimisticReceipt",
+          "elapsedSeconds": 0.03,
+          "logLine": 58,
+          "topLevel": true
+        },
+        {
+          "status": "PASS",
+          "test": "TestStopTimeoutRetainsActualHealthHandlerAndFencesNewRPC",
+          "elapsedSeconds": 0.04,
+          "logLine": 60,
+          "topLevel": true
+        },
+        {
+          "status": "PASS",
+          "test": "TestConstructorPreflightAndChangedHealthFailClosed",
+          "elapsedSeconds": 0.02,
+          "logLine": 67,
+          "topLevel": true
+        },
+        {
+          "status": "PASS",
+          "test": "TestConstructorPreflightAndChangedHealthFailClosed/wrongServerName",
+          "elapsedSeconds": 0.0,
+          "logLine": 68,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestConstructorPreflightAndChangedHealthFailClosed/extraServerURI",
+          "elapsedSeconds": 0.0,
+          "logLine": 69,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestConstructorPreflightAndChangedHealthFailClosed/wrongEKU",
+          "elapsedSeconds": 0.0,
+          "logLine": 70,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestConstructorPreflightAndChangedHealthFailClosed/expired",
+          "elapsedSeconds": 0.0,
+          "logLine": 71,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestConstructorPreflightAndChangedHealthFailClosed/notYetValid",
+          "elapsedSeconds": 0.0,
+          "logLine": 72,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestEstablishedChannelServerExpiryAndTypedNilHealthSource",
+          "elapsedSeconds": 0.02,
+          "logLine": 74,
+          "topLevel": true
+        },
+        {
+          "status": "SKIP",
+          "test": "TestPrinterAgentProcess",
+          "elapsedSeconds": 0.0,
+          "logLine": 77,
+          "topLevel": true,
+          "classification": "fixture-entry-only",
+          "reason": "Standalone isolated cross-language fixture entry needs VYNIC_PRINTER_AGENT_FIXTURE_DIR; ordinary package tests execute the actual loopback server. The separately qualified Windows Flutter packet uses this entry as its actual Go fixture."
+        }
+      ],
+      "observed": {
+        "status": "PASS",
+        "exitCode": 0,
+        "elapsedMs": 1072,
+        "workingDirectory": "C:\\Users\\vaanskii\\AppData\\Local\\VynicReadinessPrinterAgent\\software-v2-d6f8ecef582b\\source\\apps\\edge\\internal\\printeragent",
+        "binarySHA256": "f335745e38be573f5ec031478eab4b524a8069c811324ac2a5d39876b676e894",
+        "packagedCLISHA256": "a5ef474a67d62326436c48e073731b59062cc104545032574af671dc70b882cc",
+        "arguments": [
+          "-test.v",
+          "-test.timeout=10m"
+        ],
+        "stdoutSHA256": "22d623b85629b212b42e77d3e24e4c3a0a81a4e4cacb3a793e6e166bfe47d09d",
+        "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "sourceTests": [
+        {
+          "path": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/final-cohort-v2/apps/edge/internal/printeragent/server_test.go",
+          "sha256": "505a664b20b1d64a396dd824ee40568e344b0b59ca43a5c3977f305663afc3e2",
+          "bytes": 24635
+        }
+      ]
+    },
+    "amd64/printerdaemon": {
+      "status": "PASS",
+      "topLevelPass": 26,
+      "passRecords": 95,
+      "subtestPass": 69,
+      "failRecords": 0,
+      "skipRecords": [],
+      "stdout": {
+        "path": "/Users/vaanskii/Developer/vynic/docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/windows-software-go-packages-result-v2/amd64-printerdaemon.stdout.log",
+        "sha256": "a61c497461fb402aa92142b520a1016c6811f488e893e07155782a8292ff365f",
+        "bytes": 16020
+      },
+      "stderr": {
+        "path": "/Users/vaanskii/Developer/vynic/docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/windows-software-go-packages-result-v2/amd64-printerdaemon.stderr.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "records": [
+        {
+          "status": "PASS",
+          "test": "TestConfigStrictNestedSchemaAndHeldProfile",
+          "elapsedSeconds": 0.18,
+          "logLine": 19,
+          "topLevel": true
+        },
+        {
+          "status": "PASS",
+          "test": "TestConfigStrictNestedSchemaAndHeldProfile/duplicate-case-client",
+          "elapsedSeconds": 0.0,
+          "logLine": 20,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestConfigStrictNestedSchemaAndHeldProfile/null-client",
+          "elapsedSeconds": 0.0,
+          "logLine": 21,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestConfigStrictNestedSchemaAndHeldProfile/null-client-id",
+          "elapsedSeconds": 0.0,
+          "logLine": 22,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestConfigStrictNestedSchemaAndHeldProfile/missing-pins-key",
+          "elapsedSeconds": 0.0,
+          "logLine": 23,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestConfigStrictNestedSchemaAndHeldProfile/null-helper-protocol",
+          "elapsedSeconds": 0.0,
+          "logLine": 24,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestConfigStrictNestedSchemaAndHeldProfile/old-schema",
+          "elapsedSeconds": 0.0,
+          "logLine": 25,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestConfigStrictNestedSchemaAndHeldProfile/unknown-role",
+          "elapsedSeconds": 0.0,
+          "logLine": 26,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestConfigStrictNestedSchemaAndHeldProfile/unknown-root",
+          "elapsedSeconds": 0.0,
+          "logLine": 27,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestConfigStrictNestedSchemaAndHeldProfile/alias-pins-key",
+          "elapsedSeconds": 0.0,
+          "logLine": 28,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestConfigStrictNestedSchemaAndHeldProfile/null-qualification",
+          "elapsedSeconds": 0.0,
+          "logLine": 29,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestConfigStrictNestedSchemaAndHeldProfile/alias-qualification",
+          "elapsedSeconds": 0.0,
+          "logLine": 30,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestConfigStrictNestedSchemaAndHeldProfile/role-scope-mismatch",
+          "elapsedSeconds": 0.0,
+          "logLine": 31,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestConfigStrictNestedSchemaAndHeldProfile/relative-state",
+          "elapsedSeconds": 0.0,
+          "logLine": 32,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestConfigStrictNestedSchemaAndHeldProfile/dispatch-enabled",
+          "elapsedSeconds": 0.0,
+          "logLine": 33,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestConfigStrictNestedSchemaAndHeldProfile/aliased-client",
+          "elapsedSeconds": 0.0,
+          "logLine": 34,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestConfigStrictNestedSchemaAndHeldProfile/old-reader",
+          "elapsedSeconds": 0.0,
+          "logLine": 35,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestConfigStrictNestedSchemaAndHeldProfile/non-loopback",
+          "elapsedSeconds": 0.0,
+          "logLine": 36,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestPreflightRejectsWrongRootIdentityRoleAndSchemaWithoutReset",
+          "elapsedSeconds": 0.8,
+          "logLine": 44,
+          "topLevel": true
+        },
+        {
+          "status": "PASS",
+          "test": "TestPreflightRejectsWrongRootIdentityRoleAndSchemaWithoutReset/missing-marker",
+          "elapsedSeconds": 0.14,
+          "logLine": 45,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestPreflightRejectsWrongRootIdentityRoleAndSchemaWithoutReset/marker-installation",
+          "elapsedSeconds": 0.13,
+          "logLine": 46,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestPreflightRejectsWrongRootIdentityRoleAndSchemaWithoutReset/old-schema",
+          "elapsedSeconds": 0.16,
+          "logLine": 47,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestPreflightRejectsWrongRootIdentityRoleAndSchemaWithoutReset/foreign-installation",
+          "elapsedSeconds": 0.16,
+          "logLine": 48,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestPreflightRejectsWrongRootIdentityRoleAndSchemaWithoutReset/wrong-executable",
+          "elapsedSeconds": 0.08,
+          "logLine": 49,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestPreflightRejectsWrongRootIdentityRoleAndSchemaWithoutReset/driver-rendered-profile",
+          "elapsedSeconds": 0.13,
+          "logLine": 50,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestCanonicalLocalPathsAndReparseRefusal",
+          "elapsedSeconds": 0.13,
+          "logLine": 52,
+          "topLevel": true
+        },
+        {
+          "status": "PASS",
+          "test": "TestSQLiteReadOnlyURIPreservesLocalDriveAndEscapesPath",
+          "elapsedSeconds": 0.0,
+          "logLine": 54,
+          "topLevel": true
+        },
+        {
+          "status": "PASS",
+          "test": "TestClientProfileExactNestedPinsAndDistinctDeviceInstallation",
+          "elapsedSeconds": 0.1,
+          "logLine": 60,
+          "topLevel": true
+        },
+        {
+          "status": "PASS",
+          "test": "TestClientProfileExactNestedPinsAndDistinctDeviceInstallation/alias-pin",
+          "elapsedSeconds": 0.0,
+          "logLine": 61,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestClientProfileExactNestedPinsAndDistinctDeviceInstallation/null-pin",
+          "elapsedSeconds": 0.0,
+          "logLine": 62,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestClientProfileExactNestedPinsAndDistinctDeviceInstallation/missing-pos-installation",
+          "elapsedSeconds": 0.0,
+          "logLine": 63,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestClientProfileExactNestedPinsAndDistinctDeviceInstallation/null-pos-installation",
+          "elapsedSeconds": 0.0,
+          "logLine": 64,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestClientProfileRejectsUnrelatedCAAndExtraSANOrPurpose",
+          "elapsedSeconds": 0.59,
+          "logLine": 73,
+          "topLevel": true
+        },
+        {
+          "status": "PASS",
+          "test": "TestClientProfileRejectsUnrelatedCAAndExtraSANOrPurpose/foreign-ca",
+          "elapsedSeconds": 0.1,
+          "logLine": 74,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestClientProfileRejectsUnrelatedCAAndExtraSANOrPurpose/dns",
+          "elapsedSeconds": 0.08,
+          "logLine": 75,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestClientProfileRejectsUnrelatedCAAndExtraSANOrPurpose/ip",
+          "elapsedSeconds": 0.09,
+          "logLine": 76,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestClientProfileRejectsUnrelatedCAAndExtraSANOrPurpose/email",
+          "elapsedSeconds": 0.08,
+          "logLine": 77,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestClientProfileRejectsUnrelatedCAAndExtraSANOrPurpose/dual-purpose",
+          "elapsedSeconds": 0.08,
+          "logLine": 78,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestClientProfileRejectsUnrelatedCAAndExtraSANOrPurpose/no-digital-signature",
+          "elapsedSeconds": 0.08,
+          "logLine": 79,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestClientProfileRejectsUnrelatedCAAndExtraSANOrPurpose/no-basic-constraints",
+          "elapsedSeconds": 0.08,
+          "logLine": 80,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestDaemonActualMTLSHealthAndMutatingRPCRemainHeld",
+          "elapsedSeconds": 0.38,
+          "logLine": 82,
+          "topLevel": true
+        },
+        {
+          "status": "PASS",
+          "test": "TestDaemonStopDeadlineRetainsOriginalAdmissionDBAndOwner",
+          "elapsedSeconds": 0.5,
+          "logLine": 84,
+          "topLevel": true
+        },
+        {
+          "status": "PASS",
+          "test": "TestDaemonBindFailureClosesActualStorageBeforeRestart",
+          "elapsedSeconds": 0.22,
+          "logLine": 86,
+          "topLevel": true
+        },
+        {
+          "status": "PASS",
+          "test": "TestDaemonTrustedArtifactChangeLatchesDrainAndVisibleError",
+          "elapsedSeconds": 0.79,
+          "logLine": 91,
+          "topLevel": true
+        },
+        {
+          "status": "PASS",
+          "test": "TestDaemonTrustedArtifactChangeLatchesDrainAndVisibleError/helper",
+          "elapsedSeconds": 0.26,
+          "logLine": 92,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestDaemonTrustedArtifactChangeLatchesDrainAndVisibleError/profile",
+          "elapsedSeconds": 0.26,
+          "logLine": 93,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestDaemonTrustedArtifactChangeLatchesDrainAndVisibleError/state-marker",
+          "elapsedSeconds": 0.27,
+          "logLine": 94,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestDaemonUnexpectedListenerExitDrainsAndPreservesFailure",
+          "elapsedSeconds": 0.26,
+          "logLine": 96,
+          "topLevel": true
+        },
+        {
+          "status": "PASS",
+          "test": "TestDaemonCallerCancellationDoesNotStopHealthyHost",
+          "elapsedSeconds": 0.26,
+          "logLine": 98,
+          "topLevel": true
+        },
+        {
+          "status": "PASS",
+          "test": "TestDaemonUnresolvedStartupCleanupRetainsDBAndHostOwner",
+          "elapsedSeconds": 0.22,
+          "logLine": 100,
+          "topLevel": true
+        },
+        {
+          "status": "PASS",
+          "test": "TestDaemonActualSQLiteRecoveryNeverReplaysStartedOrSpentBeep",
+          "elapsedSeconds": 0.47,
+          "logLine": 102,
+          "topLevel": true
+        },
+        {
+          "status": "PASS",
+          "test": "TestSharedHeldReportsInfrastructureWithoutSharedPhysicalAuthority",
+          "elapsedSeconds": 0.26,
+          "logLine": 104,
+          "topLevel": true
+        },
+        {
+          "status": "PASS",
+          "test": "TestInstallerDefaultsPlanOnlyZeroExternalCalls",
+          "elapsedSeconds": 0.1,
+          "logLine": 106,
+          "topLevel": true
+        },
+        {
+          "status": "PASS",
+          "test": "TestFutureExplicitApplySourceBuildsExactStoppedManualCreate",
+          "elapsedSeconds": 0.12,
+          "logLine": 108,
+          "topLevel": true
+        },
+        {
+          "status": "PASS",
+          "test": "TestFutureApplySourceRefusesChangedInputsPrincipalAndService",
+          "elapsedSeconds": 1.03,
+          "logLine": 120,
+          "topLevel": true
+        },
+        {
+          "status": "PASS",
+          "test": "TestFutureApplySourceRefusesChangedInputsPrincipalAndService/missing-reviewed-hash",
+          "elapsedSeconds": 0.1,
+          "logLine": 121,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestFutureApplySourceRefusesChangedInputsPrincipalAndService/not-admin",
+          "elapsedSeconds": 0.11,
+          "logLine": 122,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestFutureApplySourceRefusesChangedInputsPrincipalAndService/wrong-sid",
+          "elapsedSeconds": 0.11,
+          "logLine": 123,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestFutureApplySourceRefusesChangedInputsPrincipalAndService/existing-mismatch",
+          "elapsedSeconds": 0.11,
+          "logLine": 124,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestFutureApplySourceRefusesChangedInputsPrincipalAndService/non-System32",
+          "elapsedSeconds": 0.1,
+          "logLine": 125,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestFutureApplySourceRefusesChangedInputsPrincipalAndService/changed-config",
+          "elapsedSeconds": 0.09,
+          "logLine": 126,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestFutureApplySourceRefusesChangedInputsPrincipalAndService/changed-helper",
+          "elapsedSeconds": 0.1,
+          "logLine": 127,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestFutureApplySourceRefusesChangedInputsPrincipalAndService/changed-client",
+          "elapsedSeconds": 0.11,
+          "logLine": 128,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestFutureApplySourceRefusesChangedInputsPrincipalAndService/changed-qualification",
+          "elapsedSeconds": 0.11,
+          "logLine": 129,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestFutureApplySourceRefusesChangedInputsPrincipalAndService/shared-role",
+          "elapsedSeconds": 0.09,
+          "logLine": 130,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestFutureApplySourcePreservesExactExistingService",
+          "elapsedSeconds": 0.11,
+          "logLine": 132,
+          "topLevel": true
+        },
+        {
+          "status": "PASS",
+          "test": "TestServicePrincipalRequiresItsOwnQualifiedInventoryAndNeverSystem",
+          "elapsedSeconds": 0.1,
+          "logLine": 138,
+          "topLevel": true
+        },
+        {
+          "status": "PASS",
+          "test": "TestServicePrincipalRequiresItsOwnQualifiedInventoryAndNeverSystem/system",
+          "elapsedSeconds": 0.0,
+          "logLine": 139,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestServicePrincipalRequiresItsOwnQualifiedInventoryAndNeverSystem/unqualified",
+          "elapsedSeconds": 0.0,
+          "logLine": 140,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestServicePrincipalRequiresItsOwnQualifiedInventoryAndNeverSystem/wrong-inventory",
+          "elapsedSeconds": 0.0,
+          "logLine": 141,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestServicePrincipalRequiresItsOwnQualifiedInventoryAndNeverSystem/wrong-role",
+          "elapsedSeconds": 0.0,
+          "logLine": 142,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestBundlePinsExactBytesArchitectureAndContainsNoCredentials",
+          "elapsedSeconds": 0.26,
+          "logLine": 146,
+          "topLevel": true
+        },
+        {
+          "status": "PASS",
+          "test": "TestBundlePinsExactBytesArchitectureAndContainsNoCredentials/amd64",
+          "elapsedSeconds": 0.1,
+          "logLine": 147,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestBundlePinsExactBytesArchitectureAndContainsNoCredentials/arm64",
+          "elapsedSeconds": 0.09,
+          "logLine": 148,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestBundleAndPlanRejectNestedAliasesAndNulls",
+          "elapsedSeconds": 0.12,
+          "logLine": 158,
+          "topLevel": true
+        },
+        {
+          "status": "PASS",
+          "test": "TestBundleAndPlanRejectNestedAliasesAndNulls/bundle-pin-alias",
+          "elapsedSeconds": 0.0,
+          "logLine": 159,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestBundleAndPlanRejectNestedAliasesAndNulls/bundle-pin-null",
+          "elapsedSeconds": 0.0,
+          "logLine": 160,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestBundleAndPlanRejectNestedAliasesAndNulls/artifact-alias",
+          "elapsedSeconds": 0.0,
+          "logLine": 161,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestBundleAndPlanRejectNestedAliasesAndNulls/artifact-null",
+          "elapsedSeconds": 0.01,
+          "logLine": 162,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestBundleAndPlanRejectNestedAliasesAndNulls/plan-alias",
+          "elapsedSeconds": 0.0,
+          "logLine": 163,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestBundleAndPlanRejectNestedAliasesAndNulls/plan-pin-null",
+          "elapsedSeconds": 0.0,
+          "logLine": 164,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestBundleAndPlanRejectNestedAliasesAndNulls/plan-artifact-null",
+          "elapsedSeconds": 0.0,
+          "logLine": 165,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestBundleAndPlanRejectNestedAliasesAndNulls/plan-principal-alias",
+          "elapsedSeconds": 0.0,
+          "logLine": 166,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestWindowsBackendUsesExactBoundedCreateArgv",
+          "elapsedSeconds": 0.11,
+          "logLine": 168,
+          "topLevel": true
+        },
+        {
+          "status": "PASS",
+          "test": "TestActualForegroundExecutableHealthExclusiveStopRestartAndRetention",
+          "elapsedSeconds": 1.64,
+          "logLine": 171,
+          "topLevel": true
+        },
+        {
+          "status": "PASS",
+          "test": "TestActualForegroundExecutableRejectsWrongPinsRootRoleWithoutReset",
+          "elapsedSeconds": 0.28,
+          "logLine": 179,
+          "topLevel": true
+        },
+        {
+          "status": "PASS",
+          "test": "TestActualForegroundExecutableRejectsWrongPinsRootRoleWithoutReset/pins",
+          "elapsedSeconds": 0.1,
+          "logLine": 180,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestActualForegroundExecutableRejectsWrongPinsRootRoleWithoutReset/root",
+          "elapsedSeconds": 0.02,
+          "logLine": 181,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestActualForegroundExecutableRejectsWrongPinsRootRoleWithoutReset/role",
+          "elapsedSeconds": 0.02,
+          "logLine": 182,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestActualForegroundExecutableRejectsWrongPinsRootRoleWithoutReset/old-reader",
+          "elapsedSeconds": 0.02,
+          "logLine": 183,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestActualForegroundExecutableRejectsWrongPinsRootRoleWithoutReset/outside-stop-marker",
+          "elapsedSeconds": 0.03,
+          "logLine": 184,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestActualForegroundExecutableTrustedStorageAndArtifactFailuresDrain",
+          "elapsedSeconds": 0.92,
+          "logLine": 190,
+          "topLevel": true
+        },
+        {
+          "status": "PASS",
+          "test": "TestActualForegroundExecutableTrustedStorageAndArtifactFailuresDrain/helper",
+          "elapsedSeconds": 0.31,
+          "logLine": 191,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestActualForegroundExecutableTrustedStorageAndArtifactFailuresDrain/marker",
+          "elapsedSeconds": 0.29,
+          "logLine": 192,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestActualForegroundExecutableTrustedStorageAndArtifactFailuresDrain/queue-table",
+          "elapsedSeconds": 0.32,
+          "logLine": 193,
+          "topLevel": false
+        }
+      ],
+      "observed": {
+        "status": "PASS",
+        "exitCode": 0,
+        "elapsedMs": 10146,
+        "workingDirectory": "C:\\Users\\vaanskii\\AppData\\Local\\VynicReadinessPrinterAgent\\software-v2-d6f8ecef582b\\source\\apps\\edge\\internal\\printerdaemon",
+        "binarySHA256": "6a0e7f245115c6a6324094498db679eccd17f97e91bcb50772c3bc74d4fad8d3",
+        "packagedCLISHA256": "a5ef474a67d62326436c48e073731b59062cc104545032574af671dc70b882cc",
+        "arguments": [
+          "-test.v",
+          "-test.timeout=10m"
+        ],
+        "stdoutSHA256": "a61c497461fb402aa92142b520a1016c6811f488e893e07155782a8292ff365f",
+        "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "sourceTests": [
+        {
+          "path": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/final-cohort-v2/apps/edge/internal/printerdaemon/config_test.go",
+          "sha256": "be77e7a6def6ede1bc5590d68e93ae42ea26a1d76b33e34cdbd172f0917874f4",
+          "bytes": 9447
+        },
+        {
+          "path": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/final-cohort-v2/apps/edge/internal/printerdaemon/daemon_test.go",
+          "sha256": "a923c379e554b55ba9553cc9bc89cdfd0055ab891164acfc9379632f53f18906",
+          "bytes": 15315
+        },
+        {
+          "path": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/final-cohort-v2/apps/edge/internal/printerdaemon/fixture_test.go",
+          "sha256": "1c5cf0fd4ce2e3afcbd87befe346e0172adf829e077119c4195043fd337ef500",
+          "bytes": 11541
+        },
+        {
+          "path": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/final-cohort-v2/apps/edge/internal/printerdaemon/installer_test.go",
+          "sha256": "a1d871ba121ab285c57fa343b8e5b4bfaab8aef2b5d28011403cdfa7c8c2160b",
+          "bytes": 12720
+        },
+        {
+          "path": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/final-cohort-v2/apps/edge/internal/printerdaemon/process_test.go",
+          "sha256": "226b604bac6fc8015b38dcf2e673201d8ea798de818029603c3e71601f909e2e",
+          "bytes": 8396
+        }
+      ]
+    },
+    "amd64/printer-agent-command": {
+      "status": "PASS",
+      "topLevelPass": 7,
+      "passRecords": 13,
+      "subtestPass": 6,
+      "failRecords": 0,
+      "skipRecords": [],
+      "stdout": {
+        "path": "/Users/vaanskii/Developer/vynic/docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/windows-software-go-packages-result-v2/amd64-printer-agent-command.stdout.log",
+        "sha256": "9df2e56041ed720bcf65cb118c03c59e9d4308e6cf7b468271cab762a5dfb0e0",
+        "bytes": 1829
+      },
+      "stderr": {
+        "path": "/Users/vaanskii/Developer/vynic/docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/windows-software-go-packages-result-v2/amd64-printer-agent-command.stderr.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "records": [
+        {
+          "status": "PASS",
+          "test": "TestCLIRejectsEmptyUnknownAndActivationArguments",
+          "elapsedSeconds": 0.0,
+          "logLine": 2,
+          "topLevel": true
+        },
+        {
+          "status": "PASS",
+          "test": "TestEveryForegroundExitDrainsAndPreservesOriginalFailure",
+          "elapsedSeconds": 0.0,
+          "logLine": 7,
+          "topLevel": true
+        },
+        {
+          "status": "PASS",
+          "test": "TestEveryForegroundExitDrainsAndPreservesOriginalFailure/startup",
+          "elapsedSeconds": 0.0,
+          "logLine": 8,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestEveryForegroundExitDrainsAndPreservesOriginalFailure/announce",
+          "elapsedSeconds": 0.0,
+          "logLine": 9,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestEveryForegroundExitDrainsAndPreservesOriginalFailure/wait",
+          "elapsedSeconds": 0.0,
+          "logLine": 10,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestForegroundHeldChild",
+          "elapsedSeconds": 0.0,
+          "logLine": 12,
+          "topLevel": true
+        },
+        {
+          "status": "PASS",
+          "test": "TestEveryForegroundExitRetainsProcessOnUnresolvedClose",
+          "elapsedSeconds": 0.37,
+          "logLine": 17,
+          "topLevel": true
+        },
+        {
+          "status": "PASS",
+          "test": "TestEveryForegroundExitRetainsProcessOnUnresolvedClose/startup",
+          "elapsedSeconds": 0.13,
+          "logLine": 18,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestEveryForegroundExitRetainsProcessOnUnresolvedClose/announce",
+          "elapsedSeconds": 0.12,
+          "logLine": 19,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestEveryForegroundExitRetainsProcessOnUnresolvedClose/wait",
+          "elapsedSeconds": 0.11,
+          "logLine": 20,
+          "topLevel": false
+        },
+        {
+          "status": "PASS",
+          "test": "TestForegroundLocalShutdownMarkerUsesNormalContextDrain",
+          "elapsedSeconds": 0.11,
+          "logLine": 22,
+          "topLevel": true
+        },
+        {
+          "status": "PASS",
+          "test": "TestMalformedShutdownMarkerReportsFailure",
+          "elapsedSeconds": 0.1,
+          "logLine": 24,
+          "topLevel": true
+        },
+        {
+          "status": "PASS",
+          "test": "TestCLIPlanOnlyDoesNotInvokeUnsupportedPlatformBackend",
+          "elapsedSeconds": 0.0,
+          "logLine": 26,
+          "topLevel": true
+        }
+      ],
+      "observed": {
+        "status": "PASS",
+        "exitCode": 0,
+        "elapsedMs": 1067,
+        "workingDirectory": "C:\\Users\\vaanskii\\AppData\\Local\\VynicReadinessPrinterAgent\\software-v2-d6f8ecef582b\\source\\apps\\edge\\cmd\\printer-agent",
+        "binarySHA256": "53ec669a58ff50860ca79d3cf77716787fcf172656b7e9e2e40ff16eb504336b",
+        "packagedCLISHA256": "a5ef474a67d62326436c48e073731b59062cc104545032574af671dc70b882cc",
+        "arguments": [
+          "-test.v",
+          "-test.timeout=10m"
+        ],
+        "stdoutSHA256": "9df2e56041ed720bcf65cb118c03c59e9d4308e6cf7b468271cab762a5dfb0e0",
+        "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "sourceTests": [
+        {
+          "path": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/final-cohort-v2/apps/edge/cmd/printer-agent/main_test.go",
+          "sha256": "3079dfd644659e1b8e364e7e4cf407ab76f24ec10a0b11d0dd832ab49fc82f5a",
+          "bytes": 5406
+        }
+      ]
+    }
+  },
+  "summary": {
+    "topLevelPass": 104,
+    "subtestPass": 410,
+    "passRecords": 514,
+    "fixtureEntrySkips": 2,
+    "capabilitySkips": 0,
+    "failRecords": 0
+  },
+  "sourceBinaryBundleBeforeAfterMatched": true,
+  "zeroSpoolerJobInventories": {
+    "arm64/printerprovisioning": {
+      "before": 0,
+      "after": 0
+    },
+    "arm64/printeragent": {
+      "before": 0,
+      "after": 0
+    },
+    "arm64/printerdaemon": {
+      "before": 0,
+      "after": 0
+    },
+    "arm64/printer-agent-command": {
+      "before": 0,
+      "after": 0
+    },
+    "amd64/printerprovisioning": {
+      "before": 0,
+      "after": 0
+    },
+    "amd64/printeragent": {
+      "before": 0,
+      "after": 0
+    },
+    "amd64/printerdaemon": {
+      "before": 0,
+      "after": 0
+    },
+    "amd64/printer-agent-command": {
+      "before": 0,
+      "after": 0
+    }
+  },
+  "shippedCLI": {
+    "arm64": "dbdd278544ba542a9161a9bb4fbe411b31a410789af0a0bb583d4a00a78bbf71",
+    "amd64": "a5ef474a67d62326436c48e073731b59062cc104545032574af671dc70b882cc"
+  },
+  "helperQualification": "Shipped native helper/profile hashes are verified before/after; actual daemon fixtures use synthetic unexecuted held-helper.bin. Helper execution remains a separately qualified earlier packet.",
+  "actualForegroundQualification": "Both shipped CLI architectures execute synthetic mTLS health, exclusive instance refusal, dedicated stop marker, restart with retained STARTED/spent-beep UNCERTAIN, and trusted failure drain. This is not SCM or Windows OS restart.",
+  "fixtureAccounting": "TestForegroundHeldChild passes as a standalone no-op entry; parent tests exercise its retained-process paths in actual child processes. Only TestPrinterAgentProcess standalone entries skip, one per architecture. Symlink privilege test ran and passed, not skipped.",
+  "physicalDocuments": 0,
+  "SCMRegistrations": 0,
+  "WindowsOSRestarts": 0,
+  "limits": [
+    "Actual packaged foreground CLI, synthetic temporary SQLite/mTLS; HELD_PROVISIONING always remains.",
+    "ARM64 packages run natively; amd64 packages run under Windows-on-ARM emulation.",
+    "SCM registration, actual service-account lifecycle, registered-service restart, OS reboot/power loss and physical printer/model/cut/beep acceptance remain not-run.",
+    "Installer backend tests inject fakes; no actual service/account/ACL/trust/driver/security changes.",
+    "Spooler inventory records are point-in-time observations; no continuous Winspool syscall tracing claimed.",
+    "Temporary test certificates are synthetic and do not alter persistent Windows trust or product credentials."
+  ],
+  "previousPacketsUnchanged": true
+}

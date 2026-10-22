@@ -8,40 +8,52 @@ class CreateTakeawayController extends ChangeNotifier {
   final TakeawayRepository _repository;
   CreateTakeawayState _state = const CreateTakeawayState();
 
-  CreateTakeawayController(this._repository);
+  final String? expectedScope;
+  bool _disposed = false;
+  bool newRequest = true;
+  CreateTakeawayController(this._repository, {this.expectedScope});
+  @override
+  void dispose() {
+    _disposed = true;
+    super.dispose();
+  }
+
+  void _emit() {
+    if (!_disposed) notifyListeners();
+  }
 
   CreateTakeawayState get state => _state;
 
   Future<void> initialize() async {
     final defaultPickup = _defaultPickupTime();
     _state = _state.copyWith(pickupTime: defaultPickup, loading: true);
-    notifyListeners();
+    _emit();
     try {
       final menuItems = await _repository.getMenuItems();
       _state = _state.copyWith(menuItems: menuItems, loading: false);
-      notifyListeners();
+      _emit();
     } catch (_) {
       _state = _state.copyWith(
         loading: false,
         errorMessage: 'მენიუს ჩატვირთვა ვერ მოხერხდა',
       );
-      notifyListeners();
+      _emit();
     }
   }
 
   void setWaitInPlace(bool value) {
     _state = _state.copyWith(waitInPlace: value);
-    notifyListeners();
+    _emit();
   }
 
   void setCustomerName(String value) {
     _state = _state.copyWith(customerName: value);
-    notifyListeners();
+    _emit();
   }
 
   void setPickupTime(String value) {
     _state = _state.copyWith(pickupTime: value);
-    notifyListeners();
+    _emit();
   }
 
   void incrementItem(TakeawayMenuItem item) {
@@ -50,7 +62,7 @@ class CreateTakeawayController extends ChangeNotifier {
         .putIfAbsent(item.name, () => TakeawayCartEntry(price: item.price))
         .quantity++;
     _state = _state.copyWith(cart: cart);
-    notifyListeners();
+    _emit();
   }
 
   void decrementItem(String itemName) {
@@ -62,7 +74,16 @@ class CreateTakeawayController extends ChangeNotifier {
       cart.remove(itemName);
     }
     _state = _state.copyWith(cart: cart);
-    notifyListeners();
+    _emit();
+  }
+
+  void incrementCartItem(String key) {
+    final cart = Map<String, TakeawayCartEntry>.from(_state.cart);
+    final entry = cart[key];
+    if (entry == null) return;
+    entry.quantity++;
+    _state = _state.copyWith(cart: cart);
+    _emit();
   }
 
   void replaceCartFromSelection(List<Map<String, dynamic>> lines) {
@@ -72,10 +93,17 @@ class CreateTakeawayController extends ChangeNotifier {
       final qty = (line['qty'] as num?)?.toInt() ?? 0;
       final price = (line['unitPrice'] as num?)?.toDouble() ?? 0.0;
       if (name.isEmpty || qty <= 0) continue;
-      next[name] = TakeawayCartEntry(price: price)..quantity = qty;
+      final key = line['key'] as String? ?? name;
+      next[key] = TakeawayCartEntry(
+        price: price,
+        quantity: qty,
+        itemName: name,
+        menuItemId: line['menuItemId'] as String?,
+        variantId: line['variantId'] as String?,
+      );
     }
     _state = _state.copyWith(cart: next);
-    notifyListeners();
+    _emit();
   }
 
   Future<SubmitResult> submit(User user) async {
@@ -89,31 +117,42 @@ class CreateTakeawayController extends ChangeNotifier {
       return const SubmitResult(false, 'დაამატეთ მინიმუმ ერთი პროდუქტი');
     }
     _state = _state.copyWith(submitting: true);
-    notifyListeners();
+    _emit();
     try {
       final items = _state.cart.entries
           .map(
             (e) => {
-              'itemName': e.key,
+              'itemKey': e.key,
+              'itemName': e.value.itemName ?? e.key,
               'unitPrice': e.value.price,
               'quantity': e.value.quantity,
+              if (e.value.menuItemId != null) 'menuItemId': e.value.menuItemId,
+              if (e.value.variantId != null) 'variantId': e.value.variantId,
             },
           )
           .toList();
-      await _repository.createOrder(
+      final fresh = newRequest;
+      newRequest = false;
+      final result = await _repository.createOrder(
         TakeawayCreatePayload(
           customerName: customerName,
           pickupTime: _state.pickupTime.trim(),
           waiterName: user.username,
           items: items,
         ),
+        expectedScope: expectedScope,
+        newRequest: fresh,
       );
       _state = _state.copyWith(submitting: false);
-      notifyListeners();
-      return const SubmitResult(true, null);
+      _emit();
+      return SubmitResult(
+        result.isDone,
+        result.message,
+        isError: result.delivery.name == 'failed',
+      );
     } catch (e) {
       _state = _state.copyWith(submitting: false);
-      notifyListeners();
+      _emit();
       return SubmitResult(false, 'შეცდომა: $e');
     }
   }
@@ -128,5 +167,6 @@ class SubmitResult {
   final bool success;
   final String? message;
 
-  const SubmitResult(this.success, this.message);
+  final bool isError;
+  const SubmitResult(this.success, this.message, {this.isError = true});
 }

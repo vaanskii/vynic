@@ -1,0 +1,38 @@
+{
+  "verdict": "PASS actual Windows execution of frozen V2 seven-package nonphysical proof",
+  "sourceSnapshotSha256": "d694adbe1410f005d6285396f81a7126cdc7b9fb9f44b08a01f7f3c5e523330a",
+  "reviewedArtifactManifestSha256": "c28881de8c509f4dae6609e301218a0273fe2465884133806f045ad8334ea1eb",
+  "reviewedVerificationReceiptSha256": "3f770fdeea21482d1069a2fb40fc520b44f3bdffc29817cee67a0020f0768454",
+  "guestReceiptSha256": "a0278f15814e55d1f86926d5c4bea7ef629aea4ed005f8095efecf5edc72d922",
+  "checks": {
+    "manifestArtifactsRehashed": 32,
+    "exactSourceArchiveEntries": 163,
+    "exactBinaryArchiveEntries": 7,
+    "allPEMachines": "amd640x8664",
+    "guestArchitecture": "ARM64",
+    "topLevelPassed": 115,
+    "passRecordsIncludingSubtests": 368,
+    "failed": 0,
+    "fixtureEntrySkips": [
+      "store/TestOperationalCrashWorker",
+      "store/TestCrashWorker",
+      "server/TestOperationalProofProcess",
+      "printcluster/TestRaftProcessFixture"
+    ],
+    "allStderrEmpty": true,
+    "allPackageExitCodes": 0,
+    "jobsBeforeAfter": [
+      0,
+      0
+    ]
+  },
+  "actualWindowsProcessEvidence": "Three voter processes plus fourth relay run, leader Process.Kill, new majority and exact cold-rejoin passed. Go Process.Kill on Windows uses TerminateProcess; fixture log historical SIGKILL wording must not be described as a Unix signal on Windows.",
+  "limits": [
+    "Cohort is old frozen V2 only; software-completion source is not covered.",
+    "No race instrumentation on cross-compiled Windows executables; independent macOS normal/race proofs remain separate.",
+    "Four skips are worker entrypoints; Unix-build-tag excluded tests were not executed or counted as Windows passes.",
+    "Loopback processes on one guest do not qualify distinct-host power loss/network partition or shared RAW fencing.",
+    "No physical documents, valid RAW submissions, SCM registration/account qualification, driver installation or product startup.",
+    "amd64 binaries run on ARM64 guest; native ARM64 helper/package qualification remains separate."
+  ]
+}

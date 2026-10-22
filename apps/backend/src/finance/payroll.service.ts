@@ -1,3 +1,11 @@
+import {
+  correctionInput,
+  assertCorrectionReplay,
+  assertOriginal,
+  correctionTransaction,
+  presentCorrections,
+  type CorrectionInput,
+} from './finance-corrections';
 import { inputObject } from './finance-rules';
 import {
   BadRequestException,
@@ -281,7 +289,7 @@ export class PayrollService {
       paid: paid.toFixed(2),
       remaining: Prisma.Decimal.max(0, expected.minus(paid)).toFixed(2),
       overpaid: Prisma.Decimal.max(0, paid.minus(expected)).toFixed(2),
-      payments: p.payments.map((e) => ({ ...e, amount: e.amount.toFixed(2) })),
+      payments: presentCorrections(p.payments),
       accruals: p.accruals.map((e) => ({ ...e, amount: e.amount.toFixed(2) })),
     };
   }
@@ -338,6 +346,79 @@ export class PayrollService {
         },
       );
       return payment;
+    });
+  }
+  async reversePayment(
+    actor: Actor,
+    periodId: string,
+    originalId: string,
+    input: CorrectionInput,
+  ) {
+    const data = correctionInput(input);
+    return correctionTransaction(this.db, async (tx) => {
+      const period = await this.lockPeriod(tx, actor, periodId);
+      const original = await tx.payrollPayment.findFirst({
+        where: {
+          id: originalId,
+          venueId: actor.venueId,
+          payrollPeriodId: periodId,
+        },
+      });
+      if (!original)
+        throw new NotFoundException('საწყისი გადახდა ვერ მოიძებნა');
+      const existing = await tx.payrollPayment.findUnique({
+        where: { id: data.id },
+      });
+      if (existing) {
+        assertCorrectionReplay(
+          existing,
+          actor.venueId,
+          originalId,
+          data.reason,
+          existing.payrollPeriodId === periodId,
+        );
+        return existing;
+      }
+      assertOriginal(original);
+      if (
+        await tx.payrollPayment.findUnique({
+          where: { reversalOfId: originalId },
+        })
+      )
+        throw new ConflictException('გადახდა უკვე კორექტირებულია');
+      const correctionBusinessDate = (await financeDates(tx, actor))
+        .businessDate;
+      const entry = await tx.payrollPayment.create({
+        data: {
+          id: data.id,
+          ...actorData(actor),
+          payrollPeriodId: periodId,
+          amount: original.amount.negated(),
+          businessDate: original.businessDate,
+          paymentDate: original.paymentDate,
+          notes: data.reason,
+          reversalOfId: originalId,
+          correctionBusinessDate,
+        },
+      });
+      await audit(
+        tx,
+        actor,
+        'PAYROLL_PAYMENT_REVERSED',
+        'PAYROLL_PAYMENT',
+        entry.id,
+        {
+          originalEntryId: originalId,
+          staffId: period.staffId,
+          periodMonth: period.periodMonth,
+          amount: entry.amount.toFixed(2),
+          businessDate: original.businessDate,
+          paymentDate: original.paymentDate,
+          correctionBusinessDate,
+          reason: data.reason,
+        },
+      );
+      return entry;
     });
   }
   /** A desired state command, serialized with payments. Never deletes earned history. */

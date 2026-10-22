@@ -1,0 +1,79 @@
+{
+  "command": [
+    "go",
+    "test",
+    "-c",
+    "-mod=readonly",
+    "-o",
+    "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/operational-proof-server-windows.test.exe",
+    "./internal/server"
+  ],
+  "workdir": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/source/apps/edge",
+  "environment": {
+    "GOROOT": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go1.26.8/go",
+    "GOTOOLCHAIN": "local",
+    "GOENV": "off",
+    "GOTELEMETRY": "off",
+    "GOCACHE": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-cache",
+    "GOMODCACHE": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache",
+    "GOPATH": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-path",
+    "GOBIN": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/bin",
+    "GOPROXY": "off",
+    "GOOS": "windows",
+    "GOARCH": "amd64",
+    "CGO_ENABLED": "0"
+  },
+  "durationSeconds": 1.461,
+  "exitCode": 0,
+  "modulesBefore": {
+    "apps/edge/go.mod": "ee1b4d46129d70ab34a6c12314daddd5f5a7b0122e28040a52677b359c86f37d",
+    "apps/edge/go.sum": "561b9a04ed2552e61d5187a89b023415fa4b9c5af1ea827a6707b7779234ca56",
+    "packages/contracts/generated/go/go.mod": "54ad4ea326560555ae16be9943353238cd66ede684166c1984cf96af9a344fe8",
+    "packages/contracts/generated/go/go.sum": "4d6021e7f1525d43b0713af9db44aead5817e2bbe9910d0f077172a363d4ea52"
+  },
+  "sourceManifestSha256": "a32a175fdf3454dc4f1c040822577eb35e379dd2b4ac57dc1441a4cb7dce9f03",
+  "ownedHashesFileSha256": "c8e9bc4cd6dc9de7f7261769024c937e347e99bc46fabe99fde45e7108d739b8",
+  "target": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/operational-proof-server-windows.test.exe",
+  "modulesAfter": {
+    "apps/edge/go.mod": "ee1b4d46129d70ab34a6c12314daddd5f5a7b0122e28040a52677b359c86f37d",
+    "apps/edge/go.sum": "561b9a04ed2552e61d5187a89b023415fa4b9c5af1ea827a6707b7779234ca56",
+    "packages/contracts/generated/go/go.mod": "54ad4ea326560555ae16be9943353238cd66ede684166c1984cf96af9a344fe8",
+    "packages/contracts/generated/go/go.sum": "4d6021e7f1525d43b0713af9db44aead5817e2bbe9910d0f077172a363d4ea52"
+  },
+  "moduleHashesUnchangedAcrossBuild": true,
+  "artifact": {
+    "path": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/operational-proof-server-windows.test.exe",
+    "bytes": 26283520,
+    "sha256": "f61d5b985d10356701bc4eb9974dd5762c9d31cdb7a6c6a65012bdda8fc4e231",
+    "format": "PE32+ Windows amd64 console executable",
+    "machineHex": "0x8664",
+    "optionalHeaderMagicHex": "0x20b"
+  },
+  "buildInfo": {
+    "path": "operational-wire-windows-fixture-build-info.txt",
+    "sha256": "17f6cc2d5f3cbfd839ddabbfe4331479466ee1a2159dd3adc87e1e14b9d8db03",
+    "content": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/operational-proof-server-windows.test.exe: go1.26.8\n\tpath\tvynic.local/edge/internal/server.test\n\tmod\tvynic.local/edge\t(devel)\t\n\tbuild\t-buildmode=exe\n\tbuild\t-compiler=gc\n\tbuild\tCGO_ENABLED=0\n\tbuild\tGOARCH=amd64\n\tbuild\tGOOS=windows\n\tbuild\tGOAMD64=v1\n"
+  },
+  "buildLog": {
+    "path": "operational-wire-windows-fixture-build.log",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "all26OwnedSourcesUnchanged": true,
+  "all16ProtectedSourcesUnchanged": true,
+  "testFixtureLaunchInspection": {
+    "DartFile": "apps/operations/test/unit/operational_proof_wire_test.dart",
+    "DartTestCount": 19,
+    "launch": "Process.start(binary, [r'-test.run=^TestOperationalProofProcess$', '-test.v'], environment: {VYNIC_OPERATIONAL_WIRE_DIR: temporaryDirectory, VYNIC_OPERATIONAL_WIRE_ROLE: dart-gateway})",
+    "runInShell": false,
+    "paths": "Dart File/Directory paths use native absolute temporary directory and accepted slash separators; Go uses filepath.Join; no fixed POS/Unix filesystem paths in launch.",
+    "stop": "Flushed gateway-stop marker; Go gRPC graceful stop; Dart waits5s then process kill timeout; no Unix signal dependency for normal stop.",
+    "socket": "127.0.0.1 ephemeral TCP port; TLS1.3 fixture mTLS; no LAN, registration, physical printer or SCM operation.",
+    "credentials": "Fresh temporary fixture certificates and secrets in test directory only; no live configuration.",
+    "entry": "TestOperationalProofProcess, role dart-gateway; no normal service entrypoint.",
+    "physicalTransport": "None; only frozen printqueue admission receipts.",
+    "runtimeStatus": "Cross-compilation and source inspection PASS. Actual Windows19 wire tests are parent-owned pending VM run; this receipt does not claim Windows execution."
+  },
+  "WindowsFixtureEnvironment": "VYNIC_OPERATIONAL_PROOF_GO_FIXTURE=<absolute Windows path to operational-proof-server-windows.test.exe>",
+  "WindowsFlutterCommand": "flutter --suppress-analytics test --no-pub test/unit/operational_proof_wire_test.dart",
+  "runtimeExecutionHere": false
+}

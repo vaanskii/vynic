@@ -1,0 +1,57 @@
+{
+  "verdict": "PASS bounded source review and macOS synthetic Go race suite; actual Windows qualification pending",
+  "files": {
+    "apps/edge/internal/printtransport/guard.go": "d46cbaa04bbb9e5a21966c43794f6d63be1d8418aa6315089694613993b3ae87",
+    "apps/edge/internal/printtransport/guard_other.go": "dd0cc72fe6c3de335dd563a7ff9a7b95870d52654a8f68809d906d661a8288e5",
+    "apps/edge/internal/printtransport/guard_windows.go": "414f50c210190c303da0ef0727b7c0e5e01d3fe89e4c12c4b777eb77f42b4b3f",
+    "apps/edge/internal/printtransport/helper.go": "344d1fb146346d8ab25dbdea8e3c1aaec7017e7d6517b84f9addae86a7c03185",
+    "apps/edge/internal/printtransport/helper_other.go": "39314257c720573695d8db34d02fa74eb08b58c388f5500c453f48e1ea3b22b3",
+    "apps/edge/internal/printtransport/helper_test.go": "0d4a5ccd85664fb1c7ce28337de60e5f422ddd5708fce9ebcde467e37e563d99",
+    "apps/edge/internal/printtransport/helper_windows.go": "0785a60beac6c9e0c6f910f8b0058ebea2931aa5123ab450a9b12d1cf2e7ae1e",
+    "apps/edge/internal/printtransport/helper_windows_test.go": "95eab72ee57a42d5913f8a532cc60a7c32cb2187114c4b81c6ea0214c8bca251",
+    "apps/edge/internal/printtransport/protocol.go": "982b068c3011f2dd6dc490af838f7a2b97d38afe9fa20729040772842dd3be29",
+    "apps/edge/internal/printtransport/router.go": "754bdca3212b3c145c46ab91371259e796a7858a271322386c7ad33e59788cfe",
+    "apps/edge/internal/printtransport/tcp.go": "18df0eaff557bfd2285e270fa519e66d1115924d5c7b86bfaa8618a009cd1d2f",
+    "apps/edge/internal/printtransport/tcp_test.go": "6588d48b0f00be575789adf9b26349d50f7102f7d9faf01f51ce1b2ab665e9d4",
+    "apps/edge/internal/printtransport/transport.go": "e6ad771e28315311052c60cd108e097ffc557d0075d8fc3db9aa4f14673b06aa",
+    "apps/edge/native/print_helper/CMakeLists.txt": "c9dc30418926ff8eb24b9cf54eec2e620b4d1e3b7943b8bd4ee146d6730945cc",
+    "apps/edge/native/print_helper/README.md": "c3d4be526b028c064a5896b93531c1c85e808b6f8717bc370e9e2ed0c314b8be",
+    "apps/edge/native/print_helper/main_windows.cpp": "1edb8b42e709083f9f1b61a5008d2393fbfaa82987541a3a92563659ccfadf50",
+    "apps/edge/native/print_helper/protocol.cpp": "526046639db53d383d143c70a2401baa8454255c3fe1d0d896e11709fbb5d9bb",
+    "apps/edge/native/print_helper/protocol.h": "9825f57f4524265463f3021afe77a751816b52fabad3653440d271376f0019a7",
+    "apps/edge/native/print_helper/protocol_test.cpp": "84dcfd6446ad0534c9322ca508ee8dcee864ddae2a3a84f66cb50a32b9dae711",
+    "apps/edge/native/print_helper/qualify_windows.ps1": "1b1c47f22fc768743a94d1eff9e0d970b7a0c5e0face062fe90ebe65e6a75c78",
+    "apps/edge/native/print_helper/session.cpp": "8011075a2b6667d30e881f7561fc428fb5f147c822b1ba4308e071fd10c0f083",
+    "apps/edge/native/print_helper/session.h": "0e1f72e7597b93ff6a95013ee1a78561684f4896c1f34468162bf4d510ff443f",
+    "apps/operations/windows/runner/CMakeLists.txt": "56018eee14758aa2ebffe3f5ffb88e19c716dc2b48e3d7010b9b8b352aeae3b2",
+    "apps/operations/windows/runner/windows_spooler_channel.cpp": "b05bccf184bd523ddc6ebcabe837443428daf6b9c8d5503f5d9a1a60dc32b221",
+    "apps/operations/windows/runner/windows_spooler_native.cpp": "c2b6f8d07c55b5cebbe32b3e597b5ff4a5b40bebd6c2b4a73fa1e1dd90ad5527",
+    "apps/operations/windows/runner/windows_spooler_native.h": "82564a1481807b2a40d184c4adcde115189b284484fb752a4ba272fb6cf51610"
+  },
+  "independent_test_log_sha256": "64bebccec9bbafe23021eb1f06c0ac4c806acbb7330c4ae23128e77cda55ba17",
+  "independent_tests": [
+    "TestHelperOutcomeAndNoCommitRetry",
+    "TestHelperTimeoutRetainsOriginalLifetimeAndGuard",
+    "TestHelperFrameAndResultBounds",
+    "TestGuardIdentityActiveCallAndIdempotentClose",
+    "TestTCPFailureBoundariesAndOneWrite",
+    "TestRejectBeforeDialAndFreezeBytes",
+    "TestCancelWriteRemainsUncertainAndGuardBusy",
+    "TestDestinationAndHelperPins"
+  ],
+  "review": [
+    "JOB_LIST atomic containment and attribute pointer lifetime",
+    "Explicit inheritable handle whitelist excludes job and parent writers",
+    "Semaphore retained by original child; failed acquisition closes handle",
+    "READY/COMMIT conservative uncertainty, exact-child exit and exchange drain before release",
+    "Separate stderr bounded drain and child-descendant termination before drain completion",
+    "Native Winspool extraction compared to old sealed channel implementation; equivalent method bodies and CMake link"
+  ],
+  "limits": [
+    "Windows tests crosscompiled but no actual Windows execution evidence reviewed yet",
+    "Parent-death child termination and fresh semaphore acquisition require actual Windows run",
+    "No physical printing, service-account inventory qualification, production activation, driver install or SCM changes",
+    "Submitted bytes/spooler result does not prove paper or retract already-spooled bytes",
+    "Shared RAW failover requires independent downstream fencing; process containment is not printer fencing"
+  ]
+}

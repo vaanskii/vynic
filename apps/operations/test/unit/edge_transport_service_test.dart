@@ -314,6 +314,101 @@ void main() {
       await service.stop();
     });
 
+    test(
+      'a delayed old-credential rejection cannot stop reconnected polling',
+      () async {
+        final oldReply = Completer<http.Response>();
+        final firstClaim = Completer<void>();
+        final nextClaim = Completer<void>();
+        var activeCredential = credential;
+        var claims = 0;
+        final service = EdgeTransportService(
+          idleInterval: const Duration(milliseconds: 5),
+          drainInterval: const Duration(milliseconds: 5),
+          client: EdgeTransportClient(
+            baseUrl: () => 'http://cloud.test',
+            credential: () => activeCredential,
+            httpClient: MockClient((request) async {
+              claims++;
+              if (claims == 1) {
+                expect(request.headers['X-POS-Sync-Key'], credential);
+                firstClaim.complete();
+                return oldReply.future;
+              }
+              expect(request.headers['X-POS-Sync-Key'], activeCredential);
+              if (!nextClaim.isCompleted) nextClaim.complete();
+              return http.Response(claimBody(const []), 200);
+            }),
+          ),
+          registry: EdgeCommandRegistry(const [NoopEdgeCommandHandler()]),
+        );
+        await service.start();
+        await firstClaim.future;
+        activeCredential = credential.replaceAll('a', 'b');
+        await service
+            .start(); // The enrollment path starts an already-running loop.
+        oldReply.complete(http.Response('', 401));
+        await nextClaim.future.timeout(const Duration(seconds: 2));
+        expect(service.isRunning, isTrue);
+        await service.stop();
+      },
+    );
+
+    test(
+      'a successful old-credential claim cannot execute after identity changes',
+      () async {
+        final oldReply = Completer<http.Response>();
+        final requested = Completer<void>();
+        var activeCredential = credential;
+        var claims = 0;
+        var executed = 0;
+        final acknowledgments = <String>[];
+        final service = EdgeTransportService(
+          idleInterval: const Duration(hours: 1),
+          drainInterval: const Duration(hours: 1),
+          client: EdgeTransportClient(
+            baseUrl: () => 'http://cloud.test',
+            credential: () => activeCredential,
+            httpClient: MockClient((request) async {
+              if (request.url.path.endsWith('/ack')) {
+                final result = jsonDecode(request.body) as Map;
+                acknowledgments.add(result['commandId'] as String);
+                expect(request.headers['X-POS-Sync-Key'], activeCredential);
+                return http.Response('{}', 200);
+              }
+              claims++;
+              if (claims == 1) {
+                requested.complete();
+                return oldReply.future;
+              }
+              expect(request.headers['X-POS-Sync-Key'], activeCredential);
+              return http.Response(
+                claimBody([envelope('new-identity-command')]),
+                200,
+              );
+            }),
+          ),
+          registry: EdgeCommandRegistry([_CountingHandler(() => executed++)]),
+        );
+        await service.start();
+        final oldPoll = service.pollOnce();
+        await requested.future;
+        activeCredential = credential.replaceAll('a', 'b');
+        oldReply.complete(
+          http.Response(claimBody([envelope('old-identity-command')]), 200),
+        );
+        final oldSummary = await oldPoll;
+        expect(oldSummary.claimed, 0);
+        expect(executed, 0);
+        expect(acknowledgments, isEmpty);
+        final newSummary = await service.pollOnce();
+        expect(newSummary.executed, 1);
+        expect(executed, 1);
+        expect(acknowledgments, ['new-identity-command']);
+        await service.stop();
+      },
+    );
+
     test('never runs two claims at once', () async {
       var inFlight = 0;
       var maxInFlight = 0;

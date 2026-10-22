@@ -1,0 +1,189 @@
+{
+    "schema":  2,
+    "status":  "PASS",
+    "failure":  null,
+    "startedUtc":  "2026-10-06T18:06:40.2213169Z",
+    "completedUtc":  "2026-10-06T18:07:14.6128865Z",
+    "guestBase":  "C:\\Users\\vaanskii\\AppData\\Local\\VynicReadinessPrinterAgent\\software-v2-d6f8ecef582b",
+    "currentUser":  "VANSKI\\vaanskii",
+    "currentSID":  "S-1-5-21-611125631-3759947118-1641436196-1000",
+    "guestArchitecture":  "ARM64",
+    "binaryArchitectures":  [
+                                "arm64",
+                                "amd64"
+                            ],
+    "sourceReceiptSHA256":  "faaaec2f1ece4f8259353666000eb4c0d3aee6143e73ae7fdf90772a937b581b",
+    "executionStageSHA256":  "6004c62c195e96b4ba9f54e065b9c1e887924054c0168ca7e2c49b854ba2b4f4",
+    "sourceFiles":  1109,
+    "packages":  {
+                     "arm64/printerprovisioning":  {
+                                                       "status":  "PASS",
+                                                       "exitCode":  0,
+                                                       "elapsedMs":  1048,
+                                                       "workingDirectory":  "C:\\Users\\vaanskii\\AppData\\Local\\VynicReadinessPrinterAgent\\software-v2-d6f8ecef582b\\source\\apps\\edge\\internal\\printerprovisioning",
+                                                       "binarySHA256":  "17e46e4f457f476969508c529a0856810c187104fc4b56c80c31935e6dcd3693",
+                                                       "packagedCLISHA256":  "dbdd278544ba542a9161a9bb4fbe411b31a410789af0a0bb583d4a00a78bbf71",
+                                                       "arguments":  [
+                                                                         "-test.v",
+                                                                         "-test.timeout=10m"
+                                                                     ],
+                                                       "stdoutSHA256":  "88e4bb10c67f18642f4621fabc499d3e25f39a52cda9b2074c80d6eb195e65c6",
+                                                       "stderrSHA256":  "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+                                                   },
+                     "arm64/printeragent":  {
+                                                "status":  "PASS",
+                                                "exitCode":  0,
+                                                "elapsedMs":  1053,
+                                                "workingDirectory":  "C:\\Users\\vaanskii\\AppData\\Local\\VynicReadinessPrinterAgent\\software-v2-d6f8ecef582b\\source\\apps\\edge\\internal\\printeragent",
+                                                "binarySHA256":  "819805381857dcd326f309ceba894b2bf43b62b0db037e5da7c347925ab5acb3",
+                                                "packagedCLISHA256":  "dbdd278544ba542a9161a9bb4fbe411b31a410789af0a0bb583d4a00a78bbf71",
+                                                "arguments":  [
+                                                                  "-test.v",
+                                                                  "-test.timeout=10m"
+                                                              ],
+                                                "stdoutSHA256":  "f1ad5e89b405cb6916f42dc476a04dc0c5e428c8d686dc9c4b8ecf30f3d15052",
+                                                "stderrSHA256":  "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+                                            },
+                     "arm64/printerdaemon":  {
+                                                 "status":  "PASS",
+                                                 "exitCode":  0,
+                                                 "elapsedMs":  10129,
+                                                 "workingDirectory":  "C:\\Users\\vaanskii\\AppData\\Local\\VynicReadinessPrinterAgent\\software-v2-d6f8ecef582b\\source\\apps\\edge\\internal\\printerdaemon",
+                                                 "binarySHA256":  "c6f897daba8b4bea905b53c79d98e9a22547a37c8afe477d6260c0e9bcfc3067",
+                                                 "packagedCLISHA256":  "dbdd278544ba542a9161a9bb4fbe411b31a410789af0a0bb583d4a00a78bbf71",
+                                                 "arguments":  [
+                                                                   "-test.v",
+                                                                   "-test.timeout=10m"
+                                                               ],
+                                                 "stdoutSHA256":  "49cd26559a0e0b6a4aae9313a6c57d7fc123c4b5fe259cb045cc2049954e8efc",
+                                                 "stderrSHA256":  "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+                                             },
+                     "arm64/printer-agent-command":  {
+                                                         "status":  "PASS",
+                                                         "exitCode":  0,
+                                                         "elapsedMs":  1035,
+                                                         "workingDirectory":  "C:\\Users\\vaanskii\\AppData\\Local\\VynicReadinessPrinterAgent\\software-v2-d6f8ecef582b\\source\\apps\\edge\\cmd\\printer-agent",
+                                                         "binarySHA256":  "7e94116cea1e326d3a77a7fce976e9a9ed93c2288850d0495f13a729bdf9d1cf",
+                                                         "packagedCLISHA256":  "dbdd278544ba542a9161a9bb4fbe411b31a410789af0a0bb583d4a00a78bbf71",
+                                                         "arguments":  [
+                                                                           "-test.v",
+                                                                           "-test.timeout=10m"
+                                                                       ],
+                                                         "stdoutSHA256":  "8a532adfae0cfe2b158d33e658b117a665969753d8233460d9669b38ad2f990c",
+                                                         "stderrSHA256":  "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+                                                     },
+                     "amd64/printerprovisioning":  {
+                                                       "status":  "PASS",
+                                                       "exitCode":  0,
+                                                       "elapsedMs":  1084,
+                                                       "workingDirectory":  "C:\\Users\\vaanskii\\AppData\\Local\\VynicReadinessPrinterAgent\\software-v2-d6f8ecef582b\\source\\apps\\edge\\internal\\printerprovisioning",
+                                                       "binarySHA256":  "e1794bc75a77288fd4aa0e93b432faefd0f81ae55e9c1208a09763fd04f55aa2",
+                                                       "packagedCLISHA256":  "a5ef474a67d62326436c48e073731b59062cc104545032574af671dc70b882cc",
+                                                       "arguments":  [
+                                                                         "-test.v",
+                                                                         "-test.timeout=10m"
+                                                                     ],
+                                                       "stdoutSHA256":  "82f467e9e80649e2c148c7402b0c14ee40361d4360055ba584410d0b6da45127",
+                                                       "stderrSHA256":  "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+                                                   },
+                     "amd64/printeragent":  {
+                                                "status":  "PASS",
+                                                "exitCode":  0,
+                                                "elapsedMs":  1072,
+                                                "workingDirectory":  "C:\\Users\\vaanskii\\AppData\\Local\\VynicReadinessPrinterAgent\\software-v2-d6f8ecef582b\\source\\apps\\edge\\internal\\printeragent",
+                                                "binarySHA256":  "f335745e38be573f5ec031478eab4b524a8069c811324ac2a5d39876b676e894",
+                                                "packagedCLISHA256":  "a5ef474a67d62326436c48e073731b59062cc104545032574af671dc70b882cc",
+                                                "arguments":  [
+                                                                  "-test.v",
+                                                                  "-test.timeout=10m"
+                                                              ],
+                                                "stdoutSHA256":  "22d623b85629b212b42e77d3e24e4c3a0a81a4e4cacb3a793e6e166bfe47d09d",
+                                                "stderrSHA256":  "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+                                            },
+                     "amd64/printerdaemon":  {
+                                                 "status":  "PASS",
+                                                 "exitCode":  0,
+                                                 "elapsedMs":  10146,
+                                                 "workingDirectory":  "C:\\Users\\vaanskii\\AppData\\Local\\VynicReadinessPrinterAgent\\software-v2-d6f8ecef582b\\source\\apps\\edge\\internal\\printerdaemon",
+                                                 "binarySHA256":  "6a0e7f245115c6a6324094498db679eccd17f97e91bcb50772c3bc74d4fad8d3",
+                                                 "packagedCLISHA256":  "a5ef474a67d62326436c48e073731b59062cc104545032574af671dc70b882cc",
+                                                 "arguments":  [
+                                                                   "-test.v",
+                                                                   "-test.timeout=10m"
+                                                               ],
+                                                 "stdoutSHA256":  "a61c497461fb402aa92142b520a1016c6811f488e893e07155782a8292ff365f",
+                                                 "stderrSHA256":  "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+                                             },
+                     "amd64/printer-agent-command":  {
+                                                         "status":  "PASS",
+                                                         "exitCode":  0,
+                                                         "elapsedMs":  1067,
+                                                         "workingDirectory":  "C:\\Users\\vaanskii\\AppData\\Local\\VynicReadinessPrinterAgent\\software-v2-d6f8ecef582b\\source\\apps\\edge\\cmd\\printer-agent",
+                                                         "binarySHA256":  "53ec669a58ff50860ca79d3cf77716787fcf172656b7e9e2e40ff16eb504336b",
+                                                         "packagedCLISHA256":  "a5ef474a67d62326436c48e073731b59062cc104545032574af671dc70b882cc",
+                                                         "arguments":  [
+                                                                           "-test.v",
+                                                                           "-test.timeout=10m"
+                                                                       ],
+                                                         "stdoutSHA256":  "9df2e56041ed720bcf65cb118c03c59e9d4308e6cf7b468271cab762a5dfb0e0",
+                                                         "stderrSHA256":  "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+                                                     }
+                 },
+    "spoolerInventories":  {
+                               "arm64/printerprovisioning":  {
+                                                                 "before":  0,
+                                                                 "after":  0
+                                                             },
+                               "arm64/printeragent":  {
+                                                          "before":  0,
+                                                          "after":  0
+                                                      },
+                               "arm64/printerdaemon":  {
+                                                           "before":  0,
+                                                           "after":  0
+                                                       },
+                               "arm64/printer-agent-command":  {
+                                                                   "before":  0,
+                                                                   "after":  0
+                                                               },
+                               "amd64/printerprovisioning":  {
+                                                                 "before":  0,
+                                                                 "after":  0
+                                                             },
+                               "amd64/printeragent":  {
+                                                          "before":  0,
+                                                          "after":  0
+                                                      },
+                               "amd64/printerdaemon":  {
+                                                           "before":  0,
+                                                           "after":  0
+                                                       },
+                               "amd64/printer-agent-command":  {
+                                                                   "before":  0,
+                                                                   "after":  0
+                                                               }
+                           },
+    "sourceBefore":  true,
+    "sourceAfter":  true,
+    "binaryBefore":  true,
+    "binaryAfter":  true,
+    "bundleBefore":  true,
+    "bundleAfter":  true,
+    "printJobsBefore":  0,
+    "printJobsAfter":  0,
+    "physicalDocumentsSubmitted":  0,
+    "validRAWCalls":  0,
+    "SCMRegistrations":  0,
+    "machineRestarts":  0,
+    "VMSettingsChanges":  0,
+    "persistentCredentialChanges":  0,
+    "productStarts":  0,
+    "limitations":  [
+                        "Actual packaged foreground CLI, synthetic temporary SQLite/mTLS; HELD_PROVISIONING always remains.",
+                        "ARM64 packages run natively; amd64 packages run under Windows-on-ARM emulation.",
+                        "SCM registration, actual service-account lifecycle, registered-service restart, OS reboot/power loss and physical printer/model/cut/beep acceptance remain not-run.",
+                        "Installer backend tests inject fakes; no actual service/account/ACL/trust/driver/security changes.",
+                        "Spooler inventory records are point-in-time observations; no continuous Winspool syscall tracing claimed.",
+                        "Temporary test certificates are synthetic and do not alter persistent Windows trust or product credentials."
+                    ]
+}

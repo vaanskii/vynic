@@ -1,0 +1,6 @@
+$ErrorActionPreference='Stop'
+$ProgressPreference='SilentlyContinue'
+$cache=Join-Path $env:LOCALAPPDATA 'Pub\Cache\hosted\pub.dev'
+$plugins=@('firebase_core-4.10.0','firebase_messaging-16.3.0','flutter_local_notifications_windows-*','share_plus-*','file_selector_windows-*','url_launcher_windows-*')
+foreach($p in $plugins){Get-ChildItem -Path (Join-Path $cache ($p+'\windows\CMakeLists.txt')) -ErrorAction SilentlyContinue | ForEach-Object {Write-Output ('FILE '+$_.FullName); Get-Content -LiteralPath $_.FullName}}
+Get-ChildItem -LiteralPath (Join-Path $env:USERPROFILE '.nuget\packages') -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Name

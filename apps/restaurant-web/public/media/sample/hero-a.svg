@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 1000" role="img" aria-label="Tabla dining room">
+  <rect width="1600" height="1000" fill="#2a211a"/>
+  <g fill="#e9dcc4" opacity="0.35">
+    <circle cx="400" cy="333" r="166"/>
+    <rect x="800" y="250" width="533" height="500"/>
+  </g>
+  <text x="50%" y="92%" text-anchor="middle" font-family="serif" font-size="71" fill="#e9dcc4">Tabla dining room</text>
+</svg>

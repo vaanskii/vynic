@@ -1,0 +1,32 @@
+[
+  {
+    "app": "vankisi-custom-web",
+    "tag": "vynic-web05-vankisi-custom-web:local-zreb9j3",
+    "exitCode": 0,
+    "deployed": false,
+    "pushed": false,
+    "imageId": "sha256:5ccb5323f77bde5ab57bc4078ee8cd0a6a44188cde5db8986017f377895b3523",
+    "nginxSyntaxExitCode": 0,
+    "runtimeUser": "101"
+  },
+  {
+    "app": "restaurant-web",
+    "tag": "vynic-web05-restaurant-web:local-zreb9j3",
+    "exitCode": 0,
+    "deployed": false,
+    "pushed": false,
+    "imageId": "sha256:05c17ba2ba32253d8856e99ebcc419438cffe3d94e6af5bd22b8da3f9367b70e",
+    "nginxSyntaxExitCode": 0,
+    "runtimeUser": "101"
+  },
+  {
+    "app": "platform-web",
+    "tag": "vynic-web05-platform-web:local-zreb9j3",
+    "exitCode": 0,
+    "deployed": false,
+    "pushed": false,
+    "imageId": "sha256:bea6222b612fa18acef3fdd92d8f04d3af4b217f01e49ec1ff5d0d29a243d81e",
+    "nginxSyntaxExitCode": 0,
+    "runtimeUser": "101"
+  }
+]

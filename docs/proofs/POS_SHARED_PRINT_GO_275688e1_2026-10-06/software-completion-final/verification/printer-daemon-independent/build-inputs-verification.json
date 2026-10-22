@@ -1,0 +1,20 @@
+{
+  "status": "PASS",
+  "manifest": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/printer-daemon-v1/agent-build-inputs.json",
+  "manifestSha256": "8265133677ed972e72c0e666e28002577b1b747ae7caa770acae787dfdface40",
+  "targets": [
+    {
+      "target": "windows/amd64",
+      "cgoEnabled": "0",
+      "packages": 355,
+      "files": 1814
+    },
+    {
+      "target": "windows/arm64",
+      "cgoEnabled": "0",
+      "packages": 354,
+      "files": 1797
+    }
+  ],
+  "uniqueFilesRehashed": 1914
+}

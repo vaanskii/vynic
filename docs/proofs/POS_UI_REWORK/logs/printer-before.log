@@ -1,0 +1,1212 @@
+00:00 +0: loading /private/tmp/vynic-ui-baseline-check/test/unit/cloud_printer_runtime_sync_test.dart
+00:00 +0: /private/tmp/vynic-ui-baseline-check/test/unit/cloud_printer_runtime_sync_test.dart: valid v2 publishes one complete value and flushes under both admissions
+[AuditEventService] Found 1 unsynced events. Starting batch sync.
+[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP
+[AuditEventService] Batch sync failed. Will retry later.
+00:00 +0 -1: /private/tmp/vynic-ui-baseline-check/test/unit/printer_route_catalog_test.dart: explicit routes survive reopen and dispatch reads without developer scope
+00:00 +0 -1: /private/tmp/vynic-ui-baseline-check/test/unit/cloud_printer_runtime_sync_test.dart: valid v2 publishes one complete value and flushes under both admissions [E]
+  Bad state: This POS contains data for Venue menu01-venue-a, but the device is connecting to Venue 20000000-0000-4000-8000-000000000001. Reconnect to the original Venue, or back up the complete POS data directory and use a fresh installation for the new restaurant. Existing data has been preserved.
+  package:vynic/core/database/local_venue_binding.dart 34:7                  validateLocalVenueBinding.check
+  package:vynic/core/database/local_venue_binding.dart 38:33                 validateLocalVenueBinding.checkMenu
+  package:vynic/core/database/local_venue_binding.dart 41:26                 validateLocalVenueBinding
+  package:vynic/core/database/database_core.dart 86:5                        DatabaseCore.validateVenueBinding
+  package:vynic/core/services/edge/edge_device_credential_store.dart 184:18  EdgeDeviceCredentialStore._saveEnrollment
+  package:vynic/core/services/edge/edge_device_credential_store.dart 163:11  EdgeDeviceCredentialStore.saveEnrollment.<fn>
+  package:vynic/core/services/printing/print_identity_admission.dart 32:26   PrintIdentityAdmission.changeIdentity
+  package:vynic/core/services/edge/edge_device_credential_store.dart 162:32  EdgeDeviceCredentialStore.saveEnrollment
+  test/unit/cloud_printer_runtime_sync_test.dart 149:39                      main.enroll
+  test/unit/cloud_printer_runtime_sync_test.dart 186:11                      main.<fn>
+  
+  LateInitializationError: Local 'settings' has not been initialized.
+  dart:_internal                                  LateError._throwLocalNotInitialized
+  test/unit/cloud_printer_runtime_sync_test.dart  main.<fn>
+  
+00:00 +0 -2: /private/tmp/vynic-ui-baseline-check/test/unit/printer_route_catalog_test.dart: explicit routes survive reopen and dispatch reads without developer scope
+00:00 +0 -2: /private/tmp/vynic-ui-baseline-check/test/unit/cloud_printer_runtime_sync_test.dart: valid cache remains dispatchable offline after reopening Hive and identity file [E]
+  Bad state: This POS contains data for Venue menu01-venue-a, but the device is connecting to Venue 20000000-0000-4000-8000-000000000001. Reconnect to the original Venue, or back up the complete POS data directory and use a fresh installation for the new restaurant. Existing data has been preserved.
+  package:vynic/core/database/local_venue_binding.dart 34:7                  validateLocalVenueBinding.check
+  package:vynic/core/database/local_venue_binding.dart 38:33                 validateLocalVenueBinding.checkMenu
+  package:vynic/core/database/local_venue_binding.dart 41:26                 validateLocalVenueBinding
+  package:vynic/core/database/database_core.dart 86:5                        DatabaseCore.validateVenueBinding
+  package:vynic/core/services/edge/edge_device_credential_store.dart 184:18  EdgeDeviceCredentialStore._saveEnrollment
+  package:vynic/core/services/edge/edge_device_credential_store.dart 163:11  EdgeDeviceCredentialStore.saveEnrollment.<fn>
+  package:vynic/core/services/printing/print_identity_admission.dart 32:26   PrintIdentityAdmission.changeIdentity
+  package:vynic/core/services/edge/edge_device_credential_store.dart 162:32  EdgeDeviceCredentialStore.saveEnrollment
+  test/unit/cloud_printer_runtime_sync_test.dart 149:39                      main.enroll
+  test/unit/cloud_printer_runtime_sync_test.dart 186:11                      main.<fn>
+  
+  LateInitializationError: Local 'settings' has not been initialized.
+  dart:_internal                                  LateError._throwLocalNotInitialized
+  test/unit/cloud_printer_runtime_sync_test.dart  main.<fn>
+  
+00:00 +0 -3: /private/tmp/vynic-ui-baseline-check/test/unit/printer_route_catalog_test.dart: explicit routes survive reopen and dispatch reads without developer scope
+00:00 +0 -3: /private/tmp/vynic-ui-baseline-check/test/unit/cloud_printer_runtime_sync_test.dart: a stale HTTP response after Device change cannot alter any cached snapshot [E]
+  Bad state: This POS contains data for Venue menu01-venue-a, but the device is connecting to Venue 20000000-0000-4000-8000-000000000001. Reconnect to the original Venue, or back up the complete POS data directory and use a fresh installation for the new restaurant. Existing data has been preserved.
+  package:vynic/core/database/local_venue_binding.dart 34:7                  validateLocalVenueBinding.check
+  package:vynic/core/database/local_venue_binding.dart 38:33                 validateLocalVenueBinding.checkMenu
+  package:vynic/core/database/local_venue_binding.dart 41:26                 validateLocalVenueBinding
+  package:vynic/core/database/database_core.dart 86:5                        DatabaseCore.validateVenueBinding
+  package:vynic/core/services/edge/edge_device_credential_store.dart 184:18  EdgeDeviceCredentialStore._saveEnrollment
+  package:vynic/core/services/edge/edge_device_credential_store.dart 163:11  EdgeDeviceCredentialStore.saveEnrollment.<fn>
+  package:vynic/core/services/printing/print_identity_admission.dart 32:26   PrintIdentityAdmission.changeIdentity
+  package:vynic/core/services/edge/edge_device_credential_store.dart 162:32  EdgeDeviceCredentialStore.saveEnrollment
+  test/unit/cloud_printer_runtime_sync_test.dart 149:39                      main.enroll
+  test/unit/cloud_printer_runtime_sync_test.dart 186:11                      main.<fn>
+  
+  LateInitializationError: Local 'settings' has not been initialized.
+  dart:_internal                                  LateError._throwLocalNotInitialized
+  test/unit/cloud_printer_runtime_sync_test.dart  main.<fn>
+  
+00:00 +0 -3: /private/tmp/vynic-ui-baseline-check/test/unit/printer_route_catalog_test.dart: explicit routes survive reopen and dispatch reads without developer scope
+[AuditEventService] Found 1 unsynced events. Starting batch sync.
+[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP
+[AuditEventService] Batch sync failed. Will retry later.
+00:00 +0 -4: /private/tmp/vynic-ui-baseline-check/test/unit/printer_route_catalog_test.dart: explicit routes survive reopen and dispatch reads without developer scope
+00:00 +0 -4: /private/tmp/vynic-ui-baseline-check/test/unit/cloud_printer_runtime_sync_test.dart: a stale HTTP response after Venue change cannot alter any cached snapshot [E]
+  Bad state: This POS contains data for Venue menu01-venue-a, but the device is connecting to Venue 20000000-0000-4000-8000-000000000001. Reconnect to the original Venue, or back up the complete POS data directory and use a fresh installation for the new restaurant. Existing data has been preserved.
+  package:vynic/core/database/local_venue_binding.dart 34:7                  validateLocalVenueBinding.check
+  package:vynic/core/database/local_venue_binding.dart 38:33                 validateLocalVenueBinding.checkMenu
+  package:vynic/core/database/local_venue_binding.dart 41:26                 validateLocalVenueBinding
+  package:vynic/core/database/database_core.dart 86:5                        DatabaseCore.validateVenueBinding
+  package:vynic/core/services/edge/edge_device_credential_store.dart 184:18  EdgeDeviceCredentialStore._saveEnrollment
+  package:vynic/core/services/edge/edge_device_credential_store.dart 163:11  EdgeDeviceCredentialStore.saveEnrollment.<fn>
+  package:vynic/core/services/printing/print_identity_admission.dart 32:26   PrintIdentityAdmission.changeIdentity
+  package:vynic/core/services/edge/edge_device_credential_store.dart 162:32  EdgeDeviceCredentialStore.saveEnrollment
+  test/unit/cloud_printer_runtime_sync_test.dart 149:39                      main.enroll
+  test/unit/cloud_printer_runtime_sync_test.dart 186:11                      main.<fn>
+  
+  LateInitializationError: Local 'settings' has not been initialized.
+  dart:_internal                                  LateError._throwLocalNotInitialized
+  test/unit/cloud_printer_runtime_sync_test.dart  main.<fn>
+  
+00:00 +0 -5: /private/tmp/vynic-ui-baseline-check/test/unit/printer_route_catalog_test.dart: explicit routes survive reopen and dispatch reads without developer scope
+00:00 +0 -5: /private/tmp/vynic-ui-baseline-check/test/unit/cloud_printer_runtime_sync_test.dart: a stale HTTP response after credential change cannot alter any cached snapshot [E]
+  Bad state: This POS contains data for Venue menu01-venue-a, but the device is connecting to Venue 20000000-0000-4000-8000-000000000001. Reconnect to the original Venue, or back up the complete POS data directory and use a fresh installation for the new restaurant. Existing data has been preserved.
+  package:vynic/core/database/local_venue_binding.dart 34:7                  validateLocalVenueBinding.check
+  package:vynic/core/database/local_venue_binding.dart 38:33                 validateLocalVenueBinding.checkMenu
+  package:vynic/core/database/local_venue_binding.dart 41:26                 validateLocalVenueBinding
+  package:vynic/core/database/database_core.dart 86:5                        DatabaseCore.validateVenueBinding
+  package:vynic/core/services/edge/edge_device_credential_store.dart 184:18  EdgeDeviceCredentialStore._saveEnrollment
+  package:vynic/core/services/edge/edge_device_credential_store.dart 163:11  EdgeDeviceCredentialStore.saveEnrollment.<fn>
+  package:vynic/core/services/printing/print_identity_admission.dart 32:26   PrintIdentityAdmission.changeIdentity
+  package:vynic/core/services/edge/edge_device_credential_store.dart 162:32  EdgeDeviceCredentialStore.saveEnrollment
+  test/unit/cloud_printer_runtime_sync_test.dart 149:39                      main.enroll
+  test/unit/cloud_printer_runtime_sync_test.dart 186:11                      main.<fn>
+  
+  LateInitializationError: Local 'settings' has not been initialized.
+  dart:_internal                                  LateError._throwLocalNotInitialized
+  test/unit/cloud_printer_runtime_sync_test.dart  main.<fn>
+  
+00:00 +0 -5: /private/tmp/vynic-ui-baseline-check/test/unit/printer_route_catalog_test.dart: explicit routes survive reopen and dispatch reads without developer scope
+[AuditEventService] Found 2 unsynced events. Starting batch sync.
+[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP
+[AuditEventService] Batch sync failed. Will retry later.
+[DeveloperAccess] locked (manual)
+00:00 +0 -6: /private/tmp/vynic-ui-baseline-check/test/unit/printer_route_catalog_test.dart: explicit routes survive reopen and dispatch reads without developer scope
+00:00 +0 -6: /private/tmp/vynic-ui-baseline-check/test/unit/cloud_printer_runtime_sync_test.dart: identity is rechecked after waiting for local publication admission [E]
+  Bad state: This POS contains data for Venue menu01-venue-a, but the device is connecting to Venue 20000000-0000-4000-8000-000000000001. Reconnect to the original Venue, or back up the complete POS data directory and use a fresh installation for the new restaurant. Existing data has been preserved.
+  package:vynic/core/database/local_venue_binding.dart 34:7                  validateLocalVenueBinding.check
+  package:vynic/core/database/local_venue_binding.dart 38:33                 validateLocalVenueBinding.checkMenu
+  package:vynic/core/database/local_venue_binding.dart 41:26                 validateLocalVenueBinding
+  package:vynic/core/database/database_core.dart 86:5                        DatabaseCore.validateVenueBinding
+  package:vynic/core/services/edge/edge_device_credential_store.dart 184:18  EdgeDeviceCredentialStore._saveEnrollment
+  package:vynic/core/services/edge/edge_device_credential_store.dart 163:11  EdgeDeviceCredentialStore.saveEnrollment.<fn>
+  package:vynic/core/services/printing/print_identity_admission.dart 32:26   PrintIdentityAdmission.changeIdentity
+  package:vynic/core/services/edge/edge_device_credential_store.dart 162:32  EdgeDeviceCredentialStore.saveEnrollment
+  test/unit/cloud_printer_runtime_sync_test.dart 149:39                      main.enroll
+  test/unit/cloud_printer_runtime_sync_test.dart 186:11                      main.<fn>
+  
+00:00 +1 -6: /private/tmp/vynic-ui-baseline-check/test/unit/pos02_print_delivery_test.dart: acknowledged admission is flushed and survives a new Hive session before sending
+00:00 +1 -6: /private/tmp/vynic-ui-baseline-check/test/unit/cloud_printer_runtime_sync_test.dart: identity is rechecked after waiting for local publication admission [E]
+  LateInitializationError: Local 'settings' has not been initialized.
+  dart:_internal                                  LateError._throwLocalNotInitialized
+  test/unit/cloud_printer_runtime_sync_test.dart  main.<fn>
+  
+00:00 +1 -6: /private/tmp/vynic-ui-baseline-check/test/unit/pos02_print_delivery_test.dart: acknowledged admission is flushed and survives a new Hive session before sending
+[AuditEventService] Found 1 unsynced events. Starting batch sync.
+[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP
+[AuditEventService] Batch sync failed. Will retry later.
+00:00 +1 -7: /private/tmp/vynic-ui-baseline-check/test/unit/pos02_print_delivery_test.dart: acknowledged admission is flushed and survives a new Hive session before sending
+00:00 +1 -7: /private/tmp/vynic-ui-baseline-check/test/unit/cloud_printer_runtime_sync_test.dart: malformed or foreign v2 never mutates printers, features or profile [E]
+  Bad state: This POS contains data for Venue menu01-venue-a, but the device is connecting to Venue 20000000-0000-4000-8000-000000000001. Reconnect to the original Venue, or back up the complete POS data directory and use a fresh installation for the new restaurant. Existing data has been preserved.
+  package:vynic/core/database/local_venue_binding.dart 34:7                  validateLocalVenueBinding.check
+  package:vynic/core/database/local_venue_binding.dart 38:33                 validateLocalVenueBinding.checkMenu
+  package:vynic/core/database/local_venue_binding.dart 41:26                 validateLocalVenueBinding
+  package:vynic/core/database/database_core.dart 86:5                        DatabaseCore.validateVenueBinding
+  package:vynic/core/services/edge/edge_device_credential_store.dart 184:18  EdgeDeviceCredentialStore._saveEnrollment
+  package:vynic/core/services/edge/edge_device_credential_store.dart 163:11  EdgeDeviceCredentialStore.saveEnrollment.<fn>
+  package:vynic/core/services/printing/print_identity_admission.dart 32:26   PrintIdentityAdmission.changeIdentity
+  package:vynic/core/services/edge/edge_device_credential_store.dart 162:32  EdgeDeviceCredentialStore.saveEnrollment
+  test/unit/cloud_printer_runtime_sync_test.dart 149:39                      main.enroll
+  test/unit/cloud_printer_runtime_sync_test.dart 186:11                      main.<fn>
+  
+  LateInitializationError: Local 'settings' has not been initialized.
+  dart:_internal                                  LateError._throwLocalNotInitialized
+  test/unit/cloud_printer_runtime_sync_test.dart  main.<fn>
+  
+00:00 +1 -7: /private/tmp/vynic-ui-baseline-check/test/unit/printer_route_catalog_test.dart: an unrelated developer scope cannot administer or enumerate routes
+[AuditEventService] Found 1 unsynced events. Starting batch sync.
+[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP
+[AuditEventService] Batch sync failed. Will retry later.
+00:00 +1 -8: /private/tmp/vynic-ui-baseline-check/test/unit/pos02_print_delivery_test.dart: acknowledged admission is flushed and survives a new Hive session before sending
+00:00 +1 -8: /private/tmp/vynic-ui-baseline-check/test/unit/cloud_printer_runtime_sync_test.dart: malformed feature or venue metadata is rejected before publication [E]
+  Bad state: This POS contains data for Venue menu01-venue-a, but the device is connecting to Venue 20000000-0000-4000-8000-000000000001. Reconnect to the original Venue, or back up the complete POS data directory and use a fresh installation for the new restaurant. Existing data has been preserved.
+  package:vynic/core/database/local_venue_binding.dart 34:7                  validateLocalVenueBinding.check
+  package:vynic/core/database/local_venue_binding.dart 38:33                 validateLocalVenueBinding.checkMenu
+  package:vynic/core/database/local_venue_binding.dart 41:26                 validateLocalVenueBinding
+  package:vynic/core/database/database_core.dart 86:5                        DatabaseCore.validateVenueBinding
+  package:vynic/core/services/edge/edge_device_credential_store.dart 184:18  EdgeDeviceCredentialStore._saveEnrollment
+  package:vynic/core/services/edge/edge_device_credential_store.dart 163:11  EdgeDeviceCredentialStore.saveEnrollment.<fn>
+  package:vynic/core/services/printing/print_identity_admission.dart 32:26   PrintIdentityAdmission.changeIdentity
+  package:vynic/core/services/edge/edge_device_credential_store.dart 162:32  EdgeDeviceCredentialStore.saveEnrollment
+  test/unit/cloud_printer_runtime_sync_test.dart 149:39                      main.enroll
+  test/unit/cloud_printer_runtime_sync_test.dart 186:11                      main.<fn>
+  
+00:00 +1 -8: /private/tmp/vynic-ui-baseline-check/test/unit/printer_route_catalog_test.dart: an unrelated developer scope cannot administer or enumerate routes
+[AuditEventService] Found 2 unsynced events. Starting batch sync.
+[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP
+[AuditEventService] Batch sync failed. Will retry later.
+00:00 +1 -8: /private/tmp/vynic-ui-baseline-check/test/unit/cloud_printer_runtime_sync_test.dart: malformed feature or venue metadata is rejected before publication [E]
+  LateInitializationError: Local 'settings' has not been initialized.
+  dart:_internal                                  LateError._throwLocalNotInitialized
+  test/unit/cloud_printer_runtime_sync_test.dart  main.<fn>
+  
+00:00 +1 -8: /private/tmp/vynic-ui-baseline-check/test/unit/printer_route_catalog_test.dart: an unrelated developer scope cannot administer or enumerate routes
+[AuditEventService] Found 3 unsynced events. Starting batch sync.
+[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP
+[AuditEventService] Batch sync failed. Will retry later.
+00:00 +2 -8: /private/tmp/vynic-ui-baseline-check/test/unit/pos02_print_delivery_test.dart: acknowledged admission is flushed and survives a new Hive session before sending
+00:00 +3 -8: /private/tmp/vynic-ui-baseline-check/test/widget/printer_route_configuration_test.dart: LAN route dialog scrolls and cancels cleanly at Size(360.0, 480.0)
+00:00 +3 -9: /private/tmp/vynic-ui-baseline-check/test/widget/printer_route_configuration_test.dart: LAN route dialog scrolls and cancels cleanly at Size(360.0, 480.0)
+00:00 +3 -9: /private/tmp/vynic-ui-baseline-check/test/unit/cloud_printer_runtime_sync_test.dart: cached v2 refuses downgrade, backwards revision and changed same revision [E]
+  Bad state: This POS contains data for Venue menu01-venue-a, but the device is connecting to Venue 20000000-0000-4000-8000-000000000001. Reconnect to the original Venue, or back up the complete POS data directory and use a fresh installation for the new restaurant. Existing data has been preserved.
+  package:vynic/core/database/local_venue_binding.dart 34:7                  validateLocalVenueBinding.check
+  package:vynic/core/database/local_venue_binding.dart 38:33                 validateLocalVenueBinding.checkMenu
+  package:vynic/core/database/local_venue_binding.dart 41:26                 validateLocalVenueBinding
+  package:vynic/core/database/database_core.dart 86:5                        DatabaseCore.validateVenueBinding
+  package:vynic/core/services/edge/edge_device_credential_store.dart 184:18  EdgeDeviceCredentialStore._saveEnrollment
+  package:vynic/core/services/edge/edge_device_credential_store.dart 163:11  EdgeDeviceCredentialStore.saveEnrollment.<fn>
+  package:vynic/core/services/printing/print_identity_admission.dart 32:26   PrintIdentityAdmission.changeIdentity
+  package:vynic/core/services/edge/edge_device_credential_store.dart 162:32  EdgeDeviceCredentialStore.saveEnrollment
+  test/unit/cloud_printer_runtime_sync_test.dart 149:39                      main.enroll
+  test/unit/cloud_printer_runtime_sync_test.dart 186:11                      main.<fn>
+  
+  LateInitializationError: Local 'settings' has not been initialized.
+  dart:_internal                                  LateError._throwLocalNotInitialized
+  test/unit/cloud_printer_runtime_sync_test.dart  main.<fn>
+  
+00:00 +3 -9: /private/tmp/vynic-ui-baseline-check/test/unit/printer_route_catalog_test.dart: edit retains id, increments revision and freezes previously accepted destination
+[AuditEventService] Found 1 unsynced events. Starting batch sync.
+[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP
+[AuditEventService] Batch sync failed. Will retry later.
+00:00 +3 -9: /private/tmp/vynic-ui-baseline-check/test/unit/pos02_print_delivery_test.dart: add-error after write is uncertain and never retried/fallen back
+[AuditEventService] Found 1 unsynced events. Starting batch sync.
+[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP
+[AuditEventService] Batch sync failed. Will retry later.
+00:00 +3 -10: /private/tmp/vynic-ui-baseline-check/test/widget/printer_route_configuration_test.dart: LAN route dialog scrolls and cancels cleanly at Size(360.0, 480.0)
+00:00 +3 -10: /private/tmp/vynic-ui-baseline-check/test/unit/cloud_printer_runtime_sync_test.dart: same canonical revision is idempotent and a newer revision changes future routes [E]
+  Bad state: This POS contains data for Venue menu01-venue-a, but the device is connecting to Venue 20000000-0000-4000-8000-000000000001. Reconnect to the original Venue, or back up the complete POS data directory and use a fresh installation for the new restaurant. Existing data has been preserved.
+  package:vynic/core/database/local_venue_binding.dart 34:7                  validateLocalVenueBinding.check
+  package:vynic/core/database/local_venue_binding.dart 38:33                 validateLocalVenueBinding.checkMenu
+  package:vynic/core/database/local_venue_binding.dart 41:26                 validateLocalVenueBinding
+  package:vynic/core/database/database_core.dart 86:5                        DatabaseCore.validateVenueBinding
+  package:vynic/core/services/edge/edge_device_credential_store.dart 184:18  EdgeDeviceCredentialStore._saveEnrollment
+  package:vynic/core/services/edge/edge_device_credential_store.dart 163:11  EdgeDeviceCredentialStore.saveEnrollment.<fn>
+  package:vynic/core/services/printing/print_identity_admission.dart 32:26   PrintIdentityAdmission.changeIdentity
+  package:vynic/core/services/edge/edge_device_credential_store.dart 162:32  EdgeDeviceCredentialStore.saveEnrollment
+  test/unit/cloud_printer_runtime_sync_test.dart 149:39                      main.enroll
+  test/unit/cloud_printer_runtime_sync_test.dart 186:11                      main.<fn>
+  
+  LateInitializationError: Local 'settings' has not been initialized.
+  dart:_internal                                  LateError._throwLocalNotInitialized
+  test/unit/cloud_printer_runtime_sync_test.dart  main.<fn>
+  
+00:00 +3 -10: /private/tmp/vynic-ui-baseline-check/test/unit/printer_route_catalog_test.dart: edit retains id, increments revision and freezes previously accepted destination
+[AuditEventService] Found 2 unsynced events. Starting batch sync.
+[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP
+[AuditEventService] Batch sync failed. Will retry later.
+00:00 +4 -10: /private/tmp/vynic-ui-baseline-check/test/widget/printer_route_configuration_test.dart: LAN route dialog scrolls and cancels cleanly at Size(360.0, 480.0)
+00:00 +4 -11: /private/tmp/vynic-ui-baseline-check/test/widget/printer_route_configuration_test.dart: LAN route dialog scrolls and cancels cleanly at Size(360.0, 480.0)
+00:00 +5 -11: /private/tmp/vynic-ui-baseline-check/test/widget/printer_route_configuration_test.dart: LAN route dialog scrolls and cancels cleanly at Size(360.0, 480.0)
+00:00 +5 -11: /private/tmp/vynic-ui-baseline-check/test/unit/cloud_printer_runtime_sync_test.dart: PREPARED and disabled routes hold and exact legacy stubs stop old TCP lookup fallback [E]
+  Bad state: This POS contains data for Venue menu01-venue-a, but the device is connecting to Venue 20000000-0000-4000-8000-000000000001. Reconnect to the original Venue, or back up the complete POS data directory and use a fresh installation for the new restaurant. Existing data has been preserved.
+  package:vynic/core/database/local_venue_binding.dart 34:7                  validateLocalVenueBinding.check
+  package:vynic/core/database/local_venue_binding.dart 38:33                 validateLocalVenueBinding.checkMenu
+  package:vynic/core/database/local_venue_binding.dart 41:26                 validateLocalVenueBinding
+  package:vynic/core/database/database_core.dart 86:5                        DatabaseCore.validateVenueBinding
+  package:vynic/core/services/edge/edge_device_credential_store.dart 184:18  EdgeDeviceCredentialStore._saveEnrollment
+  package:vynic/core/services/edge/edge_device_credential_store.dart 163:11  EdgeDeviceCredentialStore.saveEnrollment.<fn>
+  package:vynic/core/services/printing/print_identity_admission.dart 32:26   PrintIdentityAdmission.changeIdentity
+  package:vynic/core/services/edge/edge_device_credential_store.dart 162:32  EdgeDeviceCredentialStore.saveEnrollment
+  test/unit/cloud_printer_runtime_sync_test.dart 149:39                      main.enroll
+  test/unit/cloud_printer_runtime_sync_test.dart 186:11                      main.<fn>
+  
+  LateInitializationError: Local 'settings' has not been initialized.
+  dart:_internal                                  LateError._throwLocalNotInitialized
+  test/unit/cloud_printer_runtime_sync_test.dart  main.<fn>
+  
+00:00 +5 -11: /private/tmp/vynic-ui-baseline-check/test/widget/printer_route_configuration_test.dart: LAN route dialog scrolls and cancels cleanly at Size(360.0, 480.0)
+[AuditEventService] Found 1 unsynced events. Starting batch sync.
+[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP
+[AuditEventService] Batch sync failed. Will retry later.
+00:00 +5 -11: /private/tmp/vynic-ui-baseline-check/test/unit/printer_route_catalog_test.dart: concurrent edits admit one current revision and reject the stale writer
+[AuditEventService] Found 1 unsynced events. Starting batch sync.
+[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP
+[AuditEventService] Batch sync failed. Will retry later.
+00:00 +5 -12: /private/tmp/vynic-ui-baseline-check/test/widget/printer_route_configuration_test.dart: LAN route dialog scrolls and cancels cleanly at Size(360.0, 480.0)
+00:00 +5 -12: /private/tmp/vynic-ui-baseline-check/test/unit/cloud_printer_runtime_sync_test.dart: Cloud v2 owns every role and local records never override it [E]
+  Bad state: This POS contains data for Venue menu01-venue-a, but the device is connecting to Venue 20000000-0000-4000-8000-000000000001. Reconnect to the original Venue, or back up the complete POS data directory and use a fresh installation for the new restaurant. Existing data has been preserved.
+  package:vynic/core/database/local_venue_binding.dart 34:7                  validateLocalVenueBinding.check
+  package:vynic/core/database/local_venue_binding.dart 38:33                 validateLocalVenueBinding.checkMenu
+  package:vynic/core/database/local_venue_binding.dart 41:26                 validateLocalVenueBinding
+  package:vynic/core/database/database_core.dart 86:5                        DatabaseCore.validateVenueBinding
+  package:vynic/core/services/edge/edge_device_credential_store.dart 184:18  EdgeDeviceCredentialStore._saveEnrollment
+  package:vynic/core/services/edge/edge_device_credential_store.dart 163:11  EdgeDeviceCredentialStore.saveEnrollment.<fn>
+  package:vynic/core/services/printing/print_identity_admission.dart 32:26   PrintIdentityAdmission.changeIdentity
+  package:vynic/core/services/edge/edge_device_credential_store.dart 162:32  EdgeDeviceCredentialStore.saveEnrollment
+  test/unit/cloud_printer_runtime_sync_test.dart 149:39                      main.enroll
+  test/unit/cloud_printer_runtime_sync_test.dart 186:11                      main.<fn>
+  
+00:00 +5 -12: /private/tmp/vynic-ui-baseline-check/test/unit/printer_route_catalog_test.dart: concurrent edits admit one current revision and reject the stale writer
+[AuditEventService] Found 2 unsynced events. Starting batch sync.
+[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP
+[AuditEventService] Batch sync failed. Will retry later.
+00:00 +5 -12: /private/tmp/vynic-ui-baseline-check/test/unit/cloud_printer_runtime_sync_test.dart: Cloud v2 owns every role and local records never override it [E]
+  LateInitializationError: Local 'settings' has not been initialized.
+  dart:_internal                                  LateError._throwLocalNotInitialized
+  test/unit/cloud_printer_runtime_sync_test.dart  main.<fn>
+  
+00:00 +5 -12: /private/tmp/vynic-ui-baseline-check/test/unit/pos02_print_delivery_test.dart: flush-error after write is uncertain and never retried/fallen back
+[AuditEventService] Found 1 unsynced events. Starting batch sync.
+[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP
+[AuditEventService] Batch sync failed. Will retry later.
+00:00 +6 -12: /private/tmp/vynic-ui-baseline-check/test/widget/printer_route_configuration_test.dart: LAN route dialog scrolls and cancels cleanly at Size(360.0, 480.0)
+[AuditEventService] Found 2 unsynced events. Starting batch sync.
+00:00 +6 -13: /private/tmp/vynic-ui-baseline-check/test/widget/printer_route_configuration_test.dart: LAN route dialog scrolls and cancels cleanly at Size(360.0, 480.0)
+00:00 +6 -13: /private/tmp/vynic-ui-baseline-check/test/unit/cloud_printer_runtime_sync_test.dart: missing Cloud v2 role is held even when a valid local route exists [E]
+  Bad state: This POS contains data for Venue menu01-venue-a, but the device is connecting to Venue 20000000-0000-4000-8000-000000000001. Reconnect to the original Venue, or back up the complete POS data directory and use a fresh installation for the new restaurant. Existing data has been preserved.
+  package:vynic/core/database/local_venue_binding.dart 34:7                  validateLocalVenueBinding.check
+  package:vynic/core/database/local_venue_binding.dart 38:33                 validateLocalVenueBinding.checkMenu
+  package:vynic/core/database/local_venue_binding.dart 41:26                 validateLocalVenueBinding
+  package:vynic/core/database/database_core.dart 86:5                        DatabaseCore.validateVenueBinding
+  package:vynic/core/services/edge/edge_device_credential_store.dart 184:18  EdgeDeviceCredentialStore._saveEnrollment
+  package:vynic/core/services/edge/edge_device_credential_store.dart 163:11  EdgeDeviceCredentialStore.saveEnrollment.<fn>
+  package:vynic/core/services/printing/print_identity_admission.dart 32:26   PrintIdentityAdmission.changeIdentity
+  package:vynic/core/services/edge/edge_device_credential_store.dart 162:32  EdgeDeviceCredentialStore.saveEnrollment
+  test/unit/cloud_printer_runtime_sync_test.dart 149:39                      main.enroll
+  test/unit/cloud_printer_runtime_sync_test.dart 186:11                      main.<fn>
+  
+  LateInitializationError: Local 'settings' has not been initialized.
+  dart:_internal                                  LateError._throwLocalNotInitialized
+  test/unit/cloud_printer_runtime_sync_test.dart  main.<fn>
+  
+00:00 +7 -13: /private/tmp/vynic-ui-baseline-check/test/widget/printer_route_configuration_test.dart: LAN route dialog scrolls and cancels cleanly at Size(360.0, 480.0)
+00:00 +7 -13: /private/tmp/vynic-ui-baseline-check/test/unit/printer_route_catalog_test.dart: save completes only after settings flush and keeps admission through it
+[AuditEventService] Found 1 unsynced events. Starting batch sync.
+[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP
+[AuditEventService] Batch sync failed. Will retry later.
+00:00 +7 -14: /private/tmp/vynic-ui-baseline-check/test/widget/printer_route_configuration_test.dart: LAN route dialog scrolls and cancels cleanly at Size(360.0, 480.0)
+00:00 +7 -14: /private/tmp/vynic-ui-baseline-check/test/unit/cloud_printer_runtime_sync_test.dart: held enabled driver station does not disable another Cloud raster role [E]
+  Bad state: This POS contains data for Venue menu01-venue-a, but the device is connecting to Venue 20000000-0000-4000-8000-000000000001. Reconnect to the original Venue, or back up the complete POS data directory and use a fresh installation for the new restaurant. Existing data has been preserved.
+  package:vynic/core/database/local_venue_binding.dart 34:7                  validateLocalVenueBinding.check
+  package:vynic/core/database/local_venue_binding.dart 38:33                 validateLocalVenueBinding.checkMenu
+  package:vynic/core/database/local_venue_binding.dart 41:26                 validateLocalVenueBinding
+  package:vynic/core/database/database_core.dart 86:5                        DatabaseCore.validateVenueBinding
+  package:vynic/core/services/edge/edge_device_credential_store.dart 184:18  EdgeDeviceCredentialStore._saveEnrollment
+  package:vynic/core/services/edge/edge_device_credential_store.dart 163:11  EdgeDeviceCredentialStore.saveEnrollment.<fn>
+  package:vynic/core/services/printing/print_identity_admission.dart 32:26   PrintIdentityAdmission.changeIdentity
+  package:vynic/core/services/edge/edge_device_credential_store.dart 162:32  EdgeDeviceCredentialStore.saveEnrollment
+  test/unit/cloud_printer_runtime_sync_test.dart 149:39                      main.enroll
+  test/unit/cloud_printer_runtime_sync_test.dart 186:11                      main.<fn>
+  
+  LateInitializationError: Local 'settings' has not been initialized.
+  dart:_internal                                  LateError._throwLocalNotInitialized
+  test/unit/cloud_printer_runtime_sync_test.dart  main.<fn>
+  
+00:00 +7 -14: /private/tmp/vynic-ui-baseline-check/test/unit/printer_route_catalog_test.dart: save completes only after settings flush and keeps admission through it
+[AuditEventService] Found 2 unsynced events. Starting batch sync.
+[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP
+[AuditEventService] Batch sync failed. Will retry later.
+00:00 +8 -14: /private/tmp/vynic-ui-baseline-check/test/widget/printer_route_configuration_test.dart: LAN route dialog scrolls and cancels cleanly at Size(360.0, 480.0)
+00:00 +8 -14: /private/tmp/vynic-ui-baseline-check/test/unit/pos02_print_delivery_test.dart: close-error after write is uncertain and never retried/fallen back
+[AuditEventService] Found 1 unsynced events. Starting batch sync.
+[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP
+[AuditEventService] Batch sync failed. Will retry later.
+00:00 +8 -15: /private/tmp/vynic-ui-baseline-check/test/widget/printer_route_configuration_test.dart: LAN route dialog scrolls and cancels cleanly at Size(360.0, 480.0)
+00:00 +8 -15: /private/tmp/vynic-ui-baseline-check/test/unit/cloud_printer_runtime_sync_test.dart: pending jobs defer refresh and frozen accepted jobs keep the prior route afterward [E]
+  Bad state: This POS contains data for Venue menu01-venue-a, but the device is connecting to Venue 20000000-0000-4000-8000-000000000001. Reconnect to the original Venue, or back up the complete POS data directory and use a fresh installation for the new restaurant. Existing data has been preserved.
+  package:vynic/core/database/local_venue_binding.dart 34:7                  validateLocalVenueBinding.check
+  package:vynic/core/database/local_venue_binding.dart 38:33                 validateLocalVenueBinding.checkMenu
+  package:vynic/core/database/local_venue_binding.dart 41:26                 validateLocalVenueBinding
+  package:vynic/core/database/database_core.dart 86:5                        DatabaseCore.validateVenueBinding
+  package:vynic/core/services/edge/edge_device_credential_store.dart 184:18  EdgeDeviceCredentialStore._saveEnrollment
+  package:vynic/core/services/edge/edge_device_credential_store.dart 163:11  EdgeDeviceCredentialStore.saveEnrollment.<fn>
+  package:vynic/core/services/printing/print_identity_admission.dart 32:26   PrintIdentityAdmission.changeIdentity
+  package:vynic/core/services/edge/edge_device_credential_store.dart 162:32  EdgeDeviceCredentialStore.saveEnrollment
+  test/unit/cloud_printer_runtime_sync_test.dart 149:39                      main.enroll
+  test/unit/cloud_printer_runtime_sync_test.dart 186:11                      main.<fn>
+  
+  LateInitializationError: Local 'settings' has not been initialized.
+  dart:_internal                                  LateError._throwLocalNotInitialized
+  test/unit/cloud_printer_runtime_sync_test.dart  main.<fn>
+  
+00:00 +8 -15: /private/tmp/vynic-ui-baseline-check/test/unit/printer_route_catalog_test.dart: malformed route value null is visible and never replaced
+[AuditEventService] Found 1 unsynced events. Starting batch sync.
+[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP
+[AuditEventService] Batch sync failed. Will retry later.
+00:00 +8 -16: /private/tmp/vynic-ui-baseline-check/test/widget/printer_route_configuration_test.dart: LAN route dialog scrolls and cancels cleanly at Size(360.0, 480.0)
+[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP
+[AuditEventService] Batch sync failed. Will retry later.
+00:00 +9 -16: /private/tmp/vynic-ui-baseline-check/test/widget/printer_route_configuration_test.dart: LAN route dialog scrolls and cancels cleanly at Size(360.0, 480.0)
+00:00 +9 -16: /private/tmp/vynic-ui-baseline-check/test/unit/cloud_printer_runtime_sync_test.dart: unresolved native admission defers cache replacement even with no pending job [E]
+  Bad state: This POS contains data for Venue menu01-venue-a, but the device is connecting to Venue 20000000-0000-4000-8000-000000000001. Reconnect to the original Venue, or back up the complete POS data directory and use a fresh installation for the new restaurant. Existing data has been preserved.
+  package:vynic/core/database/local_venue_binding.dart 34:7                  validateLocalVenueBinding.check
+  package:vynic/core/database/local_venue_binding.dart 38:33                 validateLocalVenueBinding.checkMenu
+  package:vynic/core/database/local_venue_binding.dart 41:26                 validateLocalVenueBinding
+  package:vynic/core/database/database_core.dart 86:5                        DatabaseCore.validateVenueBinding
+  package:vynic/core/services/edge/edge_device_credential_store.dart 184:18  EdgeDeviceCredentialStore._saveEnrollment
+  package:vynic/core/services/edge/edge_device_credential_store.dart 163:11  EdgeDeviceCredentialStore.saveEnrollment.<fn>
+  package:vynic/core/services/printing/print_identity_admission.dart 32:26   PrintIdentityAdmission.changeIdentity
+  package:vynic/core/services/edge/edge_device_credential_store.dart 162:32  EdgeDeviceCredentialStore.saveEnrollment
+  test/unit/cloud_printer_runtime_sync_test.dart 149:39                      main.enroll
+  test/unit/cloud_printer_runtime_sync_test.dart 186:11                      main.<fn>
+  
+  LateInitializationError: Local 'settings' has not been initialized.
+  dart:_internal                                  LateError._throwLocalNotInitialized
+  test/unit/cloud_printer_runtime_sync_test.dart  main.<fn>
+  
+00:00 +9 -16: /private/tmp/vynic-ui-baseline-check/test/unit/printer_route_catalog_test.dart: malformed route value null is visible and never replaced
+[AuditEventService] Found 2 unsynced events. Starting batch sync.
+[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP
+[AuditEventService] Batch sync failed. Will retry later.
+00:00 +10 -16: /private/tmp/vynic-ui-baseline-check/test/widget/printer_route_configuration_test.dart: LAN route dialog scrolls and cancels cleanly at Size(360.0, 480.0)
+00:00 +10 -17: /private/tmp/vynic-ui-baseline-check/test/widget/printer_route_configuration_test.dart: LAN route dialog scrolls and cancels cleanly at Size(360.0, 480.0)
+00:00 +10 -17: /private/tmp/vynic-ui-baseline-check/test/unit/cloud_printer_runtime_sync_test.dart: updater freeze and identity/native admission remain blocked throughout cache flush [E]
+  Bad state: This POS contains data for Venue menu01-venue-a, but the device is connecting to Venue 20000000-0000-4000-8000-000000000001. Reconnect to the original Venue, or back up the complete POS data directory and use a fresh installation for the new restaurant. Existing data has been preserved.
+  package:vynic/core/database/local_venue_binding.dart 34:7                  validateLocalVenueBinding.check
+  package:vynic/core/database/local_venue_binding.dart 38:33                 validateLocalVenueBinding.checkMenu
+  package:vynic/core/database/local_venue_binding.dart 41:26                 validateLocalVenueBinding
+  package:vynic/core/database/database_core.dart 86:5                        DatabaseCore.validateVenueBinding
+  package:vynic/core/services/edge/edge_device_credential_store.dart 184:18  EdgeDeviceCredentialStore._saveEnrollment
+  package:vynic/core/services/edge/edge_device_credential_store.dart 163:11  EdgeDeviceCredentialStore.saveEnrollment.<fn>
+  package:vynic/core/services/printing/print_identity_admission.dart 32:26   PrintIdentityAdmission.changeIdentity
+  package:vynic/core/services/edge/edge_device_credential_store.dart 162:32  EdgeDeviceCredentialStore.saveEnrollment
+  test/unit/cloud_printer_runtime_sync_test.dart 149:39                      main.enroll
+  test/unit/cloud_printer_runtime_sync_test.dart 186:11                      main.<fn>
+  
+  LateInitializationError: Local 'settings' has not been initialized.
+  dart:_internal                                  LateError._throwLocalNotInitialized
+  test/unit/cloud_printer_runtime_sync_test.dart  main.<fn>
+  
+00:00 +10 -17: /private/tmp/vynic-ui-baseline-check/test/unit/pos02_print_delivery_test.dart: connection refusal retries only before bytes and ends visibly not sent
+[AuditEventService] Found 1 unsynced events. Starting batch sync.
+[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP
+[AuditEventService] Batch sync failed. Will retry later.
+00:00 +10 -17: /private/tmp/vynic-ui-baseline-check/test/unit/printer_route_catalog_test.dart: malformed route value legacy is visible and never replaced
+[AuditEventService] Found 1 unsynced events. Starting batch sync.
+[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP
+[AuditEventService] Batch sync failed. Will retry later.
+00:00 +11 -17: /private/tmp/vynic-ui-baseline-check/test/widget/printer_route_configuration_test.dart: LAN route dialog scrolls and cancels cleanly at Size(360.0, 480.0)
+00:00 +11 -18: /private/tmp/vynic-ui-baseline-check/test/widget/printer_route_configuration_test.dart: LAN route dialog scrolls and cancels cleanly at Size(360.0, 480.0)
+00:00 +11 -18: /private/tmp/vynic-ui-baseline-check/test/unit/printer_route_catalog_test.dart: malformed route value legacy is visible and never replaced
+[AuditEventService] Found 2 unsynced events. Starting batch sync.
+[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP
+[AuditEventService] Batch sync failed. Will retry later.
+00:00 +11 -18: /private/tmp/vynic-ui-baseline-check/test/unit/cloud_printer_runtime_sync_test.dart: a failed publication flush restores the complete last good printer value [E]
+  Bad state: This POS contains data for Venue menu01-venue-a, but the device is connecting to Venue 20000000-0000-4000-8000-000000000001. Reconnect to the original Venue, or back up the complete POS data directory and use a fresh installation for the new restaurant. Existing data has been preserved.
+  package:vynic/core/database/local_venue_binding.dart 34:7                  validateLocalVenueBinding.check
+  package:vynic/core/database/local_venue_binding.dart 38:33                 validateLocalVenueBinding.checkMenu
+  package:vynic/core/database/local_venue_binding.dart 41:26                 validateLocalVenueBinding
+  package:vynic/core/database/database_core.dart 86:5                        DatabaseCore.validateVenueBinding
+  package:vynic/core/services/edge/edge_device_credential_store.dart 184:18  EdgeDeviceCredentialStore._saveEnrollment
+  package:vynic/core/services/edge/edge_device_credential_store.dart 163:11  EdgeDeviceCredentialStore.saveEnrollment.<fn>
+  package:vynic/core/services/printing/print_identity_admission.dart 32:26   PrintIdentityAdmission.changeIdentity
+  package:vynic/core/services/edge/edge_device_credential_store.dart 162:32  EdgeDeviceCredentialStore.saveEnrollment
+  test/unit/cloud_printer_runtime_sync_test.dart 149:39                      main.enroll
+  test/unit/cloud_printer_runtime_sync_test.dart 186:11                      main.<fn>
+  
+  LateInitializationError: Local 'settings' has not been initialized.
+  dart:_internal                                  LateError._throwLocalNotInitialized
+  test/unit/cloud_printer_runtime_sync_test.dart  main.<fn>
+  
+00:00 +12 -18: /private/tmp/vynic-ui-baseline-check/test/widget/printer_route_configuration_test.dart: LAN route dialog scrolls and cancels cleanly at Size(360.0, 480.0)
+00:00 +12 -19: /private/tmp/vynic-ui-baseline-check/test/widget/printer_route_configuration_test.dart: LAN route dialog scrolls and cancels cleanly at Size(360.0, 480.0)
+00:00 +12 -19: /private/tmp/vynic-ui-baseline-check/test/unit/cloud_printer_runtime_sync_test.dart: failed publication and failed restoration latch all future mutations until recovery [E]
+  Bad state: This POS contains data for Venue menu01-venue-a, but the device is connecting to Venue 20000000-0000-4000-8000-000000000001. Reconnect to the original Venue, or back up the complete POS data directory and use a fresh installation for the new restaurant. Existing data has been preserved.
+  package:vynic/core/database/local_venue_binding.dart 34:7                  validateLocalVenueBinding.check
+  package:vynic/core/database/local_venue_binding.dart 38:33                 validateLocalVenueBinding.checkMenu
+  package:vynic/core/database/local_venue_binding.dart 41:26                 validateLocalVenueBinding
+  package:vynic/core/database/database_core.dart 86:5                        DatabaseCore.validateVenueBinding
+  package:vynic/core/services/edge/edge_device_credential_store.dart 184:18  EdgeDeviceCredentialStore._saveEnrollment
+  package:vynic/core/services/edge/edge_device_credential_store.dart 163:11  EdgeDeviceCredentialStore.saveEnrollment.<fn>
+  package:vynic/core/services/printing/print_identity_admission.dart 32:26   PrintIdentityAdmission.changeIdentity
+  package:vynic/core/services/edge/edge_device_credential_store.dart 162:32  EdgeDeviceCredentialStore.saveEnrollment
+  test/unit/cloud_printer_runtime_sync_test.dart 149:39                      main.enroll
+  test/unit/cloud_printer_runtime_sync_test.dart 186:11                      main.<fn>
+  
+  LateInitializationError: Local 'settings' has not been initialized.
+  dart:_internal                                  LateError._throwLocalNotInitialized
+  test/unit/cloud_printer_runtime_sync_test.dart  main.<fn>
+  
+00:00 +12 -19: /private/tmp/vynic-ui-baseline-check/test/unit/pos02_print_delivery_test.dart: flushed sending marker precedes every byte and blocks quit during transport
+[AuditEventService] Found 1 unsynced events. Starting batch sync.
+[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP
+[AuditEventService] Batch sync failed. Will retry later.
+00:00 +12 -19: /private/tmp/vynic-ui-baseline-check/test/unit/printer_route_catalog_test.dart: malformed route value 42 is visible and never replaced
+[AuditEventService] Found 1 unsynced events. Starting batch sync.
+[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP
+[AuditEventService] Batch sync failed. Will retry later.
+00:00 +13 -19: /private/tmp/vynic-ui-baseline-check/test/widget/printer_route_configuration_test.dart: LAN route dialog scrolls and cancels cleanly at Size(360.0, 480.0)
+00:00 +13 -20: /private/tmp/vynic-ui-baseline-check/test/widget/printer_route_configuration_test.dart: LAN route dialog scrolls and cancels cleanly at Size(360.0, 480.0)
+00:00 +13 -20: /private/tmp/vynic-ui-baseline-check/test/unit/printer_route_catalog_test.dart: malformed route value 42 is visible and never replaced
+[AuditEventService] Found 2 unsynced events. Starting batch sync.
+[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP
+[AuditEventService] Batch sync failed. Will retry later.
+00:00 +13 -20: /private/tmp/vynic-ui-baseline-check/test/unit/cloud_printer_runtime_sync_test.dart: v1 Cloud primary lookups and local bar routing retain their prior behavior [E]
+  Bad state: This POS contains data for Venue menu01-venue-a, but the device is connecting to Venue 20000000-0000-4000-8000-000000000001. Reconnect to the original Venue, or back up the complete POS data directory and use a fresh installation for the new restaurant. Existing data has been preserved.
+  package:vynic/core/database/local_venue_binding.dart 34:7                  validateLocalVenueBinding.check
+  package:vynic/core/database/local_venue_binding.dart 38:33                 validateLocalVenueBinding.checkMenu
+  package:vynic/core/database/local_venue_binding.dart 41:26                 validateLocalVenueBinding
+  package:vynic/core/database/database_core.dart 86:5                        DatabaseCore.validateVenueBinding
+  package:vynic/core/services/edge/edge_device_credential_store.dart 184:18  EdgeDeviceCredentialStore._saveEnrollment
+  package:vynic/core/services/edge/edge_device_credential_store.dart 163:11  EdgeDeviceCredentialStore.saveEnrollment.<fn>
+  package:vynic/core/services/printing/print_identity_admission.dart 32:26   PrintIdentityAdmission.changeIdentity
+  package:vynic/core/services/edge/edge_device_credential_store.dart 162:32  EdgeDeviceCredentialStore.saveEnrollment
+  test/unit/cloud_printer_runtime_sync_test.dart 149:39                      main.enroll
+  test/unit/cloud_printer_runtime_sync_test.dart 186:11                      main.<fn>
+  
+00:00 +14 -20: /private/tmp/vynic-ui-baseline-check/test/widget/printer_route_configuration_test.dart: LAN route dialog scrolls and cancels cleanly at Size(360.0, 480.0)
+00:00 +14 -20: /private/tmp/vynic-ui-baseline-check/test/unit/cloud_printer_runtime_sync_test.dart: v1 Cloud primary lookups and local bar routing retain their prior behavior [E]
+  LateInitializationError: Local 'settings' has not been initialized.
+  dart:_internal                                  LateError._throwLocalNotInitialized
+  test/unit/cloud_printer_runtime_sync_test.dart  main.<fn>
+  
+00:00 +14 -20: /private/tmp/vynic-ui-baseline-check/test/unit/pos02_print_delivery_test.dart: sending on startup becomes uncertain without any duplicate transmission
+[AuditEventService] Found 1 unsynced events. Starting batch sync.
+[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP
+[AuditEventService] Batch sync failed. Will retry later.
+00:00 +14 -20: /private/tmp/vynic-ui-baseline-check/test/unit/printer_route_catalog_test.dart: malformed route value {unexpected: map} is visible and never replaced
+[AuditEventService] Found 1 unsynced events. Starting batch sync.
+[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP
+[AuditEventService] Batch sync failed. Will retry later.
+[AuditEventService] Found 2 unsynced events. Starting batch sync.
+[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP
+[AuditEventService] Batch sync failed. Will retry later.
+00:00 +15 -20: /private/tmp/vynic-ui-baseline-check/test/widget/printer_route_configuration_test.dart: LAN route dialog scrolls and cancels cleanly at Size(360.0, 480.0)
+00:00 +16 -20: /private/tmp/vynic-ui-baseline-check/test/widget/printer_route_configuration_test.dart: LAN route dialog scrolls and cancels cleanly at Size(360.0, 480.0)
+00:00 +16 -20: /private/tmp/vynic-ui-baseline-check/test/unit/pos02_print_delivery_test.dart: a reprint is one flushed audited attempt with frozen content and copy warning
+[AuditEventService] Found 1 unsynced events. Starting batch sync.
+[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP
+00:00 +16 -20: /private/tmp/vynic-ui-baseline-check/test/unit/printer_route_catalog_test.dart: malformed route value [{protocol: 99}] is visible and never replaced
+[AuditEventService] Found 1 unsynced events. Starting batch sync.
+[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP
+00:00 +16 -20: /private/tmp/vynic-ui-baseline-check/test/unit/pos02_print_delivery_test.dart: a reprint is one flushed audited attempt with frozen content and copy warning
+[AuditEventService] Batch sync failed. Will retry later.
+00:00 +16 -20: /private/tmp/vynic-ui-baseline-check/test/unit/printer_route_catalog_test.dart: malformed route value [{protocol: 99}] is visible and never replaced
+[AuditEventService] Batch sync failed. Will retry later.
+[AuditEventService] Found 2 unsynced events. Starting batch sync.
+[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP
+[AuditEventService] Batch sync failed. Will retry later.
+00:00 +17 -20: /private/tmp/vynic-ui-baseline-check/test/widget/printer_route_configuration_test.dart: LAN route dialog scrolls and cancels cleanly at Size(360.0, 480.0)
+00:00 +18 -20: /private/tmp/vynic-ui-baseline-check/test/widget/printer_route_configuration_test.dart: LAN route dialog scrolls and cancels cleanly at Size(360.0, 480.0)
+00:00 +18 -20: /private/tmp/vynic-ui-baseline-check/test/unit/pos02_print_delivery_test.dart: stale copy request, duplicate id with changed reason and empty reason are refused
+[AuditEventService] Found 1 unsynced events. Starting batch sync.
+00:00 +18 -20: /private/tmp/vynic-ui-baseline-check/test/unit/printer_route_catalog_test.dart: malformed legacy records block new route writes without adopting them
+[AuditEventService] Found 1 unsynced events. Starting batch sync.
+[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP
+[AuditEventService] Batch sync failed. Will retry later.
+00:00 +18 -20: /private/tmp/vynic-ui-baseline-check/test/unit/pos02_print_delivery_test.dart: stale copy request, duplicate id with changed reason and empty reason are refused
+[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP
+[AuditEventService] Batch sync failed. Will retry later.
+00:00 +18 -20: /private/tmp/vynic-ui-baseline-check/test/unit/printer_route_catalog_test.dart: malformed legacy records block new route writes without adopting them
+[AuditEventService] Found 2 unsynced events. Starting batch sync.
+[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP
+[AuditEventService] Batch sync failed. Will retry later.
+00:00 +19 -20: /private/tmp/vynic-ui-baseline-check/test/widget/printer_route_configuration_test.dart: LAN route dialog scrolls and cancels cleanly at Size(360.0, 480.0)
+00:00 +20 -20: /private/tmp/vynic-ui-baseline-check/test/widget/printer_route_configuration_test.dart: LAN route dialog scrolls and cancels cleanly at Size(360.0, 480.0)
+00:00 +20 -20: /private/tmp/vynic-ui-baseline-check/test/unit/printer_route_catalog_test.dart: duplicate endpoints, names and singleton roles refuse writes
+[AuditEventService] Found 1 unsynced events. Starting batch sync.
+00:00 +20 -20: /private/tmp/vynic-ui-baseline-check/test/unit/pos02_print_delivery_test.dart: paper confirmation is explicit, idempotent and never sends bytes
+[AuditEventService] Found 1 unsynced events. Starting batch sync.
+[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP
+[AuditEventService] Batch sync failed. Will retry later.
+00:00 +20 -20: /private/tmp/vynic-ui-baseline-check/test/unit/printer_route_catalog_test.dart: duplicate endpoints, names and singleton roles refuse writes
+[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP
+[AuditEventService] Batch sync failed. Will retry later.
+[AuditEventService] Found 2 unsynced events. Starting batch sync.
+[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP
+[AuditEventService] Batch sync failed. Will retry later.
+00:00 +21 -20: /private/tmp/vynic-ui-baseline-check/test/widget/printer_route_configuration_test.dart: LAN route dialog scrolls and cancels cleanly at Size(360.0, 480.0)
+00:00 +22 -20: /private/tmp/vynic-ui-baseline-check/test/widget/printer_route_configuration_test.dart: LAN route dialog scrolls and cancels cleanly at Size(360.0, 480.0)
+00:00 +22 -20: /private/tmp/vynic-ui-baseline-check/test/unit/pos02_print_delivery_test.dart: operator policy, logout and persisted role are enforced beyond disabled UI
+[AuditEventService] Found 1 unsynced events. Starting batch sync.
+[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP
+[AuditEventService] Batch sync failed. Will retry later.
+00:00 +22 -20: /private/tmp/vynic-ui-baseline-check/test/unit/printer_route_catalog_test.dart: Cloud primary roles remain authoritative including disabled configuration
+[AuditEventService] Found 1 unsynced events. Starting batch sync.
+[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP
+[AuditEventService] Batch sync failed. Will retry later.
+00:00 +23 -20: /private/tmp/vynic-ui-baseline-check/test/widget/printer_route_configuration_test.dart: LAN route dialog scrolls and cancels cleanly at Size(360.0, 480.0)
+00:00 +23 -20: /private/tmp/vynic-ui-baseline-check/test/unit/printer_route_catalog_test.dart: Cloud primary roles remain authoritative including disabled configuration
+[AuditEventService] Found 2 unsynced events. Starting batch sync.
+[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP
+[AuditEventService] Batch sync failed. Will retry later.
+00:00 +24 -20: /private/tmp/vynic-ui-baseline-check/test/widget/printer_route_configuration_test.dart: LAN route dialog scrolls and cancels cleanly at Size(360.0, 480.0)
+00:00 +24 -20: /private/tmp/vynic-ui-baseline-check/test/unit/pos02_print_delivery_test.dart: both destinations serialize even when configured to the same physical endpoint
+[AuditEventService] Found 1 unsynced events. Starting batch sync.
+[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP
+[AuditEventService] Batch sync failed. Will retry later.
+00:00 +24 -20: /private/tmp/vynic-ui-baseline-check/test/unit/printer_route_catalog_test.dart: a later Cloud primary claim holds existing local configuration for review
+[AuditEventService] Found 1 unsynced events. Starting batch sync.
+[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP
+[AuditEventService] Batch sync failed. Will retry later.
+00:00 +25 -20: /private/tmp/vynic-ui-baseline-check/test/widget/printer_route_configuration_test.dart: LAN route dialog scrolls and cancels cleanly at Size(360.0, 480.0)
+00:00 +25 -20: /private/tmp/vynic-ui-baseline-check/test/unit/printer_route_catalog_test.dart: a later Cloud primary claim holds existing local configuration for review
+[AuditEventService] Found 2 unsynced events. Starting batch sync.
+[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP
+[AuditEventService] Batch sync failed. Will retry later.
+00:00 +26 -20: /private/tmp/vynic-ui-baseline-check/test/widget/printer_route_configuration_test.dart: LAN route dialog scrolls and cancels cleanly at Size(360.0, 480.0)
+00:01 +26 -20: /private/tmp/vynic-ui-baseline-check/test/unit/pos02_print_delivery_test.dart: failed durable admission does not send or report success
+[AuditEventService] Found 1 unsynced events. Starting batch sync.
+[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP
+[AuditEventService] Batch sync failed. Will retry later.
+00:01 +27 -20: /private/tmp/vynic-ui-baseline-check/test/widget/printer_route_configuration_test.dart: LAN route dialog scrolls and cancels cleanly at Size(360.0, 480.0)
+00:01 +27 -20: /private/tmp/vynic-ui-baseline-check/test/unit/printer_route_catalog_test.dart: Windows route accepts only an enumerated exact queue tied to this enrolled Device
+[AuditEventService] Found 1 unsynced events. Starting batch sync.
+[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP
+[AuditEventService] Batch sync failed. Will retry later.
+[AuditEventService] Found 2 unsynced events. Starting batch sync.
+[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP
+[AuditEventService] Batch sync failed. Will retry later.
+00:01 +27 -21: /private/tmp/vynic-ui-baseline-check/test/widget/printer_route_configuration_test.dart: LAN route dialog scrolls and cancels cleanly at Size(360.0, 480.0)
+00:01 +27 -21: /private/tmp/vynic-ui-baseline-check/test/unit/printer_route_catalog_test.dart: Windows route accepts only an enumerated exact queue tied to this enrolled Device [E]
+  Bad state: This POS contains data for Venue menu01-venue-a, but the device is connecting to Venue synthetic-venue. Reconnect to the original Venue, or back up the complete POS data directory and use a fresh installation for the new restaurant. Existing data has been preserved.
+  package:vynic/core/database/local_venue_binding.dart 34:7                  validateLocalVenueBinding.check
+  package:vynic/core/database/local_venue_binding.dart 38:33                 validateLocalVenueBinding.checkMenu
+  package:vynic/core/database/local_venue_binding.dart 41:26                 validateLocalVenueBinding
+  package:vynic/core/database/database_core.dart 86:5                        DatabaseCore.validateVenueBinding
+  package:vynic/core/services/edge/edge_device_credential_store.dart 184:18  EdgeDeviceCredentialStore._saveEnrollment
+  package:vynic/core/services/edge/edge_device_credential_store.dart 163:11  EdgeDeviceCredentialStore.saveEnrollment.<fn>
+  package:vynic/core/services/printing/print_identity_admission.dart 32:26   PrintIdentityAdmission.changeIdentity
+  package:vynic/core/services/edge/edge_device_credential_store.dart 162:32  EdgeDeviceCredentialStore.saveEnrollment
+  test/unit/printer_route_catalog_test.dart 61:39                            main.enroll
+  test/unit/printer_route_catalog_test.dart 399:13                           main.<fn>
+  
+00:01 +27 -21: /private/tmp/vynic-ui-baseline-check/test/unit/pos02_print_delivery_test.dart: exclusive backup admission holds new print jobs until released
+[AuditEventService] Found 1 unsynced events. Starting batch sync.
+[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP
+[AuditEventService] Batch sync failed. Will retry later.
+00:01 +28 -21: /private/tmp/vynic-ui-baseline-check/test/widget/printer_route_configuration_test.dart: LAN route dialog scrolls and cancels cleanly at Size(360.0, 480.0)
+00:01 +28 -21: /private/tmp/vynic-ui-baseline-check/test/unit/printer_route_catalog_test.dart: unenrolled and foreign-device Windows choices fail before enumeration
+[AuditEventService] Found 1 unsynced events. Starting batch sync.
+[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP
+[AuditEventService] Batch sync failed. Will retry later.
+00:01 +28 -21: /private/tmp/vynic-ui-baseline-check/test/unit/pos02_print_delivery_test.dart: background receipt admission awaits frozen rendering and Hive, not network
+[AuditEventService] Found 1 unsynced events. Starting batch sync.
+[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP
+[AuditEventService] Batch sync failed. Will retry later.
+00:01 +28 -21: /private/tmp/vynic-ui-baseline-check/test/unit/printer_route_catalog_test.dart: unenrolled and foreign-device Windows choices fail before enumeration
+[AuditEventService] Found 2 unsynced events. Starting batch sync.
+[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP
+[AuditEventService] Batch sync failed. Will retry later.
+00:01 +28 -22: /private/tmp/vynic-ui-baseline-check/test/widget/printer_route_configuration_test.dart: LAN route dialog scrolls and cancels cleanly at Size(360.0, 480.0)
+00:01 +28 -22: /private/tmp/vynic-ui-baseline-check/test/unit/printer_route_catalog_test.dart: unenrolled and foreign-device Windows choices fail before enumeration [E]
+  Bad state: This POS contains data for Venue menu01-venue-a, but the device is connecting to Venue synthetic-venue. Reconnect to the original Venue, or back up the complete POS data directory and use a fresh installation for the new restaurant. Existing data has been preserved.
+  package:vynic/core/database/local_venue_binding.dart 34:7                  validateLocalVenueBinding.check
+  package:vynic/core/database/local_venue_binding.dart 38:33                 validateLocalVenueBinding.checkMenu
+  package:vynic/core/database/local_venue_binding.dart 41:26                 validateLocalVenueBinding
+  package:vynic/core/database/database_core.dart 86:5                        DatabaseCore.validateVenueBinding
+  package:vynic/core/services/edge/edge_device_credential_store.dart 184:18  EdgeDeviceCredentialStore._saveEnrollment
+  package:vynic/core/services/edge/edge_device_credential_store.dart 163:11  EdgeDeviceCredentialStore.saveEnrollment.<fn>
+  package:vynic/core/services/printing/print_identity_admission.dart 32:26   PrintIdentityAdmission.changeIdentity
+  package:vynic/core/services/edge/edge_device_credential_store.dart 162:32  EdgeDeviceCredentialStore.saveEnrollment
+  test/unit/printer_route_catalog_test.dart 61:39                            main.enroll
+  test/unit/printer_route_catalog_test.dart 419:13                           main.<fn>
+  
+00:01 +29 -22: /private/tmp/vynic-ui-baseline-check/test/unit/pos02_print_delivery_test.dart: background receipt admission awaits frozen rendering and Hive, not network
+00:01 +29 -22: /private/tmp/vynic-ui-baseline-check/test/unit/printer_route_catalog_test.dart: untrusted Windows descriptor Guessed · USB001 never persists
+[AuditEventService] Found 1 unsynced events. Starting batch sync.
+[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP
+[AuditEventService] Batch sync failed. Will retry later.
+[AuditEventService] Found 2 unsynced events. Starting batch sync.
+[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP
+[AuditEventService] Batch sync failed. Will retry later.
+00:01 +29 -23: /private/tmp/vynic-ui-baseline-check/test/unit/pos02_print_delivery_test.dart: background receipt admission awaits frozen rendering and Hive, not network
+00:01 +29 -23: /private/tmp/vynic-ui-baseline-check/test/unit/printer_route_catalog_test.dart: untrusted Windows descriptor Guessed · USB001 never persists [E]
+  Bad state: This POS contains data for Venue menu01-venue-a, but the device is connecting to Venue synthetic-venue. Reconnect to the original Venue, or back up the complete POS data directory and use a fresh installation for the new restaurant. Existing data has been preserved.
+  package:vynic/core/database/local_venue_binding.dart 34:7                  validateLocalVenueBinding.check
+  package:vynic/core/database/local_venue_binding.dart 38:33                 validateLocalVenueBinding.checkMenu
+  package:vynic/core/database/local_venue_binding.dart 41:26                 validateLocalVenueBinding
+  package:vynic/core/database/database_core.dart 86:5                        DatabaseCore.validateVenueBinding
+  package:vynic/core/services/edge/edge_device_credential_store.dart 184:18  EdgeDeviceCredentialStore._saveEnrollment
+  package:vynic/core/services/edge/edge_device_credential_store.dart 163:11  EdgeDeviceCredentialStore.saveEnrollment.<fn>
+  package:vynic/core/services/printing/print_identity_admission.dart 32:26   PrintIdentityAdmission.changeIdentity
+  package:vynic/core/services/edge/edge_device_credential_store.dart 162:32  EdgeDeviceCredentialStore.saveEnrollment
+  test/unit/printer_route_catalog_test.dart 61:39                            main.enroll
+  test/unit/printer_route_catalog_test.dart 437:15                           main.<fn>
+  
+00:01 +29 -23: /private/tmp/vynic-ui-baseline-check/test/widget/printer_route_configuration_test.dart: LAN route dialog scrolls and cancels cleanly at Size(640.0, 600.0)
+[AuditEventService] Found 1 unsynced events. Starting batch sync.
+[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP
+[AuditEventService] Batch sync failed. Will retry later.
+00:01 +30 -23: /private/tmp/vynic-ui-baseline-check/test/widget/printer_route_configuration_test.dart: LAN route dialog scrolls and cancels cleanly at Size(640.0, 600.0)
+00:01 +30 -23: /private/tmp/vynic-ui-baseline-check/test/unit/printer_route_catalog_test.dart: untrusted Windows descriptor Synthetic RAW · USB001 never persists
+[AuditEventService] Found 1 unsynced events. Starting batch sync.
+[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP
+[AuditEventService] Batch sync failed. Will retry later.
+00:01 +30 -23: /private/tmp/vynic-ui-baseline-check/test/widget/printer_route_configuration_test.dart: LAN route dialog scrolls and cancels cleanly at Size(640.0, 600.0)
+[AuditEventService] Found 2 unsynced events. Starting batch sync.
+[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP
+[AuditEventService] Batch sync failed. Will retry later.
+00:01 +30 -23: /private/tmp/vynic-ui-baseline-check/test/unit/printer_route_catalog_test.dart: untrusted Windows descriptor Synthetic RAW · USB001 never persists
+[AuditEventService] Found 2 unsynced events. Starting batch sync.
+[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP
+[AuditEventService] Batch sync failed. Will retry later.
+00:01 +30 -24: /private/tmp/vynic-ui-baseline-check/test/widget/printer_route_configuration_test.dart: LAN route dialog scrolls and cancels cleanly at Size(640.0, 600.0)
+00:01 +30 -24: /private/tmp/vynic-ui-baseline-check/test/unit/printer_route_catalog_test.dart: untrusted Windows descriptor Synthetic RAW · USB001 never persists [E]
+  Bad state: This POS contains data for Venue menu01-venue-a, but the device is connecting to Venue synthetic-venue. Reconnect to the original Venue, or back up the complete POS data directory and use a fresh installation for the new restaurant. Existing data has been preserved.
+  package:vynic/core/database/local_venue_binding.dart 34:7                  validateLocalVenueBinding.check
+  package:vynic/core/database/local_venue_binding.dart 38:33                 validateLocalVenueBinding.checkMenu
+  package:vynic/core/database/local_venue_binding.dart 41:26                 validateLocalVenueBinding
+  package:vynic/core/database/database_core.dart 86:5                        DatabaseCore.validateVenueBinding
+  package:vynic/core/services/edge/edge_device_credential_store.dart 184:18  EdgeDeviceCredentialStore._saveEnrollment
+  package:vynic/core/services/edge/edge_device_credential_store.dart 163:11  EdgeDeviceCredentialStore.saveEnrollment.<fn>
+  package:vynic/core/services/printing/print_identity_admission.dart 32:26   PrintIdentityAdmission.changeIdentity
+  package:vynic/core/services/edge/edge_device_credential_store.dart 162:32  EdgeDeviceCredentialStore.saveEnrollment
+  test/unit/printer_route_catalog_test.dart 61:39                            main.enroll
+  test/unit/printer_route_catalog_test.dart 437:15                           main.<fn>
+  
+00:01 +30 -24: /private/tmp/vynic-ui-baseline-check/test/unit/pos02_print_delivery_test.dart: duplicate admission settles every callback with one write
+[AuditEventService] Found 1 unsynced events. Starting batch sync.
+[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP
+[AuditEventService] Batch sync failed. Will retry later.
+00:01 +31 -24: /private/tmp/vynic-ui-baseline-check/test/widget/printer_route_configuration_test.dart: LAN route dialog scrolls and cancels cleanly at Size(640.0, 600.0)
+00:01 +31 -24: /private/tmp/vynic-ui-baseline-check/test/unit/printer_route_catalog_test.dart: untrusted Windows descriptor Synthetic RAW · COM1 never persists
+[AuditEventService] Found 1 unsynced events. Starting batch sync.
+[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP
+[AuditEventService] Batch sync failed. Will retry later.
+[AuditEventService] Found 2 unsynced events. Starting batch sync.
+[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP
+[AuditEventService] Batch sync failed. Will retry later.
+00:01 +31 -25: /private/tmp/vynic-ui-baseline-check/test/widget/printer_route_configuration_test.dart: LAN route dialog scrolls and cancels cleanly at Size(640.0, 600.0)
+00:01 +31 -25: /private/tmp/vynic-ui-baseline-check/test/unit/pos02_print_delivery_test.dart: final state flush failure settles waiters and never sends again
+[AuditEventService] Found 1 unsynced events. Starting batch sync.
+[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP
+[AuditEventService] Batch sync failed. Will retry later.
+00:01 +31 -25: /private/tmp/vynic-ui-baseline-check/test/unit/printer_route_catalog_test.dart: untrusted Windows descriptor Synthetic RAW · COM1 never persists [E]
+  Bad state: This POS contains data for Venue menu01-venue-a, but the device is connecting to Venue synthetic-venue. Reconnect to the original Venue, or back up the complete POS data directory and use a fresh installation for the new restaurant. Existing data has been preserved.
+  package:vynic/core/database/local_venue_binding.dart 34:7                  validateLocalVenueBinding.check
+  package:vynic/core/database/local_venue_binding.dart 38:33                 validateLocalVenueBinding.checkMenu
+  package:vynic/core/database/local_venue_binding.dart 41:26                 validateLocalVenueBinding
+  package:vynic/core/database/database_core.dart 86:5                        DatabaseCore.validateVenueBinding
+  package:vynic/core/services/edge/edge_device_credential_store.dart 184:18  EdgeDeviceCredentialStore._saveEnrollment
+  package:vynic/core/services/edge/edge_device_credential_store.dart 163:11  EdgeDeviceCredentialStore.saveEnrollment.<fn>
+  package:vynic/core/services/printing/print_identity_admission.dart 32:26   PrintIdentityAdmission.changeIdentity
+  package:vynic/core/services/edge/edge_device_credential_store.dart 162:32  EdgeDeviceCredentialStore.saveEnrollment
+  test/unit/printer_route_catalog_test.dart 61:39                            main.enroll
+  test/unit/printer_route_catalog_test.dart 437:15                           main.<fn>
+  
+00:01 +32 -25: /private/tmp/vynic-ui-baseline-check/test/widget/printer_route_configuration_test.dart: LAN route dialog scrolls and cancels cleanly at Size(640.0, 600.0)
+00:01 +32 -25: /private/tmp/vynic-ui-baseline-check/test/unit/printer_route_catalog_test.dart: blank inventory descriptors and inventory failures remain explicit failures
+[AuditEventService] Found 1 unsynced events. Starting batch sync.
+[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP
+[AuditEventService] Batch sync failed. Will retry later.
+00:01 +32 -25: /private/tmp/vynic-ui-baseline-check/test/unit/pos02_print_delivery_test.dart: Venue change at meta.flush:before holds bytes before add
+[AuditEventService] Found 1 unsynced events. Starting batch sync.
+[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP
+[AuditEventService] Batch sync failed. Will retry later.
+00:01 +33 -25: /private/tmp/vynic-ui-baseline-check/test/unit/printer_route_catalog_test.dart: blank inventory descriptors and inventory failures remain explicit failures
+[AuditEventService] Found 2 unsynced events. Starting batch sync.
+[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP
+[AuditEventService] Batch sync failed. Will retry later.
+00:01 +33 -26: /private/tmp/vynic-ui-baseline-check/test/unit/pos02_print_delivery_test.dart: Venue change at meta.flush:before holds bytes before add
+00:01 +33 -27: /private/tmp/vynic-ui-baseline-check/test/widget/printer_route_configuration_test.dart: LAN route dialog scrolls and cancels cleanly at Size(1280.0, 720.0)
+00:01 +33 -27: /private/tmp/vynic-ui-baseline-check/test/unit/printer_route_catalog_test.dart: blank inventory descriptors and inventory failures remain explicit failures [E]
+  Bad state: This POS contains data for Venue menu01-venue-a, but the device is connecting to Venue synthetic-venue. Reconnect to the original Venue, or back up the complete POS data directory and use a fresh installation for the new restaurant. Existing data has been preserved.
+  package:vynic/core/database/local_venue_binding.dart 34:7                  validateLocalVenueBinding.check
+  package:vynic/core/database/local_venue_binding.dart 38:33                 validateLocalVenueBinding.checkMenu
+  package:vynic/core/database/local_venue_binding.dart 41:26                 validateLocalVenueBinding
+  package:vynic/core/database/database_core.dart 86:5                        DatabaseCore.validateVenueBinding
+  package:vynic/core/services/edge/edge_device_credential_store.dart 184:18  EdgeDeviceCredentialStore._saveEnrollment
+  package:vynic/core/services/edge/edge_device_credential_store.dart 163:11  EdgeDeviceCredentialStore.saveEnrollment.<fn>
+  package:vynic/core/services/printing/print_identity_admission.dart 32:26   PrintIdentityAdmission.changeIdentity
+  package:vynic/core/services/edge/edge_device_credential_store.dart 162:32  EdgeDeviceCredentialStore.saveEnrollment
+  test/unit/printer_route_catalog_test.dart 61:39                            main.enroll
+  test/unit/printer_route_catalog_test.dart 451:13                           main.<fn>
+  
+00:01 +33 -27: /private/tmp/vynic-ui-baseline-check/test/unit/pos02_print_delivery_test.dart: Venue change at meta.flush:before holds bytes before add [E]
+  Expected: PrintJobState:<PrintJobState.uncertain>
+    Actual: PrintJobState:<PrintJobState.sending>
+  
+  package:matcher                                     expect
+  package:flutter_test/src/widget_tester.dart 473:18  expect
+  test/unit/pos02_print_delivery_test.dart 386:7      main.<fn>
+  
+00:01 +33 -27: /private/tmp/vynic-ui-baseline-check/test/unit/printer_route_catalog_test.dart: permission revoked during enumeration cannot authorize a later write
+[AuditEventService] Found 1 unsynced events. Starting batch sync.
+[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP
+[AuditEventService] Batch sync failed. Will retry later.
+00:01 +33 -27: /private/tmp/vynic-ui-baseline-check/test/widget/printer_route_configuration_test.dart: LAN route dialog scrolls and cancels cleanly at Size(1280.0, 720.0)
+[AuditEventService] Found 1 unsynced events. Starting batch sync.
+[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP
+[AuditEventService] Batch sync failed. Will retry later.
+00:01 +33 -27: /private/tmp/vynic-ui-baseline-check/test/unit/pos02_print_delivery_test.dart: Venue change at transport.connect holds bytes before add
+[AuditEventService] Found 1 unsynced events. Starting batch sync.
+[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP
+[AuditEventService] Batch sync failed. Will retry later.
+00:01 +33 -27: /private/tmp/vynic-ui-baseline-check/test/unit/printer_route_catalog_test.dart: permission revoked during enumeration cannot authorize a later write
+[AuditEventService] Found 2 unsynced events. Starting batch sync.
+[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP
+[AuditEventService] Batch sync failed. Will retry later.
+00:01 +33 -28: /private/tmp/vynic-ui-baseline-check/test/widget/printer_route_configuration_test.dart: LAN route dialog scrolls and cancels cleanly at Size(1280.0, 720.0)
+00:01 +33 -29: /private/tmp/vynic-ui-baseline-check/test/widget/printer_route_configuration_test.dart: LAN route dialog scrolls and cancels cleanly at Size(1280.0, 720.0)
+00:01 +33 -29: /private/tmp/vynic-ui-baseline-check/test/unit/printer_route_catalog_test.dart: permission revoked during enumeration cannot authorize a later write [E]
+  Bad state: This POS contains data for Venue menu01-venue-a, but the device is connecting to Venue synthetic-venue. Reconnect to the original Venue, or back up the complete POS data directory and use a fresh installation for the new restaurant. Existing data has been preserved.
+  package:vynic/core/database/local_venue_binding.dart 34:7                  validateLocalVenueBinding.check
+  package:vynic/core/database/local_venue_binding.dart 38:33                 validateLocalVenueBinding.checkMenu
+  package:vynic/core/database/local_venue_binding.dart 41:26                 validateLocalVenueBinding
+  package:vynic/core/database/database_core.dart 86:5                        DatabaseCore.validateVenueBinding
+  package:vynic/core/services/edge/edge_device_credential_store.dart 184:18  EdgeDeviceCredentialStore._saveEnrollment
+  package:vynic/core/services/edge/edge_device_credential_store.dart 163:11  EdgeDeviceCredentialStore.saveEnrollment.<fn>
+  package:vynic/core/services/printing/print_identity_admission.dart 32:26   PrintIdentityAdmission.changeIdentity
+  package:vynic/core/services/edge/edge_device_credential_store.dart 162:32  EdgeDeviceCredentialStore.saveEnrollment
+  test/unit/printer_route_catalog_test.dart 61:39                            main.enroll
+  test/unit/printer_route_catalog_test.dart 470:13                           main.<fn>
+  
+00:01 +33 -29: /private/tmp/vynic-ui-baseline-check/test/widget/printer_route_configuration_test.dart: LAN route dialog scrolls and cancels cleanly at Size(1280.0, 720.0)
+[AuditEventService] Found 2 unsynced events. Starting batch sync.
+00:01 +33 -29: /private/tmp/vynic-ui-baseline-check/test/unit/pos02_print_delivery_test.dart: Venue change at transport.connect holds bytes before add [E]
+  Expected: empty
+    Actual: [
+              [
+                27,
+                64,
+                74,
+                79,
+                66,
+                32,
+                115,
+                121,
+                110,
+                116,
+                104,
+                101,
+                116,
+                105,
+                99,
+                45,
+                112,
+                111,
+                115,
+                48,
+                50,
+                45,
+                106,
+                111,
+                ...
+              ]
+            ]
+  
+  package:matcher                                     expect
+  package:flutter_test/src/widget_tester.dart 473:18  expect
+  test/unit/pos02_print_delivery_test.dart 385:7      main.<fn>
+  
+00:01 +33 -29: /private/tmp/vynic-ui-baseline-check/test/widget/printer_route_configuration_test.dart: LAN route dialog scrolls and cancels cleanly at Size(1280.0, 720.0)
+[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP
+[AuditEventService] Batch sync failed. Will retry later.
+00:01 +33 -29: /private/tmp/vynic-ui-baseline-check/test/unit/printer_route_catalog_test.dart: a different enrollment holds restored Windows routes without rewriting them
+[AuditEventService] Found 1 unsynced events. Starting batch sync.
+[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP
+[AuditEventService] Batch sync failed. Will retry later.
+00:01 +33 -29: /private/tmp/vynic-ui-baseline-check/test/unit/pos02_print_delivery_test.dart: copy request replay after safe retry remains idempotent
+[AuditEventService] Found 1 unsynced events. Starting batch sync.
+[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP
+[AuditEventService] Batch sync failed. Will retry later.
+00:01 +33 -29: /private/tmp/vynic-ui-baseline-check/test/unit/printer_route_catalog_test.dart: a different enrollment holds restored Windows routes without rewriting them
+[AuditEventService] Found 2 unsynced events. Starting batch sync.
+[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP
+[AuditEventService] Batch sync failed. Will retry later.
+00:01 +33 -30: /private/tmp/vynic-ui-baseline-check/test/widget/printer_route_configuration_test.dart: LAN route dialog scrolls and cancels cleanly at Size(1280.0, 720.0)
+00:01 +33 -30: /private/tmp/vynic-ui-baseline-check/test/unit/printer_route_catalog_test.dart: a different enrollment holds restored Windows routes without rewriting them [E]
+  Bad state: This POS contains data for Venue menu01-venue-a, but the device is connecting to Venue synthetic-venue. Reconnect to the original Venue, or back up the complete POS data directory and use a fresh installation for the new restaurant. Existing data has been preserved.
+  package:vynic/core/database/local_venue_binding.dart 34:7                  validateLocalVenueBinding.check
+  package:vynic/core/database/local_venue_binding.dart 38:33                 validateLocalVenueBinding.checkMenu
+  package:vynic/core/database/local_venue_binding.dart 41:26                 validateLocalVenueBinding
+  package:vynic/core/database/database_core.dart 86:5                        DatabaseCore.validateVenueBinding
+  package:vynic/core/services/edge/edge_device_credential_store.dart 184:18  EdgeDeviceCredentialStore._saveEnrollment
+  package:vynic/core/services/edge/edge_device_credential_store.dart 163:11  EdgeDeviceCredentialStore.saveEnrollment.<fn>
+  package:vynic/core/services/printing/print_identity_admission.dart 32:26   PrintIdentityAdmission.changeIdentity
+  package:vynic/core/services/edge/edge_device_credential_store.dart 162:32  EdgeDeviceCredentialStore.saveEnrollment
+  test/unit/printer_route_catalog_test.dart 61:39                            main.enroll
+  test/unit/printer_route_catalog_test.dart 491:13                           main.<fn>
+  
+00:01 +34 -30: /private/tmp/vynic-ui-baseline-check/test/widget/printer_route_configuration_test.dart: LAN route dialog scrolls and cancels cleanly at Size(1280.0, 720.0)
+00:01 +34 -30: /private/tmp/vynic-ui-baseline-check/test/unit/printer_route_catalog_test.dart: capability revisions freeze accepted dimensions, cutter and optional beep
+[AuditEventService] Found 1 unsynced events. Starting batch sync.
+00:01 +34 -30: /private/tmp/vynic-ui-baseline-check/test/unit/pos02_print_delivery_test.dart: stable copy identity rejects changed source, actor, reason and original-vs-copy
+[AuditEventService] Found 1 unsynced events. Starting batch sync.
+00:01 +34 -30: /private/tmp/vynic-ui-baseline-check/test/unit/printer_route_catalog_test.dart: capability revisions freeze accepted dimensions, cutter and optional beep
+[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP
+[AuditEventService] Batch sync failed. Will retry later.
+00:01 +34 -30: /private/tmp/vynic-ui-baseline-check/test/unit/pos02_print_delivery_test.dart: stable copy identity rejects changed source, actor, reason and original-vs-copy
+[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP
+[AuditEventService] Batch sync failed. Will retry later.
+00:01 +34 -30: /private/tmp/vynic-ui-baseline-check/test/unit/printer_route_catalog_test.dart: capability revisions freeze accepted dimensions, cutter and optional beep
+[AuditEventService] Found 2 unsynced events. Starting batch sync.
+[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP
+[AuditEventService] Batch sync failed. Will retry later.
+00:01 +35 -30: /private/tmp/vynic-ui-baseline-check/test/unit/printer_route_catalog_test.dart: capability revisions freeze accepted dimensions, cutter and optional beep
+00:01 +36 -30: /private/tmp/vynic-ui-baseline-check/test/unit/printer_route_catalog_test.dart: capability revisions freeze accepted dimensions, cutter and optional beep
+00:01 +37 -30: /private/tmp/vynic-ui-baseline-check/test/widget/printer_route_configuration_test.dart: developer assigns a bar LAN route while legacy additions remain unassigned
+00:01 +37 -30: /private/tmp/vynic-ui-baseline-check/test/unit/pos02_print_delivery_test.dart: forged confirmations and malformed audit history are refused
+[AuditEventService] Found 1 unsynced events. Starting batch sync.
+[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP
+[AuditEventService] Batch sync failed. Will retry later.
+00:01 +37 -30: /private/tmp/vynic-ui-baseline-check/test/unit/printer_route_catalog_test.dart: legacy candidate routes and absent beep remain conservative and silent
+[AuditEventService] Found 1 unsynced events. Starting batch sync.
+[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP
+[AuditEventService] Batch sync failed. Will retry later.
+00:01 +37 -30: /private/tmp/vynic-ui-baseline-check/test/widget/printer_route_configuration_test.dart: developer assigns a bar LAN route while legacy additions remain unassigned
+[AuditEventService] Found 1 unsynced events. Starting batch sync.
+[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP
+[AuditEventService] Batch sync failed. Will retry later.
+00:01 +38 -30: /private/tmp/vynic-ui-baseline-check/test/widget/printer_route_configuration_test.dart: developer assigns a bar LAN route while legacy additions remain unassigned
+00:01 +38 -30: /private/tmp/vynic-ui-baseline-check/test/unit/printer_route_catalog_test.dart: legacy candidate routes and absent beep remain conservative and silent
+[AuditEventService] Found 2 unsynced events. Starting batch sync.
+[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP
+[AuditEventService] Batch sync failed. Will retry later.
+00:01 +39 -30: /private/tmp/vynic-ui-baseline-check/test/widget/printer_route_configuration_test.dart: developer assigns a bar LAN route while legacy additions remain unassigned
+[AuditEventService] Found 2 unsynced events. Starting batch sync.
+[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP
+[AuditEventService] Batch sync failed. Will retry later.
+00:01 +39 -30: /private/tmp/vynic-ui-baseline-check/test/unit/pos02_print_delivery_test.dart: concurrent initial confirmations admit one frozen Order ticket
+[AuditEventService] Found 1 unsynced events. Starting batch sync.
+[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP
+[AuditEventService] Batch sync failed. Will retry later.
+00:01 +39 -30: /private/tmp/vynic-ui-baseline-check/test/unit/printer_route_catalog_test.dart: driver-rendered profile is saved for administration and held from dispatch
+[AuditEventService] Found 1 unsynced events. Starting batch sync.
+[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP
+[AuditEventService] Batch sync failed. Will retry later.
+[AuditEventService] Found 2 unsynced events. Starting batch sync.
+[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP
+[AuditEventService] Batch sync failed. Will retry later.
+00:01 +40 -30: /private/tmp/vynic-ui-baseline-check/test/widget/printer_route_configuration_test.dart: developer assigns a bar LAN route while legacy additions remain unassigned
+00:01 +41 -30: /private/tmp/vynic-ui-baseline-check/test/widget/printer_route_configuration_test.dart: developer assigns a bar LAN route while legacy additions remain unassigned
+00:01 +41 -30: /private/tmp/vynic-ui-baseline-check/test/unit/printer_route_catalog_test.dart: malformed required capability fields are never replaced by a route save
+[AuditEventService] Found 1 unsynced events. Starting batch sync.
+[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP
+[AuditEventService] Batch sync failed. Will retry later.
+[AuditEventService] Found 2 unsynced events. Starting batch sync.
+[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP
+[AuditEventService] Batch sync failed. Will retry later.
+00:01 +42 -30: /private/tmp/vynic-ui-baseline-check/test/widget/printer_route_configuration_test.dart: developer assigns a bar LAN route while legacy additions remain unassigned
+00:01 +42 -30: /private/tmp/vynic-ui-baseline-check/test/unit/pos02_print_delivery_test.dart: remote creation receipt repairs crash gap between Order and initial print admission
+[AuditEventService] Found 1 unsynced events. Starting batch sync.
+[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP
+[AuditEventService] Batch sync failed. Will retry later.
+00:01 +42 -30: /private/tmp/vynic-ui-baseline-check/test/unit/printer_route_catalog_test.dart: role dispatch excludes unrelated holds while preserving catalog integrity checks
+[AuditEventService] Found 1 unsynced events. Starting batch sync.
+[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP
+[AuditEventService] Batch sync failed. Will retry later.
+[AuditEventService] Found 2 unsynced events. Starting batch sync.
+[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP
+[AuditEventService] Batch sync failed. Will retry later.
+[DeveloperAccess] locked (manual)
+00:01 +43 -30: /private/tmp/vynic-ui-baseline-check/test/widget/printer_route_configuration_test.dart: developer assigns a bar LAN route while legacy additions remain unassigned
+00:01 +44 -30: /private/tmp/vynic-ui-baseline-check/test/widget/printer_route_configuration_test.dart: developer assigns a bar LAN route while legacy additions remain unassigned
+00:01 +44 -30: /private/tmp/vynic-ui-baseline-check/test/unit/pos02_print_delivery_test.dart: kitchen freezes Venue and destination across deferred rendering
+[AuditEventService] Found 1 unsynced events. Starting batch sync.
+[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP
+[AuditEventService] Batch sync failed. Will retry later.
+00:01 +44 -31: /private/tmp/vynic-ui-baseline-check/test/widget/printer_route_configuration_test.dart: developer assigns a bar LAN route while legacy additions remain unassigned
+00:01 +44 -31: /private/tmp/vynic-ui-baseline-check/test/unit/pos02_print_delivery_test.dart: kitchen freezes Venue and destination across deferred rendering [E]
+  Bad state: This POS contains data for Venue menu01-venue-a, but the device is connecting to Venue synthetic-other-venue. Reconnect to the original Venue, or back up the complete POS data directory and use a fresh installation for the new restaurant. Existing data has been preserved.
+  package:vynic/core/database/local_venue_binding.dart 34:7                  validateLocalVenueBinding.check
+  package:vynic/core/database/local_venue_binding.dart 38:33                 validateLocalVenueBinding.checkMenu
+  package:vynic/core/database/local_venue_binding.dart 41:26                 validateLocalVenueBinding
+  package:vynic/core/database/database_core.dart 86:5                        DatabaseCore.validateVenueBinding
+  package:vynic/core/services/edge/edge_device_credential_store.dart 184:18  EdgeDeviceCredentialStore._saveEnrollment
+  package:vynic/core/services/edge/edge_device_credential_store.dart 163:11  EdgeDeviceCredentialStore.saveEnrollment.<fn>
+  package:vynic/core/services/printing/print_identity_admission.dart 32:26   PrintIdentityAdmission.changeIdentity
+  package:vynic/core/services/edge/edge_device_credential_store.dart 162:32  EdgeDeviceCredentialStore.saveEnrollment
+  test/unit/pos02_print_delivery_test.dart 590:41                            main.<fn>
+  
+00:01 +45 -31: /private/tmp/vynic-ui-baseline-check/test/unit/pos02_print_delivery_test.dart: kitchen render failure cannot admit a blank ticket or return success
+00:01 +45 -31: /private/tmp/vynic-ui-baseline-check/test/widget/printer_route_configuration_test.dart: Windows queue option requires local Windows transport and enrollment
+[AuditEventService] Found 1 unsynced events. Starting batch sync.
+[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP
+[AuditEventService] Batch sync failed. Will retry later.
+[AuditEventService] Found 2 unsynced events. Starting batch sync.
+[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP
+[AuditEventService] Batch sync failed. Will retry later.
+00:02 +46 -31: /private/tmp/vynic-ui-baseline-check/test/unit/pos02_print_delivery_test.dart: kitchen render failure cannot admit a blank ticket or return success
+00:02 +46 -31: /private/tmp/vynic-ui-baseline-check/test/widget/printer_route_configuration_test.dart: Windows selection freezes only the enumerated exact queue and revalidates on save
+[AuditEventService] Found 1 unsynced events. Starting batch sync.
+[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP
+[AuditEventService] Batch sync failed. Will retry later.
+[AuditEventService] Found 2 unsynced events. Starting batch sync.
+[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP
+[AuditEventService] Batch sync failed. Will retry later.
+══╡ EXCEPTION CAUGHT BY FLUTTER TEST FRAMEWORK ╞════════════════════════════════════════════════════
+The following LocalVenueMismatch was thrown while running async test code:
+Bad state: This POS contains data for Venue menu01-venue-a, but the device is connecting to Venue
+synthetic-venue. Reconnect to the original Venue, or back up the complete POS data directory and use
+a fresh installation for the new restaurant. Existing data has been preserved.
+
+When the exception was thrown, this was the stack:
+#0      validateLocalVenueBinding.check (package:vynic/core/database/local_venue_binding.dart:34:7)
+#1      validateLocalVenueBinding.checkMenu (package:vynic/core/database/local_venue_binding.dart:38:33)
+#2      validateLocalVenueBinding (package:vynic/core/database/local_venue_binding.dart:41:26)
+#3      DatabaseCore.validateVenueBinding (package:vynic/core/database/database_core.dart:86:5)
+#4      EdgeDeviceCredentialStore._saveEnrollment (package:vynic/core/services/edge/edge_device_credential_store.dart:184:18)
+#5      EdgeDeviceCredentialStore.saveEnrollment.<anonymous closure> (package:vynic/core/services/edge/edge_device_credential_store.dart:163:11)
+#6      PrintIdentityAdmission.changeIdentity (package:vynic/core/services/printing/print_identity_admission.dart:32:26)
+#7      EdgeDeviceCredentialStore.saveEnrollment (package:vynic/core/services/edge/edge_device_credential_store.dart:162:32)
+#8      main.prepareWindows (file:///private/tmp/vynic-ui-baseline-check/test/widget/printer_route_configuration_test.dart:138:39)
+#9      AutomatedTestWidgetsFlutterBinding.runAsync.<anonymous closure> (package:flutter_test/src/binding.dart:2307:17)
+#12     AutomatedTestWidgetsFlutterBinding.runAsync (package:flutter_test/src/binding.dart:2303:26)
+#13     WidgetTester.runAsync (package:flutter_test/src/widget_tester.dart:838:17)
+#14     main.<anonymous closure> (file:///private/tmp/vynic-ui-baseline-check/test/widget/printer_route_configuration_test.dart:244:20)
+#15     testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:192:29)
+<asynchronous suspension>
+#16     TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1952:5)
+<asynchronous suspension>
+<asynchronous suspension>
+(elided 3 frames from dart:async and package:stack_trace)
+
+The exception was caught asynchronously.
+════════════════════════════════════════════════════════════════════════════════════════════════════
+══╡ EXCEPTION CAUGHT BY FLUTTER TEST FRAMEWORK ╞════════════════════════════════════════════════════
+The following TestFailure was thrown running a test:
+Expected: no matching candidates
+  Actual: _KeyWidgetFinder:<Found 1 widget with key [<'printer-route-ip'>]: [
+            PosOnScreenTextField-[<'printer-route-ip'>](state: _PosFieldState#c39b7),
+          ]>
+   Which: means one was found but none were expected
+
+When the exception was thrown, this was the stack:
+#4      main.<anonymous closure> (file:///private/tmp/vynic-ui-baseline-check/test/widget/printer_route_configuration_test.dart:248:7)
+<asynchronous suspension>
+#5      testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:192:15)
+<asynchronous suspension>
+#6      TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1952:5)
+<asynchronous suspension>
+<asynchronous suspension>
+(elided one frame from package:stack_trace)
+
+This was caught by the test expectation on the following line:
+  file:///private/tmp/vynic-ui-baseline-check/test/widget/printer_route_configuration_test.dart line 248
+The test description was:
+  Windows selection freezes only the enumerated exact queue and revalidates on save
+════════════════════════════════════════════════════════════════════════════════════════════════════
+══╡ EXCEPTION CAUGHT BY FLUTTER TEST FRAMEWORK ╞════════════════════════════════════════════════════
+The following message was thrown:
+Multiple exceptions (2) were detected during the running of the current test, and at least one was
+unexpected.
+════════════════════════════════════════════════════════════════════════════════════════════════════
+00:02 +46 -32: /private/tmp/vynic-ui-baseline-check/test/unit/pos02_print_delivery_test.dart: kitchen render failure cannot admit a blank ticket or return success
+00:02 +46 -32: /private/tmp/vynic-ui-baseline-check/test/widget/printer_route_configuration_test.dart: Windows selection freezes only the enumerated exact queue and revalidates on save [E]
+  Test failed. See exception logs above.
+  The test description was: Windows selection freezes only the enumerated exact queue and revalidates on save
+  
+00:02 +46 -32: /private/tmp/vynic-ui-baseline-check/test/widget/printer_route_configuration_test.dart: queue changed after selection shows a failure without saving or submitting
+[AuditEventService] Found 1 unsynced events. Starting batch sync.
+[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP
+[AuditEventService] Batch sync failed. Will retry later.
+[AuditEventService] Found 2 unsynced events. Starting batch sync.
+[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP
+[AuditEventService] Batch sync failed. Will retry later.
+══╡ EXCEPTION CAUGHT BY FLUTTER TEST FRAMEWORK ╞════════════════════════════════════════════════════
+The following LocalVenueMismatch was thrown while running async test code:
+Bad state: This POS contains data for Venue menu01-venue-a, but the device is connecting to Venue
+synthetic-venue. Reconnect to the original Venue, or back up the complete POS data directory and use
+a fresh installation for the new restaurant. Existing data has been preserved.
+
+When the exception was thrown, this was the stack:
+#0      validateLocalVenueBinding.check (package:vynic/core/database/local_venue_binding.dart:34:7)
+#1      validateLocalVenueBinding.checkMenu (package:vynic/core/database/local_venue_binding.dart:38:33)
+#2      validateLocalVenueBinding (package:vynic/core/database/local_venue_binding.dart:41:26)
+#3      DatabaseCore.validateVenueBinding (package:vynic/core/database/database_core.dart:86:5)
+#4      EdgeDeviceCredentialStore._saveEnrollment (package:vynic/core/services/edge/edge_device_credential_store.dart:184:18)
+#5      EdgeDeviceCredentialStore.saveEnrollment.<anonymous closure> (package:vynic/core/services/edge/edge_device_credential_store.dart:163:11)
+#6      PrintIdentityAdmission.changeIdentity (package:vynic/core/services/printing/print_identity_admission.dart:32:26)
+#7      EdgeDeviceCredentialStore.saveEnrollment (package:vynic/core/services/edge/edge_device_credential_store.dart:162:32)
+#8      main.prepareWindows (file:///private/tmp/vynic-ui-baseline-check/test/widget/printer_route_configuration_test.dart:138:39)
+#9      AutomatedTestWidgetsFlutterBinding.runAsync.<anonymous closure> (package:flutter_test/src/binding.dart:2307:17)
+#12     AutomatedTestWidgetsFlutterBinding.runAsync (package:flutter_test/src/binding.dart:2303:26)
+#13     WidgetTester.runAsync (package:flutter_test/src/widget_tester.dart:838:17)
+#14     main.<anonymous closure> (file:///private/tmp/vynic-ui-baseline-check/test/widget/printer_route_configuration_test.dart:295:20)
+#15     testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:192:29)
+<asynchronous suspension>
+#16     TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1952:5)
+<asynchronous suspension>
+<asynchronous suspension>
+(elided 3 frames from dart:async and package:stack_trace)
+
+The exception was caught asynchronously.
+════════════════════════════════════════════════════════════════════════════════════════════════════
+══╡ EXCEPTION CAUGHT BY FLUTTER TEST FRAMEWORK ╞════════════════════════════════════════════════════
+The following StateError was thrown running a test:
+Bad state: No element
+
+When the exception was thrown, this was the stack:
+#0      Iterable.single (dart:core/iterable.dart:694:25)
+#1      WidgetController.widget (package:flutter_test/src/controller.dart:828:30)
+#2      main.dropdown (file:///private/tmp/vynic-ui-baseline-check/test/widget/printer_route_configuration_test.dart:97:14)
+#3      main.<anonymous closure> (file:///private/tmp/vynic-ui-baseline-check/test/widget/printer_route_configuration_test.dart:299:26)
+<asynchronous suspension>
+#4      testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:192:15)
+<asynchronous suspension>
+#5      TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1952:5)
+<asynchronous suspension>
+<asynchronous suspension>
+(elided one frame from package:stack_trace)
+
+The test description was:
+  queue changed after selection shows a failure without saving or submitting
+════════════════════════════════════════════════════════════════════════════════════════════════════
+══╡ EXCEPTION CAUGHT BY FLUTTER TEST FRAMEWORK ╞════════════════════════════════════════════════════
+The following message was thrown:
+Multiple exceptions (2) were detected during the running of the current test, and at least one was
+unexpected.
+════════════════════════════════════════════════════════════════════════════════════════════════════
+00:02 +46 -33: /private/tmp/vynic-ui-baseline-check/test/unit/pos02_print_delivery_test.dart: kitchen render failure cannot admit a blank ticket or return success
+00:02 +46 -33: /private/tmp/vynic-ui-baseline-check/test/widget/printer_route_configuration_test.dart: queue changed after selection shows a failure without saving or submitting [E]
+  Test failed. See exception logs above.
+  The test description was: queue changed after selection shows a failure without saving or submitting
+  
+00:02 +46 -33: /private/tmp/vynic-ui-baseline-check/test/widget/printer_route_configuration_test.dart: Cloud ownership shows a hold and prevents a local primary replacement
+[AuditEventService] Found 1 unsynced events. Starting batch sync.
+[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP
+[AuditEventService] Batch sync failed. Will retry later.
+[AuditEventService] Found 2 unsynced events. Starting batch sync.
+[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP
+[AuditEventService] Batch sync failed. Will retry later.
+00:02 +47 -33: /private/tmp/vynic-ui-baseline-check/test/unit/pos02_print_delivery_test.dart: kitchen render failure cannot admit a blank ticket or return success
+00:02 +47 -33: /private/tmp/vynic-ui-baseline-check/test/widget/printer_route_configuration_test.dart: stale edits show a conflict and closing reloads the accepted revision
+[AuditEventService] Found 1 unsynced events. Starting batch sync.
+[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP
+[AuditEventService] Batch sync failed. Will retry later.
+[AuditEventService] Found 2 unsynced events. Starting batch sync.
+[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP
+[AuditEventService] Batch sync failed. Will retry later.
+00:03 +48 -33: /private/tmp/vynic-ui-baseline-check/test/unit/pos02_print_delivery_test.dart: kitchen render failure cannot admit a blank ticket or return success
+00:03 +48 -33: /private/tmp/vynic-ui-baseline-check/test/widget/printer_route_configuration_test.dart: locking an open route dialog disables its fields and captured submit handler
+[AuditEventService] Found 1 unsynced events. Starting batch sync.
+[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP
+[AuditEventService] Batch sync failed. Will retry later.
+[AuditEventService] Found 2 unsynced events. Starting batch sync.
+[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP
+[AuditEventService] Batch sync failed. Will retry later.
+[DeveloperAccess] locked (manual)
+00:03 +49 -33: /private/tmp/vynic-ui-baseline-check/test/unit/pos02_print_delivery_test.dart: kitchen render failure cannot admit a blank ticket or return success
+00:03 +49 -33: /private/tmp/vynic-ui-baseline-check/test/widget/printer_route_configuration_test.dart: malformed versioned routes disable administration while retaining stored data
+[AuditEventService] Found 1 unsynced events. Starting batch sync.
+[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP
+[AuditEventService] Batch sync failed. Will retry later.
+[AuditEventService] Found 2 unsynced events. Starting batch sync.
+[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP
+[AuditEventService] Batch sync failed. Will retry later.
+00:03 +50 -33: /private/tmp/vynic-ui-baseline-check/test/unit/pos02_print_delivery_test.dart: kitchen render failure cannot admit a blank ticket or return success
+00:03 +50 -33: /private/tmp/vynic-ui-baseline-check/test/widget/printer_route_configuration_test.dart: new capability controls use raster defaults with no cutter or sound
+[AuditEventService] Found 1 unsynced events. Starting batch sync.
+[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP
+[AuditEventService] Batch sync failed. Will retry later.
+[AuditEventService] Found 2 unsynced events. Starting batch sync.
+[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP
+[AuditEventService] Batch sync failed. Will retry later.
+00:03 +51 -33: /private/tmp/vynic-ui-baseline-check/test/unit/pos02_print_delivery_test.dart: kitchen render failure cannot admit a blank ticket or return success
+00:03 +51 -33: /private/tmp/vynic-ui-baseline-check/test/widget/printer_route_configuration_test.dart: paper and cutter save explicitly and Epson sound needs confirmation plus enable
+[AuditEventService] Found 1 unsynced events. Starting batch sync.
+[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP
+[AuditEventService] Batch sync failed. Will retry later.
+[AuditEventService] Found 2 unsynced events. Starting batch sync.
+[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP
+[AuditEventService] Batch sync failed. Will retry later.
+00:03 +52 -33: /private/tmp/vynic-ui-baseline-check/test/unit/pos02_print_delivery_test.dart: kitchen render failure cannot admit a blank ticket or return success
+00:04 +52 -33: /private/tmp/vynic-ui-baseline-check/test/widget/printer_route_configuration_test.dart: driver-rendered language saves as visibly held configuration
+[AuditEventService] Found 1 unsynced events. Starting batch sync.
+[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP
+[AuditEventService] Batch sync failed. Will retry later.
+[AuditEventService] Found 2 unsynced events. Starting batch sync.
+[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP
+[AuditEventService] Batch sync failed. Will retry later.
+00:04 +53 -33: /private/tmp/vynic-ui-baseline-check/test/unit/pos02_print_delivery_test.dart: kitchen render failure cannot admit a blank ticket or return success
+00:04 +53 -33: /private/tmp/vynic-ui-baseline-check/test/widget/printer_route_configuration_test.dart: an absent beep setting stays off when an existing profile is edited
+[AuditEventService] Found 1 unsynced events. Starting batch sync.
+[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP
+[AuditEventService] Batch sync failed. Will retry later.
+[AuditEventService] Found 2 unsynced events. Starting batch sync.
+[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP
+[AuditEventService] Batch sync failed. Will retry later.
+00:04 +54 -33: /private/tmp/vynic-ui-baseline-check/test/unit/pos02_print_delivery_test.dart: kitchen render failure cannot admit a blank ticket or return success
+00:04 +54 -33: /private/tmp/vynic-ui-baseline-check/test/widget/printer_route_configuration_test.dart: invalid raster dimensions stay visible and do not register a route
+[AuditEventService] Found 1 unsynced events. Starting batch sync.
+[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP
+[AuditEventService] Batch sync failed. Will retry later.
+[AuditEventService] Found 2 unsynced events. Starting batch sync.
+[AuditEventService] Batch transmission error: Bad state: MENU01 fixture forbids actual HTTP
+[AuditEventService] Batch sync failed. Will retry later.
+00:04 +55 -33: /private/tmp/vynic-ui-baseline-check/test/unit/pos02_print_delivery_test.dart: kitchen render failure cannot admit a blank ticket or return success
+00:31 +55 -34: /private/tmp/vynic-ui-baseline-check/test/unit/pos02_print_delivery_test.dart: kitchen render failure cannot admit a blank ticket or return success [E]
+  TimeoutException after 0:00:30.000000: Test timed out after 30 seconds. See https://pub.dev/packages/test#timeouts
+  dart:isolate  _RawReceivePort._handleMessage
+  
+00:31 +55 -34: /private/tmp/vynic-ui-baseline-check/test/unit/pos02_print_delivery_test.dart: receipt freezes Venue and destination across deferred rendering
+01:01 +55 -35: /private/tmp/vynic-ui-baseline-check/test/unit/pos02_print_delivery_test.dart: receipt freezes Venue and destination across deferred rendering [E]
+  TimeoutException after 0:00:30.000000: Test timed out after 30 seconds. See https://pub.dev/packages/test#timeouts
+  dart:isolate  _RawReceivePort._handleMessage
+  
+01:01 +55 -35: /private/tmp/vynic-ui-baseline-check/test/unit/pos02_print_delivery_test.dart: receipt render failure cannot admit a blank ticket or return success
+01:31 +55 -36: /private/tmp/vynic-ui-baseline-check/test/unit/pos02_print_delivery_test.dart: receipt render failure cannot admit a blank ticket or return success [E]
+  TimeoutException after 0:00:30.000000: Test timed out after 30 seconds. See https://pub.dev/packages/test#timeouts
+  dart:isolate  _RawReceivePort._handleMessage
+  
+01:31 +55 -36: /private/tmp/vynic-ui-baseline-check/test/unit/pos02_print_delivery_test.dart: report freezes Venue and destination across deferred rendering
+02:01 +55 -37: /private/tmp/vynic-ui-baseline-check/test/unit/pos02_print_delivery_test.dart: report freezes Venue and destination across deferred rendering [E]
+  TimeoutException after 0:00:30.000000: Test timed out after 30 seconds. See https://pub.dev/packages/test#timeouts
+  dart:isolate  _RawReceivePort._handleMessage
+  
+02:01 +55 -37: /private/tmp/vynic-ui-baseline-check/test/unit/pos02_print_delivery_test.dart: report render failure cannot admit a blank ticket or return success
+02:31 +55 -38: /private/tmp/vynic-ui-baseline-check/test/unit/pos02_print_delivery_test.dart: report render failure cannot admit a blank ticket or return success [E]
+  TimeoutException after 0:00:30.000000: Test timed out after 30 seconds. See https://pub.dev/packages/test#timeouts
+  dart:isolate  _RawReceivePort._handleMessage
+  
+02:31 +55 -38: /private/tmp/vynic-ui-baseline-check/test/unit/pos02_print_delivery_test.dart: local confirmation interruption at meta.put:queued:after leaves recoverable original or held warning
+03:01 +55 -39: /private/tmp/vynic-ui-baseline-check/test/unit/pos02_print_delivery_test.dart: local confirmation interruption at meta.put:queued:after leaves recoverable original or held warning [E]
+  TimeoutException after 0:00:30.000000: Test timed out after 30 seconds. See https://pub.dev/packages/test#timeouts
+  dart:isolate  _RawReceivePort._handleMessage
+  
+03:01 +55 -39: /private/tmp/vynic-ui-baseline-check/test/unit/pos02_print_delivery_test.dart: local confirmation interruption at orders.put:confirmed:after leaves recoverable original or held warning
+03:31 +55 -40: /private/tmp/vynic-ui-baseline-check/test/unit/pos02_print_delivery_test.dart: local confirmation interruption at orders.put:confirmed:after leaves recoverable original or held warning [E]
+  TimeoutException after 0:00:30.000000: Test timed out after 30 seconds. See https://pub.dev/packages/test#timeouts
+  dart:isolate  _RawReceivePort._handleMessage
+  
+03:31 +55 -40: /private/tmp/vynic-ui-baseline-check/test/unit/pos02_print_delivery_test.dart: worker rechecks committed confirmation after waiting for its admission owner
+04:01 +55 -41: /private/tmp/vynic-ui-baseline-check/test/unit/pos02_print_delivery_test.dart: worker rechecks committed confirmation after waiting for its admission owner [E]
+  TimeoutException after 0:00:30.000000: Test timed out after 30 seconds. See https://pub.dev/packages/test#timeouts
+  dart:isolate  _RawReceivePort._handleMessage
+  
+04:01 +55 -41: /private/tmp/vynic-ui-baseline-check/test/unit/pos02_print_delivery_test.dart: same-ID admission refuses a changed or removed confirmation predicate
+04:31 +55 -42: /private/tmp/vynic-ui-baseline-check/test/unit/pos02_print_delivery_test.dart: same-ID admission refuses a changed or removed confirmation predicate [E]
+  TimeoutException after 0:00:30.000000: Test timed out after 30 seconds. See https://pub.dev/packages/test#timeouts
+  dart:isolate  _RawReceivePort._handleMessage
+  
+04:31 +55 -42: /private/tmp/vynic-ui-baseline-check/test/unit/pos02_print_delivery_test.dart: an unbound frozen ticket is held when enrollment appears during rendering
+05:01 +55 -43: /private/tmp/vynic-ui-baseline-check/test/unit/pos02_print_delivery_test.dart: an unbound frozen ticket is held when enrollment appears during rendering [E]
+  TimeoutException after 0:00:30.000000: Test timed out after 30 seconds. See https://pub.dev/packages/test#timeouts
+  dart:isolate  _RawReceivePort._handleMessage
+  
+05:01 +55 -43: /private/tmp/vynic-ui-baseline-check/test/unit/pos02_print_delivery_test.dart: legacy copy APIs enforce policy and persist visible copy provenance
+05:31 +55 -44: /private/tmp/vynic-ui-baseline-check/test/unit/pos02_print_delivery_test.dart: legacy copy APIs enforce policy and persist visible copy provenance [E]
+  TimeoutException after 0:00:30.000000: Test timed out after 30 seconds. See https://pub.dev/packages/test#timeouts
+  dart:isolate  _RawReceivePort._handleMessage
+  
+05:31 +55 -44: Some tests failed.
+
+Failing tests:
+  /private/tmp/vynic-ui-baseline-check/test/unit/cloud_printer_runtime_sync_test.dart: Cloud v2 owns every role and local records never override it
+  /private/tmp/vynic-ui-baseline-check/test/unit/cloud_printer_runtime_sync_test.dart: PREPARED and disabled routes hold and exact legacy stubs stop old TCP lookup fallback
+  /private/tmp/vynic-ui-baseline-check/test/unit/cloud_printer_runtime_sync_test.dart: a failed publication flush restores the complete last good printer value
+  /private/tmp/vynic-ui-baseline-check/test/unit/cloud_printer_runtime_sync_test.dart: a stale HTTP response after Device change cannot alter any cached snapshot
+  ... and 40 more

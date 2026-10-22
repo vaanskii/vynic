@@ -14,7 +14,7 @@ build/
 .env.*
 !.env.example
 
-# ── JS/TS tooling output (apps/venue-web, apps/platform-web) ──────────────────
+# ── JS/TS tooling output (apps/vankisi-custom-web, apps/platform-web) ─────────
 node_modules/
 dist/
 .vite/
@@ -23,3 +23,10 @@ coverage/
 
 # ── OS artifacts ──────────────────────────────────────────────────────────────
 Thumbs.db
+
+!.env.docker.example
+!.env.production.example
+deploy/production-tls/
+
+# Rendered captures only; keep the preview app's source, assets and config visible.
+/experiments/manager-design-preview/previews/

@@ -1,0 +1,146 @@
+{
+  "relevantDeveloperBuildMetadata": [
+    {
+      "product": "manager",
+      "buildMetadataFile": "apps/operations/.dart_tool/vynic-dev/manager/apps/operations/macos/Flutter/ephemeral/Flutter-Generated.xcconfig",
+      "relevantBuildDefines": {
+        "VYNIC_ENV": "development"
+      }
+    },
+    {
+      "product": "pos",
+      "buildMetadataFile": "apps/operations/.dart_tool/vynic-dev/pos/apps/operations/macos/Flutter/ephemeral/Flutter-Generated.xcconfig",
+      "relevantBuildDefines": {
+        "VYNIC_ENV": "development"
+      }
+    }
+  ],
+  "legacyFlutterEnvUrls": [
+    {
+      "file": "apps/operations/.env",
+      "key": "BACKEND_URL_ANDROID",
+      "scheme": "http",
+      "hostname": "10.0.2.2",
+      "port": 3000,
+      "valueUsedByApiConfig": false
+    },
+    {
+      "file": "apps/operations/.env",
+      "key": "BACKEND_URL_IOS",
+      "scheme": "http",
+      "hostname": "127.0.0.1",
+      "port": 3000,
+      "valueUsedByApiConfig": false
+    },
+    {
+      "file": "apps/operations/.env",
+      "key": "BACKEND_URL_MACOS",
+      "scheme": "http",
+      "hostname": "127.0.0.1",
+      "port": 3000,
+      "valueUsedByApiConfig": false
+    },
+    {
+      "file": "apps/operations/.env",
+      "key": "BACKEND_URL_WINDOWS",
+      "scheme": "http",
+      "hostname": "127.0.0.1",
+      "port": 3000,
+      "valueUsedByApiConfig": false
+    },
+    {
+      "file": "apps/operations/.env",
+      "key": "BACKEND_URL_WEB",
+      "scheme": "http",
+      "hostname": "localhost",
+      "port": 3000,
+      "valueUsedByApiConfig": false
+    },
+    {
+      "file": "apps/operations/.env",
+      "key": "BACKEND_URL_FALLBACK",
+      "scheme": "http",
+      "hostname": "localhost",
+      "port": 3000,
+      "valueUsedByApiConfig": false
+    },
+    {
+      "file": "apps/operations/.env.example",
+      "key": "BACKEND_URL_ANDROID",
+      "scheme": "http",
+      "hostname": "10.0.2.2",
+      "port": 3000,
+      "valueUsedByApiConfig": false
+    },
+    {
+      "file": "apps/operations/.env.example",
+      "key": "BACKEND_URL_IOS",
+      "scheme": "http",
+      "hostname": "127.0.0.1",
+      "port": 3000,
+      "valueUsedByApiConfig": false
+    },
+    {
+      "file": "apps/operations/.env.example",
+      "key": "BACKEND_URL_MACOS",
+      "scheme": "http",
+      "hostname": "127.0.0.1",
+      "port": 3000,
+      "valueUsedByApiConfig": false
+    },
+    {
+      "file": "apps/operations/.env.example",
+      "key": "BACKEND_URL_WINDOWS",
+      "scheme": "http",
+      "hostname": "127.0.0.1",
+      "port": 3000,
+      "valueUsedByApiConfig": false
+    },
+    {
+      "file": "apps/operations/.env.example",
+      "key": "BACKEND_URL_WEB",
+      "scheme": "http",
+      "hostname": "localhost",
+      "port": 3000,
+      "valueUsedByApiConfig": false
+    },
+    {
+      "file": "apps/operations/.env.example",
+      "key": "BACKEND_URL_FALLBACK",
+      "scheme": "http",
+      "hostname": "localhost",
+      "port": 3000,
+      "valueUsedByApiConfig": false
+    }
+  ],
+  "existingExampleFiles": [
+    ".env.docker.example",
+    ".env.production.example",
+    "apps/operations/.env.example",
+    "apps/backend/.env.example"
+  ],
+  "managerPreferenceStringMetadata": [
+    {
+      "file": "/Users/vaanskii/Library/Containers/ge.vynic.manager/Data/Documents/VynicManager/manager_preferences.hive",
+      "allowedOriginStrings": [
+        "http://api.vynic.localhost"
+      ],
+      "selectedVenueMarkerPresent": true,
+      "readLimit": "String presence only, not a decoded latest Hive value; no auth data emitted or Hive opened"
+    }
+  ],
+  "liveManagerReadOnlyUi": {
+    "app": "Vynic Manager",
+    "backendText": "http://api.vynic.localhost",
+    "selectedRestaurantText": "Restaurant Vankisi",
+    "form": "PIN pad; no restaurant-code entry while selection is remembered",
+    "credentialOrPinSubmitted": false
+  },
+  "canonicalLocalHostname": "api.vynic.localhost",
+  "incorrectHostnames": {
+    "api.vyinc.localhost": "404 healthz",
+    "api.vyinic.localhost": "404 healthz"
+  },
+  "envReadingLimit": "Values emitted only for public backend URL components and VYNIC_ENV; no secret values, usernames, passwords, code/token/PIN/verifier fields emitted. No env file edited.",
+  "flutterSdkLocalEvidence": "flutter_tools Flutter-3.44.1 runner/flutter_command.dart: --dart-define-from-file supports .json/.env at build/run time; String.fromEnvironment reads compile-time values."
+}

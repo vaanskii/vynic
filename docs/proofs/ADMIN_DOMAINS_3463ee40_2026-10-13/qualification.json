@@ -1,0 +1,104 @@
+{
+  "status": "PASS_CODE_AND_ISOLATED_TESTS_NOT_DEPLOYED",
+  "qualifiedAtUtc": "2026-10-13T10:10:25.683364+00:00",
+  "head": "3463ee406184fec7f53818416e11d0e5f5602c87",
+  "uncommitted": true,
+  "scope": {
+    "adminSaasAndCustomVynicSubdomainsAndExternalDomains": true,
+    "adminHostnameRenameWithExpectedHostnameAndReason": true,
+    "ownerHostnameRequestsAndChanges": "DENIED_SUPPORT_REQUIRED",
+    "assignedSaasMirrorsAndUnpublishedContentPreserved": true,
+    "protectedPlatformOrigins": [
+      "apex",
+      "api",
+      "admin",
+      "preview",
+      "www"
+    ],
+    "crossVenueAndRetainedNameProtection": true,
+    "dnsTlsCustomFrontendRouting": "SEPARATE_DEPLOYMENT_WORK"
+  },
+  "tests": {
+    "backendAggregate": {
+      "passed": 851,
+      "failed": 0,
+      "skipped": 768
+    },
+    "adminDomains": {
+      "passed": 20,
+      "failed": 0,
+      "skipped": 0
+    },
+    "provisioning": {
+      "passed": 14,
+      "failed": 0,
+      "skipped": 0
+    },
+    "controlPlane": {
+      "passed": 43,
+      "failed": 0,
+      "skipped": 0
+    },
+    "websiteCore": {
+      "passed": 23,
+      "failed": 0,
+      "skipped": 0
+    },
+    "webAggregate": {
+      "passed": 170,
+      "failed": 0,
+      "skipped": 0
+    },
+    "overlap": {
+      "additionalPgPassed": 100,
+      "aggregatePassedOverlap": 0,
+      "aggregateSkippedRunSeparately": 100,
+      "distinctBackendPassed": 951
+    }
+  },
+  "checks": {
+    "backendTypecheck": "PASS_FINAL",
+    "backendBuild": "PASS",
+    "webTypecheckBuild": "PASS",
+    "generatedContracts": "PASS",
+    "newAndChangedImplementationLintErrors": 0,
+    "newAndChangedImplementationLintWarnings": 0,
+    "existingHistoricalReviewLintErrors": 2,
+    "provisioningTestLintComparison": {
+      "beforeErrors": 149,
+      "beforeWarnings": 14,
+      "afterErrors": 91,
+      "afterWarnings": 9,
+      "addedDiagnostics": []
+    },
+    "existingFrontendApiLintErrors": 1,
+    "gitDiffCheck": "PASS",
+    "typeOnlyLintFixEmitsIdenticalRuntimeJs": true,
+    "provisioningTypeOnlyCleanupEmitsIdenticalRuntimeJs": true
+  },
+  "boundaries": {
+    "realDomainWrites": false,
+    "liveServicesRestarted": false,
+    "credentialsChanged": false,
+    "schemaMigrationsAdded": false,
+    "deployed": false,
+    "committed": false,
+    "pushed": false
+  },
+  "cleanup": {
+    "ownedCluster": "STOPPED",
+    "pgCtlStatusExit": 3,
+    "postmasterPidAbsent": true,
+    "liveServicesChanged": false
+  },
+  "limitations": [
+    "Backend aggregate retains opt-in skips; the additional passed/skipped intersection is recorded explicitly.",
+    "Existing lint debt remains in historical review, provisioning fixtures and frontend API; new/current implementation lint is clean.",
+    "UI interaction tests use jsdom fixtures. A real-browser screenshot pass was not run; Playwright is unavailable in this workspace.",
+    "Running Docker images are unchanged. Rebuild/deployment, actual DNS/TLS and CUSTOM frontend routing are not part of this source qualification."
+  ],
+  "review": {
+    "method": "Self-review against tenant/principal/domain lifecycle and current tests; no separate-agent review claimed"
+  },
+  "privateLogs": "/tmp/vynic-admin-domains-y1nto7aq"
+}

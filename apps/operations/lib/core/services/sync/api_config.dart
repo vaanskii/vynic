@@ -1,3 +1,4 @@
+import '../menu/menu_client_compatibility.dart';
 import 'dart:io';
 import 'local_lab_api.dart';
 import 'package:flutter/foundation.dart';
@@ -39,17 +40,19 @@ class ApiConfig {
   }
 
   static String get baseUrl {
-    if (configuredUrl.isNotEmpty)
-      return configuredUrl.replaceFirst(RegExp(r'/$'), '');
+    validateBuild();
     if (allowDeveloperOverride) {
       final override =
           DatabaseService.getBackendUrlOverride() ??
           ManagerAppPreferences.backendUrlOverride.value;
       if (override != null) return override;
     }
-    validateBuild();
+    if (configuredUrl.isNotEmpty)
+      return configuredUrl.replaceFirst(RegExp(r'/$'), '');
     return !kIsWeb && Platform.isAndroid
         ? 'http://10.0.2.2:3000'
+        : !kIsWeb && Platform.isMacOS
+        ? 'http://api.vynic.localhost'
         : 'http://127.0.0.1:3000';
   }
 
@@ -63,6 +66,7 @@ class ApiConfig {
   static String? get posSyncApiKey => null;
   static Map<String, String> get posSyncHeaders => {
     'Content-Type': 'application/json',
+    ...MenuClientCompatibility.headers,
     if (EdgeDeviceCredentialStore.credential case final String credential)
       'X-POS-Sync-Key': credential,
   };
@@ -72,7 +76,11 @@ class ApiConfig {
     // A host cannot contain whitespace, and Uri.parse would silently
     // percent-encode it into something that looks like a valid address.
     if (RegExp(r'\s').hasMatch(value)) return null;
-    if (!value.contains('://')) {
+    // A bare address is a direct-backend shortcut and defaults to Nest's :3000.
+    // An explicit scheme without a port means that scheme's own port, so
+    // http://api.vynic.localhost reaches the Docker native ingress on :80.
+    final bareAddress = !value.contains('://');
+    if (bareAddress) {
       value = 'http://$value';
     }
 
@@ -88,7 +96,9 @@ class ApiConfig {
         ? uri.port
         : scheme == 'https'
         ? 443
-        : 3000;
+        : bareAddress
+        ? 3000
+        : 80;
     if (port <= 0 || port > 65535) return null;
 
     return uri

@@ -1,0 +1,222 @@
+--- a/apps/backend/src/website/custom/custom-website.service.ts
++++ b/apps/backend/src/website/custom/custom-website.service.ts
+@@ -11,6 +11,7 @@
+ import { CustomWebsiteStatus, Prisma } from '@prisma/client';
+ import { PrismaService } from '../../prisma.service';
+ import { VenueEntitlementsService } from '../../entitlements/venue-entitlements.service';
++import { latestBogIntegrationStatus } from '../../payment-integrations/payment-integration-status';
+ import {
+   CUSTOM_WEBSITE_STATUSES,
+   customReadiness,
+@@ -140,10 +141,7 @@
+           select: { id: true, hostname: true, status: true, createdAt: true },
+           orderBy: { hostname: 'asc' },
+         }),
+-        this.db.paymentIntegration.findFirst({
+-          where: { venueId, provider: 'BOG' },
+-          select: { enabled: true },
+-        }),
++        latestBogIntegrationStatus(this.db, venueId),
+       ],
+     );
+     return {
+--- a/apps/backend/src/payment-integrations/web06-readiness.integration.spec.ts
++++ b/apps/backend/src/payment-integrations/web06-readiness.integration.spec.ts
+@@ -21,6 +21,9 @@
+ } from './payment-integrations.service';
+ import { emptyWebsiteContent } from '../website/core/website-content';
+ import type { CapabilityState } from '../website/tenancy/website-capabilities';
++import { PlatformCustomWebsiteController } from '../platform/platform-custom-website.controller';
++import { CustomWebsiteService } from '../website/custom/custom-website.service';
++import type { CustomPaymentStatus } from '../website/custom/custom-website';
+ 
+ const url = process.env.WEB06_TEST_DATABASE_URL;
+ (url ? describe : describe.skip)(
+@@ -58,6 +61,19 @@
+           .set(bearer(admin))
+           .expect(200)
+       ).body as CapabilityState[];
++    const customStatus = async (f: (typeof fixtures)[number]) => {
++      const response = await http()
++        .get(`/platform/venues/${f.id}/custom-website`)
++        .set(bearer(admin));
++      expect({
++        status: response.status,
++        message: (response.body as { message?: unknown }).message,
++      }).toEqual({ status: 200, message: undefined });
++      return response.body as {
++        venueId: string;
++        payments: CustomPaymentStatus;
++      };
++    };
+     const publicFlags = async (f: (typeof fixtures)[number]) =>
+       (
+         await http()
+@@ -179,8 +195,9 @@
+         controllers: [
+           PlatformWebsiteCapabilitiesController,
+           WebsiteVenueController,
++          PlatformCustomWebsiteController,
+         ],
+-        providers: [WebsiteVenueService],
++        providers: [WebsiteVenueService, CustomWebsiteService],
+       });
+       integrations = app.get(PaymentIntegrationsService);
+     });
+@@ -341,5 +358,81 @@
+       ).toMatchObject({ ready: true, live: false, commercial: false });
+       expect((await publicFlags(f)).capabilities.onlinePayments).toBe(false);
+     });
++    it('CUSTOM operator status follows the greatest revision across rotation, clock skew, disable and reconnect', async () => {
++      const f = await createFixture('CUSTOM', 'custom-status-rotation');
++      await save(f, 'custom-status-r1').expect(200);
++      expect((await customStatus(f)).payments).toBe('ENABLED');
++      await save(f, 'custom-status-r2').expect(200);
++      expect((await customStatus(f)).payments).toBe('ENABLED');
++      // Synthetic historical metadata: neither timestamp nor an old enabled row
++      // may override the current revision's disabled state.
++      await db.paymentIntegration.updateMany({
++        where: { venueId: f.id, revision: 2 },
++        data: { enabled: false, createdAt: new Date('2000-01-01') },
++      });
++      await db.paymentIntegration.updateMany({
++        where: { venueId: f.id, revision: 1 },
++        data: { enabled: true, createdAt: new Date('2099-01-01') },
++      });
++      expect((await customStatus(f)).payments).toBe('DISABLED');
++      expect(await status(f)).toMatchObject({ configured: false, revision: 2 });
++      await save(f, 'custom-status-r3').expect(200);
++      expect((await customStatus(f)).payments).toBe('ENABLED');
++      expect(await status(f)).toMatchObject({ configured: true, revision: 3 });
++    });
++    it('CUSTOM status keeps missing configuration, entitlement and Platform authority scoped to each Venue', async () => {
++      const configured = await createFixture(
++        'CUSTOM',
++        'custom-status-configured',
++      );
++      await save(configured, 'custom-status-isolated').expect(200);
++      const missing = await createFixture('CUSTOM', 'custom-status-missing');
++      expect(await customStatus(missing)).toMatchObject({
++        venueId: missing.id,
++        payments: 'NOT_CONFIGURED',
++      });
++      expect((await customStatus(configured)).payments).toBe('ENABLED');
++      await db.venueFeatureOverride.updateMany({
++        where: { venueId: configured.id, feature: { key: 'ONLINE_PAYMENTS' } },
++        data: { effect: 'DISABLED' },
++      });
++      expect((await customStatus(configured)).payments).toBe('NOT_INCLUDED');
++      await http()
++        .get(`/platform/venues/${configured.id}/custom-website`)
++        .set(bearer(configured.ownerToken))
++        .expect(401);
++      await http()
++        .get(`/platform/venues/${missing.id}/custom-website`)
++        .expect(401);
++    });
++    it('CUSTOM status requires no decryption key, discloses no credentials and preserves pinned history', async () => {
++      const f = await createFixture('CUSTOM', 'custom-status-history');
++      await save(f, 'custom-history-r1').expect(200);
++      await save(f, 'custom-history-r2').expect(200);
++      const before = await db.paymentIntegration.findMany({
++        where: { venueId: f.id },
++        orderBy: { revision: 'asc' },
++      });
++      delete process.env.PAYMENT_INTEGRATION_MASTER_KEY;
++      try {
++        const view = await customStatus(f);
++        expect(view.payments).toBe('ENABLED');
++        expect(JSON.stringify(view)).not.toMatch(
++          /fixture-only|encryptedConfig|clientSecret|clientId/,
++        );
++      } finally {
++        process.env.PAYMENT_INTEGRATION_MASTER_KEY = '42'.repeat(32);
++      }
++      expect(
++        await db.paymentIntegration.findMany({
++          where: { venueId: f.id },
++          orderBy: { revision: 'asc' },
++        }),
++      ).toEqual(before);
++      expect(
++        (await integrations.credentials(f.id, before[0].id)).clientSecret ===
++          'fixture-only-custom-history-r1',
++      ).toBe(true);
++    });
+   },
+ );
+--- a/docs/WEB06_CURRENT_PAYMENT_READINESS.md
++++ b/docs/WEB06_CURRENT_PAYMENT_READINESS.md
+@@ -9,7 +9,8 @@
+ configured and Website payments/reservations as unavailable in both SAAS and
+ CUSTOM. The new regression failed on that original source.
+ 
+-`latestBogIntegrationStatus` now supplies both readers with the same Venue/BOG
++`latestBogIntegrationStatus` now supplies merchant status, Website capabilities
++and the CUSTOM operator view with the same Venue/BOG
+ query ordered by revision descending. It selects only enabled/revision/createdAt;
+ no ciphertext or client secret is loaded or decrypted. Missing configuration
+ and the latest disabled revision remain distinct unavailable states. Existing
+@@ -29,3 +30,22 @@
+ 
+ Final source/check results and opt-in test accounting are retained in
+ `docs/proofs/WEB06_3463ee40_2026-10-13/qualification.json`.
++
++The 2026-10-14 CUSTOM follow-up closes the remaining unordered read in
++`CustomWebsiteService.facts`. The new HTTP/PostgreSQL regression reproduced
++`DISABLED` after rotation while the current revision was enabled. Three added
++cases cover the operator view after rotation, a latest disabled revision with
++an older enabled row and skewed timestamps, reconnect, missing configuration,
++entitlement removal, Venue isolation, owner/anonymous denial, keyless metadata
++reads and unchanged pinned history. The production change only imports and
++calls the existing selector; no schema or permission change is needed.
++
++Final validation: 10 focused cases; 874 backend aggregate passes / 843 skips;
++17 existing CUSTOM cases and 8 W1 cases, with mocked bank transport. These are
++899 distinct passing case records; the focused 10 also ran in the aggregate.
++818 opt-in cases were not executed across these runs. Backend types/build,
++changed-boundary lint (zero errors/warnings), formatting and `git diff --check`
++pass. All databases were disposable on an owned loopback PostgreSQL cluster;
++75 current migrations applied to fresh databases. No live services or bank
++were used. Exact evidence, qualification limits and owned-resource cleanup:
++`docs/proofs/WEB06_CUSTOM_STATUS_3463ee40_2026-10-14/qualification.json`.
+--- a/docs/agent-state/VYNIC_PROJECT_STATE.md
++++ b/docs/agent-state/VYNIC_PROJECT_STATE.md
+@@ -1260,11 +1260,12 @@
+   and remain Cloud-side after disconnect or entitlement removal. Controlled legacy
+   import is explicit, audited, idempotent and never runs in Prisma migrations.
+   See `docs/WEBSITE_PHASE_W1.md` for rollout and disposable two-Venue proof.
+-- WEB-06 is DONE at the read-only readiness boundary: Website capabilities and
+-  merchant status share `latestBogIntegrationStatus`, selecting safe metadata
++- WEB-06 is DONE at the read-only readiness boundary: Website capabilities,
++  merchant status and the CUSTOM operator view share `latestBogIntegrationStatus`,
++  selecting safe metadata
+   from the greatest Venue/BOG revision. Rotation no longer reads an older disabled
+   row; disconnect remains unavailable, and reconnect/newer revisions restore
+-  readiness. Seven new real HTTP/PostgreSQL cases plus W1 and Website regressions
++  readiness. Ten real HTTP/PostgreSQL cases plus W1 and Website regressions
+   preserve tenant isolation, entitlement/policy gating and historical credentials.
+   No payment creation/settlement rules, encrypted revisions or schema change.
+   It makes no money/hold policy changes; WEB-01/04 qualification is recorded below.
+--- a/docs/agent-state/VYNIC_CODE_MAP.md
++++ b/docs/agent-state/VYNIC_CODE_MAP.md
+@@ -356,7 +356,7 @@
+ - WEB-05 deployment identity: `website/core/website-identity.ts`, `website/custom/custom-website-runtime.ts` / `.service.ts`; metadata migration `20261021120000_custom_website_build_identity`; manifest CLI `packages/website-client/scripts/create-site-manifest.mjs`, Vankisi identity `src/config/siteIdentity.json`, SaaS `siteIdentity.json`; operator `CustomWebsitePanel.tsx`, regression `apps/platform-web/src/test/custom-website-evidence.test.tsx`; source/local candidate contract `docs/WEB05_BUILD_IDENTITY.md`.
+ - Current tenancy reference: `docs/PUBLIC_TENANCY.md`
+ - Venue payment configuration/encryption: `apps/backend/src/payment-integrations/`; owner/Platform routes: `apps/backend/src/customer/customer-payments.controller.ts`; owner form: `apps/platform-web/src/customer/PaymentSettings.tsx`.
+-- Current BOG status/readiness selector: `apps/backend/src/payment-integrations/payment-integration-status.ts`, used by merchant status and `website/tenancy/website-capabilities.service.ts`; isolated HTTP/PG regression `payment-integrations/web06-readiness.integration.spec.ts`; qualification `docs/WEB06_CURRENT_PAYMENT_READINESS.md`.
++- Current BOG status/readiness selector: `apps/backend/src/payment-integrations/payment-integration-status.ts`, used by merchant status, `website/tenancy/website-capabilities.service.ts` and `website/custom/custom-website.service.ts`; isolated HTTP/PG regression `payment-integrations/web06-readiness.integration.spec.ts`; qualification `docs/WEB06_CURRENT_PAYMENT_READINESS.md`.
+ - WEB-01/04 occupancy/money: `website/reservation/website-booking-state.ts`, `reservation.service.ts`, `website/payment/bog-payment-facts.ts`, `payment.controller.ts`, `payment.service.ts`; migration `20261020120000_website_payment_holds_ledger`; real HTTP/PG proof `website/payment/web0104-holds-ledger.integration.spec.ts`. Safe read-only exception projection: `website/payment/website-payment-reviews.ts`, `customer/customer-website-payment-reviews.controller.ts`, `platform/platform-website-payment-reviews.controller.ts`; panels `customer/WebsitePaymentReviews.tsx` and `platform/pages/venue/WebsitePaymentReviewsPanel.tsx`. Vankisi truthful return paths: `apps/vankisi-custom-web/src/pages/PaymentSuccess.tsx` / `PaymentFail.tsx`; tests `apps/platform-web/src/test/vankisi-payment-return.test.tsx`. Contract/proof `docs/WEB0104_BOOKING_HOLDS_PAYMENT_LEDGER.md`.
+ - W1 migration/import/validation: `docs/WEBSITE_PHASE_W1.md`, `apps/backend/scripts/import-bog-integration.ts`, `apps/backend/src/payment-integrations/payment-integrations.integration.spec.ts`.
+ 
+--- a/docs/audits/2026-09-29-f7bb982/MASTER_BACKLOG.md
++++ b/docs/audits/2026-09-29-f7bb982/MASTER_BACKLOG.md
+@@ -88,7 +88,7 @@
+ | SEC-03 SECURITY HARDENING, public/admin accounts | CODE; public auth throttle/session lifecycle gaps | bounded passwords, IP+identifier limiter, revoke/rotation policy, admin session control/MFA appropriate scope; stolen/logout/disable token matrix | before accounts release; token/session version additive; M/L,H; lifetime/recovery owner |
+ | SEC-05 SECURITY HARDENING, local device/backup | CODE raw PIN export/storage | verifier/keystore/encrypted backup+recovery; synthetic confidentiality and old import | MENU-01; versioned format/key recovery; L/H; key custodian |
+ | SEC-06 SECURITY HARDENING+PRODUCT DECISION, real PII | placeholder notice CODE; governance NOT_TESTED | actual privacy notices, retention/export/deletion/backup expiry/legal review; synthetic rights exercise | SEC-02; retained financial history policy; M/M; Georgian legal sign-off |
+-| WEB-06 BUG FIX, rotated BOG readiness | DONE read-only boundary: [current readiness proof](../../WEB06_CURRENT_PAYMENT_READINESS.md) | Shared greatest-revision metadata query; r1→r2→disable/reconnect and old pinned credentials verified | WEB-01/04 source qualified with separate real acceptance gates; WEB-03 delivery boundary qualified; WEB-06 makes no schema or payment-rule changes |
++| WEB-06 BUG FIX, rotated BOG readiness | DONE read-only boundary: [current readiness proof](../../WEB06_CURRENT_PAYMENT_READINESS.md), including CUSTOM operator status | Shared greatest-revision metadata query across merchant/capabilities/CUSTOM; r1→r2→disable/reconnect and old pinned credentials verified; 10 focused cases, 899 distinct final backend case records | WEB-01/04 source qualified with separate real acceptance gates; WEB-03 delivery boundary qualified; WEB-06 makes no schema or payment-rule changes |
+ | WEB-07 BUG FIX, shared data promise | **DONE source boundary:** [shared information proof](../../WEB07_SHARED_INFORMATION.md); owner contacts/hours/socials/gallery reach bespoke readers; 8 real PG/HTTP cases, 233 frontend tests and builds pass | same Host-bound CUSTOM/SAAS info; explicit error/retry; capability-off hide; phone parity and cache refresh proven; payment verification unchanged | WEB-05 deployment attestation/global launch admission still OPEN; no starter adoption; bespoke narrative assets and existing booking time choices retained |
+ | POS-02 DEPLOYMENT/OPERATIONS+BUG FIX, kitchen print | CODE memory queue/TCP uncertainty; hardware NOT_TESTED | durable jobs and uncertain/labeled reprint; cable/paper/power/kill tests on supported hardware | OPS-01, local journal; additive IDs; L/H; supported printer list and human reconciliation |
+ | OPS-01 DEPLOYMENT/OPERATIONS, any real pilot | ENV BLOCKED and historical-only hardware; no running revision/restore proof | isolated PG negative+upgrade/replay+restore; immutable source/image/native release dossier; real Windows/core hardware checklist | domain P0s; key/schema compatibility restore; L/H gap; pilot device/host owner |

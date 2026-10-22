@@ -1,0 +1,69 @@
+{
+  "atUtc": "2026-10-06T09:21:28.346786+00:00",
+  "sourceRoot": "/private/tmp/vynic-readiness-20261006-a2nbcprb/source",
+  "scope": "Standalone Python SQLite executes actual migrations; ledger/shape/version driver is a Python model, not Go execution.",
+  "python": "3.9.6",
+  "sqlite": "3.54.0",
+  "success": true,
+  "testsRun": 8,
+  "failures": 0,
+  "errors": 0,
+  "newKindSqlVariants": [
+    "OPERATIONAL_CONTROL",
+    "AUDIT_REPORT",
+    "CLOSURE",
+    "ADVANCE",
+    "EXPENSE",
+    "STAFF",
+    "OPERATIONAL_POLICY"
+  ],
+  "schemaDriftVariants": 9,
+  "go": "UNCOMPILED; SDK absent; no acquisition, gofmt, Go tests or Go binary execution.",
+  "wire": "UNVERIFIED; canonical proto only; generated output untouched; no protoc/build/wire test.",
+  "olderEdgeRollback": "BLOCKED. SchemaVersion is 4; existing greater-version refusal retained. Old Edge binary rejection is theoretical, not executed.",
+  "activation": "None. No production registration/capability/startup change or authority created by SQL.",
+  "sourceFiles": [
+    {
+      "path": "apps/edge/internal/store/operational.go",
+      "sha256": "7ad40c1a4644d7c40a9708dd810e063e33bad420a856f687cc291b8069c5ebcd",
+      "bytes": 22601
+    },
+    {
+      "path": "apps/edge/internal/store/operational_test.go",
+      "sha256": "450cd8c16d7d7c475e66d3317a095e49c39110bb8248a0105131d5a3e62ae686",
+      "bytes": 49397
+    },
+    {
+      "path": "apps/edge/internal/store/store.go",
+      "sha256": "1986e88ef3625fab25855c7d6f6ebc90a5f793a16a2632c0afc8d04728c81e11",
+      "bytes": 5639
+    },
+    {
+      "path": "apps/edge/internal/store/migrations/001_foundation.sql",
+      "sha256": "09fb5dea2969a40a68142e5b5fc882b36282b4fa847d475593078c900de1ec1e",
+      "bytes": 874
+    },
+    {
+      "path": "apps/edge/internal/store/migrations/002_orders_tables.sql",
+      "sha256": "c0dc130351afa03b3c0ab234350fa094dce4e3b0ca3a49457b2f5ac712b4abeb",
+      "bytes": 748
+    },
+    {
+      "path": "apps/edge/internal/store/migrations/003_operational_coordination.sql",
+      "sha256": "47e6dcf89410b3c3eb28d9e54f50541556e722ee6d515d63242204322e3537ac",
+      "bytes": 4779
+    },
+    {
+      "path": "apps/edge/internal/store/migrations/004_operational_entity_kinds.sql",
+      "sha256": "c9878fdbae27a3455f979c68569a1c669a8d1d98a835de2c05f896b1c8319aad",
+      "bytes": 3391
+    },
+    {
+      "path": "packages/contracts/proto/vynic/edge/v1/operational_proof.proto",
+      "sha256": "a4ce64509caf85ef262cf0fe07d909d55b9bacd23c9e9612e95c32686324e454",
+      "bytes": 5789
+    }
+  ],
+  "scriptSha256": "de4d0f1753d1afc85466d437e08203d46e4be7e13ff973d59ba057cf066bd9a4",
+  "goOnPath": null
+}

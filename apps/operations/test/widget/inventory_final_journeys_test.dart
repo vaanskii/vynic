@@ -1,4 +1,5 @@
 import 'inventory_test_actions.dart';
+import 'manager_recipes_test.dart' show expandIngredient;
 import 'procurement_rework_test.dart' as flow;
 import 'dart:convert';
 import 'package:flutter/material.dart';
@@ -166,6 +167,8 @@ class JourneyApi {
 }
 
 Future<void> tap(WidgetTester t, Finder finder) async {
+  if (finder.description.contains("receiving-price"))
+    await openReceivingOptions(t);
   await t.ensureVisible(finder);
   await t.pumpAndSettle();
   await t.tap(finder);
@@ -173,6 +176,8 @@ Future<void> tap(WidgetTester t, Finder finder) async {
 }
 
 Future<void> enter(WidgetTester t, String key, String value) async {
+  if (key.startsWith("recipe-component-quantity-"))
+    await expandIngredient(t, int.parse(key.split("-").last));
   await t.ensureVisible(find.byKey(Key(key)));
   await t.enterText(find.byKey(Key(key)), value);
   await t.pumpAndSettle();
@@ -198,7 +203,7 @@ void main() {
       await http.runWithClient(() async {
         await t.pumpWidget(qa.app(const InventoryAdminTab()));
         await t.pumpAndSettle();
-        await tap(t, find.text('მენიუს შემადგენლობა'));
+        await tap(t, find.byKey(const Key('inventory-tab-recipes')));
         await tap(t, find.byKey(const Key('menu-category-კერძები')));
         expect(find.byKey(const Key('recipe-card-water-menu')), findsNothing);
         await qa.shot(t, 'final-menu-composition-${width.toInt()}');
@@ -385,7 +390,7 @@ void main() {
           await t.pumpAndSettle();
           expect(
             find.text(
-              '${api.name} +${kind == 'menu'
+              '${api.name} · ${kind == 'menu'
                   ? '100.000 ცალი'
                   : kind == 'bulk'
                   ? '30.000 ლ'

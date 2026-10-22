@@ -204,4 +204,4 @@ actual Windows runtime/service/ACL proof remains outstanding.
 8. Reconcile the Primary's Hive state and outstanding Cloud/local journals before
    any controlled cutover or rollback. Keep Phase 0 fencing and unchanged Cloud
    command ownership until a separately authorized transition proves no dual
-   writer interval. Custom venue-web/BOG remains outside this work.
+   writer interval. Custom vankisi-custom-web/BOG remains outside this work.

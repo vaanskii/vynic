@@ -1,0 +1,15 @@
+# OPT-IN, local development only. Never combine with compose.production.yaml.
+# Adds ONE extra listener that routes only native POS/Manager API paths to the
+# backend, published on ONE selected private LAN address (never 0.0.0.0).
+# Start with: ./scripts/docker.sh start-lan [<mac-lan-ip>]   (see docs/DEPLOYMENT.md)
+services:
+  backend:
+    environment:
+      # A terminal enrolling by LAN address must keep that address. `.localhost`
+      # names resolve to the terminal itself on other machines, so declare none.
+      DEVICE_API_BASE_URL: ""
+  reverse-proxy:
+    environment:
+      NATIVE_LAN: "true"
+    ports:
+      - "${NATIVE_LAN_BIND:?Set NATIVE_LAN_BIND to the selected private LAN IPv4 address}:${NATIVE_LAN_PORT:-8088}:8088"

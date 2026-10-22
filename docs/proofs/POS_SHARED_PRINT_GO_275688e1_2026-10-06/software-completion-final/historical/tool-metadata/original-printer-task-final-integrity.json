@@ -1,0 +1,63 @@
+{
+  "status": {
+    "command": [
+      "git",
+      "status",
+      "--short"
+    ],
+    "exitCode": 0,
+    "log": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/metadata/original-printer-task-final-status.txt",
+    "sha256": "67bfecd36cebac60d5ce311b4f876663ab30ec16fa1a970b0f4656f4a6c7b32f",
+    "lines": 176
+  },
+  "diffCheck": {
+    "command": [
+      "git",
+      "diff",
+      "--check"
+    ],
+    "exitCode": 0,
+    "log": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/metadata/original-printer-task-final-diffCheck.txt",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "lines": 0
+  },
+  "originalOwnedManifestHashes": {
+    "apps/edge/go.mod": {
+      "expectedBefore": "ebe6a02e46ff7d9e3596f1d636c6adc627cd0a1b454acccb51104f4247149ce0",
+      "actual": "ebe6a02e46ff7d9e3596f1d636c6adc627cd0a1b454acccb51104f4247149ce0"
+    },
+    "apps/edge/go.sum": {
+      "expectedBefore": "1e1ea952193292233968c2d4eefca73b1e3f5d2f6aeabae01ab5b10da7c6cdb6",
+      "actual": "1e1ea952193292233968c2d4eefca73b1e3f5d2f6aeabae01ab5b10da7c6cdb6"
+    },
+    "packages/contracts/generated/go/go.mod": {
+      "expectedBefore": "ac118a4193a52805d0527458033c05fbd59c363a01ff6bd392cacf387fa7f506",
+      "actual": "ac118a4193a52805d0527458033c05fbd59c363a01ff6bd392cacf387fa7f506"
+    },
+    "packages/contracts/generated/go/go.sum": {
+      "expectedBefore": "7781e70033bff344f07778f5571238347209d0b1d249b515547527ed757dd359",
+      "actual": "7781e70033bff344f07778f5571238347209d0b1d249b515547527ed757dd359"
+    }
+  },
+  "newOwnedPathsStillAbsentInOriginal": {
+    "apps/edge/internal/printcluster/boundaries_test.go": true,
+    "apps/edge/internal/printcluster/cluster_test.go": true,
+    "apps/edge/internal/printcluster/node.go": true,
+    "apps/edge/internal/printcluster/process_test.go": true,
+    "apps/edge/internal/printcluster/projection.go": true,
+    "apps/edge/internal/printcluster/schema.sql": true,
+    "apps/edge/internal/printcluster/state.go": true,
+    "apps/edge/internal/printcluster/testdata/local_tcp.config.json": true,
+    "apps/edge/internal/printcluster/testdata/local_tcp.job.json": true,
+    "apps/edge/internal/printcluster/testdata/shared_tcp.config.json": true,
+    "apps/edge/internal/printcluster/testdata/shared_tcp.job.json": true,
+    "apps/edge/internal/printcluster/testdata/shared_usb.config.json": true,
+    "apps/edge/internal/printcluster/testdata/shared_usb.job.json": true,
+    "apps/edge/internal/printcluster/testdata/unknown_beep.config.json": true,
+    "apps/edge/internal/printcluster/testdata/unknown_beep.job.json": true,
+    "apps/edge/internal/printcluster/transport.go": true,
+    "apps/edge/internal/printcluster/types.go": true
+  },
+  "noOriginalEditsByThisAgent": true,
+  "checkedAtUtc": "2026-10-06T16:21:22.349042+00:00"
+}

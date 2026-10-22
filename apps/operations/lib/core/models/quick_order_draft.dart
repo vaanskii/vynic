@@ -37,6 +37,12 @@ class QuickOrderDraft extends HiveObject with UpdateTrackedHiveObject {
   @HiveField(9)
   String? displayName;
 
+  @HiveField(10)
+  String? customerName;
+
+  @HiveField(11)
+  String? customerPhone;
+
   QuickOrderDraft({
     required this.id,
     required this.items,
@@ -48,5 +54,25 @@ class QuickOrderDraft extends HiveObject with UpdateTrackedHiveObject {
     required this.createdAt,
     required this.createdBy,
     this.displayName,
+    this.customerName,
+    this.customerPhone,
   });
+
+  /// Search actual saved contact information and the payable estimate amount.
+  bool matchesSearch(String input) {
+    final query = input.trim().toLowerCase();
+    if (query.isEmpty) return true;
+    final amount = double.tryParse(query.replaceAll(',', '.'));
+    if (amount != null && (total - amount).abs() < 0.005) return true;
+    final phone = query.replaceAll(RegExp(r'[^0-9]'), '');
+    return (customerName ?? '').toLowerCase().contains(query) ||
+        (displayName ?? '').toLowerCase().contains(query) ||
+        (RegExp(r'^[+0-9\s()-]+$').hasMatch(query) &&
+            phone.isNotEmpty &&
+            (customerPhone ?? '')
+                .replaceAll(RegExp(r'[^0-9]'), '')
+                .contains(phone)) ||
+        createdBy.toLowerCase().contains(query) ||
+        items.any((item) => item.itemName.toLowerCase().contains(query));
+  }
 }

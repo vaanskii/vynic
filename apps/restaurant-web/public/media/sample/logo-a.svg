@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 80" role="img" aria-label="Tabla">
+  <rect width="240" height="80" fill="#1b1815"/>
+  <g fill="#e9dcc4" opacity="0.35">
+    <circle cx="60" cy="26" r="13"/>
+    <rect x="120" y="20" width="80" height="40"/>
+  </g>
+  <text x="50%" y="92%" text-anchor="middle" font-family="serif" font-size="5" fill="#e9dcc4">Tabla</text>
+</svg>

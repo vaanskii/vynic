@@ -1,4 +1,5 @@
 import '../../models/manager_venue_selection.dart';
+import 'package:uuid/uuid.dart';
 import 'package:flutter/foundation.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:vynic/core/services/manager_app/manager_dashboard_appearance.dart';
@@ -12,6 +13,7 @@ class ManagerAppPreferences {
   static const _backendUrlKey = 'backend_url_override';
 
   static Box? _box;
+  static final Map<String, Future<String>> _linkIds = {};
   static ManagerVenueSelection? selectedVenue(String origin) {
     final value = _box?.get('selected_venue');
     if (value is! Map || value['origin'] != origin) return null;
@@ -30,6 +32,33 @@ class ManagerAppPreferences {
     await _box!.put('selected_venue', venue.toMap());
   }
 
+  /// Persist before redemption so a lost reply or preferences retry keeps the same identity.
+  /// This public UUID is a retry key, never a credential or Staff authority.
+  static Future<String> linkInstallationId(String origin) {
+    if (_box == null)
+      return Future.error(
+        StateError('Manager preferences are not initialized'),
+      );
+    return _linkIds.putIfAbsent(origin, () => _loadLinkInstallationId(origin));
+  }
+
+  static Future<String> _loadLinkInstallationId(String origin) async {
+    if (_box == null)
+      throw StateError('Manager preferences are not initialized');
+    final key = 'link_installation_id:$origin';
+    final stored = _box!.get(key);
+    if (stored is String && Uuid.isValidUUID(fromString: stored)) return stored;
+    final id = const Uuid().v4();
+    try {
+      await _box!.put(key, id);
+      await _box!.flush();
+    } catch (_) {
+      _linkIds.remove(origin);
+      rethrow;
+    }
+    return id;
+  }
+
   static Future<void> clearVenue() async {
     await _box?.deleteAll(['selected_venue', 'login_venue_code']);
   }
@@ -43,12 +72,13 @@ class ManagerAppPreferences {
       ValueNotifier(ManagerDashboardAppearance.light);
 
   /// User-set backend URL for the mobile manager app (e.g. the Windows POS LAN
-  /// address http://10.10.10.4:3000). Null = use the bundled .env default.
+  /// address http://10.10.10.4:3000). Null = use the compiled environment default.
   static final ValueNotifier<String?> backendUrlOverride =
       ValueNotifier<String?>(null);
 
   static Future<void> init() async {
     _box = await Hive.openBox(_boxName);
+    _linkIds.clear();
     final stored = _box!.get(_dashboardAppearanceKey) as String?;
     dashboardAppearance.value = _parseAppearance(stored);
     final url = (_box!.get(_backendUrlKey) as String?)?.trim();

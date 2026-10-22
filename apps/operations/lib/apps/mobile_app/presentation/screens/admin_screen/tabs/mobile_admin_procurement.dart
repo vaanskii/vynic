@@ -873,7 +873,7 @@ class _PaymentState extends State<SupplierPaymentDialog> {
   @override
   Widget build(BuildContext context) => Theme(
     data: inventoryTheme(context),
-    child: AlertDialog(
+    child: ManagerFormDialog(
       insetPadding: const EdgeInsets.all(16),
       title: Text(
         widget.reversal == null ? 'გადახდის დაფიქსირება' : 'გადახდის უკუქცევა',
@@ -957,7 +957,7 @@ Future<bool?> _confirmInventoryAction(
   context: context,
   builder: (context) => Theme(
     data: inventoryTheme(context),
-    child: AlertDialog(
+    child: ManagerFormDialog(
       title: Text(title),
       content: Text(message),
       actions: [
@@ -994,7 +994,7 @@ class _IngredientPickerState extends State<InventoryIngredientPicker> {
   @override
   Widget build(BuildContext context) => Theme(
     data: inventoryTheme(context),
-    child: AlertDialog(
+    child: ManagerFormDialog(
       title: Text(widget.title),
       content: SizedBox(
         width: 520,
@@ -1135,7 +1135,7 @@ class _IngredientQuickState extends State<IngredientQuickDialog> {
   @override
   Widget build(BuildContext context) => Theme(
     data: inventoryTheme(context),
-    child: AlertDialog(
+    child: ManagerFormDialog(
       title: Text(
         widget.receivingProduct ? 'ახალი პროდუქტი' : 'ახალი ნედლეული',
       ),

@@ -54,6 +54,12 @@ export interface Feature {
 }
 
 export interface Plan {
+  description?: string | null;
+  priceMinor?: number;
+  currency?: string;
+  billingPeriod?: string;
+  mediaQuotaBytes?: number;
+  mediaQuotaFiles?: number;
   id: string;
   key: string;
   name: string;
@@ -62,9 +68,26 @@ export interface Plan {
 }
 
 export interface ProductState {
+  commercialStatus?: string | null;
+  menuManagement?: {
+    authority: "POS" | "CLOUD";
+    canEnableCloud: boolean;
+    enabled: boolean;
+    reason: string | null;
+    /** Whether the package includes POS; menu authority follows it. */
+    posIncluded?: boolean;
+    /** Website without POS still on POS authority: nobody can edit the menu. */
+    needsCloudAuthority?: boolean;
+  };
   commercialAccess?: boolean;
   venueId: string;
   plan: Pick<Plan, "id" | "key" | "name" | "status"> | null;
+  agreedPrice?: {
+    priceMinor: number | null;
+    currency: string | null;
+    billingPeriod: string | null;
+  } | null;
+  planFeatures?: string[];
   planAssignedAt: string | null;
   overrides: Array<{
     featureKey: string;
@@ -78,10 +101,150 @@ export interface ProductState {
 }
 
 export interface WebsiteAccess {
+  hostname?: string | null;
+  provisioning?: {
+    status: string;
+    assignedSlug: string | null;
+    publishedAt: string | null;
+  } | null;
   configuredMode: WebsiteMode;
   effectiveMode: WebsiteMode;
   entitled: boolean;
   consistent: boolean;
+}
+
+export type CustomWebsiteStatus =
+  | "NOT_CONFIGURED"
+  | "SETUP_PENDING"
+  | "READY"
+  | "ACTIVE"
+  | "ERROR";
+
+/** The operator's CUSTOM website view: binding, checklist and history. */
+export interface CustomWebsite {
+  venueId: string;
+  mode: WebsiteMode;
+  effectiveMode: WebsiteMode;
+  entitled: boolean;
+  commercialStatus: string;
+  trialEndsAt: string | null;
+  status: CustomWebsiteStatus;
+  siteKey: string | null;
+  statusNote: string | null;
+  /** Additive; missing on an older backend is explicitly unverified. */
+  expectedBuildId?: string | null;
+  publicIdentity?: string;
+  updatedAt: string | null;
+  domains: Array<Pick<VenueDomain, "id" | "hostname" | "status" | "createdAt">>;
+  /** Earliest ACTIVE public domain, else the earliest ACTIVE .localhost one. */
+  primaryDomain: string | null;
+  /** `https://<primary>/`; null when the Venue has no public domain. */
+  publicUrl: string | null;
+  /** Development only; the server omits it in production. */
+  localFrontend?: CustomWebsiteLocalFrontend;
+  menu: {
+    authority: "POS" | "CLOUD";
+    editingEnabled: boolean;
+    posIncluded: boolean;
+    needsCloudAuthority: boolean;
+  };
+  payments: "NOT_INCLUDED" | "NOT_CONFIGURED" | "DISABLED" | "ENABLED";
+  readiness: {
+    complete: boolean;
+    checks: Record<
+      "entitled" | "customMode" | "siteKey" | "activeDomain",
+      boolean
+    >;
+  };
+  audit: Array<{
+    id: string;
+    action: string;
+    metadata: Record<string, unknown> | null;
+    createdAt: string;
+    actor: string;
+  }>;
+}
+
+export type WebsiteCapabilityKey =
+  | "MENU"
+  | "HOURS"
+  | "RESERVATIONS"
+  | "GALLERY"
+  | "CUSTOMER_ACCOUNTS"
+  | "ONLINE_PAYMENTS"
+  | "EVENTS"
+  | "BANQUETS"
+  | "ONLINE_ORDERING";
+
+/** One shared website capability of a Venue; identical for SAAS and CUSTOM. */
+export interface WebsiteCapability {
+  key: WebsiteCapabilityKey;
+  label: string;
+  built: boolean;
+  commercial: boolean;
+  enabled: boolean;
+  canEnable: boolean;
+  ready: boolean;
+  readyDetail: string | null;
+  available: boolean;
+  live: boolean;
+  /** null: decided by the custom frontend build. */
+  usedByFrontend: boolean | null;
+}
+
+/** Where this Venue's frontend dev server runs, from backend configuration. */
+export interface CustomWebsiteLocalFrontend {
+  state: "CONFIGURED" | "NO_SITE_KEY" | "NO_LOCAL_DOMAIN" | "NOT_CONFIGURED";
+  siteKey: string | null;
+  hostname: string | null;
+  port: number | null;
+  url: string | null;
+  source: string;
+  detail: string;
+  problems: string[];
+}
+
+/** An on-demand reachability answer; never stored, never a setup status. */
+export interface CustomWebsiteCheck {
+  availability: "REACHABLE" | "UNREACHABLE";
+  checkedAt: string;
+  hostname: string;
+  url: string;
+  frontend: { status: number | null; detail: string };
+  api: {
+    state: "OK" | "WRONG_SITE" | "UNVERIFIED" | "FAILED" | "NOT_CHECKED";
+    status: number | null;
+    detail: string;
+  };
+  environment?: "LOCAL_DEVELOPMENT" | "LOCAL_DOCKER" | "PUBLIC_HTTPS";
+  build?: {
+    state: "VERIFIED" | "UNRECORDED" | "WRONG_BUILD" | "FAILED" | "NOT_CHECKED";
+    status: number | null;
+    detail: string;
+    observedBuildId: string | null;
+    expectedBuildId: string | null;
+    siteKey: string | null;
+  };
+  observationCurrent?: boolean;
+  checkedFor?: {
+    publicIdentity: string;
+    mode: string | null;
+    siteKey: string | null;
+    expectedBuildId: string | null;
+    bindingUpdatedAt: string | null;
+    status: string;
+    entitled: boolean;
+    hostname: string;
+    domainActive: boolean;
+  };
+  facts?: Record<
+    | "commercial"
+    | "domainRegistration"
+    | "rendererDeployed"
+    | "bindingIdentityVerified"
+    | "publicationLive",
+    boolean
+  >;
 }
 
 export interface VenueDomain {
@@ -115,6 +278,7 @@ export interface Device {
 export type EnrollmentStatus = "PENDING" | "ENROLLED" | "EXPIRED" | "CANCELLED";
 
 export interface DeviceEnrollment {
+  initialManagerSetup?: boolean;
   id: string;
   venueId: string;
   /** Half a code. Safe to show; it cannot enroll anything on its own. */
@@ -133,6 +297,7 @@ export interface DeviceEnrollment {
 }
 
 export interface IssuedEnrollment {
+  initialManagerSetup?: boolean;
   id: string;
   venueId: string;
   displayName: string;
@@ -155,7 +320,7 @@ export interface AuditEvent {
   targetId: string;
   metadata: Record<string, unknown> | null;
   createdAt: string;
-  actor: { id: string; email: string; displayName: string };
+  actor: { id: string; email: string; displayName: string } | null;
 }
 
 export interface QueuedCommand {
@@ -181,6 +346,7 @@ export interface EdgeCommandStatus {
 }
 
 export type SubscriptionStatus =
+  | "NO_PLAN"
   | "TRIAL"
   | "ACTIVE"
   | "PAST_DUE"
@@ -207,4 +373,48 @@ export interface PlatformUserRow {
   displayName: string;
   role: PlatformRole;
   status: "ACTIVE" | "DISABLED";
+}
+
+export interface WebsiteDeliveryPage {
+  total: number;
+  offset: number;
+  limit: number;
+  primarySelected: boolean;
+  items: Array<{
+    id: string;
+    bookingStatus: string;
+    date: string;
+    timeSlot: string;
+    posReservationId: string | null;
+    tracking: "TRACKED" | "UNTRACKED";
+    deliveries: Array<{
+      kind: string;
+      status: string;
+      code: string | null;
+      attempts: number;
+      posReservationId: string;
+      commandId: string | null;
+      transport: string | null;
+    }>;
+  }>;
+}
+
+export interface WebsitePaymentReviewPage {
+  total: number;
+  offset: number;
+  limit: number;
+  financialDecisionOwner: "RESTAURANT_OWNER";
+  items: Array<{
+    bookingId: string;
+    date: string;
+    timeSlot: string;
+    bookingStatus: string;
+    paymentState: string;
+    expectedMinor: string | null;
+    grossPaidMinor: string | null;
+    refundedMinor: string | null;
+    currency: string | null;
+    reason: string;
+    paymentId: string | null;
+  }>;
 }

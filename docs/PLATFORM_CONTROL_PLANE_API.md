@@ -91,7 +91,7 @@ npm run platform-admin:create -- --email you@example.com --name "Your Name"
 - The password is **never** an argument — arguments land in shell history and the
   process table. It is prompted for with echo disabled and typed twice.
   `PLATFORM_ADMIN_PASSWORD` covers a non-interactive run.
-- Minimum 12 characters; hashed with Argon2id, the same primitive the rest of
+- Minimum 8 characters; hashed with Argon2id, the same primitive the rest of
   the backend uses.
 - **Refuses to touch an existing account.** Silently resetting a password from a
   script is how an account is taken over by whoever can run it twice. A
@@ -279,3 +279,25 @@ Deliberately absent, with reasons already recorded:
   Venue-owned role names, after a Venue administration boundary exists.
 - **Admin Panel UI.** Built in Step 7B; see
   [PLATFORM_ADMIN_PANEL.md](PLATFORM_ADMIN_PANEL.md).
+
+## Commercial Access Hardening
+
+All Platform writes require SUPER_ADMIN; SUPPORT_READONLY can inspect only.
+
+| Method / path | Contract |
+| --- | --- |
+| POST /customer/access-requests | Public applicantName/businessName/email/phone, optional requestedPlanId/note; returns received only |
+| GET /customer/access-requests/plans | Active customer-facing packages/prices/features |
+| POST /customer/venues/:venueId/trial-requests | Membership-authorized request; never immediate activation |
+| GET /platform/onboarding/requests | Latest 200 customer/trial requests |
+| POST /platform/onboarding/requests/:id/review | APPROVED/REJECTED and optional note; approval of an existing-Venue trial request requires planId and future trialEndsAt |
+| POST /platform/plans | Create key/name/description/priceMinor/currency/billingPeriod/status/featureKeys/mediaQuotaBytes/mediaQuotaFiles |
+| PUT /platform/plans/:id | Edit list terms and features; existing agreed prices stay unchanged; NON_FISCAL_CLOSE rejected |
+| PUT /platform/venues/:id/subscription | Explicit NO_PLAN/TRIAL/ACTIVE/PAST_DUE/SUSPENDED/CANCELLED, optional planId; TRIAL needs future trialEndsAt |
+
+Preparation defaults to NO_PLAN and planId is optional. Public auth/signup returns
+403. Domain writes, payment credentials, Manager creation/reset and POS setup now
+require their corresponding effective commercial features. Security disabling of
+an existing Manager is still allowed. Pricing values are integer minor units;
+MONTH/YEAR/ONE_TIME are supported, without automatic collection. Full policy and
+migration instructions: `COMMERCIAL_ACCESS_HARDENING.md`.

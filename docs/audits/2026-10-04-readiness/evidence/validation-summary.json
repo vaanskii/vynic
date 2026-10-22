@@ -1,0 +1,104 @@
+{
+  "auditDateUTC": "2026-10-04",
+  "baselineHead": "275688e1e5c5dc0e26e62705ab0c7670cf16d99a",
+  "backendFocused": {
+    "suites": 8,
+    "passed": 137,
+    "failed": 0
+  },
+  "backendRealHttpPostgres": {
+    "suites": 1,
+    "passed": 25,
+    "failed": 0,
+    "skipped": 0
+  },
+  "flutterUnit": {
+    "suites": 11,
+    "passed": 215,
+    "failed": 0,
+    "platform": "macOS",
+    "isolated": true
+  },
+  "flutterWidgets": {
+    "suites": 3,
+    "passed": 20,
+    "failed": 0,
+    "physicalPrinterJobs": 0
+  },
+  "pythonReleaseTools": {
+    "passed": 27,
+    "failed": 0,
+    "vmCalled": false
+  },
+  "boundaryDefectProbes": [
+    "MGR-02",
+    "MGR-05",
+    "WEB-03",
+    "WEB-04"
+  ],
+  "postgres": {
+    "migrations": 65,
+    "repeatDeploy": "PASS",
+    "checksums": "PASS",
+    "syntheticDumpRestore": "PASS",
+    "productionOrExistingDatabaseAccess": false,
+    "ownedClusterStopped": true
+  },
+  "backendRuntimeTypecheck": "PASS",
+  "backendFullTypecheck": {
+    "result": "FAIL",
+    "diagnostics": 5,
+    "testFiles": 3
+  },
+  "generatedJsonContracts": "PASS",
+  "productionComposeSyntheticConfig": "PASS",
+  "npmAdvisories": {
+    "result": "COMPLETED_WITH_FINDINGS",
+    "exitCode": 1,
+    "scope": "backend production dependency graph",
+    "counts": {
+      "high": 11,
+      "moderate": 2,
+      "critical": 0,
+      "total": 13
+    },
+    "authorization": "Explicit user approval after initial automatic-review denial",
+    "evidence": "npm-audit-summary.json",
+    "reachability": "Not assessed",
+    "fixesOrUpgrades": false
+  },
+  "notRun": [
+    "Go suites",
+    "protobuf regeneration",
+    "full Flutter analysis",
+    "all backend integration tests",
+    "full web QA/builds",
+    "live BOG",
+    "current container and Dart/Go advisory scans",
+    "physical x64 Windows and printers",
+    "complete production DB/media/key/POS replacement restore",
+    "load/capacity"
+  ],
+  "changes": "New audit directory only",
+  "preservation": {
+    "recordedAtUTC": "2026-10-04T21:16:49.459617+00:00",
+    "head": "275688e1e5c5dc0e26e62705ab0c7670cf16d99a",
+    "headUnchanged": true,
+    "branchUnchanged": true,
+    "stashUnchanged": true,
+    "indexUnchanged": true,
+    "baselineHashCount": 2437,
+    "missing": [],
+    "changed": [],
+    "gitDiffCheckExit": 0,
+    "environmentFilesUnchanged": true,
+    "changedEnvironmentFiles": [],
+    "sensitiveValueMatchesInFollowupEvidence": [],
+    "note": "Audit documentation only; no VM interaction, env edits, dependency fixes or deployment. Concurrent changes, if any, reported rather than reverted."
+  },
+  "environmentReview": {
+    "result": "READ_ONLY_REDACTED",
+    "evidence": "environment-inventory-redacted.json",
+    "notes": "File presence/classification only; running service configuration not inspected; no secret values exported; no env changes"
+  }
+}

@@ -1,0 +1,16 @@
+{
+	"Path": "github.com/hashicorp/raft-boltdb/v2",
+	"Version": "v2.4.2",
+	"Info": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/github.com/hashicorp/raft-boltdb/v2/@v/v2.4.2.info",
+	"GoMod": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/github.com/hashicorp/raft-boltdb/v2/@v/v2.4.2.mod",
+	"Zip": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/cache/download/github.com/hashicorp/raft-boltdb/v2/@v/v2.4.2.zip",
+	"Dir": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache/github.com/hashicorp/raft-boltdb/v2@v2.4.2",
+	"Sum": "h1:r2RRgZ6ajT+VH8/9yC5mfoKAlt3KrYiUDhfbUSmaoTs=",
+	"GoModSum": "h1:+wvKK1thWEqM7amY1MXjtQpkm+b9KNUXks0fcus5ZGU=",
+	"Origin": {
+		"VCS": "git",
+		"URL": "https://github.com/hashicorp/raft-boltdb",
+		"Hash": "7915f80fb457a747c5dd50821d7de3dffa0fd9c3",
+		"Ref": "refs/tags/v2.4.2"
+	}
+}

@@ -1,0 +1,30 @@
+{
+  "createdAtUtc": "2026-10-06T17:00:56.727923+00:00",
+  "ownedManifestSha256": "b7bc1d8fb500858976d2e8bc9c62af8031ce19ac1d7b83cc3c3b5e955fb54754",
+  "inputs": {
+    "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/tools/printer-agent-server.test": {
+      "sha256": "12be5c600028066e93d9135fe91637df0026e40d274d78d1809c22c5a4e977f2",
+      "bytes": 24823410
+    },
+    "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/source/apps/operations/lib/core/services/printing/printer_agent_client.dart": {
+      "sha256": "5f4bad386188c2b27ceb1032324ee418f7383f90b08a07f87efef6ae8e59dcf6",
+      "bytes": 11745
+    },
+    "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/source/apps/operations/lib/core/services/printing/printer_agent_profile.dart": {
+      "sha256": "f5f9c1c9babfe6370ba28caf3329ffe69d6b114a63ff5f10560893a2355a4436",
+      "bytes": 11508
+    },
+    "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/source/apps/operations/pubspec.yaml": {
+      "sha256": "e56661e303516d54194d90510ad10c078a6ac5835162cf3e937874942deefb0c",
+      "bytes": 5014
+    },
+    "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/source/apps/operations/pubspec.lock": {
+      "sha256": "3ad3d0f334fc95207c1536158db1f5a60239a55e955ffa63388fe157ab277f7e",
+      "bytes": 36657
+    },
+    "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/source/apps/operations/.dart_tool/package_config.json": {
+      "sha256": "11f6e2c835fbfb1f95905fa956f877fac78d5fc446fefbf1b73fd1b2540095d2",
+      "bytes": 30670
+    }
+  }
+}

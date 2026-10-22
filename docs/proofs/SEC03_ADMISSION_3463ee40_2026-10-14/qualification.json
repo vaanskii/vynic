@@ -1,0 +1,155 @@
+{
+  "status": "PASS_SOURCE_AND_ISOLATED_TESTS_NOT_DEPLOYED",
+  "milestone": "SEC-03 website authentication request admission subset",
+  "head": "3463ee406184fec7f53818416e11d0e5f5602c87",
+  "scope": [
+    "Bounded JSON/forms and DTO/service inputs before password work",
+    "Per-process global identifier/peer attempt admission across Hosts and auth endpoints",
+    "Reject missing/malformed CSRF before service work",
+    "Existing cookie/Host/capability/password flows preserved"
+  ],
+  "checks": {
+    "backendAggregate": {
+      "passed": 906,
+      "failed": 0,
+      "skipped": 895,
+      "mandatoryMenu09Database": "fresh owned disposable aggregate database"
+    },
+    "isolatedPostgresHttp": {
+      "passed": 51,
+      "failed": 0,
+      "skipped": 0,
+      "suites": {
+        "auth-admission.integration.spec.ts": 9,
+        "custom-website.integration.spec.ts": 17,
+        "guest-booking-ownership.integration.spec.ts": 25
+      }
+    },
+    "newRegressionCases": 51,
+    "passingCasesAcrossFinalRuns": 957,
+    "overlap": 0,
+    "unrunOptInCases": 844,
+    "backendBuild": "PASS",
+    "affectedAuthLint": {
+      "errors": 0,
+      "warnings": 0
+    },
+    "otherTouchedFileLintBaseline": {
+      "files": [
+        {
+          "file": "apps/backend/src/main.ts",
+          "beforeErrors": 2,
+          "beforeWarnings": 1,
+          "afterErrors": 2,
+          "afterWarnings": 1,
+          "newDiagnostics": []
+        },
+        {
+          "file": "apps/backend/src/website/auth/auth.controller.ts",
+          "beforeErrors": 2,
+          "beforeWarnings": 1,
+          "afterErrors": 0,
+          "afterWarnings": 0,
+          "newDiagnostics": []
+        },
+        {
+          "file": "apps/backend/src/website/auth/auth.service.ts",
+          "beforeErrors": 1,
+          "beforeWarnings": 0,
+          "afterErrors": 0,
+          "afterWarnings": 0,
+          "newDiagnostics": []
+        },
+        {
+          "file": "apps/backend/src/website/custom/custom-website.integration.spec.ts",
+          "beforeErrors": 167,
+          "beforeWarnings": 9,
+          "afterErrors": 167,
+          "afterWarnings": 9,
+          "newDiagnostics": []
+        },
+        {
+          "file": "apps/backend/src/website/user/guest-booking-ownership.integration.spec.ts",
+          "beforeErrors": 0,
+          "beforeWarnings": 0,
+          "afterErrors": 0,
+          "afterWarnings": 0,
+          "newDiagnostics": []
+        }
+      ],
+      "newDiagnostics": 0
+    },
+    "prettier": "PASS all 12 changed backend source/test files",
+    "gitDiffCheck": "PASS",
+    "finalAuthOnly": {
+      "passed": 42,
+      "failed": 0,
+      "skipped": 0
+    }
+  },
+  "limitations": [
+    "Rate counters are in memory per backend process, reset on restart and are not shared across replicas",
+    "SEC-03 session/logout/refresh revocation, Platform MFA and recovery policies remain open",
+    "Full cross-site browser cookie/CSRF/CORS acceptance and actual production rollout not run",
+    "844 remaining opt-in backend cases not rerun in this task",
+    "Pre-existing main.ts and CUSTOM test lint debt retained, without new diagnostics",
+    "Current Docker backend was not rebuilt or restarted; source qualification only"
+  ],
+  "preservation": {
+    "existingSourceChanged": [
+      "apps/backend/src/main.ts",
+      "apps/backend/src/website/auth/dto/auth.dto.ts",
+      "apps/backend/src/website/auth/auth.controller.ts",
+      "apps/backend/src/website/auth/auth.service.ts",
+      "apps/backend/src/website/auth/auth.module.ts",
+      "apps/backend/src/website/common/csrf.service.ts",
+      "apps/backend/src/website/user/guest-booking-ownership.integration.spec.ts",
+      "apps/backend/src/website/custom/custom-website.integration.spec.ts",
+      "docs/agent-state/VYNIC_PROJECT_STATE.md",
+      "docs/agent-state/VYNIC_CODE_MAP.md"
+    ],
+    "newSourceAndDocs": [
+      "apps/backend/src/website/auth/auth-input.ts",
+      "apps/backend/src/website/auth/auth-body-parsers.ts",
+      "apps/backend/src/website/auth/auth-admission.spec.ts",
+      "apps/backend/src/website/auth/auth-admission.integration.spec.ts",
+      "docs/SEC03_WEBSITE_AUTH_ADMISSION.md"
+    ],
+    "operationsEnvByteIdentical": {
+      "apps/operations/.env": true,
+      "apps/operations/.env.example": true
+    },
+    "schemaOrMigrationChanges": false,
+    "liveDataTouched": false,
+    "realCredentialsUsedOrChanged": false,
+    "deploymentOrServiceRestart": false,
+    "printerPos02FilesChangedByThisTask": false,
+    "otherSessionIntervention": false,
+    "OPS01DeniedRestoreRetried": false,
+    "INV01F2PolicyInvented": false,
+    "commitOrPush": false
+  },
+  "cleanup": {
+    "ownedCluster": "/private/var/folders/82/drcfb4994p16rl49gxx9tj000000gn/T/vynic-sec03-admission-qk5_3e80/pg",
+    "port": 50164,
+    "stopped": true,
+    "portClosed": true,
+    "privateDataRetained": true,
+    "liveServicesTouched": false
+  },
+  "privateEvidenceRoot": "/private/var/folders/82/drcfb4994p16rl49gxx9tj000000gn/T/vynic-sec03-admission-qk5_3e80",
+  "proofFiles": {
+    "aggregate": "/private/var/folders/82/drcfb4994p16rl49gxx9tj000000gn/T/vynic-sec03-admission-qk5_3e80/aggregate.json",
+    "postgresHttp": "/private/var/folders/82/drcfb4994p16rl49gxx9tj000000gn/T/vynic-sec03-admission-qk5_3e80/pg.json",
+    "lint": "/private/var/folders/82/drcfb4994p16rl49gxx9tj000000gn/T/vynic-sec03-admission-qk5_3e80/affected-lint-final.json",
+    "preservation": "/private/var/folders/82/drcfb4994p16rl49gxx9tj000000gn/T/vynic-sec03-admission-qk5_3e80/baseline.json",
+    "cleanup": "/private/var/folders/82/drcfb4994p16rl49gxx9tj000000gn/T/vynic-sec03-admission-qk5_3e80/cleanup.json",
+    "finalAuthOnly": "/private/var/folders/82/drcfb4994p16rl49gxx9tj000000gn/T/vynic-sec03-admission-qk5_3e80/final-auth-only.json"
+  },
+  "initialFailuresResolved": [
+    "Initial sandbox loopback listen denied: rerun with approved test-only local networking",
+    "Argon namespace spy could not redefine exports: explicit isolated test mock; PG suite uses real Argon",
+    "New PG fixture missing required timezone: added timezone/currency, then qualified on three fresh disposable databases",
+    "Final aggregate runner invoked after its owned PG cluster had stopped (17 MENU09 failures only); restored the owned test cluster, migrated a fresh aggregate database, reran final aggregate PASS, then stopped the owned cluster again. No live service or OPS-01 operation involved."
+  ]
+}

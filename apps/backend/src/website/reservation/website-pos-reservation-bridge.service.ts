@@ -1,13 +1,25 @@
-import { Injectable, Logger } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  Logger,
+  type OnModuleInit,
+  type OnModuleDestroy,
+} from '@nestjs/common';
 import { PrismaService } from '../../shared/prisma/prisma.service';
 import { PosCommandDispatcher } from '../../pos/pos-command-dispatcher.service';
 import { PosReservationMirrorService } from '../../pos/pos-reservation-mirror.service';
-import { allocatePosReservationId } from '../../pos/pos-reservation-id';
+import { Prisma } from '@prisma/client';
+import { lockOperationalVenue } from '../../edge/operational-authority';
+import type {
+  WebsiteReservationWithTables,
+  WebsiteTableRow,
+} from './website-delivery-intent';
 import { EdgeCommandTypes } from '../../shared/contracts/edge-command';
 import { MonitoringGateway } from '../../realtime/monitoring.gateway';
 import { suppressPosEchoForReservation } from '../../pos/sync-echo-guard';
 import { MenuService } from '../menu/menu.service';
 import {
+  canEncodeTableCode,
   dayBounds,
   decodeTableCode,
   encodeTableCode,
@@ -18,32 +30,24 @@ import {
 } from './reservation-table-codes';
 import type { TenantContext } from '../../tenancy/tenant-context';
 
-type WebsiteTableRow = {
-  id: number;
-  websiteTableNumber: string;
-  posTableNumber: string;
-  posFloor: string;
-  capacity: number;
-};
-
-type WebsiteReservationWithTables = {
-  id: string;
-  venueId: string;
-  date: Date;
-  timeSlot: string;
-  status: string;
-  customerName: string | null;
-  customerPhone: string | null;
-  customerEmail: string | null;
-  notes: string | null;
-  menuItems: string | null;
-  numberOfGuests: number | null;
-  posReservationId: string | null;
-  tables: Array<{ table: WebsiteTableRow }>;
-};
-
 @Injectable()
-export class WebsitePosReservationBridgeService {
+export class WebsitePosReservationBridgeService
+  implements OnModuleInit, OnModuleDestroy
+{
+  private timer?: ReturnType<typeof setInterval>;
+  private running = false;
+
+  onModuleInit() {
+    this.timer = setInterval(() => {
+      void this.processDue();
+    }, 15_000);
+    this.timer.unref();
+    void this.processDue();
+  }
+
+  onModuleDestroy() {
+    if (this.timer) clearInterval(this.timer);
+  }
   private readonly logger = new Logger(WebsitePosReservationBridgeService.name);
 
   constructor(
@@ -65,11 +69,12 @@ export class WebsitePosReservationBridgeService {
     tenant: TenantContext,
     date: string,
     excludeWebsiteReservationId?: string,
+    db: Prisma.TransactionClient = this.prisma,
   ): Promise<Set<number>> {
     const { dateKey, start, end } = dayBounds(date);
     const unavailable = new Set<number>();
 
-    const websiteReservations = await this.prisma.websiteReservation.findMany({
+    const websiteReservations = await db.websiteReservation.findMany({
       where: {
         venueId: tenant.venueId,
         date: { gte: start, lte: end },
@@ -81,6 +86,18 @@ export class WebsitePosReservationBridgeService {
       include: { tables: { include: { table: true } } },
     });
 
+    const holds = await db.websiteReservationDayHold.findMany({
+      where: {
+        venueId: tenant.venueId,
+        serviceDate: dateKey,
+        status: { in: ['HELD', 'CONFIRMED'] },
+        ...(excludeWebsiteReservationId
+          ? { reservationId: { not: excludeWebsiteReservationId } }
+          : {}),
+      },
+      select: { tableCode: true },
+    });
+    for (const hold of holds) unavailable.add(hold.tableCode);
     for (const reservation of websiteReservations) {
       if (!isReservationBlocking(reservation.status)) continue;
       for (const row of reservation.tables) {
@@ -98,7 +115,7 @@ export class WebsitePosReservationBridgeService {
     // booking taken at the till since the last snapshot is not in here, so this
     // set can be too small. Staleness is therefore reported rather than
     // swallowed, so the caller knows it is answering from an old picture.
-    const posRows = await this.posReservations.listForDate(tenant, dateKey);
+    const posRows = await this.posReservations.listForDate(tenant, dateKey, db);
     const posUnavailable = unavailableCodesFromPosReservations(
       posRows as unknown as Array<Record<string, unknown>>,
       dateKey,
@@ -107,7 +124,7 @@ export class WebsitePosReservationBridgeService {
       unavailable.add(code);
     }
 
-    const freshness = await this.posReservations.freshness(tenant);
+    const freshness = await this.posReservations.freshness(tenant, db);
     if (!freshness.fresh) {
       this.logger.warn(
         `Venue ${tenant.venueId}: reservation mirror last updated ` +
@@ -175,12 +192,14 @@ export class WebsitePosReservationBridgeService {
     tables: WebsiteTableRow[],
     date: string,
     excludeWebsiteReservationId?: string,
+    db: Prisma.TransactionClient = this.prisma,
   ): Promise<boolean> {
     if (tables.length === 0) return false;
     const unavailable = await this.getUnavailableTableCodesForDate(
       tenant,
       date,
       excludeWebsiteReservationId,
+      db,
     );
     const codes = this.encodeWebsiteTables(tables);
     return codes.every((code) => !unavailable.has(code));
@@ -190,121 +209,309 @@ export class WebsitePosReservationBridgeService {
     tenant: TenantContext,
     reservation: WebsiteReservationWithTables,
   ): Promise<string | null> {
-    if (reservation.posReservationId) {
-      return reservation.posReservationId;
-    }
-
-    const websiteTables = reservation.tables.map((row) => row.table);
-    const serviceDate = reservationDateKey(reservation.date);
-
-    const available = await this.areWebsiteTablesAvailable(
-      tenant,
-      websiteTables,
-      serviceDate,
-      reservation.id,
-    );
-    if (!available) {
-      throw new Error(
-        `Tables no longer available on ${serviceDate} — POS sync skipped`,
-      );
-    }
-
-    const tableNumbers = this.encodeWebsiteTables(websiteTables);
-    const numberOfGuests =
-      reservation.numberOfGuests ??
-      websiteTables.reduce((sum, table) => sum + table.capacity, 0) ??
-      2;
-
-    const preOrderItems = await this.buildPreOrderItems(
-      tenant,
-      reservation.menuItems,
-    );
-    const notes = this.buildPosNotes(reservation);
-
-    // Cloud names the reservation. The booking used to have no POS identity
-    // until the restaurant answered a synchronous LAN call, which meant a paid
-    // booking could not be linked while the POS was asleep — and meant a retry
-    // of that call created a second reservation. Allocating it here makes the
-    // link durable immediately and the delivery safe to repeat.
-    const posReservationId = allocatePosReservationId();
-
-    await this.prisma.websiteReservation.update({
-      where: { id: reservation.id },
-      data: { posReservationId },
+    await this.processDue(tenant.venueId, reservation.id);
+    const linked = await this.prisma.websiteReservation.findUnique({
+      where: { id: reservation.id, venueId: tenant.venueId },
+      select: { posReservationId: true },
     });
-
-    await this.posCommands.dispatch(tenant, {
-      type: EdgeCommandTypes.RESERVATION_CREATE,
-      payload: {
-        reservationId: posReservationId,
-        customerName: reservation.customerName ?? 'Website Guest',
-        customerPhone: reservation.customerPhone ?? '-',
-        tableNumbers,
-        reservationDate: serviceDate,
-        reservationTime: reservation.timeSlot,
-        numberOfGuests,
-        notes,
-        createdBy: 'website',
-        status: 'confirmed',
-        isTakeAway: false,
-        preOrderItems,
-        // Provenance for the POS audit trail; additive and ignored by
-        // builds that predate it.
-        source: 'website',
-      },
-      // Stable per booking: a second attempt to push the same website
-      // reservation is the same intent, not a second booking.
-      idempotencyKey: `RESERVATION_CREATE:website:${reservation.id}`,
-    });
-
-    suppressPosEchoForReservation(tenant, posReservationId);
-
-    this.gateway.broadcastUpdate(tenant, 'data_updated', {
-      type: 'reservations',
-      action: 'created',
-      source: 'website',
-      websiteReservationId: reservation.id,
-      reservationId: posReservationId,
-      customerName: reservation.customerName,
-      tableNumbers,
-      reservationTime: reservation.timeSlot,
-      reservationDate: serviceDate,
-    });
-
-    this.logger.log(
-      `Website reservation ${reservation.id} → POS ${posReservationId} (${serviceDate} ${reservation.timeSlot})`,
-    );
-
-    return posReservationId;
+    return linked?.posReservationId ?? null;
   }
 
   async cancelPosReservation(
     tenant: TenantContext,
     posReservationId: string,
   ): Promise<void> {
-    const id = posReservationId.trim();
-    if (!id) return;
-    try {
-      await this.posCommands.dispatch(tenant, {
-        type: EdgeCommandTypes.RESERVATION_STATUS_UPDATE,
-        payload: {
-          reservationId: id,
-          status: 'cancelled',
-          updatedBy: 'website',
-          source: 'website',
-          reason: 'Cancelled on the website',
+    // Cancellation intent was already captured with the payment outcome.
+    const booking =
+      await this.prisma.websiteReservationDeliveryIntent.findFirst({
+        where: {
+          venueId: tenant.venueId,
+          proposedPosReservationId: posReservationId,
+          kind: 'CANCEL',
         },
-        idempotencyKey: `RESERVATION_STATUS_UPDATE:website-cancel:${id}`,
+        select: { reservationId: true },
       });
-      this.gateway.broadcastUpdate(tenant, 'data_updated', {
+    if (booking) await this.processDue(tenant.venueId, booking.reservationId);
+  }
+
+  /** Durable restart/replica recovery. No historical booking replay. */
+  async processDue(venueId?: string, reservationId?: string) {
+    if (this.running) return;
+    this.running = true;
+    try {
+      const rows = await this.prisma.websiteReservationDeliveryIntent.findMany({
+        where: {
+          status: 'PENDING',
+          nextAttemptAt: { lte: new Date() },
+          ...(venueId ? { venueId } : {}),
+          ...(reservationId ? { reservationId } : {}),
+        },
+        orderBy: [
+          { nextAttemptAt: 'asc' },
+          { kind: 'desc' },
+          { createdAt: 'asc' },
+          { id: 'asc' },
+        ],
+        take: 50,
+      });
+      for (const row of rows) {
+        try {
+          await this.admitIntent(row.id, row.venueId, row.reservationId);
+        } catch (error) {
+          const attention = error instanceof ConflictException;
+          await this.prisma.websiteReservationDeliveryIntent.updateMany({
+            where: { id: row.id, status: 'PENDING' },
+            data: {
+              status: attention ? 'ATTENTION' : 'PENDING',
+              attemptCount: { increment: 1 },
+              nextAttemptAt: new Date(
+                Date.now() +
+                  Math.min(
+                    300_000,
+                    15_000 * 2 ** Math.min(row.attemptCount, 4),
+                  ),
+              ),
+              lastErrorCode: attention
+                ? 'identity_conflict'
+                : 'queue_recording_failed',
+            },
+          });
+          this.logger.error(
+            `Website delivery ${row.id}: ${attention ? 'operator reconciliation required' : 'recording failed; durable retry pending'}`,
+          );
+        }
+      }
+    } catch {
+      this.logger.error(
+        'Website delivery worker failed; durable intents retained',
+      );
+    } finally {
+      this.running = false;
+    }
+  }
+
+  private async admitIntent(
+    id: string,
+    venueId: string,
+    reservationId: string,
+  ) {
+    const admitted = await this.prisma.$transaction(
+      async (tx) => {
+        const venue = await lockOperationalVenue(tx, venueId);
+        await tx.$queryRaw`SELECT id FROM website.reservations WHERE id=${reservationId} AND "venueId"=${venueId} FOR UPDATE`;
+        const intent =
+          await tx.websiteReservationDeliveryIntent.findUniqueOrThrow({
+            where: { id },
+          });
+        if (intent.status !== 'PENDING') return null;
+        const booking = await tx.websiteReservation.findUniqueOrThrow({
+          where: { id: reservationId, venueId },
+        });
+        const tenant = { venueId, organizationId: venue.organizationId };
+        const attention = (code: string) =>
+          tx.websiteReservationDeliveryIntent.update({
+            where: { id },
+            data: { status: 'ATTENTION', lastErrorCode: code },
+          });
+        let payload: Record<string, unknown>;
+        if (intent.kind === 'CREATE') {
+          if (
+            booking.posReservationId &&
+            booking.posReservationId !== intent.proposedPosReservationId
+          ) {
+            await attention('pos_identity_conflict');
+            return null;
+          }
+          const snapshot =
+            intent.snapshot as unknown as WebsiteReservationWithTables;
+          if (
+            snapshot.id !== reservationId ||
+            snapshot.venueId !== venueId ||
+            !Array.isArray(snapshot.tables) ||
+            !Number.isFinite(new Date(snapshot.date).getTime())
+          ) {
+            await attention('invalid_snapshot');
+            return null;
+          }
+          const tables = snapshot.tables.map((row) => row.table);
+          const serviceDate =
+            snapshot.serviceDate ?? reservationDateKey(new Date(snapshot.date));
+          if (
+            tables.some(
+              (table) =>
+                !canEncodeTableCode(table.posFloor, table.posTableNumber),
+            )
+          ) {
+            await attention('unsupported_table_identity');
+            return null;
+          }
+          if (
+            !(await this.areWebsiteTablesAvailable(
+              tenant,
+              tables,
+              serviceDate,
+              reservationId,
+              tx,
+            ))
+          ) {
+            await attention('tables_unavailable');
+            return null;
+          }
+          payload = {
+            reservationId: intent.proposedPosReservationId,
+            customerName: snapshot.customerName ?? 'Website Guest',
+            customerPhone: snapshot.customerPhone ?? '-',
+            tableNumbers: this.encodeWebsiteTables(tables),
+            reservationDate: serviceDate,
+            reservationTime: snapshot.timeSlot,
+            numberOfGuests:
+              snapshot.numberOfGuests ??
+              tables.reduce((sum, table) => sum + table.capacity, 0) ??
+              2,
+            notes: this.buildPosNotes(snapshot),
+            createdBy: 'website',
+            status: 'confirmed',
+            isTakeAway: false,
+            preOrderItems: await this.buildPreOrderItems(
+              tenant,
+              snapshot.menuItems,
+              tx,
+            ),
+            source: 'website',
+          };
+        } else {
+          const create = await tx.websiteReservationDeliveryIntent.findUnique({
+            where: {
+              venueId_reservationId_kind: {
+                venueId,
+                reservationId,
+                kind: 'CREATE',
+              },
+            },
+          });
+          if (create) {
+            if (create.status === 'ATTENTION') {
+              await attention('create_unresolved');
+              return null;
+            }
+            // Never let cancellation overtake a create that is still leased or
+            // retrying. A lost ACK remains the same create identity in Edge.
+            let completed = false;
+            let failed = false;
+            if (create.status === 'QUEUED' && create.queueId) {
+              if (create.queueTransport === 'edge') {
+                const receipt = await tx.edgeCommand.findFirst({
+                  where: { id: create.queueId, venueId },
+                  select: { status: true },
+                });
+                completed = receipt?.status === 'SUCCEEDED';
+                failed = !receipt || receipt.status === 'FAILED';
+              } else {
+                const receipt = await tx.posCallbackOutbox.findFirst({
+                  where: { id: create.queueId, venueId },
+                  select: { status: true },
+                });
+                completed = receipt?.status === 'delivered';
+                failed = !receipt || receipt.status === 'failed';
+              }
+            }
+            if (failed) {
+              await attention('create_outcome_unresolved');
+              return null;
+            }
+            if (!completed) {
+              await tx.websiteReservationDeliveryIntent.update({
+                where: { id },
+                data: {
+                  nextAttemptAt: new Date(Date.now() + 15_000),
+                  lastErrorCode: 'awaiting_create_ack',
+                },
+              });
+              return null;
+            }
+          }
+          if (
+            booking.posReservationId?.trim() !== intent.proposedPosReservationId
+          ) {
+            await attention('pos_identity_conflict');
+            return null;
+          }
+          payload = {
+            reservationId: intent.proposedPosReservationId,
+            status: 'cancelled',
+            updatedBy: 'website',
+            source: 'website',
+            reason: 'Cancelled on the website',
+          };
+        }
+        const command = {
+          type:
+            intent.kind === 'CREATE'
+              ? EdgeCommandTypes.RESERVATION_CREATE
+              : EdgeCommandTypes.RESERVATION_STATUS_UPDATE,
+          payload,
+          idempotencyKey:
+            intent.kind === 'CREATE'
+              ? `RESERVATION_CREATE:website:${reservationId}`
+              : `RESERVATION_STATUS_UPDATE:website-cancel:${intent.proposedPosReservationId}`,
+        };
+        const receipt = await this.posCommands.recordWebsiteDelivery(
+          tx,
+          venueId,
+          command,
+        );
+        if (!receipt) {
+          await tx.websiteReservationDeliveryIntent.update({
+            where: { id },
+            data: {
+              nextAttemptAt: new Date(Date.now() + 15_000),
+              lastErrorCode: 'awaiting_pos_enrollment',
+            },
+          });
+          return null;
+        }
+        if (intent.kind === 'CREATE')
+          await tx.websiteReservation.update({
+            where: { id: reservationId },
+            data: { posReservationId: intent.proposedPosReservationId },
+          });
+        await tx.websiteReservationDeliveryIntent.update({
+          where: { id },
+          data: {
+            status: 'QUEUED',
+            commandPayload: payload as Prisma.InputJsonObject,
+            queueTransport: receipt.transport,
+            queueId: receipt.queueId,
+            attemptCount: { increment: 1 },
+            lastErrorCode: null,
+          },
+        });
+        return {
+          tenant,
+          kind: intent.kind,
+          posId: intent.proposedPosReservationId,
+          transport: receipt.transport,
+        };
+      },
+      { maxWait: 10_000, timeout: 30_000 },
+    );
+    if (!admitted) return;
+    // Notifications are a wake-up, never the durable handoff. Do not turn their
+    // failure into a retry of committed POS work.
+    try {
+      suppressPosEchoForReservation(admitted.tenant, admitted.posId);
+      this.gateway.broadcastUpdate(admitted.tenant, 'data_updated', {
         type: 'reservations',
-        action: 'cancelled',
+        action: admitted.kind === 'CREATE' ? 'created' : 'cancelled',
         source: 'website',
-        reservationId: id,
+        websiteReservationId: reservationId,
+        reservationId: admitted.posId,
       });
-    } catch (error) {
+      if (admitted.transport === 'legacy')
+        await this.posCommands.kickWebsiteLegacy(venueId);
+    } catch {
       this.logger.warn(
-        `Failed to record cancellation of POS reservation ${id}: ${(error as Error).message}`,
+        `Website delivery ${id}: queued; notification wake-up failed`,
       );
     }
   }
@@ -324,6 +531,7 @@ export class WebsitePosReservationBridgeService {
   private async buildPreOrderItems(
     tenant: TenantContext,
     menuItemsJson: string | null,
+    db: Prisma.TransactionClient = this.prisma,
   ): Promise<Array<Record<string, unknown>>> {
     if (!menuItemsJson) return [];
     let parsed: unknown;
@@ -339,19 +547,37 @@ export class WebsitePosReservationBridgeService {
       if (!raw || typeof raw !== 'object') continue;
       const entry = raw as Record<string, unknown>;
       const id = String(entry.id ?? '').trim();
+      const cloudVariantId = String(entry.variantId ?? '').trim();
       const quantity = Math.max(1, Math.floor(Number(entry.quantity) || 1));
       const price = Number(entry.price) || 0;
       let name = String(entry.name ?? '').trim();
       let menuItemId: string | null = null;
+      let variantId: string | null = null;
       if (!name && id) {
-        const menuItem = await this.menuService.getMenuItemById(tenant, id);
+        const menuItem = await this.menuService.getMenuItemById(tenant, id, db);
         name =
           menuItem?.nameEn ??
           menuItem?.translations?.find((t) => t.language === 'en')?.name ??
           id;
       }
       if (id) {
-        menuItemId = await this.menuService.getPosItemIdByCloudId(tenant, id);
+        menuItemId = await this.menuService.getPosItemIdByCloudId(
+          tenant,
+          id,
+          db,
+        );
+      }
+      if (cloudVariantId) {
+        variantId = await this.menuService.getPosVariantIdByCloudId(
+          tenant,
+          id,
+          cloudVariantId,
+          db,
+        );
+        if (!menuItemId || !variantId)
+          throw new ConflictException(
+            'Website menu variant identity unavailable',
+          );
       }
       if (!name) continue;
       items.push({
@@ -362,6 +588,7 @@ export class WebsitePosReservationBridgeService {
         total: price * quantity,
         comment: null,
         ...(menuItemId ? { menuItemId } : {}),
+        ...(variantId ? { variantId } : {}),
       });
     }
     return items;

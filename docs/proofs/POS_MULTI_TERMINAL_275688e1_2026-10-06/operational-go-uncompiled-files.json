@@ -1,0 +1,58 @@
+[
+  {
+    "path": "apps/edge/internal/store/operational_authority.go",
+    "originalSha256": null,
+    "isolatedSha256": "f9dde16433838546ffec537184e67d64797377d4e0854e25497f41b5e70e6370",
+    "validation": "GO_UNCOMPILED_WIRE_UNGENERATED",
+    "ported": false
+  },
+  {
+    "path": "apps/edge/internal/store/operational.go",
+    "originalSha256": null,
+    "isolatedSha256": "7ad40c1a4644d7c40a9708dd810e063e33bad420a856f687cc291b8069c5ebcd",
+    "validation": "GO_UNCOMPILED_WIRE_UNGENERATED",
+    "ported": false
+  },
+  {
+    "path": "apps/edge/internal/store/operational_test.go",
+    "originalSha256": null,
+    "isolatedSha256": "450cd8c16d7d7c475e66d3317a095e49c39110bb8248a0105131d5a3e62ae686",
+    "validation": "GO_UNCOMPILED_WIRE_UNGENERATED",
+    "ported": false
+  },
+  {
+    "path": "apps/edge/internal/store/migrations/003_operational_coordination.sql",
+    "originalSha256": null,
+    "isolatedSha256": "47e6dcf89410b3c3eb28d9e54f50541556e722ee6d515d63242204322e3537ac",
+    "validation": "GO_UNCOMPILED_WIRE_UNGENERATED",
+    "ported": false
+  },
+  {
+    "path": "apps/edge/internal/store/migrations/004_operational_entity_kinds.sql",
+    "originalSha256": null,
+    "isolatedSha256": "c9878fdbae27a3455f979c68569a1c669a8d1d98a835de2c05f896b1c8319aad",
+    "validation": "GO_UNCOMPILED_WIRE_UNGENERATED",
+    "ported": false
+  },
+  {
+    "path": "apps/edge/internal/store/store.go",
+    "originalSha256": "b06cff463749805aa08442d75d38b8603ec8ddc51f7db29255cffcbea71e7cf3",
+    "isolatedSha256": "1986e88ef3625fab25855c7d6f6ebc90a5f793a16a2632c0afc8d04728c81e11",
+    "validation": "GO_UNCOMPILED_WIRE_UNGENERATED",
+    "ported": false
+  },
+  {
+    "path": "apps/edge/internal/store/coordination_test.go",
+    "originalSha256": "3d3d21e2ef250bdd739512ae280490488f27e2c51920978ec3d1dd7842d0b596",
+    "isolatedSha256": "f3e1193c55e474f4e30d6ea19403dcecfa93c48dca9432f73ea6bd1e0dd0a053",
+    "validation": "GO_UNCOMPILED_WIRE_UNGENERATED",
+    "ported": false
+  },
+  {
+    "path": "packages/contracts/proto/vynic/edge/v1/operational_proof.proto",
+    "originalSha256": null,
+    "isolatedSha256": "a4ce64509caf85ef262cf0fe07d909d55b9bacd23c9e9612e95c32686324e454",
+    "validation": "GO_UNCOMPILED_WIRE_UNGENERATED",
+    "ported": false
+  }
+]

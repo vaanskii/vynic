@@ -19,7 +19,7 @@
 import { PrismaService } from '../src/prisma.service';
 import * as argon2 from 'argon2';
 
-const MIN_PASSWORD_LENGTH = 12;
+const MIN_PASSWORD_LENGTH = 8;
 
 const ENTER = ['\r', '\n'];
 const END_OF_TEXT = '\u0003';

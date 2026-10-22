@@ -1,3 +1,4 @@
+import 'package:vynic/core/ui/widgets/pos_dialog.dart';
 import 'package:vynic/core/database/repositories/inventory_repository.dart';
 import 'package:vynic/core/models/feature_keys.dart';
 import 'dart:async';
@@ -1044,7 +1045,7 @@ class _AdminCloseDaySectionState extends State<AdminCloseDaySection> {
   /// Order is cancelled through the same routine as every other cancellation:
   /// it stays as history with a typed event and a non-revenue record.
   Future<bool> _cancelOpenOrder(int orderId) async {
-    final confirm = await showDialog<bool>(
+    final confirm = await showPosModal<bool>(
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: AdminDesign.text,
@@ -1218,7 +1219,7 @@ class _AdminCloseDaySectionState extends State<AdminCloseDaySection> {
   Future<void> _showOpenTablesModal(List<Order> openOrders) async {
     final modalOrders = List<Order>.from(openOrders);
 
-    await showDialog<void>(
+    await showPosModal<void>(
       context: context,
       builder: (dialogContext) {
         return StatefulBuilder(
@@ -1572,9 +1573,19 @@ class _AdminCloseDaySectionState extends State<AdminCloseDaySection> {
 
       if (mounted) {
         if (success) {
-          unawaited(showSuccessToast(context, 'Z რეპორტი წარმატებით დაიბეჭდა'));
+          unawaited(
+            showSuccessToast(
+              context,
+              'Z რეპორტი გაიგზავნა — შეამოწმეთ ქაღალდი',
+            ),
+          );
         } else {
-          unawaited(showErrorToast(context, 'Z რეპორტის ბეჭდვა ვერ მოხერხდა'));
+          unawaited(
+            showErrorToast(
+              context,
+              'Z რეპორტის ბეჭდვა ვერ დადასტურდა — შეამოწმეთ ბეჭდვის სია',
+            ),
+          );
         }
       }
     } catch (e) {
@@ -1609,7 +1620,7 @@ class _AdminCloseDaySectionState extends State<AdminCloseDaySection> {
       }
     }
 
-    await showDialog<void>(
+    await showPosModal<void>(
       context: context,
       barrierDismissible: false,
       barrierColor: Colors.black38,
@@ -1639,7 +1650,7 @@ class _AdminCloseDaySectionState extends State<AdminCloseDaySection> {
                 if (ctx.mounted) setS(() => step = 0);
                 await Future.delayed(const Duration(milliseconds: 450));
 
-                final currentDate = DatabaseService.getCurrentDate();
+                final currentDate = currentBusinessDate;
                 final currentDateKey = currentDate.toIso8601String().split(
                   'T',
                 )[0];
@@ -1739,6 +1750,7 @@ class _AdminCloseDaySectionState extends State<AdminCloseDaySection> {
                 final closeFuture = DatabaseService.closeDay(
                   actorId: widget.user.username,
                   actorName: widget.user.username,
+                  expectedBusinessDate: currentDateKey,
                 );
                 await Future.delayed(const Duration(milliseconds: 500));
 
@@ -1763,14 +1775,28 @@ class _AdminCloseDaySectionState extends State<AdminCloseDaySection> {
                     unawaited(
                       showErrorToast(
                         context,
-                        'დღის დახურვა შეუძლებელია!\nდახურეთ ყველა აქტიური ჩანაწერი',
+                        DatabaseService.closeDayFailureReason ??
+                            'დღის დახურვა ვერ შესრულდა',
                       ),
                     );
                   }
                 }
               }
 
-              unawaited(doWork());
+              unawaited(
+                doWork().catchError((Object error, StackTrace stack) {
+                  if (dialogContext.mounted) Navigator.of(dialogContext).pop();
+                  if (mounted) {
+                    unawaited(
+                      showErrorToast(
+                        context,
+                        DatabaseService.closeDayFailureReason ??
+                            'დღის დახურვა ვერ შესრულდა; სცადეთ ხელახლა',
+                      ),
+                    );
+                  }
+                }),
+              );
             }
 
             // ── Blocked view (phase 2) ──
@@ -2034,18 +2060,20 @@ class _AdminCloseDaySectionState extends State<AdminCloseDaySection> {
                                       : null,
                                 ),
                                 const SizedBox(width: 10),
-                                Text(
-                                  label,
-                                  style: TextStyle(
-                                    color: isDone
-                                        ? AdminTones.successText
-                                        : isCurrent
-                                        ? AdminDesign.text
-                                        : VynicFloorTokens.textFaint,
-                                    fontSize: 13,
-                                    fontWeight: isCurrent
-                                        ? FontWeight.w600
-                                        : FontWeight.w400,
+                                Expanded(
+                                  child: Text(
+                                    label,
+                                    style: TextStyle(
+                                      color: isDone
+                                          ? AdminTones.successText
+                                          : isCurrent
+                                          ? AdminDesign.text
+                                          : VynicFloorTokens.textFaint,
+                                      fontSize: 13,
+                                      fontWeight: isCurrent
+                                          ? FontWeight.w600
+                                          : FontWeight.w400,
+                                    ),
                                   ),
                                 ),
                               ],
@@ -2253,7 +2281,7 @@ class _AdminCloseDaySectionState extends State<AdminCloseDaySection> {
   ) async {
     if (!mounted) return;
 
-    await showDialog<void>(
+    await showPosModal<void>(
       context: context,
       barrierColor: Colors.black38,
       builder: (dialogContext) {
@@ -2365,7 +2393,7 @@ class _AdminCloseDaySectionState extends State<AdminCloseDaySection> {
     final numericDate =
         '${currentDate.day.toString().padLeft(2, '0')}.${currentDate.month.toString().padLeft(2, '0')}.${currentDate.year}';
 
-    await showDialog<void>(
+    await showPosModal<void>(
       context: context,
       barrierDismissible: false,
       builder: (dialogContext) {

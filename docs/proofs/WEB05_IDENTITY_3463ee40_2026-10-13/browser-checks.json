@@ -1,0 +1,41 @@
+{
+  "desktop": {
+    "evidence": [
+      "Commercial access \u00b7 Confirmed",
+      "Domain registration \u00b7 Confirmed",
+      "Renderer deployed \u00b7 Confirmed",
+      "Binding identity verified \u00b7 Confirmed",
+      "Publication live \u00b7 Confirmed"
+    ],
+    "scrollWidth": 1440,
+    "width": 1440
+  },
+  "mobile": {
+    "focusOutline": "solid",
+    "focusedLabel": "Expected build fingerprint",
+    "scrollWidth": 375,
+    "width": 375
+  },
+  "tablet": {
+    "evidence": [
+      "Commercial access \u00b7 Confirmed",
+      "Domain registration \u00b7 Confirmed",
+      "Renderer deployed \u00b7 Confirmed",
+      "Binding identity verified \u00b7 Confirmed",
+      "Publication live \u00b7 Confirmed"
+    ],
+    "scrollWidth": 768,
+    "width": 768
+  },
+  "wrong": {
+    "text": "Commercial access\n\u00b7\nConfirmed\nDomain registration\n\u00b7\nConfirmed\nRenderer deployed\n\u00b7\nConfirmed\nBinding identity verified\n\u00b7\nNot confirmed\nPublication live\n\u00b7\nNot confirmed"
+  },
+  "error": {
+    "evidence": "Commercial access\n\u00b7\nConfirmed\nDomain registration\n\u00b7\nConfirmed\nRenderer deployed\n\u00b7\nNot verified\nBinding identity verified\n\u00b7\nNot verified\nPublication live\n\u00b7\nNot verified",
+    "alert": "Synthetic site unavailable. Try Check now again."
+  },
+  "saved": {
+    "evidence": "Commercial access\n\u00b7\nConfirmed\nDomain registration\n\u00b7\nConfirmed\nRenderer deployed\n\u00b7\nNot verified\nBinding identity verified\n\u00b7\nNot verified\nPublication live\n\u00b7\nNot verified",
+    "saved": "Custom website setup saved."
+  }
+}

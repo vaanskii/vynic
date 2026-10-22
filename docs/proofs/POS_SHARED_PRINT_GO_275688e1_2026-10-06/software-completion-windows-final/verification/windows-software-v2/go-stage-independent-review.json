@@ -1,0 +1,39 @@
+{
+  "reviewedAtUTC": "2026-10-06T18:02:20.717527+00:00",
+  "outcome": "PASS_BOUNDED_STAGING_SOURCE_REVIEW_EXECUTION_NOT_PERFORMED",
+  "openP1P2": [],
+  "stage": "/Users/vaanskii/Developer/vynic/docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/windows-software-go-packages-stage-v2",
+  "stageReceiptSHA256": "6004c62c195e96b4ba9f54e065b9c1e887924054c0168ca7e2c49b854ba2b4f4",
+  "runnerSHA256": "ba879f52f65dcd335dfadd3af360b4175b819c91a9bae10e30100f5133260bcc",
+  "artifactsRehashed": 16,
+  "sourceFilesAndZIPEntriesVerified": 1109,
+  "sourceDelta": [
+    "apps/operations/test/unit/printer_agent_runtime_profile_test.dart",
+    "apps/operations/test/widget/printer_agent_status_card_test.dart"
+  ],
+  "buildInputsRehashed": [
+    {
+      "target": "windows/amd64",
+      "repositoryInputs": 57,
+      "externalInputs": 1757
+    },
+    {
+      "target": "windows/arm64",
+      "repositoryInputs": 57,
+      "externalInputs": 1740
+    }
+  ],
+  "PEEntriesVerified": 14,
+  "review": [
+    "Runner requires pinned current-user SID/name and ARM64 context, fresh local task directory, exact receipt/artifact hashes and source/binary/bundle verification before and after eight sequential package runs.",
+    "Actual packaged CLI is explicitly selected by environment; separate compiler-produced CLI retained. Both bundle agent/helper architectures and HELD_PROVISIONING/physicalEligible=false are checked.",
+    "Reviewed fixtures exercise loopback mTLS, synthetic SQLite/keys and temporary foreground process lifecycle. Installer tests inject backend fakes; no actual SCM or service-account install is invoked. Physical senders remain disabled.",
+    "Point-in-time CIM job counts are checked before and after each run; runner correctly does not claim continuous syscall tracing. Native ARM64 and emulated amd64 are explicitly distinct.",
+    "Portable ZIP names and all member bytes are independently verified; no traversal or duplicate-entry allowance found. All frozen Go/proto ancestry remains unchanged; only two previously reviewed Dart fixture tests differ."
+  ],
+  "limits": [
+    "No guest calls/tests/source changes performed in this independent review. Actual runtime pass remains pending.",
+    "SCM registration, registered-service lifecycle/account visibility, reboot/power failure and physical RAW/cut/beep remain unqualified.",
+    "The runner may report fixture-entry skips or an OS symlink privilege skip; actual results must enumerate them rather than claim every test executed."
+  ]
+}

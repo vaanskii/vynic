@@ -17,6 +17,8 @@ import { PlatformVenueConfigService } from './platform-venue-config.service';
 import { PlatformDeviceService } from './platform-device.service';
 import { PlatformAuthService } from './platform-auth.service';
 import { PlatformAuditService } from './platform-audit.service';
+import { ManagerActivationService } from '../auth/manager-activation.service';
+import { ManagerActivationController } from '../auth/manager-activation.controller';
 import { AuthService } from '../auth/auth.service';
 import { AuthController } from '../auth/auth.controller';
 import { JwtStrategy } from '../auth/jwt.strategy';
@@ -57,6 +59,7 @@ const url = process.env.TENANT_INTEGRATION_DATABASE_URL;
     const pinA = '483921',
       pinB = '571234',
       resetPin = '692481';
+    const trialEndsAt = new Date(Date.now() + 30 * 86_400_000).toISOString();
     const http = () => request(app.getHttpServer());
     const bearer = (token = adminToken) => ({
       Authorization: `Bearer ${token}`,
@@ -105,6 +108,7 @@ const url = process.env.TENANT_INTEGRATION_DATABASE_URL;
         [PlatformDeviceService, {}],
         [PlatformCommercialService, new PlatformCommercialService(db, vault)],
         [AuthService, new AuthService(db, jwt)],
+        [ManagerActivationService, new ManagerActivationService(db, vault)],
         [ManagerTenantService, new ManagerTenantService(db)],
         [LoginThrottleService, new LoginThrottleService()],
         [VenueEntitlementsService, entitlements],
@@ -124,6 +128,7 @@ const url = process.env.TENANT_INTEGRATION_DATABASE_URL;
           PlatformVenuesController,
           PlatformOrganizationsController,
           AuthController,
+          ManagerActivationController,
           MobileController,
           EdgeTransportController,
           FinanceController,
@@ -154,9 +159,12 @@ const url = process.env.TENANT_INTEGRATION_DATABASE_URL;
             })
             .expect(201)
         ).body;
+        // NON_FISCAL_CLOSE is never a plan grant; A receives it by override.
         const keys =
           name === 'A'
-            ? Object.values(FeatureKeys)
+            ? Object.values(FeatureKeys).filter(
+                (key) => key !== FeatureKeys.NON_FISCAL_CLOSE,
+              )
             : [FeatureKeys.POS, FeatureKeys.MANAGER_APP];
         const features = await db.feature.findMany({
           where: { key: { in: keys } },
@@ -173,19 +181,62 @@ const url = process.env.TENANT_INTEGRATION_DATABASE_URL;
           .set(bearer())
           .send({ planId: plan.id })
           .expect(200);
-        const result = (
+        if (name === 'A')
           await http()
-            .post(`/platform/venues/${venue.id}/managers`)
+            .put(`/platform/venues/${venue.id}/features/NON_FISCAL_CLOSE`)
             .set(bearer())
-            .send({
-              requestId: randomUUID(),
-              displayName: 'First manager',
-              username: 'manager',
-              role: 'MANAGER',
-              pin: name === 'A' ? pinA : pinB,
-            })
+            .send({ effect: 'ENABLED' })
+            .expect(200);
+        // New Venues start NO_PLAN; access opens only with an explicit status.
+        await http()
+          .put(`/platform/venues/${venue.id}/subscription`)
+          .set(bearer())
+          .send({ status: 'TRIAL', trialEndsAt })
+          .expect(200);
+        const issued = await new DeviceCredentialService(db).issueCredential({
+          venueId: venue.id,
+          installationId: randomUUID(),
+          displayName: 'Disposable POS',
+          platform: 'windows',
+        });
+        const activation = (
+          await http()
+            .post(`/platform/venues/${venue.id}/manager-activation`)
+            .set(bearer())
+            .send({})
             .expect(201)
         ).body;
+        await http()
+          .post('/edge/manager-activation')
+          .set('X-POS-Sync-Key', issued.credential)
+          .send({
+            code: activation.code,
+            requestId: randomUUID(),
+            name: 'manager',
+            pin: name === 'A' ? pinA : pinB,
+          })
+          .expect(200);
+        const result = {
+          staff: await db.staff.findUniqueOrThrow({
+            where: {
+              venueId_username: { venueId: venue.id, username: 'manager' },
+            },
+            select: {
+              id: true,
+              venueId: true,
+              username: true,
+              displayName: true,
+              role: true,
+              isActive: true,
+            },
+          }),
+        };
+        if (name === 'A') {
+          credential = issued.credential;
+          device = await new DeviceCredentialService(db).verifyCredential(
+            credential,
+          );
+        }
         const login = (
           await http()
             .post('/auth/mobile-login')
@@ -205,23 +256,13 @@ const url = process.env.TENANT_INTEGRATION_DATABASE_URL;
           tokenB = login.access_token;
         }
       }
-      const issued = await new DeviceCredentialService(db).issueCredential({
-        venueId: a.id,
-        installationId: randomUUID(),
-        displayName: 'Disposable POS',
-        platform: 'windows',
-      });
-      credential = issued.credential;
-      device = await new DeviceCredentialService(db).verifyCredential(
-        credential,
-      );
     });
     afterAll(async () => {
       await app?.close();
       await db?.$disconnect();
     });
 
-    it('creates Staff through Platform only, durably queues while no POS exists, claims/applies/acks and logs in', async () => {
+    it('registers initial Staff in enrolled POS, durably queues, claims/applies/acks and logs in', async () => {
       expect(managerA.venueId).toBe(a.id);
       expect(managerA).not.toHaveProperty('pinHash');
       expect(managerA).not.toHaveProperty('pin');
@@ -299,19 +340,21 @@ const url = process.env.TENANT_INTEGRATION_DATABASE_URL;
         .set(bearer())
         .send({ effect: 'DISABLED' })
         .expect(200);
+      // Withdrawing the Manager product revokes the Manager identity itself.
       await http()
         .get('/mobile/inventory/stock-items')
         .set(bearer(tokenB))
-        .expect(403);
+        .expect(401);
       await http()
         .delete(`/platform/venues/${b.id}/features/MANAGER_APP`)
         .set(bearer())
         .expect(200);
     });
     it('keeps every subscription status explicit and POS authentication independent', async () => {
+      // A manual ACTIVE opens a billing agreement that later changes must go
+      // through lifecycle actions, so it comes last.
       for (const status of [
         'TRIAL',
-        'ACTIVE',
         'PAST_DUE',
         'SUSPENDED',
         'CANCELLED',
@@ -320,7 +363,22 @@ const url = process.env.TENANT_INTEGRATION_DATABASE_URL;
         await http()
           .put(`/platform/venues/${a.id}/subscription`)
           .set(bearer())
-          .send({ status, note: 'Disposable policy proof' })
+          .send({
+            status,
+            note: 'Disposable policy proof',
+            // Current commercial rules: a Trial needs an explicit future end,
+            // and an immediate loss of access needs confirmation.
+            ...(status === 'TRIAL'
+              ? {
+                  trialEndsAt: new Date(
+                    Date.now() + 14 * 86_400_000,
+                  ).toISOString(),
+                }
+              : {}),
+            ...(['SUSPENDED', 'CANCELLED'].includes(status)
+              ? { confirm: true }
+              : {}),
+          })
           .expect(200);
         const allowed = ['TRIAL', 'ACTIVE', 'PAST_DUE'].includes(status);
         await http()
@@ -330,7 +388,14 @@ const url = process.env.TENANT_INTEGRATION_DATABASE_URL;
         expect(await entitlements.hasFeature(a.id, FeatureKeys.WEBSITE)).toBe(
           allowed,
         );
-        expect(await entitlements.hasFeature(a.id, FeatureKeys.POS)).toBe(true);
+        // Lapsed access withholds commercial features but keeps the plan, and
+        // never stops the POS Device authenticating.
+        expect(await entitlements.hasFeature(a.id, FeatureKeys.POS)).toBe(
+          allowed,
+        );
+        expect(await entitlements.planFeatures(a.id)).toContain(
+          FeatureKeys.POS,
+        );
         expect(
           await new DeviceCredentialService(db).verifyCredential(credential),
         ).toMatchObject({ venueId: a.id });
@@ -403,7 +468,8 @@ const url = process.env.TENANT_INTEGRATION_DATABASE_URL;
       expect(JSON.stringify(events)).not.toContain(pinA);
       expect(events.map((e) => e.action)).toEqual(
         expect.arrayContaining([
-          'venue.manager_create',
+          'manager.activation_issued',
+          'manager.activation_completed',
           'venue.manager_reset',
           'venue.manager_disable',
           'venue.subscription_changed',

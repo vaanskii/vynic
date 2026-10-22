@@ -28,12 +28,12 @@ MANIFEST = b'''<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 from windows_pe import resource as pe_resource, version_info, inspect, icon_resources
 
 
-def resource(payload, version='1.0.7.0', product='Vynic Setup', filename='VynicSetup.exe'):
+def resource(payload, version='1.0.8.0', product='Vynic Setup', filename='VynicSetup.exe'):
     icon = Path(__file__).resolve().parents[2] / 'operations/windows/runner/resources/app_icon.ico'
     return pe_resource({24:payload,16:version_info(product,filename,version), **icon_resources(icon.read_bytes())})
 
 
-def inspect_pe(path, version='1.0.7.0'):
+def inspect_pe(path, version='1.0.8.0'):
     result=inspect(Path(path))
     assert result['subsystem']==2, 'not GUI subsystem'
     assert result['resources'][(24,1,1033)]==MANIFEST.replace(b'1.0.0.0',version.encode()), 'manifest mismatch'
@@ -55,7 +55,7 @@ def main():
     p.add_argument('--distribution', required=True, type=Path)
     p.add_argument('--out', required=True, type=Path)
     p.add_argument('--go', default='go')
-    p.add_argument('--version', default='1.0.7.0')
+    p.add_argument('--version', default='1.0.8.0')
     a = p.parse_args()
     raw = a.distribution.read_bytes()
     d = json.loads(raw)

@@ -1,0 +1,144 @@
+{
+  "status": "UPDATED_AND_LAUNCHED_WAITING_USER_TEST",
+  "recordedAtUTC": "2026-10-04T20:29:42.950518+00:00",
+  "target": {
+    "environment": "existing Parallels VM",
+    "name": "Windows 11",
+    "uuid": "9830bac8-34c6-46f7-9062-cd8f62f7a127",
+    "architecture": "Windows11 ARM with amd64 POS",
+    "lanIP": "10.10.10.9",
+    "computer": "VANSKI",
+    "user": "VANSKI\\vaanskii",
+    "elevated": false,
+    "separatePhysicalWindowsUpdated": false
+  },
+  "initial": {
+    "currentVersion": "1.0.12",
+    "highWater": 13,
+    "feed": "https://172.20.10.2:8443/networks/172.20.10.2/pos/manifest.json",
+    "baselineVersion": "1.0.7",
+    "baselineRelease": 8
+  },
+  "installed": {
+    "current": "1.0.14",
+    "high": 15,
+    "status": "SUCCESS",
+    "version": "1.0.14",
+    "startupVerified": true,
+    "dataPath": "C:\\Users\\vaanskii\\AppData\\Roaming\\vanski\\Vynic POS/Vpos_Data_vanski",
+    "lastOutcome": "SUCCESS"
+  },
+  "installedFilesMatchReviewedZip": 24,
+  "publicBuildReceipt": {
+    "product": "vynic-pos",
+    "version": "1.0.14",
+    "sourceSha256": "0bf6dd5beeb9f4ff9533aea5babaae03f27790f56471099a1184cf6e27994db7",
+    "environment": "development",
+    "apiOrigin": "http://10.10.10.3:3000"
+  },
+  "nativeVersion": "1.0.14+15",
+  "gui": "PIN login visible, ready status and version1.0.14; no Staff login or operational actions",
+  "process": {
+    "pid": 12736,
+    "path": "C:\\Users\\vaanskii\\AppData\\Local\\Vynic\\pos\\current\\vynic_pos.exe",
+    "title": "Vynic POS"
+  },
+  "provenance": {
+    "baseCommit": "275688e1e5c5dc0e26e62705ab0c7670cf16d99a",
+    "candidateSourceManifest": "db74149c4680d05e16a3a1f53906b269bf76be3d1d71e78796119633d15ff51a",
+    "candidateArchiveSha256": "6947ed4d955d5b3555c15f0cb8e1062191203bebe95d3c3cffe9bb38fd955c9e",
+    "sealedFilesVerified": 883,
+    "preparedFilesVerifiedBeforeAfterBuild": 550,
+    "preparedSourceZipSha256": "0bf6dd5beeb9f4ff9533aea5babaae03f27790f56471099a1184cf6e27994db7",
+    "artifactSha256": "4534e35e68c19a59871c04476f03dc13205d7f705e83209253b2fd693a8f6fb0",
+    "nativePreparationChangedFiles": [
+      "apps/operations/lib/main.dart",
+      "apps/operations/macos/Runner/Configs/AppInfo.xcconfig",
+      "apps/operations/product-identity.json",
+      "apps/operations/pubspec.yaml",
+      "apps/operations/windows/CMakeLists.txt",
+      "apps/operations/windows/runner/Runner.rc",
+      "apps/operations/windows/runner/main.cpp"
+    ],
+    "unrelatedWipIncluded": false
+  },
+  "feed": {
+    "url": "https://10.10.10.3:8443/networks/10.10.10.3/pos/manifest.json",
+    "version": "1.0.14",
+    "release": 15,
+    "expires": "2026-10-11T20:20:59.657262Z",
+    "tlsCaValidated": true,
+    "signatureAndArtifactsVerified": true,
+    "edgeVersion": "1.0.1",
+    "bootstrapRelease": 3,
+    "edgeExeSha256": "ba75939248e9a07ee585ef6fa9d18796a4b74f5e954b802b9af11eaa09a2d0d7",
+    "watcherEnabled": false
+  },
+  "toolchain": {
+    "Flutter": "existing3.44.2",
+    "Dart": "3.12.2",
+    "dependencyResolution": "--offline --enforce-lockfile",
+    "build": "windows release --no-pub --target=lib/main_pos.dart",
+    "buildSeconds": 150.7,
+    "FirebaseCppSDK": "cached13.5.0",
+    "toolInstallOrUpgrade": false
+  },
+  "tests": {
+    "productSuites": 7,
+    "productPassingChecks": 96,
+    "standaloneRunnerPass": 39,
+    "standaloneRunnerFail": 1,
+    "physicalEntrySkipped": 1,
+    "nineSuiteAggregate": "FAILED",
+    "runnerFailure": "AcceptanceRequest.requireOwnedOutput compares raw Windows backslash entry.path to mixed-separator marker.path, refusing valid owned output; fails closed before storage/transport",
+    "runnerShippedInInstalledProduct": false,
+    "sealedCandidateChangedToFixFailure": false
+  },
+  "migration": {
+    "tool": "retained VynicLabNetwork.exe",
+    "toolSha256": "924c1ae1564deb9097f78c9f97a1d7a5a17bb239d287e0e72006c1c05ba24fea",
+    "toolProvenance": "retained historical utility, embeddedca984da3/vcs.modified=true; exact source receipt unavailable; not freshly compiled from275688e1",
+    "receiptConfigAgree": true,
+    "maintenanceAndJournalAbsent": true,
+    "sameKeysAndEdge": true,
+    "sameDataPath": true,
+    "all23FilesByteIdenticalAfterMigration": true
+  },
+  "dataAfterLaunch": {
+    "allOriginal23FilesPresent": true,
+    "sameDataPath": true,
+    "fullByteComparison": "UNAVAILABLE while active Hive files are locked; application startup can append/migrate local rows; no claim of byte-identical post-launch data"
+  },
+  "security": {
+    "ps1Execution": "Disabled; attempted inspection file refused; policy unchanged",
+    "workflow": "normal existing EXE/BAT and direct commands; no trust/Defender/SmartScreen/signature bypass",
+    "keyRotation": false,
+    "certificateChange": false
+  },
+  "physicalJobs": 0,
+  "commits": 0,
+  "pushDeployMerge": false,
+  "milestoneDone": false,
+  "remaining": [
+    "User testing",
+    "Standalone Windows acceptance path normalization and launcher qualification",
+    "Supported-model physical/driver acceptance",
+    "Owner Receipt/paper/no-byte retry policy"
+  ],
+  "nextPhase": "Parent coordinates requested plan/deployment-readiness audit separately; no roadmap implementation begun",
+  "workspacePreservation": {
+    "snapshotFilesChecked": 727,
+    "missingFiles": 0,
+    "changedExistingFiles": [
+      "docs/POS02_ONE_SHOT_ACCEPTANCE.md",
+      "docs/POS02_WINDOWS_INSTALLER_HANDOFF.md",
+      "docs/agent-state/VYNIC_PROJECT_STATE.md"
+    ],
+    "existingRuntimeAndProofFilesUnchanged": true,
+    "head": "275688e1e5c5dc0e26e62705ab0c7670cf16d99a",
+    "branch": "codex/docker-deployment-foundation",
+    "stash": "9df454225caec647f67ad4f70ef6038dbbbe41d6",
+    "index": "EMPTY",
+    "diffCheck": "PASS"
+  }
+}

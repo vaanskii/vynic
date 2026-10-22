@@ -1,5 +1,8 @@
+import 'package:vynic/core/ui/widgets/pos_dialog.dart';
+import 'package:uuid/uuid.dart';
+import 'package:vynic/core/database/repositories/order_table_mutation_repository.dart';
+import 'package:vynic/core/services/pos/update/update_readiness.dart';
 import 'package:vynic/core/services/pos/pos_locale.dart';
-import 'package:vynic/core/services/pos/pos_input_settings.dart';
 import 'package:vynic/core/database/database_core.dart';
 import 'dart:async';
 
@@ -13,14 +16,17 @@ import 'package:vynic/core/services/pos/menu_service.dart';
 import 'package:vynic/core/services/database_service.dart';
 import 'package:vynic/core/services/printing/printer_service.dart';
 import 'package:vynic/core/widgets/pin_button.dart';
-import 'package:vynic/apps/windows_pos/widgets/on_screen_keyboard.dart';
-import 'package:vynic/core/widgets/pos_keyboard/pos_keyboard_sheet.dart';
-import 'package:vynic/core/widgets/pos_keyboard/pos_keyboard_language.dart';
+import 'package:vynic/apps/windows_pos/widgets/comment_input_dialog.dart';
+import 'package:vynic/core/widgets/pos_on_screen_text_field.dart';
 import 'package:vynic/core/models/reservation_context.dart';
 import 'package:vynic/core/utils/pos_feedback.dart';
 import 'package:vynic/core/ui/vynic_floor_tokens.dart';
 import 'package:vynic/apps/windows_pos/widgets/shared/pos_surface.dart';
 import 'order_detail_screen.dart';
+import 'package:vynic/apps/windows_pos/widgets/estimate_customer_dialog.dart';
+import 'package:vynic/core/services/pos/quick_checkout_service.dart';
+import 'package:vynic/core/services/pos/table_payment_service.dart';
+import 'package:vynic/core/services/auth/pos_session.dart';
 
 /// This screen's names for the shared floor tokens.
 ///
@@ -169,6 +175,7 @@ class MenuScreen extends StatefulWidget {
   isPreOrderMode; // If true, return cart items instead of creating order
   final bool isQuickOrder; // If true, just calculate and print receipt
   final bool isTakeAwayMode;
+  final bool isQuickCheckout;
   final String? takeAwayCustomerName;
   final String? takeAwayCustomerPhone;
   final String? takeAwayPickupTime;
@@ -187,6 +194,7 @@ class MenuScreen extends StatefulWidget {
     this.isPreOrderMode = false,
     this.isQuickOrder = false,
     this.isTakeAwayMode = false,
+    this.isQuickCheckout = false,
     this.takeAwayCustomerName,
     this.takeAwayCustomerPhone,
     this.takeAwayPickupTime,
@@ -201,6 +209,10 @@ class MenuScreen extends StatefulWidget {
 }
 
 class _MenuScreenState extends State<MenuScreen> {
+  Order? _editingOrderBaseline;
+  final String _createRequestId = const Uuid().v4();
+  bool _submittingOrder = false;
+
   List<MenuCategory> _categories = [];
   MenuCategory? _selectedCategory;
   MenuSubcategory? _selectedSubcategory;
@@ -236,6 +248,7 @@ class _MenuScreenState extends State<MenuScreen> {
       DatabaseService.isServiceFeeAvailable() &&
       !widget.isPreOrderMode &&
       !widget.isTakeAwayMode &&
+      !widget.isQuickCheckout &&
       !_existingOrderIsTakeAway;
 
   bool get _shouldIncludeServiceFee =>
@@ -315,7 +328,7 @@ class _MenuScreenState extends State<MenuScreen> {
       return true;
     }
 
-    final result = await showDialog<bool>(
+    final result = await showPosModal<bool>(
       context: context,
       barrierDismissible: false,
       builder: (dialogContext) => Dialog(
@@ -581,6 +594,7 @@ class _MenuScreenState extends State<MenuScreen> {
     if (widget.existingOrderId != null) {
       final order = DatabaseService.getOrder(widget.existingOrderId!);
       if (order != null) {
+        _editingOrderBaseline = OrderTableMutationRepository.capture(order);
         setState(() {
           _existingOrderIsTakeAway = _isTakeAwayOrder(order);
           // Reflect the existing order's service-fee state in the toggle.
@@ -764,6 +778,16 @@ class _MenuScreenState extends State<MenuScreen> {
   }
 
   Future<void> _placeOrder() async {
+    if (_submittingOrder) return;
+    setState(() => _submittingOrder = true);
+    try {
+      await _admittedplaceOrder();
+    } finally {
+      if (mounted) setState(() => _submittingOrder = false);
+    }
+  }
+
+  Future<void> _admittedplaceOrder() async {
     // If in pre-order mode, return the cart items without creating an order
     if (widget.isPreOrderMode) {
       final orderItems = _cart.values.map((cartEntry) {
@@ -785,6 +809,36 @@ class _MenuScreenState extends State<MenuScreen> {
     }
 
     if (_cart.isEmpty) return;
+
+    if (widget.isQuickCheckout) {
+      final selection = await TablePaymentService(
+        context: context,
+        total: _getCartTotal(),
+      ).collect();
+      if (selection == null || !mounted) return;
+      try {
+        final result = await QuickCheckoutService.settle(
+          requestId: _createRequestId,
+          actor: (PosSession.user ?? widget.user).username,
+          items: _cartToOrderItems(),
+          payment: selection,
+        );
+        if (!result.isSuccess)
+          throw StateError(result.detail ?? 'ანგარიშსწორება ვერ დასრულდა');
+        if (mounted)
+          Navigator.pop(context, {
+            'status': 'closed',
+            'message': 'სწრაფი გაყიდვა დასრულდა',
+          });
+      } catch (error) {
+        if (mounted)
+          await showErrorToast(
+            context,
+            'გაყიდვა ვერ დასრულდა: $error. შეკვეთა შენარჩუნებულია.',
+          );
+      }
+      return;
+    }
 
     if (widget.isTakeAwayMode && widget.existingOrderId == null) {
       final orderItems = _cart.values.map((cartEntry) {
@@ -813,6 +867,7 @@ class _MenuScreenState extends State<MenuScreen> {
           notes: widget.takeAwayNotes,
           items: orderItems,
           createdBy: widget.user.username,
+          requestId: _createRequestId,
         );
 
         setState(() {
@@ -859,6 +914,15 @@ class _MenuScreenState extends State<MenuScreen> {
     // Quick Order Mode: Calculate, save, reuse, and print receipt
     if (widget.isQuickOrder) {
       if (_cart.isNotEmpty) {
+        final existing = _selectedQuickOrderDraftId == null
+            ? null
+            : DatabaseService.getQuickOrderDraft(_selectedQuickOrderDraftId!);
+        final contact = await EstimateCustomerDialog.show(
+          context,
+          name: existing?.customerName,
+          phone: existing?.customerPhone,
+        );
+        if (contact == null || !mounted) return;
         try {
           final draft = _selectedQuickOrderDraftId == null
               ? await DatabaseService.saveQuickOrderDraft(
@@ -867,6 +931,8 @@ class _MenuScreenState extends State<MenuScreen> {
                   subtotal: _getCartTotal(),
                   includeServiceFee: _shouldIncludeServiceFee,
                   serviceFeeRate: _serviceFeeRate,
+                  customerName: contact.name,
+                  customerPhone: contact.phone,
                 )
               : await DatabaseService.updateQuickOrderDraft(
                   id: _selectedQuickOrderDraftId!,
@@ -875,6 +941,9 @@ class _MenuScreenState extends State<MenuScreen> {
                   subtotal: _getCartTotal(),
                   includeServiceFee: _shouldIncludeServiceFee,
                   serviceFeeRate: _serviceFeeRate,
+                  customerName: contact.name,
+                  customerPhone: contact.phone,
+                  replaceCustomerDetails: true,
                 );
 
           if (mounted) {
@@ -883,7 +952,11 @@ class _MenuScreenState extends State<MenuScreen> {
               _quickOrderDrafts = DatabaseService.getQuickOrderDrafts();
             });
           }
-        } catch (_) {}
+        } catch (error) {
+          if (mounted)
+            await showErrorToast(context, 'შეფასება ვერ შეინახა: $error');
+          return;
+        }
       }
 
       if (mounted) {
@@ -985,7 +1058,7 @@ class _MenuScreenState extends State<MenuScreen> {
 
           if (removalsAndReductions.isNotEmpty && needsAdminApproval) {
             // Show what will be removed/reduced
-            final confirmed = await showDialog<bool>(
+            final confirmed = await showPosModal<bool>(
               context: context,
               builder: (context) => Dialog(
                 backgroundColor: Colors.white,
@@ -1209,26 +1282,31 @@ class _MenuScreenState extends State<MenuScreen> {
 
           orderId = existingOrder.orderId;
 
-          if (auditEvents.isNotEmpty) {
-            await DatabaseService.appendOrderAuditEvents(
-              orderId: existingOrder.orderId,
-              events: auditEvents,
+          await UpdateReadiness.mutate('editOrder', () async {
+            OrderTableMutationRepository.requireFresh(
+              _editingOrderBaseline ?? existingOrder,
             );
-          }
+            OrderTableMutationRepository.requireFresh(existingOrder);
+            if (auditEvents.isNotEmpty) {
+              await DatabaseService.appendOrderAuditEvents(
+                orderId: existingOrder.orderId,
+                events: auditEvents,
+              );
+            }
 
-          // Clear existing items and add new ones
-          existingOrder.items.clear();
-          existingOrder.items.addAll(orderItems);
-          _existingOrderIsTakeAway = _isTakeAwayOrder(existingOrder);
-          existingOrder.includeServiceFee = _shouldIncludeServiceFee;
-          existingOrder.recalculateTotal();
-          existingOrder.updatedAt = DatabaseService.getCurrentDateTime();
+            // Clear existing items and add new ones
+            existingOrder.items.clear();
+            existingOrder.items.addAll(orderItems);
+            _existingOrderIsTakeAway = _isTakeAwayOrder(existingOrder);
+            existingOrder.includeServiceFee = _shouldIncludeServiceFee;
+            existingOrder.recalculateTotal();
+            existingOrder.updatedAt = DatabaseService.getCurrentDateTime();
 
-          await DatabaseService.updateOrder(existingOrder);
-
+            await DatabaseService.updateOrder(existingOrder);
+          });
           // Print modification to kitchen if there are changes
           if (addedItems.isNotEmpty || removedItems.isNotEmpty) {
-            PrinterService.printKitchenCheckInBackground(
+            await PrinterService.printKitchenCheckInBackground(
               items: [], // Empty for modifications
               addedItems: addedItems,
               removedItems: removedItems,
@@ -1246,7 +1324,12 @@ class _MenuScreenState extends State<MenuScreen> {
                     ),
                   );
                 } else {
-                  unawaited(showErrorToast(context, 'პრინტერი მიუწვდომელია'));
+                  unawaited(
+                    showErrorToast(
+                      context,
+                      'ბეჭდვა ვერ დადასტურდა — შეამოწმეთ ბეჭდვის სია',
+                    ),
+                  );
                 }
               },
             );
@@ -1286,6 +1369,7 @@ class _MenuScreenState extends State<MenuScreen> {
           createdBy: widget.user.username,
           items: orderItems,
           includeServiceFee: _shouldIncludeServiceFee,
+          requestId: _createRequestId,
         );
         orderId = order.orderId;
       }
@@ -1333,7 +1417,9 @@ class _MenuScreenState extends State<MenuScreen> {
       }
     } catch (e) {
       if (!mounted) return;
-      String message = 'Error placing order: $e';
+      String message = e is OrderMutationConflict
+          ? e.userMessage
+          : 'შეკვეთის შენახვა ვერ შესრულდა';
       if (e is StateError &&
           e.message.toLowerCase().contains('audit report') &&
           e.message.toLowerCase().contains('locked')) {
@@ -1349,14 +1435,6 @@ class _MenuScreenState extends State<MenuScreen> {
       _searchQuery = '';
       _searchController.clear();
     });
-  }
-
-  Future<void> _openSearchKeyboard() async {
-    await showPosKeyboardInputSheet(
-      context: context,
-      controller: _searchController,
-      initialLanguage: PosKeyboardLanguage.fromCode(_currentLanguage),
-    );
   }
 
   @override
@@ -1437,6 +1515,8 @@ class _MenuScreenState extends State<MenuScreen> {
   }
 
   String get _screenTitle {
+    if (widget.isQuickCheckout) return 'სწრაფი ანგარიშსწორება';
+    if (widget.isQuickOrder) return 'მენიუს შეფასება';
     if (widget.isPreOrderMode) {
       return 'რეზერვაციის მენიუ';
     }
@@ -1522,6 +1602,7 @@ class _MenuScreenState extends State<MenuScreen> {
   /// the search field a sliver. The same facts read fine joined up and clipped
   /// at two lines; the full note is on the order detail either way.
   String? _menuSubtitle() {
+    if (widget.isQuickCheckout) return 'აირჩიეთ პროდუქტები და გადაიხადეთ';
     if (widget.isTakeAwayMode) {
       final customer = (widget.takeAwayCustomerName ?? 'Guest').trim();
       final pickup = widget.takeAwayPickupTime;
@@ -1689,15 +1770,10 @@ class _MenuScreenState extends State<MenuScreen> {
 
   Widget _buildSearchField() {
     return SizedBox(
-      height: 42,
-      child: TextField(
+      height: 56,
+      child: PosOnScreenTextField(
         controller: _searchController,
-        readOnly: PosInputSettings.useOnScreen(
-          context,
-        ), // Make read-only to prevent system keyboard
-        onTap: PosInputSettings.useOnScreen(context)
-            ? _openSearchKeyboard
-            : null,
+        keyboardLanguage: _currentLanguage,
         style: const TextStyle(color: _menuTextPrimary, fontSize: 15),
         decoration: InputDecoration(
           hintText: _currentLanguage == 'en'
@@ -1940,7 +2016,7 @@ class _MenuScreenState extends State<MenuScreen> {
 
     if (item.hasVariants()) {
       // Step 1: Show variant selection dialog
-      final selectedVariant = await showDialog<MenuVariant>(
+      final selectedVariant = await showPosModal<MenuVariant>(
         context: context,
         builder: (context) {
           return _VariantSelectionDialog(
@@ -1952,7 +2028,7 @@ class _MenuScreenState extends State<MenuScreen> {
 
       if (selectedVariant != null && mounted) {
         // Step 2: Show quantity dialog
-        final qty = await showDialog<int>(
+        final qty = await showPosModal<int>(
           context: context,
           builder: (context) {
             final dialogTitle = '$itemName - ${selectedVariant.getSizeLabel()}';
@@ -1975,7 +2051,7 @@ class _MenuScreenState extends State<MenuScreen> {
       }
     } else {
       // No variants: show simple quantity dialog
-      final qty = await showDialog<int>(
+      final qty = await showPosModal<int>(
         context: context,
         builder: (context) {
           return _QuantityDialog(defaultQty: 1, title: itemName);
@@ -2091,78 +2167,61 @@ class _MenuScreenState extends State<MenuScreen> {
     final hasComment =
         entry.comment != null && entry.comment!.trim().isNotEmpty;
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-      child: Row(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SizedBox(
-            width: 22,
-            child: Text(
-              '$displayIndex',
-              style: const TextStyle(
-                color: _menuTextMuted,
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                '$displayIndex',
+                style: const TextStyle(color: _menuTextMuted, fontSize: 13),
               ),
-            ),
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
                   entry.name,
                   style: const TextStyle(
                     color: _menuTextPrimary,
-                    fontSize: 14,
+                    fontSize: 16,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
-                if (hasComment) ...[
-                  const SizedBox(height: 2),
-                  Text(
-                    entry.comment!,
-                    style: const TextStyle(
-                      color: _menuTextMuted,
-                      fontSize: 12,
-                      fontStyle: FontStyle.italic,
-                    ),
-                  ),
-                ],
-                const SizedBox(height: 4),
-                _cartLink(
-                  label: hasComment ? 'კომენტარი' : '+ კომენტარი',
-                  onTap: () => _editCartComment(entry),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 8),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
+              ),
+              const SizedBox(width: 12),
               Text(
                 '${entry.total.toStringAsFixed(2)} ₾',
                 style: const TextStyle(
                   color: _menuTextPrimary,
-                  fontSize: 14,
+                  fontSize: 15,
                   fontWeight: FontWeight.w800,
                 ),
               ),
-              const SizedBox(height: 8),
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  _qtyStepper(entry),
-                  const SizedBox(width: 6),
-                  _cartIconButton(
-                    icon: Icons.close,
-                    color: _menuDanger,
-                    onTap: () => setState(() => _cart.remove(entry.key)),
-                    tooltip: _currentLanguage == 'en' ? 'Remove' : 'წაშლა',
-                  ),
-                ],
+            ],
+          ),
+          if (hasComment) ...[
+            const SizedBox(height: 8),
+            Text(
+              entry.comment!,
+              style: const TextStyle(color: _menuTextMuted, fontSize: 13),
+            ),
+          ],
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              _cartLink(
+                label: hasComment ? 'კომენტარი' : '+ კომენტარი',
+                onTap: () => _editCartComment(entry),
+              ),
+              const Spacer(),
+              _qtyStepper(entry),
+              const SizedBox(width: 8),
+              _cartIconButton(
+                icon: Icons.close,
+                color: _menuDanger,
+                onTap: () => setState(() => _cart.remove(entry.key)),
+                tooltip: _currentLanguage == 'en' ? 'Remove' : 'წაშლა',
               ),
             ],
           ),
@@ -2173,7 +2232,7 @@ class _MenuScreenState extends State<MenuScreen> {
 
   Widget _qtyStepper(_CartEntry entry) {
     return Container(
-      height: 30,
+      height: 56,
       decoration: BoxDecoration(
         color: _menuSurfaceColor,
         borderRadius: BorderRadius.circular(8),
@@ -2215,8 +2274,8 @@ class _MenuScreenState extends State<MenuScreen> {
       onTap: onTap,
       borderRadius: BorderRadius.circular(8),
       child: SizedBox(
-        width: 28,
-        height: 30,
+        width: 56,
+        height: 56,
         child: Icon(
           icon,
           size: 16,
@@ -2236,8 +2295,8 @@ class _MenuScreenState extends State<MenuScreen> {
       onTap: onTap,
       borderRadius: BorderRadius.circular(8),
       child: Container(
-        width: 30,
-        height: 30,
+        width: 56,
+        height: 56,
         decoration: BoxDecoration(
           color: color.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(8),
@@ -2250,17 +2309,10 @@ class _MenuScreenState extends State<MenuScreen> {
   }
 
   Widget _cartLink({required String label, required VoidCallback onTap}) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(4),
-      child: Text(
-        label,
-        style: const TextStyle(
-          color: _menuAccent,
-          fontSize: 12,
-          fontWeight: FontWeight.w600,
-        ),
-      ),
+    return IconButton(
+      tooltip: label,
+      onPressed: onTap,
+      icon: const Icon(Icons.chat_bubble_outline, color: _menuAccent, size: 20),
     );
   }
 
@@ -2356,7 +2408,13 @@ class _MenuScreenState extends State<MenuScreen> {
           SizedBox(
             width: double.infinity,
             child: PosPrimaryButton(
-              label: widget.isPreOrderMode
+              label: _submittingOrder
+                  ? 'მუშავდება…'
+                  : widget.isQuickCheckout
+                  ? 'გადახდა'
+                  : widget.isQuickOrder
+                  ? 'შეფასების შენახვა'
+                  : widget.isPreOrderMode
                   ? 'რეზერვაციის დადასტურება'
                   : (widget.existingOrderId != null
                         ? 'შეკვეთის განახლება'
@@ -2366,7 +2424,9 @@ class _MenuScreenState extends State<MenuScreen> {
                   : (widget.existingOrderId != null
                         ? Icons.check
                         : Icons.check_circle),
-              onTap: widget.isPreOrderMode || _cart.isNotEmpty
+              onTap:
+                  !_submittingOrder &&
+                      (widget.isPreOrderMode || _cart.isNotEmpty)
                   ? _placeOrder
                   : null,
             ),
@@ -2405,10 +2465,12 @@ class _MenuScreenState extends State<MenuScreen> {
   }
 
   Future<void> _editCartComment(_CartEntry entry) async {
-    final comment = await showDialog<String>(
+    final comment = await showPosModal<String>(
       context: context,
-      builder: (context) =>
-          _CommentDialog(itemName: entry.name, existingComment: entry.comment),
+      builder: (context) => CommentInputDialog.menuItem(
+        itemName: entry.name,
+        initialComment: entry.comment,
+      ),
     );
     if (comment != null) {
       setState(() {
@@ -2418,7 +2480,7 @@ class _MenuScreenState extends State<MenuScreen> {
   }
 
   void _confirmClearCart() {
-    showDialog<void>(
+    showPosModal<void>(
       context: context,
       builder: (dialogContext) => AlertDialog(
         backgroundColor: Colors.white,
@@ -2478,8 +2540,8 @@ class _TopBarIconButton extends StatelessWidget {
         onTap: onTap,
         borderRadius: BorderRadius.circular(10),
         child: Container(
-          width: 40,
-          height: 40,
+          width: 56,
+          height: 56,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(10),
             border: Border.all(color: _menuBorderColor),
@@ -2513,58 +2575,11 @@ class _VariantSelectionDialogState extends State<_VariantSelectionDialog> {
     final variants = widget.item.variants ?? [];
     final english = widget.language == 'en';
 
-    return AlertDialog(
-      backgroundColor: _menuCardColor,
-      surfaceTintColor: _menuCardColor,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(VynicFloorTokens.panelRadius),
-      ),
-      titlePadding: const EdgeInsets.fromLTRB(24, 22, 24, 0),
-      title: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            widget.item.getName(widget.language),
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              color: _menuTextPrimary,
-              fontSize: 19,
-              fontWeight: FontWeight.w800,
-              height: 1.2,
-            ),
-          ),
-          const SizedBox(height: 6),
-          PosSectionLabel(english ? 'Select a size' : 'აირჩიეთ ზომა'),
-        ],
-      ),
-      contentPadding: const EdgeInsets.fromLTRB(24, 18, 24, 8),
-      content: SizedBox(
-        width: 400,
-        child: SingleChildScrollView(
-          // A drinks menu with eight pours used to run straight off the bottom
-          // of the dialog: the list was a bare `Column` inside a box that
-          // cannot grow. It scrolls now, so the number of variants an admin
-          // adds is their business rather than a layout constraint.
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              for (final e in variants.asMap().entries)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 10),
-                  child: _VariantOption(
-                    label: e.value.getSizeLabel(),
-                    price: e.value.price,
-                    selected: _selectedIndex == e.key,
-                    onTap: () => setState(() => _selectedIndex = e.key),
-                  ),
-                ),
-            ],
-          ),
-        ),
-      ),
-      actionsPadding: const EdgeInsets.fromLTRB(24, 4, 24, 20),
+    return PosFormDialog(
+      title: widget.item.getName(widget.language),
+      subtitle: english ? 'Select a size' : 'აირჩიეთ ზომა',
+      width: 448,
+      onClose: () => Navigator.of(context).pop(),
       actions: [
         PosActionButton(
           label: english ? 'Cancel' : 'გაუქმება',
@@ -2573,12 +2588,26 @@ class _VariantSelectionDialogState extends State<_VariantSelectionDialog> {
         const SizedBox(width: 8),
         PosPrimaryButton(
           label: english ? 'Next' : 'შემდეგ',
-          height: 46,
           onTap: variants.isEmpty
               ? null
               : () => Navigator.of(context).pop(variants[_selectedIndex]),
         ),
       ],
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          for (final e in variants.asMap().entries)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: _VariantOption(
+                label: e.value.getSizeLabel(),
+                price: e.value.price,
+                selected: _selectedIndex == e.key,
+                onTap: () => setState(() => _selectedIndex = e.key),
+              ),
+            ),
+        ],
+      ),
     );
   }
 }
@@ -2700,26 +2729,22 @@ class _QuantityDialogState extends State<_QuantityDialog> {
   Widget build(BuildContext context) {
     final qty = int.tryParse(_quantityInput) ?? 0;
 
-    return AlertDialog(
-      backgroundColor: _menuCardColor,
-      surfaceTintColor: _menuCardColor,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(VynicFloorTokens.panelRadius),
-      ),
-      titlePadding: const EdgeInsets.fromLTRB(24, 22, 24, 0),
-      title: Text(
-        widget.title,
-        maxLines: 2,
-        overflow: TextOverflow.ellipsis,
-        style: const TextStyle(
-          color: _menuTextPrimary,
-          fontSize: 19,
-          fontWeight: FontWeight.w800,
-          height: 1.2,
+    return PosFormDialog(
+      title: widget.title,
+      width: 428,
+      onClose: () => Navigator.of(context).pop(),
+      actions: [
+        PosActionButton(
+          label: 'გაუქმება',
+          onTap: () => Navigator.of(context).pop(),
         ),
-      ),
-      contentPadding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
-      content: SizedBox(
+        const SizedBox(width: 8),
+        PosPrimaryButton(
+          label: 'დამატება',
+          onTap: qty > 0 ? () => Navigator.of(context).pop(qty) : null,
+        ),
+      ],
+      child: SizedBox(
         width: 380,
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -2757,165 +2782,6 @@ class _QuantityDialogState extends State<_QuantityDialog> {
             const SizedBox(height: 18),
           ],
         ),
-      ),
-      actionsPadding: const EdgeInsets.fromLTRB(24, 0, 24, 20),
-      actions: [
-        PosActionButton(
-          label: 'გაუქმება',
-          onTap: () => Navigator.of(context).pop(),
-        ),
-        const SizedBox(width: 8),
-        PosPrimaryButton(
-          label: 'დამატება',
-          height: 46,
-          onTap: qty > 0 ? () => Navigator.of(context).pop(qty) : null,
-        ),
-      ],
-    );
-  }
-}
-
-// Comment Dialog for menu items
-class _CommentDialog extends StatefulWidget {
-  final String itemName;
-  final String? existingComment;
-
-  const _CommentDialog({required this.itemName, this.existingComment});
-
-  @override
-  State<_CommentDialog> createState() => _CommentDialogState();
-}
-
-class _CommentDialogState extends State<_CommentDialog> {
-  late final TextEditingController _controller;
-  bool _showKeyboard = PosInputSettings
-      .showKeyboard; // Show keyboard by default for touch screen
-  final String _currentLanguage = 'ka'; // Default to Georgian
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = TextEditingController(text: widget.existingComment ?? '');
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final hasExisting =
-        widget.existingComment != null && widget.existingComment!.isNotEmpty;
-
-    return Dialog(
-      backgroundColor: Colors.transparent,
-      insetPadding: EdgeInsets.zero,
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.end,
-        children: [
-          // The card used to be charcoal with a brass accent, sitting directly
-          // on top of a white on-screen keyboard — two products in one modal.
-          Container(
-            margin: const EdgeInsets.all(16),
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: _menuCardColor,
-              borderRadius: BorderRadius.circular(VynicFloorTokens.panelRadius),
-              border: Border.all(color: _menuBorderColor),
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const PosSectionLabel('კომენტარი'),
-                const SizedBox(height: 6),
-                Text(
-                  widget.itemName,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: _menuTextPrimary,
-                    fontSize: 17,
-                    fontWeight: FontWeight.w800,
-                    height: 1.2,
-                  ),
-                ),
-                const SizedBox(height: 14),
-                TextField(
-                  controller: _controller,
-                  readOnly: PosInputSettings.useOnScreen(
-                    context,
-                  ), // Prevent system keyboard
-                  maxLines: 3,
-                  style: const TextStyle(color: _menuTextPrimary, fontSize: 15),
-                  decoration: InputDecoration(
-                    hintText: 'მაგალითად: ხახვის გარეშე, ცხარე...',
-                    hintStyle: const TextStyle(color: _menuTextSoft),
-                    filled: true,
-                    fillColor: _menuSurfaceColor,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                      borderSide: const BorderSide(color: _menuBorderColor),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                      borderSide: const BorderSide(color: _menuBorderColor),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                      borderSide: const BorderSide(color: _menuAccent),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Row(
-                  children: [
-                    if (hasExisting)
-                      PosActionButton(
-                        label: 'წაშლა',
-                        icon: Icons.delete_outline,
-                        tone: PosActionTone.danger,
-                        // Empty string means remove the comment; null means
-                        // leave it alone. Two different answers, so they cannot
-                        // share a button.
-                        onTap: () => Navigator.pop(context, ''),
-                      ),
-                    const Spacer(),
-                    PosActionButton(
-                      label: 'გაუქმება',
-                      onTap: () => Navigator.pop(context, null),
-                    ),
-                    const SizedBox(width: 8),
-                    PosPrimaryButton(
-                      label: 'შენახვა',
-                      height: 46,
-                      onTap: () {
-                        final text = _controller.text.trim();
-                        Navigator.pop(context, text.isEmpty ? null : text);
-                      },
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          if (_showKeyboard && PosInputSettings.useOnScreen(context))
-            OnScreenKeyboard(
-              controller: _controller,
-              language: _currentLanguage,
-              onClose: () {
-                setState(() {
-                  _showKeyboard = false;
-                });
-              },
-              onEnter: () {
-                final text = _controller.text.trim();
-                Navigator.pop(context, text.isEmpty ? null : text);
-              },
-            ),
-        ],
       ),
     );
   }

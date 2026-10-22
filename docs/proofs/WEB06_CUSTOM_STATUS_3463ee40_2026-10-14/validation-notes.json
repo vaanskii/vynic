@@ -1,0 +1,19 @@
+{
+  "beforeFix": "Two new assertions reproduced DISABLED when greatest revision was enabled; eight other cases passed.",
+  "fixtureCorrection": "Newest revision was disabled before enabling a synthetic older row, preserving the existing single-enabled-row database constraint.",
+  "intermediateRun": "A reused disposable database execution returned one unexpected HTTP 403 after synthetic ONLINE_PAYMENTS entitlement removal. Its response message was not captured at the time, so the cause is unproven. The helper now reports response status/message on failure. A repeat and final fresh database focused execution passed all ten; final fresh aggregate also passed. No permission change or bypass was introduced.",
+  "freshFinalFocused": {
+    "numPassedTests": 10,
+    "numFailedTests": 0,
+    "numPendingTests": 0,
+    "numTotalTests": 10,
+    "success": true
+  },
+  "freshFinalAggregate": {
+    "numPassedTests": 874,
+    "numFailedTests": 0,
+    "numPendingTests": 843,
+    "numTotalTests": 1717,
+    "success": true
+  }
+}

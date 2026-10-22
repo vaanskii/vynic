@@ -1,0 +1,67 @@
+{
+  "cluster": "/tmp/vynic-readiness-owned-pg-d9nqqtg1",
+  "scope": "Fresh synthetic cluster only; no existing data, no media or production key restore",
+  "steps": [
+    {
+      "name": "init",
+      "exitCode": 0
+    },
+    {
+      "name": "start",
+      "exitCode": 0
+    },
+    {
+      "name": "create",
+      "exitCode": 0
+    },
+    {
+      "name": "migrate",
+      "exitCode": 0
+    },
+    {
+      "name": "migrate-repeat",
+      "exitCode": 0
+    },
+    {
+      "name": "query-disposable_sec02_readiness_20261004",
+      "exitCode": 0
+    },
+    {
+      "name": "http-sec02",
+      "exitCode": 0
+    },
+    {
+      "name": "query-disposable_sec02_readiness_20261004",
+      "exitCode": 0
+    },
+    {
+      "name": "dump",
+      "exitCode": 0
+    },
+    {
+      "name": "create-restore",
+      "exitCode": 0
+    },
+    {
+      "name": "restore",
+      "exitCode": 0
+    },
+    {
+      "name": "query-disposable_readiness_restored_20261004",
+      "exitCode": 0
+    },
+    {
+      "name": "query-disposable_readiness_restored_20261004",
+      "exitCode": 0
+    },
+    {
+      "name": "stop",
+      "exitCode": 0
+    }
+  ],
+  "migrationCount": 65,
+  "allMigrationChecksumsMatch": true,
+  "restoreMarkerAndMigrationLedgerMatch": true,
+  "status": "PASS",
+  "ownedClusterStopped": true
+}

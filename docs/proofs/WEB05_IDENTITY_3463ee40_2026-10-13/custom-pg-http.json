@@ -1,0 +1,77 @@
+{
+  "numPassedTests": 17,
+  "numFailedTests": 0,
+  "numPendingTests": 0,
+  "numTotalTests": 17,
+  "success": true,
+  "tests": [
+    {
+      "name": "CUSTOM website binding / disposable PostgreSQL provisions CUSTOM through the operator workflow only",
+      "status": "passed"
+    },
+    {
+      "name": "CUSTOM website binding / disposable PostgreSQL resolves each Host to only its own Venue",
+      "status": "passed"
+    },
+    {
+      "name": "CUSTOM website binding / disposable PostgreSQL ignores forged Venue identity in query, headers and body",
+      "status": "passed"
+    },
+    {
+      "name": "CUSTOM website binding / disposable PostgreSQL applies one set of capability rules to SAAS and CUSTOM hosts",
+      "status": "passed"
+    },
+    {
+      "name": "CUSTOM website binding / disposable PostgreSQL books and pays through each Venue\u2019s own integration and session",
+      "status": "passed"
+    },
+    {
+      "name": "CUSTOM website binding / disposable PostgreSQL limits a website administrator to the Venue it administers",
+      "status": "passed"
+    },
+    {
+      "name": "CUSTOM website binding / disposable PostgreSQL keeps mode, frontend and domains out of owner hands",
+      "status": "passed"
+    },
+    {
+      "name": "CUSTOM website binding / disposable PostgreSQL stops serving when the commercial Trial ends, without a fallback renderer",
+      "status": "passed"
+    },
+    {
+      "name": "CUSTOM website binding / disposable PostgreSQL gives a Website-only CUSTOM Venue the same canonical Cloud catalog as SAAS",
+      "status": "passed"
+    },
+    {
+      "name": "CUSTOM website binding / disposable PostgreSQL keeps POS authority for a CUSTOM Venue whose package includes POS",
+      "status": "passed"
+    },
+    {
+      "name": "CUSTOM website binding / disposable PostgreSQL reports and repairs a Website-only CUSTOM Venue left on POS authority",
+      "status": "passed"
+    },
+    {
+      "name": "CUSTOM website binding / disposable PostgreSQL checks runtime availability on demand, separately from setup status",
+      "status": "passed"
+    },
+    {
+      "name": "CUSTOM website binding / disposable PostgreSQL keeps domains port-free and local development out of production",
+      "status": "passed"
+    },
+    {
+      "name": "CUSTOM website binding / disposable PostgreSQL keeps hours, contact and gallery as Venue data both renderers read live",
+      "status": "passed"
+    },
+    {
+      "name": "CUSTOM website binding / disposable PostgreSQL offers website sign-in only where customer accounts are available",
+      "status": "passed"
+    },
+    {
+      "name": "CUSTOM website binding / disposable PostgreSQL WEB05 records only public build fingerprints with operator authorization, exact retry and immutable audit",
+      "status": "passed"
+    },
+    {
+      "name": "CUSTOM website binding / disposable PostgreSQL WEB05 HTTP observation distinguishes same-name Venues, recorded builds and tracking statuses without mutating them",
+      "status": "passed"
+    }
+  ]
+}

@@ -268,6 +268,7 @@ class _OrderMoveItemsDialogState extends State<OrderMoveItemsDialog> {
             ),
           ),
           IconButton(
+            tooltip: 'დახურვა',
             onPressed: () => Navigator.of(context).pop(),
             icon: const Icon(Icons.close, color: VynicFloorTokens.textMuted),
           ),
@@ -547,7 +548,7 @@ class _QuantityStepper extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         Container(
-          height: 34,
+          height: 56,
           decoration: BoxDecoration(
             color: VynicFloorTokens.panel,
             borderRadius: BorderRadius.circular(9),
@@ -603,8 +604,8 @@ class _StepButton extends StatelessWidget {
       onTap: onTap,
       borderRadius: BorderRadius.circular(9),
       child: SizedBox(
-        width: 30,
-        height: 34,
+        width: 56,
+        height: 56,
         child: Icon(
           icon,
           size: 16,
@@ -632,7 +633,7 @@ class _AllButton extends StatelessWidget {
         onTap: onTap,
         borderRadius: BorderRadius.circular(9),
         child: Container(
-          height: 34,
+          height: 56,
           padding: const EdgeInsets.symmetric(horizontal: 11),
           alignment: Alignment.center,
           decoration: BoxDecoration(

@@ -1,31 +1,32 @@
-import { Footer } from "../components/layout/Footer";
-import { Navbar } from "../components/layout/Navbar";
-import { DemoForm } from "../components/sections/DemoForm";
-import { FloorPlanSection } from "../components/sections/FloorPlanSection";
-import { Hero } from "../components/sections/Hero";
-import { LocalFitSection } from "../components/sections/LocalFitSection";
-import { ManagerSection } from "../components/sections/ManagerSection";
-import { ProductTour } from "../components/sections/ProductTour";
-import { ProofStrip } from "../components/sections/ProofStrip";
-import { ReservationStory } from "../components/sections/ReservationStory";
-import { ScrollProgress } from "../components/ui/ScrollProgress";
+import { useEffect } from "react";
+import { useLocation } from "react-router-dom";
+import { ExploreRail } from "../components/home/ExploreRail";
+import { HomeContact } from "../components/home/HomeContact";
+import { HomeHero } from "../components/home/HomeHero";
+import { ManagerApp } from "../components/home/ManagerApp";
+import { PortalStatement } from "../components/home/PortalStatement";
+import { ShiftScene } from "../components/home/ShiftScene";
 
+/**
+ * Home is the short version: the live hero, one cinematic shift, the swipeable
+ * Manager phone, doors to the product pages, the statement and the demo request.
+ */
 export function HomePage() {
+  const { hash } = useLocation();
+  // In-app redirects such as /features land on a section; the browser only
+  // scrolls to a fragment by itself on a full page load.
+  useEffect(() => {
+    if (hash) document.getElementById(hash.slice(1))?.scrollIntoView?.();
+  }, [hash]);
+
   return (
-    <div className="min-h-[100dvh] bg-vynic-background text-vynic-charcoal">
-      <ScrollProgress />
-      <Navbar />
-      <main>
-        <Hero />
-        <ProofStrip />
-        <FloorPlanSection />
-        <ProductTour />
-        <ReservationStory />
-        <ManagerSection />
-        <LocalFitSection />
-        <DemoForm />
-      </main>
-      <Footer />
-    </div>
+    <>
+      <HomeHero />
+      <ShiftScene />
+      <ManagerApp />
+      <ExploreRail />
+      <PortalStatement />
+      <HomeContact />
+    </>
   );
 }

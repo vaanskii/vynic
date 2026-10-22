@@ -1,3 +1,9 @@
+import { ManagerActivationController } from '../auth/manager-activation.controller';
+import { ManagerActivationService } from '../auth/manager-activation.service';
+import {
+  supportedMenuClient,
+  supportedMenuClientHeader,
+} from '../../test/menu-client.fixture';
 import {
   ManagerVenueProfileController,
   DeviceVenueProfileController,
@@ -39,7 +45,12 @@ const url = process.env.TENANT_INTEGRATION_DATABASE_URL;
 (url ? describe : describe.skip)(
   'Customer onboarding: two isolated owners, real HTTP and PostgreSQL',
   () => {
-    let db: PrismaService, app: any, operator: string;
+    let db: PrismaService,
+      app: any,
+      operator: string,
+      commercial: PlatformCommercialService,
+      admin: { id: string; email: string; displayName: string },
+      trialPlanId: string;
     const tag = randomUUID();
     const owners: any[] = [];
     const http = () => request(app.getHttpServer());
@@ -63,7 +74,7 @@ const url = process.env.TENANT_INTEGRATION_DATABASE_URL;
         limiter,
       );
       const entitlements = new VenueEntitlementsService(db);
-      const commercial = new PlatformCommercialService(db, vault);
+      commercial = new PlatformCommercialService(db, vault);
       const auth = new CustomerAuth(db, jwt, limiter);
       const service = new CustomerService(
         db,
@@ -76,7 +87,7 @@ const url = process.env.TENANT_INTEGRATION_DATABASE_URL;
         jwt,
         new ConfigService(),
       );
-      const admin = await db.platformUser.create({
+      admin = await db.platformUser.create({
         data: {
           email: `operator-${tag}@test.invalid`,
           displayName: 'Test operator',
@@ -96,6 +107,7 @@ const url = process.env.TENANT_INTEGRATION_DATABASE_URL;
         [DeviceCredentialService, credentials],
         [VenueEntitlementsService, entitlements],
         [AuthService, new AuthService(db, jwt)],
+        [ManagerActivationService, new ManagerActivationService(db, vault)],
         [LoginThrottleService, new LoginThrottleService()],
         [ManagerTenantService, new ManagerTenantService(db)],
       ];
@@ -110,6 +122,7 @@ const url = process.env.TENANT_INTEGRATION_DATABASE_URL;
           DeviceRuntimeConfigController,
           DeviceEnrollmentController,
           AuthController,
+          ManagerActivationController,
         ],
         providers: [
           ...providers.map(([provide, useValue]) => ({ provide, useValue })),
@@ -139,14 +152,16 @@ const url = process.env.TENANT_INTEGRATION_DATABASE_URL;
         create: { enabled: false },
         update: { enabled: false },
       });
-      await http()
-        .post('/customer/auth/signup')
-        .send({
-          email: `closed-${tag}@test.invalid`,
-          displayName: 'Closed',
-          password: 'a sufficiently long password',
-        })
-        .expect(503);
+      const signup = () =>
+        http()
+          .post('/customer/auth/signup')
+          .send({
+            email: `closed-${tag}@test.invalid`,
+            displayName: 'Closed',
+            password: 'a sufficiently long password',
+          });
+      // Self-service signup is retired: access comes from operator review.
+      await signup().expect(403);
       const plan = await db.plan.create({
         data: {
           key: `pilot-${tag}`,
@@ -170,23 +185,44 @@ const url = process.env.TENANT_INTEGRATION_DATABASE_URL;
           releaseLinks: {},
         })
         .expect(200);
+      // An enabled legacy policy does not reopen it.
+      await signup().expect(403);
+      expect(
+        await db.customerAccount.count({
+          where: { email: `closed-${tag}@test.invalid` },
+        }),
+      ).toBe(0);
+      trialPlanId = plan.id;
     });
-    it('signs up, creates restaurants, Managers, enrollment codes and independent Device credentials', async () => {
+    it('operator-provisioned owners create restaurants, Managers, enrollment codes and independent Device credentials', async () => {
       for (const letter of ['a', 'b']) {
         const credentials = {
-          displayName: `Owner ${letter}`,
           email: `${letter}-${tag}@test.invalid`,
           password: 'long customer test passphrase',
         };
-        const registered = (
+        // The state an approved access request + accepted invitation leaves.
+        const organization = await db.organization.create({
+          data: { name: `Owner ${letter} ${tag}` },
+        });
+        await db.customerAccount.create({
+          data: {
+            email: credentials.email,
+            displayName: `Owner ${letter}`,
+            passwordHash: await argon2.hash(credentials.password),
+            organizationId: organization.id,
+            memberships: {
+              create: { organizationId: organization.id, role: 'OWNER' },
+            },
+          },
+        });
+        const signedIn = (
           await http()
-            .post('/customer/auth/signup')
+            .post('/customer/auth/login')
             .send(credentials)
             .expect(201)
         ).body;
-        expect(registered.account.emailVerifiedAt).toBeNull();
-        expect(JSON.stringify(registered)).not.toContain('passwordHash');
-        const token = registered.access_token;
+        expect(JSON.stringify(signedIn)).not.toContain('passwordHash');
+        const token = signedIn.access_token;
         const venue = (
           await http()
             .post('/customer/venues')
@@ -206,20 +242,40 @@ const url = process.env.TENANT_INTEGRATION_DATABASE_URL;
             .expect(201)
         ).body;
         expect(retry.id).toBe(venue.id);
-        const manager = (
+        // New Venues start without a package; only an operator opens a dated Trial.
+        await http()
+          .post(`/customer/venues/${venue.id}/managers`)
+          .set(bearer(token))
+          .send({
+            requestId: randomUUID(),
+            displayName: 'Too early',
+            username: 'early',
+            role: 'MANAGER',
+            pin: '481250',
+          })
+          .expect(403);
+        await commercial.setSubscription(
+          {
+            platformUserId: admin.id,
+            role: 'SUPER_ADMIN',
+            email: admin.email,
+            displayName: admin.displayName,
+          },
+          venue.id,
+          {
+            status: 'TRIAL',
+            planId: trialPlanId,
+            trialEndsAt: new Date(Date.now() + 14 * 86_400_000).toISOString(),
+            note: 'Disposable operator-approved trial',
+          },
+        );
+        const activation = (
           await http()
-            .post(`/customer/venues/${venue.id}/managers`)
+            .post(`/customer/venues/${venue.id}/manager-activation`)
             .set(bearer(token))
-            .send({
-              requestId: randomUUID(),
-              displayName: 'First Manager',
-              username: 'manager',
-              role: 'MANAGER',
-              pin: '481259',
-            })
+            .send({})
             .expect(201)
         ).body;
-        expect(manager.staff.venueId).toBe(venue.id);
         const code = (
           await http()
             .post(`/customer/venues/${venue.id}/enrollments`)
@@ -235,6 +291,7 @@ const url = process.env.TENANT_INTEGRATION_DATABASE_URL;
               enrollmentCode: code.code,
               installationId,
               platform: 'WINDOWS',
+              menuClient: supportedMenuClient,
             })
             .expect(201)
         ).body;
@@ -246,8 +303,52 @@ const url = process.env.TENANT_INTEGRATION_DATABASE_URL;
             enrollmentCode: code.code,
             installationId: randomUUID(),
             platform: 'WINDOWS',
+            menuClient: supportedMenuClient,
           })
           .expect(409);
+        const activationInput = {
+          code: activation.code,
+          name: 'manager',
+          pin: '481259',
+          requestId: randomUUID(),
+        };
+        // An owner, Manager bearer, shared key or invitation alone is not a POS identity.
+        await http()
+          .post('/auth/manager-activation')
+          .send(activationInput)
+          .expect(404);
+        await http()
+          .post('/edge/manager-activation')
+          .send(activationInput)
+          .expect(401);
+        await http()
+          .post('/edge/manager-activation')
+          .set(bearer(token))
+          .send(activationInput)
+          .expect(401);
+        await http()
+          .post('/edge/manager-activation')
+          .set('X-POS-Sync-Key', 'legacy-shared-key')
+          .send(activationInput)
+          .expect(401);
+        await http()
+          .post('/edge/manager-activation')
+          .set('X-POS-Sync-Key', enrolled.credential)
+          .send({
+            code: activation.code,
+            requestId: randomUUID(),
+            name: 'manager',
+            pin: '481259',
+          })
+          .expect(200);
+        const manager = {
+          staff: await db.staff.findUniqueOrThrow({
+            where: {
+              venueId_username: { venueId: venue.id, username: 'manager' },
+            },
+          }),
+        };
+        expect(manager.staff.venueId).toBe(venue.id);
         const login = (
           await http()
             .post('/auth/mobile-login')
@@ -273,8 +374,12 @@ const url = process.env.TENANT_INTEGRATION_DATABASE_URL;
     });
     it('rejects cross-tenant portal, access, enrollment and printer requests and principal substitution', async () => {
       const [a, b] = owners;
-      const portal = (await http().get('/customer/portal').set(bearer(a.token)).expect(200)).body;
-      expect(portal.venues.map((entry: any) => entry.venue.loginCode)).toEqual([a.venue.loginCode]);
+      const portal = (
+        await http().get('/customer/portal').set(bearer(a.token)).expect(200)
+      ).body;
+      expect(portal.venues.map((entry: any) => entry.venue.loginCode)).toEqual([
+        a.venue.loginCode,
+      ]);
       expect(JSON.stringify(portal)).not.toContain(b.venue.loginCode);
       await http()
         .get(`/customer/venues/${b.venue.id}`)
@@ -326,6 +431,7 @@ const url = process.env.TENANT_INTEGRATION_DATABASE_URL;
           await http()
             .get('/edge/runtime-config')
             .set('X-POS-Sync-Key', o.credential)
+            .set('X-Vynic-Menu-Client', supportedMenuClientHeader)
             .expect(200)
         ).body;
       expect((await read(a)).device.runtimeConfig.printers).toEqual(printers);
@@ -379,11 +485,13 @@ const url = process.env.TENANT_INTEGRATION_DATABASE_URL;
       const runtime = await http()
         .get('/edge/runtime-config')
         .set('X-POS-Sync-Key', a.credential)
+        .set('X-Vynic-Menu-Client', supportedMenuClientHeader)
         .expect(200);
       expect(runtime.body.venue.branchName).toBe('საბურთალო');
       await http()
         .put('/edge/venue-profile')
         .set('X-POS-Sync-Key', a.credential)
+        .set('X-Vynic-Menu-Client', supportedMenuClientHeader)
         .send({ ...profile, branchName: 'დიდუბე', venueId: b.venue.id })
         .expect(200);
       expect((await read(a).expect(200)).body.branchName).toBe('დიდუბე');
@@ -396,6 +504,7 @@ const url = process.env.TENANT_INTEGRATION_DATABASE_URL;
       await http()
         .put('/edge/venue-profile')
         .set('X-POS-Sync-Key', a.credential)
+        .set('X-Vynic-Menu-Client', supportedMenuClientHeader)
         .send({ ...profile, address: 'x'.repeat(301) })
         .expect(400);
       await http()
@@ -429,6 +538,7 @@ const url = process.env.TENANT_INTEGRATION_DATABASE_URL;
           enrollmentCode: code.code,
           installationId: randomUUID(),
           platform: 'WINDOWS',
+          menuClient: supportedMenuClient,
         })
         .expect(401);
       const owner = await db.customerAccount.findFirstOrThrow({

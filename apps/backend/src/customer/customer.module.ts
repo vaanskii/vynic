@@ -1,3 +1,35 @@
+import { CustomerWebsitePaymentReviewsController } from './customer-website-payment-reviews.controller';
+import { MenuClientGuard } from '../menu-catalog/menu-client.guard';
+import { MenuRolloutService } from '../menu-catalog/menu-rollout.service';
+import {
+  CustomerMenuRolloutController,
+  DeviceMenuClientController,
+} from '../menu-catalog/menu-rollout.controller';
+import {
+  OnboardingRequestsService,
+  PublicAccessRequestsController,
+  PlatformAccessRequestsController,
+  CustomerTrialRequestsController,
+} from './onboarding-requests';
+import { RestaurantFoundationService } from './restaurant-foundation.service';
+import {
+  CustomerCatalogController,
+  DeviceFoundationController,
+  DeviceMenuController,
+} from './restaurant-foundation.controller';
+import { MenuCatalogService } from '../menu-catalog/menu-catalog.service';
+import { OwnerInvitationsService } from './owner-invitations.service';
+import {
+  PlatformOwnerInvitationsController,
+  CustomerOwnerInvitationsController,
+} from './owner-invitations.controller';
+import { WebsiteCoreModule } from '../website/core/website-core.module';
+import { CustomerWebsiteController } from './customer-website.controller';
+import { PaymentIntegrationsModule } from '../payment-integrations/payment-integrations.module';
+import {
+  CustomerPaymentsController,
+  PlatformPaymentsController,
+} from './customer-payments.controller';
 import {
   ManagerVenueProfileController,
   DeviceVenueProfileController,
@@ -19,12 +51,20 @@ import {
 } from './customer.controller';
 @Module({
   imports: [
+    WebsiteCoreModule,
+    PaymentIntegrationsModule,
     AuthModule,
     PlatformModule,
     EdgeTransportModule,
     EntitlementsModule,
   ],
   providers: [
+    OnboardingRequestsService,
+    RestaurantFoundationService,
+    MenuClientGuard,
+    MenuRolloutService,
+    MenuCatalogService,
+    OwnerInvitationsService,
     CustomerAuth,
     CustomerGuard,
     CustomerService,
@@ -32,6 +72,20 @@ import {
     EdgeDeviceGuard,
   ],
   controllers: [
+    CustomerWebsitePaymentReviewsController,
+    PublicAccessRequestsController,
+    PlatformAccessRequestsController,
+    CustomerTrialRequestsController,
+    CustomerMenuRolloutController,
+    DeviceMenuClientController,
+    CustomerCatalogController,
+    DeviceFoundationController,
+    DeviceMenuController,
+    PlatformOwnerInvitationsController,
+    CustomerOwnerInvitationsController,
+    CustomerWebsiteController,
+    CustomerPaymentsController,
+    PlatformPaymentsController,
     ManagerVenueProfileController,
     DeviceVenueProfileController,
     CustomerAuthController,

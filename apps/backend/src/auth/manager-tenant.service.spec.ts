@@ -22,6 +22,7 @@ function makeService(fixture: StaffFixture | null) {
               role: fixture.role ?? PrismaStaffRole.MANAGER,
               isActive: fixture.isActive ?? true,
               venue: {
+                legacyCommercialAccess: true,
                 id: fixture.venueId ?? 'venue-a',
                 organizationId: fixture.organizationId ?? 'org-1',
                 status: fixture.venueStatus ?? VenueStatus.ACTIVE,

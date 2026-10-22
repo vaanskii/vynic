@@ -1,0 +1,20 @@
+[
+  {
+    "file": "apps/backend/src/payment-integrations/payment-integration-status.ts",
+    "errors": 0,
+    "warnings": 0,
+    "messages": []
+  },
+  {
+    "file": "apps/backend/src/payment-integrations/web06-readiness.integration.spec.ts",
+    "errors": 0,
+    "warnings": 0,
+    "messages": []
+  },
+  {
+    "file": "apps/backend/src/website/custom/custom-website.service.ts",
+    "errors": 0,
+    "warnings": 0,
+    "messages": []
+  }
+]

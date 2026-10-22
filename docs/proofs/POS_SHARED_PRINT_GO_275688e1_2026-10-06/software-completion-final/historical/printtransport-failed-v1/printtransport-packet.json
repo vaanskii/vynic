@@ -1,0 +1,34 @@
+{
+  "sourceManifest": {
+    "sha256": "237deec3436b5cfa9983cc53ab4b52b4e9c2dcce0a9ca592efb8b26938160bda",
+    "bytes": 6871,
+    "path": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/printtransport-source-manifest.json"
+  },
+  "testExecutable": {
+    "sha256": "5ea12d153ce2ed408d0661595bd3c3afa41d7c969d81c1b87bdd956897f7d125",
+    "bytes": 5940224,
+    "filename": "printtransport-windows.test.exe"
+  },
+  "sdkManifest": {
+    "sha256": "774b989ac815f9029a02e01c309b20153d6a850d8d03d34e09cbf687ed6b673a",
+    "bytes": 4492,
+    "path": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/print-helper-sdk-sha256.json"
+  },
+  "logs": {
+    "printtransport-tests.log": {
+      "sha256": "8dc52225abd4518e9469122bf27f744389630c26556b4be9f9bf29e113271b9c",
+      "bytes": 3424
+    },
+    "print-helper-protocol-tests.log": {
+      "sha256": "c238ab02f873d04667d26ed96d49beb21fb2dde581071df13002e4451a18ca4e",
+      "bytes": 70
+    },
+    "windows-spooler-core-tests.log": {
+      "sha256": "b1c0017bfa312bdf32f5c8681fceb251846ec1ded688e1cad0ab554125374aaf",
+      "bytes": 54
+    }
+  },
+  "sourceCount": 34,
+  "ownedSourceCount": 27,
+  "whitespaceCheck": "PASS"
+}

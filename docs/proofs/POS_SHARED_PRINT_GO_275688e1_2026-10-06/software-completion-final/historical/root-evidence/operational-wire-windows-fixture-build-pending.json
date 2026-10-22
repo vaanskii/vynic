@@ -1,0 +1,37 @@
+{
+  "command": [
+    "go",
+    "test",
+    "-c",
+    "-mod=readonly",
+    "-o",
+    "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/operational-proof-server-windows.test.exe",
+    "./internal/server"
+  ],
+  "workdir": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/source/apps/edge",
+  "environment": {
+    "GOROOT": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go1.26.8/go",
+    "GOTOOLCHAIN": "local",
+    "GOENV": "off",
+    "GOTELEMETRY": "off",
+    "GOCACHE": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-cache",
+    "GOMODCACHE": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache",
+    "GOPATH": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-path",
+    "GOBIN": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/bin",
+    "GOPROXY": "off",
+    "GOOS": "windows",
+    "GOARCH": "amd64",
+    "CGO_ENABLED": "0"
+  },
+  "durationSeconds": 1.461,
+  "exitCode": 0,
+  "modulesBefore": {
+    "apps/edge/go.mod": "ee1b4d46129d70ab34a6c12314daddd5f5a7b0122e28040a52677b359c86f37d",
+    "apps/edge/go.sum": "561b9a04ed2552e61d5187a89b023415fa4b9c5af1ea827a6707b7779234ca56",
+    "packages/contracts/generated/go/go.mod": "54ad4ea326560555ae16be9943353238cd66ede684166c1984cf96af9a344fe8",
+    "packages/contracts/generated/go/go.sum": "4d6021e7f1525d43b0713af9db44aead5817e2bbe9910d0f077172a363d4ea52"
+  },
+  "sourceManifestSha256": "a32a175fdf3454dc4f1c040822577eb35e379dd2b4ac57dc1441a4cb7dce9f03",
+  "ownedHashesFileSha256": "c8e9bc4cd6dc9de7f7261769024c937e347e99bc46fabe99fde45e7108d739b8",
+  "target": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/operational-proof-server-windows.test.exe"
+}

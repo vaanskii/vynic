@@ -1,0 +1,1296 @@
+{
+  "status": "PASS bounded inert logical replicated queue; physical activation HELD",
+  "createdAtUtc": "2026-10-06T16:20:43.811146+00:00",
+  "ownedSource": {
+    "path": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/printcluster-owned-source-hashes.json",
+    "sha256": "7f0cb9e7bbb49a65983efeb0fa45b0a2dc4e9929ff737fa8943a9f2b2a74170e",
+    "bytes": 5214
+  },
+  "snapshot": {
+    "path": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/metadata/go-final-source-snapshot.json",
+    "sha256": "d694adbe1410f005d6285396f81a7126cdc7b9fb9f44b08a01f7f3c5e523330a",
+    "bytes": 27289
+  },
+  "ownedFiles": {
+    "apps/edge/internal/printcluster/boundaries_test.go": {
+      "before": null,
+      "sha256": "6a6eed7047b49dde05b49e402e9481d42a20fe72849e02cfcc196d2c76427456",
+      "bytes": 14418
+    },
+    "apps/edge/internal/printcluster/cluster_test.go": {
+      "before": null,
+      "sha256": "821fe8230f0ca133ec5aa2a0b9b58f0b69493ae6278310e6d5bd876d5e05e1ea",
+      "bytes": 32539
+    },
+    "apps/edge/internal/printcluster/node.go": {
+      "before": null,
+      "sha256": "90a8fd63aa455e7dc06c5db1308b4df75f1c7943b8a22efa8e6b2c1759b5db0a",
+      "bytes": 14310
+    },
+    "apps/edge/internal/printcluster/process_test.go": {
+      "before": null,
+      "sha256": "e1b94bb3fb2ab6af004c3d4096ce3d8b1bb93f38047f057f144c0d3b1eeb8b51",
+      "bytes": 13620
+    },
+    "apps/edge/internal/printcluster/projection.go": {
+      "before": null,
+      "sha256": "89c5c4d97f00de6c00b3ebb4ccfafacf8e6cd65cbd462bbae37493b155abd62b",
+      "bytes": 7913
+    },
+    "apps/edge/internal/printcluster/schema.sql": {
+      "before": null,
+      "sha256": "e172bcd69670592daadf2b041ee60708abe73e4ea98e370dabe01917f9be4f5e",
+      "bytes": 484
+    },
+    "apps/edge/internal/printcluster/state.go": {
+      "before": null,
+      "sha256": "fecb6b14729115c7c22f2b9b400ce60d406e6f36b3e8615ec363d35ec8a2febe",
+      "bytes": 28740
+    },
+    "apps/edge/internal/printcluster/testdata/local_tcp.config.json": {
+      "before": null,
+      "sha256": "5fb77a085478e13e841b4a9e504973fad13b54cb13260f809f2265f561fa6104",
+      "bytes": 661
+    },
+    "apps/edge/internal/printcluster/testdata/local_tcp.job.json": {
+      "before": null,
+      "sha256": "4b2a9926ba64c7a2e3123993fe1586a9adbdfd44323e4ef1a1a7c6775cb1382f",
+      "bytes": 1026
+    },
+    "apps/edge/internal/printcluster/testdata/shared_tcp.config.json": {
+      "before": null,
+      "sha256": "631484beb05a8d5e53b0049bda893813c2ce247c15de5c1d82ccc4620d0b89f1",
+      "bytes": 669
+    },
+    "apps/edge/internal/printcluster/testdata/shared_tcp.job.json": {
+      "before": null,
+      "sha256": "dfc155cc16c5f6b18c6ff80bff90c1994ae27040fb69d7afa1deaf4124bb1120",
+      "bytes": 1033
+    },
+    "apps/edge/internal/printcluster/testdata/shared_usb.config.json": {
+      "before": null,
+      "sha256": "1c8e94daf8dbd24a2c13e7c8c8e1ebf660f3d6f3e5989bd43f7f33d8adcf2e2b",
+      "bytes": 788
+    },
+    "apps/edge/internal/printcluster/testdata/shared_usb.job.json": {
+      "before": null,
+      "sha256": "31e2179da2e87ea1b13376dc7dcd41cbe23ff4dd1e6e377fa43c7ea3dca15f97",
+      "bytes": 1033
+    },
+    "apps/edge/internal/printcluster/testdata/unknown_beep.config.json": {
+      "before": null,
+      "sha256": "2f02b5d6b6fb0dda028d819e0fccc42957d51996e4d3c3673dff207d558230c7",
+      "bytes": 673
+    },
+    "apps/edge/internal/printcluster/testdata/unknown_beep.job.json": {
+      "before": null,
+      "sha256": "beca2a55a0554f39fa8e5fef7b04ce3c90398778ac43471874229cb2c87c5120",
+      "bytes": 1023
+    },
+    "apps/edge/internal/printcluster/transport.go": {
+      "before": null,
+      "sha256": "5a5844221232d1faddbbc767435eba9625cd0e3f15b9f0e0ed4b0d9ba06e27d7",
+      "bytes": 3249
+    },
+    "apps/edge/internal/printcluster/types.go": {
+      "before": null,
+      "sha256": "c21c89c70c015bf8addea454ab6c6f9b031393656cb86114309d36e2d496b8ae",
+      "bytes": 16995
+    },
+    "apps/edge/go.mod": {
+      "before": {
+        "sha256": "ebe6a02e46ff7d9e3596f1d636c6adc627cd0a1b454acccb51104f4247149ce0",
+        "bytes": 871
+      },
+      "sha256": "ee1b4d46129d70ab34a6c12314daddd5f5a7b0122e28040a52677b359c86f37d",
+      "bytes": 1406
+    },
+    "apps/edge/go.sum": {
+      "before": {
+        "sha256": "1e1ea952193292233968c2d4eefca73b1e3f5d2f6aeabae01ab5b10da7c6cdb6",
+        "bytes": 7953
+      },
+      "sha256": "561b9a04ed2552e61d5187a89b023415fa4b9c5af1ea827a6707b7779234ca56",
+      "bytes": 11936
+    },
+    "packages/contracts/generated/go/go.mod": {
+      "before": {
+        "sha256": "ac118a4193a52805d0527458033c05fbd59c363a01ff6bd392cacf387fa7f506",
+        "bytes": 343
+      },
+      "sha256": "54ad4ea326560555ae16be9943353238cd66ede684166c1984cf96af9a344fe8",
+      "bytes": 343
+    },
+    "packages/contracts/generated/go/go.sum": {
+      "before": {
+        "sha256": "7781e70033bff344f07778f5571238347209d0b1d249b515547527ed757dd359",
+        "bytes": 3297
+      },
+      "sha256": "4d6021e7f1525d43b0713af9db44aead5817e2bbe9910d0f077172a363d4ea52",
+      "bytes": 3297
+    }
+  },
+  "implementation": {
+    "package": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/source/apps/edge/internal/printcluster",
+    "consensus": "Hashicorp raft v1.8.0; raft-boltdb/v2 v2.4.2 durable log/stable store; full file snapshots; separate transactional SQLite WAL/FULL FSM projection",
+    "whyThisLibrary": "Maintained upstream Raft provides transport, log/stable persistence and snapshots. etcd/raft requires application-owned Ready/HardState/log/network sequencing, which would expand failure-sensitive implementation scope.",
+    "membership": {
+      "default": 3,
+      "explicitSupported": [
+        1,
+        2,
+        3,
+        5
+      ],
+      "quorums": {
+        "1": 1,
+        "2": 2,
+        "3": 2,
+        "5": 3
+      },
+      "localRequires": 1,
+      "fullDataVoters": true,
+      "nonvotersAreFullData": true,
+      "clientsAreNotVotes": true,
+      "automaticFallback": false
+    },
+    "immutableBinding": "Exact retained job/config bytes and SHA256; current committed config required for new admission; historical exact retry keeps original receipt. No selected dispatcher in business job identity.",
+    "admission": "Immutable 256 KiB chunk staging under request/job/effect/caller/digest identity; majority-committed typed finalize only returns ACCEPTED. Incomplete chunks have no FIFO/admission receipt.",
+    "logicalAssignment": "Separate committed leader-term/membership-generation/attempt/config-digest/payload-digest/physical-printer record; leader-only execution; no physical permit.",
+    "optionalBeep": "Strict primary profile plus normalized silent missing/malformed/unknown beep; only explicit known compatible Epson profile can be logically eligible. No hardware compatibility claim."
+  },
+  "publicJobSchema": [
+    "version",
+    "scope",
+    "clusterId",
+    "venueId",
+    "jobId",
+    "effectId",
+    "requestId",
+    "originTerminalId",
+    "originInstallationId",
+    "physicalPrinterId",
+    "routeId",
+    "role",
+    "routeRevision",
+    "configRevision",
+    "configSha256",
+    "capabilityProfile",
+    "primaryBytes",
+    "primarySha256",
+    "reprintOf"
+  ],
+  "publicConfigSchema": [
+    "version",
+    "scope",
+    "clusterId",
+    "venueId",
+    "physicalPrinterId",
+    "routeId",
+    "role",
+    "routeRevision",
+    "configRevision",
+    "ownership",
+    "destination",
+    "capabilityProfile"
+  ],
+  "goldens": {
+    "local_tcp.config.json": {
+      "owned": {
+        "path": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/source/apps/edge/internal/printcluster/testdata/local_tcp.config.json",
+        "sha256": "5fb77a085478e13e841b4a9e504973fad13b54cb13260f809f2265f561fa6104",
+        "bytes": 661
+      },
+      "actualDartOrigin": {
+        "path": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/dart-cluster-envelopes/local_tcp.config.json",
+        "sha256": "5fb77a085478e13e841b4a9e504973fad13b54cb13260f809f2265f561fa6104",
+        "bytes": 661
+      }
+    },
+    "local_tcp.job.json": {
+      "owned": {
+        "path": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/source/apps/edge/internal/printcluster/testdata/local_tcp.job.json",
+        "sha256": "4b2a9926ba64c7a2e3123993fe1586a9adbdfd44323e4ef1a1a7c6775cb1382f",
+        "bytes": 1026
+      },
+      "actualDartOrigin": {
+        "path": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/dart-cluster-envelopes/local_tcp.job.json",
+        "sha256": "4b2a9926ba64c7a2e3123993fe1586a9adbdfd44323e4ef1a1a7c6775cb1382f",
+        "bytes": 1026
+      }
+    },
+    "shared_tcp.config.json": {
+      "owned": {
+        "path": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/source/apps/edge/internal/printcluster/testdata/shared_tcp.config.json",
+        "sha256": "631484beb05a8d5e53b0049bda893813c2ce247c15de5c1d82ccc4620d0b89f1",
+        "bytes": 669
+      },
+      "actualDartOrigin": {
+        "path": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/dart-cluster-envelopes/shared_tcp.config.json",
+        "sha256": "631484beb05a8d5e53b0049bda893813c2ce247c15de5c1d82ccc4620d0b89f1",
+        "bytes": 669
+      }
+    },
+    "shared_tcp.job.json": {
+      "owned": {
+        "path": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/source/apps/edge/internal/printcluster/testdata/shared_tcp.job.json",
+        "sha256": "dfc155cc16c5f6b18c6ff80bff90c1994ae27040fb69d7afa1deaf4124bb1120",
+        "bytes": 1033
+      },
+      "actualDartOrigin": {
+        "path": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/dart-cluster-envelopes/shared_tcp.job.json",
+        "sha256": "dfc155cc16c5f6b18c6ff80bff90c1994ae27040fb69d7afa1deaf4124bb1120",
+        "bytes": 1033
+      }
+    },
+    "shared_usb.config.json": {
+      "owned": {
+        "path": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/source/apps/edge/internal/printcluster/testdata/shared_usb.config.json",
+        "sha256": "1c8e94daf8dbd24a2c13e7c8c8e1ebf660f3d6f3e5989bd43f7f33d8adcf2e2b",
+        "bytes": 788
+      },
+      "actualDartOrigin": {
+        "path": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/dart-cluster-envelopes/shared_usb.config.json",
+        "sha256": "1c8e94daf8dbd24a2c13e7c8c8e1ebf660f3d6f3e5989bd43f7f33d8adcf2e2b",
+        "bytes": 788
+      }
+    },
+    "shared_usb.job.json": {
+      "owned": {
+        "path": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/source/apps/edge/internal/printcluster/testdata/shared_usb.job.json",
+        "sha256": "31e2179da2e87ea1b13376dc7dcd41cbe23ff4dd1e6e377fa43c7ea3dca15f97",
+        "bytes": 1033
+      },
+      "actualDartOrigin": {
+        "path": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/dart-cluster-envelopes/shared_usb.job.json",
+        "sha256": "31e2179da2e87ea1b13376dc7dcd41cbe23ff4dd1e6e377fa43c7ea3dca15f97",
+        "bytes": 1033
+      }
+    },
+    "unknown_beep.config.json": {
+      "owned": {
+        "path": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/source/apps/edge/internal/printcluster/testdata/unknown_beep.config.json",
+        "sha256": "2f02b5d6b6fb0dda028d819e0fccc42957d51996e4d3c3673dff207d558230c7",
+        "bytes": 673
+      },
+      "actualDartOrigin": {
+        "path": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/dart-cluster-envelopes/unknown_beep.config.json",
+        "sha256": "2f02b5d6b6fb0dda028d819e0fccc42957d51996e4d3c3673dff207d558230c7",
+        "bytes": 673
+      }
+    },
+    "unknown_beep.job.json": {
+      "owned": {
+        "path": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/source/apps/edge/internal/printcluster/testdata/unknown_beep.job.json",
+        "sha256": "beca2a55a0554f39fa8e5fef7b04ce3c90398778ac43471874229cb2c87c5120",
+        "bytes": 1023
+      },
+      "actualDartOrigin": {
+        "path": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/dart-cluster-envelopes/unknown_beep.job.json",
+        "sha256": "beca2a55a0554f39fa8e5fef7b04ce3c90398778ac43471874229cb2c87c5120",
+        "bytes": 1023
+      }
+    }
+  },
+  "coverage": {
+    "durableMajorityAndRetainedConfig": "TestThreeFullVotersMajorityDedupConfigFreezeAndRestart",
+    "minorityAndPausedOldLogicalClaim": "TestMinorityCannotAcceptOrUsePausedOldClaim",
+    "startedPrimaryAndOptionalBeepRecovery": "TestLeaderLossInterruptionsAndOptionalBeepBarriers",
+    "uncertainBeepKeepsSamePrinterHeld": "TestStartedBeepAcrossElectionStaysHeldOtherPrinterProgresses",
+    "localWorkerDuringActualSharedQuorumLoss": "TestIndependentLOCALDurableQueueWorksDuringActualSharedQuorumLoss",
+    "twoPOSPlusThirdFullReplica": "TestTwoPOSPlusThirdFullReplicaMajority",
+    "explicitTwoFullVoterQuorumTwoNoFallback": "TestExplicitTwoVoterFailSafeNeverFallsBack",
+    "fiveFullVotersQuorumThree": "TestFiveFullVotersRequireThree",
+    "fullDataNonvoterAndClientNotVotes": "TestNonvoterAndClientDoNotCountTowardQuorum",
+    "actualThreeProcessLeaderKillFourOriginRelaysColdRestart": "TestThreeProcessSIGKILLLeaderAndFourPOSRelayRecovery",
+    "singleVoterEightMiBChunksSnapshotAndRestart": "TestFullRasterChunkingSnapshotRestoreAndBounds",
+    "actualDartFourGoldenPairsIncludingUnknownBeep": "TestActualDartContractGoldens",
+    "SQLAtomicRollbackReplayRestore": "TestProjectionRollbackReplayAndMalformedSnapshots",
+    "incompleteStoreAndForeignIdentityFailClosed": "TestDurableHalfLossAndForeignIdentityRefused",
+    "effectiveWALFULLSchemaAndSnapshotFailure": "TestEffectiveModesFutureSchemaAndSnapshotFailure",
+    "leaderOnlyLogicalExecutorReprintProvenance": "TestLeaderOnlyClaimAndReprintProvenance",
+    "nullUnreferencedJobRestoreWithoutPanic": "TestAssignedPlusUnreferencedNullJobRestoreRefused",
+    "endpointAliasAndFixedDeviceOwnership": "TestEndpointAliasesAndFixedDeviceLogicalExecutor"
+  },
+  "normal": {
+    "raw": {
+      "path": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/metadata/go-final-edge-tests.jsonl",
+      "sha256": "f593e3f85a59e5f57882519730a09184e54c845ce26fa43fd7216301ba5ec1eb",
+      "bytes": 460983
+    },
+    "testCases": {
+      "pass": 504,
+      "skip": 7
+    },
+    "topLevelPassed": [
+      "TestHelperOutcomeAndNoCommitRetry",
+      "TestLeaseAndBootEvidenceCannotAuthorizeSharedPhysicalDispatch",
+      "TestGenerationHighWaterSurvivesQuorumLossAndClockRegression",
+      "TestBindingAndRetainedJobIdentityCannotBeRewrittenByHigherIndex",
+      "TestExpectedUnsafeLeaseOnlyRAWPausedSenderCounterexample",
+      "TestBufferedTCPBytesSurviveSenderSocketClose",
+      "TestHelperTimeoutRetainsOriginalLifetimeAndGuard",
+      "TestHelperFrameAndResultBounds",
+      "TestGuardIdentityActiveCallAndIdempotentClose",
+      "TestTCPFailureBoundariesAndOneWrite",
+      "TestRejectBeforeDialAndFreezeBytes",
+      "TestCancelWriteRemainsUncertainAndGuardBusy",
+      "TestDestinationAndHelperPins",
+      "TestOfflinePublisherEnvelopeAcceptedByUpdater",
+      "TestAtomicCanonicalPrintAdmissionRollbackAndExactRetry",
+      "TestOfflinePublisherRoundTrip",
+      "TestCoordinationRequiresAuthenticatedVenueVersionAndEpoch",
+      "TestUnsupportedUnknownAndMalformedBeepDoesNotLosePrimary",
+      "TestQueueSIGKILLHelper",
+      "TestPinsAndTopologyRefuseBeforeOpeningResources",
+      "TestSharedPhysicalSenderRemainsHeld",
+      "TestHealthChecksEveryFrozenPinAndOldReader",
+      "TestTrustedPinChangeLatchesWithoutClientMismatchDenial",
+      "TestDistributionRefusesSecretsAndMissingBuildConfiguration",
+      "TestStartupModes",
+      "TestStopWaitsCommitAndRetainsOwnershipAfterDeadline",
+      "TestCloseFailureRetainsOwnerAndVisibleDiagnostic",
+      "TestHostGuardExcludesSecondRoleUntilActualDrain",
+      "TestConcurrentAdmissionsAndHealthAreDrained",
+      "TestStopDuringOpenPreventsWorkerStartAndWaitsResourceOwner",
+      "TestSharedClusterPinsAreExplicitAndImmutable",
+      "TestHealthHoldCopiesDoNotMutateTrustedEvidence",
+      "TestActualSIGKILLDurabilityAndNoReplay",
+      "TestUnboundLocalHostAndCleanRestart",
+      "TestCoordinationAtomicConflictIdempotencyReplay",
+      "TestCompetingProcessCannotRecoverOrSubmit",
+      "TestDartEnvelopeInteroperability",
+      "TestDecoderRejectsAmbiguousOrMutatedIdentity",
+      "TestCoordinationRollsBackEventAndStateWhenResultCannotPersist",
+      "TestActualQueueP1StallAllowsP2BusinessAndPrintAndDrainsBeep",
+      "TestAliasEndpointAndFrozenRetry",
+      "TestWindowsQueueCanonicalOwnership",
+      "TestCoordinationMigrationFromPhase1",
+      "TestRecoveredStartedRemainsUncertainWithoutReplay",
+      "TestOperationalProofThreeProcessesGatewayAtomicRaceLostACKAndRestart",
+      "TestFIFOAndIndependentPrinterDuringLostACK",
+      "TestCanceledActualQueueProbeDoesNotStopHealthyHost",
+      "TestControlServiceKeepsStopPendingUntilActualDrain",
+      "TestControlServiceObservesTrustedRuntimeFailureWithoutSCMCommand",
+      "TestCoordinationCrashRecovery",
+      "TestOperationalProofFreshCertificateTerminalRevocationAndFoundationIsolation",
+      "TestControlServiceCallerCancellationKeepsRunning",
+      "TestMissingOwnerRefusesBeforeResourceOpen",
+      "TestLocalAgentMayCoLocateButSharedPinsRequireStableMembership",
+      "TestCoordinationRejectsUnreplayableOrOutOfScopeDocuments",
+      "TestThreeClientFIFOAndOptionalBeepSeparate",
+      "TestOperationalOriginSignedImmutableAndCurrentTerminal",
+      "TestStopTimeoutRetainsLifetimeAndRestartIsConservative",
+      "TestOperationalQueuedAtomicReceiptsRetryRestartAndObserverOrigin",
+      "TestFirstInstallProvisioningAndRetry",
+      "TestEveryFlushedDispatchBoundaryRestart",
+      "TestSignaturePolicyMatrix",
+      "TestOldSchemaAndRealSenderFailClosed",
+      "TestOperationalProofConstructorPreflightsServerPinWithX509",
+      "TestOperationalQueuedRefusalRollsBackEveryRecord",
+      "TestPairingAuthenticationAndRestart",
+      "TestOperationalQueuedConflictPersistsWithoutEffects",
+      "TestThreeIndependentRelaysToTwoPrinterExecutor",
+      "TestPrimaryCapabilitiesMustBeImplementedBeforeAdmission",
+      "TestPairingExpiryAndInvalidTicket",
+      "TestConcurrentTicketConsumption",
+      "TestContradictoryNativeResultsAreUncertain",
+      "TestCorruptAndInterruptedDownloadRetry",
+      "TestLiveOldGuardKeepsHeadQueuedAndOtherPrinterContinues",
+      "TestCompletedNotSentClaimRecoversWithoutReprinting",
+      "TestOperationalExpandedKindsRoundTripReplayAndSnapshot",
+      "TestOperationalProofAuthorityIsSeparateSignedAndImmutable",
+      "TestOperationalProofAuthorityRequiresExistingFoundationBinding",
+      "TestOperationalReadDependencyConflictAndImmutableExactResults",
+      "TestOperationalThreeClientsExactlyOneCASWinner",
+      "TestFailedRepairPreservesWorkingReleaseAndData",
+      "TestOperationalSnapshotAndReplayUseOneConsistentHeadDuringWrites",
+      "TestRepeatedUpdatesRetainOnlyCurrentAndPreserveDurableData",
+      "TestQueueCapacityAndConfigChangeRetainExactReceipts",
+      "TestInterruptedSwapRecovery",
+      "TestMultipleDatabaseConnectionsCannotPassDurabilityProbe",
+      "TestFaultObserverCannotMutateFrozenSendBytes",
+      "TestProbationRetainsRollbackUntilRepeatedHealthPasses",
+      "TestUninstallRetainsDataAndRepairReusesState",
+      "TestRepairNeverChangesEdgeVersion",
+      "TestRepairActivePOSPreservesUpdaterHighWater",
+      "TestCrashAfterInitialHealthRollsBackAndCleansCandidate",
+      "TestRepairFailsClosedForMissingCorruptStateAndBusyHost",
+      "TestLaterSurvivesOrdinaryLaunchAndRepairStabilization",
+      "TestUnsafeBundleAndSymlink",
+      "TestNoInsecureRedirectAndBoundedMetadata",
+      "TestCleanupFailureRetriesAfterRestartWithoutRollback",
+      "TestRepairRestoresConfigurationWithoutRotatingCredentials",
+      "TestIncompleteFlutterBundleRefused",
+      "TestOperationalLostACKRestartAndFrozenEightMiBRaster",
+      "TestLegacyMigrationPreservesLaterThenPrunesAfterHealthyStartup",
+      "TestShutdownDrainsThenBoundsActiveStreams",
+      "TestOperationalAtomicRollbackOfPostimagesEventsEffectsAndResult",
+      "TestOperationalWrongEpochTerminalAndTransactionalRevocation",
+      "TestOperationalTombstonesRetainIdentityAndCapacity",
+      "TestLegacyExplicitUpdateUsesCurrentSlot",
+      "TestOperationalSequenceRevisionAndInputBounds",
+      "TestManagedDeletionRefusesDataAndUnknownPaths",
+      "TestOperationalMigrationPreservesPopulatedPhase2A",
+      "TestOperationalMigrationPreservesPopulatedSchema3AndGuards",
+      "TestOperationalSchema4MigrationRejectsEntitySchemaDrift",
+      "TestOperationalCrashRecoversWholeCommitAndRollsBackOpenTransaction",
+      "TestStoreLockAndImmutableGrant",
+      "TestUninstallUnresolvedUpdatePreservesDataAndAllowsReinstall",
+      "TestIncompatibleAndCorruptStoreFailsClosed",
+      "TestUninstallStillRequiresQuiescentProcesses",
+      "TestAtomicPairAndRollback",
+      "TestSingleSetupOwner",
+      "TestCrashRecoversCommittedWALAndRollsBackOpenTransaction",
+      "TestInterruptedRepairRestoresOldBinaryEvenOffline",
+      "TestStartedBeepAcrossElectionStaysHeldOtherPrinterProgresses",
+      "TestRepairUsesOneTemporaryRollbackAndCleansDownloads",
+      "TestInterruptedPOSRepairRestoresCurrentBeforeOfflineFailure",
+      "TestOldEdgeCapabilityRefusedBeforeLegacyLayoutMigration",
+      "TestInstallAfterRemovalUsesCurrentSignedPOSButRepairStaysPinned",
+      "TestRemovedInstallStillRejectsUntrustedRelease",
+      "TestUpdateDownloadProgressUsesObservedBytes",
+      "TestOfferDownloadsWithoutLaunchingPOSAndLeavesConsentInPOS",
+      "TestOfferExplainsRequiredRecoveryAndNeverClaimsUnresolvedSuccess",
+      "TestOfferFailureAndCancellationStayVisible",
+      "TestUnverifiedLaunchIsNotAnUpToDateCheck",
+      "TestPerUserDestinationBoundaries",
+      "TestUpdateOfferDoesNotTreatRecoveryFailureAsSuccess",
+      "TestBinarySwapCrashMatrix",
+      "TestLiveProcessWithoutContinuedHiveReadinessCannotStabilize",
+      "TestRepairAfterRemovalDoesNotAdvertiseDeletedStaging",
+      "TestVerifiedOrdinaryLaunchNeedsFreshHealthButNotStabilization",
+      "TestVerifiedOrdinaryLaunchStillRejectsWrongDataHealth",
+      "TestRepairOfVerifiedReleaseStillRequiresStabilization",
+      "TestIndependentLOCALDurableQueueWorksDuringActualSharedQuorumLoss",
+      "TestStagingCapacityScopeAndChunkReceipts",
+      "TestEffectiveModesFutureSchemaAndSnapshotFailure",
+      "TestStageRestartInstallAndIdempotency",
+      "TestLeaderOnlyClaimAndReprintProvenance",
+      "TestFailedCandidateRollsBackWithoutDataRollback",
+      "TestRejectBadReleaseAndCorruptDownloads",
+      "TestReverifyStagedArtifactAndExpiry",
+      "TestCrashDuringActivationRecoversPrevious",
+      "TestIPCAuthorizationAndWrongProcess",
+      "TestArchivePaths",
+      "TestInterruptedDownloadRetryAndSingleOwner",
+      "TestMissingJobSnapshotDoesNotPanic",
+      "TestCorruptedUpdaterStateRefused",
+      "TestTwoPOSPlusThirdFullReplicaMajority",
+      "TestOnlyTemporaryProofDirectories",
+      "TestWrongDataDirectoryCannotPassStartupHealth",
+      "TestExplicitTwoVoterFailSafeNeverFallsBack",
+      "TestAssignedPlusUnreferencedNullJobRestoreRefused",
+      "TestActualDartContractGoldens",
+      "TestStrictContractAndFrozenVisibleFields",
+      "TestFixedFullDataMembershipPolicy",
+      "TestThreeFullVotersMajorityDedupConfigFreezeAndRestart",
+      "TestLeaderLossInterruptionsAndOptionalBeepBarriers",
+      "TestMinorityCannotAcceptOrUsePausedOldClaim",
+      "TestNonvoterAndClientDoNotCountTowardQuorum",
+      "TestFullRasterChunkingSnapshotRestoreAndBounds",
+      "TestProjectionRollbackReplayAndMalformedSnapshots",
+      "TestDurableHalfLossAndForeignIdentityRefused",
+      "TestEndpointAliasesAndFixedDeviceLogicalExecutor",
+      "TestFiveFullVotersRequireThree",
+      "TestSnapshotResultReceiptStable",
+      "TestThreeProcessSIGKILLLeaderAndFourPOSRelayRecovery"
+    ],
+    "testFailures": [],
+    "skips": [
+      "TestOperationalProofProcess",
+      "TestSetupCrashWorker",
+      "TestOperationalCrashWorker",
+      "TestCrashWorker",
+      "TestRetentionCrashChild",
+      "TestUpdaterChild",
+      "TestRaftProcessFixture"
+    ],
+    "packages": [
+      {
+        "Package": "vynic.local/edge/cmd/terminal-sim",
+        "Action": "skip",
+        "Elapsed": 0
+      },
+      {
+        "Package": "vynic.local/edge/cmd/verify-local-release",
+        "Action": "skip",
+        "Elapsed": 0
+      },
+      {
+        "Package": "vynic.local/edge/internal/testutil",
+        "Action": "skip",
+        "Elapsed": 0
+      },
+      {
+        "Package": "vynic.local/edge/internal/printeligibility",
+        "Action": "pass",
+        "Elapsed": 0.355
+      },
+      {
+        "Package": "vynic.local/edge/internal/printtransport",
+        "Action": "pass",
+        "Elapsed": 0.356
+      },
+      {
+        "Package": "vynic.local/edge/cmd/sign-pos-release",
+        "Action": "pass",
+        "Elapsed": 0.449
+      },
+      {
+        "Package": "vynic.local/edge/cmd/sign-bootstrap",
+        "Action": "pass",
+        "Elapsed": 0.484
+      },
+      {
+        "Package": "vynic.local/edge/cmd/setup",
+        "Action": "pass",
+        "Elapsed": 0.831
+      },
+      {
+        "Package": "vynic.local/edge/cmd/edge",
+        "Action": "pass",
+        "Elapsed": 0.989
+      },
+      {
+        "Package": "vynic.local/edge/internal/printhost",
+        "Action": "pass",
+        "Elapsed": 1.209
+      },
+      {
+        "Package": "vynic.local/edge/internal/printqueue",
+        "Action": "pass",
+        "Elapsed": 2.557
+      },
+      {
+        "Package": "vynic.local/edge/internal/server",
+        "Action": "pass",
+        "Elapsed": 4.5
+      },
+      {
+        "Package": "vynic.local/edge/internal/store",
+        "Action": "pass",
+        "Elapsed": 5.4
+      },
+      {
+        "Package": "vynic.local/edge/internal/setup",
+        "Action": "pass",
+        "Elapsed": 6.819
+      },
+      {
+        "Package": "vynic.local/edge/internal/updater",
+        "Action": "pass",
+        "Elapsed": 15.098
+      },
+      {
+        "Package": "vynic.local/edge/internal/printcluster",
+        "Action": "pass",
+        "Elapsed": 55.511
+      }
+    ]
+  },
+  "race": {
+    "raw": {
+      "path": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/metadata/go-final-edge-race.jsonl",
+      "sha256": "cd3e69fa93c1139a2a45ca20f9ac756278e2dca70a29c5845e93d65ae266ca12",
+      "bytes": 461621
+    },
+    "testCases": {
+      "pass": 504,
+      "skip": 7
+    },
+    "topLevelPassed": [
+      "TestOfflinePublisherEnvelopeAcceptedByUpdater",
+      "TestDistributionRefusesSecretsAndMissingBuildConfiguration",
+      "TestStartupModes",
+      "TestOfflinePublisherRoundTrip",
+      "TestLeaseAndBootEvidenceCannotAuthorizeSharedPhysicalDispatch",
+      "TestGenerationHighWaterSurvivesQuorumLossAndClockRegression",
+      "TestBindingAndRetainedJobIdentityCannotBeRewrittenByHigherIndex",
+      "TestHelperOutcomeAndNoCommitRetry",
+      "TestHelperTimeoutRetainsOriginalLifetimeAndGuard",
+      "TestHelperFrameAndResultBounds",
+      "TestGuardIdentityActiveCallAndIdempotentClose",
+      "TestTCPFailureBoundariesAndOneWrite",
+      "TestExpectedUnsafeLeaseOnlyRAWPausedSenderCounterexample",
+      "TestBufferedTCPBytesSurviveSenderSocketClose",
+      "TestRejectBeforeDialAndFreezeBytes",
+      "TestCancelWriteRemainsUncertainAndGuardBusy",
+      "TestDestinationAndHelperPins",
+      "TestCoordinationRequiresAuthenticatedVenueVersionAndEpoch",
+      "TestPinsAndTopologyRefuseBeforeOpeningResources",
+      "TestSharedPhysicalSenderRemainsHeld",
+      "TestHealthChecksEveryFrozenPinAndOldReader",
+      "TestTrustedPinChangeLatchesWithoutClientMismatchDenial",
+      "TestStopWaitsCommitAndRetainsOwnershipAfterDeadline",
+      "TestCloseFailureRetainsOwnerAndVisibleDiagnostic",
+      "TestHostGuardExcludesSecondRoleUntilActualDrain",
+      "TestConcurrentAdmissionsAndHealthAreDrained",
+      "TestStopDuringOpenPreventsWorkerStartAndWaitsResourceOwner",
+      "TestSharedClusterPinsAreExplicitAndImmutable",
+      "TestHealthHoldCopiesDoNotMutateTrustedEvidence",
+      "TestAtomicCanonicalPrintAdmissionRollbackAndExactRetry",
+      "TestCoordinationAtomicConflictIdempotencyReplay",
+      "TestCoordinationRollsBackEventAndStateWhenResultCannotPersist",
+      "TestActualQueueP1StallAllowsP2BusinessAndPrintAndDrainsBeep",
+      "TestCoordinationMigrationFromPhase1",
+      "TestUnboundLocalHostAndCleanRestart",
+      "TestRecoveredStartedRemainsUncertainWithoutReplay",
+      "TestCanceledActualQueueProbeDoesNotStopHealthyHost",
+      "TestControlServiceKeepsStopPendingUntilActualDrain",
+      "TestControlServiceObservesTrustedRuntimeFailureWithoutSCMCommand",
+      "TestControlServiceCallerCancellationKeepsRunning",
+      "TestMissingOwnerRefusesBeforeResourceOpen",
+      "TestLocalAgentMayCoLocateButSharedPinsRequireStableMembership",
+      "TestRepeatedUpdatesRetainOnlyCurrentAndPreserveDurableData",
+      "TestFirstInstallProvisioningAndRetry",
+      "TestUnsupportedUnknownAndMalformedBeepDoesNotLosePrimary",
+      "TestQueueSIGKILLHelper",
+      "TestCoordinationCrashRecovery",
+      "TestSignaturePolicyMatrix",
+      "TestCoordinationRejectsUnreplayableOrOutOfScopeDocuments",
+      "TestOperationalOriginSignedImmutableAndCurrentTerminal",
+      "TestProbationRetainsRollbackUntilRepeatedHealthPasses",
+      "TestOperationalQueuedAtomicReceiptsRetryRestartAndObserverOrigin",
+      "TestCorruptAndInterruptedDownloadRetry",
+      "TestCrashAfterInitialHealthRollsBackAndCleansCandidate",
+      "TestFailedRepairPreservesWorkingReleaseAndData",
+      "TestActualSIGKILLDurabilityAndNoReplay",
+      "TestCompetingProcessCannotRecoverOrSubmit",
+      "TestDartEnvelopeInteroperability",
+      "TestDecoderRejectsAmbiguousOrMutatedIdentity",
+      "TestLaterSurvivesOrdinaryLaunchAndRepairStabilization",
+      "TestCleanupFailureRetriesAfterRestartWithoutRollback",
+      "TestAliasEndpointAndFrozenRetry",
+      "TestInterruptedSwapRecovery",
+      "TestWindowsQueueCanonicalOwnership",
+      "TestFIFOAndIndependentPrinterDuringLostACK",
+      "TestOperationalQueuedRefusalRollsBackEveryRecord",
+      "TestLegacyMigrationPreservesLaterThenPrunesAfterHealthyStartup",
+      "TestThreeClientFIFOAndOptionalBeepSeparate",
+      "TestOperationalQueuedConflictPersistsWithoutEffects",
+      "TestStopTimeoutRetainsLifetimeAndRestartIsConservative",
+      "TestUninstallRetainsDataAndRepairReusesState",
+      "TestLegacyExplicitUpdateUsesCurrentSlot",
+      "TestManagedDeletionRefusesDataAndUnknownPaths",
+      "TestRepairNeverChangesEdgeVersion",
+      "TestEveryFlushedDispatchBoundaryRestart",
+      "TestStartedBeepAcrossElectionStaysHeldOtherPrinterProgresses",
+      "TestOldSchemaAndRealSenderFailClosed",
+      "TestRepairActivePOSPreservesUpdaterHighWater",
+      "TestThreeIndependentRelaysToTwoPrinterExecutor",
+      "TestPrimaryCapabilitiesMustBeImplementedBeforeAdmission",
+      "TestContradictoryNativeResultsAreUncertain",
+      "TestLiveOldGuardKeepsHeadQueuedAndOtherPrinterContinues",
+      "TestOperationalExpandedKindsRoundTripReplayAndSnapshot",
+      "TestCompletedNotSentClaimRecoversWithoutReprinting",
+      "TestOperationalProofAuthorityIsSeparateSignedAndImmutable",
+      "TestOperationalProofAuthorityRequiresExistingFoundationBinding",
+      "TestOperationalReadDependencyConflictAndImmutableExactResults",
+      "TestRepairFailsClosedForMissingCorruptStateAndBusyHost",
+      "TestIndependentLOCALDurableQueueWorksDuringActualSharedQuorumLoss",
+      "TestStagingCapacityScopeAndChunkReceipts",
+      "TestEffectiveModesFutureSchemaAndSnapshotFailure",
+      "TestOperationalThreeClientsExactlyOneCASWinner",
+      "TestBinarySwapCrashMatrix",
+      "TestUnsafeBundleAndSymlink",
+      "TestNoInsecureRedirectAndBoundedMetadata",
+      "TestOperationalSnapshotAndReplayUseOneConsistentHeadDuringWrites",
+      "TestRepairRestoresConfigurationWithoutRotatingCredentials",
+      "TestLiveProcessWithoutContinuedHiveReadinessCannotStabilize",
+      "TestIncompleteFlutterBundleRefused",
+      "TestRepairAfterRemovalDoesNotAdvertiseDeletedStaging",
+      "TestVerifiedOrdinaryLaunchNeedsFreshHealthButNotStabilization",
+      "TestVerifiedOrdinaryLaunchStillRejectsWrongDataHealth",
+      "TestRepairOfVerifiedReleaseStillRequiresStabilization",
+      "TestQueueCapacityAndConfigChangeRetainExactReceipts",
+      "TestMultipleDatabaseConnectionsCannotPassDurabilityProbe",
+      "TestFaultObserverCannotMutateFrozenSendBytes",
+      "TestStageRestartInstallAndIdempotency",
+      "TestLeaderOnlyClaimAndReprintProvenance",
+      "TestUninstallUnresolvedUpdatePreservesDataAndAllowsReinstall",
+      "TestUninstallStillRequiresQuiescentProcesses",
+      "TestSingleSetupOwner",
+      "TestInterruptedRepairRestoresOldBinaryEvenOffline",
+      "TestMissingJobSnapshotDoesNotPanic",
+      "TestFailedCandidateRollsBackWithoutDataRollback",
+      "TestRejectBadReleaseAndCorruptDownloads",
+      "TestReverifyStagedArtifactAndExpiry",
+      "TestRepairUsesOneTemporaryRollbackAndCleansDownloads",
+      "TestCrashDuringActivationRecoversPrevious",
+      "TestInterruptedPOSRepairRestoresCurrentBeforeOfflineFailure",
+      "TestIPCAuthorizationAndWrongProcess",
+      "TestArchivePaths",
+      "TestOldEdgeCapabilityRefusedBeforeLegacyLayoutMigration",
+      "TestInterruptedDownloadRetryAndSingleOwner",
+      "TestCorruptedUpdaterStateRefused",
+      "TestInstallAfterRemovalUsesCurrentSignedPOSButRepairStaysPinned",
+      "TestRemovedInstallStillRejectsUntrustedRelease",
+      "TestUpdateDownloadProgressUsesObservedBytes",
+      "TestOfferDownloadsWithoutLaunchingPOSAndLeavesConsentInPOS",
+      "TestOfferExplainsRequiredRecoveryAndNeverClaimsUnresolvedSuccess",
+      "TestOfferFailureAndCancellationStayVisible",
+      "TestUnverifiedLaunchIsNotAnUpToDateCheck",
+      "TestPerUserDestinationBoundaries",
+      "TestUpdateOfferDoesNotTreatRecoveryFailureAsSuccess",
+      "TestTwoPOSPlusThirdFullReplicaMajority",
+      "TestOnlyTemporaryProofDirectories",
+      "TestWrongDataDirectoryCannotPassStartupHealth",
+      "TestExplicitTwoVoterFailSafeNeverFallsBack",
+      "TestAssignedPlusUnreferencedNullJobRestoreRefused",
+      "TestActualDartContractGoldens",
+      "TestStrictContractAndFrozenVisibleFields",
+      "TestFixedFullDataMembershipPolicy",
+      "TestOperationalLostACKRestartAndFrozenEightMiBRaster",
+      "TestOperationalAtomicRollbackOfPostimagesEventsEffectsAndResult",
+      "TestOperationalWrongEpochTerminalAndTransactionalRevocation",
+      "TestOperationalProofThreeProcessesGatewayAtomicRaceLostACKAndRestart",
+      "TestOperationalProofFreshCertificateTerminalRevocationAndFoundationIsolation",
+      "TestOperationalProofConstructorPreflightsServerPinWithX509",
+      "TestPairingAuthenticationAndRestart",
+      "TestPairingExpiryAndInvalidTicket",
+      "TestConcurrentTicketConsumption",
+      "TestOperationalTombstonesRetainIdentityAndCapacity",
+      "TestOperationalSequenceRevisionAndInputBounds",
+      "TestOperationalMigrationPreservesPopulatedPhase2A",
+      "TestOperationalMigrationPreservesPopulatedSchema3AndGuards",
+      "TestOperationalSchema4MigrationRejectsEntitySchemaDrift",
+      "TestShutdownDrainsThenBoundsActiveStreams",
+      "TestOperationalCrashRecoversWholeCommitAndRollsBackOpenTransaction",
+      "TestStoreLockAndImmutableGrant",
+      "TestIncompatibleAndCorruptStoreFailsClosed",
+      "TestAtomicPairAndRollback",
+      "TestCrashRecoversCommittedWALAndRollsBackOpenTransaction",
+      "TestThreeFullVotersMajorityDedupConfigFreezeAndRestart",
+      "TestLeaderLossInterruptionsAndOptionalBeepBarriers",
+      "TestMinorityCannotAcceptOrUsePausedOldClaim",
+      "TestNonvoterAndClientDoNotCountTowardQuorum",
+      "TestFullRasterChunkingSnapshotRestoreAndBounds",
+      "TestProjectionRollbackReplayAndMalformedSnapshots",
+      "TestDurableHalfLossAndForeignIdentityRefused",
+      "TestEndpointAliasesAndFixedDeviceLogicalExecutor",
+      "TestFiveFullVotersRequireThree",
+      "TestSnapshotResultReceiptStable",
+      "TestThreeProcessSIGKILLLeaderAndFourPOSRelayRecovery"
+    ],
+    "testFailures": [],
+    "skips": [
+      "TestOperationalProofProcess",
+      "TestRetentionCrashChild",
+      "TestSetupCrashWorker",
+      "TestUpdaterChild",
+      "TestOperationalCrashWorker",
+      "TestCrashWorker",
+      "TestRaftProcessFixture"
+    ],
+    "packages": [
+      {
+        "Package": "vynic.local/edge/cmd/terminal-sim",
+        "Action": "skip",
+        "Elapsed": 0
+      },
+      {
+        "Package": "vynic.local/edge/cmd/verify-local-release",
+        "Action": "skip",
+        "Elapsed": 0
+      },
+      {
+        "Package": "vynic.local/edge/internal/testutil",
+        "Action": "skip",
+        "Elapsed": 0
+      },
+      {
+        "Package": "vynic.local/edge/cmd/sign-pos-release",
+        "Action": "pass",
+        "Elapsed": 1.478
+      },
+      {
+        "Package": "vynic.local/edge/cmd/setup",
+        "Action": "pass",
+        "Elapsed": 1.501
+      },
+      {
+        "Package": "vynic.local/edge/cmd/sign-bootstrap",
+        "Action": "pass",
+        "Elapsed": 1.522
+      },
+      {
+        "Package": "vynic.local/edge/internal/printeligibility",
+        "Action": "pass",
+        "Elapsed": 1.595
+      },
+      {
+        "Package": "vynic.local/edge/internal/printtransport",
+        "Action": "pass",
+        "Elapsed": 1.599
+      },
+      {
+        "Package": "vynic.local/edge/cmd/edge",
+        "Action": "pass",
+        "Elapsed": 2.518
+      },
+      {
+        "Package": "vynic.local/edge/internal/printhost",
+        "Action": "pass",
+        "Elapsed": 2.825
+      },
+      {
+        "Package": "vynic.local/edge/internal/printqueue",
+        "Action": "pass",
+        "Elapsed": 10.586
+      },
+      {
+        "Package": "vynic.local/edge/internal/setup",
+        "Action": "pass",
+        "Elapsed": 15.713
+      },
+      {
+        "Package": "vynic.local/edge/internal/updater",
+        "Action": "pass",
+        "Elapsed": 16.165
+      },
+      {
+        "Package": "vynic.local/edge/internal/server",
+        "Action": "pass",
+        "Elapsed": 29.549
+      },
+      {
+        "Package": "vynic.local/edge/internal/store",
+        "Action": "pass",
+        "Elapsed": 31.785
+      },
+      {
+        "Package": "vynic.local/edge/internal/printcluster",
+        "Action": "pass",
+        "Elapsed": 144.75
+      }
+    ]
+  },
+  "affectedRace": {
+    "status": {
+      "command": [
+        "go",
+        "test",
+        "-mod=readonly",
+        "-race",
+        "-count=1",
+        "-json",
+        "-run",
+        "^TestFullRasterChunkingSnapshotRestoreAndBounds$",
+        "./internal/printcluster"
+      ],
+      "exitCode": 0,
+      "elapsedSeconds": 62.761,
+      "output": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/metadata/printcluster-v2-affected-race.jsonl",
+      "stderr": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/metadata/printcluster-v2-affected-race.stderr",
+      "snapshotSha256": "d694adbe1410f005d6285396f81a7126cdc7b9fb9f44b08a01f7f3c5e523330a",
+      "unchangedSourceAfter": true
+    },
+    "evidence": {
+      "raw": {
+        "path": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/metadata/printcluster-v2-affected-race.jsonl",
+        "sha256": "47f8a9b65453eea6353c8c24634dfd7c428e782f0ec5ef6411780a3cd4948cf1",
+        "bytes": 5488
+      },
+      "testCases": {
+        "pass": 4
+      },
+      "topLevelPassed": [
+        "TestFullRasterChunkingSnapshotRestoreAndBounds"
+      ],
+      "testFailures": [],
+      "skips": [],
+      "packages": [
+        {
+          "Package": "vynic.local/edge/internal/printcluster",
+          "Action": "pass",
+          "Elapsed": 61.071
+        }
+      ]
+    }
+  },
+  "integratedGoQualification": {
+    "path": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/metadata/go-final-integrated-validation.json",
+    "sha256": "8cac6872734d4d9b9daca0e9360181fb4c6c8ed7651f70c04ee949c6dae0714a",
+    "bytes": 22092
+  },
+  "windowsTestExecutables": {
+    "path": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/metadata/go-final-windows-package-tests.json",
+    "sha256": "57441bd7550ab4e0056ce34b36579ca56222ee5e58588bce9a7552963c79a404",
+    "bytes": 9931
+  },
+  "independentReviewV1": {
+    "path": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/printer-validation/printcluster-independent-review.json",
+    "sha256": "a711a1748b8705428d56e07b156c3d9fd49ba2106513c6d8414f26ec1770e535",
+    "bytes": 8817
+  },
+  "failureHistory": {
+    "v1FullRace": {
+      "ownedManifest": {
+        "path": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/printcluster-owned-source-hashes-v1.json",
+        "sha256": "a43c5b81ef7b143123f9a377c0abcfd058f0096bf8bae0f05eca709530c2cd8d",
+        "bytes": 4740
+      },
+      "snapshot": {
+        "path": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/metadata/go-v1-retained-source-snapshot.json",
+        "sha256": "becbed114597ac2e6d153fe0c5bbc75bd720a497f43678dd5cb7954e64b76f5f",
+        "bytes": 27289
+      },
+      "status": {
+        "path": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/metadata/go-v1-retained-edge-race-status.json",
+        "sha256": "f3ae976cc1715396762e5c4d65593dd7100a1efb516544d268c211290b8dce1e",
+        "bytes": 601
+      },
+      "testEvidence": {
+        "raw": {
+          "path": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/metadata/go-v1-retained-edge-race.jsonl",
+          "sha256": "c553f557d3cf0211e745ff945ee898c219f2ef143cd891bd0aeb74d21be08729",
+          "bytes": 460675
+        },
+        "testCases": {
+          "pass": 503,
+          "skip": 7,
+          "fail": 1
+        },
+        "topLevelPassed": [
+          "TestOfflinePublisherEnvelopeAcceptedByUpdater",
+          "TestDistributionRefusesSecretsAndMissingBuildConfiguration",
+          "TestStartupModes",
+          "TestOfflinePublisherRoundTrip",
+          "TestPinsAndTopologyRefuseBeforeOpeningResources",
+          "TestSharedPhysicalSenderRemainsHeld",
+          "TestHealthChecksEveryFrozenPinAndOldReader",
+          "TestTrustedPinChangeLatchesWithoutClientMismatchDenial",
+          "TestStopWaitsCommitAndRetainsOwnershipAfterDeadline",
+          "TestCloseFailureRetainsOwnerAndVisibleDiagnostic",
+          "TestHostGuardExcludesSecondRoleUntilActualDrain",
+          "TestConcurrentAdmissionsAndHealthAreDrained",
+          "TestStopDuringOpenPreventsWorkerStartAndWaitsResourceOwner",
+          "TestSharedClusterPinsAreExplicitAndImmutable",
+          "TestHealthHoldCopiesDoNotMutateTrustedEvidence",
+          "TestLeaseAndBootEvidenceCannotAuthorizeSharedPhysicalDispatch",
+          "TestGenerationHighWaterSurvivesQuorumLossAndClockRegression",
+          "TestBindingAndRetainedJobIdentityCannotBeRewrittenByHigherIndex",
+          "TestHelperOutcomeAndNoCommitRetry",
+          "TestExpectedUnsafeLeaseOnlyRAWPausedSenderCounterexample",
+          "TestBufferedTCPBytesSurviveSenderSocketClose",
+          "TestHelperTimeoutRetainsOriginalLifetimeAndGuard",
+          "TestHelperFrameAndResultBounds",
+          "TestGuardIdentityActiveCallAndIdempotentClose",
+          "TestTCPFailureBoundariesAndOneWrite",
+          "TestRejectBeforeDialAndFreezeBytes",
+          "TestCancelWriteRemainsUncertainAndGuardBusy",
+          "TestDestinationAndHelperPins",
+          "TestCoordinationRequiresAuthenticatedVenueVersionAndEpoch",
+          "TestAtomicCanonicalPrintAdmissionRollbackAndExactRetry",
+          "TestActualQueueP1StallAllowsP2BusinessAndPrintAndDrainsBeep",
+          "TestCoordinationAtomicConflictIdempotencyReplay",
+          "TestCoordinationRollsBackEventAndStateWhenResultCannotPersist",
+          "TestRecoveredStartedRemainsUncertainWithoutReplay",
+          "TestUnboundLocalHostAndCleanRestart",
+          "TestCanceledActualQueueProbeDoesNotStopHealthyHost",
+          "TestControlServiceKeepsStopPendingUntilActualDrain",
+          "TestControlServiceObservesTrustedRuntimeFailureWithoutSCMCommand",
+          "TestFirstInstallProvisioningAndRetry",
+          "TestControlServiceCallerCancellationKeepsRunning",
+          "TestMissingOwnerRefusesBeforeResourceOpen",
+          "TestLocalAgentMayCoLocateButSharedPinsRequireStableMembership",
+          "TestSignaturePolicyMatrix",
+          "TestCoordinationMigrationFromPhase1",
+          "TestUnsupportedUnknownAndMalformedBeepDoesNotLosePrimary",
+          "TestQueueSIGKILLHelper",
+          "TestRepeatedUpdatesRetainOnlyCurrentAndPreserveDurableData",
+          "TestCoordinationCrashRecovery",
+          "TestCoordinationRejectsUnreplayableOrOutOfScopeDocuments",
+          "TestCorruptAndInterruptedDownloadRetry",
+          "TestProbationRetainsRollbackUntilRepeatedHealthPasses",
+          "TestOperationalOriginSignedImmutableAndCurrentTerminal",
+          "TestOperationalQueuedAtomicReceiptsRetryRestartAndObserverOrigin",
+          "TestCrashAfterInitialHealthRollsBackAndCleansCandidate",
+          "TestFailedRepairPreservesWorkingReleaseAndData",
+          "TestActualSIGKILLDurabilityAndNoReplay",
+          "TestInterruptedSwapRecovery",
+          "TestCompetingProcessCannotRecoverOrSubmit",
+          "TestDartEnvelopeInteroperability",
+          "TestDecoderRejectsAmbiguousOrMutatedIdentity",
+          "TestLaterSurvivesOrdinaryLaunchAndRepairStabilization",
+          "TestAliasEndpointAndFrozenRetry",
+          "TestCleanupFailureRetriesAfterRestartWithoutRollback",
+          "TestWindowsQueueCanonicalOwnership",
+          "TestFIFOAndIndependentPrinterDuringLostACK",
+          "TestUninstallRetainsDataAndRepairReusesState",
+          "TestLegacyMigrationPreservesLaterThenPrunesAfterHealthyStartup",
+          "TestThreeClientFIFOAndOptionalBeepSeparate",
+          "TestStopTimeoutRetainsLifetimeAndRestartIsConservative",
+          "TestOperationalQueuedRefusalRollsBackEveryRecord",
+          "TestRepairNeverChangesEdgeVersion",
+          "TestStartedBeepAcrossElectionStaysHeldOtherPrinterProgresses",
+          "TestLegacyExplicitUpdateUsesCurrentSlot",
+          "TestOperationalQueuedConflictPersistsWithoutEffects",
+          "TestManagedDeletionRefusesDataAndUnknownPaths",
+          "TestRepairActivePOSPreservesUpdaterHighWater",
+          "TestEveryFlushedDispatchBoundaryRestart",
+          "TestOldSchemaAndRealSenderFailClosed",
+          "TestThreeIndependentRelaysToTwoPrinterExecutor",
+          "TestPrimaryCapabilitiesMustBeImplementedBeforeAdmission",
+          "TestContradictoryNativeResultsAreUncertain",
+          "TestLiveOldGuardKeepsHeadQueuedAndOtherPrinterContinues",
+          "TestCompletedNotSentClaimRecoversWithoutReprinting",
+          "TestIndependentLOCALDurableQueueWorksDuringActualSharedQuorumLoss",
+          "TestStagingCapacityScopeAndChunkReceipts",
+          "TestEffectiveModesFutureSchemaAndSnapshotFailure",
+          "TestRepairFailsClosedForMissingCorruptStateAndBusyHost",
+          "TestOperationalExpandedKindsRoundTripReplayAndSnapshot",
+          "TestUnsafeBundleAndSymlink",
+          "TestNoInsecureRedirectAndBoundedMetadata",
+          "TestOperationalProofAuthorityIsSeparateSignedAndImmutable",
+          "TestBinarySwapCrashMatrix",
+          "TestOperationalProofAuthorityRequiresExistingFoundationBinding",
+          "TestRepairRestoresConfigurationWithoutRotatingCredentials",
+          "TestOperationalReadDependencyConflictAndImmutableExactResults",
+          "TestIncompleteFlutterBundleRefused",
+          "TestLiveProcessWithoutContinuedHiveReadinessCannotStabilize",
+          "TestOperationalThreeClientsExactlyOneCASWinner",
+          "TestRepairAfterRemovalDoesNotAdvertiseDeletedStaging",
+          "TestVerifiedOrdinaryLaunchNeedsFreshHealthButNotStabilization",
+          "TestOperationalSnapshotAndReplayUseOneConsistentHeadDuringWrites",
+          "TestVerifiedOrdinaryLaunchStillRejectsWrongDataHealth",
+          "TestRepairOfVerifiedReleaseStillRequiresStabilization",
+          "TestLeaderOnlyClaimAndReprintProvenance",
+          "TestQueueCapacityAndConfigChangeRetainExactReceipts",
+          "TestStageRestartInstallAndIdempotency",
+          "TestMultipleDatabaseConnectionsCannotPassDurabilityProbe",
+          "TestFaultObserverCannotMutateFrozenSendBytes",
+          "TestMissingJobSnapshotDoesNotPanic",
+          "TestUninstallUnresolvedUpdatePreservesDataAndAllowsReinstall",
+          "TestUninstallStillRequiresQuiescentProcesses",
+          "TestSingleSetupOwner",
+          "TestInterruptedRepairRestoresOldBinaryEvenOffline",
+          "TestFailedCandidateRollsBackWithoutDataRollback",
+          "TestRejectBadReleaseAndCorruptDownloads",
+          "TestReverifyStagedArtifactAndExpiry",
+          "TestRepairUsesOneTemporaryRollbackAndCleansDownloads",
+          "TestTwoPOSPlusThirdFullReplicaMajority",
+          "TestOnlyTemporaryProofDirectories",
+          "TestCrashDuringActivationRecoversPrevious",
+          "TestInterruptedPOSRepairRestoresCurrentBeforeOfflineFailure",
+          "TestIPCAuthorizationAndWrongProcess",
+          "TestArchivePaths",
+          "TestOldEdgeCapabilityRefusedBeforeLegacyLayoutMigration",
+          "TestInterruptedDownloadRetryAndSingleOwner",
+          "TestCorruptedUpdaterStateRefused",
+          "TestInstallAfterRemovalUsesCurrentSignedPOSButRepairStaysPinned",
+          "TestRemovedInstallStillRejectsUntrustedRelease",
+          "TestUpdateDownloadProgressUsesObservedBytes",
+          "TestOfferDownloadsWithoutLaunchingPOSAndLeavesConsentInPOS",
+          "TestOfferExplainsRequiredRecoveryAndNeverClaimsUnresolvedSuccess",
+          "TestOfferFailureAndCancellationStayVisible",
+          "TestUnverifiedLaunchIsNotAnUpToDateCheck",
+          "TestPerUserDestinationBoundaries",
+          "TestUpdateOfferDoesNotTreatRecoveryFailureAsSuccess",
+          "TestExplicitTwoVoterFailSafeNeverFallsBack",
+          "TestWrongDataDirectoryCannotPassStartupHealth",
+          "TestAssignedPlusUnreferencedNullJobRestoreRefused",
+          "TestActualDartContractGoldens",
+          "TestStrictContractAndFrozenVisibleFields",
+          "TestFixedFullDataMembershipPolicy",
+          "TestOperationalLostACKRestartAndFrozenEightMiBRaster",
+          "TestOperationalAtomicRollbackOfPostimagesEventsEffectsAndResult",
+          "TestOperationalWrongEpochTerminalAndTransactionalRevocation",
+          "TestOperationalProofThreeProcessesGatewayAtomicRaceLostACKAndRestart",
+          "TestOperationalProofFreshCertificateTerminalRevocationAndFoundationIsolation",
+          "TestOperationalProofConstructorPreflightsServerPinWithX509",
+          "TestPairingAuthenticationAndRestart",
+          "TestPairingExpiryAndInvalidTicket",
+          "TestConcurrentTicketConsumption",
+          "TestOperationalTombstonesRetainIdentityAndCapacity",
+          "TestOperationalSequenceRevisionAndInputBounds",
+          "TestOperationalMigrationPreservesPopulatedPhase2A",
+          "TestOperationalMigrationPreservesPopulatedSchema3AndGuards",
+          "TestShutdownDrainsThenBoundsActiveStreams",
+          "TestOperationalSchema4MigrationRejectsEntitySchemaDrift",
+          "TestOperationalCrashRecoversWholeCommitAndRollsBackOpenTransaction",
+          "TestStoreLockAndImmutableGrant",
+          "TestThreeFullVotersMajorityDedupConfigFreezeAndRestart",
+          "TestIncompatibleAndCorruptStoreFailsClosed",
+          "TestAtomicPairAndRollback",
+          "TestCrashRecoversCommittedWALAndRollsBackOpenTransaction",
+          "TestLeaderLossInterruptionsAndOptionalBeepBarriers",
+          "TestMinorityCannotAcceptOrUsePausedOldClaim",
+          "TestNonvoterAndClientDoNotCountTowardQuorum",
+          "TestProjectionRollbackReplayAndMalformedSnapshots",
+          "TestDurableHalfLossAndForeignIdentityRefused",
+          "TestEndpointAliasesAndFixedDeviceLogicalExecutor",
+          "TestFiveFullVotersRequireThree",
+          "TestSnapshotResultReceiptStable",
+          "TestThreeProcessSIGKILLLeaderAndFourPOSRelayRecovery"
+        ],
+        "testFailures": [
+          "TestFullRasterChunkingSnapshotRestoreAndBounds"
+        ],
+        "skips": [
+          "TestOperationalProofProcess",
+          "TestSetupCrashWorker",
+          "TestRetentionCrashChild",
+          "TestUpdaterChild",
+          "TestOperationalCrashWorker",
+          "TestCrashWorker",
+          "TestRaftProcessFixture"
+        ],
+        "packages": [
+          {
+            "Package": "vynic.local/edge/cmd/terminal-sim",
+            "Action": "skip",
+            "Elapsed": 0
+          },
+          {
+            "Package": "vynic.local/edge/cmd/verify-local-release",
+            "Action": "skip",
+            "Elapsed": 0
+          },
+          {
+            "Package": "vynic.local/edge/internal/testutil",
+            "Action": "skip",
+            "Elapsed": 0
+          },
+          {
+            "Package": "vynic.local/edge/cmd/sign-pos-release",
+            "Action": "pass",
+            "Elapsed": 1.487
+          },
+          {
+            "Package": "vynic.local/edge/cmd/setup",
+            "Action": "pass",
+            "Elapsed": 1.525
+          },
+          {
+            "Package": "vynic.local/edge/cmd/sign-bootstrap",
+            "Action": "pass",
+            "Elapsed": 1.541
+          },
+          {
+            "Package": "vynic.local/edge/internal/printeligibility",
+            "Action": "pass",
+            "Elapsed": 1.4849999999999999
+          },
+          {
+            "Package": "vynic.local/edge/internal/printtransport",
+            "Action": "pass",
+            "Elapsed": 1.4849999999999999
+          },
+          {
+            "Package": "vynic.local/edge/cmd/edge",
+            "Action": "pass",
+            "Elapsed": 2.536
+          },
+          {
+            "Package": "vynic.local/edge/internal/printhost",
+            "Action": "pass",
+            "Elapsed": 2.484
+          },
+          {
+            "Package": "vynic.local/edge/internal/printqueue",
+            "Action": "pass",
+            "Elapsed": 10.692
+          },
+          {
+            "Package": "vynic.local/edge/internal/setup",
+            "Action": "pass",
+            "Elapsed": 15.303
+          },
+          {
+            "Package": "vynic.local/edge/internal/updater",
+            "Action": "pass",
+            "Elapsed": 17.048
+          },
+          {
+            "Package": "vynic.local/edge/internal/server",
+            "Action": "pass",
+            "Elapsed": 29.573
+          },
+          {
+            "Package": "vynic.local/edge/internal/store",
+            "Action": "pass",
+            "Elapsed": 32.395
+          },
+          {
+            "Package": "vynic.local/edge/internal/printcluster",
+            "Action": "fail",
+            "Elapsed": 106.683
+          }
+        ]
+      },
+      "interpretation": "The 8 MiB single-voter cold-restart synchronization helper exceeded its 400 ms probe deadline. Production state/bytes invariants were not relaxed. Retained status paths are the original invocation paths; this receipt points to the preserved v1 files and snapshot directory."
+    },
+    "idleDiagnostic": {
+      "testEvidence": {
+        "raw": {
+          "path": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/metadata/printcluster-race-large-diagnostic.jsonl",
+          "sha256": "c73192b3d5d71ab9551cb4f28c7a8514fb5f4210b04fe11c45e6e7053c3b71dd",
+          "bytes": 19741
+        },
+        "testCases": {
+          "pass": 3,
+          "fail": 1
+        },
+        "topLevelPassed": [],
+        "testFailures": [
+          "TestFullRasterChunkingSnapshotRestoreAndBounds"
+        ],
+        "skips": [],
+        "packages": [
+          {
+            "Package": "vynic.local/edge/internal/printcluster",
+            "Action": "fail",
+            "Elapsed": 26.169
+          }
+        ]
+      },
+      "loggingOnlyOverlay": {
+        "path": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/metadata/printcluster-leader-diagnostic-overlay.go",
+        "sha256": "7eed259b316b703e02c9734417b2107923a1d04aee798d9ceefe9286a4a2cc8f",
+        "bytes": 31968
+      },
+      "overlayMapping": {
+        "path": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/metadata/printcluster-leader-diagnostic-overlay.json",
+        "sha256": "9cd2d2967ac831602b807b7322c2ce5215ab6bfc815146af097e981abeb18c8d",
+        "bytes": 265
+      },
+      "interpretation": "Reproduced with the original 400 ms budget while otherwise idle. Diagnostics show repeated commit-unknown probes while the same Leader was durably applying retained staging; this is evidence for bounded test-probe correction, not proof that concurrent load caused every prior failure."
+    },
+    "preFreezeIndependentProcessRace": {
+      "log": {
+        "path": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/printer-validation/cluster-independent-boundaries-authorized.jsonl",
+        "sha256": "927cf58d905a4337366ff5174ef969023c4501503db4ade1cc7e8cfb80892d41",
+        "bytes": 18027
+      },
+      "interpretation": "A prefreeze process race test missed cold-rejoin deadline; exact final process non-race/race later passed. This separate earlier failure remains visible; no proven sole cause is asserted."
+    },
+    "v2FixtureOnlyDelta": {
+      "apps/edge/internal/printcluster/cluster_test.go": {
+        "before": "8118617df65e078fb51b629964a5fbb165033e76397e3f9427bd99c0d4a72ccd",
+        "after": "821fe8230f0ca133ec5aa2a0b9b58f0b69493ae6278310e6d5bd876d5e05e1ea"
+      }
+    },
+    "v2Reason": "Only fixture sync budget/diagnostics and fresh bounded continuation context; unchanged production domain/FSM/node/transport/schema/dependency manifests",
+    "qualificationRule": "Only v2 checks with exact current hashes qualify the final candidate. Earlier passing and failed evidence is retained, not overwritten or silently substituted."
+  },
+  "limits": [
+    "Inert loopback proof only; PhysicalDispatchStatus always denies and the package exposes no Send or downstream fencing permit. No automatic production startup or printer activation.",
+    "Three voter OS processes plus fourth relay run on one Darwin host with real loopback TCP and separate durable stores. This proves owned-process SIGKILL recovery, not machine power loss, independent host fault domains, or venue LAN qualification.",
+    "Actual multi-process replicated primary payload is 600 KiB and other three-voter fixtures use 700 KiB. The 8 MiB full-envelope/chunk/snapshot/cold-restart proof is one voter; no 8 MiB three-voter qualification is claimed.",
+    "Pinned synthetic loopback peer/caller fixture trust is not production enrollment, signed-origin forwarding, or live mTLS cluster admission. Terminal-origin production transport integration remains held.",
+    "Only the elected leader can claim logical execution. Fixed Device USB jobs are held when that Device is not leader; no nonleader USB forwarding or host failover is implemented.",
+    "Controlled nonvoter join/remove is implemented. Live voter-set replacement, durable authenticated client outbox and production enrollment/cutover remain outside this proof; voter counts are explicitly pinned, never inferred from online peers.",
+    "Started primary becomes UNCERTAIN without automatic resend. Started optional beep becomes UNCERTAIN and holds same-printer FIFO; no elapsed lease or membership change alone releases it.",
+    "ResolveNotPrinted is an audited synthetic operator assertion, not proof that an old executor/native call or buffered bytes were fenced. Physical admission stays denied.",
+    "SQLite WAL/FULL and Bolt fsync are verified on task-local files. Network filesystem, actual power-loss media guarantees, Windows service account/driver/hardware behavior need separate qualification.",
+    "Bounded retained queue: 128 jobs, 256 requests/configs, 512 attempts, 8 staged jobs, 32 MiB staging, 12 MiB envelope, 64 MiB projection; no production compaction/unbounded queue claim.",
+    "Seven Windows test executables are cross-compiled here. Actual Windows guest results, marker-only helper skips and forced TerminateProcess semantics belong to parent receipts, not this compiler receipt."
+  ],
+  "independentReviewV2": {
+    "path": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/printer-validation/printcluster-independent-review-v2.json",
+    "sha256": "e066026d1aa694f8f507a71f1dbd4ddd0116defd6484cc5cb8eca5e099740911",
+    "bytes": 8775
+  }
+}

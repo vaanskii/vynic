@@ -1,0 +1,11 @@
+{
+  "action": "Stop only task-owned temporary PostgreSQL for safe pause",
+  "ownedCluster": "/var/folders/82/drcfb4994p16rl49gxx9tj000000gn/T/vynic-ops01-restore-u96kmr4i/pg",
+  "ownedLoopbackPort": 50846,
+  "stopped": true,
+  "portClosed": true,
+  "rejectedRestoreContinuationRan": false,
+  "databaseDataMutatedByCleanup": false,
+  "liveServicesTouched": false,
+  "updatedAt": "2026-10-14T11:24:35.087680+00:00"
+}

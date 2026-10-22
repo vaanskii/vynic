@@ -1,0 +1,11 @@
+{
+  "genericStage": "/Users/vaanskii/Developer/vynic/docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/software-windows-flutter-stage-v3",
+  "posStage": "/Users/vaanskii/Developer/vynic/docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/software-windows-pos-stage-v3",
+  "finalSourceReceiptSHA256": "faaaec2f1ece4f8259353666000eb4c0d3aee6143e73ae7fdf90772a937b581b",
+  "genericStageReceiptSHA256": "9d983056af3e023a7b1c5045d8fe80893ad1d4c52cf2a2ac902d4a5e3f34f748",
+  "posStageReceiptSHA256": "781e3b50d6f5850af9bfc63e530dbc28937d80a5996bf2ff37b08e1fc0935f09",
+  "productPreparationSHA256": "618794b28299e53b9a2c6910f9cfb262ec9fd1244f2901e03f1879c9b0754c9b",
+  "VMExecuted": false,
+  "executionHeld": true,
+  "heldReason": "Guest session diagnosis and root CPU coordination"
+}

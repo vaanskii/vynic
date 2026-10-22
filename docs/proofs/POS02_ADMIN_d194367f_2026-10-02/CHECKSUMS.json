@@ -1,0 +1,25 @@
+{
+  "filesSha256": {
+    "README.md": "9a7e9b5b31df5738a7a6f1f69309807e90b2527182b52db5ffdafb6a5958ed90",
+    "Run-Synthetic-Tests.ps1": "3492a52df37734e0ca9ed97efbc287b67314f2832c564aeea598e49865f538eb",
+    "Verify-Source.ps1": "c7614b2fa7b0e121881ed95b06eec0b8bfd09a0d779a26921ef9d6db4a8f503a",
+    "cached-launcher-smoke.json": "204ef2380cbf2b3b844621562ad7f89d7370b6ccbea42d73f4e951fdd9722773",
+    "commands.json": "63bfbb3f17ed7a3cb475dc473d8d9adb827b551a8f69353113ea39c7b3769ed2",
+    "log-sha256.json": "579f14f1354d80aa2030a3d4dd4460a6b2e4fdf4c1881e53168f7f2a60dd9814",
+    "logs.zip": "c4abb6efadf0fe82f47e6292d0e171d90ec800ce769059a6564eb734276130d2",
+    "native-recovery.json": "2f49d136329966956219976a8390561582069034c007eb1eb88892f73fa3c18e",
+    "owned-paths.json": "9de654c987588932291ed78e708d2e1fdf9060909dc8ad509c82da3eb601bbab",
+    "owned-runtime.patch": "83777b37eba4b019bce6146312ad13f1b8a527c96f006c68c786a564fc37da60",
+    "patch-validation.json": "f5a5c50273cdf914778f828588a557648b5e65cf2b72be7c97608675f6ccff21",
+    "preservation.json": "5d3c75aa0427e110d30f8d47360121e73eafae3b88defc5f9c06147dfc7a633c",
+    "profile.json": "b3cf463aa7cbbdb000740f45571f982e20d479af9dc7d3afda882d712427930d",
+    "proof.json": "86928ca87a95605187bfadfca03f749adba48b65dcace9765bb914af3b656456",
+    "review.json": "b4a4247e653690eac3b3628fe176fdd3694ca5fdbcb5e58d8e36ac3f1a2e3ca3",
+    "source-sha256.json": "d194367f8fd0e2f6d9dcfea86f52d09cb605b32779b7904613b00466bd084de8",
+    "source.zip": "11b1da1ac84fc9930397fb867ab8f5067cd21c2bbd97ae4a723e5f1609c99dc4",
+    "verifier-negative-checks.json": "160b605fb99dfa244e5132fd109846c4efd638fe7f5fe628e39846d64982e9f2",
+    "verify_revision.py": "20462bddc7c733eb68b14f6ccfccf0d42e6249d4898b3eb0263573589e1ab6a8",
+    "workspace-check.json": "1b96179c7895efa3c8b5877cf56c7001e2eec51cd3bf8ec0998a394b88611969"
+  },
+  "guideSha256": "a24816246324ff48abbc108a0ba4258a3cb2e111e11c78f4ba7e1249634acef3"
+}

@@ -1,0 +1,26 @@
+{
+  "verifiedAtUtc": "2026-10-06T14:08:43.540948+00:00",
+  "assets": [
+    {
+      "filename": "go1.26.8.darwin-arm64.tar.gz",
+      "url": "https://go.dev/dl/go1.26.8.darwin-arm64.tar.gz",
+      "sha256": "a012b25b571bd0138a03dcd25375ceba866fe5ca822f426d2c66a4de56fd3f4b",
+      "bytes": 64626620,
+      "verified": true
+    },
+    {
+      "filename": "protoc-36.2-osx-aarch_64.zip",
+      "url": "https://github.com/protocolbuffers/protobuf/releases/download/v36.2/protoc-36.2-osx-aarch_64.zip",
+      "sha256": "9cd98a532c5c5e0c4161314de0225de27e4c8a323917b6ea7b1b714d3ae23466",
+      "bytes": 2625514,
+      "verified": true
+    },
+    {
+      "filename": "protoc_plugin-25.0.0.tar.gz",
+      "url": "https://pub.dev/api/archives/protoc_plugin-25.0.0.tar.gz",
+      "sha256": "d1ea363e9118f954d9d482c2f7281c5ff5149b059e68672d1faa564d49091f05",
+      "bytes": 243562,
+      "verified": true
+    }
+  ]
+}

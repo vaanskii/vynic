@@ -19,6 +19,7 @@ import { StaffSyncService } from '../snapshot/staff-sync.service';
 import { SyncBroadcastService } from '../snapshot/sync-broadcast.service';
 import { TableSyncService } from '../snapshot/table-sync.service';
 import { PosCallbackClient } from '../../pos-callback.client';
+import * as bcrypt from 'bcrypt';
 
 /**
  * Use-case tests for the same-order last-write-wins resolution and the staff
@@ -267,6 +268,7 @@ describe('IngestPosSnapshotService /sync/manager-data — order last-write-wins'
 
 describe('IngestPosSnapshotService /sync/manager-data — staff reconcile protection', () => {
   it('keeps a server user that has a queued mobile create, deletes a genuinely-stale one', async () => {
+    const queuedPinHash = await bcrypt.hash('5678', 4);
     const { prisma, calls } = makeMockPrisma({
       'posCallbackOutbox.findMany': (arg: any) => {
         if (arg?.select?.endpoint) {
@@ -278,11 +280,10 @@ describe('IngestPosSnapshotService /sync/manager-data — staff reconcile protec
         return undefined;
       },
       // Server currently has mary (incoming), john (queued create), bob (stale).
-      'staff.findMany': () => [
-        { username: 'mary' },
-        { username: 'john' },
-        { username: 'bob' },
-      ],
+      'staff.findMany': (arg: { select?: { pinHash?: boolean } }) =>
+        arg.select?.pinHash
+          ? [{ username: 'john', pinHash: queuedPinHash }]
+          : [{ username: 'mary' }, { username: 'john' }, { username: 'bob' }],
     });
     const ingest = makeIngestService(prisma);
 

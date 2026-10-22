@@ -3,10 +3,14 @@ import 'dart:io' show Platform;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'additional_printers_section.dart';
 import 'package:vynic/core/ui/vynic_floor_tokens.dart';
 import 'package:vynic/apps/windows_pos/widgets/admin/admin_surface.dart';
 import 'package:vynic/apps/windows_pos/widgets/admin/shared/admin_design.dart';
 import 'package:flutter/services.dart';
+import 'package:vynic/apps/windows_pos/widgets/shared/print_jobs.dart';
+import 'package:vynic/core/services/printing/printer_agent_runtime_profile.dart';
+import 'printer_agent_status_card.dart';
 
 typedef AsyncVoidCallback = Future<void> Function();
 
@@ -20,6 +24,7 @@ class AdminPrintersSection extends StatefulWidget {
     required this.isTestingPrinters,
     required this.onSavePrinterSettings,
     required this.onTestPrinterConnections,
+    this.printerAgentHealthSource,
   });
 
   final TextEditingController kitchenPrinterController;
@@ -29,6 +34,7 @@ class AdminPrintersSection extends StatefulWidget {
   final bool isTestingPrinters;
   final AsyncVoidCallback onSavePrinterSettings;
   final AsyncVoidCallback onTestPrinterConnections;
+  final PrinterAgentRuntimeHealthSource? printerAgentHealthSource;
 
   @override
   State<AdminPrintersSection> createState() => _AdminPrintersSectionState();
@@ -81,6 +87,12 @@ class _AdminPrintersSectionState extends State<AdminPrintersSection> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     _buildHeader(),
+                    const SizedBox(height: 14),
+                    PrinterAgentStatusCard(
+                      source:
+                          widget.printerAgentHealthSource ??
+                          const PrinterAgentRuntimeProfile(),
+                    ),
                     const SizedBox(height: 16),
                     LayoutBuilder(
                       builder: (context, constraints) {
@@ -114,6 +126,8 @@ class _AdminPrintersSectionState extends State<AdminPrintersSection> {
                     ),
                     const SizedBox(height: 14),
                     _buildInfoStrip(),
+                    const SizedBox(height: 12),
+                    const PrintJobsNotice(),
                   ],
                 ),
               ),
@@ -246,6 +260,7 @@ class _AdminPrintersSectionState extends State<AdminPrintersSection> {
               enabled: false,
             ),
           ),
+          const AdditionalPrintersSection(),
         ],
       ),
     );
@@ -422,7 +437,7 @@ class _AdminPrintersSectionState extends State<AdminPrintersSection> {
             icon: widget.isTestingPrinters ? null : Icons.print_outlined,
             label: widget.isTestingPrinters
                 ? 'შემოწმება...'
-                : 'პრინტერის ტესტი',
+                : 'კავშირის შემოწმება',
             isLoading: widget.isTestingPrinters,
             onPressed: widget.isTestingPrinters
                 ? null
@@ -471,7 +486,7 @@ class _AdminPrintersSectionState extends State<AdminPrintersSection> {
           SizedBox(width: 10),
           Expanded(
             child: Text(
-              'ამ ეტაპზე გამოიყენება მიმდინარე უსაფრთხო კონფიგურაცია: სამზარეულო + ჩეკი, ფიქსირებული პორტი 9100.',
+              'კავშირის შემოწმება ქაღალდზე ბეჭდვას არ ადასტურებს. გაგზავნილი და გაურკვეველი ჩეკები იხილეთ ბეჭდვის სიაში.',
               style: TextStyle(color: _text, fontSize: 13),
             ),
           ),

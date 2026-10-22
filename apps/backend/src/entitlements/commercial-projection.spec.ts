@@ -25,11 +25,19 @@ describe('Commercial projection', () => {
       recipe: { components: [{ baseQuantityPerUnit: '0.5' }] },
     });
   });
-  it.each(['TRIAL', 'ACTIVE', 'PAST_DUE', null])(
+  it('bounds trials and legacy compatibility explicitly', () => {
+    const now = new Date('2030-01-01');
+    expect(
+      commercialAccessAllowed('TRIAL', new Date('2030-01-02'), false, now),
+    ).toBe(true);
+    expect(commercialAccessAllowed('TRIAL', now, false, now)).toBe(false);
+    expect(commercialAccessAllowed(null, null, true)).toBe(true);
+  });
+  it.each(['ACTIVE', 'PAST_DUE'])(
     'allows explicit grace and rollout compatibility: %s',
     (status) => expect(commercialAccessAllowed(status)).toBe(true),
   );
-  it.each(['SUSPENDED', 'CANCELLED', 'unknown'])(
+  it.each(['NO_PLAN', 'TRIAL', 'SUSPENDED', 'CANCELLED', 'unknown', null])(
     'denies inactive/unknown state: %s',
     (status) => expect(commercialAccessAllowed(status)).toBe(false),
   );

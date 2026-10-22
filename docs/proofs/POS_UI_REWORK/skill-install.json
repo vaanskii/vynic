@@ -1,0 +1,41 @@
+{
+  "repo": "thienqo/flutter-skills",
+  "commit": "5b89c05fcd817d284a97e970e410a9b806a29d40",
+  "installed": "/Users/vaanskii/Developer/vynic/.agents/skills/flutter-ui-design",
+  "license": "BSD-3-Clause",
+  "review": "All eight skill/reference/evaluation files reviewed; Markdown and JSON only. No executables or hooks. Optional cross-referenced skills not installed.",
+  "files": [
+    {
+      "path": "SKILL.md",
+      "sha256": "80a88adaa3d94ab923774a7b97054f489a413afba04b85a7d025ae03d79ead81"
+    },
+    {
+      "path": "evals/cases.json",
+      "sha256": "111682a00b50e3f074de63e0653b7ff97eced01579ffd590364b6160517b2680"
+    },
+    {
+      "path": "references/art-direction.md",
+      "sha256": "b999efc6f372101e9f1b180e86a80b3e962671540a5f89d5e2e2cf4cf500166e"
+    },
+    {
+      "path": "references/visual-foundations.md",
+      "sha256": "4e497cb6f4bf52f536ab3317d9649bac0b01d9993ba0786b2e70197ab98a6f12"
+    },
+    {
+      "path": "references/states-and-feedback.md",
+      "sha256": "45290a1ee5b34370ce1a5e621e05bbfb15dd832cc190fd79a99f334f8b39b539"
+    },
+    {
+      "path": "references/visual-verification.md",
+      "sha256": "d9feee4d22117f7ad62526520a3b1145ed36fe2f22422d72eebb4bacb4d02072"
+    },
+    {
+      "path": "references/screen-composition.md",
+      "sha256": "08834ada70d74390b02b8ba7c7df5c6c5ce0458e126552bf2f03cb47b6c69dca"
+    },
+    {
+      "path": "references/platform-adaptation.md",
+      "sha256": "60b2bb57b3dcb68cf8010cf8291a3024084373adea947633c11c64cc7034e6d2"
+    }
+  ]
+}

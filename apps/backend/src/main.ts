@@ -4,19 +4,17 @@ import { ValidationPipe } from '@nestjs/common';
 import { json, urlencoded } from 'express';
 import cookieParser from 'cookie-parser';
 import { AppModule } from './app.module';
+import { websiteAuthBodyParsers } from './website/auth/auth-body-parsers';
 
-const DEV_CLIENT_PORTS = new Set(['5173', '5174', '4173']);
-const LAN_ORIGIN =
-  /^https?:\/\/(localhost|127\.0\.0\.1|192\.168\.\d{1,3}\.\d{1,3}|10\.\d{1,3}\.\d{1,3}\.\d{1,3}|172\.(1[6-9]|2\d|3[01])\.\d{1,3}\.\d{1,3})(:\d+)?$/;
+import { validateDeploymentEnvironment } from './shared/deployment-config';
+
+import { isDevLanOrigin } from './dev-origins';
+import { isSameOriginRequest } from './website/tenancy/same-origin';
+
+validateDeploymentEnvironment();
 
 function normalizeOrigin(origin: string): string {
   return origin.endsWith('/') ? origin.slice(0, -1) : origin;
-}
-
-function isDevLanOrigin(origin: string): boolean {
-  if (!LAN_ORIGIN.test(origin)) return false;
-  const port = origin.match(/:(\d+)$/)?.[1] ?? '80';
-  return DEV_CLIENT_PORTS.has(port);
 }
 
 function buildAllowedOrigins(): string[] {
@@ -30,14 +28,23 @@ function buildAllowedOrigins(): string[] {
     .filter((value): value is string => Boolean(value))
     .map(normalizeOrigin);
 
-  return ['http://localhost:5173', 'http://127.0.0.1:5173', ...fromEnv];
+  return process.env.NODE_ENV === 'production'
+    ? fromEnv
+    : ['http://localhost:5173', 'http://127.0.0.1:5173', ...fromEnv];
 }
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  const proxyIps = process.env.TRUST_PROXY_IPS?.split(',')
+    .map((ip) => ip.trim())
+    .filter(Boolean);
+  if (proxyIps?.length)
+    app.getHttpAdapter().getInstance().set('trust proxy', proxyIps);
+  app.enableShutdownHooks();
   const isProduction = process.env.NODE_ENV === 'production';
   const allowedOrigins = new Set(buildAllowedOrigins());
 
+  app.use('/api/auth', ...websiteAuthBodyParsers());
   app.use(
     json({
       limit: '50mb',
@@ -52,23 +59,10 @@ async function bootstrap() {
   app.use(urlencoded({ extended: true, limit: '50mb' }));
   app.use(cookieParser());
 
-  app.enableCors({
-    origin: (origin: string | undefined, callback) => {
-      if (!origin) {
-        callback(null, true);
-        return;
-      }
-      const normalized = normalizeOrigin(origin);
-      if (allowedOrigins.has(normalized)) {
-        callback(null, true);
-        return;
-      }
-      if (!isProduction && isDevLanOrigin(normalized)) {
-        callback(null, true);
-        return;
-      }
-      callback(new Error(`Not allowed by CORS: ${origin}`), false);
-    },
+  const trustForwardedHost = ['1', 'true'].includes(
+    (process.env.TRUST_PROXY_HOST ?? '').trim().toLowerCase(),
+  );
+  const corsOptions = {
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: [
@@ -80,7 +74,33 @@ async function bootstrap() {
       'X-POS-Sync-Key',
       'x-connection-key',
     ],
-  });
+  };
+  // Explicit origins, development LAN clients, and requests a restaurant site
+  // sends to its own host (see isSameOriginRequest). Everything else is refused
+  // before a handler runs; there is no wildcard.
+  app.enableCors(
+    (
+      req: { headers: Record<string, string | string[] | undefined> },
+      callback: (error: Error | null, options?: object) => void,
+    ) => {
+      const origin =
+        typeof req.headers.origin === 'string' ? req.headers.origin : undefined;
+      if (!origin) {
+        callback(null, { ...corsOptions, origin: true });
+        return;
+      }
+      const normalized = normalizeOrigin(origin);
+      if (
+        allowedOrigins.has(normalized) ||
+        (!isProduction && isDevLanOrigin(normalized)) ||
+        isSameOriginRequest(origin, req.headers, { trustForwardedHost })
+      ) {
+        callback(null, { ...corsOptions, origin: true });
+        return;
+      }
+      callback(new Error(`Not allowed by CORS: ${origin}`));
+    },
+  );
 
   app.useGlobalPipes(
     new ValidationPipe({

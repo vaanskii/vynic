@@ -1,0 +1,41 @@
+{
+  "schema": 1,
+  "createdAtUtc": "2026-10-06T17:31:29.560572+00:00",
+  "sourceReceiptSHA256": "193e4800e5d0733a30bc6c8d4ac993590219363941e69a787bba5ac3681c8f68",
+  "executionStatus": "HELD_AFTER_VM_APPROVAL_REJECTION",
+  "VMExecuted": false,
+  "assets": {
+    "analysis-selection.json": {
+      "sha256": "c194b204f6a956d79081acdaec508e2a217104c8a0dafd974b79637ad300490b",
+      "bytes": 3823
+    },
+    "operational-proof-server-windows.test.exe": {
+      "sha256": "2c9370e4c4cfdb55094f63a26a2bf5b45bff43868a1a2c14a0f47c2654c70abb",
+      "bytes": 26370560
+    },
+    "printer-agent-server-windows.test.exe": {
+      "sha256": "f335745e38be573f5ec031478eab4b524a8069c811324ac2a5d39876b676e894",
+      "bytes": 25833472
+    },
+    "run.ps.txt": {
+      "sha256": "ed751681c9080066e96a952ece759e541c236a5efb214d317210ad7a589bcddb",
+      "bytes": 5760
+    },
+    "source-manifest.json": {
+      "sha256": "f53338cbe0a30d867ab0b370d861671ace9e31b2de0d88696960ec6c3f6c65d6",
+      "bytes": 193014
+    },
+    "source.zip": {
+      "sha256": "dedd8e046927fe20954e392aaf7b92e76e06145f54b7e7c2f5f5f9920052b066",
+      "bytes": 5780809
+    },
+    "stage-receipt.json": {
+      "sha256": "700aba05ce08b93223c6579391455377b7eec1b2fb7fd706bf5c1213e5443260",
+      "bytes": 1372
+    },
+    "test-selection.json": {
+      "sha256": "7bd71e5071e5da65b5d0d6316bf5548d4a55cfcb48aaf68464fa851b076540b0",
+      "bytes": 1917
+    }
+  }
+}

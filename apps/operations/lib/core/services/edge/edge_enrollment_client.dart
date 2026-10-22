@@ -1,10 +1,12 @@
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
+import '../menu/menu_client_compatibility.dart';
 
 /// Why an enrollment attempt did not produce a credential.
 enum EdgeEnrollmentOutcome {
   enrolled,
+  updateRequired,
 
   /// The server could not be reached at all — wrong address, or nothing there.
   unreachable,
@@ -90,6 +92,7 @@ class EdgeEnrollmentClient {
     required String installationId,
     required String platform,
     String? displayName,
+    Map<String, Object?>? menuClient,
   }) async {
     final Uri uri;
     try {
@@ -111,6 +114,8 @@ class EdgeEnrollmentClient {
               'enrollmentCode': code,
               'installationId': installationId,
               'platform': platform,
+              'managerSetupVersion': 1,
+              'menuClient': menuClient ?? MenuClientCompatibility.report,
               if (displayName != null && displayName.isNotEmpty)
                 'displayName': displayName,
             }),
@@ -123,6 +128,12 @@ class EdgeEnrollmentClient {
     }
 
     final body = _decode(response.body);
+    if (!MenuClientCompatibility.observe(response.statusCode, body)) {
+      return const EdgeEnrollmentResult.failed(
+        EdgeEnrollmentOutcome.updateRequired,
+        message: MenuClientCompatibility.updateMessage,
+      );
+    }
     if (response.statusCode < 200 || response.statusCode >= 300) {
       return EdgeEnrollmentResult.failed(
         _classify(response.statusCode),
@@ -139,7 +150,10 @@ class EdgeEnrollmentClient {
     final credential = _string(body['credential']);
     final venue = body['venue'];
     final device = body['device'];
-    if (credential == null || venue is! Map || device is! Map) {
+    if (credential == null ||
+        venue is! Map ||
+        _string(venue['id']) == null ||
+        device is! Map) {
       return const EdgeEnrollmentResult.failed(
         EdgeEnrollmentOutcome.serverError,
         message: 'The server did not return a usable device credential.',

@@ -1,6 +1,17 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import type { Prisma } from '@prisma/client';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from '../../shared/prisma/prisma.service';
 import type { TenantContext } from '../../tenancy/tenant-context';
+import {
+  activeCategory,
+  activeSubcategory,
+  activeMenuItem,
+  activeVariant,
+} from '../../menu-catalog/menu-active';
 
 type MenuItemRow = {
   id: string;
@@ -42,10 +53,58 @@ type SubcategoryContext = {
 export class MenuService {
   constructor(private readonly prisma: PrismaService) {}
 
+  /** Canonical rows only: display minimum prices are never payable prices. */
+  async getBookableSelection(
+    tenant: TenantContext,
+    id: string,
+    variantId?: string,
+  ) {
+    const include = { variants: true, websitePresentation: true } as const;
+    let item = await this.prisma.menuItem.findFirst({
+      where: { id, venueId: tenant.venueId, ...activeMenuItem },
+      include,
+    });
+    let selectedVariantId = variantId;
+    if (!item) {
+      // Existing Vankisi carts send the selected variant's ID as `id`.
+      // Resolve its parent through the same Venue boundary, never client price.
+      const legacy = await this.prisma.menuItemVariant.findFirst({
+        where: {
+          id,
+          ...activeVariant,
+          menuItem: { venueId: tenant.venueId, ...activeMenuItem },
+        },
+        include: { menuItem: { include } },
+      });
+      if (!legacy || (variantId !== undefined && variantId !== legacy.id))
+        throw new BadRequestException('Menu selection is unavailable');
+      item = legacy.menuItem;
+      selectedVariantId = legacy.id;
+    }
+    if (!item.enabled || item.websitePresentation?.visibleOnWebsite === false)
+      throw new BadRequestException('Menu selection is unavailable');
+    const variant = item.variants.find(
+      (v) => v.id === selectedVariantId && v.retiredAt === null,
+    );
+    if (
+      (selectedVariantId !== undefined && !variant) ||
+      (item.variants.length && !variant)
+    )
+      throw new BadRequestException('A valid menu variant is required');
+    const suffix = variant ? ` ${variant.size}L` : '';
+    return {
+      itemId: item.id,
+      variantId: variant?.id,
+      price: variant?.price ?? item.price,
+      nameEn: `${item.nameEn}${suffix}`,
+      nameKa: `${item.nameKa}${suffix}`,
+    };
+  }
+
   /** Full menu tree — categories in POS order, for the resolved Venue only. */
   async getAllCategories(tenant: TenantContext) {
     const categories = await this.prisma.menuCategory.findMany({
-      where: { venueId: tenant.venueId },
+      where: { venueId: tenant.venueId, ...activeCategory },
       include: this.menuInclude(),
       orderBy: { sortOrder: 'asc' },
     });
@@ -55,9 +114,11 @@ export class MenuService {
 
   /** Single category — use when user picks e.g. "beer" / "ლუდი". */
   async getCategoryBySlug(tenant: TenantContext, slug: string) {
-    const category = await this.prisma.menuCategory.findUnique({
+    const category = await this.prisma.menuCategory.findFirst({
       where: {
-        venueId_slug: { venueId: tenant.venueId, slug },
+        venueId: tenant.venueId,
+        slug,
+        ...activeCategory,
       },
       include: this.menuInclude(),
     });
@@ -69,10 +130,18 @@ export class MenuService {
     return this.toWebsiteCategory(category);
   }
 
-  async getMenuItemById(tenant: TenantContext, itemId: string) {
-    const item = await this.prisma.menuItem.findFirst({
-      where: { id: itemId, venueId: tenant.venueId },
-      include: { variants: true, category: true, subcategory: true },
+  async getMenuItemById(
+    tenant: TenantContext,
+    itemId: string,
+    db: Prisma.TransactionClient = this.prisma,
+  ) {
+    const item = await db.menuItem.findFirst({
+      where: { id: itemId, venueId: tenant.venueId, ...activeMenuItem },
+      include: {
+        variants: { where: { retiredAt: null } },
+        category: true,
+        subcategory: true,
+      },
     });
     if (!item) return null;
 
@@ -88,28 +157,50 @@ export class MenuService {
     return this.toWebsiteMenuItem(item, sub);
   }
 
-  /** Resolve a public Cloud item key to the POS identity used on order lines. */
+  /** Resolve an accepted booking's Cloud key, including retained retired rows. */
   async getPosItemIdByCloudId(
     tenant: TenantContext,
     itemId: string,
+    db: Prisma.TransactionClient = this.prisma,
   ): Promise<string | null> {
-    const item = await this.prisma.menuItem.findFirst({
+    const item = await db.menuItem.findFirst({
       where: { id: itemId, venueId: tenant.venueId },
-      select: { posMenuItemId: true },
+      select: { id: true, posMenuItemId: true },
     });
-    return item?.posMenuItemId ?? null;
+    return item ? (item.posMenuItemId ?? item.id) : null;
+  }
+
+  /** Cloud and POS variant keys can differ; never infer one from a display name. */
+  async getPosVariantIdByCloudId(
+    tenant: TenantContext,
+    itemId: string,
+    variantId: string,
+    db: Prisma.TransactionClient = this.prisma,
+  ): Promise<string | null> {
+    const variant = await db.menuItemVariant.findFirst({
+      where: {
+        id: variantId,
+        menuItemId: itemId,
+        menuItem: { venueId: tenant.venueId },
+      },
+      select: { id: true, posMenuVariantId: true },
+    });
+    return variant ? (variant.posMenuVariantId ?? variant.id) : null;
   }
 
   private menuInclude() {
     return {
       items: {
-        include: { variants: true },
+        where: activeMenuItem,
+        include: { variants: { where: { retiredAt: null } } },
         orderBy: { sortOrder: 'asc' as const },
       },
       subcategories: {
+        where: activeSubcategory,
         include: {
           items: {
-            include: { variants: true },
+            where: activeMenuItem,
+            include: { variants: { where: { retiredAt: null } } },
             orderBy: { sortOrder: 'asc' as const },
           },
         },
@@ -148,32 +239,35 @@ export class MenuService {
     const hasSubcategories = subcategories.length > 0;
 
     // Unified sections for the frontend: always iterate `sections`, never guess from empty `items`.
+    const directSection = {
+      type: 'items' as const,
+      id: null as string | null,
+      slug: null as string | null,
+      sortOrder: 0,
+      nameEn: null as string | null,
+      nameKa: null as string | null,
+      translations: [] as Array<{ language: string; name: string }>,
+      items: directItems,
+    };
     const sections = hasSubcategories
-      ? subcategories.map((sub) => ({
-          type: 'subcategory' as const,
-          id: sub.id,
-          slug: sub.slug,
-          sortOrder: sub.sortOrder,
-          nameEn: sub.nameEn,
-          nameKa: sub.nameKa,
-          translations: sub.translations,
-          items: sub.items,
-        }))
-      : [
-          {
-            type: 'items' as const,
-            id: null as string | null,
-            slug: null as string | null,
-            sortOrder: 0,
-            nameEn: null as string | null,
-            nameKa: null as string | null,
-            translations: [] as Array<{ language: string; name: string }>,
-            items: directItems,
-          },
-        ];
+      ? [
+          ...(directItems.length ? [directSection] : []),
+          ...subcategories.map((sub) => ({
+            type: 'subcategory' as const,
+            id: sub.id,
+            slug: sub.slug,
+            sortOrder: sub.sortOrder,
+            nameEn: sub.nameEn,
+            nameKa: sub.nameKa,
+            translations: sub.translations,
+            items: sub.items,
+          })),
+        ]
+      : [directSection];
 
     const totalItemCount = hasSubcategories
-      ? subcategories.reduce((sum, sub) => sum + sub.items.length, 0)
+      ? directItems.length +
+        subcategories.reduce((sum, sub) => sum + sub.items.length, 0)
       : directItems.length;
 
     return {
@@ -190,7 +284,7 @@ export class MenuService {
       hasSubcategories,
       /** `flat` = show category.items; `grouped` = show category.sections (subcategory tabs) */
       displayMode: hasSubcategories ? ('grouped' as const) : ('flat' as const),
-      /** Direct items only — empty when hasSubcategories (use sections instead) */
+      /** Direct items only; sections includes these alongside subcategories. */
       items: directItems,
       subcategories,
       /** Preferred for UI: list of item groups to render */

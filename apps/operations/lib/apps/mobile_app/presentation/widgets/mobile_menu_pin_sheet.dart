@@ -1,15 +1,23 @@
+import 'package:vynic/apps/mobile_app/presentation/widgets/manager_modal.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:vynic/apps/mobile_app/presentation/widgets/mobile_glass_ui.dart';
 
 /// A single variant option passed to [showMobileMenuPinSheet].
 class MenuPinVariant {
   final String label;
   final double price;
+  final int? inCartQty;
 
   /// Caller-supplied tag to recover the original model after the sheet returns.
   final dynamic tag;
 
-  const MenuPinVariant({required this.label, required this.price, this.tag});
+  const MenuPinVariant({
+    required this.label,
+    required this.price,
+    this.tag,
+    this.inCartQty,
+  });
 }
 
 /// Result returned from [showMobileMenuPinSheet].
@@ -34,8 +42,9 @@ Future<MenuPinResult?> showMobileMenuPinSheet(
   int inCartQty = 0,
   bool addMode = false,
 }) {
-  return showModalBottomSheet<MenuPinResult>(
+  return showManagerModal<MenuPinResult>(
     context: context,
+    maxWidth: 440,
     isScrollControlled: true,
     backgroundColor: Colors.transparent,
     builder: (_) => _MobileMenuPinSheet(
@@ -82,6 +91,7 @@ class _MobileMenuPinSheetState extends State<_MobileMenuPinSheet> {
   }
 
   double get _effectiveUnitPrice => _selectedVariant?.price ?? widget.unitPrice;
+  int get _currentInCart => _selectedVariant?.inCartQty ?? widget.inCartQty;
 
   int get _qty => int.tryParse(_input) ?? 0;
 
@@ -101,157 +111,192 @@ class _MobileMenuPinSheetState extends State<_MobileMenuPinSheet> {
   Widget build(BuildContext context) {
     final qty = _qty;
     final total = qty > 0 ? (qty * _effectiveUnitPrice) : 0.0;
-    final cartAfter = widget.inCartQty + qty;
+    final cartAfter = _currentInCart + qty;
 
-    return Container(
-      decoration: BoxDecoration(
-        color: MobileGlassTheme.surfaceCard,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-        border: Border.all(color: MobileGlassTheme.border(0.12)),
-      ),
-      padding: EdgeInsets.fromLTRB(
-        16,
-        16,
-        16,
-        16 + MediaQuery.of(context).padding.bottom,
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // Handle bar
-          Center(
-            child: Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: MobileGlassTheme.border(0.25),
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
+    return Focus(
+      autofocus: true,
+      onKeyEvent: (node, event) {
+        if (event is! KeyDownEvent) return KeyEventResult.ignored;
+        final character = event.character;
+        if (character != null && RegExp(r'^[0-9]$').hasMatch(character)) {
+          _onKey(character);
+          return KeyEventResult.handled;
+        }
+        if (event.logicalKey == LogicalKeyboardKey.backspace) {
+          _onKey('⌫');
+          return KeyEventResult.handled;
+        }
+        if (event.logicalKey == LogicalKeyboardKey.enter ||
+            event.logicalKey == LogicalKeyboardKey.numpadEnter) {
+          if (_qty > 0)
+            Navigator.pop(
+              context,
+              MenuPinResult(qty: _qty, variant: _selectedVariant),
+            );
+          return KeyEventResult.handled;
+        }
+        return KeyEventResult.ignored;
+      },
+      child: SingleChildScrollView(
+        child: Container(
+          decoration: BoxDecoration(
+            color: MobileGlassTheme.surfaceCard,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+            border: Border.all(color: MobileGlassTheme.border(0.12)),
           ),
-          const SizedBox(height: 16),
-
-          // Item header
-          Text(
-            widget.itemName,
-            style: TextStyle(
-              fontWeight: FontWeight.w700,
-              fontSize: 18,
-              color: MobileGlassTheme.textPrimary,
-            ),
-            textAlign: TextAlign.center,
+          padding: EdgeInsets.fromLTRB(
+            16,
+            16,
+            16,
+            16 + MediaQuery.of(context).padding.bottom,
           ),
-          const SizedBox(height: 4),
-          Text(
-            '${_effectiveUnitPrice.toStringAsFixed(1)} ₾ / ცალი',
-            style: TextStyle(color: MobileGlassTheme.muted(0.65), fontSize: 13),
-            textAlign: TextAlign.center,
-          ),
-          if (widget.addMode && widget.inCartQty > 0) ...[
-            const SizedBox(height: 4),
-            Text(
-              'კალათაში: ${widget.inCartQty}',
-              style: TextStyle(
-                color: MobileGlassTheme.primary,
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ],
-
-          // Variant chips
-          if (widget.variants.isNotEmpty) ...[
-            const SizedBox(height: 12),
-            Wrap(
-              spacing: 8,
-              children: widget.variants.map((v) {
-                final isSel = _selectedVariant == v;
-                return ChoiceChip(
-                  label: Text(v.label),
-                  selected: isSel,
-                  onSelected: (val) {
-                    if (val) setState(() => _selectedVariant = v);
-                  },
-                  selectedColor: MobileGlassTheme.primary,
-                  backgroundColor: MobileGlassTheme.surface(0.08),
-                  labelStyle: TextStyle(
-                    color: isSel ? Colors.white : MobileGlassTheme.muted(0.75),
-                    fontWeight: FontWeight.w600,
-                  ),
-                );
-              }).toList(),
-            ),
-          ],
-
-          const SizedBox(height: 16),
-
-          // Display
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-            decoration: BoxDecoration(
-              color: MobileGlassTheme.surface(0.06),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: MobileGlassTheme.border(0.1)),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  _input.isEmpty ? '0' : _input,
-                  style: TextStyle(
-                    fontSize: 40,
-                    fontWeight: FontWeight.w800,
-                    color: _input.isEmpty
-                        ? MobileGlassTheme.muted(0.3)
-                        : MobileGlassTheme.textPrimary,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Handle bar
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: MobileGlassTheme.border(0.25),
+                    borderRadius: BorderRadius.circular(2),
                   ),
                 ),
-                if (total > 0)
-                  Text(
-                    '${total.toStringAsFixed(1)} ₾',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                      color: MobileGlassTheme.good,
-                    ),
+              ),
+              const SizedBox(height: 16),
+
+              // Item header
+              Text(
+                widget.itemName,
+                style: TextStyle(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 18,
+                  color: MobileGlassTheme.textPrimary,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 4),
+              Text(
+                '${_effectiveUnitPrice.toStringAsFixed(1)} ₾ / ცალი',
+                style: TextStyle(
+                  color: MobileGlassTheme.muted(0.65),
+                  fontSize: 13,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              if (widget.addMode && _currentInCart > 0) ...[
+                const SizedBox(height: 4),
+                Text(
+                  'კალათაში: $_currentInCart',
+                  style: TextStyle(
+                    color: MobileGlassTheme.primary,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
                   ),
+                ),
               ],
-            ),
+
+              // Variant chips
+              if (widget.variants.isNotEmpty) ...[
+                const SizedBox(height: 12),
+                Wrap(
+                  spacing: 8,
+                  children: widget.variants.map((v) {
+                    final isSel = _selectedVariant == v;
+                    return ChoiceChip(
+                      label: Text(v.label),
+                      selected: isSel,
+                      onSelected: (val) {
+                        if (val) setState(() => _selectedVariant = v);
+                      },
+                      selectedColor: MobileGlassTheme.primary,
+                      backgroundColor: MobileGlassTheme.surface(0.08),
+                      labelStyle: TextStyle(
+                        color: isSel
+                            ? MobileGlassTheme.onPrimary
+                            : MobileGlassTheme.muted(0.75),
+                        fontWeight: FontWeight.w600,
+                      ),
+                    );
+                  }).toList(),
+                ),
+              ],
+
+              const SizedBox(height: 16),
+
+              // Display
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 14,
+                ),
+                decoration: BoxDecoration(
+                  color: MobileGlassTheme.surface(0.06),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: MobileGlassTheme.border(0.1)),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      _input.isEmpty ? '0' : _input,
+                      style: TextStyle(
+                        fontSize: 40,
+                        fontWeight: FontWeight.w800,
+                        color: _input.isEmpty
+                            ? MobileGlassTheme.muted(0.3)
+                            : MobileGlassTheme.textPrimary,
+                      ),
+                    ),
+                    if (total > 0)
+                      Text(
+                        '${total.toStringAsFixed(1)} ₾',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w600,
+                          color: MobileGlassTheme.good,
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 12),
+
+              // PIN pad grid
+              for (final row in [
+                ['1', '2', '3'],
+                ['4', '5', '6'],
+                ['7', '8', '9'],
+                ['C', '0', '⌫'],
+              ])
+                Row(children: row.map((k) => _pinBtn(k)).toList()),
+
+              const SizedBox(height: 12),
+
+              // Confirm button
+              MobileGlassPrimaryButton(
+                label: _confirmLabel(qty, cartAfter),
+                icon: Icons.add_shopping_cart_rounded,
+                onPressed: qty > 0
+                    ? () => Navigator.pop(
+                        context,
+                        MenuPinResult(qty: qty, variant: _selectedVariant),
+                      )
+                    : null,
+              ),
+            ],
           ),
-
-          const SizedBox(height: 12),
-
-          // PIN pad grid
-          for (final row in [
-            ['1', '2', '3'],
-            ['4', '5', '6'],
-            ['7', '8', '9'],
-            ['C', '0', '⌫'],
-          ])
-            Row(children: row.map((k) => _pinBtn(k)).toList()),
-
-          const SizedBox(height: 12),
-
-          // Confirm button
-          MobileGlassPrimaryButton(
-            label: _confirmLabel(qty, cartAfter),
-            icon: Icons.add_shopping_cart_rounded,
-            onPressed: qty > 0
-                ? () => Navigator.pop(
-                    context,
-                    MenuPinResult(qty: qty, variant: _selectedVariant),
-                  )
-                : null,
-          ),
-        ],
+        ),
       ),
     );
   }
 
   String _confirmLabel(int qty, int cartAfter) {
     if (qty <= 0) return 'დამატება';
-    if (widget.addMode && widget.inCartQty > 0) {
+    if (widget.addMode && _currentInCart > 0) {
       return 'დამატება  +$qty → $cartAfter';
     }
     return 'დამატება  ×$qty';

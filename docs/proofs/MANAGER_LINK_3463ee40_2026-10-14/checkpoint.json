@@ -1,0 +1,52 @@
+{
+  "status": "PASS_SOURCE_AND_ISOLATED_TESTS_NOT_DEPLOYED",
+  "updatedAt": "2026-10-14T15:26:12.554355+00:00",
+  "privateWorkDir": "/var/folders/82/drcfb4994p16rl49gxx9tj000000gn/T/vynic-manager-link-_gxef3c7",
+  "design": {
+    "issuance": "POST /platform/venues/:venueId/manager-links; current ACTIVE SUPER_ADMIN only. SUPPORT_READONLY GET only, owner has no issuance/cancel path.",
+    "readiness": "Current ACTIVE Venue + MANAGER_APP + at least one active MANAGER/ADMIN. Cannot bootstrap initial Staff.",
+    "code": "20 Crockford base32 characters;8 indexed public selector +12 secret characters (60-bit secret), Argon2id verifier;30-minute expiry;5 durable failed verifications.",
+    "redemption": "POST /auth/manager-link {code,installationId}; no client Venue authority. Venue/issuer/features rechecked; Venue row serializes single-use consumption and audit.",
+    "retry": "Same installation UUID + same code may retry within expiry after lost reply; different installation denied. UUID is retry identity, not authentication/attestation.",
+    "subsequentLogin": "Returned public Venue metadata remembered per backend origin; PIN and existing unique-active-Staff match still required; link grants no session, no Staff creation, no PIN write.",
+    "compatibility": "Existing remembered Venue selections and Staff sessions remain; legacy lookup retained for old clients, new first-time UI uses real one-use code.",
+    "reissueCancel": "Supersedes unused codes; consumed links and installed Staff sessions are not revoked."
+  },
+  "completed": [
+    "Additive77th ManagerVenueLink migration",
+    "Service and public/Platform guarded controllers wired",
+    "Client persistent per-origin retry UUID and one-use linking endpoint",
+    "Admin issue/list/cancel UI; owner support instructions",
+    "Go SDK official checksum verified in private directory; actual wire binaries compiled"
+  ],
+  "validation": {
+    "prisma": "validate/generate passed",
+    "backendTypes": "PASS",
+    "managerLinkHttpPG": "17 PASS_FINAL",
+    "goFixtures": "Both compiled; locked dependency versions downloaded, go.mod/go.sum not edited",
+    "flutterLiveFixture": "MENU09 now default opt-in like other live process proofs; partial opt-in still fails",
+    "backendAggregate": "864 PASS,886 opt-ins skipped;17 new +50 previous opt-ins qualified separately",
+    "frontendAggregate": "256 PASS_FINAL",
+    "flutterAggregate": "2635 PASS;17 dedicated/live skips;0 errors",
+    "managerDefault": "18 PASS",
+    "productionManager": "6 PASS",
+    "migration76to77": "PASS; all76 checksums and existing values unchanged; repeat NOOP",
+    "lint": "0 errors/0 warnings on new backend+test and changed frontend+test",
+    "nativeBuilds": "Both macOS debug POS+Manager PASS; neither launched",
+    "envPreservation": "Full .env and .env.example fingerprints unchanged in this continuation"
+  },
+  "authorizationDecision": "No unresolved product decision: only current Platform SUPER_ADMIN can mint/cancel; no permission expansion. No live issuance, credentials, deployment or reset.",
+  "ownedPort": 62055,
+  "blocker": "None for qualified source; deployment and dedicated release proofs not performed",
+  "ops01": "PAUSED; not touched",
+  "qualification": "qualification.json",
+  "cleanup": {
+    "ownedCluster": "STOPPED",
+    "port": 62055,
+    "portClosed": true,
+    "postmasterPidAbsent": true,
+    "testRunnerWireTemporaryDirectoryRemoved": true,
+    "liveServicesChanged": false,
+    "ops01Retried": false
+  }
+}

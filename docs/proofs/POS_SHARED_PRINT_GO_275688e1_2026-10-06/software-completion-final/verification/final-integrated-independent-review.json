@@ -1,0 +1,96 @@
+{
+  "schema": 1,
+  "reviewedAtUtc": "2026-10-06T17:38:14.938807+00:00",
+  "verdict": "PASS_AVAILABLE_SOURCE_AND_EVIDENCE_REVIEW_NOT_PRODUCTION_READY",
+  "openP1": [],
+  "openP2": [],
+  "sourceManifest": {
+    "path": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/final-cohort-source.json",
+    "sha256": "193e4800e5d0733a30bc6c8d4ac993590219363941e69a787bba5ac3681c8f68"
+  },
+  "sourceAndCopyFilesIndependentlyRehashedUnchanged": 1109,
+  "integratedQualification": {
+    "path": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/final-integrated-qualification.json",
+    "sha256": "ae81ebc6baaa8030c27efa92ca03cb92ad7046cb123c2d66a9dca5fbef91dcfd"
+  },
+  "finalReport": {
+    "path": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/source/docs/POS_PRINTER_IMPLEMENTATION_REPORT_2026-10-06.md",
+    "sha256": "0a70e7aa396839d7778636060c213c63cfd28ae61d1272d0df2a2ebc4a9f7a38"
+  },
+  "normalizedFlutter": {
+    "path": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/final-flutter-tests-v3-normalized-receipt.json",
+    "sha256": "0686b57f966a32688e564fd2986d2c432a0ef1548514e49b12df1c2291f51629"
+  },
+  "analysis": {
+    "path": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/final-flutter-analysis-receipt.json",
+    "sha256": "919864a34363eadb9b289103537548c81d3660cad71189b51d869a0da2f7cd50"
+  },
+  "completedReviews": {
+    "printerprovisioning-independent-review.json": {
+      "path": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/printerprovisioning-independent-review.json",
+      "sha256": "efee605a225833838925b4b9901bb02209fc336565f212f8774af80a99073aff"
+    },
+    "printer-agent-ui-independent-review.json": {
+      "path": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/printer-agent-ui-independent-review.json",
+      "sha256": "b967d2751b4fbb7c14386cbd07caabcb75912a56837dbdfb9cbc8bc8f1573e36"
+    },
+    "printer-agent-rpc-independent-review.json": {
+      "path": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/printer-agent-rpc-independent-review.json",
+      "sha256": "3ee756f1a9ad8b694cdb46c1269c93b551e5f3ef2aa09a75e6f310782cb1b114"
+    },
+    "native-arm64-independent-review.json": {
+      "path": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/native-arm64-independent-review.json",
+      "sha256": "3529aa893d6a583e421d6c68bacfa91e14156444d2c6d90d4190fc4063d3ee7a"
+    },
+    "actual-tcp-crash-independent-review.json": {
+      "path": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/actual-tcp-crash-independent-review.json",
+      "sha256": "0280a5387bc8c47d1d126de97a5e3298a92f423f7d1ed9d2380d3921fe04eaf2"
+    },
+    "printer-daemon-independent-review.json": {
+      "path": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/printer-daemon-independent-review.json",
+      "sha256": "c1f1afd089659144d60f753637110d8f968cfe52163a2767750bfc0941f634a6"
+    },
+    "acceptance-matrix-v9-stage-independent-review.json": {
+      "path": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/acceptance-matrix-v9-stage-independent-review.json",
+      "sha256": "6180c6f9e53ae490209a757a670261ce333e2f39d32d8bb3276876b940c3e045"
+    }
+  },
+  "independentlyVerifiedEvidence": {
+    "GoNormalAndRaceEach": {
+      "topLevelPassRecords": 225,
+      "allPassRecords": 764,
+      "fixtureEntrySkips": 9,
+      "failures": 0,
+      "dataRace": false
+    },
+    "GoCheckStatusOutputAndStderrHashesVerified": 9,
+    "GoVulnerabilityFindingEvents": 0,
+    "Flutter": {
+      "visibleSuccess": 623,
+      "hiddenSuccess": 51,
+      "suites": 39,
+      "skip": 0,
+      "errors": 0,
+      "doneSuccess": true,
+      "analysisTargets": 68,
+      "issues": 0,
+      "bothActualMutualTLSFixtureHashesVerified": true
+    },
+    "bundleReproductions": "Both four-file architectures independently byte-compared with two independently rebuilt package directories each; all equal to pinned owner artifacts.",
+    "matrix": "V9 SHA19f3cc4431982ad2f1304a0ba485b3e3588234096d019c3dbf3c58c9448f5f70:17 bounded software counterparts,1 not-run; all18 full physical acceptance cases not-run.",
+    "WindowsNewRuntime": "NOT_RUN_BLOCKED_AUTOMATIC_APPROVAL; crosscompile/staging is not runtime qualification."
+  },
+  "reportAssessment": [
+    "Final metrics agree with exact-source parsed logs and successful process statuses. Fixture skips and hidden loader/setup records are distinguished; earlier parser/build/race failures remain historical.",
+    "Old163/898 Windows and Go proofs are explicitly separated from the new1109 cohort; nativeARM64 helper evidence does not qualify new daemon/SCM runtime.",
+    "Case8 wrapper-marker gap and case9 Submitted-not-paper limits are explicit; case18 Mac foreground restart does not establish installed Windows-service/OS restart.",
+    "Missing production issuer/current durable authorization/revocation/active routes, authenticated LAN runtime, business/Hive writer bridge and reader/rollback cutover remain implementation dependencies.",
+    "Source report retains NOT_DONE and unconditional production admission/physical holds; no commit/deploy/SCM or printer qualification implied."
+  ],
+  "remainingBlockers": [
+    "New Windows cohort execution remains blocked by automatic approval review of the VM preflight; reviewer issued no guest command or workaround.",
+    "Production authority/current-state and route provisioning, authenticated shared service composition and full business/Hive cutover are not implemented by the held API.",
+    "Printer/model/service-account/SCM/OS/downstream RAW fencing and physical acceptance remain unqualified."
+  ],
+  "portScope": "This approves the identified source/evidence for reviewable guarded port only; preserve user-owned preimages and historical proof packets. No unreviewed original workspace, committed runtime, installation or production activation is qualified."
+}

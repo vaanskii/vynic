@@ -1,0 +1,7 @@
+{
+  "createdAtUTC": "2026-10-06T17:52:59.382906+00:00",
+  "baseline": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/source",
+  "newCandidate": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/source-v2",
+  "status": "BASELINE_COPY_ONLY_NO_SOURCE_EDITS",
+  "previousCohortImmutable": true
+}

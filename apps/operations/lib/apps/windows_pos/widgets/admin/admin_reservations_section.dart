@@ -1,3 +1,6 @@
+import 'package:vynic/apps/windows_pos/widgets/shared/pos_surface.dart';
+import 'package:vynic/core/ui/widgets/pos_dialog.dart';
+import 'package:vynic/core/models/reservation_status.dart';
 import 'dart:async';
 import 'dart:io';
 
@@ -142,7 +145,8 @@ class _AdminReservationsSectionState extends State<AdminReservationsSection> {
               normalizedStatus.startsWith('cancelled') ||
               normalizedStatus.startsWith('canceled');
 
-          if (!isConfirmed && !isCancelled) {
+          final isHold = normalizedStatus == 'hold';
+          if (!isConfirmed && !isCancelled && !isHold) {
             return false;
           }
 
@@ -152,7 +156,7 @@ class _AdminReservationsSectionState extends State<AdminReservationsSection> {
             reservation.reservationDate.day,
           );
 
-          return !reservationDateOnly.isBefore(normalizedToday);
+          return isHold || !reservationDateOnly.isBefore(normalizedToday);
         }).toList()..sort((a, b) {
           final dateComparison = a.reservationDate.compareTo(b.reservationDate);
           if (dateComparison != 0) {
@@ -182,6 +186,8 @@ class _AdminReservationsSectionState extends State<AdminReservationsSection> {
       final status = _normalizeStatus(reservation.status);
       final matchesStatus = _reservationStatusFilter == 'cancelled'
           ? status.startsWith('cancelled') || status.startsWith('canceled')
+          : _reservationStatusFilter == 'hold'
+          ? status == 'hold'
           : status.startsWith('confirmed');
       final matchesDate =
           _reservationDateFilter == null ||
@@ -290,47 +296,16 @@ class _AdminReservationsSectionState extends State<AdminReservationsSection> {
   }
 
   Widget _buildPageHeader(bool isMobile, int count) {
-    return Row(
-      children: [
-        Container(
-          width: 44,
-          height: 44,
-          decoration: BoxDecoration(
-            color: AdminDesign.accent.withValues(alpha: 0.12),
-            borderRadius: BorderRadius.circular(AdminDesign.radius),
-          ),
-          child: const Icon(
-            Icons.event_available_outlined,
-            color: AdminDesign.accentDark,
-          ),
-        ),
-        const SizedBox(width: 13),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'რეზერვაციები',
-                style: TextStyle(
-                  color: AdminDesign.text,
-                  fontSize: isMobile ? 23 : 27,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-              const SizedBox(height: 2),
-              const Text(
-                'მართეთ ჯავშნები, სტუმრები და მაგიდების განაწილება.',
-                style: TextStyle(color: AdminDesign.muted, fontSize: 13),
-              ),
-            ],
-          ),
-        ),
-        if (!isMobile)
-          AdminStatusBadge(
-            icon: Icons.calendar_month_outlined,
-            label: '$count ჩანაწერი',
-          ),
-      ],
+    return AdminSectionHeader(
+      icon: Icons.event_available_outlined,
+      title: 'რეზერვაციები',
+      subtitle: 'მართეთ ჯავშნები, სტუმრები და მაგიდების განაწილება.',
+      badge: !isMobile
+          ? AdminStatusBadge(
+              icon: Icons.calendar_month_outlined,
+              label: '$count ჩანაწერი',
+            )
+          : null,
     );
   }
 
@@ -576,6 +551,11 @@ class _AdminReservationsSectionState extends State<AdminReservationsSection> {
           child: const Text('დადასტურებული'),
         ),
         CheckedPopupMenuItem(
+          value: 'hold',
+          checked: _reservationStatusFilter == 'hold',
+          child: const Text('დროებითი დაკავება'),
+        ),
+        CheckedPopupMenuItem(
           value: 'cancelled',
           checked: _reservationStatusFilter == 'cancelled',
           child: const Text('გაუქმებული'),
@@ -650,8 +630,13 @@ class _AdminReservationsSectionState extends State<AdminReservationsSection> {
     required bool showDivider,
   }) {
     final cancelled = _isCancelled(reservation);
+    final isHold = reservation.statusEnum == ReservationStatus.hold;
     final statusColor = cancelled ? AdminDesign.danger : AdminTones.successText;
-    final statusLabel = cancelled ? 'გაუქმებული' : 'დადასტურებული';
+    final statusLabel = cancelled
+        ? 'გაუქმებული'
+        : isHold
+        ? 'დროებითი დაკავება'
+        : 'დადასტურებული';
     final tables = ReservationTableAvailability.tableNumbersLabel(reservation);
     final dateLabel = DatabaseService.getGeorgianFormattedDate(
       reservation.reservationDate,
@@ -1100,7 +1085,7 @@ class _AdminReservationsSectionState extends State<AdminReservationsSection> {
   }
 
   Future<void> _confirmCancelReservation(Reservation reservation) async {
-    final confirmed = await showDialog<bool>(
+    final confirmed = await showPosModal<bool>(
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: Colors.white,
@@ -1130,7 +1115,16 @@ class _AdminReservationsSectionState extends State<AdminReservationsSection> {
   }
 
   Future<void> _confirmDeleteReservation(Reservation reservation) async {
-    final confirmed = await showDialog<bool>(
+    if (reservation.advanceAmount > 0) {
+      unawaited(
+        showErrorToast(
+          context,
+          'ავანსიანი ჯავშანი ინახება — მიღებული თანხა არ იშლება',
+        ),
+      );
+      return;
+    }
+    final confirmed = await showPosModal<bool>(
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: Colors.white,
@@ -1177,24 +1171,24 @@ class _AdminReservationsSectionState extends State<AdminReservationsSection> {
     DateTime? initialDate;
     TimeOfDay? initialTime;
     int? initialGuests;
+    String? requestId;
+    String initialStatus = 'confirmed';
+    double initialAdvanceAmount = 0;
 
     while (mounted) {
-      final result = await showDialog<Map<String, dynamic>>(
-        context: context,
-        barrierDismissible: false,
-        builder: (dialogContext) {
-          return Material(
-            color: Colors.transparent,
-            child: ReservationCreationSheet(
-              initialName: initialName,
-              initialPhone: initialPhone,
-              initialNotes: initialNotes,
-              initialDate: initialDate,
-              initialTime: initialTime,
-              initialGuests: initialGuests,
-            ),
-          );
-        },
+      final result = await ReservationCreationSheet.show(
+        context,
+        form: ReservationCreationSheet(
+          initialName: initialName,
+          initialPhone: initialPhone,
+          initialNotes: initialNotes,
+          initialDate: initialDate,
+          initialTime: initialTime,
+          initialGuests: initialGuests,
+          requestId: requestId,
+          initialStatus: initialStatus,
+          initialAdvanceAmount: initialAdvanceAmount,
+        ),
       );
 
       if (result == null) {
@@ -1219,6 +1213,9 @@ class _AdminReservationsSectionState extends State<AdminReservationsSection> {
       initialDate = selectedDate;
       initialTime = selectedTime;
       initialGuests = guestCount;
+      requestId = result['id'] as String?;
+      initialStatus = result['status'] as String? ?? 'confirmed';
+      initialAdvanceAmount = result['advanceAmount'] as double? ?? 0;
 
       final timeString =
           '${selectedTime.hour.toString().padLeft(2, '0')}:${selectedTime.minute.toString().padLeft(2, '0')}';
@@ -1267,18 +1264,27 @@ class _AdminReservationsSectionState extends State<AdminReservationsSection> {
         continue;
       }
 
-      final reservationId = await DatabaseService.createReservation(
-        customerName: customerName,
-        customerPhone: customerPhone,
-        tableRefs: tableRefs,
-        reservationDate: selectedDate,
-        reservationTime: timeString,
-        numberOfGuests: guestCount,
-        notes: (notesRaw == null || notesRaw.isEmpty) ? null : notesRaw,
-        createdBy: widget.user.username,
-        status: 'confirmed',
-        preOrderItems: selectedItems.isEmpty ? null : selectedItems,
-      );
+      late final String reservationId;
+      try {
+        reservationId = await DatabaseService.createReservation(
+          customerName: customerName,
+          customerPhone: customerPhone,
+          tableRefs: tableRefs,
+          reservationDate: selectedDate,
+          reservationTime: timeString,
+          numberOfGuests: guestCount,
+          notes: (notesRaw == null || notesRaw.isEmpty) ? null : notesRaw,
+          createdBy: widget.user.username,
+          status: result['status'] as String? ?? 'confirmed',
+          advanceAmount: result['advanceAmount'] as double? ?? 0,
+          id: result['id'] as String?,
+          preOrderItems: selectedItems.isEmpty ? null : selectedItems,
+        );
+      } catch (error) {
+        if (!mounted) return;
+        unawaited(showErrorToast(context, 'რეზერვაცია ვერ შეიქმნა: $error'));
+        continue; // Keep the request identity and entered advance on retry.
+      }
 
       final createdReservation = Reservation(
         id: reservationId,
@@ -1292,23 +1298,24 @@ class _AdminReservationsSectionState extends State<AdminReservationsSection> {
         notes: (notesRaw == null || notesRaw.isEmpty) ? null : notesRaw,
         createdAt: DatabaseService.getCurrentDateTime(),
         createdBy: widget.user.username,
-        status: 'confirmed',
+        status: result['status'] as String? ?? 'confirmed',
         preOrderItems: selectedItems,
       );
 
-      _sendReservationKitchenCheck(createdReservation);
+      if (createdReservation.statusEnum != ReservationStatus.hold)
+        await _sendReservationKitchenCheck(createdReservation);
 
       if (!mounted) {
         return;
       }
 
       unawaited(showSuccessToast(context, 'Reservation created successfully'));
-      setState(() {});
+      setState(() => _reservationStatusFilter = createdReservation.status);
       return;
     }
   }
 
-  void _sendReservationKitchenCheck(Reservation reservation) {
+  Future<void> _sendReservationKitchenCheck(Reservation reservation) async {
     final kitchenItems = HomeReservationsHelper.buildKitchenCheckLines(
       reservation,
     );
@@ -1322,7 +1329,7 @@ class _AdminReservationsSectionState extends State<AdminReservationsSection> {
     final createdAt = HomeReservationsHelper.buildKitchenTime(reservation);
 
     final kitchenTables = ReservationTableAvailability.tableRefsOf(reservation);
-    PrinterService.printKitchenCheckInBackground(
+    await PrinterService.printKitchenCheckInBackground(
       items: kitchenItems,
       tableNumber: kitchenTables.isNotEmpty
           ? kitchenTables.map((ref) => ref.tableNumber).join(', ')
@@ -1337,7 +1344,12 @@ class _AdminReservationsSectionState extends State<AdminReservationsSection> {
         if (success) {
           unawaited(showSuccessToast(context, 'ჩეკი გაიგზავნა სამზარეულოში'));
         } else {
-          unawaited(showErrorToast(context, 'პრინტერი მიუწვდომელია'));
+          unawaited(
+            showErrorToast(
+              context,
+              'ბეჭდვა ვერ დადასტურდა — შეამოწმეთ ბეჭდვის სია',
+            ),
+          );
         }
       },
     );
@@ -1391,11 +1403,17 @@ class _AdminReservationsSectionState extends State<AdminReservationsSection> {
   Future<void> _deleteReservation(Reservation reservation) async {
     // Confirmation is already handled by the reservations management section
     // before this callback fires, so we delete directly (no second dialog).
-    await DatabaseService.deleteReservation(
-      reservation.id,
-      actorId: widget.user.username,
-      source: AuditSource.pos,
-    );
+    try {
+      await DatabaseService.deleteReservation(
+        reservation.id,
+        actorId: widget.user.username,
+        source: AuditSource.pos,
+      );
+    } catch (error) {
+      if (mounted)
+        unawaited(showErrorToast(context, 'რეზერვაცია ვერ წაიშალა: $error'));
+      return;
+    }
     if (!mounted) return;
     setState(() {});
     unawaited(showSuccessToast(context, 'Reservation deleted'));
@@ -1424,52 +1442,10 @@ class _ReservationKpiCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      height: 78,
-      padding: EdgeInsets.symmetric(
-        horizontal: compact ? 10 : 16,
-        vertical: 12,
-      ),
-      decoration: AdminDesign.panelDecoration(),
-      child: Row(
-        children: [
-          Container(
-            width: compact ? 40 : 48,
-            height: compact ? 40 : 48,
-            decoration: BoxDecoration(
-              color: data.color.withValues(alpha: 0.12),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(data.icon, color: data.color, size: compact ? 21 : 25),
-          ),
-          SizedBox(width: compact ? 8 : 12),
-          Expanded(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  data.label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: AdminDesign.muted,
-                    fontSize: compact ? 10 : 11,
-                  ),
-                ),
-                Text(
-                  '${data.value}',
-                  style: const TextStyle(
-                    color: AdminDesign.text,
-                    fontSize: 22,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
+    return PosMetricCard(
+      label: data.label,
+      value: '${data.value}',
+      framed: false,
     );
   }
 }

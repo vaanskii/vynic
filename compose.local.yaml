@@ -1,0 +1,55 @@
+services:
+  prisma-studio:
+    profiles: [tools]
+    image: ${IMAGE_PREFIX:-vynic}/backend:${IMAGE_TAG:-local}
+    init: true
+    command: ["node", "dist/scripts/studio-docker-local.js"]
+    environment:
+      DATABASE_URL: postgresql://vynic:${POSTGRES_PASSWORD}@postgres:5432/vynic_local_prod
+      VYNIC_LOCAL_DOCKER: "true"
+    ports: ["127.0.0.1:5555:5555"]
+    networks: [database, studio-access]
+    depends_on:
+      postgres: {condition: service_healthy}
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    restart: "no"
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:5555/api',{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({requestId:'health',channel:'prisma',action:'clientRequest',payload:{data:{modelName:'Venue',operation:'count',args:{}}}})}).then(r=>r.json()).then(x=>process.exit(x.payload.error===null?0:1)).catch(()=>process.exit(1))"]
+      interval: 3s
+      timeout: 3s
+      start_period: 10s
+      retries: 10
+  postgres:
+    image: postgres:17-bookworm
+    environment:
+      POSTGRES_USER: vynic
+      POSTGRES_DB: vynic_local_prod
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}
+    networks: [database]
+    volumes: [postgres-data:/var/lib/postgresql/data]
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U vynic -d vynic_local_prod"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+  migrate:
+    environment:
+      DATABASE_URL: postgresql://vynic:${POSTGRES_PASSWORD}@postgres:5432/vynic_local_prod
+    depends_on:
+      postgres: {condition: service_healthy}
+  backend:
+    environment:
+      DATABASE_URL: postgresql://vynic:${POSTGRES_PASSWORD}@postgres:5432/vynic_local_prod
+      VYNIC_LOCAL_DOCKER: "true"
+      # Native POS/Manager origin; enrollment offers it back to the terminal.
+      DEVICE_API_BASE_URL: ${DEVICE_API_BASE_URL:-http://api.vynic.localhost}
+  reverse-proxy:
+    ports: ["127.0.0.1:80:8080"]
+volumes:
+  postgres-data:
+
+# Port publishing needs a non-internal bridge. Traefik is not attached.
+networks:
+  studio-access:

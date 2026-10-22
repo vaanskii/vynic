@@ -1,0 +1,50 @@
+{
+  "$schema": "http://cyclonedx.org/schema/bom-1.5.schema.json",
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.5",
+  "serialNumber": "urn:uuid:8bf780dc-2355-4fc7-8cef-4fd056530eba",
+  "version": 1,
+  "metadata": {
+    "timestamp": "2026-10-14T19:17:19.207Z",
+    "lifecycles": [
+      {
+        "phase": "pre-build"
+      }
+    ],
+    "tools": [
+      {
+        "vendor": "npm",
+        "name": "cli",
+        "version": "11.13.0"
+      },
+      {
+        "vendor": "Vynic",
+        "name": "locked-node-flag-scope",
+        "version": "1"
+      }
+    ],
+    "component": {
+      "bom-ref": "@vynic/website-client@0.1.0",
+      "type": "application",
+      "name": "website-client",
+      "version": "0.1.0",
+      "scope": "required",
+      "description": "Shared, framework-agnostic client for CUSTOM restaurant frontends over the Vynic public website API.",
+      "purl": "pkg:npm/%40vynic/website-client@0.1.0",
+      "properties": [
+        {
+          "name": "cdx:npm:package:private",
+          "value": "true"
+        }
+      ],
+      "externalReferences": []
+    }
+  },
+  "components": [],
+  "dependencies": [
+    {
+      "ref": "@vynic/website-client@0.1.0",
+      "dependsOn": []
+    }
+  ]
+}

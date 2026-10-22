@@ -30,7 +30,10 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
    * hours earlier. The token's own `username`/`role` are deliberately ignored.
    */
   async validate(payload: JwtPayload): Promise<ManagerRequestUser> {
-    const manager = await this.managerTenant.resolveByStaffId(payload.sub);
+    const manager = await this.managerTenant.resolveByStaffId(
+      payload.sub,
+      true,
+    );
     if (!manager) {
       throw new UnauthorizedException('Manager identity is no longer valid');
     }

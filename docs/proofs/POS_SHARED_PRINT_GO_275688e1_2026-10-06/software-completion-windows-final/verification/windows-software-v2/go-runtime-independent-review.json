@@ -1,0 +1,102 @@
+{
+  "reviewedAtUTC": "2026-10-06T18:09:54.946322+00:00",
+  "outcome": "PASS_BOUNDED_ACTUAL_WINDOWS_GO_PACKAGES_AND_FOREGROUND_CLI",
+  "openP1P2": [],
+  "sourceManifestSHA256": "faaaec2f1ece4f8259353666000eb4c0d3aee6143e73ae7fdf90772a937b581b",
+  "stageReceiptSHA256": "6004c62c195e96b4ba9f54e065b9c1e887924054c0168ca7e2c49b854ba2b4f4",
+  "countsByPackage": {
+    "arm64/printerprovisioning": {
+      "passRecords": 112,
+      "topLevelPasses": 12,
+      "skips": []
+    },
+    "arm64/printeragent": {
+      "passRecords": 37,
+      "topLevelPasses": 7,
+      "skips": [
+        "TestPrinterAgentProcess"
+      ]
+    },
+    "arm64/printerdaemon": {
+      "passRecords": 95,
+      "topLevelPasses": 26,
+      "skips": []
+    },
+    "arm64/printer-agent-command": {
+      "passRecords": 13,
+      "topLevelPasses": 7,
+      "skips": []
+    },
+    "amd64/printerprovisioning": {
+      "passRecords": 112,
+      "topLevelPasses": 12,
+      "skips": []
+    },
+    "amd64/printeragent": {
+      "passRecords": 37,
+      "topLevelPasses": 7,
+      "skips": [
+        "TestPrinterAgentProcess"
+      ]
+    },
+    "amd64/printerdaemon": {
+      "passRecords": 95,
+      "topLevelPasses": 26,
+      "skips": []
+    },
+    "amd64/printer-agent-command": {
+      "passRecords": 13,
+      "topLevelPasses": 7,
+      "skips": []
+    }
+  },
+  "passRecords": 514,
+  "topLevelPasses": 104,
+  "fixtureEntrySkips": 2,
+  "failures": 0,
+  "guest": {
+    "currentSID": "S-1-5-21-611125631-3759947118-1641436196-1000",
+    "user": "VANSKI\\vaanskii",
+    "architecture": "ARM64",
+    "ARM64Executables": "native",
+    "amd64Executables": "Windows-on-ARM emulation"
+  },
+  "evidence": {
+    "/Users/vaanskii/Developer/vynic/docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/windows-software-go-packages-result-v2/windows-software-go-packages.json": "f08745536b0304271af665d544e7ac42a6cfeb3044655cf10ff4f6dc9a5be957",
+    "/Users/vaanskii/Developer/vynic/docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/windows-software-go-packages-result-v2/arm64-printerprovisioning.stdout.log": "88e4bb10c67f18642f4621fabc499d3e25f39a52cda9b2074c80d6eb195e65c6",
+    "/Users/vaanskii/Developer/vynic/docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/windows-software-go-packages-result-v2/arm64-printerprovisioning.stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "/Users/vaanskii/Developer/vynic/docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/windows-software-go-packages-result-v2/arm64-printeragent.stdout.log": "f1ad5e89b405cb6916f42dc476a04dc0c5e428c8d686dc9c4b8ecf30f3d15052",
+    "/Users/vaanskii/Developer/vynic/docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/windows-software-go-packages-result-v2/arm64-printeragent.stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "/Users/vaanskii/Developer/vynic/docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/windows-software-go-packages-result-v2/arm64-printerdaemon.stdout.log": "49cd26559a0e0b6a4aae9313a6c57d7fc123c4b5fe259cb045cc2049954e8efc",
+    "/Users/vaanskii/Developer/vynic/docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/windows-software-go-packages-result-v2/arm64-printerdaemon.stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "/Users/vaanskii/Developer/vynic/docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/windows-software-go-packages-result-v2/arm64-printer-agent-command.stdout.log": "8a532adfae0cfe2b158d33e658b117a665969753d8233460d9669b38ad2f990c",
+    "/Users/vaanskii/Developer/vynic/docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/windows-software-go-packages-result-v2/arm64-printer-agent-command.stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "/Users/vaanskii/Developer/vynic/docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/windows-software-go-packages-result-v2/amd64-printerprovisioning.stdout.log": "82f467e9e80649e2c148c7402b0c14ee40361d4360055ba584410d0b6da45127",
+    "/Users/vaanskii/Developer/vynic/docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/windows-software-go-packages-result-v2/amd64-printerprovisioning.stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "/Users/vaanskii/Developer/vynic/docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/windows-software-go-packages-result-v2/amd64-printeragent.stdout.log": "22d623b85629b212b42e77d3e24e4c3a0a81a4e4cacb3a793e6e166bfe47d09d",
+    "/Users/vaanskii/Developer/vynic/docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/windows-software-go-packages-result-v2/amd64-printeragent.stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "/Users/vaanskii/Developer/vynic/docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/windows-software-go-packages-result-v2/amd64-printerdaemon.stdout.log": "a61c497461fb402aa92142b520a1016c6811f488e893e07155782a8292ff365f",
+    "/Users/vaanskii/Developer/vynic/docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/windows-software-go-packages-result-v2/amd64-printerdaemon.stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "/Users/vaanskii/Developer/vynic/docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/windows-software-go-packages-result-v2/amd64-printer-agent-command.stdout.log": "9df2e56041ed720bcf65cb118c03c59e9d4308e6cf7b468271cab762a5dfb0e0",
+    "/Users/vaanskii/Developer/vynic/docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/windows-software-go-packages-result-v2/amd64-printer-agent-command.stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/windows-software-v2/go-stage-independent-review.json": "7f35e87410aec28f60a41f42b6efac5db9e0ca6f84f6ad373bea97d1a1e9b753",
+    "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/windows-software-v2/flutter-combined-independent-review-final.json": "92c7dcb4ffcd69795145ba0959a5a63117407d2fc819fb7a2f0662dd41408cb2",
+    "/Users/vaanskii/Developer/vynic/docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/windows-software-go-packages-stage-v2/stage-receipt.json": "6004c62c195e96b4ba9f54e065b9c1e887924054c0168ca7e2c49b854ba2b4f4",
+    "/Users/vaanskii/Developer/vynic/docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/windows-software-go-packages-stage-v2/run.ps1": "ba879f52f65dcd335dfadd3af360b4175b819c91a9bae10e30100f5133260bcc",
+    "/Users/vaanskii/Developer/vynic/docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/windows-software-go-packages-stage-v2/packaged-bundle-manifest.json": "5d2eae46eda33862d7b071e0f739a6b0584745991f9295346c68b3066e4f33c2",
+    "/Users/vaanskii/Developer/vynic/docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/windows-software-go-packages-stage-v2/agent-build-inputs.json": "8265133677ed972e72c0e666e28002577b1b747ae7caa770acae787dfdface40"
+  },
+  "review": [
+    "Eight actual package invocations use -test.v -test.timeout=10m and each exit0; stdout/stderr hashes and test-executable hashes match staged pins. All stderr files empty.",
+    "Real supplied packaged foreground CLI executable hashes match respective shipped bundles. Actual health/exclusion/portable stop/restart/retained recovery and invalid pins/root/role/reader/marker/helper/storage cases pass for both architectures.",
+    "All1109 frozen source files remain unchanged; source/binary/bundle hashes are verified before and after guest execution. Entire v1 sealed621-artifact packet remains unchanged.",
+    "All per-package and overall point-in-time spooler inventories are zero; reviewed test scope uses synthetic SQLite/mTLS and installer fakes. Production mutating admission and physical dispatch remain held.",
+    "Two explicit TestPrinterAgentProcess entry skips are retained. TestForegroundHeldChild also returns in standalone mode; its meaningful behavior executes under three parent-invoked subprocess cases per architecture."
+  ],
+  "limitations": [
+    "Native helper and capability-profile bundle bytes were integrity-checked, not executed by these daemon fixtures: their supplied config binds a synthetic unexecuted held-helper.bin. Actual helper qualification is a separate earlier proof cohort.",
+    "No continuous Winspool tracing is claimed; no physical printer, RAW/cut/beep, driver, SCM registration, selected service-account visibility, registered service restart, reboot/power-loss or production issuer/shared cutover qualification.",
+    "Reviewer made no VM calls, tests, source edits or service operations.",
+    "Prepared POS native build remains a separate pending proof and is not qualified by this receipt."
+  ]
+}

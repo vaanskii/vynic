@@ -1,0 +1,40 @@
+$ErrorActionPreference='Stop';$ProgressPreference='SilentlyContinue'
+$shared='\\Mac\Home\Developer\vynic\docs\proofs\POS_WINDOWS_NATIVE_abf7e6b3_2026-10-06'
+$stage=Get-Content -LiteralPath (Join-Path $shared 'windows-stage.json') -Raw | ConvertFrom-Json
+$job=$stage.job;$op=Join-Path $job 'apps\operations'
+$manifest=Get-Content -LiteralPath (Join-Path $shared 'prepared-source-sha256.json') -Raw | ConvertFrom-Json
+function Assert-Source {foreach($e in $manifest.PSObject.Properties){$p=Join-Path $job $e.Name;if((Get-FileHash -LiteralPath $p -Algorithm SHA256).Hash.ToLowerInvariant() -ne $e.Value){throw ('Source mismatch: '+$e.Name)}}}
+Assert-Source
+$env:FLUTTER_SUPPRESS_ANALYTICS='true';$env:DART_SUPPRESS_ANALYTICS='true';$env:CI='true'
+$env:HTTP_PROXY='http://127.0.0.1:9';$env:HTTPS_PROXY='http://127.0.0.1:9';$env:NO_PROXY='127.0.0.1,localhost,::1'
+$pattern=Join-Path $env:LOCALAPPDATA 'VynicLocalReleaseBuild\*\apps\operations\build\windows\x64\extracted\firebase_cpp_sdk_windows\include\firebase\version.h'
+$cached=Get-ChildItem -Path $pattern | Sort-Object LastWriteTime -Descending | Select-Object -First 1
+if(!$cached){throw 'Cached Firebase SDK missing; no acquisition permitted'}
+$env:FIREBASE_CPP_SDK_DIR=$cached.Directory.Parent.Parent.FullName
+$version=Get-Content -LiteralPath $cached.FullName -Raw
+if($version -notmatch 'FIREBASE_VERSION_MAJOR 13' -or $version -notmatch 'FIREBASE_VERSION_MINOR 5' -or $version -notmatch 'FIREBASE_VERSION_REVISION 0'){throw 'Cached Firebase SDK version mismatch'}
+Set-Location -LiteralPath $op
+& $stage.flutter build windows --release --no-pub --target=lib/main_pos.dart --dart-define=VYNIC_ENV=development --dart-define=VYNIC_LOCAL_WINDOWS_LAB=true --dart-define=VYNIC_API_URL=http://10.10.10.3:3000
+if($LASTEXITCODE -ne 0){throw ('Windows native POS release build failed: '+$LASTEXITCODE)}
+Assert-Source
+$release=Join-Path $op 'build\windows\x64\runner\Release'
+$exe=Join-Path $release 'vynic_pos.exe'
+if(!(Test-Path -LiteralPath $exe)){throw 'POS build artifact absent'}
+if(@(Get-ChildItem -LiteralPath $release -Recurse -Force -Filter '.env*').Count -ne 0){throw 'Forbidden environment asset'}
+$raw=[IO.File]::ReadAllBytes($exe);$offset=[BitConverter]::ToInt32($raw,60)
+if([Text.Encoding]::ASCII.GetString($raw,$offset,4) -ne "PE`0`0"){throw 'Invalid PE artifact'}
+$machine=[BitConverter]::ToUInt16($raw,$offset+4)
+if($machine -ne 0x8664){throw ('Unexpected target machine: '+$machine)}
+$hashes=@{}
+Get-ChildItem -LiteralPath $release -Recurse -Force -File | ForEach-Object {
+ if($_.Attributes -band [IO.FileAttributes]::ReparsePoint){throw 'Build artifact reparse point refused'}
+ $relative=$_.FullName.Substring($release.Length+1).Replace([char]92,[char]47)
+ $hashes[$relative]=(Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
+}
+$zip=Join-Path $job 'native-pos-build.zip'
+if(Test-Path -LiteralPath $zip){throw 'Owned artifact archive already exists'}
+Add-Type -AssemblyName System.IO.Compression.FileSystem
+[IO.Compression.ZipFile]::CreateFromDirectory($release,$zip,[IO.Compression.CompressionLevel]::Optimal,$false)
+Copy-Item -LiteralPath $zip -Destination (Join-Path $shared 'native-pos-build.zip')
+[pscustomobject]@{job=$job;sourceFiles=@($manifest.PSObject.Properties).Count;sourceUnchanged=$true;firebaseSdk=$env:FIREBASE_CPP_SDK_DIR;firebaseVersion='13.5.0';firebaseVersionHeaderSha256=(Get-FileHash -LiteralPath $cached.FullName -Algorithm SHA256).Hash.ToLowerInvariant();targetMachine=$machine;target='windows-amd64';guestArchitecture='Windows ARM64';releaseFiles=$hashes;archiveSha256=(Get-FileHash -LiteralPath $zip -Algorithm SHA256).Hash.ToLowerInvariant();productStarted=$false;installed=$false;published=$false;signedRelease=$false;physicalJobs=0} | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath (Join-Path $shared 'windows-build.json') -Encoding UTF8
+Write-Output 'BUILD_OK_AMD64_SOURCE_UNCHANGED_NOT_INSTALLED_NOT_PUBLISHED'

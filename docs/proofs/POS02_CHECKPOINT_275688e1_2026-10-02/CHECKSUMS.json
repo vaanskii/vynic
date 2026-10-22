@@ -1,0 +1,97 @@
+{
+  "milestone": "POS-02",
+  "status": "NOT_DONE_UNCOMMITTED_PAUSED_PENDING_USER_DECISIONS",
+  "baseCommit": "275688e1e5c5dc0e26e62705ab0c7670cf16d99a",
+  "createdAtUTC": "2026-10-02T17:57:27.547354+00:00",
+  "persistentWorkspaceDirectory": "/Users/vaanskii/Developer/vynic/docs/proofs/POS02_CHECKPOINT_275688e1_2026-10-02",
+  "scratchDependency": "NONE for checkpoint source/patches/evidence/verification; SDK/package cache are separate execution prerequisites",
+  "checkpointFilesSha256": {
+    "RESUME.md": "98079595dd9ffa4753ff411d3e352b760999bd595c896ef2094e0a6be7c6077e",
+    "baseline-preservation.json": "8359991e2590eabb32545f0bb8042ab2a079b5e33abf90e958229a89d6373df7",
+    "candidate-source-sha256.json": "da60e6d3dad6e70961200fbea671539fe39a8691bd23e441102afe3ea34d4882",
+    "candidate-source.tar.gz": "c4e8c12d600769c75f3b17f1ebf000ce94d36c1dc84899db45f16b24b72a6c85",
+    "commands/acceptance.json": "1940e7f933433f0fa703974d851565a72b176e93e53a6d340720526ca389ad2d",
+    "evidence/POS02_CANDIDATE_275688e1_2026-10-02.json": "c84f8295e86035f43c773a407ddc09dc2b576eff0d439bd79045b02ecf281af8",
+    "evidence/POS02_LOGS_275688e1_2026-10-02.zip": "5d09f134458fc17d260ba284167655e25fc12a372ea15bfe9f0842c3d9db69f8",
+    "evidence/POS02_NATIVE_275688e1_2026-10-02.json": "ffc509bad9b4594f2ba20cfb72f509960b1df8c475636d7657392104c0237198",
+    "evidence/POS02_PRINT_JOBS_640_2026-10-02.png": "c777b203b2a956cd441fb2f4ca18491148786aa091178d4b88b6444fe47631f6",
+    "handoff-task-paths.json": "e1d4964d8262ac26836d787075cc9c1c248dfef3de86fc81ecccd9b820e76ba4",
+    "log-entry-sha256.json": "16828b96c88795dfe9ea07c2a4c571b0131ebc3fad23f756552a29c8c80f124d",
+    "pos02-docs-delta.patch": "42313f70c0f1fb0b5d68a235dab99639b93c87b2f70b1120844b5abd879dc2b8",
+    "pos02-runtime.patch": "bc1cf35ce4c9ff873bd28e835cdbdac60d771df176360d34a73b53d7593647d7",
+    "task-authored-paths.json": "4a32a349de788d3bafbad099811c6b891bd940a7eabb4adb718b06596571d478",
+    "verify_checkpoint.py": "22ffc6469f416c46c6a106271612dd6e11c15a2be3183fea55f2fbee1f8b08bc"
+  },
+  "candidateSourceFileCount": 867,
+  "authoredTaskOverlayCount": 32,
+  "archivedBaseRoots": [
+    "apps/operations",
+    "packages/contracts"
+  ],
+  "excluded": [
+    "original 267 unrelated WIP file contents",
+    "build products",
+    "SDK and package caches",
+    ".dart_tool",
+    "customer data",
+    "runtime credentials"
+  ],
+  "isolatedBuildDerivedSource": [
+    {
+      "path": "apps/operations/macos/Podfile.lock",
+      "baseSha256": "2f2ebb75920cdeb9708e8c6d2b6c1f90d27fbcb27a0405c66bb3459dac876d0b",
+      "capturedSha256": "7aaa15192e53e90cab51f0340e4c335c1319078e66f577a07437ebaba1c58199",
+      "detail": "CocoaPods 1.16.2 refreshed only stale PODFILE CHECKSUM; no pod/version change; not in shared tree or runtime task patch"
+    }
+  ],
+  "originalProofFilesSha256": {
+    "POS02_CANDIDATE_275688e1_2026-10-02.json": "c84f8295e86035f43c773a407ddc09dc2b576eff0d439bd79045b02ecf281af8",
+    "POS02_NATIVE_275688e1_2026-10-02.json": "ffc509bad9b4594f2ba20cfb72f509960b1df8c475636d7657392104c0237198",
+    "POS02_LOGS_275688e1_2026-10-02.zip": "5d09f134458fc17d260ba284167655e25fc12a372ea15bfe9f0842c3d9db69f8",
+    "POS02_PRINT_JOBS_640_2026-10-02.png": "c777b203b2a956cd441fb2f4ca18491148786aa091178d4b88b6444fe47631f6"
+  },
+  "expectedPreTaskDocSha256": {
+    "docs/agent-state/VYNIC_CODE_MAP.md": "aee9733dc8cc2e33fb13422c2a1bd1ee28fab22cdd34f5f76174610091fc2622",
+    "docs/agent-state/VYNIC_PROJECT_STATE.md": "1cf627ff6b5f08d9b6bb351e1dbeb86907294b633df26fdb1f1c730656665b56"
+  },
+  "expectedPostTaskDocSha256": {
+    "docs/agent-state/VYNIC_PROJECT_STATE.md": "0fd8c9aa482aa8c2320e2a4be5279425743a6e806e9064254931b3a36ba02e0f",
+    "docs/agent-state/VYNIC_CODE_MAP.md": "54ff88b06cbb4c37b6f10183d2bfb32af620f10529dd56d8ab927c2d27e59084"
+  },
+  "verificationIdentities": {
+    "acceptance": {
+      "tests": 788,
+      "suites": 65,
+      "newTests": 50
+    },
+    "nativeSIGKILLCheckpoints": 102,
+    "rawLogEntries": 223,
+    "analyzer": "PASS_NO_ISSUES",
+    "macOSPOSDevelopmentBuild": "PASS",
+    "broadDiscovery": "12 existing failures reproduced on untouched HEAD",
+    "physicalWindowsAcceptance": "PENDING_NOT_RUN"
+  },
+  "preservation": {
+    "originalWIPCount": 267,
+    "originalWIPByteIdentical": 265,
+    "targetedWIPDocUpdates": [
+      "docs/agent-state/VYNIC_PROJECT_STATE.md",
+      "docs/agent-state/VYNIC_CODE_MAP.md"
+    ],
+    "headBranchStashIndexUnchanged": true,
+    "commitCreated": false,
+    "liveOrVMOperations": "NONE"
+  },
+  "currentPolicy": {
+    "defaultEveryFreshProcess": "unconfigured",
+    "productionActivation": "NONE",
+    "manualCopyConfirmRetry": "BLOCKED",
+    "automaticInitialPrinting": "ENABLED",
+    "administrators": "persisted normalized manager including legacy admin; supervisor/waiter excluded",
+    "printingStaff": "any uniquely resolved persisted signed-in Staff identity",
+    "reason": "minimum 3 trimmed characters; maximum 500 input characters; stored trimmed",
+    "actionPolicyCoupled": true
+  },
+  "resumeInstructions": "RESUME.md",
+  "readOnlyVerification": "python3 verify_checkpoint.py [--check-working-tree]"
+}

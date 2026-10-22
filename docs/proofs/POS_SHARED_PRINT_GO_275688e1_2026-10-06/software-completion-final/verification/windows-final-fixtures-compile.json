@@ -1,0 +1,65 @@
+{
+  "schema": 1,
+  "sourceManifestSHA256": "193e4800e5d0733a30bc6c8d4ac993590219363941e69a787bba5ac3681c8f68",
+  "sourceFiles": 1109,
+  "sourceBeforeAfterVerified": true,
+  "environment": {
+    "GOROOT": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go1.26.8/go",
+    "GOTOOLCHAIN": "local",
+    "GOOS": "windows",
+    "GOARCH": "amd64",
+    "CGO_ENABLED": "0",
+    "GOCACHE": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-cache",
+    "GOMODCACHE": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/go-mod-cache",
+    "GOPROXY": "off"
+  },
+  "artifacts": {
+    "operational-proof-server-windows.test.exe": {
+      "package": "apps/edge/internal/server",
+      "path": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/tools/final-cohort-windows-fixtures/operational-proof-server-windows.test.exe",
+      "sha256": "2c9370e4c4cfdb55094f63a26a2bf5b45bff43868a1a2c14a0f47c2654c70abb",
+      "bytes": 26370560,
+      "startedAtUtc": "2026-10-06T17:22:49.441396+00:00",
+      "finishedAtUtc": "2026-10-06T17:22:50.069138+00:00",
+      "command": [
+        "go",
+        "test",
+        "-mod=readonly",
+        "-c",
+        "-o",
+        "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/tools/final-cohort-windows-fixtures/operational-proof-server-windows.test.exe",
+        "./internal/server"
+      ],
+      "workingDirectory": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/final-cohort/apps/edge",
+      "exitCode": 0,
+      "buildInfoSHA256": "b6d113816e7a0ceaf1b5af3c3fd92a47ef6479fbe79c6f2eb4fb64830493dba7",
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "printer-agent-server-windows.test.exe": {
+      "package": "apps/edge/internal/printeragent",
+      "path": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/tools/final-cohort-windows-fixtures/printer-agent-server-windows.test.exe",
+      "sha256": "f335745e38be573f5ec031478eab4b524a8069c811324ac2a5d39876b676e894",
+      "bytes": 25833472,
+      "startedAtUtc": "2026-10-06T17:22:50.069294+00:00",
+      "finishedAtUtc": "2026-10-06T17:22:50.734444+00:00",
+      "command": [
+        "go",
+        "test",
+        "-mod=readonly",
+        "-c",
+        "-o",
+        "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/tools/final-cohort-windows-fixtures/printer-agent-server-windows.test.exe",
+        "./internal/printeragent"
+      ],
+      "workingDirectory": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/final-cohort/apps/edge",
+      "exitCode": 0,
+      "buildInfoSHA256": "87b31d8ed2ef7a8164b45d738b13362b680547a7c976fe96f4f7aae00a6a3f64",
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  },
+  "physicalPrints": 0,
+  "VMExecuted": false,
+  "generatedSourceEdits": false
+}

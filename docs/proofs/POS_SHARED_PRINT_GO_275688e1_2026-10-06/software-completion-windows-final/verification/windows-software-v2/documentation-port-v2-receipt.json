@@ -1,0 +1,22 @@
+{
+  "recordedAtUTC": "2026-10-06T18:24:48.087942+00:00",
+  "paths": [
+    {
+      "path": "docs/POS_PRINTER_IMPLEMENTATION_REPORT_2026-10-06.md",
+      "preimageSHA256": "0a70e7aa396839d7778636060c213c63cfd28ae61d1272d0df2a2ebc4a9f7a38",
+      "currentSHA256": "c5f37d33f35141180ff104626dc58787a5d395d4eb1f6ac2b117a7761ed67b31"
+    },
+    {
+      "path": "docs/agent-state/VYNIC_PROJECT_STATE.md",
+      "preimageSHA256": "96eb085a9a2520caa58ea164cf07e92872b1b270d125393988217826ec61cef7",
+      "currentSHA256": "9f534006be72a37b5b4697188738c361c665cfbb2a38884bce19c93459b71d6e"
+    }
+  ],
+  "finalReviewedPaths": 156,
+  "reviewSHA256": "f8b22e1b5c71339808a1df305b9c07f826fdd389eccf7bdc508e69883ea228e6",
+  "finalManifestSHA256": "07705e80942193412becd49815bf17b4624f2730fa6d5a07d940103c09250bed",
+  "unrelatedPreimagesUnchanged": true,
+  "HEADBranchStashIndexUnchanged": true,
+  "committed": false,
+  "exactCommittedRuntimeQualified": false
+}

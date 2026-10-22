@@ -1,0 +1,303 @@
+{
+  "componentOccurrences": 2596,
+  "containerRecipes": [
+    {
+      "digestPinned": false,
+      "file": "apps/backend/Dockerfile",
+      "line": 2,
+      "reference": "node:22-bookworm-slim"
+    },
+    {
+      "digestPinned": false,
+      "file": "apps/backend/Dockerfile",
+      "line": 15,
+      "reference": "node:22-bookworm-slim"
+    },
+    {
+      "digestPinned": false,
+      "file": "deploy/frontend.Dockerfile",
+      "line": 2,
+      "reference": "node:22-bookworm-slim"
+    },
+    {
+      "digestPinned": false,
+      "file": "deploy/frontend.Dockerfile",
+      "line": 18,
+      "reference": "nginxinc/nginx-unprivileged:1.28-alpine"
+    },
+    {
+      "digestPinned": false,
+      "file": "compose.yaml",
+      "line": 3,
+      "reference": "${IMAGE_PREFIX:-vynic}/backend:${IMAGE_TAG:-local}"
+    },
+    {
+      "digestPinned": false,
+      "file": "compose.yaml",
+      "line": 50,
+      "reference": "${IMAGE_PREFIX:-vynic}/platform-web:${IMAGE_TAG:-local}"
+    },
+    {
+      "digestPinned": false,
+      "file": "compose.yaml",
+      "line": 60,
+      "reference": "${IMAGE_PREFIX:-vynic}/restaurant-web:${IMAGE_TAG:-local}"
+    },
+    {
+      "digestPinned": false,
+      "file": "compose.yaml",
+      "line": 70,
+      "reference": "${IMAGE_PREFIX:-vynic}/vankisi-custom-web:${IMAGE_TAG:-local}"
+    },
+    {
+      "digestPinned": false,
+      "file": "compose.yaml",
+      "line": 80,
+      "reference": "traefik:v3.6"
+    },
+    {
+      "digestPinned": false,
+      "file": "compose.local.yaml",
+      "line": 4,
+      "reference": "${IMAGE_PREFIX:-vynic}/backend:${IMAGE_TAG:-local}"
+    },
+    {
+      "digestPinned": false,
+      "file": "compose.local.yaml",
+      "line": 24,
+      "reference": "postgres:17-bookworm"
+    }
+  ],
+  "createdAt": "2026-10-14T19:17:19.927092+00:00",
+  "formatVersion": 1,
+  "inputSha256": {
+    "apps/backend/Dockerfile": "eb5036930c673c8d7284d2492da42218c80b3116381bef0dce596b5c501e88d4",
+    "apps/backend/package-lock.json": "8de56455c5e72811744d712d38733473b65d0edd4638b165fd9b94dcba0e8cbf",
+    "apps/backend/package.json": "99a6859298553388341cdf9c2a5d50b337505e82437c9b6c798cd9d1e56367da",
+    "apps/devtool/pubspec.lock": "c0238efe4b6b0940f8136e84bb167b4854b59e723851c9ed6503f90e38485d9f",
+    "apps/edge/go.mod": "ee1b4d46129d70ab34a6c12314daddd5f5a7b0122e28040a52677b359c86f37d",
+    "apps/edge/go.sum": "561b9a04ed2552e61d5187a89b023415fa4b9c5af1ea827a6707b7779234ca56",
+    "apps/edge/tool/dart_sim/pubspec.lock": "319c243bcb9b547c7a416736821616c9e54d9dfa17bd7e1b89f33c92a60fa917",
+    "apps/operations/ios/Podfile.lock": "14c96458d35f1949152341516bb9684df5bf6583d0ef4c3a6974cb5b6fa52de2",
+    "apps/operations/macos/Podfile.lock": "2f2ebb75920cdeb9708e8c6d2b6c1f90d27fbcb27a0405c66bb3459dac876d0b",
+    "apps/operations/pubspec.lock": "3ad3d0f334fc95207c1536158db1f5a60239a55e955ffa63388fe157ab277f7e",
+    "apps/platform-web/package-lock.json": "141681ebe084b0caa4376c2e03ab3cd502ee9876681f91be24d6f3b7acde2914",
+    "apps/platform-web/package.json": "507097527c1d27ba9a799ae8d31b2572a21338a53e4fffe5efa1e5613dcc50ab",
+    "apps/restaurant-web/package-lock.json": "09ea1e077323b75fad4b416f72fc62d83d00bd05f8bc17a66546df8ef6f40c50",
+    "apps/restaurant-web/package.json": "73e64539c330ba748f2d51fd013066878f62bb606779776308ecc7b06c8efbf2",
+    "apps/vankisi-custom-web/package-lock.json": "1645b7f7814f7841c65510fb88d3dc3059c7b8f0bbece4a886f6502b785639a3",
+    "apps/vankisi-custom-web/package.json": "6a95183ecbb83472accb8e9fc3f621ea236bbf0055e2a9eb4351779aeffd9cf1",
+    "compose.local.yaml": "b768fb294b3b193d5889d004000a71698386a8efdf4b8fa1b214dfe0f8fa3d3e",
+    "compose.yaml": "ee71e021b7391db5c2d53447f09d665a4c90aa551af012498d12d3b773144824",
+    "deploy/frontend.Dockerfile": "49df8526ed5ff856ce34c00744ad835b15b83f17566f01e616e092300b9a9300",
+    "packages/contracts/generated/edge_dart/pubspec.lock": "4796eb6e85ab0ebb08008f1544bc71d2c15ab120a74a2bd5386febe64e118339",
+    "packages/contracts/generated/go/go.mod": "54ad4ea326560555ae16be9943353238cd66ede684166c1984cf96af9a344fe8",
+    "packages/contracts/generated/go/go.sum": "4d6021e7f1525d43b0713af9db44aead5817e2bbe9910d0f077172a363d4ea52",
+    "packages/website-client/package-lock.json": "29e13fc283de65aad22453753c1892420079c72ceab39ca3c58ba9cc57ad482f",
+    "packages/website-client/package.json": "13915d6e095cb56898ff94c42ff4f570764e39fc2a648a34b50045e2a97569e6",
+    "templates/custom-site/package-lock.json": "95cc478c580e0895a007d70549b68e9eacd2b3ed157b8922972da991ba93e9e2",
+    "templates/custom-site/package.json": "97a4df184f3bebc565a5cdabb2fcd1747ad8dac1d03aaafb457fb12c8bde480a"
+  },
+  "limitations": [
+    "Lockfile composition is not installed-image or binary attestation",
+    "Advisory queries are prepared, not executed",
+    "Go/Pub transitive build/runtime reachability is not established",
+    "Go rows are declared requirements, not a resolved full MVS module graph",
+    "A runtime lock SBOM must retain shared prod/dev nodes and direct runtime dependencies",
+    "Container OS, SDK and native plugin advisories remain separate checks",
+    "No application source, environment, credentials or business data are query fields"
+  ],
+  "native": [
+    {
+      "advisoryScan": "NOT_RUN",
+      "cocoaPods": "1.16.2",
+      "declaredPods": [],
+      "lockfile": "apps/operations/macos/Podfile.lock"
+    },
+    {
+      "advisoryScan": "NOT_RUN",
+      "cocoaPods": "1.16.2",
+      "declaredPods": [
+        "Flutter (1.0.0)"
+      ],
+      "lockfile": "apps/operations/ios/Podfile.lock"
+    }
+  ],
+  "networkRequests": 0,
+  "projects": [
+    {
+      "components": 934,
+      "ecosystem": "npm",
+      "project": "apps/backend"
+    },
+    {
+      "components": 337,
+      "ecosystem": "npm",
+      "project": "apps/platform-web"
+    },
+    {
+      "components": 301,
+      "ecosystem": "npm",
+      "project": "apps/restaurant-web"
+    },
+    {
+      "components": 445,
+      "ecosystem": "npm",
+      "project": "apps/vankisi-custom-web"
+    },
+    {
+      "components": 70,
+      "ecosystem": "npm",
+      "project": "packages/website-client"
+    },
+    {
+      "components": 203,
+      "ecosystem": "npm",
+      "project": "templates/custom-site"
+    },
+    {
+      "components": 157,
+      "ecosystem": "Pub",
+      "project": "apps/operations/pubspec.lock"
+    },
+    {
+      "components": 72,
+      "ecosystem": "Pub",
+      "project": "apps/devtool/pubspec.lock"
+    },
+    {
+      "components": 21,
+      "ecosystem": "Pub",
+      "project": "packages/contracts/generated/edge_dart/pubspec.lock"
+    },
+    {
+      "components": 22,
+      "ecosystem": "Pub",
+      "project": "apps/edge/tool/dart_sim/pubspec.lock"
+    },
+    {
+      "components": 28,
+      "declaredGo": "1.26.0",
+      "ecosystem": "Go",
+      "project": "apps/edge/go.mod"
+    },
+    {
+      "components": 6,
+      "declaredGo": "1.26.0",
+      "ecosystem": "Go",
+      "project": "packages/contracts/generated/go/go.mod"
+    }
+  ],
+  "publicUniqueQueries": 1733,
+  "sboms": [
+    {
+      "components": 879,
+      "file": "apps-backend-build.cdx.json",
+      "missingRuntimeDirectDependencies": [],
+      "project": "apps/backend",
+      "scope": "build",
+      "sha256": "553ccae3d21f4c2ba0acc82408b133801b4d290d8051053cba3905d2d10ef2f9",
+      "status": "PASS"
+    },
+    {
+      "components": 360,
+      "file": "apps-backend-production.cdx.json",
+      "missingRuntimeDirectDependencies": [],
+      "project": "apps/backend",
+      "scope": "production",
+      "sha256": "08e39467498b3fa15bee3a4009315356784749a75431d1494fcf6eafe97ed789",
+      "status": "PASS"
+    },
+    {
+      "components": 334,
+      "file": "apps-platform-web-build.cdx.json",
+      "missingRuntimeDirectDependencies": [],
+      "project": "apps/platform-web",
+      "scope": "build",
+      "sha256": "4ebe531769a414bb313f3288413042c8d98de802d36ec7f993edd73d5e53052d",
+      "status": "PASS"
+    },
+    {
+      "components": 129,
+      "file": "apps-platform-web-production.cdx.json",
+      "missingRuntimeDirectDependencies": [],
+      "project": "apps/platform-web",
+      "scope": "production",
+      "sha256": "a1df95bcbcc1158fc78aa82a9f6566fb93cde362b33e6d1e3556aeec2fbcec97",
+      "status": "PASS"
+    },
+    {
+      "components": 299,
+      "file": "apps-restaurant-web-build.cdx.json",
+      "missingRuntimeDirectDependencies": [],
+      "project": "apps/restaurant-web",
+      "scope": "build",
+      "sha256": "4df5a9f63ca8bd230b37f19bbeaf7a112962fd81f9a2abda65ed35985bf609a9",
+      "status": "PASS"
+    },
+    {
+      "components": 3,
+      "file": "apps-restaurant-web-production.cdx.json",
+      "missingRuntimeDirectDependencies": [],
+      "project": "apps/restaurant-web",
+      "scope": "production",
+      "sha256": "5ec07a88ef2082221bbfd489941092febd9b1b72653dbaa57e61f9d10d5e34e1",
+      "status": "PASS"
+    },
+    {
+      "components": 442,
+      "file": "apps-vankisi-custom-web-build.cdx.json",
+      "missingRuntimeDirectDependencies": [],
+      "project": "apps/vankisi-custom-web",
+      "scope": "build",
+      "sha256": "55d2d82a6bc8ff883f1179cafc5e1b5dd4f5031082cdf07ad66751a882ae1b4a",
+      "status": "PASS"
+    },
+    {
+      "components": 226,
+      "file": "apps-vankisi-custom-web-production.cdx.json",
+      "missingRuntimeDirectDependencies": [],
+      "project": "apps/vankisi-custom-web",
+      "scope": "production",
+      "sha256": "0c17f2f7b701a944c41f055b1ca4b0fed29e2b29f9a9670a7bbb430ec72de52b",
+      "status": "PASS"
+    },
+    {
+      "components": 70,
+      "file": "packages-website-client-build.cdx.json",
+      "missingRuntimeDirectDependencies": [],
+      "project": "packages/website-client",
+      "scope": "build",
+      "sha256": "9f5285cf699ea68e95ff2b69d9dfaaf31f625118f39cf18030c131976069cdd5",
+      "status": "PASS"
+    },
+    {
+      "components": 0,
+      "file": "packages-website-client-production.cdx.json",
+      "missingRuntimeDirectDependencies": [],
+      "project": "packages/website-client",
+      "scope": "production",
+      "sha256": "d813e5b53c31c03f9ebc79cadd74420082c022c765f1d1ab387f0ce5d724ee12",
+      "status": "PASS"
+    },
+    {
+      "components": 201,
+      "file": "templates-custom-site-build.cdx.json",
+      "missingRuntimeDirectDependencies": [],
+      "project": "templates/custom-site",
+      "scope": "build",
+      "sha256": "5f95e5246548a8491d54a838066c56557ada4c339c4e911ebd7e382e4aa32824",
+      "status": "PASS"
+    },
+    {
+      "components": 3,
+      "file": "templates-custom-site-production.cdx.json",
+      "missingRuntimeDirectDependencies": [],
+      "project": "templates/custom-site",
+      "scope": "production",
+      "sha256": "afee1513ceb3a66a411b2a2c7027f584096623d0e79ecd52524cde0be429f46b",
+      "status": "PASS"
+    }
+  ],
+  "status": "INVENTORIED"
+}

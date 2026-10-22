@@ -29,6 +29,8 @@ bool FlutterWindow::OnCreate() {
     return false;
   }
   RegisterPlugins(flutter_controller_->engine());
+  windows_spooler_channel_ = std::make_unique<WindowsSpoolerChannel>(
+      flutter_controller_->engine()->messenger(), GetHandle());
   SetChildContent(flutter_controller_->view()->GetNativeWindow());
 
   flutter_controller_->engine()->SetNextFrameCallback([&]() {
@@ -47,6 +49,7 @@ bool FlutterWindow::OnCreate() {
 }
 
 void FlutterWindow::OnDestroy() {
+  windows_spooler_channel_.reset();
 #ifdef VYNIC_POS_FULLSCREEN
   RemoveTrayIcon();
 #endif
@@ -61,6 +64,8 @@ LRESULT
 FlutterWindow::MessageHandler(HWND hwnd, UINT const message,
                               WPARAM const wparam,
                               LPARAM const lparam) noexcept {
+  if (windows_spooler_channel_ && windows_spooler_channel_->HandleMessage(message))
+    return 0;
 #ifdef VYNIC_POS_FULLSCREEN
   static const UINT taskbar_created = RegisterWindowMessage(L"TaskbarCreated");
   if (message == taskbar_created) {

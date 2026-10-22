@@ -1,0 +1,129 @@
+﻿{
+    "schema":  1,
+    "status":  "PASS",
+    "failure":  null,
+    "startedUtc":  "2026-10-06T16:31:30.2129332Z",
+    "completedUtc":  "2026-10-06T16:32:46.0513058Z",
+    "guestBase":  "C:\\Users\\vaanskii\\AppData\\Local\\VynicReadinessGoPackages\\frozen-v2-dc50e6bc33bb",
+    "guestArchitecture":  "ARM64",
+    "nativeWindows":  true,
+    "binaryArchitecture":  "amd64",
+    "sourceReceiptSHA256":  "d694adbe1410f005d6285396f81a7126cdc7b9fb9f44b08a01f7f3c5e523330a",
+    "compilerReceiptSHA256":  "57441bd7550ab4e0056ce34b36579ca56222ee5e58588bce9a7552963c79a404",
+    "sourceFiles":  163,
+    "packages":  {
+                     "store":  {
+                                   "status":  "PASS",
+                                   "exitCode":  0,
+                                   "elapsedMs":  5124,
+                                   "workingDirectory":  "C:\\Users\\vaanskii\\AppData\\Local\\VynicReadinessGoPackages\\frozen-v2-dc50e6bc33bb\\source\\apps\\edge\\internal\\store",
+                                   "binarySHA256":  "f88b9b38eaa3c71241b3176646de8216547a35895817ab28c6a7aed42686bf1c",
+                                   "arguments":  [
+                                                     "-test.v",
+                                                     "-test.timeout=5m"
+                                                 ],
+                                   "stdoutSHA256":  "a1c8215ce8338a6d8bd437426d074f468bc42bc12add26a2581e3895ca779a55",
+                                   "stderrSHA256":  "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+                               },
+                     "server":  {
+                                    "status":  "PASS",
+                                    "exitCode":  0,
+                                    "elapsedMs":  7156,
+                                    "workingDirectory":  "C:\\Users\\vaanskii\\AppData\\Local\\VynicReadinessGoPackages\\frozen-v2-dc50e6bc33bb\\source\\apps\\edge\\internal\\server",
+                                    "binarySHA256":  "cded3bef20097a35e7aa0b96ce63942c58e8d701dd405add6be51110365f252d",
+                                    "arguments":  [
+                                                      "-test.v",
+                                                      "-test.timeout=5m"
+                                                  ],
+                                    "stdoutSHA256":  "2dc0f96273081aebe1fa380ca59ab1f5f4a36852e81dab0aa9ad9a1e243c02a8",
+                                    "stderrSHA256":  "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+                                },
+                     "printqueue":  {
+                                        "status":  "PASS",
+                                        "exitCode":  0,
+                                        "elapsedMs":  2148,
+                                        "workingDirectory":  "C:\\Users\\vaanskii\\AppData\\Local\\VynicReadinessGoPackages\\frozen-v2-dc50e6bc33bb\\source\\apps\\edge\\internal\\printqueue",
+                                        "binarySHA256":  "b3e4db66c08ba1126d93978c59d4504a31724aaee80157fa667f4215e9051b6e",
+                                        "arguments":  [
+                                                          "-test.v",
+                                                          "-test.timeout=5m"
+                                                      ],
+                                        "stdoutSHA256":  "b90650ae4f8cf40e53666709c1db449eb0bddac4e9ce3bf5a6425b5a79647756",
+                                        "stderrSHA256":  "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+                                    },
+                     "printhost":  {
+                                       "status":  "PASS",
+                                       "exitCode":  0,
+                                       "elapsedMs":  1104,
+                                       "workingDirectory":  "C:\\Users\\vaanskii\\AppData\\Local\\VynicReadinessGoPackages\\frozen-v2-dc50e6bc33bb\\source\\apps\\edge\\internal\\printhost",
+                                       "binarySHA256":  "6314038ec90b7ae6f51b97ec86e1284e178cbbcd096e3c55b5e09d0d6239e564",
+                                       "arguments":  [
+                                                         "-test.v",
+                                                         "-test.timeout=5m"
+                                                     ],
+                                       "stdoutSHA256":  "19e813adea0ee613d6704e6d047b1ed12f7da2428f21af174e602f17f0c45be7",
+                                       "stderrSHA256":  "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+                                   },
+                     "printcluster":  {
+                                          "status":  "PASS",
+                                          "exitCode":  0,
+                                          "elapsedMs":  54588,
+                                          "workingDirectory":  "C:\\Users\\vaanskii\\AppData\\Local\\VynicReadinessGoPackages\\frozen-v2-dc50e6bc33bb\\source\\apps\\edge\\internal\\printcluster",
+                                          "binarySHA256":  "499823899f0ca0e15b987a7ca66827c2207403db663a74b2e61e5c88789d927c",
+                                          "arguments":  [
+                                                            "-test.v",
+                                                            "-test.timeout=10m"
+                                                        ],
+                                          "stdoutSHA256":  "dec6c98e8d18e9be636528ff9c056e36669d264efbf5a01b35c91e982ce13209",
+                                          "stderrSHA256":  "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+                                      },
+                     "printeligibility":  {
+                                              "status":  "PASS",
+                                              "exitCode":  0,
+                                              "elapsedMs":  1213,
+                                              "workingDirectory":  "C:\\Users\\vaanskii\\AppData\\Local\\VynicReadinessGoPackages\\frozen-v2-dc50e6bc33bb\\source\\apps\\edge\\internal\\printeligibility",
+                                              "binarySHA256":  "c79d6f27da15fc50a5a04fb941fa2363ca779d96214aea3ab3fb6908e9abe2bd",
+                                              "arguments":  [
+                                                                "-test.v",
+                                                                "-test.timeout=5m"
+                                                            ],
+                                              "stdoutSHA256":  "22ca3cca6f6c90da26fbb4555f3e791855cdcc982ca34de14c3d879957ffdb57",
+                                              "stderrSHA256":  "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+                                          },
+                     "printtransport":  {
+                                            "status":  "PASS",
+                                            "exitCode":  0,
+                                            "elapsedMs":  1196,
+                                            "workingDirectory":  "C:\\Users\\vaanskii\\AppData\\Local\\VynicReadinessGoPackages\\frozen-v2-dc50e6bc33bb\\source\\apps\\edge\\internal\\printtransport",
+                                            "binarySHA256":  "24eb7968003bb0195d94b9cdab36232f977e9153fcc2f6a13a58045bf4203516",
+                                            "arguments":  [
+                                                              "-test.v",
+                                                              "-test.timeout=5m"
+                                                          ],
+                                            "stdoutSHA256":  "34c58c9e3ea1c91947aa86c6d86d5fa357b895125284c4243e1d1e9d4631dd35",
+                                            "stderrSHA256":  "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+                                        }
+                 },
+    "sourceBefore":  true,
+    "sourceAfter":  true,
+    "binaryBefore":  true,
+    "binaryAfter":  true,
+    "printJobsBefore":  0,
+    "printJobsAfter":  0,
+    "documentsSubmitted":  0,
+    "validRAWCalls":  0,
+    "serviceRegistrations":  0,
+    "driverInstalls":  0,
+    "productStarts":  0,
+    "machineRestarts":  0,
+    "VMSettingsChanges":  0,
+    "persistentCredentialChanges":  0,
+    "limitations":  [
+                        "Frozen V2 163-file cohort only; future service/installer/RPC/UI source excluded.",
+                        "Loopback synthetic transports and temporary test certificates/SQLite only.",
+                        "Windows os.Process.Kill means TerminateProcess, not literal Unix SIGKILL.",
+                        "Non-Windows queue SIGKILL/competing-process tests are excluded by build tags.",
+                        "SCM registration, service installation, actual service restart, OS reboot/power loss and physical printer acceptance not run.",
+                        "ACCEPTED or SUBMITTED never claims paper DELIVERED."
+                    ]
+}

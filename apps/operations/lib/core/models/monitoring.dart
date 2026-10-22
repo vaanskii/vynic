@@ -21,6 +21,7 @@ class ManagerDashboardMetrics {
   final int occupiedTables;
   final int reservedTables;
   final int freeTables;
+  final String? snapshotAt;
   final String? financialProvenance;
   final String? financialWarning;
   final double tbcRevenue;
@@ -50,6 +51,7 @@ class ManagerDashboardMetrics {
     this.occupiedTables = 0,
     this.reservedTables = 0,
     this.freeTables = 0,
+    this.snapshotAt,
     this.financialProvenance,
     this.financialWarning,
     this.tbcRevenue = 0,
@@ -89,6 +91,7 @@ class ManagerDashboardMetrics {
       occupiedTables: json['occupiedTables'] ?? 0,
       reservedTables: json['reservedTables'] ?? 0,
       freeTables: json['freeTables'] ?? 0,
+      snapshotAt: json['snapshotAt'] as String?,
       financialProvenance: json['financialProvenance'] as String?,
       financialWarning: json['financialWarning'] as String?,
       tbcRevenue: (json['tbcRevenue'] ?? 0).toDouble(),
@@ -120,6 +123,7 @@ class ManagerDashboardMetrics {
     'occupiedTables': occupiedTables,
     'reservedTables': reservedTables,
     'freeTables': freeTables,
+    'snapshotAt': snapshotAt,
     'financialProvenance': financialProvenance,
     'financialWarning': financialWarning,
     'tbcRevenue': tbcRevenue,

@@ -17,6 +17,13 @@
     sans-serif;
   --font-mono:
     "Geist Mono", "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+
+  /* Motion tokens — mirror src/lib/motion.ts. */
+  --motion-fast: 180ms;
+  --motion-base: 320ms;
+  --motion-reveal: 620ms;
+  --motion-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --motion-ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
 }
 
 @theme {
@@ -173,10 +180,6 @@ img {
   will-change: transform;
 }
 
-.vynic-soft-pulse {
-  animation: vynic-soft-pulse 2.8s ease-in-out infinite;
-}
-
 .vynic-live-dot {
   animation: vynic-live-dot 4.2s ease-in-out infinite;
 }
@@ -223,10 +226,6 @@ img {
   animation: vynic-launch-message 0.85s 0.12s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
-.vynic-launch-loader {
-  animation: vynic-launch-loader 0.72s ease-in-out infinite alternate;
-}
-
 .vynic-live-activity-sweep {
   animation: vynic-live-activity-sweep 1.1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
@@ -236,8 +235,9 @@ img {
 }
 
 @media (prefers-reduced-motion: no-preference) {
+  /* One pass as the strip arrives with the opening, then still. */
   .vynic-dark-sweep {
-    animation: vynic-sweep 7.2s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+    animation: vynic-sweep 3.4s 0.4s cubic-bezier(0.16, 1, 0.3, 1) 1 both;
   }
 
   .vynic-demo-pulse {
@@ -280,16 +280,6 @@ img {
   100% {
     opacity: 0;
     transform: translateX(130%);
-  }
-}
-
-@keyframes vynic-soft-pulse {
-  0%,
-  100% {
-    opacity: 0.52;
-  }
-  50% {
-    opacity: 1;
   }
 }
 
@@ -404,19 +394,6 @@ img {
   }
 }
 
-@keyframes vynic-launch-loader {
-  from {
-    opacity: 0.28;
-    transform: scaleX(0.68);
-    transform-origin: left center;
-  }
-  to {
-    opacity: 1;
-    transform: scaleX(1);
-    transform-origin: left center;
-  }
-}
-
 @keyframes vynic-live-activity-sweep {
   0% {
     opacity: 0;
@@ -446,6 +423,118 @@ img {
   100% {
     box-shadow: 0 0 0 0 rgba(118, 75, 124, 0);
   }
+}
+
+/* ---- Public-site motion system ------------------------------------------ */
+
+/* In-page links land below the sticky header. */
+main section[id] {
+  scroll-margin-top: 56px;
+}
+
+/* Masked words for the hero headline reveal (SplitWords). The padding keeps
+   descenders and Georgian glyphs inside the clip. */
+.vynic-word-mask {
+  display: inline-block;
+  overflow: hidden;
+  padding-bottom: 0.14em;
+  margin-bottom: -0.14em;
+  vertical-align: top;
+}
+
+.vynic-word {
+  display: inline-block;
+  will-change: transform;
+}
+
+/* Hero depth: a static aura, a grid that surfaces around the product, and a
+   pointer light (desktop fine pointers only, positioned by GSAP). */
+.vynic-hero-aura {
+  background:
+    radial-gradient(ellipse 46% 58% at 72% 44%, color-mix(in srgb, var(--vynic-plum) 13%, transparent), transparent 70%),
+    radial-gradient(ellipse 38% 44% at 12% 92%, color-mix(in srgb, var(--vynic-green) 9%, transparent), transparent 72%);
+}
+
+.vynic-hero-grid {
+  background-image:
+    linear-gradient(90deg, color-mix(in srgb, var(--vynic-charcoal) 6%, transparent) 1px, transparent 1px),
+    linear-gradient(0deg, color-mix(in srgb, var(--vynic-charcoal) 6%, transparent) 1px, transparent 1px);
+  background-size: 44px 44px;
+  -webkit-mask-image: radial-gradient(ellipse 52% 62% at 70% 46%, #000 12%, transparent 72%);
+  mask-image: radial-gradient(ellipse 52% 62% at 70% 46%, #000 12%, transparent 72%);
+}
+
+.vynic-hero-light {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 640px;
+  height: 640px;
+  margin: -320px 0 0 -320px;
+  border-radius: 9999px;
+  background: radial-gradient(circle, color-mix(in srgb, var(--vynic-plum) 15%, transparent) 0%, transparent 62%);
+  opacity: 0;
+  visibility: hidden;
+  will-change: transform, opacity;
+}
+
+/* Navigation link: underline draws from the left. */
+.vynic-nav-link {
+  position: relative;
+}
+
+.vynic-nav-link::after {
+  position: absolute;
+  right: 0;
+  bottom: -6px;
+  left: 0;
+  height: 1px;
+  content: "";
+  background: currentColor;
+  transform: scaleX(0);
+  transform-origin: right center;
+  transition: transform var(--motion-base) var(--motion-ease-out);
+}
+
+.vynic-nav-link:hover::after,
+.vynic-nav-link:focus-visible::after {
+  transform: scaleX(1);
+  transform-origin: left center;
+}
+
+/* Header gains a hairline shadow once the page scrolls. */
+.vynic-header {
+  transition:
+    box-shadow var(--motion-base) var(--motion-ease-out),
+    background-color var(--motion-base) var(--motion-ease-out);
+}
+
+.vynic-header[data-scrolled="true"] {
+  background-color: color-mix(in srgb, var(--vynic-background) 96%, transparent);
+  box-shadow: 0 1px 0 color-mix(in srgb, var(--vynic-charcoal) 5%, transparent),
+    0 10px 30px -18px color-mix(in srgb, var(--vynic-charcoal) 28%, transparent);
+}
+
+/* Platform story: a static composition until JS enables the scrubbed,
+   sticky stage (desktop, tall enough viewport, motion allowed). */
+.vynic-story-stage {
+  padding-block: 6rem;
+}
+
+.vynic-story-track[data-scrub="true"] {
+  height: 380vh;
+}
+
+.vynic-story-track[data-scrub="true"] > .vynic-story-stage {
+  position: sticky;
+  top: 56px;
+  height: calc(100dvh - 56px);
+  padding-block: 0;
+}
+
+/* Soft light behind the platform-story stage. */
+.vynic-stage-aura {
+  background: radial-gradient(closest-side, color-mix(in srgb, var(--vynic-plum) 11%, transparent), transparent);
 }
 
 @media (prefers-reduced-motion: reduce) {

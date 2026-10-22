@@ -1,0 +1,67 @@
+{
+  "schema": 1,
+  "sourceReceiptSHA256": "faaaec2f1ece4f8259353666000eb4c0d3aee6143e73ae7fdf90772a937b581b",
+  "bundles": {
+    "arm64": {
+      "files": {
+        "capability-profile.json": {
+          "sha256": "889ca206e624d88df360fddd23aa7400f81ffec00d222c1dc134b368926209f4",
+          "bytes": 175
+        },
+        "manifest.json": {
+          "sha256": "d872b1c844451a169554bb6af99ba9e2a354cf70a8058f073377e90483aac3b9",
+          "bytes": 1772
+        },
+        "vynic-print-helper.exe": {
+          "sha256": "99869fe8761ee48f1c66d30359dc837327dd3cc054ba60a1d80089916a6981f5",
+          "bytes": 291328
+        },
+        "vynic-printer-agent.exe": {
+          "sha256": "dbdd278544ba542a9161a9bb4fbe411b31a410789af0a0bb583d4a00a78bbf71",
+          "bytes": 23291392
+        }
+      },
+      "manifestSHA256": "d872b1c844451a169554bb6af99ba9e2a354cf70a8058f073377e90483aac3b9",
+      "agentSHA256": "dbdd278544ba542a9161a9bb4fbe411b31a410789af0a0bb583d4a00a78bbf71",
+      "helperSHA256": "99869fe8761ee48f1c66d30359dc837327dd3cc054ba60a1d80089916a6981f5"
+    },
+    "amd64": {
+      "files": {
+        "capability-profile.json": {
+          "sha256": "889ca206e624d88df360fddd23aa7400f81ffec00d222c1dc134b368926209f4",
+          "bytes": 175
+        },
+        "manifest.json": {
+          "sha256": "650360132e8f333c37f6ee6eb45a989fefd1ce5b9243d5066f0358b5bb6d4e8f",
+          "bytes": 1772
+        },
+        "vynic-print-helper.exe": {
+          "sha256": "b720e1eedc77ab574d769865e39f71506a5f3ebc9d93ab5166bc3f112203019d",
+          "bytes": 316416
+        },
+        "vynic-printer-agent.exe": {
+          "sha256": "a5ef474a67d62326436c48e073731b59062cc104545032574af671dc70b882cc",
+          "bytes": 24817152
+        }
+      },
+      "manifestSHA256": "650360132e8f333c37f6ee6eb45a989fefd1ce5b9243d5066f0358b5bb6d4e8f",
+      "agentSHA256": "a5ef474a67d62326436c48e073731b59062cc104545032574af671dc70b882cc",
+      "helperSHA256": "b720e1eedc77ab574d769865e39f71506a5f3ebc9d93ab5166bc3f112203019d"
+    }
+  },
+  "buildInputReceiptSHA256": "8265133677ed972e72c0e666e28002577b1b747ae7caa770acae787dfdface40",
+  "verifiedInputs": [
+    {
+      "target": "windows/amd64",
+      "repositoryInputsMatched": 57,
+      "externalSDKAndModuleInputsMatched": 1757
+    },
+    {
+      "target": "windows/arm64",
+      "repositoryInputsMatched": 57,
+      "externalSDKAndModuleInputsMatched": 1740
+    }
+  ],
+  "compilerCLIKeptSeparate": true,
+  "physicalEligible": false
+}

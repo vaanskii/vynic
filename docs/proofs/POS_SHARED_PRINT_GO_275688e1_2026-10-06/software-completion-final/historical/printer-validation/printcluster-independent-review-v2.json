@@ -1,0 +1,113 @@
+{
+  "verdict": "PASS bounded inert Raft proof at V2 frozen source; supersedes source qualification of V1, retaining all prior failures/limits",
+  "previousReview": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/printer-validation/printcluster-independent-review.json",
+  "previousReviewSha256": "a711a1748b8705428d56e07b156c3d9fd49ba2106513c6d8414f26ec1770e535",
+  "ownedManifestSha256": "7f0cb9e7bbb49a65983efeb0fa45b0a2dc4e9929ff737fa8943a9f2b2a74170e",
+  "snapshotManifestSha256": "d694adbe1410f005d6285396f81a7126cdc7b9fb9f44b08a01f7f3c5e523330a",
+  "ownedFilesVerified": 21,
+  "snapshotAndCurrentSourceFilesVerified": 163,
+  "ownedHashes": {
+    "apps/edge/internal/printcluster/boundaries_test.go": "6a6eed7047b49dde05b49e402e9481d42a20fe72849e02cfcc196d2c76427456",
+    "apps/edge/internal/printcluster/cluster_test.go": "821fe8230f0ca133ec5aa2a0b9b58f0b69493ae6278310e6d5bd876d5e05e1ea",
+    "apps/edge/internal/printcluster/node.go": "90a8fd63aa455e7dc06c5db1308b4df75f1c7943b8a22efa8e6b2c1759b5db0a",
+    "apps/edge/internal/printcluster/process_test.go": "e1b94bb3fb2ab6af004c3d4096ce3d8b1bb93f38047f057f144c0d3b1eeb8b51",
+    "apps/edge/internal/printcluster/projection.go": "89c5c4d97f00de6c00b3ebb4ccfafacf8e6cd65cbd462bbae37493b155abd62b",
+    "apps/edge/internal/printcluster/schema.sql": "e172bcd69670592daadf2b041ee60708abe73e4ea98e370dabe01917f9be4f5e",
+    "apps/edge/internal/printcluster/state.go": "fecb6b14729115c7c22f2b9b400ce60d406e6f36b3e8615ec363d35ec8a2febe",
+    "apps/edge/internal/printcluster/testdata/local_tcp.config.json": "5fb77a085478e13e841b4a9e504973fad13b54cb13260f809f2265f561fa6104",
+    "apps/edge/internal/printcluster/testdata/local_tcp.job.json": "4b2a9926ba64c7a2e3123993fe1586a9adbdfd44323e4ef1a1a7c6775cb1382f",
+    "apps/edge/internal/printcluster/testdata/shared_tcp.config.json": "631484beb05a8d5e53b0049bda893813c2ce247c15de5c1d82ccc4620d0b89f1",
+    "apps/edge/internal/printcluster/testdata/shared_tcp.job.json": "dfc155cc16c5f6b18c6ff80bff90c1994ae27040fb69d7afa1deaf4124bb1120",
+    "apps/edge/internal/printcluster/testdata/shared_usb.config.json": "1c8e94daf8dbd24a2c13e7c8c8e1ebf660f3d6f3e5989bd43f7f33d8adcf2e2b",
+    "apps/edge/internal/printcluster/testdata/shared_usb.job.json": "31e2179da2e87ea1b13376dc7dcd41cbe23ff4dd1e6e377fa43c7ea3dca15f97",
+    "apps/edge/internal/printcluster/testdata/unknown_beep.config.json": "2f02b5d6b6fb0dda028d819e0fccc42957d51996e4d3c3673dff207d558230c7",
+    "apps/edge/internal/printcluster/testdata/unknown_beep.job.json": "beca2a55a0554f39fa8e5fef7b04ce3c90398778ac43471874229cb2c87c5120",
+    "apps/edge/internal/printcluster/transport.go": "5a5844221232d1faddbbc767435eba9625cd0e3f15b9f0e0ed4b0d9ba06e27d7",
+    "apps/edge/internal/printcluster/types.go": "c21c89c70c015bf8addea454ab6c6f9b031393656cb86114309d36e2d496b8ae",
+    "apps/edge/go.mod": "ee1b4d46129d70ab34a6c12314daddd5f5a7b0122e28040a52677b359c86f37d",
+    "apps/edge/go.sum": "561b9a04ed2552e61d5187a89b023415fa4b9c5af1ea827a6707b7779234ca56",
+    "packages/contracts/generated/go/go.mod": "54ad4ea326560555ae16be9943353238cd66ede684166c1984cf96af9a344fe8",
+    "packages/contracts/generated/go/go.sum": "4d6021e7f1525d43b0713af9db44aead5817e2bbe9910d0f077172a363d4ea52"
+  },
+  "onlyChangedSource": [
+    "apps/edge/internal/printcluster/cluster_test.go"
+  ],
+  "deltaReview": [
+    "Only test code changed. Production/store/consensus/transport code and all other owned sources remain byte-identical to prior bounded review.",
+    "Leader helper still requires successful committed SyncLogicalState; IsLeader alone cannot satisfy it. Probe budget400ms becomes5s, convergence10s becomes20s. Actual error/term/index diagnostics use TryRLock so diagnostic capture cannot block indefinitely.",
+    "Post-restart large transfer receives fresh bounded90s context. Primary bytes, full job envelope, stable receipt, malformed/duplicate chunk rejection, snapshot ownership and quorum assertions are unchanged.",
+    "Retained idle diagnostic reproduced400ms unknown commit with FSM applying. Independent revised race run measured healthy successful531.3405ms sync; owner measured538.214417ms. This supports bounded fixture-timing correction; it is not a production latency or throughput qualification."
+  ],
+  "validation": {
+    "printer-validation/cluster-v2-independent-large-normal.jsonl": {
+      "sha256": "3c2ddf249aab46b31a1759cc3deb27485b01ada443ac945b7ac83ad1c27cd672",
+      "topLevelPassed": 1,
+      "lastPackageEvent": {
+        "Time": "2026-10-06T20:17:51.894385+04:00",
+        "Action": "pass",
+        "Package": "vynic.local/edge/internal/printcluster",
+        "Elapsed": 8.854
+      }
+    },
+    "printer-validation/cluster-v2-independent-large-race.jsonl": {
+      "sha256": "1f9c5ca415ab97ebd2ede94c23fe10d21bbf8dc93010152440e9ced86755eadd",
+      "topLevelPassed": 1,
+      "lastPackageEvent": {
+        "Time": "2026-10-06T20:19:09.361987+04:00",
+        "Action": "pass",
+        "Package": "vynic.local/edge/internal/printcluster",
+        "Elapsed": 61.594
+      }
+    },
+    "tools/metadata/printcluster-v2-affected-race.jsonl": {
+      "sha256": "47f8a9b65453eea6353c8c24634dfd7c428e782f0ec5ef6411780a3cd4948cf1",
+      "topLevelPassed": 1,
+      "lastPackageEvent": {
+        "Time": "2026-10-06T20:09:25.924119+04:00",
+        "Action": "pass",
+        "Package": "vynic.local/edge/internal/printcluster",
+        "Elapsed": 61.071
+      }
+    },
+    "tools/metadata/go-final-edge-tests.jsonl": {
+      "sha256": "f593e3f85a59e5f57882519730a09184e54c845ce26fa43fd7216301ba5ec1eb",
+      "topLevelPassed": 172,
+      "lastPackageEvent": {
+        "Time": "2026-10-06T20:10:58.258777+04:00",
+        "Action": "pass",
+        "Package": "vynic.local/edge/internal/printcluster",
+        "Elapsed": 55.511
+      }
+    },
+    "tools/metadata/go-final-edge-race.jsonl": {
+      "sha256": "cd3e69fa93c1139a2a45ca20f9ac756278e2dca70a29c5845e93d65ae266ca12",
+      "topLevelPassed": 172,
+      "lastPackageEvent": {
+        "Time": "2026-10-06T20:15:29.127278+04:00",
+        "Action": "pass",
+        "Package": "vynic.local/edge/internal/printcluster",
+        "Elapsed": 144.75
+      }
+    }
+  },
+  "failedEvidencePreserved": {
+    "tools/metadata/go-v1-retained-edge-race.jsonl": "c553f557d3cf0211e745ff945ee898c219f2ef143cd891bd0aeb74d21be08729",
+    "tools/metadata/go-v1-retained-edge-race-status.json": "f3ae976cc1715396762e5c4d65593dd7100a1efb516544d268c211290b8dce1e",
+    "tools/metadata/printcluster-race-large-diagnostic.jsonl": "c73192b3d5d71ab9551cb4f28c7a8514fb5f4210b04fe11c45e6e7053c3b71dd",
+    "tools/metadata/printcluster-leader-diagnostic-overlay.go": "7eed259b316b703e02c9734417b2107923a1d04aee798d9ceefe9286a4a2cc8f",
+    "tools/metadata/printcluster-leader-diagnostic-overlay.json": "9cd2d2967ac831602b807b7322c2ce5215ab6bfc815146af097e981abeb18c8d"
+  },
+  "limits": [
+    "PhysicalDispatchStatus always denies. No shared physical sender or downstream epoch receiver exists; no RAW/ESC-POS HA or exactly-once physical guarantee.",
+    "Actual SIGKILL test uses three voter OS processes plus fourth relay on one macOS host over loopback, not computer power loss or real venue-LAN partition.",
+    "Actual multi-process replicated primary payload is 600 KiB. Separate 8 MiB chunk/snapshot proof is single-voter; no 8 MiB three-host qualification.",
+    "Synthetic loopback peer handshake/caller control is fixture trust, not production terminal authentication or live LAN enrollment. No normal startup attachment.",
+    "Leader-only logical execution means fixed USB ownership on a nonleader is held. Powered-off attached host cannot print.",
+    "Bounded proof retains max128 jobs/256 requests, max8 staged jobs/32 MiB staging, 12 MiB envelope and 64 MiB projection; not an unbounded production spool.",
+    "Controlled membership replacement, authenticated production forwarding/durable client outbox, service installation/account qualification, legacy writer fencing and reader/rollback cutover remain outside this proof.",
+    "Operator not-printed resolution is an audited synthetic assertion; it is not evidence that an old physical worker or buffered printer bytes were fenced.",
+    "This review does not promote opaque operational postimage APIs or qualify remaining business writer integration. Parent combined full-suite validation is separately recorded.",
+    "Full V2 normal/race logs each contain172 passing top-level tests and no failure or DATA RACE event; worker-entry skips remain intentional fixture plumbing, not physical acceptance.",
+    "V1 review and failed broad race/diagnostic logs remain immutable. No failure was relabeled PASS; new source/test hashes and independently passing affected normal/race logs establish V2 qualification."
+  ]
+}

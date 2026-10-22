@@ -1,0 +1,185 @@
+syntax = "proto3";
+package vynic.edge.v1;
+option go_package = "vynic.local/contracts/go/vynic/edge/v1;edgev1";
+import "vynic/edge/v1/foundation.proto";
+
+// Fixture-only proof contract, never a production activation token. Register
+// through a separate explicit harness after verified authority pinning. Normal
+// Foundation startup/capabilities/business_mutations_enabled remain unchanged.
+// Requires protocol 1.3 and operational.coordination.proof.v1. This floor is
+// separate from normal Foundation protocol 1.1. No auto-pinning,
+// epoch reset, promotion, takeover, or printer dispatch RPC exists.
+service OperationalProof {
+  rpc Status(AuthenticatedRequest) returns (ProofStatus);
+  rpc Commit(ProofCommitRequest) returns (ProofCommitResult);
+  rpc GetResult(ProofResultRequest) returns (ProofCommitResult);
+  rpc Replay(ProofReplayRequest) returns (ProofReplayPage);
+  rpc Snapshot(ProofSnapshotRequest) returns (ProofSnapshot);
+}
+
+message ProofLimits {
+  // Byte bounds describe store-encoded JSON (including byte-field base64), not
+  // protobuf wire length. Server validation remains authoritative. Configure
+  // bounded gRPC request/result overhead separately in the isolated harness.
+  uint32 max_request_bytes = 1;
+  uint32 max_document_bytes = 2;
+  uint32 max_effect_bytes = 3;
+  uint32 max_application_bytes = 4;
+  uint32 max_result_bytes = 5;
+  uint32 max_snapshot_bytes = 6;
+  uint32 max_replay_bytes = 7;
+  uint32 max_writes = 8;
+  uint32 max_reads = 9;
+  uint32 max_request_effects = 10;
+  uint32 max_replay_events = 11;
+  uint32 max_entities = 12;
+  uint32 max_retained_requests = 13;
+  uint32 max_retained_events = 14;
+  uint32 max_retained_effects = 15;
+  uint32 max_event_bytes = 16;
+  uint32 max_state_bytes = 17;
+  uint32 max_journal_bytes = 18;
+}
+message ProofStatus {
+  string mode = 1; // Exactly ISOLATED_PROOF.
+  string venue_id = 2; // Derived from verified bound installation.
+  string installation_id = 3;
+  uint64 authority_epoch = 4; // 1..int64 max, immutable pinned proof generation.
+  uint64 head_sequence = 5;
+  bytes grant_sha256 = 6;
+  Protocol protocol = 7;
+  repeated string capabilities = 8;
+  ProofLimits limits = 9;
+  // Fresh certificate identity, checked against signed local registration.
+  string origin_installation_id = 10; // Empty for base three-UUID proof peers.
+}
+message ProofEntity {
+  enum Kind {
+    UNSPECIFIED = 0;
+    ORDER = 1;
+    TABLE = 2;
+    RESERVATION = 3;
+    PACKAGE = 4;
+    SALE = 5;
+    DAY = 6;
+    // Planned Venue-owned control record with a stable planner-supplied UUID:
+    // global lastOrderId/currentDayId and admitted phase. The store preserves
+    // opaque postimages; it neither plans these fields nor derives their IDs.
+    OPERATIONAL_CONTROL = 7;
+    AUDIT_REPORT = 8;
+    CLOSURE = 9;
+    ADVANCE = 10;
+    EXPENSE = 11;
+    STAFF = 12;
+    OPERATIONAL_POLICY = 13;
+  }
+  Kind kind = 1;
+  string id = 2; // Canonical UUID; no integer/label identity.
+  uint64 revision = 3;
+  bool tombstone = 4; // Retained; deleted identities cannot be resurrected.
+  bytes document = 5; // Complete UTF-8 JSON object bytes, preserved exactly.
+}
+message ProofRead {
+  ProofEntity.Kind kind = 1;
+  string id = 2;
+  uint64 expected_revision = 3; // 0 means absence, not a tombstone.
+  bool expected_tombstone = 4;
+}
+message ProofWrite {
+  ProofEntity.Kind kind = 1;
+  string id = 2;
+  uint64 expected_revision = 3;
+  bool tombstone = 4;
+  bytes document = 5;
+}
+message ProofEffect {
+  enum Kind { UNSPECIFIED = 0; AUDIT = 1; PRINT = 2; }
+  string id = 1; // Canonical UUID, globally unique within this installation.
+  Kind kind = 2;
+  bytes payload = 3; // Frozen record only. Proof never sends physical effects.
+}
+message ProofCommitRequest {
+  AuthenticatedRequest auth = 1;
+  string request_id = 2; // UUID immutable across timeout/restart/retry.
+  uint64 authority_epoch = 3;
+  repeated ProofRead reads = 4;
+  repeated ProofWrite writes = 5;
+  repeated ProofEffect effects = 6;
+  bytes application_data = 7; // Opaque; cannot override canonical outcome.
+  // Empty retains inert opaque proof receipts. Exact vynic-print-queue.v1
+  // requires operational.print.queue.proof.v1 and strict versioned admission
+  // of every PRINT in the same durable commit. This is immutable request data,
+  // not a production or physical-dispatch grant.
+  string print_admission = 8;
+  // Queued origin must match the verified four-UUID proof certificate and its
+  // local immutable signed registration. Empty for old inert proof requests.
+  string origin_installation_id = 9;
+}
+message ProofPrintReceipt {
+  uint32 version = 1; // Exactly 1; queue admission, not physical delivery.
+  string job_id = 2;
+  string effect_id = 3;
+  string physical_printer_id = 4;
+  uint64 sequence = 5; // Per physical printer, positive signed int64.
+  string admission_sha256 = 6; // Exact frozen envelope digest, lowercase hex.
+}
+message ProofEvent {
+  string mode = 1;
+  uint64 authority_epoch = 2;
+  uint64 sequence = 3;
+  string request_id = 4;
+  string terminal_id = 5;
+  repeated ProofEntity entities = 6;
+  repeated ProofEffect effects = 7;
+  string print_admission = 8; // Exact immutable originating admission mode.
+  string origin_installation_id = 9; // Producer origin, not observer origin.
+  repeated ProofPrintReceipt print_receipts = 10; // Every queued PRINT, atomically.
+}
+message ProofCommitResult {
+  enum Outcome { UNSPECIFIED = 0; COMMITTED = 1; CONFLICT = 2; }
+  string mode = 1;
+  string request_id = 2;
+  string terminal_id = 3;
+  Outcome outcome = 4;
+  uint64 authority_epoch = 5;
+  uint64 head_sequence = 6; // Historical exact retries may precede client cursor.
+  ProofEvent event = 7; // Present only for COMMITTED; exact durable event.
+  repeated ProofEntity current = 8; // Complete dependencies on CONFLICT only.
+  bytes application_data = 9;
+  string print_admission = 10; // Retained on both success and conflict.
+  string origin_installation_id = 11;
+}
+message ProofResultRequest {
+  AuthenticatedRequest auth = 1;
+  uint64 authority_epoch = 2;
+  string request_id = 3; // Lookup restricted to originating terminal.
+}
+message ProofReplayRequest {
+  AuthenticatedRequest auth = 1;
+  uint64 authority_epoch = 2;
+  uint64 after_sequence = 3;
+  uint32 limit = 4; // 1..100; 0 uses the server default.
+}
+message ProofReplayPage {
+  string mode = 1;
+  uint64 authority_epoch = 2;
+  uint64 after_sequence = 3;
+  uint64 head_sequence = 4;
+  uint64 next_sequence = 5; // Last event sequence, or requested cursor if empty.
+  repeated ProofEvent events = 6; // Strict contiguous ascending sequence.
+}
+message ProofSnapshotRequest {
+  AuthenticatedRequest auth = 1;
+  uint64 authority_epoch = 2;
+}
+message ProofSnapshot {
+  string mode = 1;
+  string venue_id = 2;
+  string installation_id = 3;
+  uint64 authority_epoch = 4;
+  uint64 sequence = 5; // State and cursor from the same transaction.
+  // This checkpoint has entities only, no effects. A client retaining effect
+  // receipts bootstraps through replay from zero and verifies this snapshot;
+  // it must not jump its replay cursor here and silently skip frozen effects.
+  repeated ProofEntity entities = 6;
+}

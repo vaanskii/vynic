@@ -1,3 +1,4 @@
+import 'package:vynic/core/ui/pos_theme.dart';
 import 'package:vynic/apps/windows_pos/screens/login_screen.dart';
 import 'package:vynic/apps/windows_pos/widgets/login/login_desktop_view.dart';
 import 'dart:io';
@@ -26,7 +27,8 @@ import 'package:vynic/apps/windows_pos/widgets/admin/admin_staff_section.dart';
 import 'package:vynic/apps/windows_pos/screens/home_screen.dart';
 
 Widget app(Widget body) => MaterialApp(
-  theme: ThemeData(fontFamily: 'NotoSansGeorgian'),
+  theme: PosTheme.light,
+  debugShowCheckedModeBanner: false,
   builder: (_, child) => PosLocaleHost(
     child: PosInputScope(
       child: RepaintBoundary(key: const ValueKey('capture'), child: child!),
@@ -267,7 +269,12 @@ void main() {
           await tester.tap(find.text('q'));
           await tester.pump();
           expect(controller.text, 'ქq');
-          await tester.tap(find.byTooltip('Close'));
+          await tester.tap(
+            find.descendant(
+              of: find.byType(PosKeyboard),
+              matching: find.byTooltip('Close'),
+            ),
+          );
           await tester.pumpAndSettle();
           expect(controller.text, 'ქq');
           expect(tester.takeException(), isNull);

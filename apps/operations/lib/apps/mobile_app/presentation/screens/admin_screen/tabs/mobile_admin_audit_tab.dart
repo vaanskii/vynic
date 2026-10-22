@@ -189,11 +189,64 @@ class _AuditTabState extends State<_AuditTab>
   @override
   Widget build(BuildContext context) {
     super.build(context);
+    if (MediaQuery.sizeOf(context).width < 700) {
+      return RefreshIndicator(
+        onRefresh: _load,
+        child: ListView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: _adminScrollPadding(context),
+          children: [
+            _buildHeader(),
+            _buildStatusFilter(),
+            _buildStats(),
+            const SizedBox(height: 16),
+            if (_loading)
+              const SizedBox(height: 200, child: _AdminLoading())
+            else if (_error != null)
+              SizedBox(height: 280, child: _ErrorWidget(onRetry: _load))
+            else if (_reports.isEmpty)
+              _buildEmpty()
+            else
+              for (final entry in _sortedDays)
+                _DayGroup(
+                  dayKey: entry.key,
+                  reports: entry.value,
+                  onTapReport: (r) => _showDetails(context, r),
+                ),
+          ],
+        ),
+      );
+    }
     return Column(
       children: [
-        _buildHeader(),
-        _buildStats(),
-        _buildStatusFilter(),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
+          child: LayoutBuilder(
+            builder: (context, box) {
+              if (box.maxWidth < 850)
+                return Column(
+                  children: [
+                    _buildHeader(),
+                    _buildStatusFilter(),
+                    _buildStats(),
+                  ],
+                );
+              return Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SizedBox(
+                    width: 330,
+                    child: Column(
+                      children: [_buildHeader(), _buildStatusFilter()],
+                    ),
+                  ),
+                  const SizedBox(width: 24),
+                  Expanded(child: _buildStats()),
+                ],
+              );
+            },
+          ),
+        ),
         if (_loading)
           const Expanded(child: _AdminLoading())
         else if (_error != null)
@@ -206,69 +259,109 @@ class _AuditTabState extends State<_AuditTab>
     );
   }
 
-  Widget _buildHeader() => Padding(
-    padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-    child: Row(
-      children: [
-        IconButton(
-          icon: const Icon(Icons.chevron_left),
-          onPressed: _prevMonth,
-          color: AdminTheme.text,
-          splashRadius: 20,
-        ),
-        Expanded(
-          child: Text(
-            '${_georgianMonth(_selectedMonth.month)} ${_selectedMonth.year}',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.w700,
-              color: AdminTheme.text,
+  Widget _buildHeader() => MediaQuery.sizeOf(context).width < 500
+      ? Column(
+          children: [
+            Text(
+              '${_georgianMonth(_selectedMonth.month)} ${_selectedMonth.year}',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+                color: AdminTheme.text,
+              ),
             ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                IconButton(
+                  tooltip: 'წინა თვე',
+                  icon: const Icon(Icons.chevron_left),
+                  onPressed: _prevMonth,
+                ),
+                IconButton(
+                  tooltip: 'შემდეგი თვე',
+                  icon: const Icon(Icons.chevron_right),
+                  onPressed: _isCurrentMonth ? null : _nextMonth,
+                ),
+                IconButton(
+                  tooltip: 'განახლება',
+                  icon: const Icon(Icons.refresh_rounded, size: 20),
+                  onPressed: _load,
+                  color: AdminTheme.primary,
+                ),
+              ],
+            ),
+          ],
+        )
+      : Padding(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+          child: Row(
+            children: [
+              IconButton(
+                icon: const Icon(Icons.chevron_left),
+                onPressed: _prevMonth,
+                color: AdminTheme.text,
+                splashRadius: 20,
+              ),
+              Expanded(
+                child: Text(
+                  '${_georgianMonth(_selectedMonth.month)} ${_selectedMonth.year}',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                    color: AdminTheme.text,
+                  ),
+                ),
+              ),
+              IconButton(
+                icon: const Icon(Icons.chevron_right),
+                onPressed: _isCurrentMonth ? null : _nextMonth,
+                color: AdminTheme.primary,
+                splashRadius: 20,
+              ),
+              IconButton(
+                icon: const Icon(Icons.refresh_rounded, size: 20),
+                onPressed: _load,
+                color: AdminTheme.primary,
+                splashRadius: 18,
+              ),
+            ],
           ),
-        ),
-        IconButton(
-          icon: const Icon(Icons.chevron_right),
-          onPressed: _isCurrentMonth ? null : _nextMonth,
-          color: _isCurrentMonth ? AdminTheme.textMuted : Colors.white,
-          splashRadius: 20,
-        ),
-        IconButton(
-          icon: const Icon(Icons.refresh_rounded, size: 20),
-          onPressed: _load,
-          color: AdminTheme.primary,
-          splashRadius: 18,
-        ),
-      ],
-    ),
-  );
+        );
 
-  Widget _buildStats() => Padding(
-    padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-    child: Row(
-      children: [
-        _statChip(
-          'აქტიური',
-          _count(AuditReportStatus.open),
-          const Color(0xFFF59E0B),
-        ),
-        SizedBox(width: 8),
-        _statChip(
-          'დახურული',
-          _count(AuditReportStatus.closed),
-          const Color(0xFF10B981),
-        ),
-        SizedBox(width: 8),
-        _statChip(
-          'გაუქმებული',
-          _count(AuditReportStatus.cancelled),
-          const Color(0xFFEF4444),
-        ),
-        SizedBox(width: 8),
-        _statChip('სულ', _reports.length, AdminTheme.primary),
-      ],
-    ),
-  );
+  Widget _buildStats() {
+    final chips = [
+      _statChip('აქტიური', _count(AuditReportStatus.open), AdminTheme.warn),
+      _statChip('დახურული', _count(AuditReportStatus.closed), AdminTheme.good),
+      _statChip(
+        'გაუქმებული',
+        _count(AuditReportStatus.cancelled),
+        AdminTheme.bad,
+      ),
+      _statChip('სულ', _reports.length, AdminTheme.primary),
+    ];
+    return Padding(
+      padding: const EdgeInsets.only(top: 12),
+      child: MediaQuery.sizeOf(context).width < 500
+          ? Column(
+              children: [
+                Row(children: [chips[0], const SizedBox(width: 8), chips[1]]),
+                const SizedBox(height: 8),
+                Row(children: [chips[2], const SizedBox(width: 8), chips[3]]),
+              ],
+            )
+          : Row(
+              children: [
+                for (var i = 0; i < chips.length; i++) ...[
+                  if (i > 0) const SizedBox(width: 8),
+                  chips[i],
+                ],
+              ],
+            ),
+    );
+  }
 
   Widget _statChip(String label, int value, Color color) => Expanded(
     child: Container(
@@ -431,6 +524,20 @@ class _DayGroup extends StatelessWidget {
   Widget build(BuildContext context) {
     final date = DateTime.tryParse(dayKey) ?? DateTime.now();
     final georgianDate = _georgianDate(date);
+    final compact = MediaQuery.sizeOf(context).width < 700;
+    Widget badges() => Wrap(
+      spacing: 4,
+      runSpacing: 4,
+      children: [
+        _miniBadge('აქტ.', _count(AuditReportStatus.open), AdminTheme.warn),
+        _miniBadge('დახ.', _count(AuditReportStatus.closed), AdminTheme.good),
+        _miniBadge(
+          'გაუქ.',
+          _count(AuditReportStatus.cancelled),
+          AdminTheme.bad,
+        ),
+      ],
+    );
 
     return Card(
       color: AdminTheme.surfaceElevated,
@@ -448,11 +555,13 @@ class _DayGroup extends StatelessWidget {
           childrenPadding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
           iconColor: AdminTheme.primary,
           collapsedIconColor: AdminTheme.textMuted,
-          leading: Icon(
-            Icons.calendar_month_outlined,
-            color: AdminTheme.primary,
-            size: 20,
-          ),
+          leading: compact
+              ? null
+              : Icon(
+                  Icons.calendar_month_outlined,
+                  color: AdminTheme.primary,
+                  size: 20,
+                ),
           title: Text(
             georgianDate,
             style: TextStyle(
@@ -461,30 +570,17 @@ class _DayGroup extends StatelessWidget {
               color: AdminTheme.text,
             ),
           ),
-          subtitle: Text(
-            '$dayKey • სულ ${reports.length}',
-            style: TextStyle(fontSize: 12, color: AdminTheme.textMuted),
-          ),
-          trailing: Wrap(
-            spacing: 4,
+          subtitle: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _miniBadge(
-                'A',
-                _count(AuditReportStatus.open),
-                const Color(0xFFF59E0B),
+              Text(
+                '$dayKey • სულ ${reports.length}',
+                style: TextStyle(fontSize: 12, color: AdminTheme.textMuted),
               ),
-              _miniBadge(
-                'D',
-                _count(AuditReportStatus.closed),
-                const Color(0xFF10B981),
-              ),
-              _miniBadge(
-                'G',
-                _count(AuditReportStatus.cancelled),
-                const Color(0xFFEF4444),
-              ),
+              if (compact) ...[const SizedBox(height: 8), badges()],
             ],
           ),
+          trailing: compact ? null : badges(),
           children: (() {
             final ordered = List<AuditReport>.from(reports)
               ..sort((a, b) {
@@ -552,11 +648,11 @@ class _AuditReportCard extends StatelessWidget {
   static Color _statusColor(AuditReportStatus s) {
     switch (s) {
       case AuditReportStatus.open:
-        return const Color(0xFFF59E0B);
+        return AdminTheme.warn;
       case AuditReportStatus.closed:
-        return const Color(0xFF10B981);
+        return AdminTheme.good;
       case AuditReportStatus.cancelled:
-        return const Color(0xFFEF4444);
+        return AdminTheme.bad;
     }
   }
 
@@ -656,8 +752,9 @@ class _AuditReportCard extends StatelessWidget {
               icon: const Icon(Icons.fact_check_outlined, size: 15),
               label: const Text('დეტალები'),
               style: TextButton.styleFrom(
-                foregroundColor: const Color(0xFF2563EB),
+                foregroundColor: AdminTheme.primary,
                 textStyle: const TextStyle(
+                  fontFamily: 'NotoSansGeorgian',
                   fontSize: 12,
                   fontWeight: FontWeight.w700,
                 ),
@@ -682,7 +779,11 @@ class _AuditReportCard extends StatelessWidget {
     ),
     child: RichText(
       text: TextSpan(
-        style: TextStyle(fontSize: 11, color: AdminTheme.textMuted),
+        style: TextStyle(
+          fontFamily: 'NotoSansGeorgian',
+          fontSize: 11,
+          color: AdminTheme.textMuted,
+        ),
         children: [
           TextSpan(
             text: '$label: ',
@@ -753,14 +854,14 @@ class _AuditDetailDialog extends StatelessWidget {
     final events = report.orderedEvents;
     return Dialog(
       insetPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 24),
-      backgroundColor: AdminTheme.surfaceElevated,
+      backgroundColor: AdminTheme.surface,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
         side: BorderSide(color: AdminTheme.border),
       ),
       child: ConstrainedBox(
         constraints: BoxConstraints(
-          maxWidth: 600,
+          maxWidth: 880,
           maxHeight: MediaQuery.of(context).size.height * 0.88,
         ),
         child: Padding(
@@ -775,7 +876,7 @@ class _AuditDetailDialog extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Audit #${report.orderId}',
+                          'შეკვეთის ისტორია #${report.orderId}',
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.w700,
@@ -810,8 +911,10 @@ class _AuditDetailDialog extends StatelessWidget {
                       color: AdminTheme.textMuted,
                       size: 20,
                     ),
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(),
+                    constraints: const BoxConstraints(
+                      minWidth: 48,
+                      minHeight: 48,
+                    ),
                   ),
                 ],
               ),
@@ -821,23 +924,23 @@ class _AuditDetailDialog extends StatelessWidget {
                 runSpacing: 5,
                 children: [
                   _chip(
-                    'Opened by',
+                    'გახსნა',
                     '${report.openedByName} (${report.openedById})',
                   ),
-                  _chip('Opened at', _fmtTs(report.openedAt)),
+                  _chip('გახსნის დრო', _fmtTs(report.openedAt)),
                   if (report.closedAt != null)
-                    _chip('Closed at', _fmtTs(report.closedAt!)),
+                    _chip('დახურვის დრო', _fmtTs(report.closedAt!)),
                   if (report.closedByName != null)
                     _chip(
-                      'Closed by',
+                      'დახურა',
                       '${report.closedByName!} (${report.closedById ?? '-'})',
                     ),
-                  _chip('Status', _statusLabel(report.status)),
+                  _chip('მდგომარეობა', _statusLabel(report.status)),
                 ],
               ),
               SizedBox(height: 12),
               Text(
-                'ქმედებების ქრონოლოგია (Who • What • When)',
+                'ქმედებების ისტორია',
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w700,
@@ -883,7 +986,11 @@ class _AuditDetailDialog extends StatelessWidget {
     ),
     child: RichText(
       text: TextSpan(
-        style: TextStyle(fontSize: 11, color: AdminTheme.textMuted),
+        style: TextStyle(
+          fontFamily: 'NotoSansGeorgian',
+          fontSize: 11,
+          color: AdminTheme.textMuted,
+        ),
         children: [
           TextSpan(
             text: '$label: ',
@@ -1081,8 +1188,11 @@ class _EventTile extends StatelessWidget {
             spacing: 6,
             runSpacing: 4,
             children: [
-              _metaChip('Operator', '${event.waiterName} (${event.waiterId})'),
-              _metaChip('Qty', '${event.previousQty} → ${event.newQty}'),
+              _metaChip('ოპერატორი', '${event.waiterName} (${event.waiterId})'),
+              _metaChip(
+                'რაოდენობა',
+                'ადრე ${event.previousQty}, ახლა ${event.newQty}',
+              ),
               // Payment semantics come from the structured close details,
               // never from the free-text note.
               for (final chip in CloseEventPresentation.chips(event))
@@ -1113,13 +1223,17 @@ class _EventTile extends StatelessWidget {
   Widget _metaChip(String label, String value) => Container(
     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
     decoration: BoxDecoration(
-      color: AdminTheme.text,
+      color: AdminTheme.surfaceElevated,
       borderRadius: BorderRadius.circular(8),
-      border: Border.all(color: const Color(0xFFE2E8F0)),
+      border: Border.all(color: AdminTheme.border),
     ),
     child: RichText(
       text: TextSpan(
-        style: TextStyle(fontSize: 11, color: AdminTheme.textMuted),
+        style: TextStyle(
+          fontFamily: 'NotoSansGeorgian',
+          fontSize: 11,
+          color: AdminTheme.textMuted,
+        ),
         children: [
           TextSpan(
             text: '$label: ',

@@ -1,0 +1,11 @@
+{
+  "status": "WRAPPER_FAILED",
+  "wrapperExitCode": 1,
+  "failure": "Result parser called .get on a list of batched Flutter machine events; child exit code was not persisted before parser failure.",
+  "sourceManifestSHA256": "193e4800e5d0733a30bc6c8d4ac993590219363941e69a787bba5ac3681c8f68",
+  "scriptSHA256": "cb75c5e6d319f3c061742a15cbec9c80ea37efbc8ea392371ee33465c5485deb",
+  "outputSHA256": "9c6d00b745e4e1b21329325550b031343f880438478bad75816892176839e38c",
+  "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "recordedAtUTC": "2026-10-06T17:25:39.227709+00:00",
+  "claims": "No zero exit or normalized counts attributed to this failed wrapper; retained historical output only."
+}

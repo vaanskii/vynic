@@ -1,0 +1,37 @@
+{
+  "revision": 2,
+  "sourceManifest": {
+    "sha256": "638458ddc270fa3638c52f2a7bc491e6327bebbf2a46caba9fb451f64bae680f",
+    "bytes": 7137,
+    "path": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/printtransport-source-manifest.v2.json"
+  },
+  "previousManifest": {
+    "sha256": "237deec3436b5cfa9983cc53ab4b52b4e9c2dcce0a9ca592efb8b26938160bda",
+    "bytes": 6871,
+    "path": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/printtransport-source-manifest.json"
+  },
+  "changedSource": {
+    "sha256": "35596e34502d6c6f05e768a22df0c1088d867b87a4fb90d1c4595d2f38350121",
+    "bytes": 11104,
+    "path": "apps/edge/native/print_helper/protocol_test.cpp"
+  },
+  "testExecutable": {
+    "sha256": "5ea12d153ce2ed408d0661595bd3c3afa41d7c969d81c1b87bdd956897f7d125",
+    "bytes": 5940224,
+    "filename": "printtransport-windows.test.exe"
+  },
+  "sdkManifest": {
+    "sha256": "774b989ac815f9029a02e01c309b20153d6a850d8d03d34e09cbf687ed6b673a",
+    "bytes": 4492,
+    "path": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/print-helper-sdk-sha256.json"
+  },
+  "portableTestLog": {
+    "sha256": "c238ab02f873d04667d26ed96d49beb21fb2dde581071df13002e4451a18ca4e",
+    "bytes": 70,
+    "path": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/print-helper-protocol-tests.v2.log"
+  },
+  "whitespaceCheck": "PASS",
+  "unchangedSourceCount": 33,
+  "sourceCount": 34,
+  "ownedSourceCount": 27
+}

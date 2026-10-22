@@ -275,6 +275,21 @@ describeDatabase('Platform control plane (PostgreSQL)', () => {
       ).rejects.toBeInstanceOf(UnauthorizedException);
     });
 
+    it('refuses a customer account token', async () => {
+      // Owners sign in on the same product site, but their token is for the
+      // customer audience and never authenticates Platform Admin.
+      const customerToken = jwt.sign(
+        { sub: adminId, typ: 'CUSTOMER' },
+        { audience: 'vynic-customer', issuer: 'vynic' },
+      );
+
+      await expect(
+        guard.canActivate(
+          contextFor({ authorization: `Bearer ${customerToken}` }).context,
+        ),
+      ).rejects.toBeInstanceOf(UnauthorizedException);
+    });
+
     it('refuses a token that claims the platform type but not the audience', async () => {
       const forged = jwt.sign({ sub: adminId, typ: 'PLATFORM' });
 
@@ -369,6 +384,9 @@ describeDatabase('Platform control plane (PostgreSQL)', () => {
       expect(
         await prisma.venuePlanAssignment.count({ where: { venueId: a.id } }),
       ).toBe(0);
+      expect(
+        await prisma.venueSubscription.findUnique({ where: { venueId: a.id } }),
+      ).toMatchObject({ status: 'NO_PLAN' });
     });
 
     it('never reuses the deterministic bootstrap ids', () => {
@@ -434,6 +452,14 @@ describeDatabase('Platform control plane (PostgreSQL)', () => {
         planId: await planId('POS_WEBSITE_MANAGER'),
       });
       await venues.assignPlan(actor, venueBId, { planId: await planId('POS') });
+      // A plan alone grants nothing; access needs an explicit subscription.
+      expect((await venues.readProduct(venueBId)).effectiveFeatures).toEqual(
+        [],
+      );
+      await prisma.venueSubscription.updateMany({
+        where: { venueId: { in: [venueAId, venueBId] } },
+        data: { status: 'ACTIVE', startedAt: new Date() },
+      });
 
       const productA = await venues.readProduct(venueAId);
       const productB = await venues.readProduct(venueBId);
@@ -447,10 +473,7 @@ describeDatabase('Platform control plane (PostgreSQL)', () => {
           FeatureKeys.MANAGER_APP,
         ]),
       );
-      expect(productB.effectiveFeatures).toEqual([
-        FeatureKeys.NON_FISCAL_CLOSE,
-        FeatureKeys.POS,
-      ]);
+      expect(productB.effectiveFeatures).toEqual([FeatureKeys.POS]);
     });
 
     it('an override changes what the production guard enforces', async () => {
@@ -493,10 +516,7 @@ describeDatabase('Platform control plane (PostgreSQL)', () => {
       );
 
       expect(product.overrides).toEqual([]);
-      expect(product.effectiveFeatures).toEqual([
-        FeatureKeys.NON_FISCAL_CLOSE,
-        FeatureKeys.POS,
-      ]);
+      expect(product.effectiveFeatures).toEqual([FeatureKeys.POS]);
     });
 
     it('a disabling override wins over the plan', async () => {
@@ -572,6 +592,10 @@ describeDatabase('Platform control plane (PostgreSQL)', () => {
     });
 
     it('keeps each venue hostname to itself', async () => {
+      // Hostnames need WEBSITE; the POS-only Venue gets it by override.
+      await venues.setFeatureOverride(actor, venueBId, FeatureKeys.WEBSITE, {
+        effect: FeatureOverrideEffect.ENABLED,
+      });
       await venues.registerDomain(actor, venueBId, { hostname: hostB });
 
       await expect(
@@ -785,7 +809,7 @@ describeDatabase('Platform control plane (PostgreSQL)', () => {
       // shared with the other specs, which write platform audit events of
       // their own, and a global read would assert over theirs too.
       const events = (await audit.recent(500, 0)).filter(
-        (event) => event.actor.id === adminId,
+        (event) => event.actor?.id === adminId,
       );
       const actions = events.map((event) => event.action);
 
@@ -808,7 +832,7 @@ describeDatabase('Platform control plane (PostgreSQL)', () => {
         ]),
       );
       for (const event of events) {
-        expect(event.actor.id).toBe(adminId);
+        expect(event.actor?.id).toBe(adminId);
       }
 
       const serialized = JSON.stringify(events);

@@ -1,0 +1,318 @@
+{
+  "schema": 1,
+  "sealedAtUtc": "2026-10-06T17:07:24.923136+00:00",
+  "verdict": "PASS_BOUNDED_READONLY_MANUAL_HEALTH_UI",
+  "sourceRoot": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/source",
+  "ownedFiles": 6,
+  "ownedManifest": {
+    "path": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/metadata/printer-agent-ui-owned-hashes.json",
+    "sha256": "b7bc1d8fb500858976d2e8bc9c62af8031ce19ac1d7b83cc3c3b5e955fb54754",
+    "bytes": 1746
+  },
+  "beforeManifest": {
+    "path": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/metadata/printer-agent-ui-before-hashes.json",
+    "sha256": "8bb4da74fbc3058ddd69d6c8e22dce1b9911b10f54fca97bc17dcecffe54323f",
+    "bytes": 910
+  },
+  "sourceStableAfter": {
+    "apps/operations/lib/apps/windows_pos/widgets/admin/printers/admin_printers_section.dart": true,
+    "apps/operations/lib/apps/windows_pos/widgets/admin/printers/printer_agent_status_card.dart": true,
+    "apps/operations/lib/core/services/printing/printer_agent_runtime_profile.dart": true,
+    "apps/operations/test/support/printer_agent_status_fixture.dart": true,
+    "apps/operations/test/unit/printer_agent_runtime_profile_test.dart": true,
+    "apps/operations/test/widget/printer_agent_status_card_test.dart": true
+  },
+  "inputsManifest": {
+    "path": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/metadata/printer-agent-ui-validation-inputs.json",
+    "sha256": "3fe50bd0a8f8a9b8b7f72f6790b560c496cdc76c9c7e12c8a130a4867cb7a67d",
+    "bytes": 1603
+  },
+  "inputsStableAfter": {
+    "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/tools/printer-agent-server.test": true,
+    "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/source/apps/operations/lib/core/services/printing/printer_agent_client.dart": true,
+    "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/source/apps/operations/lib/core/services/printing/printer_agent_profile.dart": true,
+    "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/source/apps/operations/pubspec.yaml": true,
+    "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/source/apps/operations/pubspec.lock": true,
+    "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/source/apps/operations/.dart_tool/package_config.json": true
+  },
+  "analysis": {
+    "path": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/printer-agent-ui-analyze-final.log",
+    "sha256": "62a38c54c4399ff24a04b006c1f9af08e01c1a937af0a17ab1294126f665848a",
+    "bytes": 96,
+    "exit": 0,
+    "items": 6,
+    "issues": 0
+  },
+  "tests": {
+    "path": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/printer-agent-ui-tests-final.jsonl",
+    "sha256": "a463a8d885b67fe72fed1a34cfc804334d1d145c41ac5080e573a627546b9d8d",
+    "bytes": 132177,
+    "stderr": {
+      "path": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/printer-agent-ui-tests-final.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "exit": 0,
+    "done": {
+      "success": true,
+      "type": "done",
+      "time": 8030
+    },
+    "visiblePass": 90,
+    "hiddenLoadsPass": 4,
+    "skip": 0,
+    "errors": 0,
+    "bySuite": {
+      "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/source/apps/operations/test/unit/printer_agent_runtime_profile_test.dart": {
+        "hiddenPass": 1,
+        "visiblePass": 32
+      },
+      "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/source/apps/operations/test/widget/printer_agent_status_card_test.dart": {
+        "hiddenPass": 1,
+        "visiblePass": 33
+      },
+      "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/source/apps/operations/test/widget/pos02_admin_printers_test.dart": {
+        "hiddenPass": 1,
+        "visiblePass": 9
+      },
+      "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/source/apps/operations/test/widget/printer_route_configuration_test.dart": {
+        "hiddenPass": 1,
+        "visiblePass": 16
+      }
+    },
+    "actualWire": [
+      {
+        "name": "manual card uses real profile and mTLS health then shows actual offline failure",
+        "result": "success",
+        "skipped": false
+      }
+    ],
+    "command": [
+      "flutter",
+      "--suppress-analytics",
+      "test",
+      "--no-pub",
+      "--machine",
+      "test/unit/printer_agent_runtime_profile_test.dart",
+      "test/widget/printer_agent_status_card_test.dart",
+      "test/widget/pos02_admin_printers_test.dart",
+      "test/widget/printer_route_configuration_test.dart"
+    ],
+    "env": {
+      "CI": "true",
+      "DART_SUPPRESS_ANALYTICS": "true",
+      "FLUTTER_SUPPRESS_ANALYTICS": "true",
+      "VYNIC_PRINTER_AGENT_GO_FIXTURE": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/tools/printer-agent-server.test"
+    },
+    "authorization": "accepted synthetic loopback escalation under explicit task authorization"
+  },
+  "actualFixture": {
+    "path": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/tools/printer-agent-server.test",
+    "sha256": "12be5c600028066e93d9135fe91637df0026e40d274d78d1809c22c5a4e977f2",
+    "bytes": 24823410,
+    "launch": [
+      "-test.run=^TestPrinterAgentProcess$",
+      "-test.v"
+    ],
+    "connectorMocked": false,
+    "syntheticEnrollmentGetter": true,
+    "distinctPOSAndGoInstallationAsserted": true,
+    "realServerSQLiteAndMutualTls": true,
+    "ownedStopThenUnavailable": true,
+    "childAssertsZero": [
+      "jobs",
+      "receipts",
+      "claims",
+      "attempts",
+      "beeps"
+    ],
+    "physicalSender": false
+  },
+  "profile": {
+    "rootKeys": [
+      "version",
+      "provisionStatus",
+      "listenAddress",
+      "clientId",
+      "currentDeviceInstallationId",
+      "pins",
+      "serverCertificatePath",
+      "serverCertificateSha256",
+      "clientCertificatePath",
+      "clientPrivateKeyPath",
+      "clientCertificateSha256"
+    ],
+    "version": 1,
+    "provisionStatus": "HELD_PROVISIONING",
+    "pinsKeys": 23,
+    "maxProfileBytes": 65536,
+    "maxPemBytes": 16384,
+    "identity": "POS getter validates explicit currentDeviceInstallationId; distinct Go pins.installationId remains exact in TLS profile/health. Config is readonly context, never production authority.",
+    "transport": "explicit127.0.0.1 port; exact leafDER/time/SNI, noCAfallback; client cert/key memory only"
+  },
+  "toolchain": {
+    "platform": "macOS-27.0-arm64-arm-64bit",
+    "sdkRoot": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/tools/flutter-sdk",
+    "metadata": {
+      "frameworkVersion": "3.44.1",
+      "channel": "stable",
+      "repositoryUrl": "https://github.com/flutter/flutter.git",
+      "frameworkRevision": "924134a44c189315be2148659913dda1671cbe99",
+      "frameworkCommitDate": "2026-05-29 12:13:22 -0400",
+      "engineRevision": "c416acfeb8126e097f758c664aaa3da929e27da0",
+      "engineCommitDate": "2026-05-27 20:19:31.000Z",
+      "engineContentHash": "39b1f7043775b9578bbb26a1676e79c4e31c8b5e",
+      "engineBuildDate": "2026-05-27 13:50:43.210",
+      "dartSdkVersion": "3.12.1",
+      "devToolsVersion": "2.57.0",
+      "flutterVersion": "3.44.1"
+    },
+    "noPubGetOrAcquisition": true,
+    "installedDependenciesReadOnly": true
+  },
+  "independentReview": {
+    "path": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/printer-agent-ui-independent-review.json",
+    "sha256": "b967d2751b4fbb7c14386cbd07caabcb75912a56837dbdfb9cbc8bc8f1573e36",
+    "bytes": 3350
+  },
+  "getterProvenance": {
+    "files": {
+      "original": {
+        "path": "/Users/vaanskii/Developer/vynic/apps/operations/lib/core/services/edge/edge_device_credential_store.dart",
+        "sha256": "2015a817e6026d52fa669816ecf8cc56a45ec1a9df81c949f07c5f7f25fd8191",
+        "bytes": 11937
+      },
+      "earlierFrozen": {
+        "path": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/source/apps/operations/lib/core/services/edge/edge_device_credential_store.dart",
+        "sha256": "2015a817e6026d52fa669816ecf8cc56a45ec1a9df81c949f07c5f7f25fd8191",
+        "bytes": 11937
+      },
+      "continuation": {
+        "path": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/source/apps/operations/lib/core/services/edge/edge_device_credential_store.dart",
+        "sha256": "2015a817e6026d52fa669816ecf8cc56a45ec1a9df81c949f07c5f7f25fd8191",
+        "bytes": 11937
+      }
+    },
+    "changed": false,
+    "installationGetterLine": 94,
+    "deviceGetterLine": 97,
+    "venueGetterLine": 104
+  },
+  "originalPathGuard": {
+    "apps/operations/lib/apps/windows_pos/widgets/admin/printers/admin_printers_section.dart": {
+      "exists": true,
+      "sha256": "4d9c61d780bf49660694ee306a0a51f0b4466dc330d52e137a189a374061366c",
+      "matchesBefore": true
+    },
+    "apps/operations/lib/apps/windows_pos/widgets/admin/printers/printer_agent_status_card.dart": {
+      "exists": false,
+      "sha256": null,
+      "matchesBefore": true
+    },
+    "apps/operations/lib/core/services/printing/printer_agent_runtime_profile.dart": {
+      "exists": false,
+      "sha256": null,
+      "matchesBefore": true
+    },
+    "apps/operations/test/support/printer_agent_status_fixture.dart": {
+      "exists": false,
+      "sha256": null,
+      "matchesBefore": true
+    },
+    "apps/operations/test/unit/printer_agent_runtime_profile_test.dart": {
+      "exists": false,
+      "sha256": null,
+      "matchesBefore": true
+    },
+    "apps/operations/test/widget/printer_agent_status_card_test.dart": {
+      "exists": false,
+      "sha256": null,
+      "matchesBefore": true
+    }
+  },
+  "whitespaceChecks": {
+    "apps/operations/lib/apps/windows_pos/widgets/admin/printers/admin_printers_section.dart": {
+      "exit": 1,
+      "output": "",
+      "whitespaceClean": true
+    },
+    "apps/operations/lib/apps/windows_pos/widgets/admin/printers/printer_agent_status_card.dart": {
+      "exit": 1,
+      "output": "",
+      "whitespaceClean": true
+    },
+    "apps/operations/lib/core/services/printing/printer_agent_runtime_profile.dart": {
+      "exit": 1,
+      "output": "",
+      "whitespaceClean": true
+    },
+    "apps/operations/test/support/printer_agent_status_fixture.dart": {
+      "exit": 1,
+      "output": "",
+      "whitespaceClean": true
+    },
+    "apps/operations/test/unit/printer_agent_runtime_profile_test.dart": {
+      "exit": 1,
+      "output": "",
+      "whitespaceClean": true
+    },
+    "apps/operations/test/widget/printer_agent_status_card_test.dart": {
+      "exit": 1,
+      "output": "",
+      "whitespaceClean": true
+    }
+  },
+  "retainedHistory": [
+    {
+      "path": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/printer-agent-ui-analyze-candidate.log",
+      "sha256": "88de260a52b806f7bf68f8c19c35721d39a8c3eb554c4205d82c7e335da978af",
+      "bytes": 1492,
+      "status": "telemetry write blocked"
+    },
+    {
+      "path": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/printer-agent-ui-analyze-candidate-suppressed.log",
+      "sha256": "fae90ccc5d28f4e5f28b3fc8d8251b1883964de78ccf21b166c1046f547e5d4a",
+      "bytes": 2785,
+      "status": "child analyzer telemetry blocked"
+    },
+    {
+      "path": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/printer-agent-ui-analyze-candidate-ci.log",
+      "sha256": "8ac2a479af6347bb2aad17242f105dacc64c3fbdecf3dfab5821b4224c4fd000",
+      "bytes": 575,
+      "status": "two infos fixed without package changes"
+    },
+    {
+      "path": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/printer-agent-ui-tests-candidate.jsonl",
+      "sha256": "8574bb54ad70d5abcf225f6e8b71d0ca1d7eb3c1d0f0b442e83001440e03ca7f",
+      "bytes": 4149,
+      "status": "default sandbox loopback blocked"
+    },
+    {
+      "path": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/printer-agent-ui-tests-authorized.jsonl",
+      "sha256": "e77a22e13554a4f29b548e04c4ffcea5434dab5d2ffc26bb7a09c342b7f08e87",
+      "bytes": 75824,
+      "status": "interrupted fake-clock fixture wait; no successful done"
+    },
+    {
+      "path": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/printer-agent-ui-tests-actual-candidate.jsonl",
+      "sha256": "4be1bbccac1cff75c1f0ceaf0ca182b575943093f96f462d4b7c72edcbafbf53",
+      "bytes": 86880,
+      "status": "PASS60 old10-key contract superseded by explicit distinct installation correction"
+    }
+  ],
+  "remainingBlockers": [
+    "Signed Device/POS origin↔Go installation/host admission authority mapping remains pending.",
+    "Manual historical health is not continuously monitored availability, joined shared-replica health or physical qualification.",
+    "Service installation/start, credential provisioning and physical cutover require separate qualification; existing printing stays unchanged."
+  ],
+  "excludedWrites": [
+    "original repository",
+    "old sealed source/proofs",
+    "Go/modules",
+    "backend/platform-web",
+    "global configuration",
+    "real credentials",
+    "service installation",
+    "printer output"
+  ]
+}

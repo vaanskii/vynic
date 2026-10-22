@@ -1,0 +1,101 @@
+[
+  {
+    "name": "web03",
+    "exitCode": 0,
+    "passed": 26,
+    "failed": 0,
+    "skipped": 0
+  },
+  {
+    "name": "web06-regression",
+    "exitCode": 0,
+    "passed": 7,
+    "failed": 0,
+    "skipped": 0
+  },
+  {
+    "name": "w1-regression",
+    "exitCode": 0,
+    "passed": 8,
+    "failed": 0,
+    "skipped": 0
+  },
+  {
+    "name": "website-regression",
+    "exitCode": 0,
+    "passed": 23,
+    "failed": 0,
+    "skipped": 0
+  },
+  {
+    "name": "sec01-regression",
+    "exitCode": 0,
+    "passed": 45,
+    "failed": 0,
+    "skipped": 0
+  },
+  {
+    "name": "sec02-regression",
+    "exitCode": 0,
+    "passed": 25,
+    "failed": 0,
+    "skipped": 0
+  },
+  {
+    "name": "tenant-regression",
+    "exitCode": 0,
+    "passed": 20,
+    "failed": 0,
+    "skipped": 0
+  },
+  {
+    "name": "backend-aggregate",
+    "exitCode": 0,
+    "passed": 851,
+    "failed": 0,
+    "skipped": 801
+  },
+  {
+    "name": "backend-typecheck",
+    "exitCode": 0
+  },
+  {
+    "name": "backend-build",
+    "exitCode": 0
+  },
+  {
+    "name": "backend-new-lint",
+    "exitCode": 0
+  },
+  {
+    "name": "backend-touched-lint",
+    "exitCode": 1
+  },
+  {
+    "name": "prisma-validate",
+    "exitCode": 0
+  },
+  {
+    "name": "frontend-aggregate",
+    "exitCode": 0,
+    "passed": 176,
+    "failed": 0,
+    "skipped": 0
+  },
+  {
+    "name": "frontend-build",
+    "exitCode": 0
+  },
+  {
+    "name": "frontend-new-lint",
+    "exitCode": 0
+  },
+  {
+    "name": "frontend-touched-lint",
+    "exitCode": 1
+  },
+  {
+    "name": "contracts",
+    "exitCode": 0
+  }
+]

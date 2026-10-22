@@ -902,4 +902,271 @@ describeDatabase('Cloud Sale ledger (PostgreSQL)', () => {
       ]),
     );
   });
+  it('separates creator and closer attribution without inventing historical staff IDs', async () => {
+    await sync.sync(
+      venueA,
+      [
+        sale('actor-one', {
+          createdBy: 'Original waiter',
+          closedById: 'Closing manager',
+        }),
+        sale('actor-two', {
+          createdBy: 'Renamed waiter',
+          closedById: 'Closing manager',
+        }),
+        sale('actor-unknown', { createdBy: 'unknown', closedById: null }),
+        sale('actor-internal', {
+          isFiscal: false,
+          collectedNow: '0.00',
+          payments: [],
+        }),
+        sale('actor-void', { isCancelled: true }),
+        sale('actor-restored', { restoredToOrder: true }),
+      ],
+      [],
+    );
+    await sync.sync(
+      venueB,
+      [sale('actor-foreign', { createdBy: 'Secret other venue' })],
+      [],
+    );
+    const creator = await queries.getStaff(venueA, {
+      from: '2026-09-04',
+      to: '2026-09-04',
+      attribution: 'creator',
+    });
+    expect(creator.staff.map((row) => row.staffName)).toEqual([
+      'Original waiter',
+      'Renamed waiter',
+      'Unknown / system',
+    ]);
+    expect(creator.staff.every((row) => row.identityStable === false)).toBe(
+      true,
+    );
+    expect(creator.staff[0]).toMatchObject({
+      identityBasis: 'RECORDED_POS_USERNAME',
+      revenue: '100.00',
+    });
+    expect(creator.staff[2]).toMatchObject({
+      staffId: null,
+      identityBasis: 'UNKNOWN',
+    });
+    const closer = await queries.getStaff(venueA, {
+      from: '2026-09-04',
+      to: '2026-09-04',
+    });
+    expect(closer.staff[0]).toMatchObject({
+      staffName: 'Closing manager',
+      saleCount: 2,
+      revenue: '200.00',
+    });
+    const rank = await queries.getStaffPerformance(venueA, {
+      from: '2026-09-04',
+      to: '2026-09-04',
+    });
+    expect(rank[0]).toMatchObject({
+      waiterName: 'Original waiter',
+      totalSales: 100,
+      orderCount: 1,
+    });
+    const stored = await prisma.cloudSale.findFirstOrThrow({
+      where: { venueId: venueA.venueId, posSaleId: 'actor-one' },
+    });
+    const detail: unknown = await queries.getSale(venueA, stored.id);
+    expect(detail).toMatchObject({
+      attribution: {
+        creator: { staffName: 'Original waiter' },
+        closer: { staffName: 'Closing manager' },
+      },
+    });
+    await expect(
+      queries.getStaff(venueA, { attribution: 'invented' }),
+    ).rejects.toThrow('Attribution must');
+  });
+
+  it('requests bounded replay after Cloud loses already-acknowledged retained Sales', async () => {
+    const rows = [sale('replay-one'), sale('replay-two')];
+    const day = {
+      businessDate: '2026-09-04',
+      expectedSaleCount: 2,
+      expectedRevenue: '200.00',
+      uploadComplete: true,
+    };
+    await sync.sync(venueA, rows, [day]);
+    await sync.sync(venueB, rows, [day]);
+    await prisma.cloudSale.deleteMany({
+      where: { venueId: venueA.venueId, posSaleId: 'replay-two' },
+    });
+    const lost = await sync.sync(venueA, [], [day]);
+    expect(lost.retryBusinessDates).toEqual(['2026-09-04']);
+    expect(
+      (
+        await queries.getSummary(venueA, {
+          from: day.businessDate,
+          to: day.businessDate,
+        })
+      ).provenance,
+    ).toBe('PARTIAL');
+    // A replay preserves the identity of the surviving row and creates only
+    // the genuinely missing row; ordinary incomplete batches never restart.
+    expect(
+      (await sync.sync(venueA, rows, [{ ...day, uploadComplete: false }]))
+        .retryBusinessDates,
+    ).toEqual([]);
+    expect((await sync.sync(venueA, [], [day])).retryBusinessDates).toEqual([]);
+    expect(
+      (
+        await queries.getSummary(venueA, {
+          from: day.businessDate,
+          to: day.businessDate,
+        })
+      ).revenue,
+    ).toBe('200.00');
+    expect(
+      await prisma.cloudSale.count({ where: { venueId: venueA.venueId } }),
+    ).toBe(2);
+    expect(
+      await prisma.cloudSale.count({ where: { venueId: venueB.venueId } }),
+    ).toBe(2);
+  });
+
+  it('aggregate-only history cannot manufacture detailed products or staff', async () => {
+    await prisma.setting.create({
+      data: {
+        venueId: venueA.venueId,
+        key: 'salesSummary:2026-09-04',
+        value: JSON.stringify({ totalRevenue: 400, orderCount: 4 }),
+      },
+    });
+    for (const result of [
+      await queries.getProducts(venueA, {
+        from: '2026-09-04',
+        to: '2026-09-04',
+      }),
+      await queries.getStaff(venueA, {
+        from: '2026-09-04',
+        to: '2026-09-04',
+        attribution: 'creator',
+      }),
+      await queries.listSales(venueA, { from: '2026-09-04', to: '2026-09-04' }),
+    ]) {
+      expect(result.provenance).toBe('PARTIAL');
+      expect(result.warning).toContain('Aggregate-only history');
+    }
+    expect((await queries.getRecordedStaffHistory(venueA)).staff).toEqual([]);
+  });
+
+  it('bounded upload remains partial until the final ACK declaration, then paginates one pinned day', async () => {
+    const rows = Array.from({ length: 251 }, (_, index) =>
+      sale(`bounded-${index}`),
+    );
+    const declaration = {
+      businessDate: '2026-09-04',
+      expectedSaleCount: 251,
+      expectedRevenue: '25100.00',
+      legacyRevenue: '25100.00',
+      uploadComplete: false,
+    };
+    const first = await sync.sync(venueA, rows.slice(0, 250), [declaration]);
+    expect(first.acknowledgements).toHaveLength(250);
+    expect(
+      (
+        await queries.getSummary(venueA, {
+          from: '2026-09-04',
+          to: '2026-09-04',
+        })
+      ).provenance,
+    ).toBe('PARTIAL');
+    await sync.sync(venueA, rows.slice(250), [declaration]);
+    expect(
+      (
+        await queries.getSummary(venueA, {
+          from: '2026-09-04',
+          to: '2026-09-04',
+        })
+      ).provenance,
+    ).toBe('PARTIAL');
+    await sync.sync(venueA, [], [{ ...declaration, uploadComplete: true }]);
+    const summary = await queries.getSummary(venueA, {
+      from: '2026-09-04',
+      to: '2026-09-04',
+    });
+    expect([summary.provenance, summary.revenue, summary.warning]).toEqual([
+      'LEDGER_COMPLETE',
+      '25100.00',
+      null,
+    ]);
+    const page = await queries.listSales(venueA, {
+      from: '2026-09-04',
+      to: '2026-09-04',
+      limit: 100,
+    });
+    expect(page.sales).toHaveLength(100);
+    await prisma.setting.create({
+      data: {
+        venueId: venueA.venueId,
+        key: 'currentBusinessDate',
+        value: '2026-09-05',
+      },
+    });
+    const next = await queries.listSales(venueA, {
+      from: page.from,
+      to: page.to,
+      cursor: page.nextCursor!,
+      limit: 100,
+    });
+    expect(next.sales).toHaveLength(100);
+    expect(
+      new Set([
+        ...(page.sales as Array<{ id: string }>).map((row) => row.id),
+        ...(next.sales as Array<{ id: string }>).map((row) => row.id),
+      ]).size,
+    ).toBe(200);
+    const last = await queries.listSales(venueA, {
+      from: page.from,
+      to: page.to,
+      cursor: next.nextCursor!,
+      limit: 100,
+    });
+    expect(last.sales).toHaveLength(51);
+    expect(last.nextCursor).toBeNull();
+    expect(
+      (
+        await queries.listSales(venueB, {
+          from: page.from,
+          to: page.to,
+          cursor: page.nextCursor!,
+          limit: 100,
+        })
+      ).sales,
+    ).toEqual([]);
+    expect(
+      (
+        await queries.getSummary(venueA, {
+          from: '2026-09-03',
+          to: '2026-09-04',
+        })
+      ).provenance,
+    ).toBe('PARTIAL');
+  });
+
+  it.each(['2026-02-31', '2026-13-01', '2026-00-01', '2026-9-04'])(
+    'rejects a non-round-tripping business date %s',
+    async (from) => {
+      await expect(queries.getSummary(venueA, { from })).rejects.toThrow(
+        'Dates must use YYYY-MM-DD',
+      );
+    },
+  );
+  it.each(['NaN', '1.5', 'Infinity'])(
+    'rejects invalid pagination limits %s before querying rows',
+    async (limit) => {
+      await expect(
+        queries.listSales(venueA, { from: '2026-09-04', limit }),
+      ).rejects.toThrow('Limit must be an integer');
+      await expect(
+        queries.getProducts(venueA, { from: '2026-09-04', limit }),
+      ).rejects.toThrow('Limit must be an integer');
+    },
+  );
 });

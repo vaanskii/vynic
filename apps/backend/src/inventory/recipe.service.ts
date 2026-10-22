@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma.service';
+import { activeMenuItem, activeVariant } from '../menu-catalog/menu-active';
 import type { TenantContext } from '../tenancy/tenant-context';
 import {
   InventoryAuditAction,
@@ -21,6 +22,7 @@ import {
   resolveRecipeQuantity,
 } from './inventory-quantity';
 import { inventoryUnit } from './inventory-unit';
+import { lockStockItems } from './stock-item-lock';
 
 export interface RecipeComponentInput {
   stockItemId?: unknown;
@@ -91,6 +93,7 @@ export class RecipeService {
     const rows = await this.prisma.menuItem.findMany({
       where: {
         venueId: tenant.venueId,
+        ...activeMenuItem,
         ...(search
           ? {
               OR: [
@@ -104,7 +107,7 @@ export class RecipeService {
       include: {
         category: { select: { nameKa: true, nameEn: true } },
         subcategory: { select: { nameKa: true, nameEn: true } },
-        variants: { orderBy: { size: 'asc' } },
+        variants: { where: { retiredAt: null }, orderBy: { size: 'asc' } },
         consumptionRecipes: {
           include: { _count: { select: { components: true } } },
         },
@@ -230,7 +233,12 @@ export class RecipeService {
    */
   async projection(venueId: string) {
     const rows = await this.prisma.menuConsumptionRecipe.findMany({
-      where: { venueId, isActive: true },
+      where: {
+        venueId,
+        isActive: true,
+        menuItem: activeMenuItem,
+        OR: [{ variantId: null }, { variant: activeVariant }],
+      },
       include: {
         components: { orderBy: { sequence: 'asc' } },
         menuItem: { select: { posMenuItemId: true } },
@@ -435,8 +443,8 @@ export class RecipeService {
     variantId: string | null,
   ) {
     const menuItem = await tx.menuItem.findFirst({
-      where: { id: menuItemId, venueId },
-      include: { variants: true },
+      where: { id: menuItemId, venueId, ...activeMenuItem },
+      include: { variants: { where: { retiredAt: null } } },
     });
     if (!menuItem) throw new NotFoundException('Menu item not found');
     if (variantId == null) {
@@ -471,6 +479,7 @@ export class RecipeService {
         inputs.map((row) => requiredText(row.stockItemId, 'stockItemId')),
       ),
     );
+    await lockStockItems(tx, actor.venueId, ids);
     const items = await tx.stockItem.findMany({
       where: { id: { in: ids }, venueId: actor.venueId },
       select: { id: true, name: true, baseUnit: true },

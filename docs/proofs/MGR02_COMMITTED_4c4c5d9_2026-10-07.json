@@ -1,0 +1,118 @@
+{
+  "milestone": "MGR-02",
+  "status": "DONE",
+  "operationalCommit": "4c4c5d92eb3c301907db7037b044c83fb952a084",
+  "exactGitExport": true,
+  "worktreeWipOverlaysUsed": false,
+  "runtimeSourceSha256": {
+    "apps/backend/src/edge/edge-command.service.ts": "52c507ae4bcabd3306a1e5101c41096eb000ff8a26a5d6081f833e33b801e1f6",
+    "apps/backend/src/mobile/mobile.controller.ts": "f14b42647f9569c394ea4063d82715166d579211a44e7f3474dd2e7d86629da3",
+    "apps/backend/src/mobile/services/mobile-dashboard.service.ts": "311f308c86091a1bfdc9a72c34184b0bd45109a3ad4b56e3e73fe37afde182b6",
+    "apps/backend/src/shared/contracts/edge-command.ts": "4d6529715970508c12701a8a178f870b94b85f36aa6854606d5ce139dc623c2a",
+    "apps/operations/lib/apps/mobile_app/presentation/screens/live_status_screen/live_status_screen.dart": "a5d0305bc58ea1af746500d0660526aa3db677fed38db5876eb0a9b8a8fefd46",
+    "apps/operations/lib/apps/mobile_app/presentation/screens/live_status_screen/views/live_status_tables_part.dart": "1ef70c1e4f5f5d64460beb136df1bca73dca1c9a905d83a089b7562ff10c633d",
+    "apps/operations/lib/apps/mobile_app/presentation/screens/order_editor_screen.dart": "1fcbda940353002af8ed3062cedcc12b2edb0985a355005467c27ca77dd50d9a",
+    "apps/operations/lib/core/contracts/edge_command.dart": "806ed16d98431d63201266fa8408300a0254fdfebb0a4e6e791a63bc6d175d45",
+    "apps/operations/lib/core/database/database_core.dart": "24eac129ed97b64c5d40ccfa7043d9483f46700859877695200998a954cc3341",
+    "apps/operations/lib/core/database/repositories/backup_repository.dart": "929ffe2e2eecb4555d8aac4ed98d23cd0155d3c0dec8433e4279e045356a3266",
+    "apps/operations/lib/core/database/repositories/order_table_mutation_repository.dart": "b8ac14728353700729bc9ccf7fd88074a69a86e09f3d3e436b6e9ffc95af5324",
+    "apps/operations/lib/core/services/edge/edge_transport_service.dart": "bcea9d03f535b2779990980a383c804b31e22d0c6081c6ae5a7f42d82afbee06",
+    "apps/operations/lib/core/services/edge/pos_edge_command_handlers.dart": "cc60ffdc3ea9789831482c4e0c5b4467af11cb6c1893de564add49cdd00de5fd",
+    "apps/operations/lib/core/services/manager_app/mobile_api_service.dart": "d9e67b0fac1ac09e4fd1fc67b6713b25e4b417c5a3e49ba6195517f8e3f738f3",
+    "apps/operations/lib/main_manager.dart": "1da923c18152cfa67b4a8594a5fa93299aedc54606ca3ed1791027fe94df4c70",
+    "apps/operations/test/unit/edge_transport_end_to_end_test.dart": "2959deb90e40a0e440c20cec501f048cd9331520449518fec486826f2e3e87ef",
+    "apps/operations/test/unit/pos_edge_command_handlers_test.dart": "ddee4b55eb18dceb982880262fc015ad6437b480619866fd2be236bd8f356506",
+    "docs/agent-state/VYNIC_CODE_MAP.md": "69e4bc5edc6f7c77f92cb1f6130886a02b66efac8a4248154c912c7851649f79",
+    "docs/agent-state/VYNIC_PROJECT_STATE.md": "086795f423b63224a6c160d042641e72da9cc5961a7561236c05dcb6919f61d5",
+    "packages/contracts/generated/dart/edge_command.dart": "806ed16d98431d63201266fa8408300a0254fdfebb0a4e6e791a63bc6d175d45",
+    "packages/contracts/generated/typescript/edge-command.ts": "4d6529715970508c12701a8a178f870b94b85f36aa6854606d5ce139dc623c2a",
+    "packages/contracts/schema/edge-command.contract.json": "174ab4aa0eb4fbcbf4e9ab05d99d051db9b851c15554326251c33d025ed6afe1",
+    "apps/backend/src/mobile/services/manager-table-repair.ts": "e0be42bd2234e0c56d485c8a14051678b331ff138866e3dc1aa9606cd0862e2f",
+    "apps/backend/src/mobile/services/mgr02-table-repair.integration.spec.ts": "7511310f025b2b6b06d7acb1609395717f6c377fdfbb86cd0efd41a58ef87d78",
+    "apps/backend/tool/prove_mgr02_postgres.py": "b6ab24f9563537fd8d7a984654f74dafc161af7b137d41b6ed776ed2a3cfd08d",
+    "apps/operations/lib/core/database/repositories/table_repair_repository.dart": "a58e67d365ea0ae3282e41c1c51ee44a4728a286f9d6beef7efd7598dd8ea6fc",
+    "apps/operations/lib/core/services/manager_app/table_repair_request.dart": "9a4c7b6535e85431c89b73db8b09787c867f889d5a7c38ba604bf81e709a9c3d",
+    "apps/operations/lib/apps/mobile_app/presentation/widgets/table_repair_status_panel.dart": "0a573ee1f1e7e2f51e0efaa75ad762ec001b7589b0dd48f50b0ca4f5dcbef441",
+    "apps/operations/test/unit/mgr02_table_repair_test.dart": "fa52b3ffb9ce0c89e89bad95a49f8099b93c66f4c4e22730acd2ae55096b9986",
+    "apps/operations/test/unit/mgr02_table_repair_request_test.dart": "c4e574ec5cfdb72a491b5029a7a1cb4d7391cb31cc1b96ebb799fbab4db069e3",
+    "apps/operations/test/unit/mgr02_edge_repair_test.dart": "12818996d13194644d8e64948916973003882742c8001fad9a31052e746bd632",
+    "apps/operations/test/unit/mgr02_manager_session_test.dart": "a152179baa6bb88b5c4ad953fc7d86af474dc73df7ce174bd6349ce2b00b9890",
+    "apps/operations/test/widget/mgr02_table_repair_status_test.dart": "57c56c267e10110f95dcc0e7e80b87e0db9639254208fc2da6c73c61a028f717",
+    "apps/operations/test/live/mgr02_process_recovery_test.dart": "457a0c9cb7bd46e68d29a21091c24d90a86783292e8e154f5f3fc5355a12abe3",
+    "apps/operations/tool/prove_mgr02_recovery.py": "d2e33bc732a76c176290425df755bc4781ce041bcb2f79a41cb3d68236e82598",
+    "docs/MGR02_GUARDED_TABLE_REPAIR.md": "36b4d98c55abf4f8743d664eebbb285dbd0f7a54e25f28d86b32a01df07b457a"
+  },
+  "syntheticOnly": true,
+  "platform": "macOS development host; no Windows/physical acceptance claimed",
+  "flutter": {
+    "passed": 191,
+    "mgr02Cases": 47,
+    "suites": 20,
+    "failed": 0,
+    "skipped": 0,
+    "rawLogSha256": "4222d3cd6c59c2d27438f7d6f710134b40738a95ff4c704ebef89c8e1ebe4a95"
+  },
+  "postgres": {
+    "passed": 14,
+    "failed": 0,
+    "skipped": 0,
+    "freshClusterStoppedRemoved": true,
+    "rawLogSha256": "c19a64128b7f149eaa9ea4c98dc1ab0053e9ba4f5a1be9c679edd495dee0a988"
+  },
+  "nativeSigkill": {
+    "checkpoints": 24,
+    "differentProcessRestart": true,
+    "oneRepairAndAudit": true,
+    "laterOccupancyPreserved": true,
+    "all391InputHashesMatched": true,
+    "receiptSha256": "645edd3affe1ef339da0933dc84c5b46bac2b6580353f2b2fa6e8e0cc638ecfd"
+  },
+  "checks": {
+    "dartAnalysisOwnedFiles": 22,
+    "dartAnalysis": "PASS",
+    "typescriptRuntimeBuild": {
+      "status": "PASS",
+      "command": [
+        "node",
+        "node_modules/typescript/bin/tsc",
+        "--noEmit",
+        "-p",
+        "tsconfig.build.json"
+      ],
+      "exportWorkingDirectory": "apps/backend",
+      "exitCode": 0,
+      "rawLogSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "generatedContractOutputs": 12,
+    "generatedContracts": "PASS",
+    "diffCheck": "PASS",
+    "prismaClient": {
+      "status": "PASS",
+      "generatedFromCommittedSchema": true,
+      "schemaEqualApartFromPrismaFormattingAndModelAttributePlacement": true,
+      "schemaSha256": "4bb3615bb309d0315eb186fdd835b5ef2aa8fa540074eca085c6c0d6690283ac",
+      "generatedSchemaSha256": "e16ef6d5ba82df20d164a1e7d9b4fb85e7f4d5151ce503d6d650d92674a924c2"
+    }
+  },
+  "independentReview": {
+    "source": "APPROVED no open P1/P2",
+    "finalEvidence": "APPROVED: exact committed blobs/hashes, all test and log receipts, Prisma schema equivalence, and workspace preservation independently verified",
+    "reviewer": "/root/manager_repair_review"
+  },
+  "preservation": {
+    "branch": "codex/docker-deployment-foundation",
+    "stash": "9df454225caec647f67ad4f70ef6038dbbbe41d6",
+    "unownedBaselineFilesUnchanged": 3593,
+    "preexistingWipPreservedOnSharedFiles": true,
+    "noPushDeployMergeInstallVmActions": true
+  },
+  "archive": {
+    "path": "docs/proofs/MGR02_COMMITTED_4c4c5d9_2026-10-07.zip",
+    "sha256": "58eff46db9924282ce0c27f4683c02982c175766f790a190b16ee94dafd17f9a"
+  },
+  "pending": [
+    "POS-02 printer work deferred; physical printer/driver acceptance NOT_DONE",
+    "Windows VM operations HELD",
+    "MGR-03 broader delivery, MGR-05 atomic item editing and OPS-01 release qualification separate"
+  ]
+}

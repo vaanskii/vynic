@@ -1,0 +1,13 @@
+{
+  "status": "VERIFIED_UNCOMMITTED_DETACHED_MANAGER_CHECKPOINT_POS02_EDGE01_NOT_DONE",
+  "sourceManifestSha256": "6b4dddddd80934523fa048d0fd964989d619ddefdf6c70e316ec5078961ec470",
+  "newSourceFiles": 3,
+  "inputWindowsSourceFiles": 818,
+  "productionAttached": false,
+  "milestoneDone": false,
+  "macTestsPassed": 143,
+  "windowsNewTestsPassed": 19,
+  "windowsAnalysisFiles": 3,
+  "sourceUnchanged": true,
+  "independentReview": "NO_P1_P2_BOUNDED_DETACHED_SCOPE"
+}

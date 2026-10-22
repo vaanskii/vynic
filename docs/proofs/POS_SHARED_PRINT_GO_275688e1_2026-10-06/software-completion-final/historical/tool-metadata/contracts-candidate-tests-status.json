@@ -1,0 +1,1 @@
+{"exitCode": 0, "command": "GOPROXY=off go test -mod=readonly -count=1 -json ./...", "source": "security-candidate/packages/contracts/generated/go"}

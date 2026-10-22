@@ -1,0 +1,339 @@
+{
+  "milestone": "MGR-04",
+  "status": "DONE",
+  "qualifiedAtUTC": "2026-10-07T16:01:35.965269+00:00",
+  "runtimeCommit": "4a46db340e9b29d0da95dd11ed75e6a379099e30",
+  "baseCommit": "c916e1297c9e0581e55c81550ddd995d8a95a27c",
+  "exactCommittedExport": true,
+  "preExistingWipOverlayUsed": false,
+  "syntheticOnly": true,
+  "behavior": "API availability, visible response location/read age, authenticated POS source/Cloud receipt time and completeness remain separate. Failed/cached blocks preserve original times and errors. Atomic accepted block/date stamps, oldest summary+ledger source and pre/post generation guards prevent false current or complete labels.",
+  "flutter": {
+    "passed": 492,
+    "suites": 37,
+    "mgr04Cases": 31,
+    "regressions": 461,
+    "failed": 0,
+    "skipped": 0,
+    "sequentialFixtures": true,
+    "actualManagerWidths": [
+      360,
+      640,
+      1440
+    ],
+    "textScales": [
+      1,
+      2
+    ],
+    "priorManagerNavigationWidths": [
+      320,
+      1024
+    ],
+    "rawReceipt": "flutter-tests.jsonl",
+    "summary": "flutter-summary.json",
+    "selection": "flutter-test-files.json",
+    "visualReceipt": "widgets/partial-source-status.png"
+  },
+  "postgres": {
+    "passed": 44,
+    "failed": 0,
+    "skipped": 0,
+    "actualHTTP": true,
+    "suites": [
+      "MGR04 freshness",
+      "MGR01 tables",
+      "MGR02 repair"
+    ],
+    "freshMigrationReplay": "PASS",
+    "schemaOrMigrationChanges": false,
+    "privatePrismaClientRegeneratedFromExactSchema": true,
+    "ownedClusterStoppedAndRemoved": true,
+    "rawReceipt": "postgres-proof.json",
+    "rawTests": "mgr04-postgres-tests.json"
+  },
+  "backendTests": {
+    "passed": 88,
+    "suites": 6,
+    "failed": 0,
+    "skipped": 0,
+    "rawReceipt": "backend-unit.json"
+  },
+  "analysis": {
+    "files": 19,
+    "issues": 0,
+    "rawReceipt": "analysis.log"
+  },
+  "formatCheck": {
+    "files": 19,
+    "changed": 0,
+    "exitCode": 0
+  },
+  "staticChecks": [
+    {
+      "step": "analysis",
+      "exitCode": 0
+    },
+    {
+      "step": "format-check",
+      "exitCode": 0
+    },
+    {
+      "step": "typescript-build",
+      "exitCode": 0
+    },
+    {
+      "step": "contracts-check",
+      "exitCode": 0
+    },
+    {
+      "step": "new-server-lint",
+      "exitCode": 0
+    },
+    {
+      "step": "prisma-validate",
+      "exitCode": 0
+    }
+  ],
+  "lint": {
+    "newServerHelperUnitAndFixture": "PASS",
+    "legacy": "BASELINE_DEBT_NO_INCREASE",
+    "baseErrors": 147,
+    "currentErrors": 147,
+    "baseWarnings": 12,
+    "currentWarnings": 12,
+    "rawReceipt": "legacy-lint-baseline.json"
+  },
+  "builds": {
+    "status": "PASS",
+    "steps": [
+      {
+        "role": "manager",
+        "exitCode": 0,
+        "executablesSha256": {
+          "build/macos/Build/Products/Debug/Vynic Manager.app/Contents/MacOS/Vynic Manager": "a9692c6a6234c64ff8196f9a17b2a27f942778ea0474764d4b7a3127387d6279",
+          "build/macos/Build/Products/Debug/Vynic Manager.app/Contents/MacOS/Vynic Manager.debug.dylib": "72c115d149064252b45b44ffbe7fd445aad1c595da97793df6e4a1dd5c73628a",
+          "build/macos/Build/Products/Debug/Vynic Manager.app/Contents/MacOS/__preview.dylib": "9d43260602b030e5b8f769a6d74a13bf478b50454bdb07b8c70a0cb8188b8fe5"
+        }
+      },
+      {
+        "role": "pos",
+        "exitCode": 0,
+        "executablesSha256": {
+          "build/macos/Build/Products/Debug/Vynic Manager.app/Contents/MacOS/Vynic Manager": "35bcf9e9b0a63e0cba6bd8458bd22b048ece0bbfe8f376063489abb193ede763",
+          "build/macos/Build/Products/Debug/Vynic Manager.app/Contents/MacOS/Vynic Manager.debug.dylib": "72c115d149064252b45b44ffbe7fd445aad1c595da97793df6e4a1dd5c73628a",
+          "build/macos/Build/Products/Debug/Vynic Manager.app/Contents/MacOS/__preview.dylib": "9d43260602b030e5b8f769a6d74a13bf478b50454bdb07b8c70a0cb8188b8fe5"
+        }
+      }
+    ],
+    "ManagerMacOSDevelopment": "PASS",
+    "POSMacOSDevelopment": "PASS",
+    "Windows": "HELD_NOT_RUN",
+    "physicalPrinterAcceptance": "NOT_DONE_DEFERRED"
+  },
+  "generatedMetadataSideEffect": "build-generated-metadata.json",
+  "toolVersions": {
+    "node": "v24.16.0",
+    "python": "Python 3.9.6",
+    "postgres": "postgres (PostgreSQL) 17.10 (Homebrew)",
+    "xcode": "Xcode 27.0\nBuild version 27A266a",
+    "cocoaPods": "1.16.2",
+    "flutter": "3.44.1",
+    "dart": "3.12.1",
+    "flutterRevision": "924134a44c189315be2148659913dda1671cbe99"
+  },
+  "independentReview": {
+    "agent": "manager_repair_review",
+    "status": "APPROVED",
+    "readOnly": true,
+    "runtimeCommit": "4a46db340e9b29d0da95dd11ed75e6a379099e30",
+    "openFindings": 0,
+    "milestoneBlockers": [],
+    "independentlyVerified": {
+      "gitBlobs": 2157,
+      "regularFiles": 2128,
+      "symlinks": 29,
+      "ownedRuntimeBlobs": 32,
+      "rawFlutterTests": 492,
+      "flutterSuites": 37,
+      "mgr04Cases": 31,
+      "backendTests": 88,
+      "actualHTTPPostgresTests": 44,
+      "staticSteps": 6,
+      "dartFiles": 19,
+      "macOSDevelopmentBuilds": 2,
+      "sourceBeforeAfterEqual": true,
+      "unownedBaselineFiles": 6904,
+      "sharedWipFiles": 2,
+      "originalStatusEntries": 240
+    },
+    "conclusion": "MGR-04 is DONE at the exact runtime. API/cache/source/completeness remain separate; oldest ledger source and query/session/concurrent-generation fences are verified. Windows, physical printers and broader release readiness are not asserted. MGR-06 is immutable financial corrections, analytics remains deferred."
+  },
+  "sourceIdentity": {
+    "status": "PASS",
+    "runtimeCommit": "4a46db340e9b29d0da95dd11ed75e6a379099e30",
+    "regularFiles": 2128,
+    "symlinks": 29,
+    "allGitBlobsMatched": true,
+    "preExistingWipOverlayUsed": false,
+    "allTrackedSourceMatchesRuntimeAfterVerification": true,
+    "prePostSourceHashesEqual": true
+  },
+  "runtimeSourceSha256": {
+    "apps/backend/src/app.module.ts": "8b0fcebbf06db4cc84962d4b9b4d3c60f9f4503096d333ce9076fb803836db4a",
+    "apps/backend/src/mobile/mobile.controller.ts": "27b3defb336093b60de261168f60816961d11d43b6d7d8f626be18a19eca4677",
+    "apps/backend/src/mobile/services/manager-data-freshness.spec.ts": "57bd1970db67421bf071870bd6c906339606d88cbd0d7fcb4ed3ef9ca50cd174",
+    "apps/backend/src/mobile/services/manager-data-freshness.ts": "a59bd039d4221b2989f1e0bf0dd53d57d01e5c3fdfdc28496c56859b92bf1d52",
+    "apps/backend/src/mobile/services/manager-revenue-classification.spec.ts": "be7bd084b1e7e3ec6b271db604d71a677f7feda98b16dc0aeb2b05516fe88823",
+    "apps/backend/src/mobile/services/mgr04-freshness.integration.spec.ts": "a8932a1fab3a8793726d478d18828e191d47cb2c906c76d8c27d8c361fc01deb",
+    "apps/backend/src/mobile/services/mobile-dashboard.service.ts": "2aac314a7b213052ce25506a0206d49408ef9be7cce9bd612d11bd9dba06ac71",
+    "apps/backend/src/pos/sync/application/ingest-pos-snapshot.service.ts": "7cb6359c465de5ae8ecc053de83c8c0fe917ab8d3050d8b43e8847b6e53f7df2",
+    "apps/backend/src/pos/sync/snapshot/reservation-sync.service.ts": "09aebd97d228380f4f67a9bc1eb64f6cef03a02fe1910f27fde606700bde0221",
+    "apps/backend/tool/prove_mgr04_postgres.py": "9912059112531c62b761540a3d34f377e2d699a417273d1abf9f531483bcdba8",
+    "apps/operations/lib/apps/mobile_app/data/models/dashboard_bundle.dart": "0b74b8b6bee3e012a2ca665eccc6cb1036c61bb9b100412d6c5d67c0923b1a16",
+    "apps/operations/lib/apps/mobile_app/data/services/dashboard_remote_service.dart": "03bf44780fad579db5a2e78d9212874a29fa0ebc611f180471fc92dba693e96e",
+    "apps/operations/lib/apps/mobile_app/presentation/controllers/dashboard_controller.dart": "bb5413afaa53ecc7583bd4c0c33e5fa7519943f7c9650084106db62adaa3e4a0",
+    "apps/operations/lib/apps/mobile_app/presentation/screens/dashboard_screen.dart": "0fc43ba76aca87f64708412cc1833682442db168e12c8ea5d78ef6d54682b6d9",
+    "apps/operations/lib/apps/mobile_app/presentation/screens/financials_screen.dart": "f19f467d0066f6bfd06b1fde39075e339f815cad86048ed70019046e246d4fba",
+    "apps/operations/lib/apps/mobile_app/presentation/screens/live_status_screen/live_status_screen.dart": "cc44c0c16a8927751f1184d93d1e902c4e68b6f13e2a5af5792af5eba10ed5cd",
+    "apps/operations/lib/apps/mobile_app/presentation/screens/mobile_calculator_screen.dart": "ecd88fa0cb03869a3dac5ad4c6016d323036d8bf9fcfd0a8a7ffa5972ab57f0d",
+    "apps/operations/lib/apps/mobile_app/presentation/screens/mobile_counted_menus_screen.dart": "e0fdfb01eb0145cf79ee4a26a3ced512f2507a847cfa279e095ac52204ee4d6f",
+    "apps/operations/lib/apps/mobile_app/presentation/screens/staff_performance_screen.dart": "13f374a4f0f7798e153605d8909a97960e9c24c2f49a09c069002bf2794b6273",
+    "apps/operations/lib/apps/mobile_app/presentation/widgets/manager_data_status.dart": "c63884401091226473cab213d9abf5b94d226cfaee3d3335545ad6d50ef65b0a",
+    "apps/operations/lib/apps/mobile_app/state/providers/dashboard_state.dart": "49a31be19171eb08bb0f9ff43a89883d8c841dfed457c9329645e83be761d1f7",
+    "apps/operations/lib/core/models/monitoring.dart": "1bdc56eab236202e5965a35cea514add45aeb9825bf79a46c4fc0b06819e4a4c",
+    "apps/operations/lib/core/services/manager_app/manager_data_read.dart": "0d8a384dce1f34d5bc58b95608f5e2150f9024583fbe23a070063c82bef3dc82",
+    "apps/operations/lib/core/services/manager_app/mobile_api_service.dart": "47066c36287dab70d54d5c24530f63e434ef21a703616c5b4d4ba6189f0e2fd9",
+    "apps/operations/lib/core/services/manager_app/mobile_cache_service.dart": "6389bd6bb532be838ee94cb6e2978f7976c6548b199c3e34f64e011932ba6580",
+    "apps/operations/lib/core/services/sync/manager_sync_service.dart": "bf9c182e51530f62463413d5c14bb7c4fe707c5a4bfdf6b8742b4e449707fc9e",
+    "apps/operations/test/unit/mgr04_data_freshness_test.dart": "474905ae54e04cd58a840022528a7a1bed514b61102473c3b0de4b2b1274d833",
+    "apps/operations/test/widget/mgr01_manager_table_navigation_test.dart": "3b4780ebdef393c1a7e01ac3808baab8d8adbcea96268f6f3aaacf2332a3828c",
+    "apps/operations/test/widget/mgr04_data_status_test.dart": "e8ce75364899d9ceeec4ecb5c8619c1fbdbb3e28590983865b2cdd953daea099",
+    "docs/MGR04_DATA_FRESHNESS.md": "f52ea3202c723806a1504b2916aa9926bc0b5a982c7059b3c2ffe085b11531f8",
+    "docs/agent-state/VYNIC_CODE_MAP.md": "1e188c359a86b512d195de1299edb06655642111e6e41eb6eafabdc266c33f74",
+    "docs/agent-state/VYNIC_PROJECT_STATE.md": "897ce518c0e7e1ebb982fdd4a80d0388510569aec666cbea4acdb975cda86ede"
+  },
+  "finalTrackedSourceMatchesRuntimeCommit": true,
+  "sourceHashReceipts": [
+    "source-before.json",
+    "source-after.json",
+    "git-source-records.json"
+  ],
+  "preservation": {
+    "statusEntries": 240,
+    "originalStatusEntriesUnchanged": true,
+    "statusSha256": "f80b4f53c00631f2d0bea3b95d0f1fae141cd54f710bd5f795b63d9add5c8eb8",
+    "status": "PASS",
+    "baselineFileCount": 6927,
+    "unownedBaselineFiles": 6904,
+    "unownedHashesUnchanged": true,
+    "sharedFileOriginalsRecovered": [
+      {
+        "path": "docs/agent-state/VYNIC_CODE_MAP.md",
+        "method": "three-way inverse merge",
+        "originalSha256": "067b247ff04eea4332c9ca641aff69c50150f6494d6dae93976966d6d7db9315",
+        "matches": true
+      },
+      {
+        "path": "docs/agent-state/VYNIC_PROJECT_STATE.md",
+        "method": "three-way inverse merge",
+        "originalSha256": "d901145eae0e2f93e95610b6a2d3ab5dfee01573f2444a4eb1af3c5c461ca30e",
+        "matches": true
+      }
+    ],
+    "branch": "codex/docker-deployment-foundation",
+    "stash": "9df454225caec647f67ad4f70ef6038dbbbe41d6",
+    "originalHead": "c916e1297c9e0581e55c81550ddd995d8a95a27c",
+    "runtimeCommit": "4a46db340e9b29d0da95dd11ed75e6a379099e30",
+    "currentHead": "4a46db340e9b29d0da95dd11ed75e6a379099e30"
+  },
+  "acceptance": [
+    "warm scoped cache/API down retains errors and times",
+    "API up/POS stale remains limited",
+    "actual PARTIAL and COMPLETE ledger followed by summary-only upload",
+    "uncovered ledger date range unknown",
+    "one failed subrequest and changed business day cannot show false current/empty pulse",
+    "resume refresh and observer disposal",
+    "durable Hive reopen and failed cache flush",
+    "principal/origin/query/logout/token fencing",
+    "concurrent generation/primary replacement/transaction rollback"
+  ],
+  "pending": {
+    "milestoneBlockers": [],
+    "POS02PrinterPhysicalDriverPaperAcceptance": "NOT_DONE_DEFERRED",
+    "WindowsVMOperations": "HELD",
+    "WindowsPhysicalReleaseReplacementQualification": "OPS-01 release gate pending",
+    "MGR06FinanceCorrections": "next Manager milestone; immutable payroll/obligation/reserve corrections",
+    "deferredAnalytics": "legacy breakdowns partial and unproven top-item completeness conservatively unavailable; separate from MGR-06",
+    "productionReadiness": "separate release gates remain"
+  },
+  "reproduction": {
+    "flutterCommand": "flutter-test-command.txt",
+    "analysisSelection": "analysis-files.json",
+    "postgresTool": "apps/backend/tool/prove_mgr04_postgres.py",
+    "backendCommand": "backend-command.txt",
+    "cachedToolchainsRequired": true,
+    "newInstalls": false
+  },
+  "earlierTrials": "Candidate fixture corrections and reviewed query/ledger fixes completed before runtime commit. HTTP widget fixtures run sequentially; optional screenshot I/O uses runAsync and repository fonts. Final exact committed receipts have zero failed or skipped acceptance cases.",
+  "rawReceiptsSha256": {
+    "analysis-files.json": "7b64676b1197f7d7f8a996c7c0f5058292cb50343643f29b4b036e54753f2d31",
+    "analysis.log": "a162710e7c52dfb5c5bbdfa34635a9c9ede57a8c0fab77c51e47bb680a856b1f",
+    "backend-command.txt": "0e7e77bad7c4ff56f8cf27f03ac553496c5f05bdf5501e446fa8f08ba513a18a",
+    "backend-run.log": "36d9b15abc499c27fd62c62750a6cb76e3fa8a7470e099ec0bd0b58b4d878717",
+    "backend-unit.json": "a44bb94d154e53e0fd39962ecdffe7869893fe9bb6f4dabefc7b506cdf6b644b",
+    "backend-unit.log": "4d1678ddc8667b80660a56d394077920da73e7409e3009471dff70c3e0c988d8",
+    "build-generated-metadata.json": "8b3a150e300bf853dbb556248f2977493f0b4430c8e6aaeb087738d38c620307",
+    "build-manager-command.txt": "1eb1daa5acd54c4acb2ad8445404f0088e46e46ad8f29c6ae1ce38cd0286a54e",
+    "build-manager.log": "c93f1a8c96aebe6ef3d85440d3938482ec6ca9209d2217342c82fad522bbc28b",
+    "build-pos-command.txt": "681ed075b51df6c09ac6b586e019a1d474e767a28175d271f759318323ecd39c",
+    "build-pos.log": "ea085aaf3f4674e5c811dac8c6e120d5af2199494deafaee9dba73575cf94fc3",
+    "build-run.log": "c345261d587ba3bea57c0a942ffe66c653ae64c08b1a6b8aedc296017b983b83",
+    "builds.json": "710450039289e3f06133c4659a78d06d07fdfd156ebd1cecafe7074f6c09e33e",
+    "contracts-check.log": "0b4ba9c6834c8b3610e5f982ed6723c8716f429d051990e41d8aee1f394d4c04",
+    "flutter-run.log": "123f087a86ed844c936e6f8671fc2abb04f3e4d2f4fc496448594e895ca70616",
+    "flutter-summary.json": "361957d598f0131862c07eedf9114242912111980df8e0612b470cc8edb798c3",
+    "flutter-test-command.txt": "c647dbb823ce6c644907b2c2f47f9be6179c0a6e9fb36e54766ed9b6e692a5ec",
+    "flutter-test-files.json": "601da9db1c405456d8639b85b92ef2c208f6e0c302858069ac79364204f21035",
+    "flutter-tests.jsonl": "82920f9d6a3175e09296ad4fb535be8aa354ef6fb804246466271a922be5b66d",
+    "flutter-version.json": "ac18521c70c3e67c1688bd1b75694348c8428b194dcd3ba8a52fb99a81ac9f98",
+    "format-check.log": "9f9684e20151a77fed16088f0ff21e29ede2a179095840d3f31b44d4f200101b",
+    "git-source-records.json": "7c15212f65b22ecc68f2f2e9950e7ba12c91986bfa11f058f62849f3fad7547c",
+    "independent-review.json": "e8c44d3ff6e6db5f533997eb33514dbd3cec3b32cfd2e6dfba068b3dfbcda443",
+    "legacy-lint-base.json": "0ed17f284cc6044c91156661673728c6e08ae50ee6f9063b531e20413f5042f2",
+    "legacy-lint-baseline.json": "2fd7dba37a11c257576fc4da2f74047183d95ecb41ff6cbcd91c008335d36cae",
+    "legacy-lint-current.json": "400742d0d0cd95e416b84c06eb33fafd39f3d6d01ede173c564a47e5f70739cd",
+    "legacy-lint-run.log": "c796be96141b0accf29258aca1d2f0b6061e59de42dd9307625ebbfd4154fdaf",
+    "mgr04-http-fixture.json": "55bda5a98e6aac26da00952a60fa9f2c03b807490b58d9ae07aa426fc47adcd9",
+    "mgr04-postgres-tests.json": "ab01e68e282c225a336a8bbbd5c146148bfcabbbe99bc76322b97b9635edc06a",
+    "new-server-lint.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "pg-create.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "pg-init.log": "30d21fdb702161b408aa682b614476acb1b118262f5e0775aaf3aea0f6819f34",
+    "pg-integration.log": "f380e5d6ae53a90aa553ab18fb57ace9525f0349be92a5480d8ba053e96198c3",
+    "pg-migrate.log": "20f9f43aa87e89490fcf32eb47ff2cb0ecd5c486ae3bf29d3eb2394299baa386",
+    "pg-start.log": "66afd0411ccc09366e99fdd99b85f21899c8d2d064f5835126859618802153ad",
+    "pg-stop.log": "ca19178a35ab4153b75b494963b66ce8243e1b94c173107c87b44d09db23652d",
+    "postgres-command.txt": "db6a4367fb07ad5c4c76e76fde330b4a83097d1f23c5ed16f190ed9fac634c2a",
+    "postgres-proof.json": "a647d92a741022e20eab4d612c649c3eeef9aaa35680e0614f0698c0ee203c58",
+    "postgres-run.log": "cc03f8733ca06283d75dda8ff865814ca80ac4f78cf8b518bc95a2f695f9a3b4",
+    "preservation.json": "7c51105637ccc600c95a48fb9fe0c6c57c641930180bae747b0d8299f2a22c42",
+    "prisma-generate.log": "5f689eb88846449d72094e195cf14bb8b94bccedc62d0829fa60d4a5e319f0e4",
+    "prisma-validate.log": "cc0e6164208a94dc9cd0832e91e84ca6b4e33439dabd6a05368cce40930f853a",
+    "pub-offline.log": "e7d7c55f649f5c59fa52a2bfd419f6fbf175d3f1caf8dba96e688daa72795d5e",
+    "source-after.json": "518cff1ff3c662167d6b8272d5b6b82bb81e8cf600dadd9edf0b709d4673d4dc",
+    "source-before.json": "518cff1ff3c662167d6b8272d5b6b82bb81e8cf600dadd9edf0b709d4673d4dc",
+    "source-identity-initial.json": "e6afeeeaea68d27e4abc41a4acf3d30e90639261df88133596b7ee0807ba667b",
+    "source-identity.json": "0199570633583b1faea28aadf4a89255fb4c739769b0da6b65b5d450a55e19e7",
+    "source-symlinks.json": "f2162f7a53ad7b46abd0ff0072dc2ea421e77822fd203f6dc722c20416da7370",
+    "static-checks.json": "8030b26f489e32de32ee715085fb8c436b7e49c6f75537129379a7c7436f583b",
+    "static-run.log": "cdfc986b6aac67472d24d83339e91d10e15db8a20eaf8ebe11a90095568ec824",
+    "tool-versions.json": "a83497d7d0f047c14990e257f3897caf460ac10c6c9631800cd35cd0b651281c",
+    "typescript-build.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "versions-run.log": "0c9636519643cc053a2a41d8be173702ec0544a5f348c1d46b165005e67d34fb",
+    "widgets/partial-source-status.png": "66bfd38131415ecde5be4ef1b2abfc1c836ed5263d8d1241601b5349954c6601"
+  },
+  "archive": {
+    "path": "docs/proofs/MGR04_COMMITTED_4a46db3_2026-10-07.zip",
+    "sha256": "c7d345a6f538ec398e237c679bf6028e2520331e535cc2ac5273186e619b78f4",
+    "entryCount": 54
+  }
+}

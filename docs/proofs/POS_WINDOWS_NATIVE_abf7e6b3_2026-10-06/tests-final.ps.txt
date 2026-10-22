@@ -1,0 +1,19 @@
+$ErrorActionPreference='Stop';$ProgressPreference='SilentlyContinue'
+$shared='\\Mac\Home\Developer\vynic\docs\proofs\POS_WINDOWS_NATIVE_abf7e6b3_2026-10-06'
+$stage=Get-Content -LiteralPath (Join-Path $shared 'windows-stage.json') -Raw | ConvertFrom-Json
+$job=$stage.job;$op=Join-Path $job 'apps\operations'
+$manifest=Get-Content -LiteralPath (Join-Path $shared 'prepared-source-v2-sha256.json') -Raw | ConvertFrom-Json
+function Assert-Source {foreach($e in $manifest.PSObject.Properties){$p=Join-Path $job $e.Name;if((Get-FileHash -LiteralPath $p -Algorithm SHA256).Hash.ToLowerInvariant() -ne $e.Value){throw ('Source mismatch: '+$e.Name)}}}
+Assert-Source
+$env:FLUTTER_SUPPRESS_ANALYTICS='true';$env:DART_SUPPRESS_ANALYTICS='true';$env:CI='true'
+$env:HTTP_PROXY='http://127.0.0.1:9';$env:HTTPS_PROXY='http://127.0.0.1:9';$env:NO_PROXY='127.0.0.1,localhost,::1'
+$selection=@(Get-Content -LiteralPath (Join-Path $shared 'test-selection.json') -Raw | ConvertFrom-Json)
+$analysis=@(Get-Content -LiteralPath (Join-Path $shared 'analysis-selection.json') -Raw | ConvertFrom-Json)
+Set-Location -LiteralPath $op
+& $stage.flutter test --no-pub --reporter expanded @selection
+if($LASTEXITCODE -ne 0){throw ('Windows Flutter tests failed: '+$LASTEXITCODE)}
+& $stage.flutter analyze --no-pub @analysis
+if($LASTEXITCODE -ne 0){throw ('Windows targeted analysis failed: '+$LASTEXITCODE)}
+Assert-Source
+[pscustomobject]@{job=$job;sourceFiles=@($manifest.PSObject.Properties).Count;sourceUnchanged=$true;flutterSuites=$selection.Count;analysisFiles=$analysis.Count;physicalJobs=0;installedProductStarted=$false;sourceManifest='prepared-source-v2-sha256.json'} | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $shared 'windows-tests-final.json') -Encoding UTF8
+Write-Output 'FINAL_WINDOWS_TESTS_AND_ANALYSIS_OK_SOURCE_UNCHANGED'

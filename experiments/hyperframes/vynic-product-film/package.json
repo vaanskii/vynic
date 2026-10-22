@@ -1,0 +1,16 @@
+{
+  "name": "vynic-product-film",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "npx --yes hyperframes@0.8.96 preview",
+    "check": "npx --yes hyperframes@0.8.96 check",
+    "render:preview": "tools/render-preview.sh",
+    "audio": "node audio/synth.mjs",
+    "render:master": "npx --yes hyperframes@0.8.96 render --docker --quality delivery --fps 30 --output renders/vynic-film-master_1080p30.mp4",
+    "render:web": "npx --yes hyperframes@0.8.96 render --docker --variables '{\"sound\":false,\"loopOut\":true}' --crf 24 --fps 30 --output renders/vynic-film-web_1080p30.mp4 && tools/strip-audio.sh vynic-film-web_1080p30.mp4",
+    "render:webm": "npx --yes hyperframes@0.8.96 render --docker --variables '{\"sound\":false,\"loopOut\":true}' --format webm --fps 30 --output renders/vynic-film-web_1080p30.webm && tools/strip-audio.sh vynic-film-web_1080p30.webm",
+    "render": "npx --yes hyperframes@0.8.96 render",
+    "publish": "npx --yes hyperframes@0.8.96 publish"
+  }
+}

@@ -1,0 +1,48 @@
+{
+  "reviewedAtUTC": "2026-10-06T18:21:31.423325+00:00",
+  "outcome": "PASS_BOUNDED_PREPARED_POS_BUILD_AND_FINAL_WINDOWS_AGGREGATE",
+  "openP1P2": [],
+  "sourceManifestSHA256": "faaaec2f1ece4f8259353666000eb4c0d3aee6143e73ae7fdf90772a937b581b",
+  "officialPreparationDeltaCount": 8,
+  "preparedSourceFiles": 1109,
+  "portableArtifactEntries": 23,
+  "cachedFirebaseFilesUnchanged": 182,
+  "executable": {
+    "name": "vynic_pos.exe",
+    "sha256": "7314018d0b083a95b2abcc9af7c42aa7aac03014a560afc1816013791c0f7d04",
+    "bytes": 848896,
+    "machine": "AMD64",
+    "UTF16ResourceBrandingVynicPOSPresent": true
+  },
+  "evidence": {
+    "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/windows-software-v2/pos-v3-final-receipt.json": "894cb1b768987050de6f708f4fdce5a399bf433094bca15ead33059b1622af29",
+    "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/windows-software-v2/windows-software-completion-final-receipt-v2.json": "1db6cb1aae401001abab906324a8fffa1179974ec61fd04b76ca79b3c783fefa",
+    "/Users/vaanskii/Developer/vynic/docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/software-windows-pos-stage-v3/product-preparation.json": "618794b28299e53b9a2c6910f9cfb262ec9fd1244f2901e03f1879c9b0754c9b",
+    "/Users/vaanskii/Developer/vynic/docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/software-windows-pos-stage-v3/runner-artifacts.json": "102ac6a252f7d556ddd132eb9e24d384804a135e63c8d42289b2675a90292a4b",
+    "/Users/vaanskii/Developer/vynic/docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/software-windows-pos-stage-v3/build.ps.txt": "b1261cebc6b55c17cee2c16f8d4bcd70af05c2d632188b1d0e0e0cc75df72120",
+    "/Users/vaanskii/Developer/vynic/docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/software-windows-pos-stage-v3/source.zip": "c34f868986cb6015d43639a2cb20276660801ea8e16282eb5ce37060e5f96463",
+    "/Users/vaanskii/Developer/vynic/docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/software-windows-pos-stage-v3/source-manifest.json": "5c109431d067276a007a9b50d26076117e6624c937051316db62c6bd30d592f3",
+    "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/windows-software-v2/flutter-combined-independent-review-final.json": "92c7dcb4ffcd69795145ba0959a5a63117407d2fc819fb7a2f0662dd41408cb2",
+    "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/windows-software-v2/go-runtime-independent-review.json": "e711f5cb0f03a4b53c7581a92243d8814d77dc83b30b85c2048be2820e327dd0",
+    "/Users/vaanskii/Developer/vynic/docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/software-windows-pos-result-v3/firebase-sdk-sha256-before.json": "8e68de1c1568c80a71e090073382b5d93b5d51a3fbfaf4e55fc406fad7b8c0a3",
+    "/Users/vaanskii/Developer/vynic/docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/software-windows-pos-result-v3/built-artifact-sha256.json": "49d2d74e6d1addb13f16388eb2791722007b95bd1ce06130e24f46abfecb6529",
+    "/Users/vaanskii/Developer/vynic/docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/software-windows-pos-result-v3/windows-pos-build.log": "684935a292ad50c2207db60d9a2ae775ed76090262170f73ee5538fe5a3f9ac0",
+    "/Users/vaanskii/Developer/vynic/docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/software-windows-pos-result-v3/offline-pub-get.log": "30229f9d0b6e8f121372205ec994858e2208d3f237440ee516b1058e6ad20a97",
+    "/Users/vaanskii/Developer/vynic/docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/software-windows-pos-result-v3/native-pos-build.zip": "f5eb22bfe2ca70f9b9e0434336da548eeb0613ed7d10d1ae43ebe252f1b9b785",
+    "/Users/vaanskii/Developer/vynic/docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/software-windows-pos-result-v3/windows-pos-build.json": "7cfa157934ce1e629e683a149d5cc56aef45462d7ff8aae3548502b6fbe92e64",
+    "/Users/vaanskii/Developer/vynic/docs/proofs/POS_SHARED_PRINT_GO_275688e1_2026-10-06/software-windows-pos-result-v3/firebase-sdk-sha256-after.json": "8e68de1c1568c80a71e090073382b5d93b5d51a3fbfaf4e55fc406fad7b8c0a3"
+  },
+  "review": [
+    "Independently compared prepared ZIP manifest with frozen generic source: exactly eight declared preparation deltas. Reconstructed all seven retained/new byte transformations directly from official product.py rules; eighth is removal of menu seed. All1109 prepared ZIP entries match.",
+    "All23 artifact ZIP names are unique relative canonical forward-slash paths without traversal or .env assets; each entry matches exact artifact SHA. Executable has AMD64 PE machine and UTF16 Vynic POS branding.",
+    "Build script executes --release --no-pub --target=lib/main_pos.dart with development/local-lab and intentionally invalid127.0.0.1:9 API defines; no explicit agent profile or launch step. Actual log reports successful vynic_pos.exe build.",
+    "SDK182-file before/after maps equal historical cached Firebase13.5.0 map; recorded header pin and source guards checked. Artifact hashes and all final-aggregate reference/history hashes independently match.",
+    "Final aggregate accurately combines separately reviewed Mac/Windows Flutter and both nativeARM64/emulatedamd64 shipped-agent foreground tests, retaining real failures and runtime limits."
+  ],
+  "limits": [
+    "POS executable was built and inspected, not started, installed, signed, published or qualified for a production endpoint.",
+    "Actual synthetic printer-agent foreground processes are separately tested; no registered SCM service, selected service principal, OS reboot/power loss, physical printer/cut/beep, production authority or writer cutover is qualified.",
+    "SDK preservation is verification of recorded before/after/historical hash maps; reviewer made no guest calls or direct live SDK reads.",
+    "No source edits, builds, tests, VM or service actions were performed by this review."
+  ]
+}

@@ -1,4 +1,5 @@
-import 'dart:ui';
+import 'package:vynic/core/services/manager_app/manager_data_read.dart';
+import 'package:vynic/apps/mobile_app/presentation/widgets/manager_data_status.dart';
 import 'package:vynic/apps/mobile_app/theme/manager_theme.dart';
 import 'package:vynic/apps/mobile_app/presentation/widgets/mobile_glass_ui.dart';
 
@@ -15,7 +16,14 @@ import 'package:vynic/core/utils/pos_feedback.dart';
 
 class MobileCountedMenusScreen extends StatefulWidget {
   final User user;
-  const MobileCountedMenusScreen({super.key, required this.user});
+  final bool embedded;
+  final VoidCallback? onNew;
+  const MobileCountedMenusScreen({
+    super.key,
+    required this.user,
+    this.embedded = false,
+    this.onNew,
+  });
 
   @override
   State<MobileCountedMenusScreen> createState() =>
@@ -23,6 +31,23 @@ class MobileCountedMenusScreen extends StatefulWidget {
 }
 
 class _MobileCountedMenusScreenState extends State<MobileCountedMenusScreen> {
+  Map<String, ManagerReadStatus> _displayReads = {};
+  void _readFailed(Object error, String key) {
+    final previous = _displayReads[key];
+    final failure = error is ManagerReadFailure
+        ? error.status
+        : ManagerReadStatus(key: key, error: 'მონაცემები ვერ განახლდა.');
+    _displayReads = {
+      ..._displayReads,
+      key: previous?.fetchedAt == null
+          ? failure
+          : previous!.failed(
+              failure.error ?? 'მონაცემები ვერ განახლდა.',
+              location: 'memory',
+            ),
+    };
+  }
+
   bool _loading = true;
   List<Map<String, dynamic>> _drafts = [];
   String? _error;
@@ -32,7 +57,7 @@ class _MobileCountedMenusScreenState extends State<MobileCountedMenusScreen> {
   final Set<String> _updatingServiceFee = <String>{};
 
   static final _money = NumberFormat('#,##0.00', 'en_US');
-  static final _date = DateFormat('dd MMM, HH:mm');
+  static final _date = DateFormat('dd.MM.yyyy, HH:mm');
 
   @override
   void initState() {
@@ -67,6 +92,7 @@ class _MobileCountedMenusScreenState extends State<MobileCountedMenusScreen> {
             });
       if (mounted) {
         setState(() {
+          _displayReads = {'counted_menus': MobileApiService.statusFor(data)!};
           _drafts = drafts;
           _serviceFeeAvailable = serviceFeeAvailable;
           _defaultServiceFeePercent = defaultServiceFeePercent;
@@ -76,7 +102,8 @@ class _MobileCountedMenusScreenState extends State<MobileCountedMenusScreen> {
     } catch (e) {
       if (mounted) {
         setState(() {
-          _error = e.toString();
+          _readFailed(e, 'counted_menus');
+          _error = _drafts.isEmpty ? 'მონაცემები ვერ განახლდა.' : null;
           _loading = false;
         });
       }
@@ -98,6 +125,10 @@ class _MobileCountedMenusScreenState extends State<MobileCountedMenusScreen> {
   );
 
   Future<void> _startNewCount() async {
+    if (widget.onNew != null) {
+      widget.onNew!();
+      return;
+    }
     final saved = await Navigator.push<bool>(
       context,
       MaterialPageRoute(
@@ -127,6 +158,9 @@ class _MobileCountedMenusScreenState extends State<MobileCountedMenusScreen> {
             editDraftId: id,
             initialName: draft['displayName']?.toString(),
             initialCountItems: items,
+            initialIncludeServiceFee: draft['includeServiceFee'] == true,
+            initialServiceFeeRate: (draft['serviceFeeRate'] as num?)
+                ?.toDouble(),
           ),
         ),
       ),
@@ -369,8 +403,15 @@ class _MobileCountedMenusScreenState extends State<MobileCountedMenusScreen> {
     if (id.isEmpty || _printing.contains(id)) return;
     setState(() => _printing.add(id));
     try {
-      await MobileApiService.printCountedMenu(id);
-      if (mounted) showSuccessToast(context, 'ჩეკი გაიგზავნა POS-ზე');
+      final delivery = await MobileApiService.printCountedMenu(id);
+      if (mounted)
+        showPosToast(
+          context: context,
+          message: delivery.printMessage,
+          style: delivery.name == 'failed' || delivery.name == 'unavailable'
+              ? PosToastStyle.error
+              : PosToastStyle.info,
+        );
     } catch (e) {
       if (!mounted) return;
       final message = e.toString();
@@ -434,41 +475,54 @@ class _MobileCountedMenusScreenState extends State<MobileCountedMenusScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: MobileGlassTheme.bg,
-      body: Stack(
-        children: [
-          Positioned(
-            top: -80,
-            right: -60,
-            child: _GlowOrb(color: Color(0xFFF59E0B), size: 220),
-          ),
-          Positioned(
-            bottom: 120,
-            left: -80,
-            child: _GlowOrb(color: Color(0xFF2563EB), size: 260),
-          ),
-          SafeArea(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildHeader(),
-                if (!_loading && _error == null && _drafts.isNotEmpty)
-                  _buildStatsBar(),
-                Expanded(child: _buildBody()),
-              ],
+    return ManagerDataBoundary(
+      reads: _displayReads,
+      blocks: const {'counted_menus'},
+      onRefresh: _load,
+      child: Scaffold(
+        backgroundColor: MobileGlassTheme.bg,
+        body: Stack(
+          children: [
+            Positioned(
+              top: -80,
+              right: -60,
+              child: _GlowOrb(color: MobileGlassTheme.warn, size: 220),
             ),
-          ),
-        ],
-      ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: _startNewCount,
-        backgroundColor: MobileGlassTheme.primary,
-        icon: Icon(Icons.add_rounded),
-        label: Text(
-          'ახალი დათვლა',
-          style: TextStyle(fontWeight: FontWeight.w700),
+            Positioned(
+              bottom: 120,
+              left: -80,
+              child: _GlowOrb(color: MobileGlassTheme.primary, size: 260),
+            ),
+            Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 1120),
+                child: SafeArea(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      if (!widget.embedded) _buildHeader(),
+                      if (!_loading && _error == null && _drafts.isNotEmpty)
+                        _buildStatsBar(),
+                      Expanded(child: _buildBody()),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
+        floatingActionButton: widget.embedded
+            ? null
+            : FloatingActionButton.extended(
+                onPressed: _startNewCount,
+                backgroundColor: MobileGlassTheme.primary,
+                foregroundColor: MobileGlassTheme.onPrimary,
+                icon: Icon(Icons.add_rounded),
+                label: Text(
+                  'ახალი დათვლა',
+                  style: TextStyle(fontWeight: FontWeight.w700),
+                ),
+              ),
       ),
     );
   }
@@ -478,13 +532,14 @@ class _MobileCountedMenusScreenState extends State<MobileCountedMenusScreen> {
       padding: const EdgeInsets.fromLTRB(8, 8, 16, 8),
       child: Row(
         children: [
-          IconButton(
-            onPressed: () => Navigator.pop(context),
-            icon: Icon(
-              Icons.arrow_back_rounded,
-              color: MobileGlassTheme.textPrimary,
+          if (!widget.embedded)
+            IconButton(
+              onPressed: () => Navigator.pop(context),
+              icon: Icon(
+                Icons.arrow_back_rounded,
+                color: MobileGlassTheme.textPrimary,
+              ),
             ),
-          ),
           Expanded(
             child: Text(
               'დათვლილი მენიუ',
@@ -739,12 +794,7 @@ class _DraftCard extends StatelessWidget {
                 width: 44,
                 height: 44,
                 decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      const Color(0xFF2563EB).withValues(alpha: 0.35),
-                      const Color(0xFFF59E0B).withValues(alpha: 0.25),
-                    ],
-                  ),
+                  color: MobileGlassTheme.data.primarySoft,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(
@@ -781,8 +831,8 @@ class _DraftCard extends StatelessWidget {
               ),
               Text(
                 '₾${money.format(total)}',
-                style: const TextStyle(
-                  color: Color(0xFF10B981),
+                style: TextStyle(
+                  color: MobileGlassTheme.good,
                   fontWeight: FontWeight.w800,
                   fontSize: 17,
                 ),
@@ -841,7 +891,7 @@ class _DraftCard extends StatelessWidget {
                 icon: Icon(Icons.event_available_rounded, size: 18),
                 label: Text('დადასტურება'),
                 style: TextButton.styleFrom(
-                  foregroundColor: const Color(0xFF0EA5A0),
+                  foregroundColor: MobileGlassTheme.good,
                 ),
               ),
               if (serviceFeeAvailable)
@@ -851,13 +901,13 @@ class _DraftCard extends StatelessWidget {
                       ? null
                       : onOpenServiceFeeConfig,
                   icon: isServiceFeeUpdating
-                      ? const SizedBox(
+                      ? SizedBox(
                           width: 16,
                           height: 16,
                           child: CircularProgressIndicator(
                             strokeWidth: 2,
                             valueColor: AlwaysStoppedAnimation<Color>(
-                              Color(0xFF0F766E),
+                              MobileGlassTheme.good,
                             ),
                           ),
                         )
@@ -876,7 +926,7 @@ class _DraftCard extends StatelessWidget {
                   ),
                   style: TextButton.styleFrom(
                     foregroundColor: includeServiceFee
-                        ? const Color(0xFF0F766E)
+                        ? MobileGlassTheme.good
                         : MobileGlassTheme.muted(0.65),
                   ),
                 ),
@@ -891,20 +941,20 @@ class _DraftCard extends StatelessWidget {
               TextButton.icon(
                 onPressed: isPrinting ? null : onPrint,
                 icon: isPrinting
-                    ? const SizedBox(
+                    ? SizedBox(
                         width: 16,
                         height: 16,
                         child: CircularProgressIndicator(
                           strokeWidth: 2,
                           valueColor: AlwaysStoppedAnimation<Color>(
-                            Color(0xFF10B981),
+                            MobileGlassTheme.good,
                           ),
                         ),
                       )
                     : Icon(Icons.print_rounded, size: 18),
                 label: Text(isPrinting ? 'იბეჭდება…' : 'ჩეკის ბეჭდვა'),
                 style: TextButton.styleFrom(
-                  foregroundColor: const Color(0xFF10B981),
+                  foregroundColor: MobileGlassTheme.good,
                 ),
               ),
               TextButton.icon(
@@ -912,7 +962,7 @@ class _DraftCard extends StatelessWidget {
                 icon: Icon(Icons.picture_as_pdf_outlined, size: 18),
                 label: Text('PDF'),
                 style: TextButton.styleFrom(
-                  foregroundColor: const Color(0xFF2563EB),
+                  foregroundColor: MobileGlassTheme.primary,
                 ),
               ),
               TextButton.icon(
@@ -920,7 +970,7 @@ class _DraftCard extends StatelessWidget {
                 icon: Icon(Icons.delete_outline_rounded, size: 18),
                 label: Text('წაშლა'),
                 style: TextButton.styleFrom(
-                  foregroundColor: const Color(0xFFEF4444),
+                  foregroundColor: MobileGlassTheme.bad,
                 ),
               ),
             ],
@@ -973,48 +1023,29 @@ class _StatChip extends StatelessWidget {
 }
 
 class _GlassCard extends StatelessWidget {
+  const _GlassCard({required this.child, this.padding});
   final Widget child;
-  final EdgeInsetsGeometry padding;
-
-  const _GlassCard({required this.child, this.padding = EdgeInsets.zero});
-
+  final EdgeInsetsGeometry? padding;
   @override
   Widget build(BuildContext context) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(20),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-        child: Container(
-          padding: padding,
-          decoration: BoxDecoration(
-            color: MobileGlassTheme.surface(0.06),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: MobileGlassTheme.border(0.1)),
-          ),
-          child: child,
-        ),
+    final theme = MobileGlassTheme.of(context);
+    final radius = BorderRadius.circular(18);
+    return Material(
+      color: theme.surfaceCard,
+      shape: RoundedRectangleBorder(
+        borderRadius: radius,
+        side: BorderSide(color: theme.cardBorder),
       ),
+      clipBehavior: Clip.antiAlias,
+      child: Padding(padding: padding ?? EdgeInsets.zero, child: child),
     );
   }
 }
 
 class _GlowOrb extends StatelessWidget {
+  const _GlowOrb({required this.color, required this.size});
   final Color color;
   final double size;
-
-  const _GlowOrb({required this.color, required this.size});
-
   @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: size,
-      height: size,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        gradient: RadialGradient(
-          colors: [color.withValues(alpha: 0.18), color.withValues(alpha: 0)],
-        ),
-      ),
-    );
-  }
+  Widget build(BuildContext context) => const SizedBox.shrink();
 }

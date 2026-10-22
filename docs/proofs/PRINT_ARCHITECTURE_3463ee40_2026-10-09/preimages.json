@@ -1,0 +1,9 @@
+{
+  "apps/edge/internal/printcluster/state.go": "fecb6b14729115c7c22f2b9b400ce60d406e6f36b3e8615ec363d35ec8a2febe",
+  "apps/edge/internal/printcluster/node.go": "90a8fd63aa455e7dc06c5db1308b4df75f1c7943b8a22efa8e6b2c1759b5db0a",
+  "apps/edge/internal/printcluster/projection.go": "89c5c4d97f00de6c00b3ebb4ccfafacf8e6cd65cbd462bbae37493b155abd62b",
+  "apps/edge/internal/printcluster/types.go": "c21c89c70c015bf8addea454ab6c6f9b031393656cb86114309d36e2d496b8ae",
+  "docs/agent-state/VYNIC_PROJECT_STATE.md": "c079860eafc6dfe4df828d120372481dae93a05a8e22a0c09dd2ac19d7d25f43",
+  "docs/agent-state/VYNIC_CODE_MAP.md": "94ef0ac785aaac80e255b011f04bcc56bc304ea7516a5db28f1e6f8bf7d921ae",
+  "docs/agent-state/VYNIC_DECISIONS.md": "3bae563ce3f378699e722fcfd4c8db6857ed9b181057f89e213660022a6c2f76"
+}

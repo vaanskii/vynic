@@ -1,3 +1,4 @@
+import 'package:vynic/core/ui/widgets/pos_dialog.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -182,7 +183,7 @@ class _AdminErrorLogSectionState extends State<AdminErrorLogSection> {
   }
 
   Future<void> _confirmClearErrorLogs() async {
-    final confirmed = await showDialog<bool>(
+    final confirmed = await showPosModal<bool>(
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: _cardColor,

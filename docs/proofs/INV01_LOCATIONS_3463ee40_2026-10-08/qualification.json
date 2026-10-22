@@ -1,0 +1,147 @@
+{
+  "status": "PARTIAL_F1_BACKEND_PROVEN_F2_BLOCKED",
+  "qualifiedAtUtc": "2026-10-08T18:42:36.839260+00:00",
+  "head": "3463ee406184fec7f53818416e11d0e5f5602c87",
+  "branch": "codex/docker-deployment-foundation",
+  "uncommittedCandidate": true,
+  "executableSourceManifestSha256": "9a492694839246024f2602b000d4edb058581d616e117f5544dffbaa8cf93037",
+  "scope": {
+    "f1BackendFoundation": "IMPLEMENTED_AND_CHECKED",
+    "f1UserInterface": "NOT_IMPLEMENTED",
+    "f2Transfers": "NOT_STARTED_PENDING_PRODUCT_DECISIONS",
+    "fullPhase9Complete": false
+  },
+  "backendAggregate": {
+    "passed": 870,
+    "skipped": 713,
+    "failed": 0,
+    "suitesPassed": 75
+  },
+  "inventoryRegressionPostgresql": {
+    "passed": 89,
+    "failed": 0,
+    "suites": 9,
+    "newLocationCases": 12,
+    "aggregateOverlap": 19
+  },
+  "flutterConsumerCompatibility": {
+    "passed": 27,
+    "failed": 0,
+    "suites": 5,
+    "fullAggregateRun": false,
+    "offlineEnforcedLockfileRestoredIgnoredPackageMetadataOnly": true
+  },
+  "testOverlap": {
+    "backendAggregate": 870,
+    "inventoryRegression": 89,
+    "intersection": 19,
+    "distinctBackendCases": 940,
+    "newLocationsCases": 12,
+    "identity": "repository path + assertion ordinal + full test name"
+  },
+  "checks": {
+    "backendTypecheck": "PASS",
+    "backendBuild": "PASS",
+    "newFilesEslint": "PASS",
+    "touchedFormat": "PASS",
+    "prismaValidate": "PASS",
+    "freshAndPopulatedMigrations": "PASS",
+    "migrationRetry": "PASS",
+    "inventorySchemaDrift": "NONE_NEW",
+    "preexistingPrismaDifferences": 2,
+    "exactStartingSchemaBaselineVerified": true,
+    "touchedExistingLintErrors": 180,
+    "touchedExistingLintWarnings": 4,
+    "addedLintDiagnostics": 0,
+    "gitDiffCheck": "PASS"
+  },
+  "accounting": {
+    "costingRule": "D015_VENUE_ITEM_CLOUD_ACCEPTANCE_ORDER",
+    "valuationFunctionByteIdentical": true,
+    "balancesDerivedFromMovementLedger": true,
+    "locationReversalsUseOriginalLocationAndValue": true,
+    "legacyV1SaleIssueLocation": "VENUE_DEFAULT",
+    "perLocationCostMethodAdded": false,
+    "transferNetZeroProven": false
+  },
+  "requiredProductDecisions": [
+    {
+      "decision": "POS_ISSUE_LOCATION",
+      "recommended": "One location selected per restaurant; old version-1 snapshots retain default",
+      "alternative": "Every Sale uses default for this checkpoint"
+    },
+    {
+      "decision": "TRANSFER_WORKFLOW",
+      "recommended": "One-step Manager confirmation",
+      "alternative": "Separate sending and destination receipt"
+    },
+    {
+      "decision": "INSUFFICIENT_SOURCE_QUANTITY",
+      "recommended": "Reject manual transfer and reversal",
+      "alternative": "Allow negative with required reason"
+    }
+  ],
+  "review": {
+    "method": "Fresh self-review of final code against F1/F2 acceptance and D014/D015; no separate-agent review claimed",
+    "criteria": [
+      "Venue-owned default and source-location constraints",
+      "Exact quantity sums and D015 unchanged",
+      "Same-transaction creation and audit",
+      "Cross-process UUID retry and different-intent refusal",
+      "Manager/Inventory auth denial",
+      "Scoped deletion order and rollback",
+      "No transfer/approval/negative-stock policy invented"
+    ],
+    "remainingApproval": "Human answers to the three product decisions"
+  },
+  "boundaries": {
+    "realDataWrites": false,
+    "liveCredentialsChanged": false,
+    "liveServicesRestarted": false,
+    "deployed": false,
+    "committed": false,
+    "pushed": false,
+    "priorResetRepeated": false,
+    "wasteStocktakeReturnsProductionStarted": false
+  },
+  "limitations": [
+    "F2 transfers, configured POS source and Manager location UI remain unimplemented. Full INV-01 and mandatory flour acceptance are OPEN.",
+    "713 aggregate cases remain skipped; 70 Inventory cases from opt-in suites were run separately. No claim is made for all remaining opt-in cases.",
+    "180 pre-existing errors and 4 warnings remain in the five touched Backend files; there are zero added diagnostics.",
+    "Two existing printer FK-name schema differences are unchanged and outside Inventory scope.",
+    "No full Flutter/Web rerun or Windows build was performed in this Backend-only checkpoint; 27 relevant existing Flutter unit cases passed.",
+    "The earlier unchanged MGR-05 editor timing failure at default concurrency remains recorded in the preceding INV-02/04 proof; it was not requalified here.",
+    "Real user registration/enrollment/POS/Manager login and Windows/hardware acceptance remain separate open gates."
+  ],
+  "ownedClusterCleanup": {
+    "status": "STOPPED",
+    "ownedCluster": "/private/tmp/vynic-menu09-candidate-eclunepv",
+    "databases": 6,
+    "pgCtlStatusExit": 3,
+    "postmasterPidAbsent": true,
+    "realServicesChanged": false
+  },
+  "preservation": {
+    "baselineFiles": 3751,
+    "changedBaselineFiles": [
+      "apps/backend/prisma/schema.prisma",
+      "apps/backend/src/inventory/inventory-audit.ts",
+      "apps/backend/src/inventory/inventory.service.ts",
+      "apps/backend/src/inventory/receiving.service.ts",
+      "apps/backend/src/local-tools/deletion-matrix.ts",
+      "apps/backend/src/mobile/mobile.controller.ts",
+      "docs/LOCAL_DATABASE_TOOLS.md",
+      "docs/agent-state/VYNIC_CODE_MAP.md",
+      "docs/agent-state/VYNIC_PROJECT_STATE.md",
+      "docs/audits/2026-09-29-f7bb982/MASTER_BACKLOG.md"
+    ],
+    "unchangedOtherBaselineFiles": 3741,
+    "unexpectedChanges": [],
+    "frozenExecutableFiles": 2173,
+    "executableFilesUnchangedDuringFinalChecks": true,
+    "headUnchanged": true,
+    "noEnvironmentFileChanged": true,
+    "noDependencyOrFlutterSourceChanged": true
+  },
+  "privateRawLogs": "/private/tmp/vynic-inv01-f1f2-6sijarr6"
+}

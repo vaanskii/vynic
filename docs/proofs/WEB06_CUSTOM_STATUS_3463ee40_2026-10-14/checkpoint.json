@@ -1,0 +1,10 @@
+{
+  "status": "COMPLETED_SOURCE_ISOLATED_QUALIFICATION",
+  "qualification": "qualification.json",
+  "head": "3463ee406184fec7f53818416e11d0e5f5602c87",
+  "distinctPassingCases": 899,
+  "optInCasesNotExecuted": 818,
+  "ownedClusterStopped": true,
+  "nextSafeIndependentStep": "OPS-01 final-schema isolated backup -> fresh restore qualification with synthetic data; no live database/deployment or parallel POS-02.C scope.",
+  "updatedAt": "2026-10-14T10:57:54.438539+00:00"
+}

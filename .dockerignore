@@ -1,0 +1,16 @@
+**/node_modules
+**/dist
+**/.env
+**/.env.*
+**/.git
+**/.data
+**/coverage
+**/*.log
+**/*.tsbuildinfo
+**/test-results
+**/playwright-report
+secrets
+.codex
+.claude
+.agents
+build

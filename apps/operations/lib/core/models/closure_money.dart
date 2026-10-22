@@ -60,7 +60,7 @@ class ClosureMoney {
   factory ClosureMoney.fromOrder(Order order, {required double collectedNow}) {
     final advance = _round(order.effectiveAdvanceAmount);
     return ClosureMoney(
-      gross: _round(order.totalAmount + advance),
+      gross: _round(order.grossAmount),
       advanceApplied: advance,
       collectedNow: _round(collectedNow),
     );

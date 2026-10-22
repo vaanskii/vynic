@@ -1,0 +1,666 @@
+{
+  "createdAtUtc": "2026-10-06T15:44:27.338988+00:00",
+  "source": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/source",
+  "snapshot": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/go-final-validation",
+  "parts": [
+    "apps/edge",
+    "packages/contracts/generated/go"
+  ],
+  "count": 163,
+  "files": {
+    "apps/edge/.gitignore": {
+      "sha256": "5f04f533e4f99dc912ef2ed93cc9302974c59b167c51fac47b3578b0c35c5db2",
+      "bytes": 84
+    },
+    "apps/edge/README.md": {
+      "sha256": "155fdce22b7adc22a19022ece68c0926207fc9ec7b9411b13cf6beefc1ed4cf2",
+      "bytes": 11459
+    },
+    "apps/edge/cmd/edge/host.go": {
+      "sha256": "c54ae92ddb6f23e053bf0e881c6586f0fa33d24d0f3b3027af3fac9eb04753f8",
+      "bytes": 1415
+    },
+    "apps/edge/cmd/edge/host_test.go": {
+      "sha256": "42121fe16be421dbd4bd5f08a45e11ddb4bf8095dd8b94a43e57bc64cf3ebe4b",
+      "bytes": 2485
+    },
+    "apps/edge/cmd/edge/main.go": {
+      "sha256": "53238f7a2c883865bd1f0298a425d9fb2a78ede1db5946b7c72df6baa61bf160",
+      "bytes": 4003
+    },
+    "apps/edge/cmd/setup/main.go": {
+      "sha256": "50f51f904e8bd3d9a19469e3aed4d8bb1b1a0107fc7940013ce8c3831aea482c",
+      "bytes": 1136
+    },
+    "apps/edge/cmd/setup/main_other.go": {
+      "sha256": "a4d12c8e549c0ac500ac7a824dc54ca0aa82692e4c51a44094ceed207c63ee49",
+      "bytes": 199
+    },
+    "apps/edge/cmd/setup/main_test.go": {
+      "sha256": "0c3862cce1e73e9c5b6808121bdbba97d7b947c2f643c683bc542b6549be3151",
+      "bytes": 765
+    },
+    "apps/edge/cmd/setup/main_windows.go": {
+      "sha256": "1adae63e81edfb294069f82a2ba05179185f4c9052b78be5142135a317f93328",
+      "bytes": 7017
+    },
+    "apps/edge/cmd/setup/startup.go": {
+      "sha256": "3a032010d64c1573e571331cc90830e83729aa212546ffcfa0f3ed282be3d9e5",
+      "bytes": 834
+    },
+    "apps/edge/cmd/setup/startup_test.go": {
+      "sha256": "d58baffdc024ed075435744fe306fd79d2e462b37fc1d3d97efae4766e9a5a61",
+      "bytes": 790
+    },
+    "apps/edge/cmd/setup/startup_windows_test.go": {
+      "sha256": "dc3d8a3ad893d8e4f553116cc2730d804d648d1782c86eb0d3b0af8b1fe87481",
+      "bytes": 766
+    },
+    "apps/edge/cmd/setup/ui_windows.go": {
+      "sha256": "790786ebe67723838109445277097816337fb6b507c5d96075ad05af31205cdc",
+      "bytes": 10697
+    },
+    "apps/edge/cmd/setup/wizard_windows.go": {
+      "sha256": "cdb7966598121ba16933eaa66e277bb91773155c9867545b162c675d73b8c771",
+      "bytes": 2281
+    },
+    "apps/edge/cmd/sign-bootstrap/main.go": {
+      "sha256": "c333e5d15085abb6b6865be04a69314f7664bbf4ec549c3ca5db30143153497d",
+      "bytes": 2370
+    },
+    "apps/edge/cmd/sign-bootstrap/main_test.go": {
+      "sha256": "af4ff8f0295c7229a425e8480bf51f8968af8c8aae689d2fd4ce92ccb906b2b1",
+      "bytes": 2688
+    },
+    "apps/edge/cmd/sign-pos-release/main.go": {
+      "sha256": "38c65397d417c31e8a376400f3f1916e6b09d21afdab9a3e8d0e39164c9646d1",
+      "bytes": 2170
+    },
+    "apps/edge/cmd/sign-pos-release/main_test.go": {
+      "sha256": "927182a5f367ad5c7177353ff0504852950c17c43fa37c7e38d9d40e4550e0e0",
+      "bytes": 2242
+    },
+    "apps/edge/cmd/terminal-sim/main.go": {
+      "sha256": "0a93a130b18424357b2cd0d59080ebf079b7eeb339650475255b5728e2688b6e",
+      "bytes": 4921
+    },
+    "apps/edge/cmd/verify-local-release/main.go": {
+      "sha256": "eab74b9e4a7f32da98b34ee244c2ca337ebe4c263df368661a61c9175de5f4a3",
+      "bytes": 3992
+    },
+    "apps/edge/go.mod": {
+      "sha256": "ee1b4d46129d70ab34a6c12314daddd5f5a7b0122e28040a52677b359c86f37d",
+      "bytes": 1406
+    },
+    "apps/edge/go.sum": {
+      "sha256": "561b9a04ed2552e61d5187a89b023415fa4b9c5af1ea827a6707b7779234ca56",
+      "bytes": 11936
+    },
+    "apps/edge/internal/printcluster/boundaries_test.go": {
+      "sha256": "6a6eed7047b49dde05b49e402e9481d42a20fe72849e02cfcc196d2c76427456",
+      "bytes": 14418
+    },
+    "apps/edge/internal/printcluster/cluster_test.go": {
+      "sha256": "8118617df65e078fb51b629964a5fbb165033e76397e3f9427bd99c0d4a72ccd",
+      "bytes": 31467
+    },
+    "apps/edge/internal/printcluster/node.go": {
+      "sha256": "90a8fd63aa455e7dc06c5db1308b4df75f1c7943b8a22efa8e6b2c1759b5db0a",
+      "bytes": 14310
+    },
+    "apps/edge/internal/printcluster/process_test.go": {
+      "sha256": "e1b94bb3fb2ab6af004c3d4096ce3d8b1bb93f38047f057f144c0d3b1eeb8b51",
+      "bytes": 13620
+    },
+    "apps/edge/internal/printcluster/projection.go": {
+      "sha256": "89c5c4d97f00de6c00b3ebb4ccfafacf8e6cd65cbd462bbae37493b155abd62b",
+      "bytes": 7913
+    },
+    "apps/edge/internal/printcluster/schema.sql": {
+      "sha256": "e172bcd69670592daadf2b041ee60708abe73e4ea98e370dabe01917f9be4f5e",
+      "bytes": 484
+    },
+    "apps/edge/internal/printcluster/state.go": {
+      "sha256": "fecb6b14729115c7c22f2b9b400ce60d406e6f36b3e8615ec363d35ec8a2febe",
+      "bytes": 28740
+    },
+    "apps/edge/internal/printcluster/testdata/local_tcp.config.json": {
+      "sha256": "5fb77a085478e13e841b4a9e504973fad13b54cb13260f809f2265f561fa6104",
+      "bytes": 661
+    },
+    "apps/edge/internal/printcluster/testdata/local_tcp.job.json": {
+      "sha256": "4b2a9926ba64c7a2e3123993fe1586a9adbdfd44323e4ef1a1a7c6775cb1382f",
+      "bytes": 1026
+    },
+    "apps/edge/internal/printcluster/testdata/shared_tcp.config.json": {
+      "sha256": "631484beb05a8d5e53b0049bda893813c2ce247c15de5c1d82ccc4620d0b89f1",
+      "bytes": 669
+    },
+    "apps/edge/internal/printcluster/testdata/shared_tcp.job.json": {
+      "sha256": "dfc155cc16c5f6b18c6ff80bff90c1994ae27040fb69d7afa1deaf4124bb1120",
+      "bytes": 1033
+    },
+    "apps/edge/internal/printcluster/testdata/shared_usb.config.json": {
+      "sha256": "1c8e94daf8dbd24a2c13e7c8c8e1ebf660f3d6f3e5989bd43f7f33d8adcf2e2b",
+      "bytes": 788
+    },
+    "apps/edge/internal/printcluster/testdata/shared_usb.job.json": {
+      "sha256": "31e2179da2e87ea1b13376dc7dcd41cbe23ff4dd1e6e377fa43c7ea3dca15f97",
+      "bytes": 1033
+    },
+    "apps/edge/internal/printcluster/testdata/unknown_beep.config.json": {
+      "sha256": "2f02b5d6b6fb0dda028d819e0fccc42957d51996e4d3c3673dff207d558230c7",
+      "bytes": 673
+    },
+    "apps/edge/internal/printcluster/testdata/unknown_beep.job.json": {
+      "sha256": "beca2a55a0554f39fa8e5fef7b04ce3c90398778ac43471874229cb2c87c5120",
+      "bytes": 1023
+    },
+    "apps/edge/internal/printcluster/transport.go": {
+      "sha256": "5a5844221232d1faddbbc767435eba9625cd0e3f15b9f0e0ed4b0d9ba06e27d7",
+      "bytes": 3249
+    },
+    "apps/edge/internal/printcluster/types.go": {
+      "sha256": "c21c89c70c015bf8addea454ab6c6f9b031393656cb86114309d36e2d496b8ae",
+      "bytes": 16995
+    },
+    "apps/edge/internal/printeligibility/gate.go": {
+      "sha256": "72ad434093c2fe9f9c97de623e0a6bb436e96ca7167565023519f1664e29a48c",
+      "bytes": 6481
+    },
+    "apps/edge/internal/printeligibility/gate_test.go": {
+      "sha256": "8470d2132bd9e5f7c6c897bae551dce302b0eb673d2441fe41382df8f0e85004",
+      "bytes": 7221
+    },
+    "apps/edge/internal/printhost/INSTALLATION_PLAN.md": {
+      "sha256": "e8c13f715dd280f762ba0c2eee954b0e3200b87c0dcedc40ce94bbc7f3aacd46",
+      "bytes": 5200
+    },
+    "apps/edge/internal/printhost/host.go": {
+      "sha256": "55eafb67ed59aef51fbfb5181b22be010a265833bbd523140b8b855b3662bfe4",
+      "bytes": 9921
+    },
+    "apps/edge/internal/printhost/host_test.go": {
+      "sha256": "03c2253726ef07528a1f93ff561c04cd834afeb95573e0dc5c414e3aabbf13fb",
+      "bytes": 16326
+    },
+    "apps/edge/internal/printhost/pins.go": {
+      "sha256": "9e94a889f56e947cebc3f4b8f663d04fc9dbd5c4b7b1af957246b8a6808b3a8d",
+      "bytes": 8022
+    },
+    "apps/edge/internal/printhost/proof_composition.go": {
+      "sha256": "1a05166b0731b4670b2ce5329893561df386b9955eabcbf825f6d0b92c4b1d35",
+      "bytes": 2503
+    },
+    "apps/edge/internal/printhost/queue_lifecycle_test.go": {
+      "sha256": "a2bae11d7234158ef94f239fad4ac8f92c3ed9a1d93f75b577939f5aac7b3fc9",
+      "bytes": 16798
+    },
+    "apps/edge/internal/printhost/service.go": {
+      "sha256": "1a242519ede401c8954dbfe3941e483834e2b7e3416c9b263bd5de61ceea1937",
+      "bytes": 3199
+    },
+    "apps/edge/internal/printhost/service_test.go": {
+      "sha256": "2c0bb78ea73507e3c6fa3a3f38df5de4d2d166ae3e5b3facd82a73cab0a4e51e",
+      "bytes": 9577
+    },
+    "apps/edge/internal/printhost/service_windows.go": {
+      "sha256": "2701581e0d34f98b96449c12a9eb1ad5c9936b6cad050cb7a1aa56ade4d76fee",
+      "bytes": 2348
+    },
+    "apps/edge/internal/printqueue/atomic_test.go": {
+      "sha256": "c08336fea3436945cce4d3cdba7dd42eec0888527acc9465a1cd200ce64d3c31",
+      "bytes": 4999
+    },
+    "apps/edge/internal/printqueue/crash_unix_test.go": {
+      "sha256": "2f8e544f1d3d3e988a291fc8aa5f30f43f724089b0c693d4adbc0e22e004aacf",
+      "bytes": 7733
+    },
+    "apps/edge/internal/printqueue/queue_test.go": {
+      "sha256": "94e518d9e9d45e1ab33c94c85138dab0acd5ea4266c01f7e169be5e27bc51f6b",
+      "bytes": 20479
+    },
+    "apps/edge/internal/printqueue/relay_test.go": {
+      "sha256": "461fecdc579447f719d5a96432bb392464db52bdbc7a78abafc62b9855a01eae",
+      "bytes": 9441
+    },
+    "apps/edge/internal/printqueue/review_test.go": {
+      "sha256": "2fe38f3b959c29a35b1eef20d906c1839d7da17310c5e187d010a4d075e3e32e",
+      "bytes": 8324
+    },
+    "apps/edge/internal/printqueue/state.go": {
+      "sha256": "e8fe7a2133b28750c666177d4da42fbb805cf28b0a9206604553db3ac48d2c99",
+      "bytes": 9151
+    },
+    "apps/edge/internal/printqueue/store.go": {
+      "sha256": "7cb4255b3a6e7ccab29f918b7050db79231773ab970592221abfaf2bc4f98280",
+      "bytes": 14505
+    },
+    "apps/edge/internal/printqueue/testdata/dart_tcp.json": {
+      "sha256": "51eb907f6b32ad2088d0914c559ba8ad7b1bdd2c54c62fa2820b00ec53916889",
+      "bytes": 1415
+    },
+    "apps/edge/internal/printqueue/testdata/dart_windowsSpooler.json": {
+      "sha256": "f40373faa1cad1355db125d910b9dd2413fa010a5000554594e02dbc617213f7",
+      "bytes": 1454
+    },
+    "apps/edge/internal/printqueue/types.go": {
+      "sha256": "11b947eafa08ed481e5d9f4cb71fbf45063c6c15c03f94e6db56f9b7ec41ea25",
+      "bytes": 15102
+    },
+    "apps/edge/internal/printqueue/worker.go": {
+      "sha256": "afa6beeddac7bce886e3c5d5576ca9416f281e7d707dd18c50c7cf2cab30006f",
+      "bytes": 8040
+    },
+    "apps/edge/internal/printtransport/guard.go": {
+      "sha256": "d46cbaa04bbb9e5a21966c43794f6d63be1d8418aa6315089694613993b3ae87",
+      "bytes": 2308
+    },
+    "apps/edge/internal/printtransport/guard_other.go": {
+      "sha256": "dd0cc72fe6c3de335dd563a7ff9a7b95870d52654a8f68809d906d661a8288e5",
+      "bytes": 538
+    },
+    "apps/edge/internal/printtransport/guard_windows.go": {
+      "sha256": "414f50c210190c303da0ef0727b7c0e5e01d3fe89e4c12c4b777eb77f42b4b3f",
+      "bytes": 1152
+    },
+    "apps/edge/internal/printtransport/helper.go": {
+      "sha256": "344d1fb146346d8ab25dbdea8e3c1aaec7017e7d6517b84f9addae86a7c03185",
+      "bytes": 6178
+    },
+    "apps/edge/internal/printtransport/helper_other.go": {
+      "sha256": "39314257c720573695d8db34d02fa74eb08b58c388f5500c453f48e1ea3b22b3",
+      "bytes": 233
+    },
+    "apps/edge/internal/printtransport/helper_test.go": {
+      "sha256": "0d4a5ccd85664fb1c7ce28337de60e5f422ddd5708fce9ebcde467e37e563d99",
+      "bytes": 6976
+    },
+    "apps/edge/internal/printtransport/helper_windows.go": {
+      "sha256": "562135704cee8202560b58e642c0746c4c4b854beddc44cfa49a1022b242964b",
+      "bytes": 10139
+    },
+    "apps/edge/internal/printtransport/helper_windows_test.go": {
+      "sha256": "feb123a3e952a62e5116024d5b434e2b72be7ccdc71e1b327211931ed3e8ce13",
+      "bytes": 9570
+    },
+    "apps/edge/internal/printtransport/protocol.go": {
+      "sha256": "982b068c3011f2dd6dc490af838f7a2b97d38afe9fa20729040772842dd3be29",
+      "bytes": 5784
+    },
+    "apps/edge/internal/printtransport/router.go": {
+      "sha256": "754bdca3212b3c145c46ab91371259e796a7858a271322386c7ad33e59788cfe",
+      "bytes": 2552
+    },
+    "apps/edge/internal/printtransport/tcp.go": {
+      "sha256": "18df0eaff557bfd2285e270fa519e66d1115924d5c7b86bfaa8618a009cd1d2f",
+      "bytes": 1801
+    },
+    "apps/edge/internal/printtransport/tcp_test.go": {
+      "sha256": "6588d48b0f00be575789adf9b26349d50f7102f7d9faf01f51ce1b2ab665e9d4",
+      "bytes": 7698
+    },
+    "apps/edge/internal/printtransport/transport.go": {
+      "sha256": "e6ad771e28315311052c60cd108e097ffc557d0075d8fc3db9aa4f14673b06aa",
+      "bytes": 4089
+    },
+    "apps/edge/internal/server/coordination.go": {
+      "sha256": "fdb53f16850905c044730d65ed54380f6cff6f461da3eba5e55d6dc228ce872e",
+      "bytes": 1954
+    },
+    "apps/edge/internal/server/coordination_test.go": {
+      "sha256": "e3f38fc389553210fa347885e36a50b8ade7ff87e211641702ddfbe2b9647c87",
+      "bytes": 2137
+    },
+    "apps/edge/internal/server/operational_proof.go": {
+      "sha256": "7a5b9e0ccbd2382bf56774964695f93bf620dc2affffccafe45cd8b571801a02",
+      "bytes": 16904
+    },
+    "apps/edge/internal/server/operational_proof_test.go": {
+      "sha256": "2563c3c157ab8ec367134c3dc9301c51f4af748995e7f7b1fc995a0c9c0c5ca3",
+      "bytes": 37377
+    },
+    "apps/edge/internal/server/operational_wire.go": {
+      "sha256": "232900f222b0d03a48c8a622c1bc1fc4b01bed5241a8db55cf29801ddb5a7e57",
+      "bytes": 6019
+    },
+    "apps/edge/internal/server/server.go": {
+      "sha256": "197284e58b0bdf534208c5dc985ea585b48b58e3e5fdec3ff0a004b28ec4f1e8",
+      "bytes": 6294
+    },
+    "apps/edge/internal/server/server_test.go": {
+      "sha256": "3e32421759ec9839c7064d6111c44ee01f76192111793e2e421f43ba991a4520",
+      "bytes": 9282
+    },
+    "apps/edge/internal/setup/destination.go": {
+      "sha256": "041c4c39acf5b6c2a7a459d90d70d0cb359b312bc86a1e67683c62c7215e8721",
+      "bytes": 1002
+    },
+    "apps/edge/internal/setup/destination_windows.go": {
+      "sha256": "97457bd6b180515cc2ca5e74952e1c518de19b0f0bcbd674cf53b5951030a2df",
+      "bytes": 2599
+    },
+    "apps/edge/internal/setup/files_other.go": {
+      "sha256": "fccce811bc567b234479e5e4456772589c31a1e5e9d49484d577c387a4a5e877",
+      "bytes": 175
+    },
+    "apps/edge/internal/setup/files_windows.go": {
+      "sha256": "3aff98b2f9d61911127dd0028dc662088230cef36f341a47927af77e3c43ac26",
+      "bytes": 670
+    },
+    "apps/edge/internal/setup/metadata.go": {
+      "sha256": "8e64b87d6056b97db81ae90582483c8b5a8c59af5942ee35678e1575503321eb",
+      "bytes": 5529
+    },
+    "apps/edge/internal/setup/native_windows.go": {
+      "sha256": "7adce0dde981fddcdd1ef0d1cbbe008368eebd99eebc54fa46880fa42f768fdd",
+      "bytes": 14763
+    },
+    "apps/edge/internal/setup/setup.go": {
+      "sha256": "ac2370bf64d6f9a9d695fb5d0a2740d5a850e1ef50c2c52090c151e659e98ec2",
+      "bytes": 19473
+    },
+    "apps/edge/internal/setup/setup_test.go": {
+      "sha256": "06ea4a9bf4f77478327ff2a74acd972d6cdc188bea3d61827bcacd39402f3ccf",
+      "bytes": 27113
+    },
+    "apps/edge/internal/setup/shortcuts_windows.go": {
+      "sha256": "db170879c67c44c52846af38708f7f2071c0175a1d157587ccf3a07395b07dcc",
+      "bytes": 3834
+    },
+    "apps/edge/internal/setup/shortcuts_windows_test.go": {
+      "sha256": "94481c1378ad9e08199591f50c220a3c25d4dfe726aadb013f8056ef8787bfba",
+      "bytes": 704
+    },
+    "apps/edge/internal/setup/update_offer.go": {
+      "sha256": "724c3e7dba70f408c9efd21183edb28cc7f20f22f455ca6363ab2d1d7cab4187",
+      "bytes": 5008
+    },
+    "apps/edge/internal/setup/update_offer_test.go": {
+      "sha256": "b7a2f49358682178fdf1e488d8011958cd0009c02a56a7b766dc4e0bc72b8273",
+      "bytes": 5229
+    },
+    "apps/edge/internal/setup/update_windows.go": {
+      "sha256": "85db84520f6d0a4e0aafaf0341142ffc435e2a4be6883690ecea43d329526e68",
+      "bytes": 1642
+    },
+    "apps/edge/internal/setup/wizard_test.go": {
+      "sha256": "03c233bc77a8e40b2bd5e0aa6b28820f518bf516ed6e5072abadf44a7b2d92f1",
+      "bytes": 1259
+    },
+    "apps/edge/internal/store/coordination.go": {
+      "sha256": "72fac64960774f0c0e0481bc4fc4b0f88fc64ac130664ca6cb9ba5072c321061",
+      "bytes": 12815
+    },
+    "apps/edge/internal/store/coordination_test.go": {
+      "sha256": "d31845fb9646fc3649a334d09cc1add900be6d2b9df1ddf8cffebcbb10308d7a",
+      "bytes": 10373
+    },
+    "apps/edge/internal/store/identity.go": {
+      "sha256": "ba4fc52a707f2a1e0fd9fab419fbd838712fe3ef261163173d093d8cdcb73a46",
+      "bytes": 5394
+    },
+    "apps/edge/internal/store/migrations/001_foundation.sql": {
+      "sha256": "09fb5dea2969a40a68142e5b5fc882b36282b4fa847d475593078c900de1ec1e",
+      "bytes": 874
+    },
+    "apps/edge/internal/store/migrations/002_orders_tables.sql": {
+      "sha256": "c0dc130351afa03b3c0ab234350fa094dce4e3b0ca3a49457b2f5ac712b4abeb",
+      "bytes": 748
+    },
+    "apps/edge/internal/store/migrations/003_operational_coordination.sql": {
+      "sha256": "47e6dcf89410b3c3eb28d9e54f50541556e722ee6d515d63242204322e3537ac",
+      "bytes": 4779
+    },
+    "apps/edge/internal/store/migrations/004_operational_entity_kinds.sql": {
+      "sha256": "c9878fdbae27a3455f979c68569a1c669a8d1d98a835de2c05f896b1c8319aad",
+      "bytes": 3391
+    },
+    "apps/edge/internal/store/migrations/005_shared_print_queue.sql": {
+      "sha256": "35834d0ffe04dda47f4abade9ac393296652c3bba85f822be1a2759722ed69fc",
+      "bytes": 7646
+    },
+    "apps/edge/internal/store/migrations/006_operational_terminal_origin.sql": {
+      "sha256": "f8eb4d12eab05e885d03f1feda89b1954587ac74f0a48650adc9a201c894d7fe",
+      "bytes": 1400
+    },
+    "apps/edge/internal/store/operational.go": {
+      "sha256": "630d34a918b519c3196b245c77313ac0b91c5897558c613b8b3996385174cd6d",
+      "bytes": 28076
+    },
+    "apps/edge/internal/store/operational_authority.go": {
+      "sha256": "8be9d8958201295706e29c10c16df552ee79d99017644275cfb61fd043c34e17",
+      "bytes": 9168
+    },
+    "apps/edge/internal/store/operational_origin.go": {
+      "sha256": "fe80ece6c6fb959466a6a4f91a579a24ad058fc33d95e609c9b02428e6362000",
+      "bytes": 6402
+    },
+    "apps/edge/internal/store/operational_queue_test.go": {
+      "sha256": "62277b7de6f7e8c43e1dffc45b7f3296634d8f3092cea00efa54253a0fa89561",
+      "bytes": 13882
+    },
+    "apps/edge/internal/store/operational_status.go": {
+      "sha256": "869db19a157d2a90cf8f6d5fb22699ebfc8f977068cd2310dc33ecfe4f1277fb",
+      "bytes": 1758
+    },
+    "apps/edge/internal/store/operational_test.go": {
+      "sha256": "776fa4d60204bbdfac854d48cfc07fc36e4df4c92252e4ae6c38ea1268afb152",
+      "bytes": 50397
+    },
+    "apps/edge/internal/store/schema.go": {
+      "sha256": "d74924fc19a7a2cce7f1434ef774aaa6b4d15b60d37525659b04d7e6e8b92bb8",
+      "bytes": 1711
+    },
+    "apps/edge/internal/store/store.go": {
+      "sha256": "38f30ef5b5381526759c310725e5979fb66848186507087da6afbed95bc8b39e",
+      "bytes": 5645
+    },
+    "apps/edge/internal/store/store_test.go": {
+      "sha256": "a87ce36c2248fd63e65904e987dda0e625c93310db9d6cd6c255432db463dce6",
+      "bytes": 5463
+    },
+    "apps/edge/internal/store/terminal.go": {
+      "sha256": "a883155dc25ef8e082c4d268c1eb8229405369d45de4b2b4ebb3645a41d47416",
+      "bytes": 4026
+    },
+    "apps/edge/internal/testutil/testutil.go": {
+      "sha256": "bed217fbfdfc5751822e186f9d00fceac0d49f867a2bfe95baa47c8b19d2771c",
+      "bytes": 1406
+    },
+    "apps/edge/internal/updater/existing.go": {
+      "sha256": "61dda90a985628843e2748ce61c179f26405c2aaf4c96f18c36ccb1bba73e1c1",
+      "bytes": 1110
+    },
+    "apps/edge/internal/updater/launcher.go": {
+      "sha256": "ab01909fcb496cdcb3aa1d6da8edfdf1cb3a171307f7d190e1dbb67df9a278a8",
+      "bytes": 745
+    },
+    "apps/edge/internal/updater/layout.go": {
+      "sha256": "adcfc2ed6e48b105896224c1b021402dfe8dd13382cc4056ed7d21adf193d6ff",
+      "bytes": 13775
+    },
+    "apps/edge/internal/updater/layout_other.go": {
+      "sha256": "8e6810f701b938f29152770312f6873bf18d5dbcb61594cdb671321d16a186bc",
+      "bytes": 471
+    },
+    "apps/edge/internal/updater/layout_windows.go": {
+      "sha256": "1be5c2df350565c292380c25a4c9227bc97ab2a20583058e2429c793c3a39b10",
+      "bytes": 676
+    },
+    "apps/edge/internal/updater/manifest.go": {
+      "sha256": "bbf56532f6b0fc657a33cd59362b314da94e1e21ea3349c1c4a3030b527f1082",
+      "bytes": 6615
+    },
+    "apps/edge/internal/updater/process_other.go": {
+      "sha256": "3a0adab49db01de7a0f665451d4ddc5fde44975ad68bbeb889c93d885df66282",
+      "bytes": 544
+    },
+    "apps/edge/internal/updater/process_windows.go": {
+      "sha256": "e8321a0ebdf8919f061e16e4bed2a57cec32134888b2ab677bd41338548528eb",
+      "bytes": 3948
+    },
+    "apps/edge/internal/updater/retention_test.go": {
+      "sha256": "43f2b03cfbb288deda1de5f8de61dd38454f84a11c8ac69d21f9498be19738ff",
+      "bytes": 13868
+    },
+    "apps/edge/internal/updater/updater.go": {
+      "sha256": "1f074c06458d3c9171be2d14a7ccc0398d5d38c2cd2acee965857ad9dd3f7ef1",
+      "bytes": 24729
+    },
+    "apps/edge/internal/updater/updater_test.go": {
+      "sha256": "cc1d49cd9ae5a62fa884a461796e5833b4893f43c903810f4944c927cbe2d33d",
+      "bytes": 15454
+    },
+    "apps/edge/native/print_helper/CMakeLists.txt": {
+      "sha256": "c9dc30418926ff8eb24b9cf54eec2e620b4d1e3b7943b8bd4ee146d6730945cc",
+      "bytes": 1918
+    },
+    "apps/edge/native/print_helper/README.md": {
+      "sha256": "c3d4be526b028c064a5896b93531c1c85e808b6f8717bc370e9e2ed0c314b8be",
+      "bytes": 4796
+    },
+    "apps/edge/native/print_helper/main_windows.cpp": {
+      "sha256": "1edb8b42e709083f9f1b61a5008d2393fbfaa82987541a3a92563659ccfadf50",
+      "bytes": 4131
+    },
+    "apps/edge/native/print_helper/protocol.cpp": {
+      "sha256": "526046639db53d383d143c70a2401baa8454255c3fe1d0d896e11709fbb5d9bb",
+      "bytes": 6309
+    },
+    "apps/edge/native/print_helper/protocol.h": {
+      "sha256": "9825f57f4524265463f3021afe77a751816b52fabad3653440d271376f0019a7",
+      "bytes": 1566
+    },
+    "apps/edge/native/print_helper/protocol_test.cpp": {
+      "sha256": "35596e34502d6c6f05e768a22df0c1088d867b87a4fb90d1c4595d2f38350121",
+      "bytes": 11104
+    },
+    "apps/edge/native/print_helper/qualify_windows.ps1": {
+      "sha256": "1b1c47f22fc768743a94d1eff9e0d970b7a0c5e0face062fe90ebe65e6a75c78",
+      "bytes": 4602
+    },
+    "apps/edge/native/print_helper/session.cpp": {
+      "sha256": "8011075a2b6667d30e881f7561fc428fb5f147c822b1ba4308e071fd10c0f083",
+      "bytes": 2880
+    },
+    "apps/edge/native/print_helper/session.h": {
+      "sha256": "0e1f72e7597b93ff6a95013ee1a78561684f4896c1f34468162bf4d510ff443f",
+      "bytes": 1027
+    },
+    "apps/edge/tool/build-edge-windows.py": {
+      "sha256": "50ed50826f08131afe6214c00e42e6ad0d9a63096e0f9d89117d46335db530bc",
+      "bytes": 1367
+    },
+    "apps/edge/tool/build-setup.py": {
+      "sha256": "b730f4f5cb33d4ae10b0eb565f63d009bac25ccbb10db8373746dfd909b82bb7",
+      "bytes": 4711
+    },
+    "apps/edge/tool/dart_sim/bin/main.dart": {
+      "sha256": "50146a88348131239a82a5c85a36adea33f615919ecba5167a5bb2e10271e78f",
+      "bytes": 4624
+    },
+    "apps/edge/tool/dart_sim/pubspec.lock": {
+      "sha256": "319c243bcb9b547c7a416736821616c9e54d9dfa17bd7e1b89f33c92a60fa917",
+      "bytes": 5105
+    },
+    "apps/edge/tool/dart_sim/pubspec.yaml": {
+      "sha256": "bdacfbbb932a3dd46ae4e48dd0112fb151251ba272c1249847b82b0d418dda49",
+      "bytes": 191
+    },
+    "apps/edge/tool/lab-edge-upgrade/main_windows.go": {
+      "sha256": "b862db76fa40bfcb22a508f4cde2c72984a76f6a72af2b5bfb168f4c3766dec1",
+      "bytes": 11316
+    },
+    "apps/edge/tool/lab-network/main_windows.go": {
+      "sha256": "011554278b6ffde404046807f2d85344d0af67b02596affdccb546bc6aaca5c7",
+      "bytes": 6066
+    },
+    "apps/edge/tool/local-windows-release-test.sh": {
+      "sha256": "1a2142052fddbc3e74636611cd532f0d6080a68c5962ed9e0d4bb50da85b0640",
+      "bytes": 159
+    },
+    "apps/edge/tool/local_windows_release_test.py": {
+      "sha256": "8664271bb031c9a45e459b11ae7e1f21f460d5ffb611845974c8733991edcc32",
+      "bytes": 38678
+    },
+    "apps/edge/tool/local_windows_release_test_test.py": {
+      "sha256": "136f9e9cde75eeb4d34f9a0036385d2b6ca9bb502f76555a7ac8486360dc62c9",
+      "bytes": 9249
+    },
+    "apps/edge/tool/mac-dev.sh": {
+      "sha256": "948d6a271d9495f48b7ddb152aacc61cd8a2a1442e8e0c264072361925c8b979",
+      "bytes": 1460
+    },
+    "apps/edge/tool/phase2a_proof.py": {
+      "sha256": "f994e693b8a11e50e7d46e3178cdb87049a2cf82735a748d51b8cd4823a8cf71",
+      "bytes": 8106
+    },
+    "apps/edge/tool/prove-pos-updater.py": {
+      "sha256": "85110e2d1504ee1f90740bcda469e9ad48327860f33ef116fea08df01325cee4",
+      "bytes": 1500
+    },
+    "apps/edge/tool/prove.py": {
+      "sha256": "6c7c43088ab0b66a307fef2079110f4ec7d00253c25d2758c75053a041c1cba4",
+      "bytes": 12706
+    },
+    "apps/edge/tool/publish-local-pos.sh": {
+      "sha256": "0bb2178fb29519c00318749830ef34dd7d9c951994d1f427c761f89403686d21",
+      "bytes": 147
+    },
+    "apps/edge/tool/publish_local_pos.py": {
+      "sha256": "818d95cb652bd4d3463f7bff807b2e8c879738dc10cf60a44bd472a21ade09a8",
+      "bytes": 11448
+    },
+    "apps/edge/tool/publish_local_pos_test.py": {
+      "sha256": "c5b518b2bd5cbe97871cf957778c17ca68dea675b61107d42b537e9900bcbc3c",
+      "bytes": 9083
+    },
+    "apps/edge/tool/sign-windows-release.py": {
+      "sha256": "d4f6bd93bd7fad7e98597c6891d231dad46d0feef7157658a3244615b5099f51",
+      "bytes": 3121
+    },
+    "apps/edge/tool/windows_pe.py": {
+      "sha256": "21933025b3a3523f1fc2f22d720e00f264d932a8aec5dd047399cb19dd4d74dc",
+      "bytes": 6582
+    },
+    "apps/edge/tool/windows_pe_test.py": {
+      "sha256": "78fd62c1afed42cef74de625d9a4dfde9b951ffd8c95fa89c0320e4028d739da",
+      "bytes": 3932
+    },
+    "packages/contracts/generated/go/go.mod": {
+      "sha256": "54ad4ea326560555ae16be9943353238cd66ede684166c1984cf96af9a344fe8",
+      "bytes": 343
+    },
+    "packages/contracts/generated/go/go.sum": {
+      "sha256": "4d6021e7f1525d43b0713af9db44aead5817e2bbe9910d0f077172a363d4ea52",
+      "bytes": 3297
+    },
+    "packages/contracts/generated/go/vynic/edge/v1/foundation.pb.go": {
+      "sha256": "2fe19a44f91538bc3f8b378bc74ffc95871cb343fc45b2617bb6df2660e27509",
+      "bytes": 21420
+    },
+    "packages/contracts/generated/go/vynic/edge/v1/foundation_grpc.pb.go": {
+      "sha256": "26ca4f43c6eaf3e18b869acd7b7380cb89d8a24d14ebba14f15fd1c4186f852e",
+      "bytes": 9554
+    },
+    "packages/contracts/generated/go/vynic/edge/v1/operational_proof.pb.go": {
+      "sha256": "1f4c43c39f821c429a55956c41598ed2e8762a6198382a32fe464bb34674f506",
+      "bytes": 63145
+    },
+    "packages/contracts/generated/go/vynic/edge/v1/operational_proof_grpc.pb.go": {
+      "sha256": "a50e4ed1c10672ab1fc43bae0ed306c95f4cc2e7b48d8b8e47ffe67beecfa63d",
+      "bytes": 11924
+    },
+    "packages/contracts/generated/go/vynic/edge/v1/orders_tables.pb.go": {
+      "sha256": "da15396ea8eed4135f2ea5eedad32815b03292b7951d342a278ed11dd4e3de86",
+      "bytes": 28783
+    },
+    "packages/contracts/generated/go/vynic/edge/v1/orders_tables_grpc.pb.go": {
+      "sha256": "70f935d086e4bedf117e0fb781c09caaa71ffd33ef7551f3e527dcc5735f6d14",
+      "bytes": 7785
+    }
+  },
+  "beforeCopyAfterEqual": true,
+  "expectedScope": "All final Edge Go source plus generated contracts, including printer queue/RPC and operational proof after their owners declare freeze"
+}

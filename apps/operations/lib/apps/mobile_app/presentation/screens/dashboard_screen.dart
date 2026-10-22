@@ -1,3 +1,6 @@
+import '../widgets/manager_preview_charts.dart';
+import '../widgets/manager_design_components.dart';
+import 'package:vynic/apps/mobile_app/presentation/widgets/manager_data_status.dart';
 import 'package:vynic/core/services/manager_app/mobile_api_service.dart';
 import 'package:vynic/core/services/manager_app/manager_entitlements.dart';
 import '../widgets/financial_planning_card.dart';
@@ -15,14 +18,10 @@ import 'package:intl/intl.dart';
 import 'package:vynic/apps/mobile_app/data/repositories/dashboard_repository.dart';
 import 'package:vynic/apps/mobile_app/data/services/dashboard_remote_service.dart';
 import 'package:vynic/apps/mobile_app/presentation/controllers/dashboard_controller.dart';
-import 'package:vynic/apps/mobile_app/presentation/screens/mobile_calculator_screen.dart';
-import 'package:vynic/apps/mobile_app/presentation/screens/mobile_counted_menus_screen.dart';
 import 'package:vynic/apps/mobile_app/state/providers/dashboard_state.dart';
 import 'package:vynic/core/models/monitoring.dart';
 import 'package:vynic/core/models/user.dart';
-import 'package:vynic/core/services/notifications/app_notification_history_store.dart';
 import 'package:vynic/core/services/sync/monitoring_socket_service.dart';
-import 'package:vynic/apps/mobile_app/presentation/widgets/manager_toast.dart';
 
 final _empty = ManagerDashboardMetrics(
   todayRevenue: 0,
@@ -39,7 +38,7 @@ final _empty = ManagerDashboardMetrics(
 final _money = NumberFormat('#,##0', 'en_US');
 final _moneyExact = NumberFormat('#,##0.00', 'en_US');
 
-String _gelExact(num amount) => '₾${_moneyExact.format(amount)}';
+String _gelExact(num amount) => '${_moneyExact.format(amount)} ₾';
 
 /// Manager dashboard (light/dark via [ManagerAppPreferences]) while staying
 /// wired to the live [DashboardController] data (revenue, orders, tables,
@@ -59,20 +58,14 @@ class DashboardScreen extends StatefulWidget {
   State<DashboardScreen> createState() => _DashboardScreenState();
 }
 
-class _DashboardScreenState extends State<DashboardScreen>
-    with SingleTickerProviderStateMixin {
+class _DashboardScreenState extends State<DashboardScreen> {
   late final DashboardController _controller;
-  late final AnimationController _animController;
 
   @override
   void initState() {
     super.initState();
     _controller = DashboardController(
       const DashboardRepository(DashboardRemoteService()),
-    );
-    _animController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1100),
     );
     _controller.addListener(_onControllerChanged);
     _controller.initialize();
@@ -84,9 +77,6 @@ class _DashboardScreenState extends State<DashboardScreen>
   }
 
   void _onControllerChanged() {
-    if (_controller.state.firstLoadDone && _animController.value == 0) {
-      _animController.forward(from: 0);
-    }
     if (mounted) setState(() {});
   }
 
@@ -107,7 +97,6 @@ class _DashboardScreenState extends State<DashboardScreen>
     MonitoringSocketService.dayClosedCounter.removeListener(_onDayClosed);
     _controller.removeListener(_onControllerChanged);
     _controller.dispose();
-    _animController.dispose();
     super.dispose();
   }
 
@@ -120,11 +109,11 @@ class _DashboardScreenState extends State<DashboardScreen>
   }
 
   List<Map<String, dynamic>> _topItems(DashboardState state) {
-    final raw = state.salesReport?['topItems'];
+    final raw = state.productAnalytics?['byQuantity'];
     if (raw is! List) return [];
     return raw
         .whereType<Map>()
-        .map((e) => e.cast<String, dynamic>())
+        .map((e) => {...e.cast<String, dynamic>(), 'qty': e['quantity']})
         .take(5)
         .toList();
   }
@@ -145,20 +134,21 @@ class _DashboardScreenState extends State<DashboardScreen>
     return DateTime(n.year, n.month, n.day);
   }
 
-  Map<String, double> _dailyRevenueMap(DashboardState state) {
-    final map = <String, double>{};
+  Map<String, double?> _dailyRevenueMap(DashboardState state) {
+    final map = <String, double?>{};
     for (final row in state.salesDaily) {
       final date = (row['date'] ?? '').toString();
       if (date.length < 10) continue;
       final rev = row['totalRevenue'];
-      map[date.substring(0, 10)] = rev is num
-          ? rev.toDouble()
-          : double.tryParse('$rev') ?? 0;
+      final value = rev is num ? rev.toDouble() : double.tryParse('$rev');
+      map[date.substring(0, 10)] = value != null && value.isFinite
+          ? value
+          : null;
     }
     return map;
   }
 
-  List<_DayPoint> _last7BusinessDays(
+  List<ManagerRevenuePoint> _last7BusinessDays(
     DashboardState state,
     double activeRevenue,
     String? activeBusinessDayId,
@@ -173,10 +163,27 @@ class _DashboardScreenState extends State<DashboardScreen>
     return window.map((dateKey) {
       final isActive = dateKey == activeKey;
       final parts = dateKey.split('-');
-      final label = parts.length >= 3 ? '${parts[2]}.${parts[1]}' : dateKey;
-      return _DayPoint(
+      const months = [
+        'იან',
+        'თებ',
+        'მარ',
+        'აპრ',
+        'მაი',
+        'ივნ',
+        'ივლ',
+        'აგვ',
+        'სექ',
+        'ოქტ',
+        'ნოე',
+        'დეკ',
+      ];
+      final month = parts.length >= 3 ? int.tryParse(parts[1]) : null;
+      final label = month != null && month >= 1 && month <= 12
+          ? '${int.tryParse(parts[2]) ?? parts[2]} ${months[month - 1]}'
+          : dateKey;
+      return ManagerRevenuePoint(
         label: label,
-        value: isActive ? activeRevenue : (map[dateKey] ?? 0),
+        value: isActive ? activeRevenue : map[dateKey],
         isToday: isActive,
       );
     }).toList();
@@ -224,464 +231,233 @@ class _DashboardScreenState extends State<DashboardScreen>
     return '$h სთ $m წთ';
   }
 
-  List<Map<String, dynamic>> _sortedCountedMenus(List<dynamic> raw) {
-    final out = raw
-        .whereType<Map>()
-        .map((e) => e.cast<String, dynamic>())
-        .toList();
-    out.sort((a, b) {
-      final ad = DateTime.tryParse('${a['createdAt'] ?? ''}');
-      final bd = DateTime.tryParse('${b['createdAt'] ?? ''}');
-      if (ad == null && bd == null) return 0;
-      if (ad == null) return 1;
-      if (bd == null) return -1;
-      return bd.compareTo(ad);
-    });
-    return out;
-  }
-
-  _CountedMenusSummary _countedMenusSummary(List<dynamic> raw) {
-    final drafts = _sortedCountedMenus(raw);
-    var totalValue = 0.0;
-    var totalItems = 0;
-    for (final d in drafts) {
-      totalValue +=
-          (d['total'] as num?)?.toDouble() ??
-          (d['subtotal'] as num?)?.toDouble() ??
-          0;
-      totalItems += (d['items'] as List?)?.length ?? 0;
-    }
-    return _CountedMenusSummary(
-      drafts: drafts,
-      totalValue: totalValue,
-      totalItems: totalItems,
-    );
-  }
-
-  Future<void> _openCountedMenus() async {
-    await Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) =>
-            managerThemedPage(MobileCountedMenusScreen(user: widget.user)),
-      ),
-    );
-    if (mounted) _controller.loadAll();
-  }
-
-  Future<void> _startCountMenu() async {
-    final saved = await Navigator.of(context).push<bool>(
-      MaterialPageRoute(
-        builder: (_) =>
-            managerThemedPage(const MobileCalculatorScreen(isCountMode: true)),
-      ),
-    );
-    if (saved == true && mounted) _controller.loadAll();
-  }
-
-  void _toast(String msg, {Color? color}) {
-    if (!mounted) return;
-    ManagerToast.showSnackBar(context, msg, accentColor: color);
-  }
-
   @override
   Widget build(BuildContext context) {
     final state = _controller.state;
     final metrics = state.metrics ?? _empty;
-    final avgOrder = metrics.todayOrderCount > 0
-        ? metrics.todayRevenue / metrics.todayOrderCount
-        : 0.0;
 
     final staff = [...state.staff]
       ..sort((a, b) => b.totalSales.compareTo(a.totalSales));
     final topItems = _topItems(state);
-    final activeDayId = metrics.businessDayId ?? metrics.businessDate;
+    final activeDayId = metrics.businessDate ?? metrics.businessDayId;
     final series = _last7BusinessDays(
       state,
-      metrics.shiftTotalRevenue,
+      metrics.closedTablesRevenue,
       activeDayId,
     );
     final dayChange = _previousBusinessDayChange(
       state,
-      metrics.shiftTotalRevenue,
+      metrics.closedTablesRevenue,
       activeDayId,
     );
-    final menuSummary = _countedMenusSummary(state.countedMenus);
 
-    return ValueListenableBuilder<ManagerDashboardAppearance>(
-      valueListenable: ManagerAppPreferences.dashboardAppearance,
-      builder: (context, appearance, _) {
-        final theme = DashboardThemeData.forAppearance(appearance);
-        return DashboardThemeScope(
-          theme: theme,
-          child: Scaffold(
-            backgroundColor: theme.scaffoldBackground,
-            body: Stack(
-              children: [
-                Positioned(
-                  top: -150,
-                  right: -100,
-                  child: _SoftGlow(
-                    color: theme.glowTopRight,
-                    size: 500,
-                    opacity: theme.glowTopRightOpacity,
-                  ),
-                ),
-                Positioned(
-                  bottom: 0,
-                  left: -150,
-                  child: _SoftGlow(
-                    color: theme.glowBottomLeft,
-                    size: 400,
-                    opacity: theme.glowBottomLeftOpacity,
-                  ),
-                ),
-                SafeArea(
-                  bottom: false,
-                  child: RefreshIndicator(
-                    color: theme.primary,
-                    backgroundColor: theme.refreshIndicatorBackground,
-                    onRefresh: () async {
-                      await MobileApiService.refreshEntitlements();
-                      await _controller.loadAll();
-                    },
-                    child: CustomScrollView(
-                      physics: const AlwaysScrollableScrollPhysics(
-                        parent: BouncingScrollPhysics(),
-                      ),
-                      slivers: [
-                        SliverToBoxAdapter(
-                          child: Padding(
-                            padding: const EdgeInsets.only(bottom: 24),
-                            child: state.loading && state.metrics == null
-                                ? _DashboardSkeleton()
-                                : LayoutBuilder(
-                                    builder: (context, constraints) {
-                                      Widget fade(double delay, Widget child) =>
-                                          _FadeInSlide(
-                                            controller: _animController,
-                                            delay: delay,
-                                            child: child,
-                                          );
-
-                                      // Build every section once, then arrange
-                                      // them responsively below.
-                                      final header = _Header(
-                                        greeting: _greeting(),
-                                        name: widget.user.username,
-                                        onNotifications:
-                                            widget.onOpenNotifications,
-                                      );
-                                      const aiCard = _AIInsightsCard();
-                                      final activeDay = _ActiveBusinessDayCard(
-                                        metrics: metrics,
-                                        formatOpened: _formatOpenedLocal,
-                                        formatDuration: () => _formatDuration(
-                                          metrics.businessDayOpenedAt,
-                                          metrics.businessDayDurationMinutes,
-                                        ),
-                                      );
-                                      final hero = _HeroRevenueCard(
-                                        metrics: metrics,
-                                        series: series,
-                                        dayChange: dayChange,
-                                        onTap: () =>
-                                            widget.onNavigateTab?.call(2),
-                                      );
-                                      final secondary = _SecondaryStats(
-                                        orderCount: metrics.todayOrderCount,
-                                        avgOrder: avgOrder,
-                                        activeTables: metrics.activeTablesCount,
-                                        occupancy: metrics.occupancyPercentage
-                                            .round(),
-                                        payable: metrics.openTablesPayable,
-                                        onTapOrders: () =>
-                                            widget.onNavigateTab?.call(2),
-                                        onTapTables: () =>
-                                            widget.onNavigateTab?.call(1),
-                                      );
-                                      final pulse = _ManagerPulseCard(
-                                        metrics: metrics,
-                                        reservations: state.todayReservations,
-                                        onTapTables: () =>
-                                            widget.onNavigateTab?.call(1),
-                                        onTapReservations: () =>
-                                            widget.onNavigateTab?.call(4),
-                                      );
-                                      final tables = _TablesOverviewStrip(
-                                        metrics: metrics,
-                                        onTap: () =>
-                                            widget.onNavigateTab?.call(1),
-                                      );
-                                      final quickActions = _QuickActionsSection(
-                                        onCloseBusinessDay: () => _toast(
-                                          'დღის დახურვა ხდება Windows POS-ში',
-                                          color: context.dash.warn,
-                                        ),
-                                        onViewReport: () =>
-                                            widget.onNavigateTab?.call(2),
-                                        onExportPdf: () => _toast(
-                                          'PDF ექსპორტი მალე დაემატება',
-                                          color: context.dash.info,
-                                        ),
-                                        onReservations: () =>
-                                            widget.onNavigateTab?.call(4),
-                                        onAnnouncement: () => _toast(
-                                          'შეტყობინების გაგზავნა მალე დაემატება',
-                                          color: context.dash.info,
-                                        ),
-                                      );
-                                      final countedMenus = _CountedMenusSection(
-                                        summary: menuSummary,
-                                        onOpenAll: _openCountedMenus,
-                                        onNewCount: _startCountMenu,
-                                      );
-                                      final Widget? topItemsWidget =
-                                          topItems.isNotEmpty
-                                          ? _TopItemsSection(topItems: topItems)
-                                          : null;
-                                      final Widget? waitersWidget =
-                                          staff.isNotEmpty
-                                          ? _WaitersSection(staff: staff)
-                                          : null;
-
-                                      // Phones (< 880px): single column, in the
-                                      // original priority order. Tablets / Mac
-                                      // (>= 880px): a centered two-column
-                                      // masonry mirroring the dashboard mockup.
-                                      if (constraints.maxWidth < 880) {
-                                        return Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            const SizedBox(height: 12),
-                                            fade(0.0, header),
-                                            const SizedBox(height: 24),
-                                            fade(0.04, aiCard),
-                                            const SizedBox(height: 24),
-                                            fade(0.08, activeDay),
-                                            const SizedBox(height: 16),
-                                            fade(0.15, hero),
-                                            const SizedBox(height: 16),
-                                            fade(0.25, secondary),
-                                            const SizedBox(height: 16),
-                                            if (ManagerEntitlements.has(
-                                              FeatureKeys.inventory,
-                                            ))
-                                              InventorySummaryCard(
-                                                onOpenInventory:
-                                                    widget.onNavigateTab == null
-                                                    ? null
-                                                    : () =>
-                                                          widget.onNavigateTab!(
-                                                            3,
-                                                          ),
-                                              ),
-                                            const SizedBox(height: 12),
-                                            if (ManagerEntitlements.has(
-                                              FeatureKeys.financialPlanning,
-                                            ))
-                                              const FinancialPlanningCard(),
-                                            const SizedBox(height: 28),
-                                            fade(0.32, pulse),
-                                            const SizedBox(height: 28),
-                                            fade(0.35, tables),
-                                            const SizedBox(height: 28),
-                                            fade(0.38, quickActions),
-                                            const SizedBox(height: 28),
-                                            fade(0.42, countedMenus),
-                                            if (topItemsWidget != null) ...[
-                                              const SizedBox(height: 28),
-                                              fade(0.5, topItemsWidget),
-                                            ],
-                                            if (waitersWidget != null) ...[
-                                              const SizedBox(height: 28),
-                                              fade(0.6, waitersWidget),
-                                            ],
-                                            const SizedBox(height: 28),
-                                          ],
-                                        );
-                                      }
-
-                                      // Header + AI banner always span full
-                                      // width; the responsive grid sits below.
-                                      Widget shell(
-                                        double maxWidth,
-                                        Widget grid,
-                                      ) {
-                                        return Center(
-                                          child: ConstrainedBox(
-                                            constraints: BoxConstraints(
-                                              maxWidth: maxWidth,
-                                            ),
-                                            child: Column(
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
-                                              children: [
-                                                const SizedBox(height: 16),
-                                                fade(0.0, header),
-                                                const SizedBox(height: 20),
-                                                fade(0.04, aiCard),
-                                                const SizedBox(height: 20),
-                                                if (ManagerEntitlements.has(
-                                                  FeatureKeys.inventory,
-                                                ))
-                                                  InventorySummaryCard(
-                                                    onOpenInventory:
-                                                        widget.onNavigateTab ==
-                                                            null
-                                                        ? null
-                                                        : () => widget
-                                                              .onNavigateTab!(3),
-                                                  ),
-                                                const SizedBox(height: 12),
-                                                if (ManagerEntitlements.has(
-                                                  FeatureKeys.financialPlanning,
-                                                ))
-                                                  const FinancialPlanningCard(),
-                                                const SizedBox(height: 20),
-                                                grid,
-                                                const SizedBox(height: 28),
-                                              ],
-                                            ),
-                                          ),
-                                        );
-                                      }
-
-                                      Widget col(List<Widget> children) =>
-                                          Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: children,
-                                          );
-
-                                      // Extra-wide desktop (e.g. 1728px Mac):
-                                      // three balanced columns like the mockup.
-                                      if (constraints.maxWidth >= 1320) {
-                                        return shell(
-                                          1600,
-                                          Row(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: [
-                                              Expanded(
-                                                child: col([
-                                                  fade(0.15, hero),
-                                                  const SizedBox(height: 20),
-                                                  fade(0.25, secondary),
-                                                ]),
-                                              ),
-                                              Expanded(
-                                                child: col([
-                                                  fade(0.42, countedMenus),
-                                                  const SizedBox(height: 20),
-                                                  fade(0.38, quickActions),
-                                                  if (topItemsWidget !=
-                                                      null) ...[
-                                                    const SizedBox(height: 20),
-                                                    fade(0.5, topItemsWidget),
-                                                  ],
-                                                ]),
-                                              ),
-                                              Expanded(
-                                                child: col([
-                                                  fade(0.08, activeDay),
-                                                  const SizedBox(height: 20),
-                                                  fade(0.32, pulse),
-                                                  const SizedBox(height: 20),
-                                                  fade(0.35, tables),
-                                                  if (waitersWidget !=
-                                                      null) ...[
-                                                    const SizedBox(height: 20),
-                                                    fade(0.6, waitersWidget),
-                                                  ],
-                                                ]),
-                                              ),
-                                            ],
-                                          ),
-                                        );
-                                      }
-
-                                      // Tablet / small desktop: two columns.
-                                      return shell(
-                                        1240,
-                                        Row(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Expanded(
-                                              flex: 3,
-                                              child: col([
-                                                fade(0.15, hero),
-                                                const SizedBox(height: 20),
-                                                fade(0.25, secondary),
-                                                const SizedBox(height: 20),
-                                                fade(0.42, countedMenus),
-                                                if (topItemsWidget != null) ...[
-                                                  const SizedBox(height: 20),
-                                                  fade(0.5, topItemsWidget),
-                                                ],
-                                              ]),
-                                            ),
-                                            Expanded(
-                                              flex: 2,
-                                              child: col([
-                                                fade(0.08, activeDay),
-                                                const SizedBox(height: 20),
-                                                fade(0.32, pulse),
-                                                const SizedBox(height: 20),
-                                                fade(0.35, tables),
-                                                const SizedBox(height: 20),
-                                                fade(0.38, quickActions),
-                                                if (waitersWidget != null) ...[
-                                                  const SizedBox(height: 20),
-                                                  fade(0.6, waitersWidget),
-                                                ],
-                                              ]),
-                                            ),
-                                          ],
-                                        ),
-                                      );
-                                    },
+    return ManagerDataBoundary(
+      reads: state.reads,
+      blocks: const {
+        'dashboard',
+        'product_analytics',
+        'staff_performance',
+        'sales_daily',
+        'financials',
+        'reservations',
+        'counted_menus',
+      },
+      onRefresh: _controller.loadAll,
+      child: ManagerThemeListener(
+        child: Builder(
+          builder: (context) {
+            final theme = managerThemeOf(context);
+            return Scaffold(
+              backgroundColor: theme.scaffoldBackground,
+              body: SafeArea(
+                bottom: false,
+                child: RefreshIndicator(
+                  color: theme.primary,
+                  onRefresh: () async {
+                    await MobileApiService.refreshEntitlements();
+                    await _controller.loadAll();
+                  },
+                  child: CustomScrollView(
+                    key: const PageStorageKey<String>(
+                      'manager-dashboard-scroll',
+                    ),
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    slivers: [
+                      SliverToBoxAdapter(
+                        child: Center(
+                          child: ConstrainedBox(
+                            constraints: const BoxConstraints(maxWidth: 1424),
+                            child: Padding(
+                              padding: EdgeInsets.all(
+                                MediaQuery.sizeOf(context).width < 700
+                                    ? 20
+                                    : 32,
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  _Header(
+                                    greeting: _greeting(),
+                                    name: widget.user.username,
+                                    onNotifications: widget.onOpenNotifications,
                                   ),
+                                  SizedBox(
+                                    height:
+                                        MediaQuery.sizeOf(context).width < 700
+                                        ? 16
+                                        : 24,
+                                  ),
+                                  if (state.loading && state.metrics == null)
+                                    _DashboardSkeleton()
+                                  else if (state.metrics == null)
+                                    const ManagerDataUnavailable(label: 'დაფა')
+                                  else
+                                    LayoutBuilder(
+                                      builder: (context, constraints) {
+                                        final hero = _HeroRevenueCard(
+                                          metrics: metrics,
+                                          series: series,
+                                          financials: state.financials,
+                                          financialsAvailable:
+                                              state
+                                                  .reads['financials']
+                                                  ?.location !=
+                                              'unavailable',
+                                          dayChange: dayChange,
+                                          onTap: () =>
+                                              widget.onNavigateTab?.call(2),
+                                        );
+                                        final pulse = ManagerDataSection(
+                                          block: 'reservations',
+                                          status: state.reads['reservations'],
+                                          child: _ManagerPulseCard(
+                                            metrics: metrics,
+                                            reservations:
+                                                state.todayReservations,
+                                            onTapTables: () =>
+                                                widget.onNavigateTab?.call(1),
+                                            onTapReservations: () =>
+                                                widget.onNavigateTab?.call(4),
+                                          ),
+                                        );
+                                        final activeDay = _ActiveBusinessDayCard(
+                                          metrics: metrics,
+                                          formatOpened: _formatOpenedLocal,
+                                          formatDuration: () => _formatDuration(
+                                            metrics.businessDayOpenedAt,
+                                            metrics.businessDayDurationMinutes,
+                                          ),
+                                        );
+                                        Widget column(List<Widget> children) =>
+                                            Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.stretch,
+                                              children: [
+                                                for (final entry
+                                                    in children.indexed) ...[
+                                                  if (entry.$1 > 0)
+                                                    const SizedBox(height: 20),
+                                                  entry.$2,
+                                                ],
+                                              ],
+                                            );
+                                        final bookings = ManagerDataSection(
+                                          block: 'reservations',
+                                          status: state.reads['reservations'],
+                                          child: _UpcomingReservations(
+                                            reservations:
+                                                state.todayReservations,
+                                            onOpen: () =>
+                                                widget.onNavigateTab?.call(4),
+                                          ),
+                                        );
+                                        final planning =
+                                            ManagerEntitlements.has(
+                                              FeatureKeys.financialPlanning,
+                                            )
+                                            ? const FinancialPlanningCard()
+                                            : const SizedBox.shrink();
+                                        final products = ManagerDataSection(
+                                          block: 'product_analytics',
+                                          status:
+                                              state.reads['product_analytics'],
+                                          child: _TopItemsSection(
+                                            topItems: topItems,
+                                          ),
+                                        );
+                                        final extras = [
+                                          activeDay,
+                                          _TablesOverviewStrip(
+                                            metrics: metrics,
+                                            onTap: () =>
+                                                widget.onNavigateTab?.call(1),
+                                          ),
+                                          if (ManagerEntitlements.has(
+                                            FeatureKeys.inventory,
+                                          ))
+                                            InventorySummaryCard(
+                                              onOpenInventory: () =>
+                                                  widget.onNavigateTab?.call(3),
+                                            ),
+                                          if (staff.isNotEmpty)
+                                            _WaitersSection(staff: staff),
+                                        ];
+                                        if (constraints.maxWidth <= 850)
+                                          return column([
+                                            hero,
+                                            pulse,
+                                            if (ManagerEntitlements.has(
+                                              FeatureKeys.managerReservations,
+                                            ))
+                                              bookings,
+                                            planning,
+                                            products,
+                                            ...extras,
+                                          ]);
+                                        Widget pair(
+                                          Widget left,
+                                          Widget right,
+                                        ) => Row(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Expanded(flex: 5, child: left),
+                                            const SizedBox(width: 22),
+                                            Expanded(flex: 6, child: right),
+                                          ],
+                                        );
+                                        return column([
+                                          hero,
+                                          pair(
+                                            pulse,
+                                            ManagerEntitlements.has(
+                                                  FeatureKeys
+                                                      .managerReservations,
+                                                )
+                                                ? bookings
+                                                : const SizedBox.shrink(),
+                                          ),
+                                          pair(planning, products),
+                                          ...extras,
+                                        ]);
+                                      },
+                                    ),
+                                ],
+                              ),
+                            ),
                           ),
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                 ),
-              ],
-            ),
-          ),
-        );
-      },
+              ),
+            );
+          },
+        ),
+      ),
     );
   }
-}
-
-class _DayPoint {
-  final String label;
-  final double value;
-  final bool isToday;
-  const _DayPoint({
-    required this.label,
-    required this.value,
-    required this.isToday,
-  });
-}
-
-class _CountedMenusSummary {
-  final List<Map<String, dynamic>> drafts;
-  final double totalValue;
-  final int totalItems;
-
-  const _CountedMenusSummary({
-    required this.drafts,
-    required this.totalValue,
-    required this.totalItems,
-  });
-
-  int get draftCount => drafts.length;
-  List<Map<String, dynamic>> get recent => drafts.take(3).toList();
 }
 
 /// ------------------------------------------------------------------
@@ -689,149 +465,37 @@ class _CountedMenusSummary {
 /// ------------------------------------------------------------------
 
 class _Header extends StatelessWidget {
-  final String greeting;
-  final String name;
-  final VoidCallback? onNotifications;
-
   const _Header({
     required this.greeting,
     required this.name,
     this.onNotifications,
   });
-
+  final String greeting, name;
+  final VoidCallback? onNotifications;
   @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+  Widget build(BuildContext context) => LayoutBuilder(
+    builder: (context, constraints) {
+      final title = Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  greeting,
-                  style: TextStyle(
-                    color: context.dash.textSecondary,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
-                    letterSpacing: 0.3,
-                  ),
-                ),
-                SizedBox(height: 4),
-                Text(
-                  name,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: context.dash.textPrimary,
-                    fontSize: 28,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: -0.5,
-                  ),
-                ),
-              ],
+          Text(
+            'დღის მიმოხილვა',
+            style: TextStyle(
+              color: context.dash.textPrimary,
+              fontSize: constraints.maxWidth < 700 ? 25 : 30,
+              fontWeight: FontWeight.w600,
             ),
           ),
-          SizedBox(width: 12),
-          _BouncingButton(
-            onTap: () => onNotifications?.call(),
-            child: Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: context.dash.headerButtonBackground,
-                shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                    color: context.dash.textPrimary.withOpacity(0.04),
-                    blurRadius: 10,
-                    offset: Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: ValueListenableBuilder<int>(
-                valueListenable:
-                    AppNotificationHistoryStore.instance.unreadCount,
-                builder: (_, unread, __) {
-                  return Stack(
-                    children: [
-                      Icon(
-                        Icons.notifications_outlined,
-                        color: context.dash.textPrimary,
-                      ),
-                      if (unread > 0)
-                        Positioned(top: 2, right: 2, child: _Dot()),
-                    ],
-                  );
-                },
-              ),
-            ),
+          const SizedBox(height: 6),
+          Text(
+            '$greeting $name',
+            style: TextStyle(color: context.dash.textSecondary, fontSize: 14),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _AIInsightsCard extends StatelessWidget {
-  const _AIInsightsCard();
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24),
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: context.dash.primarySoft,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: context.dash.primary.withOpacity(0.1)),
-        ),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: context.dash.primary,
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Icons.auto_awesome_rounded,
-                color: Colors.white,
-                size: 20,
-              ),
-            ),
-            SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Vynic AI პროგნოზი',
-                    style: TextStyle(
-                      color: context.dash.primary,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 13,
-                    ),
-                  ),
-                  SizedBox(height: 4),
-                  Text(
-                    'ამინდის გაუარესების გამო, დღეს მოსალოდნელია მიტანის სერვისზე მოთხოვნის 25%-ით ზრდა.',
-                    style: TextStyle(
-                      color: context.dash.textPrimary,
-                      fontSize: 13,
-                      height: 1.4,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+      );
+      return title;
+    },
+  );
 }
 
 class _ActiveBusinessDayCard extends StatefulWidget {
@@ -871,10 +535,10 @@ class _ActiveBusinessDayCardState extends State<_ActiveBusinessDayCard> {
     final m = widget.metrics;
     final isOpen = m.businessDayStatus.toUpperCase() == 'OPEN';
     final statusColor = isOpen ? context.dash.good : context.dash.textSecondary;
-    final dayId = m.businessDayId ?? m.businessDate ?? '—';
+    final dayId = m.businessDate ?? m.businessDayId ?? '—';
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24),
+      padding: EdgeInsets.zero,
       child: _DashboardCard(
         padding: const EdgeInsets.all(20),
         child: Column(
@@ -1064,7 +728,7 @@ class _TablesOverviewStrip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24),
+      padding: EdgeInsets.zero,
       child: _BouncingButton(
         onTap: onTap,
         child: _DashboardCard(
@@ -1084,26 +748,28 @@ class _TablesOverviewStrip extends StatelessWidget {
                 ],
               ),
               SizedBox(height: 14),
-              Row(
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                crossAxisAlignment: WrapCrossAlignment.center,
                 children: [
                   _TableStatChip(
                     label: 'დაკავ.',
                     count: metrics.occupiedTables,
                     color: context.dash.warn,
                   ),
-                  SizedBox(width: 8),
+
                   _TableStatChip(
                     label: 'თავისუფ.',
                     count: metrics.freeTables,
                     color: context.dash.good,
                   ),
-                  SizedBox(width: 8),
+
                   _TableStatChip(
                     label: 'რეზ.',
                     count: metrics.reservedTables,
                     color: context.dash.info,
                   ),
-                  const Spacer(),
                   Text(
                     '${metrics.totalTables} სულ',
                     style: TextStyle(
@@ -1164,275 +830,338 @@ class _TableStatChip extends StatelessWidget {
 
 class _HeroRevenueCard extends StatelessWidget {
   final ManagerDashboardMetrics metrics;
-  final List<_DayPoint> series;
+  final List<ManagerRevenuePoint> series;
+  final Map<String, dynamic>? financials;
+  final bool financialsAvailable;
   final double? dayChange;
   final VoidCallback onTap;
 
   const _HeroRevenueCard({
     required this.metrics,
     required this.series,
+    required this.financials,
+    required this.financialsAvailable,
     required this.dayChange,
     required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
+    final t = context.dash;
     final closed = metrics.closedTablesRevenue;
-    final open = metrics.openTablesPayable;
-    final openCount = metrics.occupiedTables;
-    final hasOpen = openCount > 0 && open > 0.005;
+    final hasOpen =
+        metrics.occupiedTables > 0 && metrics.openTablesPayable > .005;
     final total = hasOpen ? metrics.shiftTotalRevenue : closed;
-    final hasCompare = dayChange != null;
+    // Existing financial endpoint resolves outflows and reporting date together.
+    // Do not combine a cached prior business day with the current dashboard.
+    final procurement = financials?['procurement'];
+    final financialDate = procurement is Map
+        ? procurement['businessDate']?.toString()
+        : null;
+    final sameDay =
+        financialsAvailable &&
+        financialDate != null &&
+        financialDate == (metrics.businessDate ?? metrics.businessDayId);
+    final outflows = sameDay
+        ? double.tryParse('${financials?['totalOutflows']}')
+        : null;
+    final difference = sameDay
+        ? double.tryParse('${financials?['differenceExact']}')
+        : null;
+    final expenseValue = outflows == null ? '—' : _gelExact(outflows);
+    final balanceValue = difference == null ? '—' : _gelExact(difference);
     final up = (dayChange ?? 0) >= 0;
-    final compareColor = !hasCompare
-        ? context.dash.textSecondary
-        : (up ? context.dash.good : context.dash.bad);
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24),
-      child: _BouncingButton(
-        onTap: onTap,
-        child: _HeroRevenueShell(
+    final comparison = dayChange == null
+        ? '—'
+        : '${up ? '+' : ''}${dayChange!.toStringAsFixed(1)}%';
+    final details = Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: _PaymentChip(
+                label: 'ნაღდი (დახურ.)',
+                amount: metrics.cashRevenue,
+                color: t.good,
+                icon: Icons.payments_outlined,
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: _PaymentChip(
+                label: 'ბარათი (დახურ.)',
+                amount: metrics.cardRevenue,
+                color: t.info,
+                icon: Icons.credit_card_rounded,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 10),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            if (metrics.tbcRevenue > 0)
+              _LedgerProviderChip(label: 'TBC', amount: metrics.tbcRevenue),
+            if (metrics.bogRevenue > 0)
+              _LedgerProviderChip(label: 'BOG', amount: metrics.bogRevenue),
+            if (metrics.advanceApplied > 0)
+              _LedgerProviderChip(
+                label: 'ავანსი',
+                amount: metrics.advanceApplied,
+              ),
+          ],
+        ),
+        if (ManagerEntitlements.has(FeatureKeys.nonFiscalClose) &&
+            metrics.nonFiscalClosedRevenue > .005)
+          _RevenueSplitRow(
+            icon: Icons.receipt_long_outlined,
+            label: 'აქედან არაფისკ.',
+            amount: metrics.nonFiscalClosedRevenue,
+            color: t.info,
+          ),
+        if (metrics.refunds > 0)
+          _RevenueSplitRow(
+            icon: Icons.replay,
+            label: 'დაბრუნებები',
+            amount: metrics.refunds,
+            color: t.bad,
+          ),
+      ],
+    );
+    return LayoutBuilder(
+      builder: (context, box) {
+        final compact = box.maxWidth < 850;
+        Widget metric(
+          String title,
+          String value, {
+          String? sub,
+          bool large = false,
+        }) => Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              title,
+              style: managerDesignText(context, compact ? 11 : 12, muted: true),
+            ),
+            SizedBox(height: compact ? 5 : 12),
+            Text(
+              value,
+              style: managerDesignText(
+                context,
+                compact ? 19 : 24,
+                weight: compact ? FontWeight.w600 : FontWeight.w500,
+              ),
+            ),
+            if (sub != null) ...[
+              const SizedBox(height: 12),
+              Text(sub, style: managerDesignText(context, 10, muted: true)),
+            ],
+          ],
+        );
+        final primary = Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    'დღის გაყიდვები',
+                    style: managerDesignText(context, 12, muted: true),
+                  ),
+                ),
+                if (compact)
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 9,
+                      vertical: 5,
+                    ),
+                    decoration: BoxDecoration(
+                      color: t.isDark
+                          ? t.good.withValues(alpha: .12)
+                          : const Color(0xFFEDF5F1),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Text(
+                      '• დღეს',
+                      style: managerDesignText(
+                        context,
+                        11,
+                        weight: FontWeight.w500,
+                      ).copyWith(color: t.good),
+                    ),
+                  ),
+              ],
+            ),
+            SizedBox(height: compact ? 10 : 8),
+            Text(
+              _gelExact(closed),
+              style: managerDesignText(
+                context,
+                compact ? 36 : 38,
+                weight: FontWeight.w600,
+              ),
+            ),
+            SizedBox(height: compact ? 5 : 8),
+            Wrap(
+              spacing: 6,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: [
+                if (!compact && dayChange != null)
+                  Icon(
+                    up ? Icons.trending_up : Icons.trending_down,
+                    size: 15,
+                    color: up ? t.good : t.bad,
+                  ),
+                Text(
+                  comparison,
+                  style: managerDesignText(
+                    context,
+                    12,
+                    weight: FontWeight.w600,
+                  ).copyWith(color: up ? t.good : t.bad),
+                ),
+                Text(
+                  'წინა საქმიან დღესთან',
+                  style: managerDesignText(
+                    context,
+                    compact ? 10 : 11,
+                    muted: true,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        );
+        return ManagerPanel(
+          padding: compact ? 20 : 26,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
-                child: Column(
+              if (compact)
+                primary
+              else
+                Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(
-                      children: [
-                        Text(
-                          'აქტიური ცვლის შემოსავალი',
-                          style: TextStyle(
-                            color: context.dash.textSecondary,
-                            fontSize: 14,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                        Spacer(),
-                        Icon(
-                          Icons.chevron_right_rounded,
-                          color: context.dash.textSecondary,
-                          size: 20,
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: 8),
-                    TweenAnimationBuilder<double>(
-                      key: ValueKey(total.toStringAsFixed(2)),
-                      tween: Tween(begin: 0, end: total),
-                      duration: const Duration(milliseconds: 1100),
-                      curve: Curves.easeOutCubic,
-                      builder: (context, val, __) => FittedBox(
-                        fit: BoxFit.scaleDown,
-                        alignment: Alignment.centerLeft,
-                        child: Text(
-                          _gelExact(val),
-                          style: TextStyle(
-                            color: context.dash.textPrimary,
-                            fontSize: 42,
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: -1.5,
-                          ),
-                        ),
+                    Expanded(flex: 4, child: primary),
+                    for (final value in [
+                      (
+                        'გასავლები',
+                        expenseValue,
+                        outflows == null
+                            ? 'მონაცემი მიუწვდომელია'
+                            : 'უკვე გადახდილი',
                       ),
-                    ),
-                    SizedBox(height: 4),
-                    Text(
-                      hasOpen ? 'დახურული + ღია მაგიდები' : 'დახურული მაგიდები',
-                      style: TextStyle(
-                        color: context.dash.textSecondary,
-                        fontSize: 11,
+                      (
+                        'ნაშთი',
+                        balanceValue,
+                        difference == null
+                            ? 'მონაცემი მიუწვდომელია'
+                            : 'გაყიდვები − გასავლები',
                       ),
-                    ),
-                    if (metrics.financialWarning != null) ...[
-                      const SizedBox(height: 10),
-                      Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          color: context.dash.warn.withValues(alpha: 0.12),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Text(
-                          metrics.financialWarning!,
-                          style: TextStyle(
-                            color: context.dash.textSecondary,
-                            fontSize: 11,
-                            height: 1.3,
-                          ),
-                        ),
+                      (
+                        'შეკვეთები',
+                        '${metrics.todayOrderCount}',
+                        'დღეს დასრულებული',
                       ),
-                    ],
-                    SizedBox(height: 14),
-                    _RevenueSplitRow(
-                      icon: Icons.check_circle_outline_rounded,
-                      label: 'დახურული',
-                      amount: closed,
-                      color: context.dash.good,
-                    ),
-                    if (ManagerEntitlements.has(FeatureKeys.nonFiscalClose) &&
-                        metrics.nonFiscalClosedRevenue > 0.005) ...[
-                      SizedBox(height: 8),
-                      _RevenueSplitRow(
-                        icon: Icons.receipt_long_rounded,
-                        label: 'აქედან არაფისკ.',
-                        amount: metrics.nonFiscalClosedRevenue,
-                        color: context.dash.info,
-                      ),
-                    ],
-                    if (hasOpen) ...[
-                      SizedBox(height: 8),
-                      _RevenueSplitRow(
-                        icon: Icons.table_bar_rounded,
-                        label: 'ღია ($openCount)',
-                        amount: open,
-                        color: context.dash.warn,
-                      ),
-                    ],
-                    SizedBox(height: 12),
-                    Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 4,
-                          ),
+                    ])
+                      Expanded(
+                        flex: 3,
+                        child: Container(
+                          padding: const EdgeInsets.only(left: 24),
                           decoration: BoxDecoration(
-                            color: compareColor.withOpacity(0.15),
-                            borderRadius: BorderRadius.circular(20),
+                            border: Border(
+                              left: BorderSide(color: t.cardBorder),
+                            ),
                           ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                !hasCompare
-                                    ? Icons.remove_rounded
-                                    : (up
-                                          ? Icons.trending_up_rounded
-                                          : Icons.trending_down_rounded),
-                                color: compareColor,
-                                size: 14,
-                              ),
-                              SizedBox(width: 4),
-                              Text(
-                                hasCompare
-                                    ? '${up ? '+' : ''}${dayChange!.toStringAsFixed(1)}%'
-                                    : '—',
-                                style: TextStyle(
-                                  color: compareColor,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ],
-                          ),
+                          child: metric(value.$1, value.$2, sub: value.$3),
                         ),
-                        SizedBox(width: 8),
-                        Flexible(
-                          child: Text(
-                            'წინა ცვლასთან',
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              color: context.dash.textSecondary,
-                              fontSize: 12,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    if (metrics.cashRevenue > 0 || metrics.cardRevenue > 0) ...[
-                      SizedBox(height: 14),
-                      Row(
-                        children: [
-                          if (metrics.cashRevenue > 0)
-                            Expanded(
-                              child: _PaymentChip(
-                                label: 'ნაღდი (დახურ.)',
-                                amount: metrics.cashRevenue,
-                                color: context.dash.good,
-                                icon: Icons.payments_outlined,
-                              ),
-                            ),
-                          if (metrics.cashRevenue > 0 &&
-                              metrics.cardRevenue > 0)
-                            SizedBox(width: 8),
-                          if (metrics.cardRevenue > 0)
-                            Expanded(
-                              child: _PaymentChip(
-                                label: 'ბარათი (დახურ.)',
-                                amount: metrics.cardRevenue,
-                                color: context.dash.info,
-                                icon: Icons.credit_card_rounded,
-                              ),
-                            ),
-                        ],
                       ),
-                    ],
-                    if (metrics.tbcRevenue > 0 ||
-                        metrics.bogRevenue > 0 ||
-                        metrics.advanceApplied > 0) ...[
-                      const SizedBox(height: 8),
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: [
-                          if (metrics.tbcRevenue > 0)
-                            _LedgerProviderChip(
-                              label: 'TBC',
-                              amount: metrics.tbcRevenue,
-                            ),
-                          if (metrics.bogRevenue > 0)
-                            _LedgerProviderChip(
-                              label: 'BOG',
-                              amount: metrics.bogRevenue,
-                            ),
-                          if (metrics.advanceApplied > 0)
-                            _LedgerProviderChip(
-                              label: 'ავანსი',
-                              amount: metrics.advanceApplied,
-                            ),
-                        ],
-                      ),
-                    ],
-                    if (metrics.refunds > 0) ...[
-                      SizedBox(height: 8),
-                      _RevenueSplitRow(
-                        icon: Icons.replay_rounded,
-                        label: 'დაბრუნებები',
-                        amount: metrics.refunds,
-                        color: context.dash.bad,
-                      ),
-                    ],
                   ],
                 ),
-              ),
-              SizedBox(height: 20),
-
-              // NEW SMOOTH AREA CHART
-              SizedBox(
-                height: 100,
-                width: double.infinity,
-                child: ClipRRect(
-                  borderRadius: const BorderRadius.only(
-                    bottomLeft: Radius.circular(32),
-                    bottomRight: Radius.circular(32),
-                  ),
-                  child: CustomPaint(
-                    painter: _SmoothAreaChartPainter(
-                      series: series,
-                      theme: context.dash,
+              if (!compact) ...[
+                const SizedBox(height: 28),
+                const Divider(height: 1),
+              ],
+              const SizedBox(height: 24),
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      'გაყიდვების დინამიკა',
+                      style: managerDesignText(
+                        context,
+                        12,
+                        weight: FontWeight.w500,
+                      ),
                     ),
                   ),
+                  Text(
+                    'ბოლო 7 საქმიანი დღე',
+                    style: managerDesignText(context, 10, muted: true),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              ManagerRevenueBars(points: series, compact: compact),
+              if (compact) ...[
+                const SizedBox(height: 18),
+                const Divider(height: 1),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    Expanded(child: metric('გასავლები', expenseValue)),
+                    Container(height: 43, width: 1, color: t.cardBorder),
+                    const SizedBox(width: 20),
+                    Expanded(child: metric('ნაშთი', balanceValue)),
+                  ],
                 ),
+                if (outflows == null) const SizedBox(height: 8),
+                if (outflows == null)
+                  Text(
+                    'გასავლების მონაცემი მიუწვდომელია',
+                    style: managerDesignText(context, 10, muted: true),
+                  ),
+              ],
+              if (metrics.financialWarning != null)
+                Padding(
+                  padding: const EdgeInsets.only(top: 12),
+                  child: Text(
+                    metrics.financialWarning!,
+                    style: managerDesignText(
+                      context,
+                      12,
+                    ).copyWith(color: t.warn),
+                  ),
+                ),
+              const SizedBox(height: 12),
+              ExpansionTile(
+                key: const PageStorageKey<String>('manager-dashboard-payments'),
+                minTileHeight: 40,
+                tilePadding: EdgeInsets.zero,
+                childrenPadding: const EdgeInsets.only(bottom: 8),
+                shape: const Border(),
+                collapsedShape: const Border(),
+                title: Text(
+                  'გადახდის დეტალები',
+                  style: managerDesignText(context, 12, muted: true),
+                ),
+                children: [
+                  ManagerKeyValue('აქტიური ცვლის ჯამი', _gelExact(total)),
+                  ManagerKeyValue(
+                    'ღია შეკვეთები',
+                    _gelExact(metrics.openTablesPayable),
+                  ),
+                  details,
+                ],
               ),
             ],
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 }
@@ -1453,12 +1182,7 @@ class _RevenueSplitRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.08),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: color.withOpacity(0.15)),
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 7),
       child: Row(
         children: [
           Icon(icon, color: color, size: 18),
@@ -1483,75 +1207,8 @@ class _RevenueSplitRow extends StatelessWidget {
               style: TextStyle(
                 color: color,
                 fontSize: 16,
-                fontWeight: FontWeight.w800,
+                fontWeight: FontWeight.w600,
               ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _SecondaryStats extends StatelessWidget {
-  final int orderCount;
-  final double avgOrder;
-  final int activeTables;
-  final int occupancy;
-  final double payable;
-  final VoidCallback onTapOrders;
-  final VoidCallback onTapTables;
-
-  const _SecondaryStats({
-    required this.orderCount,
-    required this.avgOrder,
-    required this.activeTables,
-    required this.occupancy,
-    required this.payable,
-    required this.onTapOrders,
-    required this.onTapTables,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24),
-      child: Row(
-        children: [
-          Expanded(
-            child: _StatCard(
-              title: 'შეკვეთები',
-              value: orderCount,
-              trend: 'საშ ₾${_money.format(avgOrder.round())}',
-              isPositive: true,
-              icon: Icons.receipt_long_rounded,
-              iconColor: context.dash.info,
-              onTap: onTapOrders,
-            ),
-          ),
-          SizedBox(width: 12),
-          Expanded(
-            child: _StatCard(
-              title: 'მაგიდები',
-              value: activeTables,
-              trend: '$occupancy%',
-              isPositive: occupancy < 90,
-              icon: Icons.table_restaurant_rounded,
-              iconColor: context.dash.warn,
-              onTap: onTapTables,
-            ),
-          ),
-          SizedBox(width: 12),
-          Expanded(
-            child: _StatCard(
-              title: 'გადასახდელი',
-              value: payable.round(),
-              valueLabel: _gelExact(payable),
-              trend: '$activeTables მაგ.',
-              isPositive: true,
-              icon: Icons.pending_actions_rounded,
-              iconColor: context.dash.primary,
-              onTap: onTapTables,
             ),
           ),
         ],
@@ -1669,144 +1326,161 @@ class _ManagerPulseCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final occ = metrics.occupancyPercentage.round().clamp(0, 100);
-    final ringColor = occ >= 90
-        ? context.dash.bad
-        : (occ >= 70 ? context.dash.warn : context.dash.good);
     final t = context.dash;
-    final items = _attentionItems(t);
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24),
-      child: _DashboardCard(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const _SectionHeader(title: 'დღის პულსი'),
-            SizedBox(height: 16),
-            Row(
-              children: [
-                SizedBox(
-                  width: 88,
-                  height: 88,
-                  child: Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      SizedBox(
-                        width: 88,
-                        height: 88,
-                        child: CircularProgressIndicator(
-                          value: occ / 100,
-                          strokeWidth: 8,
-                          backgroundColor: ringColor.withOpacity(0.15),
-                          color: ringColor,
-                          strokeCap: StrokeCap.round,
-                        ),
-                      ),
-                      Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            '$occ%',
-                            style: TextStyle(
-                              color: context.dash.textPrimary,
-                              fontSize: 20,
-                              fontWeight: FontWeight.w800,
-                            ),
-                          ),
-                          Text(
-                            'დატვირთ.',
-                            style: TextStyle(
-                              color: context.dash.textSecondary,
-                              fontSize: 10,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
+    return ManagerPanel(
+      padding: 22,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          ManagerSectionHeading(
+            'რესტორანი ახლა',
+            action: 'მაგიდები',
+            onAction: onTapTables,
+          ),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(
+                '${metrics.occupiedTables}',
+                style: managerDesignText(context, 34, weight: FontWeight.w600),
+              ),
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.only(bottom: 7, left: 6),
+                  child: Text(
+                    '/ ${metrics.totalTables} მაგიდა დაკავებულია',
+                    style: managerDesignText(context, 12, muted: true),
                   ),
                 ),
-                SizedBox(width: 18),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _miniStat(
-                        context,
-                        'აქტიური მაგიდები',
-                        '${metrics.activeTablesCount}',
-                        onTapTables,
-                      ),
-                      SizedBox(height: 8),
-                      _miniStat(
-                        context,
-                        'გადასახდელი',
-                        _gelExact(metrics.openTablesPayable),
-                        onTapTables,
-                      ),
-                      SizedBox(height: 8),
-                      if (ManagerEntitlements.has(
-                        FeatureKeys.managerReservations,
-                      ))
-                        _miniStat(
-                          context,
-                          'რეზერვაციები',
-                          '${reservations.length}',
-                          onTapReservations,
-                        ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            SizedBox(height: 18),
-            Text(
+              ),
+              Text(
+                '${metrics.occupancyPercentage.round()}%',
+                style: managerDesignText(
+                  context,
+                  15,
+                  weight: FontWeight.w600,
+                ).copyWith(color: t.primary),
+              ),
+            ],
+          ),
+          const SizedBox(height: 15),
+          ManagerOccupancyBars(
+            total: metrics.totalTables,
+            occupied: metrics.occupiedTables,
+          ),
+          const SizedBox(height: 17),
+          const Divider(height: 1),
+          const SizedBox(height: 8),
+          ManagerKeyValue(
+            'ღია შეკვეთების თანხა',
+            _gelExact(metrics.openTablesPayable),
+          ),
+          const ManagerKeyValue('წაღების შეკვეთები', 'მიუწვდომელია'),
+          ExpansionTile(
+            key: const PageStorageKey<String>('manager-dashboard-attention'),
+            tilePadding: EdgeInsets.zero,
+            shape: const Border(),
+            collapsedShape: const Border(),
+            title: Text(
               'ყურადღება',
-              style: TextStyle(
-                color: context.dash.textSecondary,
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-              ),
+              style: managerDesignText(context, 12, muted: true),
             ),
-            SizedBox(height: 10),
-            ...items.map(
-              (item) => Padding(
-                padding: const EdgeInsets.only(bottom: 8),
-                child: _PulseRow(item: item),
-              ),
-            ),
-          ],
-        ),
+            children: [
+              for (final item in _attentionItems(t))
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: _PulseRow(item: item),
+                ),
+            ],
+          ),
+        ],
       ),
     );
   }
+}
 
-  Widget _miniStat(
-    BuildContext context,
-    String label,
-    String value,
-    VoidCallback? onTap,
-  ) {
-    return GestureDetector(
-      onTap: onTap,
-      behavior: HitTestBehavior.opaque,
-      child: Row(
+class _UpcomingReservations extends StatelessWidget {
+  const _UpcomingReservations({required this.reservations, this.onOpen});
+  final List<Map<String, dynamic>> reservations;
+  final VoidCallback? onOpen;
+  @override
+  Widget build(BuildContext context) {
+    final t = context.dash;
+    final upcoming =
+        reservations.where((r) {
+          final status = '${r['status']}'.toLowerCase();
+          return !status.startsWith('cancelled') &&
+              !status.startsWith('completed');
+        }).toList()..sort(
+          (a, b) =>
+              '${a['reservationTime']}'.compareTo('${b['reservationTime']}'),
+        );
+    return ManagerPanel(
+      padding: 22,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Expanded(
-            child: Text(
-              label,
-              style: TextStyle(color: context.dash.textSecondary, fontSize: 12),
-            ),
+          ManagerSectionHeading(
+            'მომდევნო რეზერვაციები',
+            action: 'ყველა',
+            onAction: onOpen,
           ),
-          Text(
-            value,
-            style: TextStyle(
-              color: context.dash.textPrimary,
-              fontSize: 14,
-              fontWeight: FontWeight.w700,
+          if (upcoming.isEmpty)
+            Text(
+              'დღეს რეზერვაცია არ არის',
+              style: managerDesignText(context, 12, muted: true),
             ),
-          ),
+          for (final r in upcoming.take(3))
+            InkWell(
+              onTap: onOpen,
+              borderRadius: BorderRadius.circular(8),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 52,
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                      decoration: BoxDecoration(
+                        color: t.scaffoldBackground,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        '${r['reservationTime'] ?? '—'}',
+                        textAlign: TextAlign.center,
+                        style: managerDesignText(
+                          context,
+                          12,
+                          weight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            '${r['customerName'] ?? ''}',
+                            style: managerDesignText(
+                              context,
+                              12,
+                              weight: FontWeight.w500,
+                            ),
+                          ),
+                          const SizedBox(height: 3),
+                          Text(
+                            '${r['numberOfGuests'] ?? '—'} სტუმარი · მაგიდა ${(r['tableNumbers'] as List? ?? const []).join(', ')}',
+                            style: managerDesignText(context, 10, muted: true),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Icon(Icons.chevron_right, size: 17, color: t.textSecondary),
+                  ],
+                ),
+              ),
+            ),
         ],
       ),
     );
@@ -1869,618 +1543,61 @@ class _PulseRow extends StatelessWidget {
   }
 }
 
-class _CountedMenusSection extends StatelessWidget {
-  final _CountedMenusSummary summary;
-  final VoidCallback onOpenAll;
-  final VoidCallback onNewCount;
-
-  const _CountedMenusSection({
-    required this.summary,
-    required this.onOpenAll,
-    required this.onNewCount,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final hasDrafts = summary.draftCount > 0;
-    final maxTotal = summary.recent
-        .map(
-          (d) =>
-              (d['total'] as num?)?.toDouble() ??
-              (d['subtotal'] as num?)?.toDouble() ??
-              0,
-        )
-        .fold<double>(0, (a, b) => a > b ? a : b);
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24),
-      child: _DashboardCard(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: context.dash.warn.withOpacity(0.15),
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  child: Icon(
-                    Icons.fact_check_rounded,
-                    color: context.dash.warn,
-                    size: 22,
-                  ),
-                ),
-                SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'მენიუს დათვლა',
-                        style: TextStyle(
-                          color: context.dash.textPrimary,
-                          fontSize: 17,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      Text(
-                        hasDrafts
-                            ? '${summary.draftCount} შენახული · ${summary.totalItems} პოზიცია'
-                            : 'დათვალე და შეინახე მენიუ',
-                        style: TextStyle(
-                          color: context.dash.textSecondary,
-                          fontSize: 12,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                _BouncingButton(
-                  onTap: onNewCount,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 8,
-                    ),
-                    decoration: BoxDecoration(
-                      color: context.dash.primary.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.add_rounded,
-                          color: context.dash.primary,
-                          size: 18,
-                        ),
-                        SizedBox(width: 4),
-                        Text(
-                          'ახალი',
-                          style: TextStyle(
-                            color: context.dash.primary,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            SizedBox(height: 18),
-            if (hasDrafts) ...[
-              Row(
-                children: [
-                  Expanded(
-                    child: _MenuStatTile(
-                      label: 'ჯამი',
-                      value: '₾${_money.format(summary.totalValue.round())}',
-                      color: context.dash.good,
-                    ),
-                  ),
-                  SizedBox(width: 8),
-                  Expanded(
-                    child: _MenuStatTile(
-                      label: 'ჩანაწერები',
-                      value: '${summary.draftCount}',
-                      color: context.dash.info,
-                    ),
-                  ),
-                  SizedBox(width: 8),
-                  Expanded(
-                    child: _MenuStatTile(
-                      label: 'პოზიციები',
-                      value: '${summary.totalItems}',
-                      color: context.dash.warn,
-                    ),
-                  ),
-                ],
-              ),
-              SizedBox(height: 16),
-              SizedBox(
-                height: 96,
-                child: ListView.separated(
-                  scrollDirection: Axis.horizontal,
-                  physics: const BouncingScrollPhysics(),
-                  itemCount: summary.recent.length,
-                  separatorBuilder: (_, __) => SizedBox(width: 10),
-                  itemBuilder: (context, i) {
-                    final d = summary.recent[i];
-                    final total =
-                        (d['total'] as num?)?.toDouble() ??
-                        (d['subtotal'] as num?)?.toDouble() ??
-                        0;
-                    final items = (d['items'] as List?)?.length ?? 0;
-                    final share = maxTotal > 0 ? total / maxTotal : 0.0;
-                    return _MenuDraftChip(
-                      name: (d['displayName'] ?? 'დაუსახელებელი').toString(),
-                      total: total,
-                      items: items,
-                      share: share,
-                    );
-                  },
-                ),
-              ),
-            ] else
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: context.dash.surfaceMuted,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: context.dash.textSecondary.withOpacity(0.1),
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.inventory_2_outlined,
-                      color: context.dash.textSecondary,
-                      size: 28,
-                    ),
-                    SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        'ჯერ არაფერი არ არის შენახული.\nდააჭირე „ახალი“ და დაითვალე მენიუ.',
-                        style: TextStyle(
-                          color: context.dash.textSecondary,
-                          fontSize: 13,
-                          height: 1.35,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            SizedBox(height: 14),
-            _BouncingButton(
-              onTap: onOpenAll,
-              child: Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                decoration: BoxDecoration(
-                  color: context.dash.surfaceMuted,
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      hasDrafts
-                          ? 'ყველა ჩანაწერის ნახვა'
-                          : 'მენიუს დათვლის გახსნა',
-                      style: TextStyle(
-                        color: context.dash.textPrimary,
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    SizedBox(width: 6),
-                    Icon(
-                      Icons.arrow_forward_rounded,
-                      color: context.dash.textSecondary,
-                      size: 18,
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _MenuStatTile extends StatelessWidget {
-  final String label, value;
-  final Color color;
-
-  const _MenuStatTile({
-    required this.label,
-    required this.value,
-    required this.color,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(14),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            label,
-            style: TextStyle(color: context.dash.textSecondary, fontSize: 10),
-          ),
-          SizedBox(height: 4),
-          FittedBox(
-            fit: BoxFit.scaleDown,
-            alignment: Alignment.centerLeft,
-            child: Text(
-              value,
-              style: TextStyle(
-                color: color,
-                fontSize: 16,
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _MenuDraftChip extends StatelessWidget {
-  final String name;
-  final double total, share;
-  final int items;
-
-  const _MenuDraftChip({
-    required this.name,
-    required this.total,
-    required this.items,
-    required this.share,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      height: 96,
-      child: Container(
-        width: 148,
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: context.dash.surfaceMuted,
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              name,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                color: context.dash.textPrimary,
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            FittedBox(
-              fit: BoxFit.scaleDown,
-              alignment: Alignment.centerLeft,
-              child: Text(
-                '₾${_money.format(total.round())}',
-                style: TextStyle(
-                  color: context.dash.good,
-                  fontSize: 15,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-            ),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(4),
-                  child: LinearProgressIndicator(
-                    value: share.clamp(0.05, 1.0),
-                    minHeight: 4,
-                    backgroundColor: context.dash.textSecondary.withOpacity(
-                      0.1,
-                    ),
-                    color: context.dash.primary,
-                  ),
-                ),
-                SizedBox(height: 4),
-                Text(
-                  '$items პოზ.',
-                  style: TextStyle(
-                    color: context.dash.textSecondary,
-                    fontSize: 10,
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _QuickAction {
-  final String title;
-  final IconData icon;
-  final Color color;
-  final VoidCallback onTap;
-  const _QuickAction(this.title, this.icon, this.color, this.onTap);
-}
-
-class _QuickActionsSection extends StatelessWidget {
-  final VoidCallback onCloseBusinessDay,
-      onViewReport,
-      onExportPdf,
-      onReservations,
-      onAnnouncement;
-
-  const _QuickActionsSection({
-    required this.onCloseBusinessDay,
-    required this.onViewReport,
-    required this.onExportPdf,
-    required this.onReservations,
-    required this.onAnnouncement,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final actions = <_QuickAction>[
-      _QuickAction(
-        'დღის\nდახურვა',
-        Icons.nightlight_round,
-        context.dash.warn,
-        onCloseBusinessDay,
-      ),
-      _QuickAction(
-        'სრული\nანგარიში',
-        Icons.assessment_outlined,
-        context.dash.primary,
-        onViewReport,
-      ),
-      _QuickAction(
-        'PDF\nექსპორტი',
-        Icons.picture_as_pdf_rounded,
-        context.dash.bad,
-        onExportPdf,
-      ),
-      if (ManagerEntitlements.has(FeatureKeys.managerReservations))
-        _QuickAction(
-          'რეზ.\nგახსნა',
-          Icons.event_seat_rounded,
-          context.dash.info,
-          onReservations,
-        ),
-      _QuickAction(
-        'შეტყობ.\nგაგზ.',
-        Icons.campaign_outlined,
-        context.dash.good,
-        onAnnouncement,
-      ),
-    ];
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const _SectionHeader(title: 'სწრაფი ქმედებები'),
-              SizedBox(height: 4),
-              Text(
-                'აქტიური ცვლის მართვა',
-                style: TextStyle(
-                  color: context.dash.textSecondary,
-                  fontSize: 12,
-                ),
-              ),
-            ],
-          ),
-        ),
-        SizedBox(height: 16),
-        SizedBox(
-          height: 110,
-          child: ListView.builder(
-            scrollDirection: Axis.horizontal,
-            physics: const BouncingScrollPhysics(),
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            itemCount: actions.length,
-            itemBuilder: (context, index) {
-              final action = actions[index];
-              return _BouncingButton(
-                onTap: action.onTap,
-                child: Container(
-                  width: 110,
-                  margin: const EdgeInsets.symmetric(horizontal: 4),
-                  child: _DashboardCard(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(action.icon, color: action.color, size: 28),
-                        SizedBox(height: 12),
-                        Text(
-                          action.title,
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            color: context.dash.textPrimary,
-                            fontSize: 11,
-                            fontWeight: FontWeight.w600,
-                            height: 1.2,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              );
-            },
-          ),
-        ),
-      ],
-    );
-  }
-}
-
 class _TopItemsSection extends StatelessWidget {
   final List<Map<String, dynamic>> topItems;
   const _TopItemsSection({required this.topItems});
 
-  static const _gradients = <List<Color>>[
-    [Color(0xFF2563EB), Color(0xFF60A5FA)],
-    [Color(0xFF3B82F6), Color(0xFF06B6D4)],
-    [Color(0xFFF59E0B), Color(0xFFEF4444)],
-    [Color(0xFF10B981), Color(0xFF059669)],
-    [Color(0xFF0EA5E9), Color(0xFF38BDF8)],
-  ];
-
   @override
-  Widget build(BuildContext context) {
-    return Column(
+  Widget build(BuildContext context) => ManagerPanel(
+    padding: 22,
+    child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 24),
-          child: _SectionHeader(title: "პოპულარული (აქტიური ცვლა)"),
+        const ManagerSectionHeading(
+          'პოპულარული პროდუქტები',
+          subtitle: 'დღეს გაყიდული რაოდენობა',
         ),
-        SizedBox(height: 16),
-        SizedBox(
-          height: 170,
-          child: ListView.builder(
-            scrollDirection: Axis.horizontal,
-            physics: const BouncingScrollPhysics(),
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            itemCount: topItems.length,
-            itemBuilder: (context, index) {
-              final item = topItems[index];
-              final name = (item['name'] as String?) ?? '';
-              final qty = (item['qty'] as num?)?.toInt() ?? 0;
-              final revenue = (item['revenue'] as num?)?.toDouble() ?? 0;
-              final grad = _gradients[index % _gradients.length];
-              return Container(
-                width: 160,
-                margin: const EdgeInsets.symmetric(horizontal: 4),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(24),
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: grad,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: grad.first.withOpacity(0.2),
-                      blurRadius: 16,
-                      offset: const Offset(0, 8),
-                    ),
-                  ],
-                ),
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.2),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: const Icon(
-                            Icons.restaurant_rounded,
-                            color: Colors.white,
-                            size: 18,
-                          ),
-                        ),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 3,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.black.withOpacity(0.2),
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: Text(
-                            '#${index + 1}',
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 11,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const Spacer(),
-                    Text(
-                      name,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 15,
-                        fontWeight: FontWeight.bold,
-                        height: 1.15,
-                      ),
-                    ),
-                    SizedBox(height: 6),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          '$qty ცალი',
-                          style: TextStyle(
-                            color: Colors.white.withOpacity(0.85),
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                        Text(
-                          '₾${_money.format(revenue.round())}',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 13,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              );
-            },
+        if (topItems.isEmpty)
+          Text(
+            'პროდუქტების მონაცემები არ არის',
+            style: managerDesignText(context, 12, muted: true),
           ),
-        ),
+        for (final item in topItems)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 9),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    '${item['name'] ?? ''}',
+                    style: managerDesignText(context, 12),
+                  ),
+                ),
+                Text(
+                  '${item['qty'] ?? '—'} ც',
+                  style: managerDesignText(context, 11, muted: true),
+                ),
+                const SizedBox(width: 28),
+                SizedBox(
+                  width: 80,
+                  child: Text(
+                    item['revenue'] == null
+                        ? '—'
+                        : _gelExact((item['revenue'] as num)),
+                    textAlign: TextAlign.right,
+                    style: managerDesignText(
+                      context,
+                      12,
+                      weight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
       ],
-    );
-  }
+    ),
+  );
 }
 
 class _WaitersSection extends StatelessWidget {
@@ -2491,11 +1608,16 @@ class _WaitersSection extends StatelessWidget {
   Widget build(BuildContext context) {
     final top = staff.take(5).toList();
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24),
+      padding: EdgeInsets.zero,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const _SectionHeader(title: "პერსონალის რეიტინგი"),
+          if (top.isNotEmpty)
+            Text(
+              'შეკვეთის შემქმნელის ჩაწერილი სახელით',
+              style: TextStyle(fontSize: 11, color: context.dash.textSecondary),
+            ),
           SizedBox(height: 16),
           _DashboardCard(
             padding: const EdgeInsets.all(8),
@@ -2550,20 +1672,13 @@ class _WaiterRow extends StatelessWidget {
                 height: 48,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  gradient: LinearGradient(
-                    colors: [
-                      context.dash.primary,
-                      context.dash.avatarGradientEnd,
-                    ],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
+                  color: context.dash.primarySoft,
                 ),
                 alignment: Alignment.center,
                 child: Text(
                   _initials,
-                  style: const TextStyle(
-                    color: Colors.white,
+                  style: TextStyle(
+                    color: context.dash.primary,
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
                   ),
@@ -2628,108 +1743,6 @@ class _WaiterRow extends StatelessWidget {
 /// REUSABLE COMPONENTS
 /// ------------------------------------------------------------------
 
-class _StatCard extends StatelessWidget {
-  final String title;
-  final int value;
-  final String? valueLabel;
-  final String trend;
-  final bool isPositive;
-  final IconData icon;
-  final Color iconColor;
-  final VoidCallback? onTap;
-
-  const _StatCard({
-    required this.title,
-    required this.value,
-    this.valueLabel,
-    required this.trend,
-    required this.isPositive,
-    required this.icon,
-    required this.iconColor,
-    this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final card = _DashboardCard(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(7),
-            decoration: BoxDecoration(
-              color: iconColor.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Icon(icon, color: iconColor, size: 18),
-          ),
-          SizedBox(height: 14),
-          if (valueLabel != null)
-            FittedBox(
-              fit: BoxFit.scaleDown,
-              alignment: Alignment.centerLeft,
-              child: Text(
-                valueLabel!,
-                style: TextStyle(
-                  color: context.dash.textPrimary,
-                  fontSize: 22,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: -1,
-                ),
-              ),
-            )
-          else
-            TweenAnimationBuilder<int>(
-              tween: IntTween(begin: 0, end: value),
-              duration: const Duration(milliseconds: 1200),
-              curve: Curves.easeOutCubic,
-              builder: (context, val, child) {
-                return FittedBox(
-                  fit: BoxFit.scaleDown,
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    _money.format(val),
-                    style: TextStyle(
-                      color: context.dash.textPrimary,
-                      fontSize: 22,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: -1,
-                    ),
-                  ),
-                );
-              },
-            ),
-          SizedBox(height: 4),
-          Text(
-            title,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              color: context.dash.textSecondary,
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-          SizedBox(height: 8),
-          Text(
-            trend,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              color: isPositive ? context.dash.good : context.dash.bad,
-              fontSize: 11,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ],
-      ),
-    );
-    if (onTap == null) return card;
-    return _BouncingButton(onTap: onTap!, child: card);
-  }
-}
-
 class _SectionHeader extends StatelessWidget {
   final String title;
   const _SectionHeader({required this.title});
@@ -2748,72 +1761,9 @@ class _SectionHeader extends StatelessWidget {
   }
 }
 
-class _Dot extends StatelessWidget {
-  const _Dot();
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 8,
-      height: 8,
-      decoration: BoxDecoration(
-        color: context.dash.bad,
-        shape: BoxShape.circle,
-        boxShadow: [
-          BoxShadow(color: context.dash.bad, blurRadius: 4, spreadRadius: 1),
-        ],
-      ),
-    );
-  }
-}
-
 /// ------------------------------------------------------------------
 /// EFFECTS & UTILITIES
 /// ------------------------------------------------------------------
-
-class _HeroRevenueShell extends StatelessWidget {
-  final Widget child;
-
-  const _HeroRevenueShell({required this.child});
-
-  @override
-  Widget build(BuildContext context) {
-    final t = context.dash;
-    const radius = BorderRadius.all(Radius.circular(32));
-
-    if (t.useGlassCards) {
-      return ClipRRect(
-        borderRadius: radius,
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
-          child: Container(
-            decoration: BoxDecoration(
-              borderRadius: radius,
-              color: t.heroCardBackground,
-              border: Border.all(color: t.heroCardBorder),
-            ),
-            child: child,
-          ),
-        ),
-      );
-    }
-
-    return Container(
-      decoration: BoxDecoration(
-        color: t.heroCardBackground,
-        borderRadius: radius,
-        boxShadow: [
-          BoxShadow(
-            color: t.heroCardShadow,
-            blurRadius: 24,
-            offset: const Offset(0, 10),
-          ),
-        ],
-        border: Border.all(color: t.heroCardBorder),
-      ),
-      child: child,
-    );
-  }
-}
 
 class _DashboardCard extends StatelessWidget {
   final Widget child;
@@ -2824,7 +1774,7 @@ class _DashboardCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final t = context.dash;
-    const radius = BorderRadius.all(Radius.circular(24));
+    const radius = BorderRadius.all(Radius.circular(18));
 
     if (t.useGlassCards) {
       return ClipRRect(
@@ -2863,111 +1813,20 @@ class _DashboardCard extends StatelessWidget {
   }
 }
 
-class _SoftGlow extends StatelessWidget {
-  final Color color;
-  final double size;
-  final double opacity;
-  const _SoftGlow({
-    required this.color,
-    required this.size,
-    required this.opacity,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return IgnorePointer(
-      child: Container(
-        width: size,
-        height: size,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          gradient: RadialGradient(
-            colors: [color.withOpacity(opacity), color.withOpacity(0.0)],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _FadeInSlide extends StatelessWidget {
-  final AnimationController controller;
-  final Widget child;
-  final double delay;
-
-  const _FadeInSlide({
-    required this.controller,
-    required this.child,
-    required this.delay,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final animation = CurvedAnimation(
-      parent: controller,
-      curve: Interval(delay, 1.0, curve: Curves.easeOutCubic),
-    );
-    return AnimatedBuilder(
-      animation: animation,
-      builder: (context, child) {
-        return Opacity(
-          opacity: animation.value.clamp(0.0, 1.0),
-          child: Transform.translate(
-            offset: Offset(0, 30 * (1 - animation.value)),
-            child: child,
-          ),
-        );
-      },
-      child: child,
-    );
-  }
-}
-
-class _BouncingButton extends StatefulWidget {
+class _BouncingButton extends StatelessWidget {
+  const _BouncingButton({required this.child, required this.onTap});
   final Widget child;
   final VoidCallback onTap;
-  const _BouncingButton({required this.child, required this.onTap});
-
   @override
-  State<_BouncingButton> createState() => _BouncingButtonState();
-}
-
-class _BouncingButtonState extends State<_BouncingButton>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _controller;
-  late final Animation<double> _scale;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 150),
-    );
-    _scale = Tween<double>(
-      begin: 1.0,
-      end: 0.95,
-    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTapDown: (_) => _controller.forward(),
-      onTapUp: (_) {
-        _controller.reverse();
-        widget.onTap();
-      },
-      onTapCancel: () => _controller.reverse(),
-      child: ScaleTransition(scale: _scale, child: widget.child),
-    );
-  }
+  Widget build(BuildContext context) => Material(
+    color: Colors.transparent,
+    borderRadius: BorderRadius.circular(18),
+    child: InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(18),
+      child: child,
+    ),
+  );
 }
 
 class _DashboardSkeleton extends StatefulWidget {
@@ -2997,7 +1856,7 @@ class _DashboardSkeletonState extends State<_DashboardSkeleton>
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24),
+      padding: EdgeInsets.zero,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -3057,76 +1916,4 @@ class _DashboardSkeletonState extends State<_DashboardSkeleton>
       },
     );
   }
-}
-
-// ------------------------------------------------------------------
-// SMOOTH AREA CHART PAINTER (Replaces MiniBars)
-// ------------------------------------------------------------------
-class _SmoothAreaChartPainter extends CustomPainter {
-  final List<_DayPoint> series;
-  final DashboardThemeData theme;
-
-  _SmoothAreaChartPainter({required this.series, required this.theme});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    if (series.isEmpty) return;
-
-    final maxVal = series.fold<double>(0, (m, p) => p.value > m ? p.value : m);
-    final minVal = 0.0; // Assume baseline is 0
-
-    final path = Path();
-    final stepX = size.width / (series.length <= 1 ? 1 : series.length - 1);
-
-    // Calculate Y coordinates
-    double getY(double val) {
-      if (maxVal == 0) return size.height;
-      final fraction = (val - minVal) / (maxVal - minVal);
-      // Give some padding at the top so it doesn't touch the very edge
-      return size.height - (fraction * (size.height * 0.9));
-    }
-
-    path.moveTo(0, getY(series[0].value));
-
-    for (int i = 0; i < series.length - 1; i++) {
-      final p0x = i * stepX;
-      final p0y = getY(series[i].value);
-      final p1x = (i + 1) * stepX;
-      final p1y = getY(series[i + 1].value);
-
-      // Control points for smooth bezier curve
-      final cx = (p0x + p1x) / 2;
-      path.cubicTo(cx, p0y, cx, p1y, p1x, p1y);
-    }
-
-    // Paint the stroke (The Line)
-    final strokePaint = Paint()
-      ..color = theme.chartLine
-      ..strokeWidth = 3
-      ..style = PaintingStyle.stroke
-      ..strokeCap = StrokeCap.round;
-
-    canvas.drawPath(path, strokePaint);
-
-    // Create the area fill
-    final fillPath = Path.from(path);
-    fillPath.lineTo(size.width, size.height);
-    fillPath.lineTo(0, size.height);
-    fillPath.close();
-
-    // Paint the gradient area
-    final fillPaint = Paint()
-      ..shader = LinearGradient(
-        begin: Alignment.topCenter,
-        end: Alignment.bottomCenter,
-        colors: [theme.chartFillTop, theme.chartFillBottom],
-      ).createShader(Rect.fromLTWH(0, 0, size.width, size.height))
-      ..style = PaintingStyle.fill;
-
-    canvas.drawPath(fillPath, fillPaint);
-  }
-
-  @override
-  bool shouldRepaint(covariant _SmoothAreaChartPainter oldDelegate) =>
-      oldDelegate.series != series || oldDelegate.theme != theme;
 }

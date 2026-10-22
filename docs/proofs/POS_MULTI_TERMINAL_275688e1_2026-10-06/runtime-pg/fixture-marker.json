@@ -1,0 +1,9 @@
+{
+  "kind": "vynic-printer-runtime-disposable-proof",
+  "task": "vynic-readiness-20261006-a2nbcprb",
+  "database": "vynic_readiness",
+  "postgresContainer": "vynic-readiness-20261006-pg",
+  "network": "none",
+  "syntheticRowsOnly": true,
+  "noApplicationStartup": true
+}

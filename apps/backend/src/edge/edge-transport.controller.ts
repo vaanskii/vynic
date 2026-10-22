@@ -23,6 +23,7 @@ interface ClaimBody {
 }
 
 interface AcknowledgeBody {
+  resultProjection?: unknown;
   commandId?: string;
   status?: string;
   code?: string | null;
@@ -120,6 +121,7 @@ export class EdgeTransportController {
     const result = await this.commands.acknowledge(device, {
       commandId,
       status: body.status,
+      resultProjection: body.resultProjection,
       code: body.code ?? null,
       detail: body.detail ?? null,
     });

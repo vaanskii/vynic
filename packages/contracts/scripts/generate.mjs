@@ -582,6 +582,8 @@ export interface EdgeCommandResult {
   /** Short machine-readable outcome, e.g. \`printer_offline\`. */
   code?: string | null;
   detail?: string | null;
+  /** ${edgeContract.resultProjection} */
+  resultProjection?: unknown;
 }
 `;
 }
@@ -779,16 +781,26 @@ class EdgeCommandResult {
     required this.status,
     this.code,
     this.detail,
+    this.resultProjection,
   });
 
-  const EdgeCommandResult.succeeded(this.commandId, {this.code, this.detail})
-    : status = EdgeCommandResultStatus.succeeded;
+  const EdgeCommandResult.succeeded(
+    this.commandId, {
+    this.code,
+    this.detail,
+    this.resultProjection,
+  }) : status = EdgeCommandResultStatus.succeeded;
 
-  const EdgeCommandResult.failed(this.commandId, {this.code, this.detail})
-    : status = EdgeCommandResultStatus.failed;
+  const EdgeCommandResult.failed(
+    this.commandId, {
+    this.code,
+    this.detail,
+    this.resultProjection,
+  }) : status = EdgeCommandResultStatus.failed;
 
   final String commandId;
   final String status;
+  final Map<String, dynamic>? resultProjection;
 
   /// Short machine-readable outcome, e.g. \`printer_offline\`.
   final String? code;
@@ -800,6 +812,7 @@ class EdgeCommandResult {
     'status': status,
     if (code != null) 'code': code,
     if (detail != null) 'detail': detail,
+    if (resultProjection != null) 'resultProjection': resultProjection,
   };
 }
 

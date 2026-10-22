@@ -1,0 +1,17 @@
+{
+  "exitCode": 0,
+  "command": [
+    "govulncheck",
+    "-json",
+    "-scan=symbol",
+    "./..."
+  ],
+  "environmentOverrides": {},
+  "workingDirectory": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/final-cohort/apps/edge",
+  "startedAtUTC": "2026-10-06T17:29:28.078511+00:00",
+  "finishedAtUTC": "2026-10-06T17:29:31.101179+00:00",
+  "sourceManifestSHA256": "193e4800e5d0733a30bc6c8d4ac993590219363941e69a787bba5ac3681c8f68",
+  "output": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/final-edge-govuln.jsonl",
+  "stderr": "/private/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/final-edge-govuln.stderr",
+  "physicalPrints": 0
+}

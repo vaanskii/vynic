@@ -2,13 +2,16 @@ import { UseInterceptors } from '@nestjs/common';
 import { CommercialProjectionInterceptor } from '../entitlements/commercial-projection.interceptor';
 import { VenueEntitlementsService } from '../entitlements/venue-entitlements.service';
 import { SaleConsumptionService } from '../inventory/sale-consumption.service';
+import type { StockLocationInput } from '../inventory/stock-locations';
 import {
   Controller,
+  ForbiddenException,
   Get,
   Post,
   Patch,
   Delete,
   Headers,
+  HttpCode,
   Param,
   Body,
   Query,
@@ -38,6 +41,7 @@ import { MobileDevicesService } from './services/mobile-devices.service';
 import { MobileMenuService } from './services/mobile-menu.service';
 import { MobileMutationSupport } from './services/mobile-mutation-support.service';
 import { MobileReservationsService } from './services/mobile-reservations.service';
+import { ManagerDataFreshnessInterceptor } from './services/manager-data-freshness';
 import { MobileDashboardService } from './services/mobile-dashboard.service';
 import { MobileOrdersService } from './services/mobile-orders.service';
 import { MobileSaleLedgerService } from './services/mobile-sale-ledger.service';
@@ -54,7 +58,10 @@ import { RecipeService, type RecipeInput } from '../inventory/recipe.service';
 
 // ─── Controller ───────────────────────────────────────────────────────────────
 
-@UseInterceptors(CommercialProjectionInterceptor)
+@UseInterceptors(
+  CommercialProjectionInterceptor,
+  ManagerDataFreshnessInterceptor,
+)
 @Controller('mobile')
 @UseGuards(JwtAuthGuard, RolesGuard, FeatureGuard)
 @Roles(StaffRole.MANAGER)
@@ -78,6 +85,41 @@ export class MobileController {
     private readonly recipes: RecipeService,
   ) {}
 
+  @Post('operation-requests/:kind')
+  @HttpCode(202)
+  async requestOperation(
+    @ManagerAuth() actor: ManagerAuthContext,
+    @Param('kind') kind: string,
+    @Body() body: any,
+  ) {
+    await this.requireOperationFeature(actor, kind);
+    return this.orders.requestOperation(actor, kind, body);
+  }
+  @Get('operation-requests/:requestId')
+  @HttpCode(202)
+  async operationStatus(
+    @ManagerAuth() actor: ManagerAuthContext,
+    @Param('requestId') requestId: string,
+  ) {
+    const result = await this.orders.operationStatus(actor, requestId);
+    await this.requireOperationFeature(actor, result.kind);
+    return result;
+  }
+  private async requireOperationFeature(
+    actor: ManagerAuthContext,
+    kind: string,
+  ) {
+    if (
+      kind?.startsWith('reservation_') &&
+      !(await this.entitlements.hasFeature(
+        actor.venueId,
+        FeatureKeys.MANAGER_RESERVATIONS,
+      ))
+    ) {
+      throw new ForbiddenException('Reservation feature required');
+    }
+  }
+
   @Get('entitlements')
   entitlementsSnapshot(@ManagerTenant() tenant: TenantContext) {
     return this.entitlements.snapshot(tenant.venueId);
@@ -93,12 +135,55 @@ export class MobileController {
   }
 
   @RequiresFeature(FeatureKeys.INVENTORY)
+  @Get('inventory/consumptions/page')
+  consumptionPage(
+    @ManagerTenant() tenant: TenantContext,
+    @Query() query: import('../inventory/history-page').HistoryQuery,
+  ) {
+    return this.consumption.page(tenant, query);
+  }
+
+  @RequiresFeature(FeatureKeys.INVENTORY)
   @Get('inventory/consumptions/:id')
   consumptionDetail(
     @ManagerTenant() tenant: TenantContext,
     @Param('id') id: string,
   ) {
     return this.consumption.detail(tenant, id);
+  }
+
+  @RequiresFeature(FeatureKeys.INVENTORY)
+  @Get('inventory/locations')
+  inventoryLocations(@ManagerTenant() tenant: TenantContext) {
+    return this.inventory.locations(tenant);
+  }
+
+  @RequiresFeature(FeatureKeys.INVENTORY)
+  @Post('inventory/locations')
+  createInventoryLocation(
+    @ManagerAuth() actor: ManagerAuthContext,
+    @Body() input: StockLocationInput,
+  ) {
+    return this.inventory.createLocation(actor, input);
+  }
+
+  @RequiresFeature(FeatureKeys.INVENTORY)
+  @Patch('inventory/locations/:id')
+  renameInventoryLocation(
+    @ManagerAuth() actor: ManagerAuthContext,
+    @Param('id') id: string,
+    @Body() input: StockLocationInput,
+  ) {
+    return this.inventory.renameLocation(actor, id, input);
+  }
+
+  @RequiresFeature(FeatureKeys.INVENTORY)
+  @Get('inventory/stock-items/:id/locations')
+  inventoryLocationBalances(
+    @ManagerTenant() tenant: TenantContext,
+    @Param('id') id: string,
+  ) {
+    return this.inventory.locationBalances(tenant, id);
   }
 
   @RequiresFeature(FeatureKeys.INVENTORY)
@@ -139,6 +224,16 @@ export class MobileController {
     @Body() payload: StockItemInput,
   ) {
     return this.inventory.updateStockItem(actor, id, payload);
+  }
+
+  @RequiresFeature(FeatureKeys.INVENTORY)
+  @Get('inventory/stock-items/:id/movements')
+  stockMovementPage(
+    @ManagerTenant() tenant: TenantContext,
+    @Param('id') id: string,
+    @Query() query: import('../inventory/history-page').HistoryQuery,
+  ) {
+    return this.inventory.movementPage(tenant, id, query);
   }
 
   @RequiresFeature(FeatureKeys.INVENTORY)
@@ -386,6 +481,16 @@ export class MobileController {
   }
 
   /** Missed manager notifications while the app was backgrounded (persisted on server). */
+  @Get('notifications/page')
+  async getNotificationsPage(
+    @ManagerTenant() tenant: TenantContext,
+    @Req() req: { user: { username: string } },
+    @Query('since') since?: string,
+    @Query('cursor') cursor?: string,
+  ) {
+    return this.devices.getNotificationsPage(tenant, req.user.username, since, cursor);
+  }
+
   @Get('notifications')
   async getNotifications(
     @ManagerTenant() tenant: TenantContext,
@@ -429,27 +534,26 @@ export class MobileController {
     return this.dashboard.getTables(tenant);
   }
 
-  // POST /mobile/tables/:tableNumber/free?floor=first
-  // Forcefully marks a table as free (emergency ghost-table fix for managers).
+  // Acceptance is not authoritative completion. Old clients cannot
+  // interpret 202 as a completed repair using their 200/201 boolean check.
   @Post('tables/:tableNumber/free')
+  @HttpCode(202)
   async freeTable(
-    @ManagerTenant() tenant: TenantContext,
+    @ManagerAuth() actor: ManagerAuthContext,
     @Param('tableNumber') tableNumber: string,
     @Query('floor') floor: string = 'first',
-    @Headers('x-monitoring-socket-id') monitoringSocketId?: string,
+    @Body() body: { requestId?: unknown },
   ) {
-    return this.dashboard.freeTable(
-      tenant,
-      tableNumber,
-      floor,
-      monitoringSocketId,
-    );
+    return this.dashboard.freeTable(actor, tableNumber, floor, body?.requestId);
   }
 
   // GET /mobile/staff-performance
   @Get('staff-performance')
-  async getStaffPerformance(@ManagerTenant() tenant: TenantContext) {
-    return this.dashboard.getStaffPerformance(tenant);
+  async getStaffPerformance(
+    @ManagerTenant() tenant: TenantContext,
+    @Query() query: { from?: string; to?: string },
+  ) {
+    return this.dashboard.getStaffPerformance(tenant, query);
   }
 
   // GET /mobile/financials
@@ -507,7 +611,7 @@ export class MobileController {
   @Get('sale-staff-analytics')
   async getSaleStaffAnalytics(
     @ManagerTenant() tenant: TenantContext,
-    @Query() query: { from?: string; to?: string },
+    @Query() query: { from?: string; to?: string; attribution?: string },
   ) {
     return this.saleLedger.getStaff(tenant, query);
   }
@@ -561,7 +665,7 @@ export class MobileController {
   @RequiresFeature(FeatureKeys.MANAGER_RESERVATIONS)
   @Post('reservations')
   async createReservation(
-    @ManagerTenant() tenant: TenantContext,
+    @ManagerAuth() actor: ManagerAuthContext,
     @Headers('x-monitoring-socket-id') monitoringSocketId: string | undefined,
     @Body()
     payload: {
@@ -578,7 +682,7 @@ export class MobileController {
     },
   ) {
     return this.reservations.createReservation(
-      tenant,
+      actor,
       monitoringSocketId,
       payload,
     );
@@ -588,13 +692,13 @@ export class MobileController {
   @RequiresFeature(FeatureKeys.MANAGER_RESERVATIONS)
   @Post('reservations/:id/status')
   async updateReservationStatus(
-    @ManagerTenant() tenant: TenantContext,
+    @ManagerAuth() actor: ManagerAuthContext,
     @Param('id') id: string,
     @Headers('x-monitoring-socket-id') monitoringSocketId: string | undefined,
     @Body() payload: { status?: string },
   ) {
     return this.reservations.updateReservationStatus(
-      tenant,
+      actor,
       id,
       monitoringSocketId,
       payload,
@@ -605,11 +709,17 @@ export class MobileController {
   @RequiresFeature(FeatureKeys.MANAGER_RESERVATIONS)
   @Delete('reservations/:id')
   async deleteReservation(
-    @ManagerTenant() tenant: TenantContext,
+    @ManagerAuth() actor: ManagerAuthContext,
     @Param('id') id: string,
-    @Headers('x-monitoring-socket-id') monitoringSocketId?: string,
+    @Headers('x-monitoring-socket-id') monitoringSocketId: string | undefined,
+    @Body() body: any,
   ) {
-    return this.reservations.deleteReservation(tenant, id, monitoringSocketId);
+    return this.reservations.deleteReservation(
+      actor,
+      id,
+      monitoringSocketId,
+      body,
+    );
   }
 
   // POST /mobile/reservations/:id/print-check
@@ -633,25 +743,28 @@ export class MobileController {
     return this.orders.getOrder(tenant, id);
   }
 
-  // POST /mobile/order/:id
-  @Post('order/:id')
+  // The guarded client uses edit-request so a Cloud rollback cannot admit its
+  // retry through the old blind replacement route. Legacy bodies fail validation.
+  @Post(['order/:id', 'order/:id/edit-request'])
+  @HttpCode(202)
   async updateOrder(
-    @ManagerTenant() tenant: TenantContext,
+    @ManagerAuth() actor: ManagerAuthContext,
     @Param('id') id: string,
     @Headers('x-monitoring-socket-id') monitoringSocketId: string | undefined,
     @Body() body: any,
   ) {
-    return this.orders.updateOrder(tenant, id, monitoringSocketId, body);
+    return this.orders.updateOrder(actor, id, monitoringSocketId, body);
   }
 
   // POST /mobile/order/:id/cancel
   @Post('order/:id/cancel')
   async cancelOrder(
-    @ManagerTenant() tenant: TenantContext,
+    @ManagerAuth() actor: ManagerAuthContext,
     @Param('id') id: string,
-    @Headers('x-monitoring-socket-id') monitoringSocketId?: string,
+    @Headers('x-monitoring-socket-id') monitoringSocketId: string | undefined,
+    @Body() body: any,
   ) {
-    return this.orders.cancelOrder(tenant, id, monitoringSocketId);
+    return this.orders.cancelOrder(actor, id, monitoringSocketId, body);
   }
 
   // POST /mobile/order/:id/print-check
@@ -668,7 +781,7 @@ export class MobileController {
   // POST /mobile/takeaway-orders — create a new takeaway order from the mobile app
   @Post('takeaway-orders')
   async createTakeawayOrder(
-    @ManagerTenant() tenant: TenantContext,
+    @ManagerAuth() actor: ManagerAuthContext,
     @Headers('x-monitoring-socket-id') monitoringSocketId: string | undefined,
     @Body()
     body: {
@@ -678,13 +791,13 @@ export class MobileController {
       items: { itemName: string; unitPrice: number; quantity: number }[];
     },
   ) {
-    return this.orders.createTakeawayOrder(tenant, monitoringSocketId, body);
+    return this.orders.createTakeawayOrder(actor, monitoringSocketId, body);
   }
 
   // POST /mobile/walk-in-orders — create a dine-in (walk-in) order on table(s)
   @Post('walk-in-orders')
   async createWalkInOrder(
-    @ManagerTenant() tenant: TenantContext,
+    @ManagerAuth() actor: ManagerAuthContext,
     @Headers('x-monitoring-socket-id') monitoringSocketId: string | undefined,
     @Body()
     body: {
@@ -695,17 +808,18 @@ export class MobileController {
       items: { itemName: string; unitPrice: number; quantity: number }[];
     },
   ) {
-    return this.orders.createWalkInOrder(tenant, monitoringSocketId, body);
+    return this.orders.createWalkInOrder(actor, monitoringSocketId, body);
   }
 
   // DELETE /mobile/takeaway-orders/:id — cancel a takeaway order on Cloud and POS (kept as history)
   @Delete('takeaway-orders/:id')
   async deleteTakeawayOrder(
-    @ManagerTenant() tenant: TenantContext,
+    @ManagerAuth() actor: ManagerAuthContext,
     @Param('id') id: string,
-    @Headers('x-monitoring-socket-id') monitoringSocketId?: string,
+    @Headers('x-monitoring-socket-id') monitoringSocketId: string | undefined,
+    @Body() body: any,
   ) {
-    return this.orders.deleteTakeawayOrder(tenant, id, monitoringSocketId);
+    return this.orders.deleteTakeawayOrder(actor, id, monitoringSocketId, body);
   }
 
   // GET /mobile/takeaway-orders

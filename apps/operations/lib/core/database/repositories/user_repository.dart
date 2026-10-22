@@ -83,18 +83,20 @@ class UserRepository {
 
   // Check if a PIN code already exists
   static bool isPinCodeExists(String pinCode) {
-    return DatabaseCore.userBox!.values.any((user) => user.pinCode == pinCode);
+    return DatabaseCore.userBox!.values.any(
+      (user) => user.pinCode == pinCode && !isPlatformDisabled(user.username),
+    );
   }
 
   // Authenticate user by PIN code
   static User? authenticateByPin(String pinCode) {
-    try {
-      return DatabaseCore.userBox!.values.firstWhere(
-        (user) => user.pinCode == pinCode && !isPlatformDisabled(user.username),
-      );
-    } catch (e) {
-      return null; // User not found
-    }
+    final matches = DatabaseCore.userBox!.values
+        .where(
+          (user) =>
+              user.pinCode == pinCode && !isPlatformDisabled(user.username),
+        )
+        .toList();
+    return matches.length == 1 ? matches.single : null;
   }
 
   static bool isPlatformDisabled(String username) =>
@@ -206,7 +208,10 @@ class UserRepository {
     final user = getUserByUsername(username);
     if (user == null) return false;
     final pinUsedByAnother = DatabaseCore.userBox!.values.any(
-      (u) => u.username != username && u.pinCode == pinCode,
+      (u) =>
+          u.username != username &&
+          u.pinCode == pinCode &&
+          !isPlatformDisabled(u.username),
     );
     if (pinUsedByAnother) return false;
     final changed = user.pinCode != pinCode;

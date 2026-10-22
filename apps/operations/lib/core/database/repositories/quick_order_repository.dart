@@ -2,6 +2,7 @@ import 'package:vynic/core/services/pos/update/update_readiness.dart';
 import 'package:uuid/uuid.dart';
 import 'package:vynic/core/models/order.dart';
 import 'package:vynic/core/models/quick_order_draft.dart';
+import 'package:vynic/core/services/auth/pos_session.dart';
 
 import 'business_day_repository.dart';
 import '../database_core.dart';
@@ -42,6 +43,8 @@ class QuickOrderRepository {
       createdAt: draft.createdAt,
       createdBy: draft.createdBy,
       displayName: draft.displayName,
+      customerName: draft.customerName,
+      customerPhone: draft.customerPhone,
     );
   }
 
@@ -76,6 +79,8 @@ class QuickOrderRepository {
     required bool includeServiceFee,
     required double serviceFeeRate,
     String? displayName,
+    String? customerName,
+    String? customerPhone,
   }) => UpdateReadiness.track(
     'saveQuickOrderDraft',
     () => _updateTrackedSaveQuickOrderDraft(
@@ -85,6 +90,8 @@ class QuickOrderRepository {
       includeServiceFee: includeServiceFee,
       serviceFeeRate: serviceFeeRate,
       displayName: displayName,
+      customerName: customerName,
+      customerPhone: customerPhone,
     ),
   );
 
@@ -95,6 +102,8 @@ class QuickOrderRepository {
     required bool includeServiceFee,
     required double serviceFeeRate,
     String? displayName,
+    String? customerName,
+    String? customerPhone,
   }) async {
     if (DatabaseCore.quickOrderBox == null) {
       throw StateError('Quick order storage is not initialized');
@@ -125,9 +134,12 @@ class QuickOrderRepository {
       displayName: displayName?.trim().isNotEmpty == true
           ? displayName!.trim()
           : null,
+      customerName: _optionalText(customerName),
+      customerPhone: _optionalText(customerPhone),
     );
 
     await DatabaseCore.quickOrderBox!.put(draft.id, draft);
+    await DatabaseCore.quickOrderBox!.flush();
     return _cloneQuickOrderDraft(draft);
   }
 
@@ -139,6 +151,9 @@ class QuickOrderRepository {
     required bool includeServiceFee,
     required double serviceFeeRate,
     String? displayName,
+    String? customerName,
+    String? customerPhone,
+    bool replaceCustomerDetails = false,
   }) => UpdateReadiness.track(
     'updateQuickOrderDraft',
     () => _updateTrackedUpdateQuickOrderDraft(
@@ -149,6 +164,9 @@ class QuickOrderRepository {
       includeServiceFee: includeServiceFee,
       serviceFeeRate: serviceFeeRate,
       displayName: displayName,
+      customerName: customerName,
+      customerPhone: customerPhone,
+      replaceCustomerDetails: replaceCustomerDetails,
     ),
   );
 
@@ -160,6 +178,9 @@ class QuickOrderRepository {
     required bool includeServiceFee,
     required double serviceFeeRate,
     String? displayName,
+    String? customerName,
+    String? customerPhone,
+    bool replaceCustomerDetails = false,
   }) async {
     if (DatabaseCore.quickOrderBox == null) {
       throw StateError('Quick order storage is not initialized');
@@ -190,9 +211,16 @@ class QuickOrderRepository {
       createdAt: BusinessDayRepository.getCurrentDateTime(),
       createdBy: createdBy,
       displayName: displayName ?? existing?.displayName,
+      customerName: replaceCustomerDetails
+          ? _optionalText(customerName)
+          : existing?.customerName,
+      customerPhone: replaceCustomerDetails
+          ? _optionalText(customerPhone)
+          : existing?.customerPhone,
     );
 
     await DatabaseCore.quickOrderBox!.put(draft.id, draft);
+    await DatabaseCore.quickOrderBox!.flush();
     return _cloneQuickOrderDraft(draft);
   }
 
@@ -202,11 +230,13 @@ class QuickOrderRepository {
   );
 
   static Future<void> _updateTrackedDeleteQuickOrderDraft(String id) async {
+    _requireManagerForDeletion();
     if (DatabaseCore.quickOrderBox == null) {
       return;
     }
 
     await DatabaseCore.quickOrderBox!.delete(id);
+    await DatabaseCore.quickOrderBox!.flush();
   }
 
   static Future<void> setQuickOrderDraftDisplayName({
@@ -246,10 +276,32 @@ class QuickOrderRepository {
   );
 
   static Future<void> _updateTrackedClearQuickOrderDrafts() async {
+    _requireManagerForDeletion();
     if (DatabaseCore.quickOrderBox == null) {
       return;
     }
 
     await DatabaseCore.quickOrderBox!.clear();
+    await DatabaseCore.quickOrderBox!.flush();
+  }
+
+  static String? _optionalText(String? text) {
+    final value = text?.trim();
+    return value == null || value.isEmpty ? null : value;
+  }
+
+  /// Re-read stored authority at mutation time: an old screen or switched
+  /// session must not keep a manager's deletion permission.
+  static void _requireManagerForDeletion() {
+    final actor = PosSession.user;
+    final users = DatabaseCore.userBox?.values
+        .where((user) => user.username == actor?.username)
+        .toList();
+    if (actor == null ||
+        users == null ||
+        users.length != 1 ||
+        !users.single.canDeleteMenuCountDrafts) {
+      throw StateError('დათვლილი მენიუს წაშლა მხოლოდ მენეჯერს შეუძლია');
+    }
   }
 }

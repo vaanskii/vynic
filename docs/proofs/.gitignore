@@ -1,0 +1,72 @@
+# Generated local proof outputs. Source, reference inputs and maintained notes
+# remain visible; these rules do not remove any files already tracked in Git.
+**/jest-cache/
+**/screenshots/*
+!**/screenshots/*.md
+**/renders/*
+!**/renders/*.md
+**/*.zip
+**/*.tar.gz
+**/*.exe
+
+# Render passes and comparison exports, not the original reference inputs.
+/MANAGER_PARITY_2026-10-17/after/
+/MANAGER_PARITY_2026-10-17/before/
+/MANAGER_PARITY_2026-10-17/followup/
+/MANAGER_PARITY_2026-10-17/final/
+/MANAGER_PARITY_2026-10-17/comparison/
+/MANAGER_PARITY_2026-10-17/nested-comparison/
+/MANAGER_PARITY_2026-10-17/review/
+/MANAGER_PARITY_2026-10-17/deliverables/
+/MANAGER_PARITY_2026-10-17/closure/deliverables/
+
+# Known validation-output trees. Preserve scripts/config and maintained prose.
+/BACKEND_SHARED_REPORTING_2026-10-17/validation/**
+!/BACKEND_SHARED_REPORTING_2026-10-17/validation/**/
+/MANAGER_REDESIGN_2026-10-16/validation/**
+!/MANAGER_REDESIGN_2026-10-16/validation/**/
+/MANAGER_PARITY_2026-10-17/validation/**
+!/MANAGER_PARITY_2026-10-17/validation/**/
+/MANAGER_PARITY_2026-10-17/closure/validation/**
+!/MANAGER_PARITY_2026-10-17/closure/validation/**/
+/MANAGER_SYNC_2026-10-17/validation/**
+!/MANAGER_SYNC_2026-10-17/validation/**/
+/MANAGER_SYNC_2026-10-17/runtime/**
+!/MANAGER_SYNC_2026-10-17/runtime/**/
+/WHOLE_SYSTEM_COVERAGE_2026-10-17/validation/**
+!/WHOLE_SYSTEM_COVERAGE_2026-10-17/validation/**/
+!**/*.md
+!**/*.py
+!**/*.dart
+!**/*.sh
+!**/*.ps1
+!**/*.go
+!**/*.ts
+!**/*.js
+!**/*.mjs
+!**/*.yaml
+!**/*.yml
+!**/*.toml
+!/WHOLE_SYSTEM_COVERAGE_2026-10-17/validation/summary.json
+
+# Machine/run-specific publication state; keep the portable validation summary.
+/WHOLE_SYSTEM_COVERAGE_2026-10-17/publication/*.json
+!/WHOLE_SYSTEM_COVERAGE_2026-10-17/publication/candidate-validation.json
+/WHOLE_SYSTEM_COVERAGE_2026-10-17/publication/*.txt
+/WHOLE_SYSTEM_COVERAGE_2026-10-17/inventory/backend-modules.json
+/WHOLE_SYSTEM_COVERAGE_2026-10-17/inventory/backend-routes.json
+/WHOLE_SYSTEM_COVERAGE_2026-10-17/inventory/client-sources.json
+
+# Upload/readback metadata for generated design review deliverables.
+/MANAGER_REDESIGN_2026-10-16/render-manifest.json
+/MANAGER_REDESIGN_2026-10-16/qualification.json
+/MANAGER_REDESIGN_2026-10-16/library-*.json
+/MANAGER_PARITY_2026-10-17/render-manifest.json
+/MANAGER_PARITY_2026-10-17/library-*.json
+/MANAGER_PARITY_2026-10-17/closure/library-*.json
+/MANAGER_PARITY_2026-10-17/closure/manifest.json
+/MANAGER_PARITY_2026-10-17/closure/replacements.json
+/MANAGER_PARITY_2026-10-17/closure/upload-plan.json
+
+# Cache exclusions stay last so script/prose exceptions cannot admit cache data.
+**/jest-cache/

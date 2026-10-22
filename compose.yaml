@@ -1,0 +1,122 @@
+name: vynic-local-prod
+x-backend: &backend
+  image: ${IMAGE_PREFIX:-vynic}/backend:${IMAGE_TAG:-local}
+  build:
+    context: .
+    dockerfile: apps/backend/Dockerfile
+  init: true
+  networks: [app, database]
+  environment: &backend-env
+    NODE_ENV: production
+    PORT: "3000"
+    DATABASE_URL: ${DATABASE_URL:-}
+    JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET}
+    JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:?Set JWT_REFRESH_SECRET}
+    COOKIE_ENCRYPTION_KEY: ${COOKIE_ENCRYPTION_KEY:?Set COOKIE_ENCRYPTION_KEY}
+    PLATFORM_JWT_SECRET: ${PLATFORM_JWT_SECRET:?Set PLATFORM_JWT_SECRET}
+    PAYMENT_INTEGRATION_MASTER_KEY: ${PAYMENT_INTEGRATION_MASTER_KEY:?Set PAYMENT_INTEGRATION_MASTER_KEY}
+    FRONTEND_URL: ${FRONTEND_URL:?Set FRONTEND_URL}
+    API_URL: ${API_URL:?Set API_URL}
+    ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-}
+    SAAS_WEBSITE_BASE_DOMAIN: ${SAAS_WEBSITE_BASE_DOMAIN:?Set SAAS_WEBSITE_BASE_DOMAIN}
+    SAAS_WEBSITE_PREVIEW_ORIGIN: ${SAAS_WEBSITE_PREVIEW_ORIGIN:-}
+    WEBSITE_MEDIA_DIR: /var/lib/vynic/media
+    TRUST_PROXY_HOST: "false"
+    # Only the sole ingress address can supply a client IP. Host stays authoritative.
+    TRUST_PROXY_IPS: 172.30.89.2
+    VYNIC_LOCAL_DOCKER: "false"
+    DEVICE_API_BASE_URL: ${DEVICE_API_BASE_URL:-}
+  security_opt: [no-new-privileges:true]
+  cap_drop: [ALL]
+
+services:
+  migrate:
+    <<: *backend
+    restart: "no"
+    command: ["node_modules/.bin/prisma", "migrate", "deploy"]
+  backend:
+    <<: *backend
+    restart: unless-stopped
+    depends_on:
+      migrate: {condition: service_completed_successfully}
+    volumes: [website-media:/var/lib/vynic/media]
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/healthz').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      start_period: 30s
+      retries: 6
+  platform-web:
+    image: ${IMAGE_PREFIX:-vynic}/platform-web:${IMAGE_TAG:-local}
+    build:
+      context: .
+      dockerfile: deploy/frontend.Dockerfile
+      args: {APP: platform-web}
+    restart: unless-stopped
+    networks: [app]
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+  restaurant-web:
+    image: ${IMAGE_PREFIX:-vynic}/restaurant-web:${IMAGE_TAG:-local}
+    build:
+      context: .
+      dockerfile: deploy/frontend.Dockerfile
+      args: {APP: restaurant-web}
+    restart: unless-stopped
+    networks: [app]
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+  vankisi-custom-web:
+    image: ${IMAGE_PREFIX:-vynic}/vankisi-custom-web:${IMAGE_TAG:-local}
+    build:
+      context: .
+      dockerfile: deploy/frontend.Dockerfile
+      args: {APP: vankisi-custom-web, VITE_COMING_SOON: "false"}
+    restart: unless-stopped
+    networks: [app]
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+  reverse-proxy:
+    image: traefik:v3.6
+    command:
+      - --entrypoints.web.address=:8080
+      - --entrypoints.websecure.address=:8443
+      - --entrypoints.health.address=:8082
+      # Native LAN listener. Inert unless compose.lan.yaml publishes it and sets NATIVE_LAN.
+      - --entrypoints.native.address=:8088
+      - --providers.file.directory=/etc/traefik/dynamic
+      - --ping=true
+      - --ping.entrypoint=health
+      - --accesslog=true
+      - --accesslog.format=json
+      - --log.level=INFO
+    environment:
+      BASE_DOMAIN: ${SAAS_WEBSITE_BASE_DOMAIN}
+      CUSTOM_HOST: ${CUSTOM_HOST:?Set CUSTOM_HOST}
+      PROXY_TLS: ${PROXY_TLS:-false}
+      NATIVE_LAN: "false"
+    volumes: [./deploy/traefik:/etc/traefik/dynamic:ro]
+    networks:
+      app: {ipv4_address: 172.30.89.2}
+    depends_on:
+      backend: {condition: service_healthy}
+      platform-web: {condition: service_healthy}
+      restaurant-web: {condition: service_healthy}
+      vankisi-custom-web: {condition: service_healthy}
+    restart: unless-stopped
+    user: "65532:65532"
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    healthcheck:
+      test: ["CMD", "traefik", "healthcheck", "--ping", "--ping.entrypoint=health", "--entrypoints.health.address=:8082"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+networks:
+  app:
+    ipam:
+      config: [{subnet: 172.30.89.0/24, ip_range: 172.30.89.128/25}]
+  database:
+    internal: true
+volumes:
+  website-media:

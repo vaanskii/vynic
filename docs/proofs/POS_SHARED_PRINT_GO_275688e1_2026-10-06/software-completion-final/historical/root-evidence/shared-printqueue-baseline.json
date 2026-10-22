@@ -1,0 +1,16 @@
+{
+  "atUtc": "2026-10-06T14:17:25.257454+00:00",
+  "sourceRoot": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/source",
+  "ownedNewPaths": [
+    "apps/edge/internal/printqueue",
+    "apps/edge/internal/store/migrations/005_shared_print_queue.sql"
+  ],
+  "baseline": "Both owned paths absent; no pre-existing source overwritten. Export has no .git.",
+  "originalWorkspace": "Untouched",
+  "sealedProofs": "Untouched",
+  "activation": "Pending; no normal startup or real Sender attachment",
+  "unownedBaseline": {
+    "apps/edge/internal/store/migrations/003_operational_coordination.sql": "47e6dcf89410b3c3eb28d9e54f50541556e722ee6d515d63242204322e3537ac",
+    "apps/edge/internal/store/migrations/004_operational_entity_kinds.sql": "c9878fdbae27a3455f979c68569a1c669a8d1d98a835de2c05f896b1c8319aad"
+  }
+}

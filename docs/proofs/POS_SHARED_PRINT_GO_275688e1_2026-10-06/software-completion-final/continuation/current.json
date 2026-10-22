@@ -1,0 +1,7 @@
+{
+  "createdAtUTC": "2026-10-06T16:20:31.096697+00:00",
+  "source": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/source",
+  "sealedBaselineSource": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/source",
+  "root": "/tmp/vynic-readiness-resume-20261006-uv9ayewl",
+  "scope": "Authorized printer service executable, installer source, local transport and UI status. No original checkout writes or install/physical calls."
+}

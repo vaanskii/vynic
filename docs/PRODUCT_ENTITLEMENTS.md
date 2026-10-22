@@ -248,9 +248,9 @@ grandfathered so the migration disables nothing it can do today:
 | Effective features | `POS`, `WEBSITE`, `MANAGER_APP` |
 | Website mode | `CUSTOM` |
 
-`apps/venue-web/` is that custom website and is untouched by this step. Step 5A
+`apps/vankisi-custom-web/` is that custom website and is untouched by this step. Step 5A
 *records* product access and configuration; it does not change any frontend
-runtime, and nothing in `apps/venue-web/` reads these tables.
+runtime, and nothing in `apps/vankisi-custom-web/` reads these tables.
 
 ## Enforcement status
 

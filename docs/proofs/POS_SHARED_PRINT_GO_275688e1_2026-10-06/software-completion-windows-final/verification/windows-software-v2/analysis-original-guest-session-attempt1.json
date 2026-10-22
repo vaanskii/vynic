@@ -1,0 +1,16 @@
+{
+  "schema": 1,
+  "createdAtUtc": "2026-10-06T17:57:32.920331+00:00",
+  "status": "NOT_STARTED_GUEST_SESSION_UNAVAILABLE",
+  "exitCode": 255,
+  "approvalRejected": false,
+  "WindowsAnalysisStarted": false,
+  "VMSettingsChanges": false,
+  "launcherSHA256": "1394de960e5d0f7629e9910f8d97624c5bb51fbfa5706ecd1f9f97f4b399d09c",
+  "rawLog": {
+    "path": "/tmp/vynic-readiness-resume-20261006-uv9ayewl/software-completion/verification/windows-software-v2/analysis-original-guest-session-attempt1.log",
+    "sha256": "7bdf6af6e52aba57a408bc9f26a1cd21242f9617bb6c0fa25c1ffab9c07696b5"
+  },
+  "reason": "PrlVmGuest_RunProgram: Unable to open new session in this virtual machine. Make sure your virtual machine has finished booting, runs the latest version of Parallels Tools, and is not isolated from the host OS.",
+  "retryAuthorizedByParent": "One identical current-user analysis launch after connection settles"
+}

@@ -1,3 +1,6 @@
+import 'package:vynic/apps/mobile_app/presentation/widgets/manager_modal.dart';
+import 'package:vynic/core/services/manager_app/manager_data_read.dart';
+import 'package:vynic/apps/mobile_app/presentation/widgets/manager_data_status.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:vynic/core/services/manager_app/mobile_api_service.dart';
@@ -9,25 +12,33 @@ import 'package:vynic/core/widgets/service_fee_adjust_dialog.dart';
 /// Mobile-native menu calculator / Count Menu.
 class MobileCalculatorScreen extends StatefulWidget {
   final bool isCountMode;
+  final bool embedded;
+  final VoidCallback? onSaved;
   final bool selectionMode;
   final List<MenuSelectionLine> initialSelection;
 
   /// When non-null, the screen edits an existing counted menu (quick-order
   /// draft) instead of creating a new one: it pre-fills the cart from
-  /// [initialCountItems] (resolved against the live menu by name + price),
+  /// [initialCountItems] (retaining their saved names, prices and notes),
   /// pre-fills the name with [initialName], and Confirm calls the update route.
   final String? editDraftId;
   final String? initialName;
   final List<Map<String, dynamic>> initialCountItems;
+  final bool? initialIncludeServiceFee;
+  final double? initialServiceFeeRate;
 
   const MobileCalculatorScreen({
     super.key,
     this.isCountMode = false,
+    this.embedded = false,
+    this.onSaved,
     this.selectionMode = false,
     this.initialSelection = const [],
     this.editDraftId,
     this.initialName,
     this.initialCountItems = const [],
+    this.initialIncludeServiceFee,
+    this.initialServiceFeeRate,
   });
 
   @override
@@ -36,13 +47,33 @@ class MobileCalculatorScreen extends StatefulWidget {
 
 class _MobileCalculatorScreenState extends State<MobileCalculatorScreen>
     with TickerProviderStateMixin {
+  Map<String, ManagerReadStatus> _displayReads = {};
+  void _readFailed(Object error, String key) {
+    final previous = _displayReads[key];
+    final failure = error is ManagerReadFailure
+        ? error.status
+        : ManagerReadStatus(key: key, error: 'მონაცემები ვერ განახლდა.');
+    _displayReads = {
+      ..._displayReads,
+      key: previous?.fetchedAt == null
+          ? failure
+          : previous!.failed(
+              failure.error ?? 'მონაცემები ვერ განახლდა.',
+              location: 'memory',
+            ),
+    };
+  }
+
   bool _loading = true;
+  bool _saving = false;
   String? _error;
   List<_MenuCat> _categories = [];
   int _selectedCatIndex = 0;
   int _selectedSubcatIndex = 0;
 
   final Map<String, int> _cart = {};
+  final Map<String, MenuSelectionLine> _selectionSnapshots = {};
+  final Map<String, String> _countedLineComments = {};
   bool _includeServiceFee = false;
   double _serviceFeeRate = 0;
   bool _serviceFeeAvailable = false;
@@ -68,6 +99,7 @@ class _MobileCalculatorScreenState extends State<MobileCalculatorScreen>
     super.initState();
     for (final line in widget.initialSelection) {
       _cart[line.key] = line.qty;
+      _selectionSnapshots[line.key] = line;
     }
     _loadMenu();
   }
@@ -87,8 +119,12 @@ class _MobileCalculatorScreenState extends State<MobileCalculatorScreen>
       _serviceFeeAvailable = settings['serviceFeeAvailable'] == true;
       _serviceFeePercent =
           (settings['serviceFeePercent'] as num?)?.round() ?? 10;
-      _serviceFeeRate = _serviceFeeAvailable ? _serviceFeePercent / 100 : 0;
-      _includeServiceFee = _serviceFeeAvailable;
+      _serviceFeeRate = _serviceFeeAvailable
+          ? (widget.initialServiceFeeRate ?? _serviceFeePercent / 100)
+          : 0;
+      _serviceFeePercent = (_serviceFeeRate * 100).round();
+      _includeServiceFee =
+          _serviceFeeAvailable && (widget.initialIncludeServiceFee ?? true);
       debugPrint('[CALC] Loaded raw menu: ${raw.length} categories');
       final cats =
           raw.cast<Map<String, dynamic>>().map(_MenuCat.fromJson).toList()
@@ -108,6 +144,7 @@ class _MobileCalculatorScreenState extends State<MobileCalculatorScreen>
 
       if (mounted) {
         setState(() {
+          _displayReads = {'menu': MobileApiService.statusFor(raw)!};
           _categories = cats;
           _tabController = TabController(
             length: _categories.length,
@@ -132,41 +169,54 @@ class _MobileCalculatorScreenState extends State<MobileCalculatorScreen>
       debugPrint('[CALC] Error loading menu: $e');
       if (mounted) {
         setState(() {
-          _error = e.toString();
+          _readFailed(e, 'menu');
+          _error = _categories.isEmpty ? 'მენიუ ვერ განახლდა.' : null;
           _loading = false;
         });
       }
     }
   }
 
-  /// Edit mode: seed the cart from the draft's stored items by reconstructing
-  /// each calculator key from the live menu (Plan A-name: match by Georgian name
-  /// + unit price). Items that can't be matched are collected for a warning and
-  /// skipped — never dropped silently.
+  /// Counted drafts have frozen names/prices, without trustworthy Menu IDs.
+  /// Match only unique live keys for highlighting; retain every unmatched or
+  /// ambiguous line as a manual snapshot so editing never loses saved data.
   void _applyEditPrefill() {
     if (_editPrefillDone || widget.editDraftId == null) return;
     _editPrefillDone = true;
-    for (final raw in widget.initialCountItems) {
+    for (final entry in widget.initialCountItems.indexed) {
+      final raw = entry.$2;
       final name = (raw['itemName'] ?? raw['name'] ?? '').toString().trim();
       final qty = (raw['quantity'] as num?)?.toInt() ?? 0;
       final priceRaw = raw['unitPrice'] ?? raw['price'];
       final unitPrice = (priceRaw as num?)?.toDouble() ?? 0.0;
       if (name.isEmpty || qty <= 0) continue;
-      final key = _resolveCartKeyForDraftItem(name, unitPrice);
-      if (key == null) {
+      final liveKey = _resolveCartKeyForDraftItem(name, unitPrice);
+      final key = liveKey == null || _cart.containsKey(liveKey)
+          ? 'counted:${widget.editDraftId}:line:${entry.$1}'
+          : liveKey;
+      if (liveKey == null) {
         _unresolvedDraftItems.add(name);
-        continue;
       }
-      _cart[key] = (_cart[key] ?? 0) + qty;
+      _cart[key] = qty;
+      _selectionSnapshots[key] = MenuSelectionLine(
+        key: key,
+        itemName: name,
+        unitPrice: unitPrice,
+        qty: qty,
+      );
+      if (raw['comment'] is String) {
+        _countedLineComments[key] = raw['comment'] as String;
+      }
     }
   }
 
   /// Find the calculator cart key for a stored draft item by matching its
-  /// Georgian name and unit price against the loaded menu. Returns null when no
-  /// menu item matches (renamed / removed / price changed).
+  /// Georgian name and unit price against the loaded menu. Returns null unless
+  /// exactly one menu item matches (renamed / removed / price changed / ambiguous).
   String? _resolveCartKeyForDraftItem(String itemName, double unitPrice) {
     const eps = 0.001;
     final target = itemName.trim();
+    final matches = <String>{};
     for (final cat in _categories) {
       final pools = <List<_MenuItem>>[
         cat.items,
@@ -178,7 +228,7 @@ class _MobileCalculatorScreenState extends State<MobileCalculatorScreen>
             // Base item: saved as {itemName: nameKa, unitPrice: price}.
             if (item.nameKa.trim() == target &&
                 (item.price - unitPrice).abs() < eps) {
-              return item.key;
+              matches.add(item.key);
             }
           } else {
             // Variant item: saved as {itemName: 'nameKa (label)',
@@ -186,14 +236,14 @@ class _MobileCalculatorScreenState extends State<MobileCalculatorScreen>
             for (final v in item.variants) {
               final variantName = '${item.nameKa} (${v.label})'.trim();
               if (variantName == target && (v.price - unitPrice).abs() < eps) {
-                return '${item.key}_${v.size}';
+                matches.add(item.variantKey(v));
               }
             }
           }
         }
       }
     }
-    return null;
+    return matches.length == 1 ? matches.single : null;
   }
 
   void _warnIfUnresolvedDraftItems() {
@@ -201,7 +251,10 @@ class _MobileCalculatorScreenState extends State<MobileCalculatorScreen>
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       final names = _unresolvedDraftItems.join(', ');
-      showErrorToast(context, 'ვერ მოიძებნა მენიუში და გამოტოვებულია: $names');
+      showErrorToast(
+        context,
+        'მენიუში ზუსტად ვერ მოიძებნა; შენარჩუნებულია შენახული მონაცემებით: $names',
+      );
     });
   }
 
@@ -210,7 +263,7 @@ class _MobileCalculatorScreenState extends State<MobileCalculatorScreen>
     final cat = _categories[_selectedCatIndex];
     if (cat.subcategories.isNotEmpty) {
       _subTabController = TabController(
-        length: cat.subcategories.length,
+        length: _itemSections(cat).length,
         vsync: this,
       );
       _subTabController!.addListener(() {
@@ -223,6 +276,19 @@ class _MobileCalculatorScreenState extends State<MobileCalculatorScreen>
     }
   }
 
+  // A category can contain direct products alongside subcategories. Keep its
+  // direct products in a reachable first tab rather than hiding them.
+  List<_MenuSubcat> _itemSections(_MenuCat cat) => [
+    if (cat.items.isNotEmpty)
+      _MenuSubcat(
+        slug: cat.slug,
+        nameKa: cat.nameKa,
+        nameEn: cat.nameEn,
+        items: cat.items,
+      ),
+    ...cat.subcategories,
+  ];
+
   @override
   void dispose() {
     _searchController.dispose();
@@ -233,20 +299,8 @@ class _MobileCalculatorScreenState extends State<MobileCalculatorScreen>
     super.dispose();
   }
 
-  double get _subtotal {
-    double total = 0;
-    for (final cat in _categories) {
-      for (final it in cat.items) {
-        total += _calcItemSubtotal(it);
-      }
-      for (final sub in cat.subcategories) {
-        for (final it in sub.items) {
-          total += _calcItemSubtotal(it);
-        }
-      }
-    }
-    return total;
-  }
+  double get _subtotal =>
+      _cartLines.fold(0.0, (sum, line) => sum + line.item.price * line.qty);
 
   double _calcItemSubtotal(_MenuItem it) {
     double sum = 0;
@@ -254,7 +308,7 @@ class _MobileCalculatorScreenState extends State<MobileCalculatorScreen>
       sum += (it.price * (_cart[it.key] ?? 0));
     } else {
       for (final v in it.variants) {
-        sum += (v.price * (_cart['${it.key}_${v.size}'] ?? 0));
+        sum += (v.price * (_cart[it.variantKey(v)] ?? 0));
       }
     }
     return sum;
@@ -301,6 +355,27 @@ class _MobileCalculatorScreenState extends State<MobileCalculatorScreen>
         }
       }
     }
+    // A reopened selection retains its frozen line even when the live Menu
+    // changed or the original line had no trustworthy Menu identity.
+    lines.removeWhere((line) => _selectionSnapshots.containsKey(line.key));
+    for (final snapshot in _selectionSnapshots.values) {
+      final qty = _cart[snapshot.key] ?? 0;
+      if (qty <= 0) continue;
+      lines.add(
+        _CartLine(
+          key: snapshot.key,
+          qty: qty,
+          item: _MenuItem(
+            id: snapshot.menuItemId,
+            selectedVariantId: snapshot.variantId,
+            nameKa: snapshot.itemName,
+            nameEn: snapshot.itemName,
+            price: snapshot.unitPrice,
+            variants: [],
+          ),
+        ),
+      );
+    }
     return lines;
   }
 
@@ -313,12 +388,14 @@ class _MobileCalculatorScreenState extends State<MobileCalculatorScreen>
       }
     } else {
       for (final v in it.variants) {
-        final key = '${it.key}_${v.size}';
+        final key = it.variantKey(v);
         final qty = _cart[key] ?? 0;
         if (qty > 0) {
           list.add(
             _CartLine(
               item: _MenuItem(
+                id: it.id,
+                selectedVariantId: v.id,
                 nameKa: '${it.nameKa} (${v.label})',
                 nameEn: '${it.nameEn} (${v.label})',
                 price: v.price,
@@ -334,8 +411,9 @@ class _MobileCalculatorScreenState extends State<MobileCalculatorScreen>
     return list;
   }
 
-  void _increment(_MenuItem item, {double? size, int qty = 1}) {
-    final key = size == null ? item.key : '${item.key}_$size';
+  void _increment(_MenuItem item, {int qty = 1}) {
+    final key = item.key;
+    _selectionSnapshots.remove(key);
     setState(() => _cart[key] = (_cart[key] ?? 0) + qty);
   }
 
@@ -349,12 +427,19 @@ class _MobileCalculatorScreenState extends State<MobileCalculatorScreen>
     bool addMode = false,
   }) async {
     final variants = item.variants
-        .map((v) => MenuPinVariant(label: v.label, price: v.price, tag: v))
+        .map(
+          (v) => MenuPinVariant(
+            label: v.label,
+            price: v.price,
+            tag: v,
+            inCartQty: _cart[item.variantKey(v)] ?? 0,
+          ),
+        )
         .toList();
 
     final resolvedKey = item.variants.isEmpty
         ? item.key
-        : (cartKey ?? '${item.key}_${item.variants.first.size}');
+        : (cartKey ?? item.variantKey(item.variants.first));
 
     final currentInCart = _cart[resolvedKey] ?? 0;
 
@@ -370,9 +455,10 @@ class _MobileCalculatorScreenState extends State<MobileCalculatorScreen>
 
     final qty = result.qty;
     final v = result.variant?.tag as _MenuVariant?;
-    final finalKey = v != null ? '${item.key}_${v.size}' : item.key;
+    final finalKey = v != null ? item.variantKey(v) : item.key;
 
     setState(() {
+      _selectionSnapshots.remove(finalKey);
       // Reset the product search after an item is chosen so the grid returns to
       // the normal category view and the next search starts fresh.
       if (_searchQuery.isNotEmpty) {
@@ -380,7 +466,7 @@ class _MobileCalculatorScreenState extends State<MobileCalculatorScreen>
         _searchQuery = '';
       }
       if (addMode) {
-        _cart[finalKey] = currentInCart + qty;
+        _cart[finalKey] = (_cart[finalKey] ?? 0) + qty;
       } else {
         if (cartKey != null && cartKey != finalKey) _cart.remove(cartKey);
         if (qty <= 0) {
@@ -412,7 +498,8 @@ class _MobileCalculatorScreenState extends State<MobileCalculatorScreen>
   }
 
   Future<void> _saveCount() async {
-    if (_cart.isEmpty) return;
+    if (_cart.isEmpty || _saving) return;
+    setState(() => _saving = true);
 
     final isEdit = widget.editDraftId != null;
     final nameController = TextEditingController(
@@ -442,7 +529,10 @@ class _MobileCalculatorScreenState extends State<MobileCalculatorScreen>
       ),
     );
 
-    if (name == null) return;
+    if (name == null) {
+      if (mounted) setState(() => _saving = false);
+      return;
+    }
 
     try {
       final items = _cartLines
@@ -451,6 +541,8 @@ class _MobileCalculatorScreenState extends State<MobileCalculatorScreen>
               'itemName': l.item.nameKa,
               'quantity': l.qty,
               'unitPrice': l.item.price,
+              if (_countedLineComments.containsKey(l.key))
+                'comment': _countedLineComments[l.key],
             },
           )
           .toList();
@@ -466,6 +558,7 @@ class _MobileCalculatorScreenState extends State<MobileCalculatorScreen>
           items: items,
           subtotal: _subtotal,
           includeServiceFee: _serviceFeeAvailable && _includeServiceFee,
+          serviceFeeRate: _serviceFeeRate,
         );
       } else {
         await MobileApiService.saveCountedMenu(
@@ -473,6 +566,7 @@ class _MobileCalculatorScreenState extends State<MobileCalculatorScreen>
           items: items,
           subtotal: _subtotal,
           includeServiceFee: _serviceFeeAvailable && _includeServiceFee,
+          serviceFeeRate: _serviceFeeRate,
           createdBy: 'Manager',
         );
       }
@@ -482,99 +576,226 @@ class _MobileCalculatorScreenState extends State<MobileCalculatorScreen>
           context,
           isEdit ? 'წარმატებით განახლდა' : 'წარმატებით შეინახა',
         );
-        Navigator.pop(context, true);
+        if (widget.onSaved != null) {
+          widget.onSaved!();
+        } else {
+          Navigator.pop(context, true);
+        }
       }
     } catch (e) {
       if (mounted) {
         showErrorToast(context, 'შენახვა ვერ მოხერხდა: $e');
       }
+    } finally {
+      if (mounted) setState(() => _saving = false);
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: MobileGlassTheme.bg,
-      appBar: AppBar(
-        title: Text(
-          widget.editDraftId != null
-              ? 'მენიუს რედაქტირება'
-              : (widget.isCountMode ? 'მენიუს დათვლა' : 'მენიუ'),
-          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-        ),
+    return ManagerDataBoundary(
+      reads: _displayReads,
+      blocks: const {'menu'},
+      onRefresh: _loadMenu,
+      child: Scaffold(
         backgroundColor: MobileGlassTheme.bg,
-        foregroundColor: MobileGlassTheme.textPrimary,
-        iconTheme: IconThemeData(color: MobileGlassTheme.textPrimary),
-        elevation: 0,
-        bottom: (_loading || _categories.isEmpty)
-            ? null
-            : TabBar(
-                controller: _tabController,
-                isScrollable: true,
-                labelColor: MobileGlassTheme.textPrimary,
-                unselectedLabelColor: MobileGlassTheme.textSecondary,
-                indicatorColor: MobileGlassTheme.primary,
-                indicatorWeight: 3,
-                dividerColor: Colors.transparent,
-                labelStyle: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 14,
+        appBar: AppBar(
+          automaticallyImplyLeading: !widget.embedded,
+          toolbarHeight: widget.embedded ? 0 : kToolbarHeight,
+          title: widget.embedded
+              ? null
+              : Text(
+                  widget.editDraftId != null
+                      ? 'მენიუს რედაქტირება'
+                      : (widget.isCountMode ? 'მენიუს დათვლა' : 'მენიუ'),
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 18,
+                  ),
                 ),
-                tabs: _categories.map((c) => Tab(text: c.nameKa)).toList(),
+          backgroundColor: MobileGlassTheme.bg,
+          foregroundColor: MobileGlassTheme.textPrimary,
+          iconTheme: IconThemeData(color: MobileGlassTheme.textPrimary),
+          elevation: 0,
+          bottom: (_loading || _categories.isEmpty)
+              ? null
+              : TabBar(
+                  controller: _tabController,
+                  isScrollable: true,
+                  labelColor: MobileGlassTheme.textPrimary,
+                  unselectedLabelColor: MobileGlassTheme.textSecondary,
+                  indicatorColor: MobileGlassTheme.primary,
+                  indicatorWeight: 3,
+                  dividerColor: Colors.transparent,
+                  labelStyle: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                  ),
+                  tabs: _categories.map((c) => Tab(text: c.nameKa)).toList(),
+                ),
+        ),
+        body: _loading
+            ? Center(
+                child: CircularProgressIndicator(
+                  color: MobileGlassTheme.primary,
+                ),
+              )
+            : _error != null
+            ? _buildError()
+            : LayoutBuilder(
+                builder: (context, constraints) {
+                  final wide = constraints.maxWidth >= 1000;
+                  final catalog = Column(
+                    children: [
+                      if (_subTabController != null && _searchQuery.isEmpty)
+                        SizedBox(
+                          height: 52,
+                          child: TabBar(
+                            controller: _subTabController,
+                            isScrollable: true,
+                            labelColor: MobileGlassTheme.onPrimary,
+                            unselectedLabelColor:
+                                MobileGlassTheme.textSecondary,
+                            dividerColor: Colors.transparent,
+                            indicatorSize: TabBarIndicatorSize.tab,
+                            indicator: BoxDecoration(
+                              borderRadius: BorderRadius.circular(20),
+                              color: MobileGlassTheme.primary,
+                            ),
+                            indicatorPadding: const EdgeInsets.symmetric(
+                              vertical: 9,
+                              horizontal: 4,
+                            ),
+                            tabs: _itemSections(_categories[_selectedCatIndex])
+                                .map(
+                                  (s) => Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 12,
+                                      vertical: 8,
+                                    ),
+                                    child: Text(
+                                      s.nameKa,
+                                      style: const TextStyle(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ),
+                                )
+                                .toList(),
+                          ),
+                        ),
+                      _buildSearchBar(),
+                      Expanded(child: _buildItemGrid()),
+                      if (!wide) _buildCartSummary(),
+                    ],
+                  );
+                  return Center(
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 1440),
+                      child: wide
+                          ? Row(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                Expanded(child: catalog),
+                                SizedBox(
+                                  width: 360,
+                                  child: Padding(
+                                    padding: const EdgeInsets.fromLTRB(
+                                      8,
+                                      16,
+                                      24,
+                                      24,
+                                    ),
+                                    child: _desktopCart(),
+                                  ),
+                                ),
+                              ],
+                            )
+                          : catalog,
+                    ),
+                  );
+                },
               ),
       ),
-      body: _loading
-          ? Center(
-              child: CircularProgressIndicator(color: MobileGlassTheme.primary),
-            )
-          : _error != null
-          ? _buildError()
-          : Column(
-              children: [
-                if (_subTabController != null && _searchQuery.isEmpty)
-                  SizedBox(
-                    height: 52,
-                    child: TabBar(
-                      controller: _subTabController,
-                      isScrollable: true,
-                      labelColor: MobileGlassTheme.textPrimary,
-                      unselectedLabelColor: MobileGlassTheme.textSecondary,
-                      dividerColor: Colors.transparent,
-                      indicatorSize: TabBarIndicatorSize.tab,
-                      indicator: BoxDecoration(
-                        borderRadius: BorderRadius.circular(20),
-                        color: MobileGlassTheme.primary,
-                      ),
-                      indicatorPadding: const EdgeInsets.symmetric(
-                        vertical: 9,
-                        horizontal: 4,
-                      ),
-                      tabs: _categories[_selectedCatIndex].subcategories
-                          .map(
-                            (s) => Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 8,
-                              ),
-                              child: Text(
-                                s.nameKa,
-                                style: const TextStyle(
-                                  fontSize: 13,
+    );
+  }
+
+  Widget _desktopCart() => Material(
+    color: MobileGlassTheme.surfaceCard,
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(18),
+      side: BorderSide(color: MobileGlassTheme.borderSubtle),
+    ),
+    child: Padding(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            'თქვენი დათვლა',
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.w700,
+              color: MobileGlassTheme.textPrimary,
+            ),
+          ),
+          const SizedBox(height: 16),
+          Expanded(
+            child: _cartLines.isEmpty
+                ? Center(
+                    child: Text(
+                      'აირჩიეთ პროდუქტები მენიუდან',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(color: MobileGlassTheme.textSecondary),
+                    ),
+                  )
+                : ListView(
+                    children: [
+                      for (final line in _cartLines)
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                '${line.qty} ×',
+                                style: TextStyle(
+                                  color: MobileGlassTheme.primary,
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
-                            ),
-                          )
-                          .toList(),
-                    ),
+                              const SizedBox(width: 10),
+                              Expanded(child: Text(line.item.nameKa)),
+                              const SizedBox(width: 8),
+                              Text(_money.format(line.item.price * line.qty)),
+                            ],
+                          ),
+                        ),
+                    ],
                   ),
-                _buildSearchBar(),
-                Expanded(child: _buildItemGrid()),
-                _buildCartSummary(),
-              ],
+          ),
+          const Divider(height: 32),
+          Text('ჯამი', style: TextStyle(color: MobileGlassTheme.textSecondary)),
+          const SizedBox(height: 6),
+          Text(
+            _money.format(_total),
+            style: TextStyle(
+              fontSize: 26,
+              fontWeight: FontWeight.w700,
+              color: MobileGlassTheme.textPrimary,
             ),
-    );
-  }
+          ),
+          const SizedBox(height: 18),
+          FilledButton.icon(
+            onPressed: _cartLines.isEmpty || _saving ? null : _showCartSheet,
+            icon: const Icon(Icons.receipt_long_outlined),
+            label: Text(_saving ? 'ინახება…' : 'დათვლის ნახვა'),
+          ),
+        ],
+      ),
+    ),
+  );
 
   Widget _buildError() => Center(
     child: Column(
@@ -658,8 +879,9 @@ class _MobileCalculatorScreenState extends State<MobileCalculatorScreen>
         '[CALC] Grid Build - Cat: ${cat.nameKa}, SubIndex: $_selectedSubcatIndex',
       );
       if (cat.subcategories.isNotEmpty) {
-        if (_selectedSubcatIndex < cat.subcategories.length) {
-          items = cat.subcategories[_selectedSubcatIndex].items;
+        final sections = _itemSections(cat);
+        if (_selectedSubcatIndex < sections.length) {
+          items = sections[_selectedSubcatIndex].items;
           debugPrint('[CALC] Showing subcategory items: ${items.length}');
         } else {
           items = [];
@@ -697,14 +919,14 @@ class _MobileCalculatorScreenState extends State<MobileCalculatorScreen>
       totalQty = _cart[item.key] ?? 0;
     } else {
       for (final v in item.variants) {
-        totalQty += _cart['${item.key}_${v.size}'] ?? 0;
+        totalQty += _cart[item.variantKey(v)] ?? 0;
       }
     }
 
     final bool active = totalQty > 0;
     final double lineTotal = _calcItemSubtotal(item);
 
-    return GestureDetector(
+    return InkWell(
       onTap: () {
         if (widget.selectionMode) {
           _openSelectionQuantityDialog(item, totalQty: totalQty);
@@ -712,7 +934,7 @@ class _MobileCalculatorScreenState extends State<MobileCalculatorScreen>
           _onItemTap(item);
         }
       },
-      behavior: HitTestBehavior.opaque,
+
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 180),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
@@ -743,7 +965,7 @@ class _MobileCalculatorScreenState extends State<MobileCalculatorScreen>
                 child: Text(
                   '$totalQty',
                   style: TextStyle(
-                    color: MobileGlassTheme.textPrimary,
+                    color: MobileGlassTheme.onPrimary,
                     fontWeight: FontWeight.bold,
                     fontSize: 13,
                   ),
@@ -766,7 +988,8 @@ class _MobileCalculatorScreenState extends State<MobileCalculatorScreen>
                     overflow: TextOverflow.ellipsis,
                   ),
                   SizedBox(height: 3),
-                  Row(
+                  Wrap(
+                    crossAxisAlignment: WrapCrossAlignment.center,
                     children: [
                       Text(
                         hasVariants
@@ -882,9 +1105,9 @@ class _MobileCalculatorScreenState extends State<MobileCalculatorScreen>
     bool filled = false,
     required VoidCallback onTap,
   }) {
-    return GestureDetector(
+    return InkWell(
       onTap: onTap,
-      behavior: HitTestBehavior.opaque,
+
       child: Container(
         width: 38,
         height: 38,
@@ -903,14 +1126,16 @@ class _MobileCalculatorScreenState extends State<MobileCalculatorScreen>
         child: Icon(
           icon,
           size: 20,
-          color: filled ? Colors.white : MobileGlassTheme.textPrimary,
+          color: filled
+              ? MobileGlassTheme.onPrimary
+              : MobileGlassTheme.textPrimary,
         ),
       ),
     );
   }
 
   void _showCartSheet() {
-    showModalBottomSheet(
+    showManagerModal(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
@@ -940,12 +1165,14 @@ class _MobileCalculatorScreenState extends State<MobileCalculatorScreen>
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      'დამატებული პროდუქტები',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: MobileGlassTheme.textPrimary,
+                    Expanded(
+                      child: Text(
+                        'დამატებული პროდუქტები',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: MobileGlassTheme.textPrimary,
+                        ),
                       ),
                     ),
                     IconButton(
@@ -1115,7 +1342,8 @@ class _MobileCalculatorScreenState extends State<MobileCalculatorScreen>
                       Row(
                         children: [
                           Expanded(
-                            child: GestureDetector(
+                            child: InkWell(
+                              onTap: () => _openServiceFeeConfig(setModalState),
                               onLongPress: () =>
                                   _openServiceFeeConfig(setModalState),
                               child: Row(
@@ -1197,7 +1425,7 @@ class _MobileCalculatorScreenState extends State<MobileCalculatorScreen>
                           },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: MobileGlassTheme.primary,
-                            foregroundColor: Colors.white,
+                            foregroundColor: MobileGlassTheme.onPrimary,
                             padding: const EdgeInsets.symmetric(vertical: 16),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(16),
@@ -1221,6 +1449,8 @@ class _MobileCalculatorScreenState extends State<MobileCalculatorScreen>
                                     itemName: line.item.nameKa,
                                     unitPrice: line.item.price,
                                     qty: line.qty,
+                                    menuItemId: line.item.id,
+                                    variantId: line.item.selectedVariantId,
                                   ),
                                 )
                                 .toList();
@@ -1229,7 +1459,7 @@ class _MobileCalculatorScreenState extends State<MobileCalculatorScreen>
                           },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: MobileGlassTheme.primary,
-                            foregroundColor: Colors.white,
+                            foregroundColor: MobileGlassTheme.onPrimary,
                             padding: const EdgeInsets.symmetric(vertical: 16),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(16),
@@ -1278,7 +1508,7 @@ class _MobileCalculatorScreenState extends State<MobileCalculatorScreen>
         border: Border(top: BorderSide(color: MobileGlassTheme.borderSubtle)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.4),
+            color: MobileGlassTheme.data.cardShadow,
             blurRadius: 24,
             offset: const Offset(0, -6),
           ),
@@ -1293,9 +1523,9 @@ class _MobileCalculatorScreenState extends State<MobileCalculatorScreen>
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          GestureDetector(
+          InkWell(
             onTap: _showCartSheet,
-            behavior: HitTestBehavior.opaque,
+
             child: Row(
               children: [
                 Container(
@@ -1339,7 +1569,7 @@ class _MobileCalculatorScreenState extends State<MobileCalculatorScreen>
             onPressed: _showCartSheet,
             style: ElevatedButton.styleFrom(
               backgroundColor: MobileGlassTheme.primary,
-              foregroundColor: Colors.white,
+              foregroundColor: MobileGlassTheme.onPrimary,
               elevation: 0,
               padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 13),
               shape: RoundedRectangleBorder(
@@ -1347,7 +1577,7 @@ class _MobileCalculatorScreenState extends State<MobileCalculatorScreen>
               ),
             ),
             child: Text(
-              widget.selectionMode ? 'ნახვა' : 'შეკვეთის ნახვა',
+              widget.selectionMode ? 'ნახვა' : 'დათვლის ნახვა',
               style: TextStyle(fontWeight: FontWeight.bold),
             ),
           ),
@@ -1362,11 +1592,15 @@ class MenuSelectionLine {
   final String itemName;
   final double unitPrice;
   final int qty;
+  final String? menuItemId;
+  final String? variantId;
   const MenuSelectionLine({
     required this.key,
     required this.itemName,
     required this.unitPrice,
     required this.qty,
+    this.menuItemId,
+    this.variantId,
   });
 }
 
@@ -1389,12 +1623,23 @@ class _MenuCat {
     nameEn: j['nameEn'] as String? ?? '',
     items: ((j['items'] as List?) ?? [])
         .cast<Map<String, dynamic>>()
-        .map(_MenuItem.fromJson)
+        .indexed
+        .map(
+          (e) => _MenuItem.fromJson(
+            e.$2,
+            fallbackKey: 'category:${j['id'] ?? j['slug']}:item:${e.$1}',
+          ),
+        )
         .toList(),
     subcategories:
         (((j['subcategories'] as List?) ?? [])
             .cast<Map<String, dynamic>>()
-            .map(_MenuSubcat.fromJson)
+            .map(
+              (sub) => _MenuSubcat.fromJson(
+                sub,
+                parentKey: '${j['id'] ?? j['slug']}',
+              ),
+            )
             .toList()
           ..sort(
             (a, b) =>
@@ -1414,22 +1659,34 @@ class _MenuSubcat {
     required this.nameEn,
     required this.items,
   });
-  factory _MenuSubcat.fromJson(Map<String, dynamic> j) => _MenuSubcat(
+  factory _MenuSubcat.fromJson(
+    Map<String, dynamic> j, {
+    required String parentKey,
+  }) => _MenuSubcat(
     slug: j['slug'] as String? ?? '',
     nameKa: j['nameKa'] as String? ?? '',
     nameEn: j['nameEn'] as String? ?? '',
     items: ((j['items'] as List?) ?? [])
         .cast<Map<String, dynamic>>()
-        .map(_MenuItem.fromJson)
+        .indexed
+        .map(
+          (e) => _MenuItem.fromJson(
+            e.$2,
+            fallbackKey:
+                'category:$parentKey:sub:${j['id'] ?? j['slug']}:item:${e.$1}',
+          ),
+        )
         .toList(),
   );
 }
 
 class _MenuVariant {
+  final String? id;
   final double size;
   final double price;
-  const _MenuVariant({required this.size, required this.price});
+  const _MenuVariant({this.id, required this.size, required this.price});
   factory _MenuVariant.fromJson(Map<String, dynamic> j) => _MenuVariant(
+    id: j['id'] as String?,
     size: (j['size'] as num?)?.toDouble() ?? 0.0,
     price: (j['price'] as num?)?.toDouble() ?? 0.0,
   );
@@ -1440,26 +1697,38 @@ class _MenuVariant {
 }
 
 class _MenuItem {
+  final String? id;
+  final String? selectedVariantId;
+  final String? fallbackKey;
   final String nameKa;
   final String nameEn;
   final double price;
   final List<_MenuVariant> variants;
   const _MenuItem({
+    this.id,
+    this.selectedVariantId,
+    this.fallbackKey,
     required this.nameKa,
     required this.nameEn,
     required this.price,
     required this.variants,
   });
-  String get key => '${nameEn}_$nameKa';
-  factory _MenuItem.fromJson(Map<String, dynamic> j) => _MenuItem(
-    nameKa: j['nameKa'] as String? ?? '',
-    nameEn: j['nameEn'] as String? ?? '',
-    price: (j['price'] as num?)?.toDouble() ?? 0.0,
-    variants: ((j['variants'] as List?) ?? [])
-        .cast<Map<String, dynamic>>()
-        .map(_MenuVariant.fromJson)
-        .toList(),
-  );
+  String get key => id == null || id!.isEmpty
+      ? (fallbackKey ?? '${nameEn}_${nameKa}_$price')
+      : 'menu:$id';
+  String variantKey(_MenuVariant v) => '$key/variant:${v.id ?? v.size}';
+  factory _MenuItem.fromJson(Map<String, dynamic> j, {String? fallbackKey}) =>
+      _MenuItem(
+        id: j['id'] as String?,
+        fallbackKey: fallbackKey,
+        nameKa: j['nameKa'] as String? ?? '',
+        nameEn: j['nameEn'] as String? ?? '',
+        price: (j['price'] as num?)?.toDouble() ?? 0.0,
+        variants: ((j['variants'] as List?) ?? [])
+            .cast<Map<String, dynamic>>()
+            .map(_MenuVariant.fromJson)
+            .toList(),
+      );
 }
 
 class _CartLine {

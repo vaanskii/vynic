@@ -99,98 +99,81 @@ class _ReceivingCard extends StatelessWidget {
   final VoidCallback onOpen;
 
   @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
-      child: _AdminPanel(
-        padding: EdgeInsets.zero,
-        child: InkWell(
-          key: Key('receiving-card-${receiving.id}'),
-          onTap: onOpen,
-          borderRadius: BorderRadius.circular(14),
-          child: Padding(
-            padding: const EdgeInsets.all(14),
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                final content = Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+  Widget build(BuildContext context) => InkWell(
+    key: Key('receiving-card-${receiving.id}'),
+    onTap: onOpen,
+    borderRadius: BorderRadius.circular(8),
+    child: Padding(
+      padding: const EdgeInsets.symmetric(vertical: 15),
+      child: LayoutBuilder(
+        builder: (context, box) {
+          final identity = Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                receiving.waybillNumber == null
+                    ? receiving.supplierName
+                    : 'მიღება #${receiving.waybillNumber}',
+                style: managerDesignText(context, 13, weight: FontWeight.w500),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                '${receiving.supplierName} · ${_receivingDate(receiving.documentDate)}',
+                style: managerDesignText(context, 11, muted: true),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                '${receiving.lineCount} პოზიცია · ${receiving.createdByName}',
+                style: managerDesignText(context, 10, muted: true),
+              ),
+            ],
+          );
+          final amount = Text(
+            '${receiving.documentTotal} ₾',
+            style: managerDesignText(context, 13, weight: FontWeight.w600)
+                .copyWith(
+                  decoration: receiving.isCancelled
+                      ? TextDecoration.lineThrough
+                      : null,
+                ),
+          );
+          if (box.maxWidth < 520)
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                identity,
+                const SizedBox(height: 10),
+                Wrap(
+                  spacing: 12,
+                  runSpacing: 8,
+                  crossAxisAlignment: WrapCrossAlignment.center,
                   children: [
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            receiving.supplierName,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              color: AdminTheme.text,
-                              fontSize: 15,
-                              fontWeight: FontWeight.w800,
-                            ),
-                          ),
-                        ),
-                        _ReceivingStatusBadge(status: receiving.status),
-                      ],
-                    ),
-                    const SizedBox(height: 7),
-                    Wrap(
-                      spacing: 12,
-                      runSpacing: 6,
-                      children: [
-                        _InventoryMeta(
-                          icon: Icons.event_rounded,
-                          label: _receivingDate(receiving.documentDate),
-                        ),
-                        if (receiving.waybillNumber != null)
-                          _InventoryMeta(
-                            icon: Icons.description_outlined,
-                            label: 'ზედნადები ${receiving.waybillNumber}',
-                          ),
-                        _InventoryMeta(
-                          icon: Icons.format_list_numbered_rounded,
-                          label: '${receiving.lineCount} პოზიცია',
-                        ),
-                        _InventoryMeta(
-                          icon: Icons.person_outline_rounded,
-                          label: receiving.createdByName,
-                        ),
-                      ],
-                    ),
+                    amount,
+                    _ReceivingStatusBadge(status: receiving.status),
                   ],
-                );
-                final total = Text(
-                  '${receiving.documentTotal} ₾',
-                  style: TextStyle(
-                    color: receiving.isCancelled
-                        ? AdminTheme.textDim
-                        : AdminTheme.text,
-                    fontSize: 17,
-                    fontWeight: FontWeight.w800,
-                    decoration: receiving.isCancelled
-                        ? TextDecoration.lineThrough
-                        : null,
-                  ),
-                );
-                if (constraints.maxWidth < 520) {
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [content, const SizedBox(height: 10), total],
-                  );
-                }
-                return Row(
-                  children: [
-                    Expanded(child: content),
-                    const SizedBox(width: 12),
-                    total,
-                  ],
-                );
-              },
-            ),
-          ),
-        ),
+                ),
+              ],
+            );
+          return Row(
+            children: [
+              Expanded(child: identity),
+              const SizedBox(width: 16),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  amount,
+                  const SizedBox(height: 8),
+                  _ReceivingStatusBadge(status: receiving.status),
+                ],
+              ),
+              const SizedBox(width: 12),
+              Icon(Icons.chevron_right, size: 18, color: AdminTheme.textDim),
+            ],
+          );
+        },
       ),
-    );
-  }
+    ),
+  );
 }
 
 // ── Detail ──────────────────────────────────────────────────────────────────
@@ -254,9 +237,7 @@ class _ReceivingDetailDialogState extends State<ReceivingDetailDialog> {
     final receiving = _receiving;
     return Theme(
       data: inventoryTheme(context),
-      child: AlertDialog(
-        insetPadding: const EdgeInsets.all(VynicSpacing.md),
-        contentPadding: const EdgeInsets.all(VynicSpacing.md),
+      child: ManagerFormDialog(
         key: const Key('receiving-detail'),
         backgroundColor: AdminTheme.surface,
         title: Row(
@@ -293,27 +274,6 @@ class _ReceivingDetailDialogState extends State<ReceivingDetailDialog> {
       mainAxisSize: MainAxisSize.min,
       children: [
         _detailRow('მომწოდებელი', receiving.supplierName),
-        if (receiving.isPosted) ...[
-          _detailRow('გადახდილი', '${receiving.paid} ₾'),
-          _detailRow(
-            'დარჩენილი',
-            '${receiving.remaining} ₾ · ${_paymentLabel(receiving.paymentStatus)}',
-          ),
-          if (receiving.dueDate != null)
-            _detailRow('გადახდის ვადა', receiving.dueDate!),
-          OutlinedButton(
-            onPressed: () => Navigator.of(context)
-                .push(
-                  MaterialPageRoute<void>(
-                    builder: (_) => SupplierPayablesScreen(
-                      supplierId: receiving.supplierId,
-                    ),
-                  ),
-                )
-                .then((_) => _load()),
-            child: const Text('გადახდები და დავალიანება'),
-          ),
-        ],
         if (receiving.waybillNumber != null)
           _detailRow('ზედნადები', receiving.waybillNumber!),
         if (receiving.invoiceNumber != null)
@@ -346,6 +306,34 @@ class _ReceivingDetailDialogState extends State<ReceivingDetailDialog> {
             ),
           ],
         ),
+        const SizedBox(height: 18),
+        ManagerHelpCallout(
+          receiving.isPosted
+              ? 'გატარებული დოკუმენტი მხოლოდ წასაკითხია. მიღებამ მარაგი გაზარდა.'
+              : 'მონახაზი მარაგს არ ცვლის. მიღება საბოლოო დადასტურებას საჭიროებს.',
+        ),
+        const SizedBox(height: 18),
+        if (receiving.isPosted) ...[
+          _detailRow('გადახდილი', '${receiving.paid} ₾'),
+          _detailRow(
+            'დარჩენილი',
+            '${receiving.remaining} ₾ · ${_paymentLabel(receiving.paymentStatus)}',
+          ),
+          if (receiving.dueDate != null)
+            _detailRow('გადახდის ვადა', receiving.dueDate!),
+          OutlinedButton(
+            onPressed: () => Navigator.of(context)
+                .push(
+                  MaterialPageRoute<void>(
+                    builder: (_) => SupplierPayablesScreen(
+                      supplierId: receiving.supplierId,
+                    ),
+                  ),
+                )
+                .then((_) => _load()),
+            child: const Text('გადახდები და დავალიანება'),
+          ),
+        ],
         if (receiving.originalMovements.isNotEmpty) ...[
           const SizedBox(height: 16),
           _impactBlock(
@@ -601,7 +589,7 @@ class _ReceivingDetailDialogState extends State<ReceivingDetailDialog> {
   }) {
     return showDialog<bool>(
       context: context,
-      builder: (dialogContext) => AlertDialog(
+      builder: (dialogContext) => ManagerFormDialog(
         backgroundColor: AdminTheme.surface,
         title: Text(title, style: TextStyle(color: AdminTheme.text)),
         content: Text(
@@ -631,29 +619,7 @@ class _ReceivingDetailDialogState extends State<ReceivingDetailDialog> {
   }
 }
 
-Widget _detailRow(String label, String value) {
-  return Padding(
-    padding: const EdgeInsets.only(bottom: 6),
-    child: Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        SizedBox(
-          width: 120,
-          child: Text(
-            label,
-            style: TextStyle(color: AdminTheme.textDim, fontSize: 12),
-          ),
-        ),
-        Expanded(
-          child: Text(
-            value,
-            style: TextStyle(color: AdminTheme.text, fontSize: 13),
-          ),
-        ),
-      ],
-    ),
-  );
-}
+Widget _detailRow(String label, String value) => ManagerKeyValue(label, value);
 
 // ── Editor ──────────────────────────────────────────────────────────────────
 
@@ -926,26 +892,11 @@ class _ReceivingEditorDialogState extends State<ReceivingEditorDialog> {
   Widget build(BuildContext context) {
     return Theme(
       data: inventoryTheme(context),
-      child: AlertDialog(
-        insetPadding: const EdgeInsets.all(VynicSpacing.md),
-        contentPadding: const EdgeInsets.all(VynicSpacing.md),
+      child: ManagerFormDialog(
         key: const Key('receiving-editor'),
         backgroundColor: AdminTheme.surface,
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              widget.receiving == null ? 'ახალი მიღება' : 'მიღების რედაქტირება',
-              style: TextStyle(color: AdminTheme.text),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              _reviewing
-                  ? '2 / 2 · გადახდა და დადასტურება'
-                  : '1 / 2 · საქონელი',
-              style: TextStyle(color: AdminTheme.textMuted, fontSize: 13),
-            ),
-          ],
+        title: Text(
+          widget.receiving == null ? 'ახალი მიღება' : 'მიღების რედაქტირება',
         ),
         content: SizedBox(
           width: 620,
@@ -957,7 +908,23 @@ class _ReceivingEditorDialogState extends State<ReceivingEditorDialog> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const SizedBox(height: 8),
+                  ManagerSegments(
+                    labels: const ['1  პროდუქტები', '2  გადახდა'],
+                    selected: _reviewing ? 1 : 0,
+                    onSelect: (step) {
+                      if (_saving || _attempted || step == (_reviewing ? 1 : 0))
+                        return;
+                      if (step == 1) {
+                        _save(reviewOnly: true);
+                      } else {
+                        setState(() {
+                          _reviewing = false;
+                          _error = null;
+                        });
+                      }
+                    },
+                  ),
+                  const SizedBox(height: 22),
                   if (_posted)
                     Padding(
                       padding: const EdgeInsets.only(bottom: 16),
@@ -967,69 +934,85 @@ class _ReceivingEditorDialogState extends State<ReceivingEditorDialog> {
                       ),
                     ),
                   if (!_reviewing) ...[
-                    DropdownButtonFormField<String>(
-                      key: const Key('receiving-source'),
-                      initialValue: _sourceType,
-                      isExpanded: true,
-                      decoration: _adminInput('მომწოდებელი / წყარო'),
-                      items: const [
-                        DropdownMenuItem(
-                          value: 'SUPPLIER',
-                          child: Text('მომწოდებელი'),
-                        ),
-                        DropdownMenuItem(
-                          value: 'SELF_PURCHASE',
-                          child: Text('ჩემით / ბაზრიდან'),
-                        ),
-                      ],
-                      onChanged: _saving || _attempted
-                          ? null
-                          : (v) => setState(() => _sourceType = v!),
-                    ),
-                    const SizedBox(height: 16),
-                    if (_sourceType == 'SELF_PURCHASE')
-                      TextField(
-                        key: const Key('receiving-source-label'),
-                        controller: _sourceLabel,
-                        enabled: !_attempted,
-                        decoration: _adminInput('საიდან? (არასავალდებულო)'),
-                      ),
-                    if (_sourceType == 'SUPPLIER')
-                      DropdownButtonFormField<String>(
-                        key: const Key('receiving-supplier'),
-                        initialValue: _supplierId.isEmpty ? null : _supplierId,
-                        isExpanded: true,
-                        dropdownColor: AdminTheme.surfaceElevated,
-                        style: Theme.of(context).textTheme.bodyMedium!.copyWith(
-                          color: AdminTheme.text,
-                        ),
-                        decoration: _adminInput('ვისგან / საიდან?'),
-                        items: [
-                          for (final supplier in widget.suppliers)
-                            DropdownMenuItem(
-                              value: supplier.id,
-                              child: Text(
-                                supplier.name,
-                                overflow: TextOverflow.ellipsis,
+                    ManagerFieldPair(
+                      first: _sourceType == 'SELF_PURCHASE'
+                          ? TextField(
+                              key: const Key('receiving-source-label'),
+                              controller: _sourceLabel,
+                              enabled: !_attempted,
+                              decoration: _adminInput(
+                                'საიდან? (არასავალდებულო)',
                               ),
+                            )
+                          : DropdownButtonFormField<String>(
+                              key: const Key('receiving-supplier'),
+                              initialValue: _supplierId.isEmpty
+                                  ? null
+                                  : _supplierId,
+                              isExpanded: true,
+                              dropdownColor: AdminTheme.surfaceElevated,
+                              style: Theme.of(context).textTheme.bodyMedium!
+                                  .copyWith(color: AdminTheme.text),
+                              decoration: _adminInput('ვისგან / საიდან?'),
+                              items: [
+                                for (final supplier in widget.suppliers)
+                                  DropdownMenuItem(
+                                    value: supplier.id,
+                                    child: Text(
+                                      supplier.name,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                              ],
+                              onChanged: _saving
+                                  ? null
+                                  : (value) => setState(() {
+                                      _supplierId = value ?? _supplierId;
+                                    }),
                             ),
-                        ],
-                        onChanged: _saving
-                            ? null
-                            : (value) => setState(() {
-                                _supplierId = value ?? _supplierId;
-                              }),
+                      second: ManagerDateField(
+                        key: const Key('receiving-date'),
+                        label: 'მიღების თარიღი',
+                        value: _isoDate(_documentDate),
+                        onTap: _saving ? null : _pickDate,
                       ),
+                    ),
+                    const SizedBox(height: 14),
+                    _dialogField(
+                      _waybill,
+                      'ზედნადების ნომერი',
+                      key: const Key('receiving-waybill'),
+                    ),
                     const SizedBox(height: 10),
                     ExpansionTile(
                       key: const PageStorageKey(
                         'inventory-receiving-document-details',
                       ),
                       tilePadding: EdgeInsets.zero,
-                      title: const Text('თარიღი და დოკუმენტის დეტალები'),
+                      title: const Text('წყარო და დოკუმენტის დეტალები'),
                       children: [
                         _InventoryExpansionContents(
                           children: [
+                            DropdownButtonFormField<String>(
+                              key: const Key('receiving-source'),
+                              initialValue: _sourceType,
+                              isExpanded: true,
+                              decoration: _adminInput('მომწოდებელი / წყარო'),
+                              items: const [
+                                DropdownMenuItem(
+                                  value: 'SUPPLIER',
+                                  child: Text('მომწოდებელი'),
+                                ),
+                                DropdownMenuItem(
+                                  value: 'SELF_PURCHASE',
+                                  child: Text('ჩემით / ბაზრიდან'),
+                                ),
+                              ],
+                              onChanged: _saving || _attempted
+                                  ? null
+                                  : (v) => setState(() => _sourceType = v!),
+                            ),
+                            const SizedBox(height: 16),
                             OutlinedButton.icon(
                               key: const Key('receiving-business-date'),
                               icon: const Icon(Icons.today),
@@ -1061,25 +1044,6 @@ class _ReceivingEditorDialogState extends State<ReceivingEditorDialog> {
                                     },
                             ),
                             const SizedBox(height: 10),
-                            OutlinedButton.icon(
-                              key: const Key('receiving-date'),
-                              onPressed: _saving ? null : _pickDate,
-                              icon: const Icon(Icons.event_rounded, size: 18),
-                              label: Text(
-                                'დოკუმენტის თარიღი: ${_isoDate(_documentDate)}',
-                              ),
-                              style: OutlinedButton.styleFrom(
-                                foregroundColor: AdminTheme.text,
-                                side: BorderSide(color: AdminTheme.border),
-                                minimumSize: const Size(0, 52),
-                              ),
-                            ),
-                            const SizedBox(height: 10),
-                            _dialogField(
-                              _waybill,
-                              'ზედნადების ნომერი',
-                              key: const Key('receiving-waybill'),
-                            ),
                             _dialogField(_invoice, 'ინვოისის ნომერი'),
                             _dialogField(_notes, 'შენიშვნა', maxLines: 2),
                           ],
@@ -1087,14 +1051,7 @@ class _ReceivingEditorDialogState extends State<ReceivingEditorDialog> {
                       ],
                     ),
                     const Divider(height: 24),
-                    Text(
-                      'რას ვიღებთ დღეს?',
-                      style: TextStyle(
-                        color: AdminTheme.text,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
+                    const ManagerSectionHeading('პროდუქტები'),
                     for (var index = 0; index < _lines.length; index++)
                       _lineEditor(index),
                     Align(
@@ -1150,7 +1107,13 @@ class _ReceivingEditorDialogState extends State<ReceivingEditorDialog> {
                         ),
                       ],
                     ),
+                    const SizedBox(height: 18),
+                    const ManagerHelpCallout(
+                      'შემდეგ ნაბიჯზე გადასვლა მარაგს არ ცვლის. მიღება საბოლოო დადასტურებას საჭიროებს.',
+                    ),
                   ] else ...[
+                    _confirmationSummary(),
+                    const SizedBox(height: 24),
                     Text(
                       'გადახდა',
                       style: TextStyle(
@@ -1255,7 +1218,9 @@ class _ReceivingEditorDialogState extends State<ReceivingEditorDialog> {
                         },
                       ),
                     const SizedBox(height: 16),
-                    _confirmationSummary(),
+                    const ManagerHelpCallout(
+                      'გატარებული მიღება ზრდის მარაგს. გაუქმება ტოვებს ისტორიას და ამატებს უკუმოძრაობას.',
+                    ),
                   ],
                 ],
               ),
@@ -1348,32 +1313,34 @@ class _ReceivingEditorDialogState extends State<ReceivingEditorDialog> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Row(
-            children: [
-              Expanded(
-                child: OutlinedButton.icon(
-                  key: ValueKey(
-                    'receiving-line-item-$index-${line.stockItem?.id}',
+          _amountFields(
+            line,
+            index,
+            product: Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    key: ValueKey(
+                      'receiving-line-item-$index-${line.stockItem?.id}',
+                    ),
+                    style: OutlinedButton.styleFrom(
+                      alignment: Alignment.centerLeft,
+                    ),
+                    icon: const Icon(Icons.search),
+                    label: Text(line.stockItem?.name ?? 'საქონლის არჩევა'),
+                    onPressed: _saving ? null : () => _pickLineProduct(index),
                   ),
-                  style: OutlinedButton.styleFrom(
-                    alignment: Alignment.centerLeft,
-                  ),
-                  icon: const Icon(Icons.search),
-                  label: Text(line.stockItem?.name ?? 'საქონლის არჩევა'),
-                  onPressed: _saving ? null : () => _pickLineProduct(index),
                 ),
-              ),
-              IconButton(
-                tooltip: 'წაშლა',
-                onPressed: _saving || _lines.length == 1
-                    ? null
-                    : () => setState(() => _lines.removeAt(index).dispose()),
-                icon: Icon(Icons.close_rounded, color: AdminTheme.textDim),
-              ),
-            ],
+                IconButton(
+                  tooltip: 'წაშლა',
+                  onPressed: _saving || _lines.length == 1
+                      ? null
+                      : () => setState(() => _lines.removeAt(index).dispose()),
+                  icon: Icon(Icons.close_rounded, color: AdminTheme.textDim),
+                ),
+              ],
+            ),
           ),
-          const SizedBox(height: 8),
-          _amountFields(line, index),
           if (line.effectiveCost != null && line.stockItem != null)
             Padding(
               padding: const EdgeInsets.only(top: 8),
@@ -1420,7 +1387,11 @@ class _ReceivingEditorDialogState extends State<ReceivingEditorDialog> {
     );
   }
 
-  Widget _amountFields(_ReceivingLineDraft line, int index) {
+  Widget _amountFields(
+    _ReceivingLineDraft line,
+    int index, {
+    required Widget product,
+  }) {
     final quantity = TextField(
       key: Key('receiving-line-quantity-$index'),
       controller: line.quantity,
@@ -1476,80 +1447,74 @@ class _ReceivingEditorDialogState extends State<ReceivingEditorDialog> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Row(
-          children: [
-            Expanded(child: quantity),
-            const SizedBox(width: 12),
-            Expanded(child: unit),
-          ],
-        ),
-        const SizedBox(height: 12),
-        Text(
-          'როგორ უთითებთ ფასს?',
-          style: TextStyle(color: AdminTheme.textMuted),
-        ),
-        Wrap(
-          key: Key('receiving-price-mode-$index'),
-          spacing: 8,
-          runSpacing: 8,
-          children: [
-            for (final mode in <String, String>{
-              'base':
-                  'ფასი / ${_unitShort(line.stockItem?.baseUnit ?? InventoryUnit.piece)}',
-              if (line.unit != line.stockItem?.baseUnit)
-                'entered':
-                    'ფასი / ${_unitShort(line.unit ?? InventoryUnit.piece)}',
-              'total': 'მთლიანი თანხა',
-            }.entries)
-              ChoiceChip(
-                key: Key('receiving-price-$index-${mode.key}'),
-                label: Text(mode.value),
-                selected: line.priceMode == mode.key,
-                onSelected: _saving
-                    ? null
-                    : (_) => setState(() => line.priceMode = mode.key),
-              ),
-          ],
-        ),
-        const SizedBox(height: 12),
+        ManagerFieldPair(first: product, second: quantity),
+        const SizedBox(height: 14),
         price,
+        ExpansionTile(
+          key: PageStorageKey('receiving-line-options-$index'),
+          tilePadding: EdgeInsets.zero,
+          title: Text(
+            'ერთეული და ფასის მითითება',
+            style: managerDesignText(context, 12, muted: true),
+          ),
+          children: [
+            _InventoryExpansionContents(
+              children: [
+                unit,
+                const SizedBox(height: 12),
+                Wrap(
+                  key: Key('receiving-price-mode-$index'),
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    for (final mode in <String, String>{
+                      'base':
+                          'ფასი / ${_unitShort(line.stockItem?.baseUnit ?? InventoryUnit.piece)}',
+                      if (line.unit != line.stockItem?.baseUnit)
+                        'entered':
+                            'ფასი / ${_unitShort(line.unit ?? InventoryUnit.piece)}',
+                      'total': 'მთლიანი თანხა',
+                    }.entries)
+                      ChoiceChip(
+                        key: Key('receiving-price-$index-${mode.key}'),
+                        label: Text(mode.value),
+                        selected: line.priceMode == mode.key,
+                        onSelected: _saving
+                            ? null
+                            : (_) => setState(() => line.priceMode = mode.key),
+                      ),
+                  ],
+                ),
+              ],
+            ),
+          ],
+        ),
       ],
     );
   }
 
-  Widget _confirmationSummary() => Card(
+  Widget _confirmationSummary() => Column(
     key: const Key('receiving-confirmation-summary'),
-    margin: EdgeInsets.zero,
-    child: Padding(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          const Text(
-            'დაემატება მარაგში:',
-            style: TextStyle(fontWeight: FontWeight.w700),
-          ),
-          const SizedBox(height: 12),
-          for (final line in _lines.where(
-            (l) => l.stockItem != null && l.quantity.text.trim().isNotEmpty,
-          ))
-            Padding(
-              padding: const EdgeInsets.only(bottom: 8),
-              child: Text(
-                '${line.stockItem!.name} +${line.exactBaseQuantity?.toStringAsFixed(3) ?? '—'} ${_unitShort(line.stockItem!.baseUnit)}',
-              ),
-            ),
-          const Divider(height: 24),
-          Text('მიღების ღირებულება: ${_documentTotal.toStringAsFixed(2)} ₾'),
-          const SizedBox(height: 8),
-          Text(
-            'ახლა გადახდილი: ${_paymentMode == 'unpaid' ? '0.00' : _paymentAmount} ₾',
-          ),
-          const SizedBox(height: 8),
-          Text('დავალიანება: ${_remainingPreview()} ₾'),
-        ],
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      for (final line in _lines.where(
+        (l) => l.stockItem != null && l.quantity.text.trim().isNotEmpty,
+      ))
+        ManagerKeyValue(
+          '${line.stockItem!.name} · ${line.exactBaseQuantity?.toStringAsFixed(3) ?? '—'} ${_unitShort(line.stockItem!.baseUnit)}',
+          '${line.lineTotal.toStringAsFixed(2)} ₾',
+        ),
+      ManagerKeyValue(
+        'მიღების ჯამი',
+        '${_documentTotal.toStringAsFixed(2)} ₾',
+        emphasis: true,
       ),
-    ),
+      ManagerKeyValue(
+        'ახლა გადახდილი',
+        '${_paymentMode == 'unpaid' ? '0.00' : _paymentAmount} ₾',
+      ),
+      ManagerKeyValue('დარჩენილი ვალი', '${_remainingPreview()} ₾'),
+    ],
   );
 
   Future<void> _pickDate() async {
@@ -1804,9 +1769,7 @@ class _StockItemDetailDialogState extends State<StockItemDetailDialog> {
     final detail = _detail;
     return Theme(
       data: inventoryTheme(context),
-      child: AlertDialog(
-        insetPadding: const EdgeInsets.all(VynicSpacing.md),
-        contentPadding: const EdgeInsets.all(VynicSpacing.md),
+      child: ManagerFormDialog(
         key: const Key('stock-item-detail'),
         backgroundColor: AdminTheme.surface,
         title: Text(
@@ -1858,8 +1821,8 @@ class _StockItemDetailDialogState extends State<StockItemDetailDialog> {
                       : item.isLowStock
                       ? AdminTheme.warn
                       : AdminTheme.text,
-                  fontSize: 26,
-                  fontWeight: FontWeight.w800,
+                  fontSize: 38,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
             ),
@@ -1887,6 +1850,15 @@ class _StockItemDetailDialogState extends State<StockItemDetailDialog> {
           ),
         if (detail.inventoryValue != null)
           Text('მარაგის ღირებულება: ${detail.inventoryValue} ₾'),
+        Text(
+          'მიმდინარე მარაგის მოძრავი საშუალო. ჩამოწერების ღირებულება სერვერზე მიღებისას იყინება; დახურვის მომენტის ისტორიული თვითღირებულება არ არის.',
+          style: TextStyle(color: AdminTheme.textMuted, fontSize: 12),
+        ),
+        if (detail.includesReconstructedHistory)
+          Text(
+            'შეიცავს ისტორიიდან აღდგენილ შეფასებებს.',
+            style: TextStyle(color: AdminTheme.warn),
+          ),
         for (final row in detail.purchaseHistory)
           ListTile(
             contentPadding: EdgeInsets.zero,
@@ -1985,7 +1957,7 @@ class _StockItemDetailDialogState extends State<StockItemDetailDialog> {
         ],
         const Divider(height: 24),
         Text(
-          'ბოლო მოძრაობები',
+          'ბოლო 20 მოძრაობის ამონარიდი',
           style: TextStyle(
             color: AdminTheme.textMuted,
             fontSize: 12,
@@ -1993,6 +1965,18 @@ class _StockItemDetailDialogState extends State<StockItemDetailDialog> {
           ),
         ),
         const SizedBox(height: 8),
+        TextButton.icon(
+          icon: const Icon(Icons.history),
+          label: const Text('სრული მოძრაობების ისტორია'),
+          onPressed: () => Navigator.of(context).push(
+            MaterialPageRoute<void>(
+              builder: (_) => StockMovementHistoryScreen(
+                stockItemId: item.id,
+                name: item.name,
+              ),
+            ),
+          ),
+        ),
         if (detail.recentMovements.isEmpty)
           Text(
             'მოძრაობები ჯერ არ არის',
@@ -2034,6 +2018,7 @@ class _StockItemDetailDialogState extends State<StockItemDetailDialog> {
                             fontSize: 11,
                           ),
                         ),
+                        InventoryMovementValue(movement: movement),
                       ],
                     ),
                   ),

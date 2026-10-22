@@ -1,0 +1,54 @@
+[
+  {
+    "name": "ux01-persistence",
+    "exitCode": 0,
+    "passed": 7,
+    "failed": 0,
+    "skipped": 0
+  },
+  {
+    "name": "commercial-regression",
+    "exitCode": 0,
+    "passed": 16,
+    "failed": 0,
+    "skipped": 0
+  },
+  {
+    "name": "backend-aggregate",
+    "exitCode": 0,
+    "passed": 851,
+    "failed": 0,
+    "skipped": 808
+  },
+  {
+    "name": "backend-typecheck",
+    "exitCode": 0
+  },
+  {
+    "name": "backend-build",
+    "exitCode": 0
+  },
+  {
+    "name": "backend-new-lint",
+    "exitCode": 0
+  },
+  {
+    "name": "frontend-aggregate",
+    "exitCode": 0,
+    "passed": 186,
+    "failed": 0,
+    "skipped": 0
+  },
+  {
+    "name": "frontend-build",
+    "exitCode": 0
+  },
+  {
+    "name": "frontend-changed-lint",
+    "exitCode": 0
+  },
+  {
+    "name": "contracts",
+    "exitCode": 0
+  }
+]

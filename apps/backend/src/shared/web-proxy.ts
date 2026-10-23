@@ -28,22 +28,12 @@ function matchesSecret(
   return actual.length === expected.length && timingSafeEqual(actual, expected);
 }
 
-/** Vercel replaces the visitor's XFF; Render appends its proxy hops. */
-function authenticatedVisitorIp(
-  value: string | string[] | undefined,
-): string | undefined {
-  if (typeof value !== 'string' || value.length > 2048) return undefined;
-  const hops = value.split(',').map((hop) => hop.trim());
-  if (hops.length > 16 || hops.some((hop) => !isIP(hop))) return undefined;
-  return hops[0];
-}
-
 /**
  * Convert authenticated gateway metadata into the normal request authority.
  *
- * Vercel replaces the secret header at its edge and supplies the visitor's
- * forwarded host/protocol/IP. Render must receive api.vynic.ge as its upstream
- * Host for routing. Only after the gateway secret is verified do we replace
+ * Vercel's server middleware replaces private metadata with the actual request
+ * URL and its system-provided visitor IP. Render receives api.vynic.ge as Host
+ * for routing. Only after the gateway secret is verified do we replace
  * that Host with the public site requested by the visitor. All existing tenant,
  * CORS and authentication admission code then sees the same authority.
  *
@@ -60,7 +50,12 @@ export function webProxyIngress(secret: string | undefined): RequestHandler {
   return (request, response, next) => {
     const credential = request.headers[WEB_PROXY_SECRET_HEADER];
     delete request.headers[WEB_PROXY_SECRET_HEADER];
-    const forwardedHost = request.headers['x-forwarded-host'];
+    const forwardedHost = request.headers['x-vynic-web-proxy-host'];
+    const forwardedProtocol = request.headers['x-vynic-web-proxy-proto'];
+    const forwardedIp = request.headers['x-vynic-web-proxy-ip'];
+    delete request.headers['x-vynic-web-proxy-host'];
+    delete request.headers['x-vynic-web-proxy-proto'];
+    delete request.headers['x-vynic-web-proxy-ip'];
     delete request.headers['x-forwarded-host'];
 
     if (!isWebProxyPath(request.path) || credential === undefined) {
@@ -75,13 +70,13 @@ export function webProxyIngress(secret: string | undefined): RequestHandler {
     }
     const rawHost = one(forwardedHost);
     const hostname = normalizeHostname(rawHost);
-    const protocol = one(request.headers['x-forwarded-proto']);
-    const clientIp = authenticatedVisitorIp(request.headers['x-forwarded-for']);
-    if (!hostname || protocol !== 'https' || !clientIp) {
+    const protocol = one(forwardedProtocol);
+    const clientIp = one(forwardedIp);
+    if (!hostname || protocol !== 'https' || !clientIp || !isIP(clientIp)) {
       const invalidFields = [
         ...(!hostname ? ['host'] : []),
         ...(protocol !== 'https' ? ['protocol'] : []),
-        ...(!clientIp ? ['clientIp'] : []),
+        ...(!clientIp || !isIP(clientIp) ? ['clientIp'] : []),
       ];
       response.status(400).json({
         statusCode: 400,
@@ -92,9 +87,8 @@ export function webProxyIngress(secret: string | undefined): RequestHandler {
     }
 
     request.headers.host = hostname;
-    // This runs only after gateway authentication. Vercel overwrites incoming
-    // XFF with the visitor IP; Render appends hops and does not preserve X-Real-IP.
-    // Unauthenticated XFF never affects req.ip or global Express proxy trust.
+    // Generic forwarded headers never supply authority, even with a credential.
+    // Only server-derived private metadata affects per-peer admission here.
     Object.defineProperty(request, 'ip', {
       configurable: true,
       value: clientIp,

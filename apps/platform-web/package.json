@@ -16,6 +16,7 @@
     "@radix-ui/react-dialog": "^1.1.23",
     "@tailwindcss/vite": "latest",
     "@tanstack/react-query": "^5.102.8",
+    "@vercel/functions": "3.10.3",
     "@vitejs/plugin-react": "latest",
     "gsap": "latest",
     "motion": "latest",

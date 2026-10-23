@@ -78,7 +78,9 @@ current transport status.
   connection, executes locally, journals the outcome, and acknowledges it.
 - Vercel browser API routes can reach Render through an authenticated same-origin
   gateway. `VYNIC_WEB_PROXY_SECRET` stays server-only; verified metadata supplies
-  the public Host and visitor admission IP before CORS/tenant reads. Global
+  the public Host and visitor admission IP before CORS/tenant reads. Vercel Node
+  routing middleware derives private metadata from Request URL/system IP; generic
+  forwarded headers supply no gateway authority. Global
   forwarded-host trust stays disabled. Website cookies/CSRF and Device/Staff/
   PlatformUser/CustomerAccount authority remain unchanged. Configuration and
   verification: `docs/VERCEL_RENDER_INTEGRATION.md`.

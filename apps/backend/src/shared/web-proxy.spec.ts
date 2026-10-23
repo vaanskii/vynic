@@ -19,11 +19,30 @@ const upstream = 'api.example.invalid';
 const signed = (host = hostA) => ({
   Host: upstream,
   [WEB_PROXY_SECRET_HEADER]: secret,
-  'X-Forwarded-Host': host,
-  'X-Forwarded-Proto': 'https',
+  'X-Vynic-Web-Proxy-Host': host,
+  'X-Vynic-Web-Proxy-Proto': 'https',
+  'X-Vynic-Web-Proxy-Ip': '203.0.113.21',
+  'X-Forwarded-Host': 'attacker.invalid',
+  'X-Forwarded-Proto': 'http',
   'X-Real-IP': '198.51.100.99',
-  'X-Forwarded-For': '203.0.113.21, 10.0.0.1',
+  'X-Forwarded-For': '198.51.100.99, 10.0.0.1',
 });
+
+function jsonObject(response: { body: unknown }): Record<string, unknown> {
+  if (
+    !response.body ||
+    typeof response.body !== 'object' ||
+    Array.isArray(response.body)
+  )
+    throw new Error('Expected a JSON object response');
+  return response.body as Record<string, unknown>;
+}
+
+function jsonString(response: { body: unknown }, key: string): string {
+  const value = jsonObject(response)[key];
+  if (typeof value !== 'string') throw new Error(`Expected JSON string ${key}`);
+  return value;
+}
 
 const databaseUrl = process.env.WEB_PROXY_TEST_DATABASE_URL;
 (databaseUrl ? describe : describe.skip)(
@@ -92,7 +111,7 @@ const databaseUrl = process.env.WEB_PROXY_TEST_DATABASE_URL;
           .set(signed(hosts[index]))
           .set('X-Venue-Id', venues[1 - index]);
         expect(result.status).toBe(200);
-        expect(result.body.venue).toBe(venues[index]);
+        expect(jsonObject(result).venue).toBe(venues[index]);
       },
     );
 
@@ -122,25 +141,27 @@ const databaseUrl = process.env.WEB_PROXY_TEST_DATABASE_URL;
 
 describe('authenticated web proxy (real loopback HTTP)', () => {
   let server: Server;
-  const lookup = jest.fn(async ({ where }: { where: { hostname: string } }) => {
+  const lookup = jest.fn(({ where }: { where: { hostname: string } }) => {
     const venue =
       where.hostname === hostA
         ? 'venue-a'
         : where.hostname === hostB
           ? 'venue-b'
           : null;
-    return venue
-      ? {
-          hostname: where.hostname,
-          status: 'ACTIVE',
-          venue: {
-            id: venue,
-            organizationId: 'fixture-org',
+    return Promise.resolve(
+      venue
+        ? {
+            hostname: where.hostname,
             status: 'ACTIVE',
-            websiteConfig: { mode: 'CUSTOM' },
-          },
-        }
-      : null;
+            venue: {
+              id: venue,
+              organizationId: 'fixture-org',
+              status: 'ACTIVE',
+              websiteConfig: { mode: 'CUSTOM' },
+            },
+          }
+        : null,
+    );
   });
   const tenants = new WebsiteTenantService(
     { venueDomain: { findUnique: lookup } } as never,
@@ -190,7 +211,7 @@ describe('authenticated web proxy (real loopback HTTP)', () => {
           req.method !== 'GET' &&
           !csrf.validateToken(
             req.headers['x-csrf-token'],
-            req.cookies?.csrf_token,
+            (req.cookies as Record<string, unknown> | undefined)?.csrf_token,
           )
         )
           return res.status(403).json({ message: 'Invalid CSRF token' });
@@ -198,7 +219,7 @@ describe('authenticated web proxy (real loopback HTTP)', () => {
           host: req.headers.host,
           method: req.method,
           url: req.originalUrl,
-          body: req.body,
+          body: req.body as unknown,
           rawBody: (req as Request & { rawBody?: Buffer }).rawBody?.toString(),
           authorization: req.headers.authorization,
           ip: req.ip,
@@ -240,7 +261,7 @@ describe('authenticated web proxy (real loopback HTTP)', () => {
       .set(signed(hostA))
       .set('X-Venue-Id', 'venue-b');
     expect(response.status).toBe(200);
-    expect(response.body.venue).toBe('venue-a');
+    expect(jsonObject(response).venue).toBe('venue-a');
   });
 
   it('ignores an unauthenticated forwarded host and never falls back to a Venue', async () => {
@@ -259,7 +280,7 @@ describe('authenticated web proxy (real loopback HTTP)', () => {
       .get('/api/website/bootstrap')
       .set('Host', hostA)
       .set('X-Forwarded-Host', hostB);
-    expect(response.body.venue).toBe('venue-a');
+    expect(jsonObject(response).venue).toBe('venue-a');
   });
 
   it('rejects a wrong gateway credential before any tenant lookup', async () => {
@@ -282,16 +303,14 @@ describe('authenticated web proxy (real loopback HTTP)', () => {
   });
 
   it.each([
-    ['X-Forwarded-Host', 'https://proxy-a.example.invalid'],
-    ['X-Forwarded-Host', `${hostA}, ${hostB}`],
-    ['X-Forwarded-Host', ''],
-    ['X-Forwarded-Proto', 'http'],
-    ['X-Forwarded-Proto', 'https,http'],
-    ['X-Forwarded-For', 'not-an-ip'],
-    ['X-Forwarded-For', ''],
-    ['X-Forwarded-For', '203.0.113.21, not-an-ip'],
-    ['X-Forwarded-For', '203.0.113.21,'],
-    ['X-Forwarded-For', Array(17).fill('203.0.113.21').join(',')],
+    ['X-Vynic-Web-Proxy-Host', 'https://proxy-a.example.invalid'],
+    ['X-Vynic-Web-Proxy-Host', `${hostA}, ${hostB}`],
+    ['X-Vynic-Web-Proxy-Host', ''],
+    ['X-Vynic-Web-Proxy-Proto', 'http'],
+    ['X-Vynic-Web-Proxy-Proto', 'https,http'],
+    ['X-Vynic-Web-Proxy-Ip', 'not-an-ip'],
+    ['X-Vynic-Web-Proxy-Ip', ''],
+    ['X-Vynic-Web-Proxy-Ip', '203.0.113.21, 198.51.100.99'],
   ])(
     'rejects malformed authenticated metadata %s=%s',
     async (header, value) => {
@@ -300,10 +319,10 @@ describe('authenticated web proxy (real loopback HTTP)', () => {
         .set(signed())
         .set(header, value);
       expect(response.status).toBe(400);
-      expect(response.body.invalidFields).toEqual([
-        header === 'X-Forwarded-Host'
+      expect(jsonObject(response).invalidFields).toEqual([
+        header.endsWith('Host')
           ? 'host'
-          : header === 'X-Forwarded-Proto'
+          : header.endsWith('Proto')
             ? 'protocol'
             : 'clientIp',
       ]);
@@ -312,30 +331,36 @@ describe('authenticated web proxy (real loopback HTTP)', () => {
     },
   );
 
-  it.each([
-    ['203.0.113.21', '203.0.113.21'],
-    ['203.0.113.21, 10.0.0.1, ::1', '203.0.113.21'],
-    ['2001:db8::21, 10.0.0.1', '2001:db8::21'],
-  ])(
-    'uses the authenticated visitor before appended Render hops %s',
-    async (chain, visitor) => {
+  it.each(['203.0.113.21', '2001:db8::21'])(
+    'uses private visitor metadata and ignores generic forwarded IPs %s',
+    async (visitor) => {
       const response = await request(server)
         .get('/api/probe')
         .set(signed())
-        .set('X-Forwarded-For', chain)
-        .unset('X-Real-IP');
+        .set('X-Vynic-Web-Proxy-Ip', visitor)
+        .set('X-Forwarded-For', 'not-an-ip, also-invalid')
+        .set('X-Real-IP', 'not-an-ip');
       expect(response.status).toBe(200);
-      expect(response.body.ip).toBe(visitor);
+      expect(jsonObject(response).ip).toBe(visitor);
     },
   );
 
-  it('requires authenticated XFF even if X-Real-IP is present', async () => {
+  it('never falls back to generic forwarded authority, even with a credential', async () => {
     const response = await request(server)
       .get('/api/probe')
       .set(signed())
-      .unset('X-Forwarded-For');
+      .unset('X-Vynic-Web-Proxy-Host')
+      .unset('X-Vynic-Web-Proxy-Proto')
+      .unset('X-Vynic-Web-Proxy-Ip')
+      .set('X-Forwarded-Host', hostA)
+      .set('X-Forwarded-Proto', 'https')
+      .set('X-Forwarded-For', '203.0.113.21');
     expect(response.status).toBe(400);
-    expect(response.body.invalidFields).toEqual(['clientIp']);
+    expect(jsonObject(response).invalidFields).toEqual([
+      'host',
+      'protocol',
+      'clientIp',
+    ]);
   });
 
   it('keeps method, exact body, query, Authorization, cookies and CSRF intact', async () => {
@@ -353,7 +378,7 @@ describe('authenticated web proxy (real loopback HTTP)', () => {
       .patch('/api/probe?cursor=a%2Fb&limit=2')
       .set(signed())
       .set('Cookie', cookies.map((cookie) => cookie.split(';')[0]).join('; '))
-      .set('X-CSRF-Token', tokenResponse.body.csrfToken)
+      .set('X-CSRF-Token', jsonString(tokenResponse, 'csrfToken'))
       .set('Authorization', 'Bearer synthetic-owner-token')
       .set('Content-Type', 'application/json')
       .send(rawBody);
@@ -385,7 +410,7 @@ describe('authenticated web proxy (real loopback HTTP)', () => {
       .get('/api/website/bootstrap')
       .set(signed(hostA))
       .set('Origin', `https://${hostB}`);
-    expect(response.body.sameOrigin).toBe(false);
+    expect(jsonObject(response).sameOrigin).toBe(false);
   });
 
   it('leaves direct payment callbacks available without gateway credentials', async () => {
@@ -394,7 +419,7 @@ describe('authenticated web proxy (real loopback HTTP)', () => {
       .set('Host', upstream)
       .send({ synthetic: true });
     expect(response.status).toBe(200);
-    expect(response.body.host).toBe(upstream);
+    expect(jsonObject(response).host).toBe(upstream);
   });
 
   it('does not grant native transports host/IP authority from gateway headers', async () => {
@@ -403,7 +428,7 @@ describe('authenticated web proxy (real loopback HTTP)', () => {
       .set(signed())
       .set(WEB_PROXY_SECRET_HEADER, 'wrong');
     expect(response.status).toBe(200);
-    expect(response.body.host).toBe(upstream);
-    expect(response.body.ip).not.toBe('203.0.113.21');
+    expect(jsonObject(response).host).toBe(upstream);
+    expect(jsonObject(response).ip).not.toBe('203.0.113.21');
   });
 });

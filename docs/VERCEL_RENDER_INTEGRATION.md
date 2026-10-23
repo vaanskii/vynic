@@ -1,66 +1,81 @@
 # Vercel frontend transport to Render
 
-The three frontends keep same-origin API URLs. Their Vercel routes forward only
-the browser API families and website logo media to `https://api.vynic.ge`, keeping
-the complete path and query. Platform forwards `/platform` and `/customer`, SaaS
-forwards `/api/website`, and Vankisi CUSTOM forwards `/api`. Files are served
-before the SPA fallback; missing API paths and assets never become HTML.
+The three frontends keep same-origin API URLs. Their server-only `proxy.ts`
+entrypoints forward browser APIs and website logo media to the fixed origin
+`https://api.vynic.ge`, keeping the full path/query and original method/body.
+`vercel.json` limits middleware invocation to Platform `/platform` + `/customer`,
+SaaS `/api/website`, CUSTOM `/api`, and shared `/media/website-logos`. Other files
+use normal static handling and SPA fallback; API/static failures never become HTML.
 
 ## Gateway authority
 
-`VYNIC_WEB_PROXY_SECRET` is a new independent server-only secret, configured on
-Render and the three Vercel projects. Never use a `VITE_` name, put its value in
-Git, reuse an authentication key, or log request headers containing it. Vercel
-route transforms delete any visitor-supplied `x-vynic-web-proxy-secret`, then set
-the value from the server environment at request time. The upstream URL is fixed.
+`VYNIC_WEB_PROXY_SECRET` is one independent server-only secret, stored in Render
+and the Production environment of each Vercel project. Never use a `VITE_` name,
+put its value in Git, reuse an authentication key, or log credentials. Vercel's
+Node routing middleware reads the secret at runtime. Static route rules never
+attach credentials, so bypassing middleware cannot authenticate caller metadata.
+
+`packages/website-client/server/vercel-gateway.ts` constructs authority from the
+actual Request URL and Vercel's `x-vercel-forwarded-for` system header. A Host/URL
+discrepancy, non-HTTPS request, invalid system IP or missing secret fails closed.
+Caller-supplied private/generic proxy headers and middleware control headers are
+removed. Only server-derived `x-vynic-web-proxy-host`, `-proto`, `-ip` and `-secret`
+are sent upstream. Do not replace this with generic X-Forwarded headers: combined
+caller headers were observed surviving external static rewrites on live Vercel,
+and Render does not preserve a valid X-Real-IP through this deployment.
 
 Render keeps `TRUST_PROXY_HOST` disabled. Before CORS/body parsing, the backend
-verifies the gateway credential using a timing-safe comparison and requires a
-single valid forwarded hostname, HTTPS, and a valid visitor IP. Only authenticated
-browser proxy requests normalize Host and the per-peer admission IP. The gateway
-credential and forwarded Host are removed before handlers run. Missing gateway
-credentials cannot make a forwarded Host authoritative; wrong credentials or
-malformed authenticated metadata fail with JSON errors. Native routes, direct
-health checks and signed payment callbacks retain their existing boundaries.
+checks the credential using a timing-safe comparison and validates the private
+hostname, HTTPS marker and visitor IP. It then normalizes Host and per-peer
+admission IP. Generic forwarded headers never supply gateway authority, even
+with a credential. Private credentials/metadata are removed before handlers run.
+Wrong credentials or malformed metadata fail explicitly with JSON; diagnostics
+identify only field names, never values. Native transports, direct health checks
+and signed payment callbacks retain their existing authorization boundaries.
 
-Visitor admission uses the first IP in the authenticated `X-Forwarded-For`
-chain. Vercel replaces client-supplied XFF with the visitor address; Render
-appends proxy hops and does not preserve `X-Real-IP` on this deployment. The
-complete bounded chain must contain valid IPs. Without the gateway credential,
-XFF supplies no authority. Metadata errors identify only the failed field,
-never credential/header values.
-
-This authenticates the proxy, not a user or Venue. Restaurant authority remains
+This authenticates a gateway, not a user or Venue. Restaurant authority remains
 Host -> active VenueDomain -> active Venue. Unknown domains fail closed. Existing
-PlatformUser/CustomerAccount bearer authorization, website cookies and CSRF remain
-in force. There is no client-selected Venue ID and no production default Venue.
+PlatformUser/CustomerAccount authorization, website cookies and CSRF remain in
+force. There is no client-selected Venue ID or production default Venue.
 
-The transport preserves method, body, query, Authorization, Cookie, Set-Cookie
-and CSRF headers. API responses are not cached by Vercel. Static files and public
-content-addressed website logo media retain their existing handling. Website
-cookies remain host-only, Secure and SameSite=Strict; no wildcard CORS is needed.
+Rewrites preserve method, body, query, Authorization, Cookie, Set-Cookie and CSRF
+headers. The body is not read or reserialized by middleware. APIs use private,
+no-store caching; content-addressed public website logos retain original caching.
+Cookies stay host-only, Secure and SameSite=Strict; CORS uses no wildcard.
 
-## Rollout and verification
+## Configuration changes for this integration
 
-1. Configure the new secret in all four server environments without displaying
-   its value. Existing secrets and database contents stay unchanged.
-2. Publish the tested code to main, deploy the exact backend commit on Render,
-   and confirm `/healthz`. Render auto-deploy stays off.
-3. Deploy all three Vercel projects from that commit. Verify API JSON failures,
-   direct SPA navigation, static assets and malicious forwarded-header inputs.
-4. Check that the secret value is absent from generated frontend bundles and
-   responses. Missing environment interpolation must fail closed at the backend.
+| Destination | Environment | Added name | Kind | Purpose/value |
+| --- | --- | --- | --- | --- |
+| Render vynic-api | Service runtime | VYNIC_WEB_PROXY_SECRET | Secret | Authenticate server-derived metadata; value never documented |
+| Render vynic-api | Service runtime | SAAS_WEBSITE_PREVIEW_ORIGIN | Nonsecret | https://vynic-restaurant-web.vercel.app |
+| Vercel vynic-platform-web | Production only | VYNIC_WEB_PROXY_SECRET | Sensitive secret | Same gateway credential |
+| Vercel vynic-restaurant-web | Production only | VYNIC_WEB_PROXY_SECRET | Sensitive secret | Same gateway credential |
+| Vercel vynic-vankisi-custom-web | Production only | VYNIC_WEB_PROXY_SECRET | Sensitive secret | Same gateway credential |
 
-Tests include real loopback HTTP with the authoritative tenant resolver over two
-synthetic domain records, header tampering, visitor-IP admission, exact request
-transport, real CSRF issuance/validation, secure cookie attributes and direct
-native/callback compatibility. Existing opt-in PostgreSQL tenant/auth regressions
-must use a fresh owned local fixture, never the Render database or business data.
+Existing authentication/database keys, DNS/domain bindings, CORS origins and
+Render automatic deployment settings are not changed by this integration.
+Manage keys in Render's service Environment page and each Vercel project's
+Settings -> Environment Variables. A future rotation must update all four
+server environments and deploy the matching backend/frontends together.
 
-A healthy proxy does not provision business data. An empty database still needs
-separately authorized PlatformUser setup, Venue/domain assignments, entitlements,
-publication and CUSTOM binding before full restaurant testing. No DNS/domain
-binding change or account creation is part of this transport rollout.
+## Verification and rollout
 
-References: [Vercel external origin protection](https://vercel.com/docs/routing/rewrites#restricting-your-origin-to-vercel-traffic),
-[server environment references in route transforms](https://vercel.com/docs/project-configuration/vercel-json#using-environment-variables-in-routes).
+Tests cover server-derived authority under combined hostile headers, missing
+configuration, fixed upstream/path/query, unconsumed bodies, real rewrite helpers,
+backend loopback HTTP, PostgreSQL tenant separation, secure cookie/CSRF handling
+and native/callback compatibility. Database tests require fresh owned loopback
+fixtures, never business data or the Render database.
+
+Deploy the exact tested main commit to all three Vercel projects and Render;
+Render automatic deployment remains off. Verify live health, JSON API errors,
+SPA refresh, real assets, CSRF freshness, no-store caching and forged metadata.
+Check actual secret absence in committed content and deployed client bundles
+and responses, including internal middleware request headers being consumed.
+
+A working transport does not create business data. Empty deployments still need
+separately approved PlatformUser setup, Venue/domain assignments, entitlements,
+publication and CUSTOM binding before full restaurant testing.
+
+References: [Vercel routing middleware](https://vercel.com/docs/routing-middleware/js-reference),
+[Vercel system request headers](https://vercel.com/docs/headers/request-headers).

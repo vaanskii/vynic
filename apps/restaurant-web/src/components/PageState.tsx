@@ -12,7 +12,15 @@ export function PageState({
   strings,
   onRetry,
 }: {
-  kind: "loading" | "custom" | "unavailable" | "unsupported" | "error";
+  kind:
+    | "loading"
+    | "custom"
+    | "unavailable"
+    | "unsupported"
+    | "error"
+    | "missing"
+    | "pending"
+    | "address";
   strings: Strings;
   onRetry?: () => void;
 }) {
@@ -22,23 +30,24 @@ export function PageState({
         <p role="status">{strings.loading}</p>
       </div>
     );
-  const copy =
-    kind === "custom"
-      ? strings.custom
-      : kind === "unsupported"
-        ? strings.unsupported
-        : kind === "error"
-          ? strings.error
-          : strings.unavailable;
+  const copy = strings[kind];
   return (
-    <div className="state">
+    <main className="state" aria-live="polite">
+      <a className="state-brand" href="https://vynic.ge">
+        Vynic
+      </a>
       <h1>{copy.title}</h1>
       <p>{copy.body}</p>
-      {kind === "error" && onRetry && (
-        <button type="button" onClick={onRetry}>
-          {strings.error.retry}
-        </button>
-      )}
-    </div>
+      <div className="state-actions">
+        {kind === "error" && onRetry && (
+          <button type="button" onClick={onRetry}>
+            {strings.error.retry}
+          </button>
+        )}
+        <a className="state-link" href="https://vynic.ge">
+          {strings.goToVynic}
+        </a>
+      </div>
+    </main>
   );
 }

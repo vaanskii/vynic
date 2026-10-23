@@ -78,7 +78,9 @@ export function VenueWebsiteTab({ venueId }: { venueId: string }) {
       await refreshDomains();
       setDomainOpen(false);
       setHostname("");
-      setFeedback("Domain registered.");
+      setFeedback(
+        "Domain saved as pending. Connect DNS and the correct frontend, check HTTPS, then activate the binding.",
+      );
     },
   });
   const mutateDomain = useMutation({
@@ -138,7 +140,7 @@ export function VenueWebsiteTab({ venueId }: { venueId: string }) {
   const website = product.data.website;
   const selectedMode = mode || website.configuredMode;
   const assignedSlug = website.provisioning?.assignedSlug;
-  // The one SaaS binding; every other registered hostname is a custom domain.
+  // Address role is separate from the renderer: CUSTOM can use a Vynic subdomain.
   const saasHostname =
     website.configuredMode === "SAAS" && assignedSlug
       ? website.hostname !== undefined
@@ -271,7 +273,7 @@ export function VenueWebsiteTab({ venueId }: { venueId: string }) {
             : "Not applicable"}
         </p>
         <p>
-          Custom domains:{" "}
+          Additional hostnames:{" "}
           {customDomains.length
             ? customDomains.map((d) => d.hostname).join(", ")
             : "None"}
@@ -288,13 +290,23 @@ export function VenueWebsiteTab({ venueId }: { venueId: string }) {
       </Panel>
       <Panel
         title="Domains"
-        description="Register Vynic subdomains or external domains, and change existing hostnames. Customers contact support for changes. DNS, TLS and custom website routing are managed separately."
+        description="Each hostname belongs to one restaurant. Saving here updates the database only: it does not provision DNS, Vercel or SSL. Pending bindings do not serve restaurant data; active bindings still require website access and publication."
         action={
           <Button tone="primary" onClick={() => setDomainOpen(true)}>
             <Plus size={16} /> Register domain
           </Button>
         }
       >
+        <p>
+          Renderer: <strong>{website.configuredMode}</strong>.{" "}
+          {website.configuredMode === "SAAS"
+            ? "Connect all SaaS restaurant addresses to the shared vynic-restaurant-web project."
+            : website.configuredMode === "CUSTOM"
+              ? "Connect this address to the restaurant’s own CUSTOM project (Vankisi: vynic-vankisi-custom-web)."
+              : "Choose a website mode before connecting a frontend."}{" "}
+          Verify the exact host in Vercel, its DNS record and HTTPS before
+          activating. Binding status is not a live DNS or SSL check.
+        </p>
         {domains.data.length === 0 ? (
           <EmptyState
             title="No domains registered"
@@ -305,7 +317,7 @@ export function VenueWebsiteTab({ venueId }: { venueId: string }) {
             <thead>
               <tr>
                 <th>Hostname</th>
-                <th>Status</th>
+                <th>Database binding</th>
                 <th>Registered</th>
                 <th aria-label="Actions" />
               </tr>
@@ -320,14 +332,20 @@ export function VenueWebsiteTab({ venueId }: { venueId: string }) {
                       </strong>
                       <small>
                         {isSaasDomain(domain.hostname)
-                          ? "SaaS address"
-                          : "Custom domain"}{" "}
-                        · {domain.id}
+                          ? "Assigned SaaS address"
+                          : "Additional hostname"}{" "}
+                        · {website.configuredMode} · {domain.id}
                       </small>
                     </div>
                   </td>
                   <td>
-                    <StatusBadge value={domain.status} />
+                    <StatusBadge value={domain.status}>
+                      {domain.status === "PENDING"
+                        ? "Pending connection"
+                        : domain.status === "ACTIVE"
+                          ? "Active binding"
+                          : "Disabled binding"}
+                    </StatusBadge>
                   </td>
                   <td>{formatDateTime(domain.createdAt)}</td>
                   <td>
@@ -356,7 +374,9 @@ export function VenueWebsiteTab({ venueId }: { venueId: string }) {
                           })
                         }
                       >
-                        {domain.status === "ACTIVE" ? "Disable" : "Enable"}
+                        {domain.status === "ACTIVE"
+                          ? "Disable"
+                          : "Activate binding"}
                       </Button>
                       <Button
                         tone="danger"
@@ -392,7 +412,7 @@ export function VenueWebsiteTab({ venueId }: { venueId: string }) {
         open={domainOpen}
         onOpenChange={setDomainOpen}
         title="Register domain"
-        description="Enter only the hostname. Vynic does not change DNS or TLS here."
+        description="Enter only the hostname. It will be saved as pending. Connect the correct Vercel project, apply its exact DNS record and verify HTTPS before activating the binding."
         footer={
           <>
             <Button onClick={() => setDomainOpen(false)}>Cancel</Button>
@@ -496,13 +516,13 @@ export function VenueWebsiteTab({ venueId }: { venueId: string }) {
         title={
           domainAction?.kind === "release"
             ? `Release ${domainAction.domain.hostname}?`
-            : `${domainAction?.nextStatus === "ACTIVE" ? "Enable" : "Disable"} ${domainAction?.domain.hostname}?`
+            : `${domainAction?.nextStatus === "ACTIVE" ? "Activate binding for" : "Disable"} ${domainAction?.domain.hostname}?`
         }
         description={
           domainAction?.kind === "release"
             ? "This frees the globally unique hostname so another venue can register it. DNS and TLS are not changed."
             : domainAction?.nextStatus === "ACTIVE"
-              ? "Public host resolution may resume for this hostname if the venue and website configuration also allow it."
+              ? "Confirm that this exact hostname is connected to the correct frontend, DNS resolves and HTTPS is valid. This activates only the database binding; it does not verify infrastructure. Website access and publication must also allow serving."
               : "The hostname stays reserved to this venue but will stop resolving publicly."
         }
         confirmLabel={

@@ -1,4 +1,10 @@
-import { createElement, useCallback, useEffect, useMemo, useState } from "react";
+import {
+  createElement,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import { clearPreviewToken, loadSite, readPreviewToken } from "./api/client";
 import type { SiteState } from "./api/types";
 import {
@@ -29,11 +35,15 @@ function fallbackTitleFor(kind: SiteState["kind"], strings: Strings) {
   if (kind === "unsupported") return strings.unsupported.title;
   if (kind === "error") return strings.error.title;
   if (kind === "loading") return strings.loading;
+  if (kind === "missing" || kind === "pending" || kind === "address")
+    return strings[kind].title;
   return strings.unavailable.title;
 }
 
 export function App() {
-  const preview = window.location.pathname.startsWith(PREVIEW_PATH);
+  const preview =
+    window.location.pathname === PREVIEW_PATH ||
+    window.location.pathname.startsWith(`${PREVIEW_PATH}/`);
   const [language, setLanguage] = useState<Language>(() =>
     storedLanguage(window.localStorage),
   );
@@ -44,13 +54,18 @@ export function App() {
 
   // Read once per mount: the token is moved out of the address bar immediately.
   const token = useMemo(
-    () => (preview ? readPreviewToken(window.location, window.sessionStorage) : null),
+    () =>
+      preview ? readPreviewToken(window.location, window.sessionStorage) : null,
     [preview],
   );
 
   useEffect(() => {
     let live = true;
-    void loadSite(preview, token).then((next) => {
+    void (
+      window.location.hostname === "vynic-restaurant-web.vercel.app" && !preview
+        ? Promise.resolve<SiteState>({ kind: "address" })
+        : loadSite(preview, token)
+    ).then((next) => {
       if (live) setState(next);
     });
     return () => {

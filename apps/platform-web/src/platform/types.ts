@@ -1,7 +1,7 @@
 export type PlatformRole = "SUPER_ADMIN" | "SUPPORT_READONLY";
 export type VenueStatus = "ACTIVE" | "DISABLED";
 export type DeviceStatus = "ACTIVE" | "DISABLED" | "REVOKED";
-export type DomainStatus = "ACTIVE" | "DISABLED";
+export type DomainStatus = "PENDING" | "ACTIVE" | "DISABLED";
 export type WebsiteMode = "NONE" | "SAAS" | "CUSTOM";
 export type OverrideEffect = "ENABLED" | "DISABLED";
 

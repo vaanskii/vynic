@@ -1235,6 +1235,14 @@ current transport status.
 
 ## Website State
 
+- Exact production host routing and onboarding are documented in
+  `docs/DOMAIN_ROUTING_ONBOARDING.md`. Manually registered Admin domains start
+  PENDING and require explicit activation; status reflects database admission,
+  not DNS/TLS verification. Public restaurant document middleware returns branded
+  404/unpublished/outage states without redirecting or disclosing tenant data;
+  shared SaaS root guidance preserves authenticated preview flows. CUSTOM document
+  admission checks Host-resolved renderer identity and ACTIVE binding.
+
 - Public APIs resolve registered hostnames through `VenueDomain`; production
   fails closed for unknown or disabled hosts. Effective WEBSITE is required to
   claim/activate domains, edit/preview/publish content and serve SaaS or CUSTOM.
@@ -1665,7 +1673,9 @@ current transport status.
 
 ## Current Migration Versions
 
-- Prisma migration source tip: `20261023120000_manager_venue_link`
+- Prisma migration source tip: `20261023230000_pending_website_domains`
+  (additive PENDING VenueDomainStatus; historical rows and defaults unchanged).
+- Previous migration: `20261023120000_manager_venue_link`
   (additive ManagerVenueLink, Venue/Platform issuer foreign keys, verifier-only
   storage). Fresh 77 and populated 76→77 upgrades preserve existing Venue/Device/
   Staff/PIN/activation data and all 76 migration checksums; repeat deploy is a no-op.

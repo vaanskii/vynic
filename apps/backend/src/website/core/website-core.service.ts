@@ -394,7 +394,11 @@ export class WebsiteCoreService {
       { trustForwardedHost: false },
     )[0];
     const resolved = host ? await this.hosts.resolveByHostname(host) : null;
-    if (!resolved) throw new NotFoundException('Website unavailable');
+    if (!resolved)
+      throw new NotFoundException({
+        code: 'WEBSITE_NOT_FOUND',
+        message: 'Website unavailable',
+      });
     const venueId = resolved.tenant.venueId;
     const access = await this.access.websiteAccess(venueId);
     if (!access.entitled || access.effectiveMode === 'NONE')
@@ -420,7 +424,10 @@ export class WebsiteCoreService {
       },
     });
     if (row?.mode !== 'SAAS' || row.status !== 'PUBLISHED' || !row.published)
-      throw new NotFoundException('Website unavailable');
+      throw new NotFoundException({
+        code: 'WEBSITE_NOT_PUBLISHED',
+        message: 'Website unavailable',
+      });
     return row;
   }
   async bootstrap(headers: Record<string, string | string[] | undefined>) {

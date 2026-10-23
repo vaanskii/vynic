@@ -33,13 +33,15 @@ describe.each(projects)("$name Vercel transport", ({ config, api, local }) => {
     expect(config.proxy.entrypoint).toBe("proxy.ts");
     const matches = (path: string) =>
       config.proxy.matcher.some((matcher) => {
+        if (matcher.startsWith("/(("))
+          return new RegExp(`^${matcher}$`).test(path);
         const prefix = matcher.replace("/:path*", "");
         return path === prefix || path.startsWith(prefix + "/");
       });
     expect(matches(api)).toBe(true);
     expect(matches("/media/website-logos/example.webp")).toBe(true);
-    expect(matches(local)).toBe(false);
-    expect(matches("/mobile/probe")).toBe(false);
+    expect(matches(local)).toBe(config !== projects[0].config);
+    expect(matches("/assets/probe.js")).toBe(false);
   });
   it("has no static rewrite that could attach credentials without server verification", () => {
     expect(routeFor(api)).toBeUndefined();

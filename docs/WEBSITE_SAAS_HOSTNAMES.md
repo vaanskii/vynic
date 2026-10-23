@@ -50,6 +50,12 @@ older SAAS row that has none.
 
 ## Platform Admin changes
 
+New manual registrations start PENDING (globally reserved, not publicly resolved).
+The operator connects the correct SAAS/CUSTOM Vercel project, verifies exact DNS
+and HTTPS, then explicitly activates the database binding. ACTIVE is not automated
+DNS/SSL verification. Existing bindings and automatic SaaS assignment/publication
+remain unchanged. See `DOMAIN_ROUTING_ONBOARDING.md` for the production host map.
+
 Owners on Trial, ACTIVE or other plans see their current address read-only and
 are directed to Vynic support. Saving/publishing content cannot rename it.
 

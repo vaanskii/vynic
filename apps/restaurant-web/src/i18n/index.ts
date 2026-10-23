@@ -43,6 +43,10 @@ export interface Strings {
     explanation: string;
     exit: string;
   };
+  missing: { title: string; body: string };
+  pending: { title: string; body: string };
+  address: { title: string; body: string };
+  goToVynic: string;
   unavailable: { title: string; body: string };
   custom: { title: string; body: string };
   unsupported: { title: string; body: string };
@@ -100,9 +104,22 @@ const ka: Strings = {
       "ეს არის შენახული მონახაზი. საჯარო გვერდი არ შეცვლილა, სანამ არ გამოაქვეყნებთ.",
     exit: "წინასწარი ნახვიდან გასვლა",
   },
+  missing: {
+    title: "მითითებული რესტორანი ვერ მოიძებნა",
+    body: "გადაამოწმეთ მისამართი. ამ მისამართზე ხელმისაწვდომი რესტორნის გვერდი არ არის.",
+  },
+  pending: {
+    title: "გვერდი ჯერ არ გამოქვეყნებულა",
+    body: "რესტორნის გვერდი მზადდება. გთხოვთ, მოგვიანებით სცადოთ.",
+  },
+  address: {
+    title: "გახსენით რესტორნის მისამართი",
+    body: "რესტორნის სანახავად გამოიყენეთ მისი პირადი ვებმისამართი. ეს Vynic-ის საერთო მისამართია.",
+  },
+  goToVynic: "Vynic-ზე გადასვლა",
   unavailable: {
     title: "გვერდი ხელმისაწვდომი არ არის",
-    body: "ამ მისამართზე გამოქვეყნებული ვებსაიტი არ არის.",
+    body: "წინასწარი ნახვის ბმული მიუწვდომელია ან ვადა გაუვიდა. გახსენით ახალი ბმული თქვენი პანელიდან.",
   },
   custom: {
     title: "ინდივიდუალური ვებსაიტი",
@@ -113,7 +130,7 @@ const ka: Strings = {
     body: "ვებსაიტის ვერსია ამ აპლიკაციას არ შეესაბამება.",
   },
   error: {
-    title: "დროებითი შეფერხება",
+    title: "სერვისი დროებით მიუწვდომელია",
     body: "გვერდი ვერ ჩაიტვირთა.",
     retry: "ხელახლა ცდა",
   },
@@ -170,9 +187,22 @@ const en: Strings = {
       "This is the saved draft. The public page does not change until you publish.",
     exit: "Leave preview",
   },
+  missing: {
+    title: "Restaurant not found",
+    body: "No restaurant website is available at this address. Please check the address.",
+  },
+  pending: {
+    title: "This website is not published yet",
+    body: "The restaurant website is being prepared. Please check back later.",
+  },
+  address: {
+    title: "Open the restaurant’s address",
+    body: "Use the restaurant’s own web address to visit its website. This is the shared Vynic address.",
+  },
+  goToVynic: "Go to Vynic",
   unavailable: {
     title: "This page is not available",
-    body: "No website is published at this address.",
+    body: "This preview link is unavailable or has expired. Open a new preview from your dashboard.",
   },
   custom: {
     title: "Custom website",
@@ -183,7 +213,7 @@ const en: Strings = {
     body: "The published website version does not match this application.",
   },
   error: {
-    title: "Temporary problem",
+    title: "Service temporarily unavailable",
     body: "The page could not be loaded.",
     retry: "Try again",
   },
@@ -202,7 +232,10 @@ export function storedLanguage(storage: Storage | undefined): Language {
   }
   return defaultLanguage;
 }
-export function rememberLanguage(storage: Storage | undefined, value: Language) {
+export function rememberLanguage(
+  storage: Storage | undefined,
+  value: Language,
+) {
   try {
     storage?.setItem(STORAGE_KEY, value);
   } catch {
@@ -211,6 +244,9 @@ export function rememberLanguage(storage: Storage | undefined, value: Language) 
 }
 
 /** The visitor's language, used only to pick between the two authored names. */
-export function localized(name: { ka: string; en: string }, language: Language) {
+export function localized(
+  name: { ka: string; en: string },
+  language: Language,
+) {
   return (language === "ka" ? name.ka : name.en) || name.en || name.ka;
 }

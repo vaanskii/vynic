@@ -15,16 +15,35 @@ import {
  */
 const PREVIEW_TOKEN_KEY = "vynic-website-preview-token";
 
-export class WebsiteUnavailable extends Error {}
+export class WebsiteUnavailable extends Error {
+  constructor(readonly kind: "missing" | "pending" | "unavailable") {
+    super(kind);
+  }
+}
 
 async function get<T>(path: string, token?: string): Promise<T> {
   const response = await fetch(path, {
     headers: token ? { Authorization: `Bearer ${token}` } : undefined,
     credentials: "omit",
+    cache: "no-store",
+    signal: AbortSignal.timeout(10000),
   });
-  if (response.status === 404 || response.status === 401)
-    throw new WebsiteUnavailable(String(response.status));
-  if (!response.ok) throw new Error(`Website request failed: ${response.status}`);
+  if (response.status === 401 && token)
+    throw new WebsiteUnavailable("unavailable");
+  if (response.status === 404) {
+    const body = (await response.json().catch(() => null)) as {
+      code?: string;
+    } | null;
+    throw new WebsiteUnavailable(
+      token
+        ? "unavailable"
+        : body?.code === "WEBSITE_NOT_PUBLISHED"
+          ? "pending"
+          : "missing",
+    );
+  }
+  if (!response.ok)
+    throw new Error(`Website request failed: ${response.status}`);
   return (await response.json()) as T;
 }
 
@@ -83,7 +102,7 @@ export async function loadSite(
     );
   } catch (error) {
     return {
-      kind: error instanceof WebsiteUnavailable ? "unavailable" : "error",
+      kind: error instanceof WebsiteUnavailable ? error.kind : "error",
     };
   }
   if (bootstrap.mode === "CUSTOM") return { kind: "custom" };

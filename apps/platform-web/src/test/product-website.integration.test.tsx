@@ -98,7 +98,7 @@ describe("venue product and website controls", () => {
     expect(
       await screen.findByText("Current SaaS address: tabla.vynic.localhost"),
     ).toBeVisible();
-    expect(screen.getByText("Custom domains: tabla.example")).toBeVisible();
+    expect(screen.getByText("Additional hostnames: tabla.example")).toBeVisible();
   });
 
   it("retains the old domain and error when the displayed hostname is stale", async () => {
@@ -204,6 +204,7 @@ describe("venue product and website controls", () => {
             ...domain,
             id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
             hostname: String(request.body?.hostname),
+            status: "PENDING",
           },
         ];
         return { body: domains[1] };
@@ -253,6 +254,10 @@ describe("venue product and website controls", () => {
         ),
       ).toBe(true),
     );
+
+    expect(await screen.findByText("Pending connection")).toBeVisible();
+    expect(screen.getByText(/Saving here updates the database only/)).toBeVisible();
+    expect(screen.getByRole("button", { name: "Activate binding" })).toBeVisible();
 
     const originalRow = screen.getByText("vankisi.example").closest("tr");
     await user.click(

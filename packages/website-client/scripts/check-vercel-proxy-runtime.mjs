@@ -70,7 +70,7 @@ try {
     const program = `
       const { default: proxy } = await import(${JSON.stringify(entrypoint)});
       const request = new Request(${JSON.stringify(`https://runtime.example.invalid${route}?cursor=a%2Fb`)}, { headers: { host: 'runtime.example.invalid', 'x-vercel-forwarded-for': '203.0.113.21' } });
-      const result = proxy(request);
+      const result = await proxy(request);
       if (result.headers.get('x-middleware-rewrite') !== ${JSON.stringify(`https://api.vynic.ge${route}?cursor=a%2Fb`)}) throw new Error('Runtime rewrite failed');
       if (result.headers.get('x-middleware-request-x-vynic-web-proxy-host') !== 'runtime.example.invalid') throw new Error('Runtime host failed');
     `;

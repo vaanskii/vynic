@@ -4,8 +4,10 @@ The three frontends keep same-origin API URLs. Their server-only `proxy.ts`
 entrypoints forward browser APIs and website logo media to the fixed origin
 `https://api.vynic.ge`, keeping the full path/query and original method/body.
 `vercel.json` limits middleware invocation to Platform `/platform` + `/customer`,
-SaaS `/api/website`, CUSTOM `/api`, and shared `/media/website-logos`. Other files
-use normal static handling and SPA fallback; API/static failures never become HTML.
+SaaS `/api/website`, CUSTOM `/api`, and shared `/media/website-logos`. Restaurant document routes additionally run `server/website-page.ts` admission,
+with real branded failure statuses and shared SaaS root guidance; see
+`DOMAIN_ROUTING_ONBOARDING.md`. Valid documents use SPA fallback. Other files use
+normal static handling; API/static failures never become HTML.
 
 ## Gateway authority
 

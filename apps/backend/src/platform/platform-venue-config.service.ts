@@ -460,7 +460,7 @@ export class PlatformVenueConfigService {
         await lockHostnames(tx);
         await assertPlatformHostnameAvailable(tx, venueId, hostname);
         const domain = await tx.venueDomain.create({
-          data: { venueId, hostname },
+          data: { venueId, hostname, status: VenueDomainStatus.PENDING },
           select: DOMAIN_FIELDS,
         });
         await tx.platformAuditEvent.create({

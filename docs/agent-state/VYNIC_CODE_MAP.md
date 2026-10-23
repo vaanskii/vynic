@@ -348,6 +348,8 @@ the implementation and nearby tests. Do not treat this as architecture truth.
 
 ## Venue Website
 
+- Production restaurant document admission/status pages: `packages/website-client/server/website-page.ts`, called by SaaS/CUSTOM `proxy.ts`; runbook `docs/DOMAIN_ROUTING_ONBOARDING.md`. Host-derived API authority remains `server/vercel-gateway.ts`.
+
 - Vankisi CUSTOM app/pages: `apps/vankisi-custom-web/src/App.tsx`, `apps/vankisi-custom-web/src/pages/`
 - API client: `apps/vankisi-custom-web/src/services/api.ts`
 - Backend website module: `apps/backend/src/website/`

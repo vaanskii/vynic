@@ -146,9 +146,9 @@ for (const [name, handler, api] of [
   ["custom", custom, "/api/auth/csrf"],
 ] as const) {
   describe(`${name} real Vercel rewrite helper`, () => {
-    it("sends private credentials only as upstream request metadata", () => {
+    it("sends private credentials only as upstream request metadata", async () => {
       process.env.VYNIC_WEB_PROXY_SECRET = secret;
-      const response = handler(makeRequest(api + "?cursor=a%2Fb"));
+      const response = await handler(makeRequest(api + "?cursor=a%2Fb"));
       expect(response.headers.get("x-middleware-rewrite")).toBe(
         `https://api.vynic.ge${api}?cursor=a%2Fb`,
       );
@@ -161,9 +161,9 @@ for (const [name, handler, api] of [
       expect(response.headers.get("x-vercel-enable-rewrite-caching")).toBe("0");
       expect(response.body).toBeNull();
     });
-    it("retains media handling and blocks credential-free middleware bypass", () => {
+    it("retains media handling and blocks credential-free middleware bypass", async () => {
       process.env.VYNIC_WEB_PROXY_SECRET = secret;
-      const response = handler(
+      const response = await handler(
         makeRequest("/media/website-logos/example.webp"),
       );
       expect(response.headers.get("x-middleware-rewrite")).toBe(
@@ -171,7 +171,7 @@ for (const [name, handler, api] of [
       );
       expect(response.headers.get("Cache-Control")).toBeNull();
       delete process.env.VYNIC_WEB_PROXY_SECRET;
-      expect(handler(makeRequest(api)).status).toBe(503);
+      expect((await handler(makeRequest(api))).status).toBe(503);
     });
   });
 }

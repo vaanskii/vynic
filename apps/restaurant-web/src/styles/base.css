@@ -11,11 +11,12 @@
  * first paint. See `docs/WEBSITE_PHASE_W3.md`.
  */
 :root {
-  --font-display: "Noto Serif Georgian", "BPG Nino Mtavruli", Sylfaen, Georgia,
+  --font-display:
+    "Noto Serif Georgian", "BPG Nino Mtavruli", Sylfaen, Georgia,
     "Times New Roman", serif;
-  --font-body: "Noto Sans Georgian", "BPG Nino Mtavruli", Sylfaen,
-    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial,
-    sans-serif;
+  --font-body:
+    "Noto Sans Georgian", "BPG Nino Mtavruli", Sylfaen, -apple-system,
+    BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 
   --paper: #fbf8f3;
   --paper-raised: #f4ede2;
@@ -163,4 +164,35 @@ button {
 }
 .state button:hover {
   background: var(--paper-raised);
+}
+
+.state-brand {
+  font: 700 28px system-ui;
+  color: var(--ink);
+  text-decoration: none;
+  margin-bottom: 2rem;
+}
+.state h1 {
+  max-width: 24ch;
+  text-wrap: balance;
+}
+.state-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+.state-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 48px;
+  padding: 0.7rem 1.4rem;
+  background: var(--ink);
+  color: var(--paper);
+  text-decoration: none;
+  border-radius: var(--radius);
+}
+.state-link:hover {
+  background: #39312b;
 }

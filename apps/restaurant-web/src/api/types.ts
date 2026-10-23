@@ -97,6 +97,6 @@ export type SiteState =
   | { kind: "loading" }
   | { kind: "site"; site: WebsiteSite; menu: WebsiteMenu | null }
   | { kind: "custom" }
-  | { kind: "unavailable" }
+  | { kind: "unavailable" | "missing" | "pending" | "address" }
   | { kind: "unsupported" }
   | { kind: "error" };

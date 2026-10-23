@@ -184,10 +184,20 @@ const url = process.env.PLATFORM_DOMAIN_TEST_DATABASE_URL;
 
     it('registers a normalized Vynic subdomain for CUSTOM with real tenant resolution and audit', async () => {
       const hostname = `kitchen-${tag}.vynic.localhost`;
-      expect(
-        (await register(custom, ` ${hostname.toUpperCase()}:443 `).expect(201))
-          .body,
-      ).toMatchObject({ hostname, venueId: custom });
+      const created = (
+        await register(custom, ` ${hostname.toUpperCase()}:443 `).expect(201)
+      ).body as { id: string };
+      expect(created).toMatchObject({
+        hostname,
+        venueId: custom,
+        status: 'PENDING',
+      });
+      await expect(resolver.resolveByHostname(hostname)).resolves.toBeNull();
+      await http()
+        .put(`${root(custom)}/${created.id}/status`)
+        .set(auth())
+        .send({ status: 'ACTIVE' })
+        .expect(200);
       await expect(resolver.resolveByHostname(hostname)).resolves.toMatchObject(
         { tenant: { venueId: custom }, configuredMode: 'CUSTOM' },
       );

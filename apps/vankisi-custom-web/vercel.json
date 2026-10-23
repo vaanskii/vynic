@@ -13,7 +13,9 @@
     "entrypoint": "proxy.ts",
     "matcher": [
       "/api/:path*",
-      "/media/website-logos/:path*"
+      "/media/website-logos/:path*",
+      "/((?!(?:api|customer|platform|media|assets)(?:/|$)|.*\\.[^/]+$).*)",
+      "/index.html"
     ]
   }
 }

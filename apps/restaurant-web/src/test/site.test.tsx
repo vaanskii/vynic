@@ -94,15 +94,17 @@ describe("Published restaurant page", () => {
       document.querySelector('meta[name="robots"]')?.getAttribute("content"),
     ).toBe("index, follow");
     expect(
-      document.querySelector('meta[name="description"]')?.getAttribute("content"),
+      document
+        .querySelector('meta[name="description"]')
+        ?.getAttribute("content"),
     ).toBe("Khinkali and local wine.");
     expect(
-      document.querySelector('meta[property="og:title"]')?.getAttribute("content"),
+      document
+        .querySelector('meta[property="og:title"]')
+        ?.getAttribute("content"),
     ).toBe("Tabla — Georgian restaurant");
     expect(
-      document
-        .querySelector('link[rel="canonical"]')
-        ?.getAttribute("href"),
+      document.querySelector('link[rel="canonical"]')?.getAttribute("href"),
     ).toBe(`${window.location.origin}/`);
     expect(
       document.querySelector('link[rel="icon"]')?.getAttribute("href"),
@@ -114,7 +116,9 @@ describe("Published restaurant page", () => {
     const user = userEvent.setup();
     render(<App />);
     await screen.findByRole("heading", { level: 1, name: "ტაბლა" });
-    expect(screen.getByRole("heading", { name: "ხინკალი" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "ხინკალი" }),
+    ).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: /English/ }));
     expect(
@@ -136,6 +140,46 @@ describe("Published restaurant page", () => {
 });
 
 describe("Pages that are not published restaurant content", () => {
+  it("shows an unpublished state without leaking draft content", async () => {
+    replies.set("/api/website/bootstrap", {
+      status: 404,
+      body: { code: "WEBSITE_NOT_PUBLISHED", draft: "Private draft" },
+    });
+    render(<App />);
+    await screen.findByRole("heading", {
+      name: "გვერდი ჯერ არ გამოქვეყნებულა",
+    });
+    expect(screen.queryByText("Private draft")).toBeNull();
+    expect(
+      screen.getByRole("link", { name: "Vynic-ზე გადასვლა" }),
+    ).toHaveAttribute("href", "https://vynic.ge");
+    expect(window.location.pathname).toBe("/");
+  });
+  it("offers retry for a service outage and recovers", async () => {
+    replies.set("/api/website/bootstrap", { status: 503 });
+    render(<App />);
+    await screen.findByRole("heading", {
+      name: "სერვისი დროებით მიუწვდომელია",
+    });
+    publish();
+    await userEvent.click(screen.getByRole("button", { name: "ხელახლა ცდა" }));
+    await screen.findByRole("heading", { level: 1, name: "ტაბლა" });
+  });
+  it("does not classify a public authorization failure as an absent restaurant", async () => {
+    replies.set("/api/website/bootstrap", { status: 401 });
+    render(<App />);
+    await screen.findByRole("heading", {
+      name: "სერვისი დროებით მიუწვდომელია",
+    });
+  });
+  it("does not treat preview-prefixed ordinary paths as authenticated previews", async () => {
+    window.history.replaceState(null, "", "/preview-other");
+    publish();
+    render(<App />);
+    await screen.findByRole("heading", { level: 1, name: "ტაბლა" });
+    expect(requests[0].url).toBe("/api/website/bootstrap");
+  });
+
   it("does not render a CUSTOM Venue as a generic site, and stays noindex", async () => {
     replies.set("/api/website/bootstrap", {
       body: { schemaVersion: 2, mode: "CUSTOM" },
@@ -152,10 +196,14 @@ describe("Pages that are not published restaurant content", () => {
     expect(requests.map((r) => r.url)).toEqual(["/api/website/bootstrap"]);
   });
 
-  it("shows an unavailable page for an unknown, disabled or unpublished host", async () => {
+  it("shows a not-found page for an unknown or inactive host without redirecting", async () => {
+    replies.set("/api/website/bootstrap", {
+      status: 404,
+      body: { code: "WEBSITE_NOT_FOUND" },
+    });
     render(<App />);
     await screen.findByRole("heading", {
-      name: "გვერდი ხელმისაწვდომი არ არის",
+      name: "მითითებული რესტორანი ვერ მოიძებნა",
     });
     await waitFor(() =>
       expect(

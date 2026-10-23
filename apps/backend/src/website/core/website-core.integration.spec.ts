@@ -190,7 +190,10 @@ const url = process.env.W3_TEST_DATABASE_URL;
     it('drafts stay private, preview is authenticated and no-store, explicit publish exposes each Venue only', async () => {
       for (let i = 0; i < 2; i++) {
         await save(i, 0).expect(200);
-        await publicGet(i).expect(404);
+        const unpublished = await publicGet(i).expect(404);
+        expect(unpublished.body.code).toBe('WEBSITE_NOT_PUBLISHED');
+        expect(unpublished.body).not.toHaveProperty('profile');
+        expect(unpublished.body).not.toHaveProperty('draft');
         const preview = await http()
           .get(`${path(i)}/preview`)
           .set(auth(i))

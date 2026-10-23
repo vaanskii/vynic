@@ -1104,6 +1104,7 @@ enum VenueStatus {
 /// Whether a registered website hostname currently resolves to its Venue.
 /// A DISABLED row keeps the hostname reserved without serving it.
 enum VenueDomainStatus {
+  PENDING
   ACTIVE
   DISABLED
 

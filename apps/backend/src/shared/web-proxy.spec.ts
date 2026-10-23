@@ -21,8 +21,8 @@ const signed = (host = hostA) => ({
   [WEB_PROXY_SECRET_HEADER]: secret,
   'X-Forwarded-Host': host,
   'X-Forwarded-Proto': 'https',
-  'X-Real-IP': '203.0.113.21',
-  'X-Forwarded-For': '198.51.100.99, 10.0.0.1',
+  'X-Real-IP': '198.51.100.99',
+  'X-Forwarded-For': '203.0.113.21, 10.0.0.1',
 });
 
 const databaseUrl = process.env.WEB_PROXY_TEST_DATABASE_URL;
@@ -287,8 +287,11 @@ describe('authenticated web proxy (real loopback HTTP)', () => {
     ['X-Forwarded-Host', ''],
     ['X-Forwarded-Proto', 'http'],
     ['X-Forwarded-Proto', 'https,http'],
-    ['X-Real-IP', 'not-an-ip'],
-    ['X-Real-IP', '203.0.113.21, 198.51.100.99'],
+    ['X-Forwarded-For', 'not-an-ip'],
+    ['X-Forwarded-For', ''],
+    ['X-Forwarded-For', '203.0.113.21, not-an-ip'],
+    ['X-Forwarded-For', '203.0.113.21,'],
+    ['X-Forwarded-For', Array(17).fill('203.0.113.21').join(',')],
   ])(
     'rejects malformed authenticated metadata %s=%s',
     async (header, value) => {
@@ -308,6 +311,32 @@ describe('authenticated web proxy (real loopback HTTP)', () => {
       expect(lookup).not.toHaveBeenCalled();
     },
   );
+
+  it.each([
+    ['203.0.113.21', '203.0.113.21'],
+    ['203.0.113.21, 10.0.0.1, ::1', '203.0.113.21'],
+    ['2001:db8::21, 10.0.0.1', '2001:db8::21'],
+  ])(
+    'uses the authenticated visitor before appended Render hops %s',
+    async (chain, visitor) => {
+      const response = await request(server)
+        .get('/api/probe')
+        .set(signed())
+        .set('X-Forwarded-For', chain)
+        .unset('X-Real-IP');
+      expect(response.status).toBe(200);
+      expect(response.body.ip).toBe(visitor);
+    },
+  );
+
+  it('requires authenticated XFF even if X-Real-IP is present', async () => {
+    const response = await request(server)
+      .get('/api/probe')
+      .set(signed())
+      .unset('X-Forwarded-For');
+    expect(response.status).toBe(400);
+    expect(response.body.invalidFields).toEqual(['clientIp']);
+  });
 
   it('keeps method, exact body, query, Authorization, cookies and CSRF intact', async () => {
     const tokenResponse = await request(server)

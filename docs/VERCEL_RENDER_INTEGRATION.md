@@ -23,6 +23,13 @@ credentials cannot make a forwarded Host authoritative; wrong credentials or
 malformed authenticated metadata fail with JSON errors. Native routes, direct
 health checks and signed payment callbacks retain their existing boundaries.
 
+Visitor admission uses the first IP in the authenticated `X-Forwarded-For`
+chain. Vercel replaces client-supplied XFF with the visitor address; Render
+appends proxy hops and does not preserve `X-Real-IP` on this deployment. The
+complete bounded chain must contain valid IPs. Without the gateway credential,
+XFF supplies no authority. Metadata errors identify only the failed field,
+never credential/header values.
+
 This authenticates the proxy, not a user or Venue. Restaurant authority remains
 Host -> active VenueDomain -> active Venue. Unknown domains fail closed. Existing
 PlatformUser/CustomerAccount bearer authorization, website cookies and CSRF remain

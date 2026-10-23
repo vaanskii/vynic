@@ -28,6 +28,16 @@ function matchesSecret(
   return actual.length === expected.length && timingSafeEqual(actual, expected);
 }
 
+/** Vercel replaces the visitor's XFF; Render appends its proxy hops. */
+function authenticatedVisitorIp(
+  value: string | string[] | undefined,
+): string | undefined {
+  if (typeof value !== 'string' || value.length > 2048) return undefined;
+  const hops = value.split(',').map((hop) => hop.trim());
+  if (hops.length > 16 || hops.some((hop) => !isIP(hop))) return undefined;
+  return hops[0];
+}
+
 /**
  * Convert authenticated gateway metadata into the normal request authority.
  *
@@ -66,26 +76,25 @@ export function webProxyIngress(secret: string | undefined): RequestHandler {
     const rawHost = one(forwardedHost);
     const hostname = normalizeHostname(rawHost);
     const protocol = one(request.headers['x-forwarded-proto']);
-    const clientIp = one(request.headers['x-real-ip']);
-    if (!hostname || protocol !== 'https' || !clientIp || !isIP(clientIp)) {
+    const clientIp = authenticatedVisitorIp(request.headers['x-forwarded-for']);
+    if (!hostname || protocol !== 'https' || !clientIp) {
       const invalidFields = [
         ...(!hostname ? ['host'] : []),
         ...(protocol !== 'https' ? ['protocol'] : []),
-        ...(!clientIp || !isIP(clientIp) ? ['clientIp'] : []),
+        ...(!clientIp ? ['clientIp'] : []),
       ];
-      response
-        .status(400)
-        .json({
-          statusCode: 400,
-          message: 'Invalid web proxy metadata',
-          invalidFields,
-        });
+      response.status(400).json({
+        statusCode: 400,
+        message: 'Invalid web proxy metadata',
+        invalidFields,
+      });
       return;
     }
 
     request.headers.host = hostname;
-    // Existing per-peer admission uses req.ip. Never trust a caller's arbitrary
-    // X-Forwarded-For chain, and never turn on global Express proxy trust here.
+    // This runs only after gateway authentication. Vercel overwrites incoming
+    // XFF with the visitor IP; Render appends hops and does not preserve X-Real-IP.
+    // Unauthenticated XFF never affects req.ip or global Express proxy trust.
     Object.defineProperty(request, 'ip', {
       configurable: true,
       value: clientIp,

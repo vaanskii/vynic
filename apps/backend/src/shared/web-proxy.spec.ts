@@ -297,6 +297,14 @@ describe('authenticated web proxy (real loopback HTTP)', () => {
         .set(signed())
         .set(header, value);
       expect(response.status).toBe(400);
+      expect(response.body.invalidFields).toEqual([
+        header === 'X-Forwarded-Host'
+          ? 'host'
+          : header === 'X-Forwarded-Proto'
+            ? 'protocol'
+            : 'clientIp',
+      ]);
+      expect(response.text).not.toContain(secret);
       expect(lookup).not.toHaveBeenCalled();
     },
   );

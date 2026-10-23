@@ -68,9 +68,18 @@ export function webProxyIngress(secret: string | undefined): RequestHandler {
     const protocol = one(request.headers['x-forwarded-proto']);
     const clientIp = one(request.headers['x-real-ip']);
     if (!hostname || protocol !== 'https' || !clientIp || !isIP(clientIp)) {
+      const invalidFields = [
+        ...(!hostname ? ['host'] : []),
+        ...(protocol !== 'https' ? ['protocol'] : []),
+        ...(!clientIp || !isIP(clientIp) ? ['clientIp'] : []),
+      ];
       response
         .status(400)
-        .json({ statusCode: 400, message: 'Invalid web proxy metadata' });
+        .json({
+          statusCode: 400,
+          message: 'Invalid web proxy metadata',
+          invalidFields,
+        });
       return;
     }
 

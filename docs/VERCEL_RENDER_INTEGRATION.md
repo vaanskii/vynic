@@ -64,7 +64,9 @@ server environments and deploy the matching backend/frontends together.
 Tests cover server-derived authority under combined hostile headers, missing
 configuration, fixed upstream/path/query, unconsumed bodies, real rewrite helpers,
 backend loopback HTTP, PostgreSQL tenant separation, secure cookie/CSRF handling
-and native/callback compatibility. Database tests require fresh owned loopback
+and native/callback compatibility. Run `node packages/website-client/scripts/check-vercel-proxy-runtime.mjs`
+to execute emitted proxies under Node ESM without Vite extension fallback; relative
+server imports name the emitted `.js` file. Database tests require fresh owned loopback
 fixtures, never business data or the Render database.
 
 Deploy the exact tested main commit to all three Vercel projects and Render;

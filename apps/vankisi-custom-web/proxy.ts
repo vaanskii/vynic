@@ -1,5 +1,5 @@
 import { rewrite } from "@vercel/functions";
-import { gatewayRequest } from "../../packages/website-client/server/vercel-gateway";
+import { gatewayRequest } from "../../packages/website-client/server/vercel-gateway.js";
 
 export default function proxy(request: Request) {
   const gateway = gatewayRequest(

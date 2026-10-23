@@ -378,6 +378,7 @@ the implementation and nearby tests. Do not treat this as architecture truth.
 - Local tools: `scripts/docker-init.py`, `scripts/docker.sh`, `scripts/prove-docker-http.py`; guarded samples: `apps/backend/scripts/seed-docker-local.ts`.
 - Local customer cleanup matrix/transaction/media recovery: `apps/backend/src/local-tools/`; CLI: `apps/backend/scripts/reset-docker-customers.ts`; Studio: `apps/backend/scripts/studio-docker-local.ts`; operator API: `platform/platform-local-tools.controller.ts`; UI: `platform/components/LocalDeletePanel.tsx`. Runbook and model matrix: `docs/LOCAL_DATABASE_TOOLS.md`.
 - Startup/local-HTTP security policy: `apps/backend/src/shared/deployment-config.ts`; DB readiness: `apps/backend/src/health.controller.ts`.
+- Authenticated Vercel/Render ingress: `apps/backend/src/shared/web-proxy.ts`, installed before CORS in `src/main.ts`; the three frontend `vercel.json` files own server-only gateway headers and API/SPA routing. Contract and rollout: `docs/VERCEL_RENDER_INTEGRATION.md`; regressions: `shared/web-proxy.spec.ts`, `platform-web/src/test/vercel-routing.test.ts`.
 
 ## Prisma / Database
 

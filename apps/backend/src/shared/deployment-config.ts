@@ -35,6 +35,7 @@ export function validateDeploymentEnvironment(
     'JWT_REFRESH_SECRET',
     'COOKIE_ENCRYPTION_KEY',
     'PLATFORM_JWT_SECRET',
+    'VYNIC_WEB_PROXY_SECRET',
   ]) {
     if (
       env[key] !== undefined &&
@@ -55,6 +56,11 @@ export function validateDeploymentEnvironment(
     throw new Error('ALLOWED_ORIGINS cannot contain a wildcard');
   if (env.TRUST_PROXY_IPS?.split(',').some((ip) => !isIP(ip.trim())))
     throw new Error('TRUST_PROXY_IPS must contain exact proxy IP addresses');
+  if (
+    env.VYNIC_WEB_PROXY_SECRET &&
+    ['1', 'true'].includes((env.TRUST_PROXY_HOST ?? '').trim().toLowerCase())
+  )
+    throw new Error('VYNIC_WEB_PROXY_SECRET requires TRUST_PROXY_HOST to remain disabled');
   if (env.VYNIC_LOCAL_DOCKER === 'true') {
     const db = new URL(env.DATABASE_URL!);
     if (

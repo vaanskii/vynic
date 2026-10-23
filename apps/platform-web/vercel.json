@@ -1,9 +1,60 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "rewrites": [
+  "routes": [
     {
-      "source": "/((?!(?:api|customer|platform|media|assets)(?:/|$)|.*\\.[^/]+$).*)",
-      "destination": "/index.html"
+      "src": "/((?:platform|customer)(?:/.*)?)",
+      "dest": "https://api.vynic.ge/$1",
+      "headers": {
+        "Cache-Control": "private, no-store",
+        "x-vercel-enable-rewrite-caching": "0"
+      },
+      "transforms": [
+        {
+          "type": "request.headers",
+          "op": "delete",
+          "target": {
+            "key": "x-vynic-web-proxy-secret"
+          }
+        },
+        {
+          "type": "request.headers",
+          "op": "set",
+          "target": {
+            "key": "x-vynic-web-proxy-secret"
+          },
+          "args": "$VYNIC_WEB_PROXY_SECRET",
+          "env": ["VYNIC_WEB_PROXY_SECRET"]
+        }
+      ]
+    },
+    {
+      "src": "/(media/website-logos(?:/.*)?)",
+      "dest": "https://api.vynic.ge/$1",
+      "transforms": [
+        {
+          "type": "request.headers",
+          "op": "delete",
+          "target": {
+            "key": "x-vynic-web-proxy-secret"
+          }
+        },
+        {
+          "type": "request.headers",
+          "op": "set",
+          "target": {
+            "key": "x-vynic-web-proxy-secret"
+          },
+          "args": "$VYNIC_WEB_PROXY_SECRET",
+          "env": ["VYNIC_WEB_PROXY_SECRET"]
+        }
+      ]
+    },
+    {
+      "handle": "filesystem"
+    },
+    {
+      "src": "/((?!(?:api|customer|platform|media|assets)(?:/|$)|.*\\.[^/]+$).*)",
+      "dest": "/index.html"
     }
   ]
 }

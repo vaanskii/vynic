@@ -76,6 +76,12 @@ current transport status.
   duplicate Manager PINs still fail login until an authorized PIN change.
 - Cloud-originated POS work uses a persistent pull queue. The Edge initiates the
   connection, executes locally, journals the outcome, and acknowledges it.
+- Vercel browser API routes can reach Render through an authenticated same-origin
+  gateway. `VYNIC_WEB_PROXY_SECRET` stays server-only; verified metadata supplies
+  the public Host and visitor admission IP before CORS/tenant reads. Global
+  forwarded-host trust stays disabled. Website cookies/CSRF and Device/Staff/
+  PlatformUser/CustomerAccount authority remain unchanged. Configuration and
+  verification: `docs/VERCEL_RENDER_INTEGRATION.md`.
 
 ## Current Phase
 

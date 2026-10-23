@@ -108,4 +108,26 @@ describe('deployment security configuration', () => {
       validateDeploymentEnvironment({ ...valid(), ALLOWED_ORIGINS: '*' }),
     ).toThrow('wildcard');
   });
+  it('requires a strong gateway secret without global forwarded-host trust', () => {
+    expect(() =>
+      validateDeploymentEnvironment({
+        ...valid(),
+        VYNIC_WEB_PROXY_SECRET: 'short',
+      }),
+    ).toThrow('VYNIC_WEB_PROXY_SECRET');
+    expect(() =>
+      validateDeploymentEnvironment({
+        ...valid(),
+        VYNIC_WEB_PROXY_SECRET: 'd'.repeat(64),
+        TRUST_PROXY_HOST: 'true',
+      }),
+    ).toThrow('TRUST_PROXY_HOST');
+    expect(() =>
+      validateDeploymentEnvironment({
+        ...valid(),
+        VYNIC_WEB_PROXY_SECRET: 'd'.repeat(64),
+        TRUST_PROXY_HOST: 'false',
+      }),
+    ).not.toThrow();
+  });
 });

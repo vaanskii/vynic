@@ -41,9 +41,12 @@ function fallbackTitleFor(kind: SiteState["kind"], strings: Strings) {
 }
 
 export function App() {
-  const preview =
+  const previewAttempt =
     window.location.pathname === PREVIEW_PATH ||
     window.location.pathname.startsWith(`${PREVIEW_PATH}/`);
+  const preview =
+    (window.location.pathname === PREVIEW_PATH ||
+      window.location.pathname === `${PREVIEW_PATH}/`) && !window.location.search;
   const [language, setLanguage] = useState<Language>(() =>
     storedLanguage(window.localStorage),
   );
@@ -62,8 +65,8 @@ export function App() {
   useEffect(() => {
     let live = true;
     void (
-      window.location.hostname === "vynic-restaurant-web.vercel.app" && !preview
-        ? Promise.resolve<SiteState>({ kind: "address" })
+      previewAttempt && !preview
+        ? Promise.resolve<SiteState>({ kind: "unavailable" })
         : loadSite(preview, token)
     ).then((next) => {
       if (live) setState(next);
@@ -71,7 +74,7 @@ export function App() {
     return () => {
       live = false;
     };
-  }, [preview, token, attempt]);
+  }, [preview, previewAttempt, token, attempt]);
 
   useEffect(() => {
     applyDocumentHead({

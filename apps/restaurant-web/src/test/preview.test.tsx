@@ -48,6 +48,27 @@ afterEach(() => {
 });
 
 describe("Draft preview", () => {
+  it.each(["#token=", "#unknown=private", "#token=preview-token&token=other", "#token=preview-token&next=other"])(
+    "clears malformed fragments without using a previous preview: %s",
+    async (hash) => {
+      vi.stubGlobal("fetch", mockFetch());
+      sessionStorage.setItem("vynic-website-preview-token", "preview-token");
+      window.history.replaceState(null, "", `/preview${hash}`);
+      render(<App />);
+      await screen.findByRole("heading", { name: "გვერდი ხელმისაწვდომი არ არის" });
+      expect(requests).toHaveLength(0);
+      expect(window.location.hash).toBe("");
+      expect(sessionStorage.getItem("vynic-website-preview-token")).toBeNull();
+    },
+  );
+  it("reloads a valid stored preview on the trailing-slash entry", async () => {
+    vi.stubGlobal("fetch", mockFetch());
+    sessionStorage.setItem("vynic-website-preview-token", "preview-token");
+    window.history.replaceState(null, "", "/preview/");
+    render(<App />);
+    await screen.findByRole("heading", { level: 1, name: "მონახაზი" });
+    expect(requests.every((r) => r.auth === "Bearer preview-token")).toBe(true);
+  });
   it("renders the draft through preview routes and drops the token from the URL", async () => {
     vi.stubGlobal("fetch", mockFetch());
     window.history.replaceState(null, "", "/preview#token=preview-token");
@@ -70,6 +91,18 @@ describe("Draft preview", () => {
       "preview-token",
     );
   });
+
+  it.each(["/preview/nested", "/preview?token=preview-token", "/preview/?next=other"]) (
+    "rejects malformed entry %s even with a stored valid token",
+    async (path) => {
+      vi.stubGlobal("fetch", mockFetch());
+      sessionStorage.setItem("vynic-website-preview-token", "preview-token");
+      window.history.replaceState(null, "", path);
+      render(<App />);
+      await screen.findByRole("heading", { name: "გვერდი ხელმისაწვდომი არ არის" });
+      expect(requests).toHaveLength(0);
+    },
+  );
 
   it("is never indexable and publishes no canonical address", async () => {
     vi.stubGlobal("fetch", mockFetch());

@@ -58,13 +58,18 @@ async function get<T>(path: string, token?: string): Promise<T> {
 export function readPreviewToken(location: Location, storage: Storage) {
   const fragment = new URLSearchParams(location.hash.replace(/^#/, ""));
   const fromFragment = fragment.get("token");
-  if (fromFragment) {
+  if (location.hash) {
+    history.replaceState(null, "", location.pathname + location.search);
+    // An explicit malformed attempt must not fall back to a previously viewed draft.
+    if (!fromFragment || fragment.size !== 1) {
+      clearPreviewToken(storage);
+      return null;
+    }
     try {
       storage.setItem(PREVIEW_TOKEN_KEY, fromFragment);
     } catch {
       // Private browsing can refuse storage; the token still works this once.
     }
-    history.replaceState(null, "", location.pathname + location.search);
     return fromFragment;
   }
   try {

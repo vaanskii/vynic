@@ -1,5 +1,6 @@
 import { next, rewrite } from "@vercel/functions";
 import { gatewayRequest } from "../../packages/website-client/server/vercel-gateway.js";
+import { canonicalPageResponse } from "../../packages/website-client/server/canonical-page.js";
 
 import {
   isWebsitePage,
@@ -7,6 +8,12 @@ import {
 } from "../../packages/website-client/server/website-page.js";
 
 export default function proxy(request: Request) {
+  const canonical = canonicalPageResponse(request, "saas", [
+    process.env.VERCEL_URL,
+    process.env.VERCEL_BRANCH_URL,
+    process.env.VERCEL_PROJECT_PRODUCTION_URL,
+  ]);
+  if (canonical) return canonical;
   if (isWebsitePage(new URL(request.url).pathname))
     return websitePageResponse(
       request,

@@ -27,10 +27,26 @@ no restaurant identity. Network/timeouts/upstream failures return a retryable
 renderer bindings 421, and incompatible schemas 502. These are private/no-store,
 noindex documents that work without JavaScript and never reflect caller data.
 
-The shared `vynic-restaurant-web.vercel.app` address explains that visitors must
-use the restaurant's own address (200, noindex). `/preview` and `/preview/*`
-retain the existing fragment-token flow: only authenticated preview API requests
-can read drafts. Similar prefixes such as `/preview-other` are ordinary pages.
+Known Vercel project addresses now redirect ordinary GET/HEAD page requests:
+Platform → `https://vynic.ge`, Vankisi CUSTOM → `https://vankisi.vynic.ge`,
+shared SaaS → `https://vynic.ge`. The allowlist contains each project's exact
+`.vercel.app`, team and main-branch aliases plus exact deployment/branch hosts
+from Vercel's server-owned system variables. There is no blanket suffix rule.
+Platform/CUSTOM preserve the page path; SaaS goes to the platform root. Query
+strings are discarded, an explicit empty fragment prevents browser token
+inheritance, and `Referrer-Policy: no-referrer` prevents source URL disclosure.
+Redirects are temporary HTTP 307 and private/no-store. `/index.html` is covered.
+API/media/assets, writes, owned domains and unrelated project hosts are unchanged.
+
+SaaS `/preview` and `/preview/` retain the existing fragment-token flow until an
+owned preview origin is approved: only authenticated preview API requests can
+read drafts. Preview queries or nested preview paths return a private 400 with
+no redirect or tenant lookup; `/preview-other` is ordinary navigation. Missing
+or expired preview credentials remain unavailable. Existing stored-token reloads
+work. The Vercel preview origin remains configured; visitors can still reach that
+explicit preview entry. Redirects are UX canonicalization, not access control:
+provider protection and historical immutable deployment URLs are not changed.
+See `DOMAIN_CONNECTION_VISIBILITY_PROPOSAL.md` for the owned-preview proposal.
 A CUSTOM document requires the Host-resolved CUSTOM site key to match its build
 and the binding to be ACTIVE. Missing production restaurant setup therefore
 shows an unavailable restaurant page rather than the bespoke site's static shell.

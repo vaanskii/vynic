@@ -1240,7 +1240,8 @@ current transport status.
   PENDING and require explicit activation; status reflects database admission,
   not DNS/TLS verification. Public restaurant document middleware returns branded
   404/unpublished/outage states without redirecting or disclosing tenant data;
-  shared SaaS root guidance preserves authenticated preview flows. CUSTOM document
+  exact Vercel project aliases redirect public navigation to owned domains while
+  authenticated SaaS preview entry stays on its configured origin. CUSTOM document
   admission checks Host-resolved renderer identity and ACTIVE binding.
 
 - Public APIs resolve registered hostnames through `VenueDomain`; production

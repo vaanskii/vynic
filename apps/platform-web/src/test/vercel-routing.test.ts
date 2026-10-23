@@ -40,7 +40,8 @@ describe.each(projects)("$name Vercel transport", ({ config, api, local }) => {
       });
     expect(matches(api)).toBe(true);
     expect(matches("/media/website-logos/example.webp")).toBe(true);
-    expect(matches(local)).toBe(config !== projects[0].config);
+    expect(matches(local)).toBe(true);
+    expect(matches("/index.html")).toBe(true);
     expect(matches("/assets/probe.js")).toBe(false);
   });
   it("has no static rewrite that could attach credentials without server verification", () => {

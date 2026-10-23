@@ -18,17 +18,6 @@ const mock = (status: number, body: unknown) =>
 describe("public HTML page admission", () => {
   it("also admits direct index documents", () =>
     expect(isWebsitePage("/index.html")).toBe(true));
-  it("shows shared-host guidance without looking up or disclosing a tenant", async () => {
-    mock(500, {});
-    const result = await websitePageResponse(
-      request("/", "vynic-restaurant-web.vercel.app"),
-      secret,
-      "saas",
-    );
-    expect(result?.status).toBe(200);
-    expect(await result?.text()).toContain("გახსენით რესტორნის მისამართი");
-    expect(fetch).not.toHaveBeenCalled();
-  });
   it.each(["/preview", "/preview/"])(
     "preserves authenticated fragment preview at %s",
     async (path) => {
@@ -38,6 +27,17 @@ describe("public HTML page admission", () => {
       ).toBeNull();
       expect(fetch).not.toHaveBeenCalled();
       expect(isPreviewPath("/preview-attacker")).toBe(false);
+    },
+  );
+  it.each(["/preview/nested", "/preview?token=never-forward", "/preview/?next=other"]) (
+    "rejects malformed preview entry without a redirect or tenant lookup: %s",
+    async (path) => {
+      mock(200, { privateDraft: "never disclose" });
+      const result = await websitePageResponse(request(path), secret, "saas");
+      expect(result?.status).toBe(400);
+      expect(result?.headers.get("Location")).toBeNull();
+      expect(await result!.text()).not.toContain("never");
+      expect(fetch).not.toHaveBeenCalled();
     },
   );
   it.each([

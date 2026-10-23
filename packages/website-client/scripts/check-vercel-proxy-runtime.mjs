@@ -73,11 +73,16 @@ try {
       const result = await proxy(request);
       if (result.headers.get('x-middleware-rewrite') !== ${JSON.stringify(`https://api.vynic.ge${route}?cursor=a%2Fb`)}) throw new Error('Runtime rewrite failed');
       if (result.headers.get('x-middleware-request-x-vynic-web-proxy-host') !== 'runtime.example.invalid') throw new Error('Runtime host failed');
+      const canonical = await proxy(new Request('https://runtime-deployment.vercel.app/en/menu?token=synthetic', { headers: { host: 'runtime-deployment.vercel.app' } }));
+      const expected = ${JSON.stringify(app === "vankisi-custom-web" ? "https://vankisi.vynic.ge/en/menu#" : app === "restaurant-web" ? "https://vynic.ge/#" : "https://vynic.ge/en/menu#")};
+      if (canonical.status !== 307 || canonical.headers.get('location') !== expected) throw new Error('Runtime canonical redirect failed');
+
     `;
     execFileSync(process.execPath, ["--input-type=module", "--eval", program], {
       cwd: scratch,
       env: {
         ...process.env,
+        VERCEL_URL: "runtime-deployment.vercel.app",
         VYNIC_WEB_PROXY_SECRET:
           "synthetic-runtime-test-secret-without-live-access",
       },

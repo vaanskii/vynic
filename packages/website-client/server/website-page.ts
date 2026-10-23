@@ -1,20 +1,16 @@
 import { gatewayRequest, type WebGateway } from "./vercel-gateway.js";
 
-export const genericSaasHost = "vynic-restaurant-web.vercel.app";
 export const isPreviewPath = (path: string) =>
+  path === "/preview" || path === "/preview/";
+export const isPreviewAttempt = (path: string) =>
   path === "/preview" || path.startsWith("/preview/");
 export const isWebsitePage = (path: string) =>
   path === "/index.html" ||
   (!/^\/(?:api|customer|platform|media|assets)(?:\/|$)/.test(path) &&
     !/\.[^/]+$/.test(path));
 
-type State = "address" | "missing" | "pending" | "unavailable" | "error";
+type State = "missing" | "pending" | "unavailable" | "error";
 const copy: Record<State, [string, string, string]> = {
-  address: [
-    "გახსენით რესტორნის მისამართი",
-    "რესტორნის სანახავად გამოიყენეთ მისი პირადი ვებმისამართი. ეს Vynic-ის საერთო მისამართია.",
-    "Use the restaurant’s own web address to visit its website.",
-  ],
   missing: [
     "მითითებული რესტორანი ვერ მოიძებნა",
     "გადაამოწმეთ მისამართი. ამ მისამართზე ხელმისაწვდომი რესტორნის გვერდი არ არის.",
@@ -78,7 +74,10 @@ export async function websitePageResponse(
   if (request.method !== "GET" && !head)
     return websitePage("unavailable", 405, head);
   // Tokens live in fragments and only the authenticated preview API can read drafts.
-  if (scope === "saas" && isPreviewPath(url.pathname)) return null;
+  if (scope === "saas" && isPreviewAttempt(url.pathname))
+    return isPreviewPath(url.pathname) && !url.search
+      ? null
+      : websitePage("unavailable", 400, head);
   const upstream = new URL(
     scope === "saas" ? "/api/website/bootstrap" : "/api/website/venue",
     url,
@@ -90,8 +89,6 @@ export async function websitePageResponse(
   );
   if (gateway instanceof Response)
     return websitePage("error", gateway.status, head);
-  if (scope === "saas" && url.hostname === genericSaasHost)
-    return websitePage("address", 200, head);
   // Forward only server-derived authority. A public page probe must not inherit conditional
   // requests, cookies, authorization, caller headers or middleware controls.
   const headers = new Headers({ Accept: "application/json" });

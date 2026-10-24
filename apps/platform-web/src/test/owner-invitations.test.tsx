@@ -35,10 +35,52 @@ beforeEach(() => {
   window.history.replaceState({}, "", "/invite#token=test-token");
 });
 describe("Owner invitation journey", () => {
+  it("resumes after refresh without returning the invitation token to browser storage", async () => {
+    const details = {
+      email: "owner@test.invalid",
+      organizationName: "Resumable restaurant",
+      existingAccount: false,
+      displayName: "Owner",
+    };
+    api.customer.mockResolvedValue(details);
+    const view = mount();
+    await screen.findByText("Resumable restaurant");
+    expect(window.location.hash).toBe("");
+    view.unmount();
+    api.customer.mockClear();
+    mount();
+    await screen.findByText("Resumable restaurant");
+    expect(api.customer).toHaveBeenCalledWith("invitations/session/resume", {});
+    expect(localStorage.length).toBe(0);
+    expect(sessionStorage.getItem("vynic-invitation")).toBeNull();
+  });
+  it("requests operator reissue when the link was lost and never claims email delivery", async () => {
+    const user = userEvent.setup();
+    window.history.replaceState({}, "", "/invite");
+    api.customer.mockImplementation(async (path: string) => {
+      if (path === "invitations/request-new")
+        return { received: true, delivery: "ADMIN_REVIEW" };
+      throw new Error("Invitation is invalid or no longer available");
+    });
+    mount();
+    await user.type(
+      await screen.findByLabelText("მოწვევის ელფოსტა"),
+      "owner@test.invalid",
+    );
+    await user.click(
+      screen.getByRole("button", { name: "ახალი ბმულის მოთხოვნა" }),
+    );
+    expect(await screen.findByRole("status")).toHaveTextContent(
+      "ელფოსტა ავტომატურად არ იგზავნება",
+    );
+    expect(api.customer).toHaveBeenCalledWith("invitations/request-new", {
+      email: "owner@test.invalid",
+    });
+  });
   it("registers through the invitation and lands on the prepared Venue", async () => {
     const user = userEvent.setup();
     api.customer.mockImplementation(async (path: string) =>
-      path === "invitations/inspect"
+      path === "invitations/session"
         ? {
             email: "owner@test.invalid",
             organizationName: "Prepared restaurant",
@@ -58,7 +100,7 @@ describe("Owner invitation journey", () => {
     ).toBeInTheDocument();
     expect(api.customer).toHaveBeenCalledWith(
       "invitations/register",
-      expect.objectContaining({ token: "test-token" }),
+      expect.objectContaining({ password: "Owner-created long password" }),
     );
     expect(api.customer).not.toHaveBeenCalledWith(
       "auth/signup",
@@ -69,7 +111,7 @@ describe("Owner invitation journey", () => {
   it("reuses the access-request name without asking for it again", async () => {
     const user = userEvent.setup();
     api.customer.mockImplementation(async (path: string) =>
-      path === "invitations/inspect"
+      path === "invitations/session"
         ? {
             email: "owner@test.invalid",
             organizationName: "Prepared restaurant",
@@ -79,19 +121,23 @@ describe("Owner invitation journey", () => {
         : { venueId: "prepared-venue" },
     );
     mount();
-    await user.type(await screen.findByLabelText("პაროლი"), "Owner password 123");
+    await user.type(
+      await screen.findByLabelText("პაროლი"),
+      "Owner password 123",
+    );
     expect(screen.queryByLabelText("სახელი")).not.toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "მოწვევის მიღება" }));
-    expect(await screen.findByText("Existing venue: prepared-venue")).toBeInTheDocument();
+    expect(
+      await screen.findByText("Existing venue: prepared-venue"),
+    ).toBeInTheDocument();
     expect(api.customer).toHaveBeenCalledWith("invitations/register", {
-      token: "test-token",
       password: "Owner password 123",
     });
   });
   it("signs an existing owner in before accepting, without creating a second account", async () => {
     const user = userEvent.setup();
     api.customer.mockImplementation(async (path: string) =>
-      path === "invitations/inspect"
+      path === "invitations/session"
         ? {
             email: "existing@test.invalid",
             organizationName: "Prepared restaurant",
@@ -111,7 +157,7 @@ describe("Owner invitation journey", () => {
     ).toBeInTheDocument();
     const paths = api.customer.mock.calls.map((c) => c[0]);
     expect(paths).toEqual([
-      "invitations/inspect",
+      "invitations/session",
       "auth/login",
       "invitations/accept",
     ]);

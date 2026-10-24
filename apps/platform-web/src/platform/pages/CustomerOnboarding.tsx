@@ -24,6 +24,7 @@ type Invitation = {
   expiresAt: string;
   acceptedAt: string | null;
   revokedAt: string | null;
+  recoveryRequestedAt?: string | null;
 };
 export function CustomerOnboarding({
   plans,
@@ -83,8 +84,7 @@ export function CustomerOnboarding({
     setLink("");
     try {
       const result = await platformOnboardingApi(path, body, "POST");
-      if (result.invitationPath)
-        setLink(publicSiteUrl(result.invitationPath));
+      if (result.invitationPath) setLink(publicSiteUrl(result.invitationPath));
       else setMessage("Invitation revoked.");
       await refresh();
     } catch (e) {
@@ -263,9 +263,7 @@ export function CustomerOnboarding({
                         {v.name} — plan and features
                       </Link>{" "}
                       ·{" "}
-                      <Link to={`/venues/${v.id}/website`}>
-                        Website setup
-                      </Link>
+                      <Link to={`/venues/${v.id}/website`}>Website setup</Link>
                     </span>
                   ))}
                 </li>
@@ -297,6 +295,12 @@ export function CustomerOnboarding({
                     {i.email} · {state}
                   </p>
                   <p>Expires {new Date(i.expiresAt).toLocaleString()}</p>
+                  {i.recoveryRequestedAt && (
+                    <p role="status">
+                      New link requested ·{" "}
+                      {new Date(i.recoveryRequestedAt).toLocaleString()}
+                    </p>
+                  )}
                   {!readonly && !i.acceptedAt && (
                     <div className="customer-row">
                       <button

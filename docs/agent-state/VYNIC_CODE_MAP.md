@@ -184,6 +184,7 @@ the implementation and nearby tests. Do not treat this as architecture truth.
 
 - Customer principal, portal/onboarding and operator pilot policy: `apps/backend/src/customer/`
 - Owner membership/invitations: apps/backend/src/customer/owner-invitations.service.ts and owner-invitations.controller.ts; acceptance UI: apps/platform-web/src/customer/AcceptInvitation.tsx. Runbook: docs/SAAS_OWNER_INVITATIONS.md; local server/browser/backfill proofs: apps/backend/scripts/*onboarding*.
+- Protected Windows delivery: `apps/backend/src/customer/installer-downloads.service.ts`, `installer-downloads.controller.ts`, durable `security-admission.ts`; customer/Admin `ProtectedInstallerDownloads.tsx`, fragment-to-cookie `InstallerDownloadPage.tsx`; offline transport `apps/edge/internal/setup/offline_bundle.go`. Policy/prerequisites: `docs/PROTECTED_WINDOWS_DOWNLOADS.md`; HTTP/PG regression: `protected-onboarding.integration.spec.ts`.
 - Real two-customer proof: `apps/backend/src/customer/customer-onboarding.integration.spec.ts`
 - Public/customer UI: `apps/platform-web/src/customer/` (sign-in `CustomerAuthPage.tsx`, `/request-access` form `AccessRequest.tsx` + `access-request.css` in `PublicFrame.tsx`; dashboard routes and `/portal` redirects `dashboard-routes.tsx`; public nav actions `src/components/layout/Navbar.tsx`); operator controls: `src/platform/pages/OnboardingPage.tsx`
 - POS first-run: `apps/operations/lib/apps/windows_pos/screens/pos_first_run.dart`; printer pull/cache: `core/services/edge/runtime_config_sync.dart`

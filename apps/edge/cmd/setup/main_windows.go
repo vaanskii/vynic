@@ -204,6 +204,10 @@ func runWindows(o startupOptions) error {
 		return e
 	}
 	i := setup.Installer{Layout: l, Distribution: d, Host: setup.NativeHost{}, SetupSource: source}
+	i.Client, e = setup.OfflineBundleClient(filepath.Dir(source))
+	if e != nil {
+		return e
+	}
 	if action == 3 {
 		yes, e := dialog("Remove Vynic POS and Edge application releases?\n\nRestaurant data, local identities, update history and support diagnostics will be kept. The small setup utility is retained for Repair. Data deletion is a separate support operation.", "", button{"Uninstall", 3}, button{"Cancel", 0})
 		if e != nil {

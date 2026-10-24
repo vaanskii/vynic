@@ -15,6 +15,7 @@ describe('Invitation applicant name reuse', () => {
   };
   function setup(applicantName: string | null) {
     const db = {
+      invitationResumeSession: { deleteMany: jest.fn() },
       ownerInvitation: {
         findUnique: jest.fn().mockResolvedValue(row),
         update: jest.fn(),

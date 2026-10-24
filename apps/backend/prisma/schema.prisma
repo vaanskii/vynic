@@ -2485,6 +2485,7 @@ model OrganizationMembership {
 }
 
 model OwnerInvitation {
+  recoveryRequestedAt DateTime?
   id String @id @default(uuid())
   organizationId String
   email String
@@ -2500,6 +2501,46 @@ model OwnerInvitation {
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
   acceptedBy CustomerAccount? @relation(fields: [acceptedById], references: [id], onDelete: Restrict)
   @@index([organizationId, email])
+  @@schema("pos")
+}
+
+/// Opaque, HttpOnly browser continuation; the original invitation remains single use.
+model InvitationResumeSession {
+  sessionHash String @id
+  invitationId String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  @@index([invitationId])
+  @@index([expiresAt])
+  @@schema("pos")
+}
+
+/// Short-lived capability. Authority is rechecked against its issuer on every use.
+model InstallerDownloadGrant {
+  artifactId String
+  artifactBytes Int
+  artifactSha256 String
+  id String @id @default(uuid())
+  tokenHash String @unique
+  customerAccountId String?
+  platformUserId String?
+  venueId String?
+  expiresAt DateTime
+  revokedAt DateTime?
+  requestCount Int @default(0)
+  createdAt DateTime @default(now())
+  @@index([customerAccountId, createdAt])
+  @@index([platformUserId, createdAt])
+  @@schema("pos")
+}
+
+/// Hashed identities and durable, bounded fixed-window admission across replicas.
+model SecurityAdmission {
+  key String @id
+  window BigInt
+  count Int
+  updatedAt DateTime @default(now())
+  @@index([updatedAt])
   @@schema("pos")
 }
 

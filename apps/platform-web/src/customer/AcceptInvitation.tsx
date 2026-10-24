@@ -12,24 +12,31 @@ type Invitation = {
 export function AcceptInvitation() {
   const navigate = useNavigate();
   const location = useLocation();
+  const [invitationPath] = useState(location.pathname);
   const [token] = useState(
     () =>
-      new URLSearchParams(
-        (location.hash || window.location.hash).slice(1),
-      ).get("token") ?? "",
+      new URLSearchParams((location.hash || window.location.hash).slice(1)).get(
+        "token",
+      ) ?? "",
   );
   const [invitation, setInvitation] = useState<Invitation>();
   const [signedIn, setSignedIn] = useState(hasCustomerSession);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  const [recovery, setRecovery] = useState("");
   useEffect(() => {
-    // Keep the invitation only in memory after opening; never in query strings or storage.
-    window.history.replaceState(null, "", window.location.pathname);
-    if (location.hash) navigate(location.pathname, { replace: true });
     let active = true;
-    customerApi<Invitation>("invitations/inspect", { token })
+    customerApi<Invitation>(
+      token ? "invitations/session" : "invitations/session/resume",
+      token ? { token } : {},
+    )
       .then((data) => {
-        if (active) setInvitation(data);
+        if (active) {
+          setInvitation(data);
+          // Strip the original capability only after the HttpOnly continuation exists.
+          window.history.replaceState(null, "", invitationPath);
+          if (token) navigate(invitationPath, { replace: true });
+        }
       })
       .catch((e) => {
         if (active) setError(e.message);
@@ -37,7 +44,7 @@ export function AcceptInvitation() {
     return () => {
       active = false;
     };
-  }, [token]);
+  }, [token, invitationPath, navigate]);
   async function accept(fields: Record<string, FormDataEntryValue>) {
     setBusy(true);
     setError("");
@@ -52,7 +59,7 @@ export function AcceptInvitation() {
       const existing = signedIn || invitation?.existingAccount;
       const result = await customerApi(
         existing ? "invitations/accept" : "invitations/register",
-        { ...fields, token },
+        fields,
       );
       navigate("/dashboard", {
         replace: true,
@@ -64,7 +71,7 @@ export function AcceptInvitation() {
       // Refresh the form choice without consuming or losing the invitation.
       try {
         setInvitation(
-          await customerApi<Invitation>("invitations/inspect", { token }),
+          await customerApi<Invitation>("invitations/session/resume", {}),
         );
       } catch {
         setInvitation(undefined);
@@ -101,17 +108,19 @@ export function AcceptInvitation() {
                 void accept(Object.fromEntries(new FormData(e.currentTarget)));
               }}
             >
-              {!signedIn && !invitation.existingAccount && !invitation.displayName && (
-                <label>
-                  სახელი
-                  <input
-                    name="displayName"
-                    required
-                    maxLength={100}
-                    autoComplete="name"
-                  />
-                </label>
-              )}
+              {!signedIn &&
+                !invitation.existingAccount &&
+                !invitation.displayName && (
+                  <label>
+                    სახელი
+                    <input
+                      name="displayName"
+                      required
+                      maxLength={100}
+                      autoComplete="name"
+                    />
+                  </label>
+                )}
               {!signedIn && (
                 <label>
                   პაროლი
@@ -152,7 +161,40 @@ export function AcceptInvitation() {
           </div>
         )}
         {!invitation && error && (
-          <p>მოითხოვეთ ახალი მოწვევა Vynic-ის ადმინისტრატორთან.</p>
+          <form
+            onSubmit={async (e) => {
+              e.preventDefault();
+              if (busy) return;
+              const email = new FormData(e.currentTarget).get("email");
+              setBusy(true);
+              setRecovery("");
+              try {
+                await customerApi("invitations/request-new", { email });
+                setRecovery(
+                  "მოთხოვნა მიღებულია. თუ მოწვევა არსებობს, ადმინისტრატორი ახალ ბმულს მოგაწვდით. ელფოსტა ავტომატურად არ იგზავნება.",
+                );
+              } catch (e) {
+                setError((e as Error).message);
+              } finally {
+                setBusy(false);
+              }
+            }}
+          >
+            <p>მოითხოვეთ ახალი მოწვევა Vynic-ის ადმინისტრატორთან.</p>
+            <label>
+              მოწვევის ელფოსტა
+              <input
+                name="email"
+                type="email"
+                spellCheck={false}
+                maxLength={254}
+                required
+                autoComplete="email"
+              />
+            </label>
+            <button disabled={busy}>ახალი ბმულის მოთხოვნა</button>
+            {recovery && <p role="status">{recovery}</p>}
+          </form>
         )}
       </section>
     </PublicFrame>

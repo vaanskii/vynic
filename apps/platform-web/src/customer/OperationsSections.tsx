@@ -1,4 +1,5 @@
 import { WebsitePaymentReviews } from "./WebsitePaymentReviews";
+import { ProtectedInstallerDownloads } from "./ProtectedInstallerDownloads";
 export { SubscriptionSection } from "./SubscriptionSection";
 import { useState } from "react";
 import { customerApi } from "./api";
@@ -189,7 +190,7 @@ export function DevicesSection({
       <div className="portal-grid">
         <section className="portal-card">
           <h3>1. ჩამოტვირთეთ POS</h3>
-          <Downloads links={releaseLinks} keys={["posWindows"]} />
+          <ProtectedInstallerDownloads key={venue.venue.id} venueId={venue.venue.id} />
           <h3>2. დააკავშირეთ კოდით</h3>
           <p>გახსენით POS და შეიყვანეთ მოწყობილობის კოდი.</p>
           {venue.initialManagerSetupEligible ? <>

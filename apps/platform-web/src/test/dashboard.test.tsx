@@ -170,6 +170,7 @@ function serve({
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     async (path: string, body?: any, method?: string) => {
       if (path.endsWith("/hostname-requests")) return [];
+      if (path.endsWith("/downloads")) return { available: false, grants: [] };
       if (path.endsWith("/trial-requests")) return null;
       if (path === "access-requests/plans") return [];
       if (path.endsWith("/subscription"))
@@ -787,7 +788,8 @@ describe("Operational sections", () => {
     await user.click(
       (await nav()).getByRole("button", { name: "მოწყობილობები / POS" }),
     );
-    expect(screen.getByText(/Vynic POS · Windows —/)).toBeVisible();
+    expect(await screen.findByText(/დაცული ჩამოტვირთვა მზადდება/)).toBeVisible();
+    expect(screen.getByRole("button", { name: "ჩამოტვირთვის ბმულის შექმნა" })).toBeDisabled();
   });
 });
 

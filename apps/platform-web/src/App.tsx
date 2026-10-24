@@ -1,6 +1,7 @@
 import { isAdminHost } from "./site-origins";
 import { AccessRequest } from "./customer/AccessRequest";
 import { AcceptInvitation } from "./customer/AcceptInvitation";
+import { InstallerDownloadPage } from "./customer/InstallerDownloadPage";
 import { CustomerAuthPage } from "./customer/CustomerAuthPage";
 import { CustomerDashboard } from "./customer/CustomerDashboard";
 import { PortalRedirect } from "./customer/dashboard-routes";
@@ -96,6 +97,7 @@ export function AppRoutes({
         element={<Navigate to="/request-access" replace />}
       />
       <Route path="/invite/*" element={<AcceptInvitation />} />
+      <Route path="/download" element={<InstallerDownloadPage />} />
       <Route path="/dashboard/:section?" element={<CustomerDashboard />} />
       <Route
         path="/start"

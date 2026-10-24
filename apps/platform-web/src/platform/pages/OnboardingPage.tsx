@@ -1,4 +1,5 @@
 import { AccessRequests } from "./AccessRequests";
+import { ProtectedInstallerDownloads } from "../../customer/ProtectedInstallerDownloads";
 import { CustomerOnboarding } from "./CustomerOnboarding";
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
@@ -30,6 +31,7 @@ export function OnboardingPage() {
     <div className="customer">
       <main>
         <h1>{venueId ? "Restaurant onboarding" : "Customer onboarding"}</h1>
+        {!venueId && <ProtectedInstallerDownloads admin readonly={readonly} />}
         {error && <p role="alert">{error}</p>}
         {!venueId && <AccessRequests readonly={readonly} plans={plans} />}
         {venueId ? (
@@ -95,13 +97,12 @@ export function OnboardingPage() {
                 const f = new FormData(e.currentTarget);
                 try {
                   await platformOnboardingApi("policy", {
-                    enabled: f.get("enabled") === "on",
-                    trialPlanId: f.get("trialPlanId"),
-                    trialDays: Number(f.get("trialDays")),
-                    defaultWebsiteMode: f.get("defaultWebsiteMode"),
+                    enabled: data.enabled,
+                    trialPlanId: data.trialPlanId ?? "",
+                    trialDays: data.trialDays,
+                    defaultWebsiteMode: data.defaultWebsiteMode,
                     releaseLinks: Object.fromEntries(
                       [
-                        "posWindows",
                         "managerWindows",
                         "managerMacos",
                         "managerAndroid",
@@ -121,11 +122,10 @@ export function OnboardingPage() {
                 Public signup is a request only. Approvals and product
                 assignments are separate operator actions.
               </p>
-              <fieldset disabled={readonly || busy}>
+              <fieldset disabled={readonly || busy || !data}>
                 <input type="hidden" name="trialDays" value="14" />
                 <input type="hidden" name="defaultWebsiteMode" value="NONE" />
                 {[
-                  "posWindows",
                   "managerWindows",
                   "managerMacos",
                   "managerAndroid",

@@ -251,7 +251,7 @@ void main() {
         expect(arguments['bytes'], sent.transmissionBytes);
         expect(
           latin1.decode(List<int>.from(arguments['bytes'])),
-          contains('*** REPRINT COPY 1 ***'),
+          contains('COPY\n'),
         );
         expect(sent.destination.toMap(), before['destination']);
         expect(sent.capabilityProfile.toMap(), before['capabilityProfile']);

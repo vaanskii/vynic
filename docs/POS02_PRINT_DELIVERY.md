@@ -43,8 +43,12 @@ A sent ticket remains reachable for staff even when no uncertain jobs exist.
 
 An operator paper check requires an authenticated, freshly resolved local Staff
 identity, reason and stable request ID. A deliberate copy adds one flushed,
-audited attempt to the original job and prints REPRINT COPY plus the original
-job ID and duplicate-preparation warning. A no-byte failure permits a deliberate
+audited attempt to the original job and prints only the short `COPY` label.
+Ordinary output has no technical header. Job/attempt IDs and delivery diagnostics
+remain in the durable journal and application logs (and Windows spooler document
+name), not customer/kitchen paper. The ASCII copy label is safe on supported
+ESC/POS devices without assuming Georgian native text support. Uncertainty and
+the paper-check decision remain in the operator flow. A no-byte failure permits a deliberate
 retry of the same attempt. Replaying an accepted action adds no attempt or write,
 including after a copy's connection failure/retry. Legacy Sale copies and manual
 Order/reservation copies also require a labeled-copy prompt and recorded actor/
@@ -101,7 +105,7 @@ timestamps, observed slip counts and photos:
 
 | Case | Required observation |
 | --- | --- |
-| Normal Georgian 80mm output | Correct glyphs, wrapping, totals/comments, readable job ID, feed and cut; TCP sent still awaits paper check |
+| Normal Georgian 80mm output | Correct glyphs, wrapping, totals/comments, feed and cut; no production diagnostic header. Test-only fixtures explicitly include their evidence ID; TCP sent still awaits paper check |
 | Paper-out before/during send, then refill | Observed device behavior; sent/uncertain stays visible; no automatic duplicate after refill/restart |
 | Cable interruption during transmission | Actual slip count/content and uncertain/no-byte state; no write retry after uncertainty |
 | Printer power loss during transmission | Actual slip count/content after power recovery; no automatic duplicate |

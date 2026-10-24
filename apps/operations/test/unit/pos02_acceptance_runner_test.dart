@@ -309,10 +309,7 @@ void main() {
       expect(copy.toMap()['payloadSha256'], frozen);
       expect(copy.latest['actorId'], 'pos02-synthetic-operator');
       expect(copy.latest['reason'], PrintReconciliation.kitchenCopyReason);
-      expect(
-        latin1.decode(s.fakeSocket.writes.single),
-        contains('REPRINT COPY 1'),
-      );
+      expect(latin1.decode(s.fakeSocket.writes.single), contains('COPY\n'));
       await s.submit(go: true);
       expect(s.fakeSocket.writes, hasLength(1));
       s.recordObservation(

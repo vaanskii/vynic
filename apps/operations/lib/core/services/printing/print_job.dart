@@ -72,15 +72,14 @@ class PrintJob {
   Map<String, dynamic> toMap() =>
       jsonDecode(jsonEncode(_body)) as Map<String, dynamic>;
 
-  /// Printed identifiers and copy labels survive any later Order/Menu edits.
+  /// Internal identifiers and delivery diagnostics belong to the durable journal,
+  /// not the receipt. Only an explicitly admitted copy gets a paper label. A
+  /// no-byte retry keeps the same attempt, so it cannot turn an original into a
+  /// copy. ASCII is intentional: raw ESC/POS text cannot render Georgian safely.
   List<int> get transmissionBytes => [
     0x1b,
     0x40,
-    ...ascii.encode(
-      attempts.length == 1 && copyOf == null
-          ? 'JOB $id\n'
-          : '*** REPRINT COPY ${attempts.length - (copyOf == null ? 1 : 0)} ***\nJOB $id\nOriginal may already have printed.\n',
-    ),
+    if (attempts.length > 1 || copyOf != null) ...ascii.encode('COPY\n'),
     ...base64Decode(_body['payload'] as String),
   ];
 

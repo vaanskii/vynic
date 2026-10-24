@@ -1,9 +1,10 @@
 # Windows POS distribution: preparation and remaining release gates
 
-This is a local, unpublished preparation of the existing EXE distribution path.
-No production release origin, certificate, signing identity or feed is provisioned
-by this task; the repository's working publisher is a development LAN publisher.
-The proposed `releases.vynic.ge` name below is a plan, not a configured DNS record.
+The approved free beta release site and a dedicated beta metadata signing key
+now exist. The candidate installer and signed feed remain unpublished pending
+clean-install qualification and DNS/TLS verification. `releases.vynic.ge` is
+bound in Render, but its DNS record is still pending. No trusted Authenticode
+certificate was purchased. See the current beta status at the end of this file.
 Do not run the LAN publisher to publish production: it prepares a development API,
 private HTTPS origin and development trust.
 
@@ -36,19 +37,35 @@ resetting their updater DB is not a supported migration.
 
 ## Hosting proposal
 
-Use HTTPS object storage with a custom-domain CDN for installers, ZIPs and small
-signed JSON envelopes. Cloudflare R2 with a custom domain is one concrete option;
-S3-compatible storage behind a CDN can serve the same contract. Provider, account,
-cost and public/private distribution scope require approval before provisioning.
-Cloudflare's `r2.dev` endpoint is for development and is rate limited; use its
-custom-domain path for production. See [R2 public buckets](https://developers.cloudflare.com/r2/buckets/public-buckets/).
+For the initial budget-limited beta, the proposed route is a Render static site
+for a release landing page and small signed JSON envelopes, with immutable ZIP/EXE
+assets in a separate public, binaries-only GitHub repository. This keeps DNS at
+domenebi.ge: only the release subdomain's provider-directed record is needed.
+Both provisioning and a dedicated beta manifest key await approval. Check the
+workspace's domain, bandwidth and pipeline quotas before claiming zero cost; do
+not enable paid overages. The existing runtime downloader permits bounded HTTPS
+cross-host redirects, so GitHub's release asset redirects fit its current policy.
+See [Render static sites](https://render.com/docs/static-sites) and
+[GitHub release assets](https://docs.github.com/en/repositories/releasing-projects-on-github/about-releases).
+
+HTTPS object storage/CDN is a later alternative, subject to a concrete budget.
+R2 custom domains require Cloudflare-managed DNS; retaining external authoritative
+DNS through a partial zone requires an eligible paid plan. Do not recommend this
+as a free CNAME-only setup for the current domain, and do not point the production
+name at the development-only `r2.dev` endpoint. See
+[R2 public buckets](https://developers.cloudflare.com/r2/buckets/public-buckets/)
+and [partial DNS setup](https://developers.cloudflare.com/dns/zone-setups/partial-setup/).
+S3/CloudFront provisioning would be billable and is not approved. Vercel's current
+Hobby account is not the chosen route for commercial product distribution.
 
 Keep the API at `https://api.vynic.ge` and the product/Admin web apps on Vercel.
 Do not store uploaded installers on the Render Free web service filesystem:
 it is ephemeral and the service spins down after idle periods. See
 [Render Free limitations](https://render.com/docs/free).
 
-Proposed public paths, all under `https://releases.vynic.ge`:
+Proposed logical public paths under `https://releases.vynic.ge` (the initial beta
+uses `beta` in place of `stable`; artifact URLs may instead point directly to the
+immutable GitHub release assets):
 
 | Object | Path | Retention/cache |
 | --- | --- | --- |
@@ -228,9 +245,32 @@ qualification cannot be replaced by mocked process tests or macOS cross-builds.
 The task fetched `origin/main` and inspected `7898d58f7c2f24fc370d9a32467a29dc0224eb77`
 in `/tmp/vynic-windows-release-distribution`. The original checkout/index/stash
 and `/tmp/vynic-domain-onboarding-routing` were not edited. Parallels inventory
-executed successfully: a `Windows 11` VM exists and was stopped. It was not booted,
-and this task has not executed a Windows Flutter build, SignTool, installer or
-physical print. Historical lab build evidence is not current qualification.
+executed successfully. With later authorization, the existing `Windows 11` VM
+was started and the isolated source snapshot `1.0.0-16-707d8be5` was copied to a
+new `VynicBetaBuilds` directory. Offline dependency resolution and 14 Flutter
+readiness/UI tests passed on Windows 10.0.26200.9457 with Flutter 3.44.2 / Dart
+3.12.2. Native release compilation completed successfully in 139.7 seconds;
+Windows read-back confirms `Vynic POS`, `Vynic`, `1.0.0+16`, and an unsigned EXE.
+The complete runtime was exported and candidate ZIPs/receipt are kept separately
+in `/tmp/vynic-beta-candidate-1.0.0-16-707d8be5`. The printer-header fix was then compiled in the separate
+`1.0.0-16-print-label-v2` snapshot: 151 focused Flutter printing/update tests passed
+on Windows and native compilation completed in 111.9 seconds. Native Go updater
+and Setup suites also passed with an explicit asInvoker test resource (including
+the native shortcut roundtrip). Earlier unmanifested test executables were blocked
+by Windows elevation detection; no elevation or security bypass was used.
+These component tests are not clean-installer UI or physical-print qualification.
+The existing Edge process and installed POS/data are not test targets.
+
+The beta's displayed version is `1.0.0`, with independent app build number `16`.
+Both `VYNIC_APP_VERSION` and `VYNIC_APP_BUILD` must be defined for the cloud menu
+compatibility report. The live backend's optional
+`MENU_CANONICAL_MIN_BUILD_WINDOWS` policy has not been verified. Existing lab
+`1.0.14` / release `15` installs cannot receive `1.0.0` through the ordinary
+updater: it requires both a strictly newer SemVer and a larger release number.
+Do not reset existing high-water state or point old receipts at the beta feed;
+a data-preserving migration requires separate qualification. Existing working
+POS/Edge processes and real restaurant data were not modified. No trust root was
+installed. The public setup described below was explicitly approved separately.
 
 Python validation: `python3 -m unittest windows_distribution_test
 sign_windows_release_test windows_pe_test publish_local_pos_test
@@ -249,3 +289,37 @@ checked against its published SHA-256
 and extracted only into `/tmp/vynic-release-test-toolchain`, with module/build
 caches also in `/tmp`. No system compiler installation or repository dependency
 change was made. These tests do not certify native Windows or physical printers.
+
+## Approved free beta distribution status
+
+- Public binaries/metadata repository: `https://github.com/vaanskii/vynic-releases`.
+  Landing commit `32dfa086b714655deb5c654636f45663653978c6` contains only public
+  page files; no app source, executable, update feed or private key.
+- Render static site: `https://vynic-releases.onrender.com`, service
+  `srv-dbebg2vavr4c73acdgq0`, workspace `tea-cspa7ujgbbvc73bad3lg`.
+  First deploy `dep-dbebg37avr4c73acdhqg` is live. Auto-deploy/previews are off.
+- Dashboard verified Hobby, no payment card, 1/2 domains before adding releases,
+  8 MB/5 GB bandwidth and 7/500 pipeline minutes. The new hostname uses domain
+  2/2. No plan upgrade, paid service or billing method was added.
+- `releases.vynic.ge` is bound in Render but waiting for DNS and verification.
+  Required record: `CNAME releases -> vynic-releases.onrender.com`.
+  Domenebi.ge requires the user to sign in. No DNS record has been changed yet;
+  TLS issuance is pending DNS verification, not a confirmed certificate.
+- Dedicated Ed25519 key ID `vynic-beta-20261024`, public trust expiry
+  `2027-10-24T00:00:00Z`. Private material is outside all repositories in an
+  owner-only directory/file; never copy it into the release repository or ZIPs.
+  Secure backup has not yet been established. This is beta metadata trust, not
+  an Authenticode publisher certificate or SmartScreen reputation.
+- Local candidate: `/tmp/vynic-beta-candidate-1.0.0-16-print-label-v2`;
+  Setup has asInvoker metadata, amd64 architecture and no Authenticode signature.
+  Locally signed POS/bootstrap envelopes have a 30-day expiry; renew before expiry.
+  Retained repair metadata also needs renewal, without replacing artifact bytes.
+- Final release publication is gated on DNS/TLS, exact artifact hash/signature
+  verification and clean installer/runtime qualification. The current Windows VM
+  has a working POS; Setup uses the real user's known LocalAppData path and refuses
+  active POS processes. Do not install over that host or override its paths.
+
+Printer regression evidence: 137 focused tests passed on macOS, 151 including
+update suites on Windows, and targeted Dart analysis passed. Five pre-existing
+cross-Venue fixture cases were excluded; two failures were reproduced on the
+unchanged parent commit. Full printing-suite success is not claimed.

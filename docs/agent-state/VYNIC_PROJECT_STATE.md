@@ -606,6 +606,10 @@ current transport status.
   stable request IDs and a recorded fixed operator reason. Receipt copies and
   paper confirmation still require the unconfigured owner policy. Initial Order
   confirmation and remote creation replay preserve durable admission.
+  Ordinary paper contains no job/attempt diagnostics; deliberate copies carry
+  only `COPY`. IDs, reasons and uncertain outcomes stay in the durable journal
+  and logs; no-byte retries keep the original/copy distinction and uncertain
+  delivery still requires explicit operator reconciliation.
   The printer-scoped developer panel configures revisioned kitchen/bar/receipt/
   additional TCP or locally inventoried Windows routes and explicit paper/raster/
   cutter/sound capabilities. Legacy name/IP registrations remain unassigned.

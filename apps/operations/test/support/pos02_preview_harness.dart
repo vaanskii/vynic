@@ -312,7 +312,9 @@ class Pos02PreviewSession {
         bytes: [
           0x1b,
           0x40,
-          ...ascii.encode('*** TEST / DO NOT PREPARE ***\n'),
+          // Preview-only evidence: the physical guard checks this exact job ID.
+          // Production receipts no longer receive an automatic diagnostic header.
+          ...ascii.encode('JOB $id\n*** TEST / DO NOT PREPARE ***\n'),
           ...rendered,
         ],
       );

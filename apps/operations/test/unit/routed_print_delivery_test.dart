@@ -234,6 +234,11 @@ void main() {
           'documentName': 'Vynic JOB ${job.id}',
           'bytes': Uint8List.fromList(job.transmissionBytes),
         });
+        expect((call.arguments as Map)['bytes'], [
+          0x1b,
+          0x40,
+          ...base64Decode(job.toMap()['payload'] as String),
+        ]);
         expect(
           durable.capabilityProfile.toMap(),
           job.capabilityProfile.toMap(),

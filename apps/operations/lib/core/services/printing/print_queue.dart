@@ -161,6 +161,10 @@ class PrintQueue {
           state,
           detail: result.detail,
         );
+        developer.log(
+          'Job ${job.id}, attempt ${job.attemptId}: ${state.name}. ${result.detail}',
+          name: 'vynic.print',
+        );
         _complete(job.attemptId, result.sent);
         if (result.sent && job.protocolVersion == PrintJob.routedProtocol) {
           await _optionalBeep(job);

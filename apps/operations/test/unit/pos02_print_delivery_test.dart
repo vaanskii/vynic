@@ -35,6 +35,32 @@ void main() {
   });
 
   test(
+    'original tickets contain only the frozen document, not diagnostics',
+    () async {
+      for (final target in [
+        PrintQueueTarget.kitchen,
+        PrintQueueTarget.receipt,
+      ]) {
+        final job = f.job(id: 'original-${target.name}', target: target);
+        await PrintQueue.enqueue(job);
+        await f.dispatch();
+        PrintQueue.stop();
+        expect(f.transmitted.last, [
+          0x1b,
+          0x40,
+          ...base64Decode(job.toMap()['payload'] as String),
+        ]);
+        final stored = PrintJobRepository.read(job.id)!;
+        expect(stored.id, job.id);
+        expect(stored.attemptId, job.id);
+        expect(stored.state, PrintJobState.sent);
+        expect(stored.audit.last['attemptId'], job.id);
+        expect(stored.detail, isNotEmpty);
+      }
+    },
+  );
+
+  test(
     'acknowledged admission is flushed and survives a new Hive session before sending',
     () async {
       final input = f.job();
@@ -95,6 +121,12 @@ void main() {
       );
       await f.dispatch();
       expect(f.transmitted, hasLength(1));
+      expect(f.transmitted.single, [
+        0x1b,
+        0x40,
+        ...base64Decode(before.toMap()['payload'] as String),
+      ]);
+      expect(PrintJobRepository.read(before.id)!.attempts, hasLength(1));
       await PrintReconciliation.retryNotSent(
         before,
         'synthetic connection restored',
@@ -148,7 +180,7 @@ void main() {
     },
   );
   test(
-    'a reprint is one flushed audited attempt with frozen content and copy warning',
+    'a reprint is one flushed audited attempt with frozen content and only a copy label',
     () async {
       final job = await PrintQueue.enqueue(f.job());
       await f.dispatch();
@@ -169,8 +201,16 @@ void main() {
       expect(copy.state, PrintJobState.reprint);
       expect(copy.toMap()['payloadSha256'], job.toMap()['payloadSha256']);
       final printed = ascii.decode(copy.transmissionBytes, allowInvalid: true);
-      expect(printed, contains('REPRINT COPY 1'));
-      expect(printed, contains('Original may already have printed'));
+      expect(printed, contains('COPY\n'));
+      expect(printed, isNot(contains('Original may already have printed')));
+      expect(printed, isNot(contains('JOB ')));
+      expect(printed, isNot(contains(job.id)));
+      expect(copy.transmissionBytes, [
+        0x1b,
+        0x40,
+        ...ascii.encode('COPY\n'),
+        ...base64Decode(job.toMap()['payload'] as String),
+      ]);
       expect(copy.audit.where((e) => e['action'] == 'reprint'), hasLength(1));
       expect(copy.audit.last['actorId'], 'synthetic-operator');
       await f.dispatch();
@@ -182,6 +222,62 @@ void main() {
       );
       await f.dispatch();
       expect(f.transmitted, hasLength(2));
+    },
+  );
+  test(
+    'uncertain output stays held until an explicit minimally labeled copy',
+    () async {
+      final original = f.job();
+      f.mode = 'flush-error';
+      await PrintQueue.enqueue(original);
+      await f.dispatch();
+      PrintQueue.stop();
+      final uncertain = PrintJobRepository.read(original.id)!;
+      expect(uncertain.state, PrintJobState.uncertain);
+      expect(f.transmitted.single, [
+        0x1b,
+        0x40,
+        ...base64Decode(original.toMap()['payload'] as String),
+      ]);
+      await expectLater(
+        PrintReconciliation.retryNotSent(
+          uncertain,
+          'check printer',
+          'unsafe-retry',
+        ),
+        throwsStateError,
+      );
+      await f.dispatch();
+      PrintQueue.stop();
+      expect(f.transmitted, hasLength(1));
+      f.mode = 'sent';
+      await PrintReconciliation.reprint(
+        uncertain,
+        'paper checked',
+        'checked-copy',
+      );
+      await PrintReconciliation.reprint(
+        uncertain,
+        'paper checked',
+        'checked-copy',
+      );
+      await f.dispatch();
+      expect(f.transmitted, hasLength(2));
+      expect(f.transmitted.last, [
+        0x1b,
+        0x40,
+        ...ascii.encode('COPY\n'),
+        ...base64Decode(original.toMap()['payload'] as String),
+      ]);
+      final stored = PrintJobRepository.read(original.id)!;
+      expect(stored.attempts, hasLength(2));
+      expect(stored.attempts.first['state'], 'uncertain');
+      expect(
+        stored.audit.where((event) => event['action'] == 'reprint'),
+        hasLength(1),
+      );
+      expect(stored.latest['actorId'], 'synthetic-operator');
+      expect(stored.latest['reason'], 'paper checked');
     },
   );
   test(
@@ -462,7 +558,7 @@ void main() {
           f.transmitted.single.take(160).toList(),
           allowInvalid: true,
         ),
-        contains('REPRINT COPY 1'),
+        contains('COPY\n'),
       );
       expect(j.audit.first['reason'], 'synthetic copy');
     },
@@ -787,7 +883,7 @@ void main() {
         );
         expect(
           ascii.decode(job.transmissionBytes, allowInvalid: true),
-          contains('REPRINT COPY 1'),
+          contains('COPY\n'),
         );
       }
     },

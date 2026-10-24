@@ -139,7 +139,7 @@ void main() {
           fixture.transmitted.single.take(60).toList(),
           allowInvalid: true,
         ),
-        contains('REPRINT COPY'),
+        contains('COPY\n'),
       );
       await drainToast(tester);
       expect(tester.takeException(), isNull);

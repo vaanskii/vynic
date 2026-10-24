@@ -66,7 +66,8 @@ class WindowsSpoolerTransport {
   }) : _channel = channel ?? const MethodChannel('vynic/windows_spooler'),
        _isWindows = isWindows ?? (() => Platform.isWindows);
 
-  // The durable job's visible JOB/reprint header accompanies its frozen payload.
+  // Job identity stays in the spooler document name and durable journal; only
+  // deliberate copies add a paper label to their frozen payload.
   static const maxTransmissionBytes = PrintJob.maxPayloadBytes + 1024;
   static const maxQueueNameLength = 255;
   static const maxDescriptorLength = 1024;

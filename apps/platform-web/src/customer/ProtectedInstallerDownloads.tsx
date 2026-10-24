@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { customerApi } from "./api";
 import { platformOnboardingApi } from "../platform/api";
-import { publicSiteUrl } from "../site-origins";
 type DownloadGrant = {
   id: string;
   expiresAt: string;
@@ -11,7 +10,7 @@ type DownloadResponse = {
   available: boolean;
   grants?: DownloadGrant[];
   grant?: DownloadGrant;
-  downloadPath?: string;
+  downloadUrl?: string;
 };
 
 export function ProtectedInstallerDownloads({
@@ -76,8 +75,8 @@ export function ProtectedInstallerDownloads({
       )}
       <p>
         {admin
-          ? "Issue a link valid for 15 minutes. It includes Setup, POS and Edge. Share it manually; email delivery is not configured."
-          : "შექმენით 15 წუთით მოქმედი ბმული. პაკეტში შედის ინსტალერი, POS და Edge."}
+          ? "Issue a link valid for 15 minutes. It includes Setup, POS and Edge. Anyone holding the link can download until expiry or revocation. Share it manually; email delivery is not configured."
+          : "შექმენით 15 წუთით მოქმედი ბმული. პაკეტში შედის ინსტალერი, POS და Edge. ბმულის მიმღებს ჩამოტვირთვა შეუძლია ვადის გასვლამდე ან გაუქმებამდე."}
       </p>
       {error && <p role="alert">{error}</p>}
       {message && <p role="status">{message}</p>}
@@ -97,11 +96,11 @@ export function ProtectedInstallerDownloads({
           onClick={() =>
             void run(async () => {
               const result = await call("", {});
-              if (!result.downloadPath || !result.grant)
+              if (!result.downloadUrl || !result.grant)
                 throw new Error(
                   "Download link could not be created. Try again.",
                 );
-              setLink(publicSiteUrl(result.downloadPath));
+              setLink(result.downloadUrl);
               setExpiresAt(result.grant.expiresAt);
             })
           }

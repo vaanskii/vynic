@@ -19,6 +19,8 @@ import { PlatformActor } from '../platform/platform-auth-context';
 import type { PlatformPrincipal } from '../platform/platform-auth-context';
 import { PlatformAuthGuard } from '../platform/platform-auth.guard';
 import { isSameOriginRequest } from '../website/tenancy/same-origin';
+import { randomBytes } from 'node:crypto';
+import { installerDownloadBridge } from './installer-download-bridge';
 
 @Controller('platform/onboarding/downloads')
 @UseGuards(PlatformAuthGuard)
@@ -83,13 +85,32 @@ export class CustomerInstallerDownloadsController {
   }
 }
 
-@Controller('customer/downloads')
+@Controller('customer/downloads/access/:id')
 export class InstallerDownloadFileController {
   constructor(private readonly service: InstallerDownloadsService) {}
+  @Get()
+  async bridge(
+    @Param('id') id: string,
+    @Req() req: Request,
+    @Res() res: Response,
+  ) {
+    const nonce = randomBytes(18).toString('base64url');
+    res.set({
+      'Cache-Control': 'private, no-store',
+      'Referrer-Policy': 'no-referrer',
+      'X-Content-Type-Options': 'nosniff',
+      'X-Robots-Tag': 'noindex, nofollow, noarchive',
+      'X-Frame-Options': 'DENY',
+      'Content-Security-Policy': `default-src 'none'; script-src 'nonce-${nonce}'; connect-src 'self'; base-uri 'none'; frame-ancestors 'none'; form-action 'none'`,
+    });
+    const grant = await this.service.linkContext(id, req.ip ?? 'unknown');
+    res.type('html').send(installerDownloadBridge(grant.id, nonce));
+  }
   @Header('Cache-Control', 'private, no-store')
   @Header('Referrer-Policy', 'no-referrer')
-  @Post('open')
+  @Post('session')
   async open(
+    @Param('id') id: string,
     @Body() body: Record<string, unknown>,
     @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
@@ -106,29 +127,34 @@ export class InstallerDownloadFileController {
     const grant = await this.service.resolve(
       body.token ?? req.cookies?.['vynic-download'],
       req.ip ?? 'unknown',
+      id,
     );
     if (body.token)
       res.cookie('vynic-download', body.token, {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'strict',
-        path: '/customer/downloads',
+        path: '/customer/downloads/access/' + grant.id,
         expires: grant.expiresAt,
       });
     return { expiresAt: grant.expiresAt, ...this.service.status() };
   }
-  @Head('file') head(@Req() req: Request, @Res() res: Response) {
-    return this.file(req, res);
+  @Head('file') head(
+    @Param('id') id: string,
+    @Req() req: Request,
+    @Res() res: Response,
+  ) {
+    return this.file(id, req, res);
   }
   @Header('Cache-Control', 'private, no-store')
   @Header('Referrer-Policy', 'no-referrer')
   @Get('file')
-  file(@Req() req: Request, @Res() res: Response) {
+  file(@Param('id') id: string, @Req() req: Request, @Res() res: Response) {
     res.set({
       'Cache-Control': 'private, no-store',
       'Referrer-Policy': 'no-referrer',
       'X-Content-Type-Options': 'nosniff',
     });
-    return this.service.stream(req.cookies?.['vynic-download'], req, res);
+    return this.service.stream(req.cookies?.['vynic-download'], req, res, id);
   }
 }

@@ -31,7 +31,8 @@ it("issues and revokes an Admin link through the POST endpoints", async () => {
         active = true;
         body = {
           grant,
-          downloadPath: "/download#token=synthetic-download-capability",
+          downloadUrl:
+            "https://releases.vynic.ge/windows/access/synthetic-grant#token=synthetic-download-capability",
         };
       } else if (method === "POST" && url.endsWith("/synthetic-grant/revoke")) {
         active = false;
@@ -59,7 +60,9 @@ it("issues and revokes an Admin link through the POST endpoints", async () => {
     await screen.findByRole("link", { name: "Open download" }),
   ).toHaveAttribute(
     "href",
-    expect.stringContaining("/download#token=synthetic-download-capability"),
+    expect.stringContaining(
+      "https://releases.vynic.ge/windows/access/synthetic-grant#token=synthetic-download-capability",
+    ),
   );
   await user.click(screen.getByRole("button", { name: "Revoke link" }));
   await waitFor(() =>

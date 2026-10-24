@@ -4,6 +4,17 @@ import { canonicalPageResponse } from "../../packages/website-client/server/cano
 import { isWebsitePage } from "../../packages/website-client/server/website-page.js";
 
 export default function proxy(request: Request) {
+  if (/^\/download\/?$/.test(new URL(request.url).pathname))
+    return new Response(null, {
+      status: ["GET", "HEAD"].includes(request.method) ? 308 : 404,
+      headers: {
+        ...(["GET", "HEAD"].includes(request.method)
+          ? { Location: "https://www.vynic.ge/#" }
+          : {}),
+        "Cache-Control": "private, no-store",
+        "Referrer-Policy": "no-referrer",
+      },
+    });
   const canonical = canonicalPageResponse(request, "platform", [
     process.env.VERCEL_URL,
     process.env.VERCEL_BRANCH_URL,

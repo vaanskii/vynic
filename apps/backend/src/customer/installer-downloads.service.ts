@@ -162,7 +162,11 @@ export class InstallerDownloadsService {
     });
     return {
       grant,
-      downloadPath: '/download#token=' + token,
+      downloadUrl:
+        'https://releases.vynic.ge/windows/access/' +
+        grant.id +
+        '#token=' +
+        token,
       ...this.status(),
     };
   }
@@ -205,20 +209,37 @@ export class InstallerDownloadsService {
       return { revoked: true };
     });
   }
-  async resolve(token: unknown, ip: string) {
-    await admit(this.db, 'installer-open-ip', ip, 60, 3600000);
-    if (typeof token !== 'string' || !/^[A-Za-z0-9_-]{43}$/.test(token))
+  async linkContext(id: string, ip: string) {
+    await admit(this.db, 'installer-link-ip', ip, 60, 3600000);
+    if (!/^[a-f0-9-]{36}$/.test(id))
       throw new NotFoundException('Download unavailable or expired');
     const row = await this.db.installerDownloadGrant.findUnique({
-      where: { tokenHash: secretHash(token) },
+      where: { id },
     });
     if (!row || row.revokedAt || row.expiresAt <= new Date())
       throw new NotFoundException('Download unavailable or expired');
     await this.authorize(this.db, row);
     return row;
   }
-  async stream(token: unknown, req: Request, res: Response) {
-    const grant = await this.resolve(token, req.ip ?? 'unknown');
+  async resolve(token: unknown, ip: string, id?: string) {
+    await admit(this.db, 'installer-open-ip', ip, 60, 3600000);
+    if (typeof token !== 'string' || !/^[A-Za-z0-9_-]{43}$/.test(token))
+      throw new NotFoundException('Download unavailable or expired');
+    const row = await this.db.installerDownloadGrant.findUnique({
+      where: { tokenHash: secretHash(token) },
+    });
+    if (
+      !row ||
+      (id && row.id !== id) ||
+      row.revokedAt ||
+      row.expiresAt <= new Date()
+    )
+      throw new NotFoundException('Download unavailable or expired');
+    await this.authorize(this.db, row);
+    return row;
+  }
+  async stream(token: unknown, req: Request, res: Response, id: string) {
+    const grant = await this.resolve(token, req.ip ?? 'unknown', id);
     const config = this.configuration();
     if (!config.ready)
       throw new ServiceUnavailableException(

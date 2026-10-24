@@ -6,9 +6,13 @@ assets intact. Old EXE, POS ZIP and Edge ZIP URLs were anonymously verified 404.
 The source repository `vaanskii/vynic` is public; its visibility was not changed.
 Never commit protected binaries or credentials to that repository.
 
-The release site directs visitors to request access or sign in. Old bootstrap and
-repair paths are replaced by authorization notices. Previously obtained files and
-already-issued third-party CDN URLs cannot be recalled by this change.
+The release origin is technical-only: root, index and unrecognized paths return
+neutral 404. It contains no installer catalog, signup page or public download
+landing. Main-site `/download` GET/HEAD redirects to the canonical main site with
+an explicit cleared fragment; other methods return 404. Old public bootstrap and
+repair copies are removed. Only `/windows/access/*` routes to the backend.
+Previously obtained files and already-issued third-party CDN URLs cannot be
+recalled by this change.
 
 ## Download authority and transport
 
@@ -23,11 +27,20 @@ already-issued third-party CDN URLs cannot be recalled by this change.
   issuer/venue. Every open/file request rechecks expiry, revocation, active issuer,
   customer membership and current POS entitlement. Revocation cannot recall bytes
   already received or abort a transfer already admitted.
-- Links use `/download#token=…`. A same-origin, CSRF-checked POST exchanges the
-  fragment for a host-only HttpOnly/SameSite=Strict cookie, Secure in production,
-  scoped to `/customer/downloads`. No secret enters query strings, access-log
-  paths, client storage, audit metadata, referrers or client bundles. Do not enable
-  request/response-body or Cookie logging on these endpoints.
+- Issued links use `https://releases.vynic.ge/windows/access/<grant-id>#token=…`.
+  Render redirects the non-secret selector to the backend; the fragment stays in
+  the browser. Only a live, authorized grant selector gets a minimal transport
+  handshake, with no catalog/navigation. Its nonce-protected script clears the
+  fragment and performs a same-origin CSRF-checked POST. A host-only HttpOnly,
+  SameSite=Strict cookie (Secure in production) is scoped to that single grant.
+  The selector alone cannot retrieve bytes. GET/HEAD/Range files additionally
+  require the matching secret/cookie. There is no generic download page. No
+  secret enters query strings, access-log paths, client storage, audit metadata,
+  referrers or client bundles. The complete
+  link is a bearer capability: a recipient can forward it, and the next holder
+  may download until expiry/revocation. Rechecking the issuer does not identify
+  the recipient; this is explicitly not recipient identity-bound authentication.
+  Do not enable request/response-body or Cookie logging on these endpoints.
 - The backend streams the fixed GitHub draft asset, following only HTTPS redirects
   to `release-assets.githubusercontent.com` internally. The storage credential
   goes only to `api.github.com`; the client never receives an upstream Location or
@@ -61,7 +74,7 @@ this change creates no Cloud-to-LAN calls or new live POS updater behavior.
 Unsigned Windows beta acceptance remains; real clean-PC installation/repair and
 physical printer qualification are separate pending gates.
 
-## Deployment prerequisite
+## Backend configuration
 
 Set only on the Render backend, using its secret UI:
 
@@ -74,11 +87,13 @@ Set only on the Render backend, using its secret UI:
   byte size and SHA-256.
 
 Keep the release draft. Do not publish the protected archive or private credential.
-Until all configuration exists, APIs and both UIs explicitly report unavailable;
-no token redirect or cosmetic public-download gate is substituted. A repository
-credential needs separate exact approval/configuration; none is minted by this
-implementation. Email sender integration is also unconfigured, and no real email
-is sent. Admin can copy approved invitation/download links manually.
+The separately approved credential `Vynic Render releases read` is configured on
+the backend, restricted to this one repository with Contents and Metadata read-only
+and expiration on November 23, 2026. Renew it through the secure provider UI before
+expiry. Missing configuration makes APIs and both UIs explicitly unavailable;
+no permanent public-asset redirect or cosmetic public-download gate is substituted.
+Email sender integration remains unconfigured, and no real email is sent. Admin
+can copy approved invitation/download links manually.
 
 Render free-instance sleep may delay the first request. Downloads stream through
 the API and consume actual upstream and Render transfer quotas (about 45 MiB per

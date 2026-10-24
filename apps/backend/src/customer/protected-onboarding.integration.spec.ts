@@ -375,7 +375,7 @@ const url = process.env.PROTECTED_ONBOARDING_TEST_DATABASE_URL;
         { customerAccountId: owner.id, venueId: venue.id },
         'grant-owner-ip',
       );
-      const token = result.downloadPath.split('=')[1];
+      const token = result.downloadUrl.split('=')[1];
       const row = await db.installerDownloadGrant.findUniqueOrThrow({
         where: { id: result.grant.id },
       });
@@ -414,7 +414,7 @@ const url = process.env.PROTECTED_ONBOARDING_TEST_DATABASE_URL;
         data: { expiresAt: new Date(0) },
       });
       await expect(
-        downloads.resolve(expired.downloadPath.split('=')[1], 'expired-ip'),
+        downloads.resolve(expired.downloadUrl.split('=')[1], 'expired-ip'),
       ).rejects.toMatchObject({ status: 404 });
     });
     it('provides HEAD and Range without a public redirect and never sends storage credentials to the asset host', async () => {
@@ -423,9 +423,25 @@ const url = process.env.PROTECTED_ONBOARDING_TEST_DATABASE_URL;
         { platformUserId: actor.platformUserId },
         'stream-admin',
       );
-      const token = issued.downloadPath.split('=')[1];
+      const token = issued.downloadUrl.split('=')[1];
+      const link = new URL(issued.downloadUrl);
+      expect(link.origin).toBe('https://releases.vynic.ge');
+      expect(link.pathname).toBe(`/windows/access/${issued.grant.id}`);
+      expect(link.search).toBe('');
+      const bridge = await http()
+        .get(`/customer/downloads/access/${issued.grant.id}`)
+        .expect(200);
+      expect(bridge.headers['content-type']).toContain('text/html');
+      expect(bridge.headers['cache-control']).toContain('no-store');
+      expect(bridge.headers['content-security-policy']).toContain(
+        "default-src 'none'",
+      );
+      expect(bridge.text).not.toContain(token);
+      await http()
+        .get(`/customer/downloads/access/${issued.grant.id}/file`)
+        .expect(404);
       const opened = await http()
-        .post('/customer/downloads/open')
+        .post(`/customer/downloads/access/${issued.grant.id}/session`)
         .set({
           'X-CSRF-Token': 'vynic-download',
           Origin: 'http://127.0.0.1',
@@ -433,6 +449,15 @@ const url = process.env.PROTECTED_ONBOARDING_TEST_DATABASE_URL;
         })
         .send({ token })
         .expect(201);
+      expect(opened.headers['set-cookie'][0]).toContain(
+        `Path=/customer/downloads/access/${issued.grant.id}`,
+      );
+      expect(opened.headers['set-cookie'][0]).toContain('HttpOnly');
+      expect(opened.headers['set-cookie'][0]).not.toContain('Domain=');
+      await http()
+        .get(`/customer/downloads/access/${randomUUID()}/file`)
+        .set('Cookie', cookie(opened))
+        .expect(404);
       const spy = jest
         .spyOn(globalThis, 'fetch')
         .mockImplementation(async (url: any, init: any) =>
@@ -463,22 +488,22 @@ const url = process.env.PROTECTED_ONBOARDING_TEST_DATABASE_URL;
         );
       try {
         const r = await http()
-          .get('/customer/downloads/file')
+          .get(`/customer/downloads/access/${issued.grant.id}/file`)
           .set('Cookie', cookie(opened))
           .expect(200);
         expect(r.headers.location).toBeUndefined();
         expect(r.headers['cache-control']).toContain('no-store');
         await http()
-          .head('/customer/downloads/file')
+          .head(`/customer/downloads/access/${issued.grant.id}/file`)
           .set('Cookie', cookie(opened))
           .expect(200);
         await http()
-          .get('/customer/downloads/file')
+          .get(`/customer/downloads/access/${issued.grant.id}/file`)
           .set('Cookie', cookie(opened))
           .set('Range', 'bytes=0-2')
           .expect(206);
         await http()
-          .get('/customer/downloads/file')
+          .get(`/customer/downloads/access/${issued.grant.id}/file`)
           .set('Cookie', cookie(opened))
           .set('Range', 'bytes=99-')
           .expect(416);
@@ -490,6 +515,96 @@ const url = process.env.PROTECTED_ONBOARDING_TEST_DATABASE_URL;
       } finally {
         spy.mockRestore();
       }
+    });
+    it.each([
+      'revoked',
+      'expired',
+      'issuer_disabled',
+      'membership_removed',
+      'entitlement_removed',
+    ])('rechecks %s on bridge, GET, HEAD and Range', async (kind) => {
+      syntheticStorage();
+      const account = await db.customerAccount.create({
+        data: {
+          email: `${randomUUID()}@test.invalid`,
+          displayName: 'Transfer fence fixture',
+          passwordHash: 'unused',
+          memberships: { create: { organizationId: venue.organizationId } },
+        },
+      });
+      const issued = await downloads.issue(
+        { customerAccountId: account.id, venueId: venue.id },
+        'fence-' + kind,
+      );
+      const base = `/customer/downloads/access/${issued.grant.id}`;
+      const opened = await http()
+        .post(base + '/session')
+        .set({
+          'X-CSRF-Token': 'vynic-download',
+          Origin: 'http://127.0.0.1',
+          Host: '127.0.0.1',
+        })
+        .send({ token: issued.downloadUrl.split('=')[1] })
+        .expect(201);
+      if (kind === 'revoked')
+        await downloads.revoke(issued.grant.id, {
+          customerAccountId: account.id,
+        });
+      if (kind === 'expired')
+        await db.installerDownloadGrant.update({
+          where: { id: issued.grant.id },
+          data: { expiresAt: new Date(0) },
+        });
+      if (kind === 'issuer_disabled')
+        await db.customerAccount.update({
+          where: { id: account.id },
+          data: { isActive: false },
+        });
+      if (kind === 'membership_removed')
+        await db.organizationMembership.delete({
+          where: {
+            customerAccountId_organizationId: {
+              customerAccountId: account.id,
+              organizationId: venue.organizationId,
+            },
+          },
+        });
+      if (kind === 'entitlement_removed')
+        await db.venueSubscription.update({
+          where: { venueId: venue.id },
+          data: { status: 'SUSPENDED' },
+        });
+      const fetchSpy = jest.spyOn(globalThis, 'fetch');
+      try {
+        const status = kind === 'entitlement_removed' ? 403 : 404;
+        await http().get(base).expect(status);
+        await http()
+          .get(base + '/file')
+          .set('Cookie', cookie(opened))
+          .expect(status);
+        await http()
+          .head(base + '/file')
+          .set('Cookie', cookie(opened))
+          .expect(status);
+        await http()
+          .get(base + '/file')
+          .set('Cookie', cookie(opened))
+          .set('Range', 'bytes=0-2')
+          .expect(status);
+        expect(fetchSpy).not.toHaveBeenCalled();
+      } finally {
+        fetchSpy.mockRestore();
+        if (kind === 'entitlement_removed')
+          await db.venueSubscription.update({
+            where: { venueId: venue.id },
+            data: { status: 'ACTIVE' },
+          });
+      }
+    });
+    it('has no generic download page or legacy file route', async () => {
+      await http().get('/customer/downloads').expect(404);
+      await http().get('/customer/downloads/file').expect(404);
+      await http().post('/customer/downloads/open').send({}).expect(404);
     });
     it('enforces durable concurrent rate limits across callers', async () => {
       const identity = randomUUID();

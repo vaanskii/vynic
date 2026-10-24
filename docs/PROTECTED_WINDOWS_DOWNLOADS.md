@@ -140,3 +140,15 @@ coverage retains real grant authorization, expiry/revocation and issuer isolatio
 These local cases do not attest the owner's live browser session. A fresh authorized
 link and browser download approval remain necessary for the production handoff;
 authenticated GitHub readback alone does not verify that handoff.
+
+A production startup performs one bounded read-only asset-header check with the
+existing server-held credential. It does not create a grant, retrieve a complete
+archive, or block API/restaurant readiness. Its single-line diagnostic contains
+only the selected nonsecret asset/size/hash, provider status, a fixed error class,
+rate-limit counters and a parsed credential-expiry timestamp when supplied.
+Provider error-body parsing is capped at 8 KiB; raw bodies, credentials and signed
+redirect URLs never enter the log. This distinguishes provider permission refusal
+from expiry, rate limiting, missing assets and redirect/length failures without
+requiring a customer capability to diagnose storage. Runtime client failures use
+the same classification. Byte ranges are sent to the fixed GitHub API too, since
+that endpoint may return bytes directly as well as redirecting to the asset host.

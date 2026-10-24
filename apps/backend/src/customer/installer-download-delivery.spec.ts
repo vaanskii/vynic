@@ -148,6 +148,29 @@ describe('Protected installer browser delivery', () => {
       if (String(url).includes('release-assets'))
         expect((init!.headers as any).Authorization).toBeUndefined();
   });
+  it('supports a ranged asset streamed directly by the GitHub API', async () => {
+    const spy = jest
+      .spyOn(globalThis, 'fetch')
+      .mockResolvedValue(
+        new Response('345', {
+          status: 206,
+          headers: {
+            'content-type': 'application/octet-stream',
+            'content-length': '3',
+            'content-range': 'bytes 3-5/10',
+          },
+        }),
+      );
+    const r = await request(app.getHttpServer())
+      .get(path)
+      .buffer(true)
+      .parse(binary)
+      .set('Cookie', cookie)
+      .set('Range', 'bytes=3-5')
+      .expect(206);
+    expect(r.body).toEqual(Buffer.from('345'));
+    expect((spy.mock.calls[0][1]!.headers as any).Range).toBe('bytes=3-5');
+  });
   it('follows a technical origin redirect through the cookie handshake to complete and resumed HTTP delivery', async () => {
     const nativeFetch = globalThis.fetch;
     jest.spyOn(downloads, 'linkContext').mockResolvedValue(grant as any);

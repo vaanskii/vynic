@@ -3,6 +3,7 @@ import {
   ForbiddenException,
   Injectable,
   Logger,
+  OnApplicationBootstrap,
   NotFoundException,
   ServiceUnavailableException,
 } from '@nestjs/common';
@@ -15,6 +16,10 @@ import { requireCommercialFeature } from '../entitlements/commercial-state';
 import type { CustomerPrincipal } from './customer-auth';
 import type { PlatformPrincipal } from '../platform/platform-auth-context';
 import { admit, secretHash } from './security-admission';
+import {
+  checkInstallerStorage,
+  classifyInstallerStorage,
+} from './installer-storage-readiness';
 
 type Issuer =
   | { customerAccountId: string; venueId: string; platformUserId?: never }
@@ -31,9 +36,40 @@ const fields = {
 } as const;
 
 @Injectable()
-export class InstallerDownloadsService {
+export class InstallerDownloadsService implements OnApplicationBootstrap {
   private readonly logger = new Logger(InstallerDownloadsService.name);
   constructor(private readonly db: PrismaService) {}
+  onApplicationBootstrap() {
+    if (process.env.NODE_ENV !== 'production') return;
+    const config = this.configuration();
+    if (!config.ready) return;
+    // One bounded read-only check, using the existing server credential. No grant
+    // is created and API/restaurant readiness does not wait on external storage.
+    void checkInstallerStorage({
+      token: config.token!,
+      assetId: config.assetId!,
+      bytes: config.bytes,
+    })
+      .then((result) =>
+        this.logger.log(
+          JSON.stringify({
+            event: 'installer_storage_startup_check',
+            assetId: config.assetId,
+            bytes: config.bytes,
+            sha256: config.sha256,
+            ...result,
+          }),
+        ),
+      )
+      .catch(() =>
+        this.logger.warn(
+          JSON.stringify({
+            event: 'installer_storage_startup_check',
+            classification: 'diagnostic_failure',
+          }),
+        ),
+      );
+  }
   configuration() {
     const {
       VYNIC_RELEASE_GITHUB_TOKEN: token,
@@ -299,10 +335,13 @@ export class InstallerDownloadsService {
     res.on('close', closed);
     let upstream: globalThis.Response | undefined;
     let phase = 'storage_request';
+    let storageHost = 'github_api';
+    let storageFailure: object = {};
     try {
       let url = `https://api.github.com/repos/vaanskii/vynic-releases/releases/assets/${config.assetId}`;
       for (let hop = 0; hop < 4; hop++) {
         const api = new URL(url).hostname === 'api.github.com';
+        storageHost = api ? 'github_api' : 'artifact_host';
         upstream = await fetch(url, {
           method: api ? 'GET' : req.method,
           redirect: 'manual',
@@ -316,7 +355,7 @@ export class InstallerDownloadsService {
                   'X-GitHub-Api-Version': '2022-11-28',
                 }
               : {}),
-            ...(range && !api ? { Range: `bytes=${start}-${end}` } : {}),
+            ...(range ? { Range: `bytes=${start}-${end}` } : {}),
           },
         });
         if (![301, 302, 303, 307, 308].includes(upstream.status)) break;
@@ -345,6 +384,11 @@ export class InstallerDownloadsService {
           upstream.headers.get('content-range') !==
             `bytes ${start}-${end}/${config.bytes}`)
       ) {
+        if (upstream)
+          storageFailure = await classifyInstallerStorage(
+            upstream,
+            storageHost,
+          );
         await upstream?.body?.cancel();
         throw new Error('Storage response rejected');
       }
@@ -372,16 +416,20 @@ export class InstallerDownloadsService {
         );
       }
     } catch {
-      this.logger.warn({
-        event: 'installer_storage_unavailable',
-        phase,
-        status: upstream?.status ?? null,
-        json: upstream?.headers.get('content-type')?.includes('json') ?? false,
-        expectedBytes: end - start + 1,
-        receivedLength: upstream?.headers.get('content-length') ?? null,
-        method: req.method,
-        range: Boolean(range),
-      });
+      this.logger.warn(
+        JSON.stringify({
+          event: 'installer_storage_unavailable',
+          ...storageFailure,
+          phase,
+          status: upstream?.status ?? null,
+          json:
+            upstream?.headers.get('content-type')?.includes('json') ?? false,
+          expectedBytes: end - start + 1,
+          receivedLength: upstream?.headers.get('content-length') ?? null,
+          method: req.method,
+          range: Boolean(range),
+        }),
+      );
       await this.audit(this.db, grant, 'installer_download.failed', grant.id);
       if (res.headersSent) res.destroy();
       else

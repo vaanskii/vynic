@@ -177,7 +177,10 @@ current transport status.
   baseline; this is a fresh-install package, not an existing-terminal upgrade or
   a permitted downgrade from lab 1.0.14. Authenticode, clean install/runtime,
   existing-terminal handoff and physical printers remain unqualified. End-user
-  browser grant transfer remains pending owner login/download permission.
+  browser delivery is blocked by a confirmed storage-provider 403 on the
+  backend's authorized HEAD request. Earlier storage readback used the desktop
+  release credential and did not verify the Render-held credential. Safe provider
+  diagnostics are implemented; client transfer remains unverified.
   Current delivery and owner checklist: `docs/PROTECTED_WINDOWS_DOWNLOADS.md`,
   `docs/WINDOWS_BETA_TEST_INSTALL.md`.
 

@@ -1,0 +1,155 @@
+{
+  "runtimeSourceCommit": "1dea429408683d746304e1ed77ed2db693113acf",
+  "mainAtRuntimePublication": "1dea429408683d746304e1ed77ed2db693113acf",
+  "releaseId": 422983256,
+  "assetId": "673319647",
+  "draft": true,
+  "prerelease": true,
+  "artifactName": "Vynic-Windows-1.0.1-build18-beta-offline.zip",
+  "bytes": 47038575,
+  "sha256": "3065c95c77012bbb5f421f83bb3118fe250f4c9f8ba4099e89a67c4e7ddcd4f7",
+  "metadataExpires": "2026-11-23T21:06:43Z",
+  "oldBuild16AssetsUnchanged": true,
+  "qualification": {
+    "sourceCommit": "1dea429408683d746304e1ed77ed2db693113acf",
+    "sourceArchive": {
+      "commit": "1dea429408683d746304e1ed77ed2db693113acf",
+      "archiveSha256": "0b020736b7a096836e5aa2af93a3b7ace68649dd0127950d2666d89292161efd",
+      "version": "1.0.1",
+      "build": 18,
+      "channel": "beta"
+    },
+    "version": "1.0.1",
+    "appBuild": 18,
+    "release": 18,
+    "channel": "beta",
+    "apiOrigin": "https://api.vynic.ge",
+    "nativeFlutterTests": 335,
+    "macFlutterTests": 335,
+    "backendUnitHTTPTests": 29,
+    "postgresPassed": 107,
+    "postgresKnownBaselineFailures": 2,
+    "protectedHTTPTests": 14,
+    "goSetupUpdaterSignatureSuites": 5,
+    "metadataExpires": "2026-11-23T21:06:43Z",
+    "signatureVerification": "Go production policy and independent OpenSSL Ed25519 verification passed",
+    "schemas": {
+      "hive": 9,
+      "edge": 2,
+      "posBinaryLayout": 2,
+      "updaterProtocol": 1
+    },
+    "authenticode": "NotSigned; metadata signatures are separate",
+    "runtimeDLLs": "Three previously verified Microsoft-signed x64 CRT DLLs, 14.44.35211.0",
+    "cleanInstallQualified": false,
+    "physicalPrintersQualified": false,
+    "automaticUpdatesActive": false,
+    "artifacts": {
+      "VynicPOS-1.0.1-build18-windows-amd64.zip": {
+        "bytes": 19612611,
+        "sha256": "bfeef3fe38d7a735947664c4c59d84029e80fb16f64eebd115183b56f8713c1d"
+      },
+      "VynicEdge-1.0.1.18-windows-amd64.zip": {
+        "bytes": 14046029,
+        "sha256": "e441793d0b920a5a15959b850973651fd0e68152b81a02fef43b820f4f5b1336"
+      },
+      "VynicSetup-1.0.1-build18-beta.exe": {
+        "bytes": 25222656,
+        "sha256": "72fdefa2d155a1ebbf3b086fb3acfec229f01f2910593ea12f13d294c0067464"
+      }
+    },
+    "restrictions": "No installer/POS/Edge runtime executed; no production transaction changes; no stable promotion"
+  },
+  "packageVerification": {
+    "status": "PASS",
+    "nativeFilesMatched": 23,
+    "payload": {
+      "newAOT": "1c81d98b1dbd61cecd79ea51bd1e5fc390cd859208cd796a95fd2b7b344b364a",
+      "newExecutable": "c634f6a0e4de95b396022c37a3c76c61c51b489a66926cf7a3e918eaade6266c",
+      "differentFromBuild16": true
+    },
+    "versions": {
+      "pos": "1.0.1+18",
+      "edge": "1.0.1.18",
+      "setup": "1.0.1.18"
+    },
+    "schemas": {
+      "hive": 9,
+      "edge": 2,
+      "layout": 2
+    },
+    "lowerThanLab1.0.14": true
+  },
+  "upstreamReadback": {
+    "assetId": "673319647",
+    "releaseId": 422983256,
+    "draft": true,
+    "head": {
+      "status": 200,
+      "bytes": 47038575
+    },
+    "resumedRange": {
+      "status": 206,
+      "bytes": 65536,
+      "contentRange": "bytes 100000-165535/47038575"
+    },
+    "fullBytes": 47038575,
+    "fullSha256": "3065c95c77012bbb5f421f83bb3118fe250f4c9f8ba4099e89a67c4e7ddcd4f7",
+    "anonymousDenial": {
+      "newAsset": 404,
+      "newTagPage": 404,
+      "technicalRoot": 404,
+      "technicalIndex": 404,
+      "automaticFeed": 404,
+      "newBootstrap": 404,
+      "newPosMetadata": 404,
+      "oldAsset": 404
+    },
+    "credentialForwardedToAssetHost": false,
+    "browserGrantDownloadTest": "pending owner login/download permission; no browser flow used here",
+    "checkedUtc": "2026-10-24T21:10:05.329778+00:00"
+  },
+  "installerSelectionKeys": [
+    "VYNIC_INSTALLER_ASSET_ID",
+    "VYNIC_INSTALLER_BYTES",
+    "VYNIC_INSTALLER_SHA256"
+  ],
+  "existingReadCredentialChanged": false,
+  "configurationDeploy": {
+    "id": "dep-dbehtlvb9u1s739p8p60",
+    "sourceCommit": "1dea429408683d746304e1ed77ed2db693113acf",
+    "status": "live",
+    "finishedAt": "2026-10-24T21:12:44.758364Z",
+    "health": 200,
+    "newApplicationErrorsObserved": 0
+  },
+  "browserHandoff": "pending owner login and archive-download permission; no bypass",
+  "existingTerminalHandoff": "not qualified; existing receipts pin baseline and automatic feed remains inactive",
+  "physicalQualification": "pending",
+  "noInstallerExecuted": true,
+  "noPOSorEdgeProcessChanged": true,
+  "productionTransactionsChanged": false,
+  "postDeployChecks": {
+    "deployId": "dep-dbehtlvb9u1s739p8p60",
+    "runtimeSourceCommit": "1dea429408683d746304e1ed77ed2db693113acf",
+    "checks": {
+      "health": 200,
+      "managerEntitlementsAnonymous": 401,
+      "operatorDownloadsAnonymous": 401,
+      "newAssetAnonymous": 404,
+      "newReleasePageAnonymous": 404,
+      "technicalRoot": 404,
+      "technicalIndex": 404,
+      "automaticUpdateFeed": 404
+    },
+    "checkedUtc": "2026-10-24T21:14:11.193033+00:00"
+  },
+  "servicePlan": "existing free; unchanged",
+  "autoDeploy": "off; unchanged",
+  "optionalWindowsGo": {
+    "signerTestsPassed": 2,
+    "setupCommand": "incomplete transport; direct execution returned255 without output",
+    "setupUpdaterSuites": "not completed on Windows for this candidate; corresponding macOS suites pass",
+    "transportClosed": true
+  }
+}

@@ -166,17 +166,20 @@ current transport status.
   remain on Mac; publication never installs POS or replaces Edge. See
   `docs/LOCAL_WINDOWS_RELEASE_TEST.md`.
 
-- Production Windows distribution preparation adds an offline public-config gate
-  (`build-setup.py --production`) and separate payload/Setup Authenticode stages,
-  with verify-only, expected certificate thumbprint and timestamp checks. Python
-  policy regressions pass; native publisher signing remains unqualified. Free
-  `releases.vynic.ge` hosting/TLS and GitHub prerelease `v1.0.0-beta.1` are live
-  for POS 1.0.0 build 16 test installation, including app-local Microsoft CRT
-  DLLs. Bootstrap/pinned repair metadata is signed; the automatic POS feed stays
-  inactive. Clean Windows install/runtime/recovery and physical printing remain
-  pending. Admin's `releaseLinks.posWindows` stores a download URL, not the
-  installed feed; live Admin configuration is unverified. See
-  `docs/WINDOWS_PRODUCTION_DISTRIBUTION.md` and `docs/WINDOWS_BETA_TEST_INSTALL.md`.
+- Current Windows beta is POS 1.0.1 build 18 / Edge and Setup 1.0.1.18 from
+  reviewed accounting/entitlement source 1dea4294, with current main and build 16
+  printer fixes. Native Windows and macOS each pass 335 Flutter regressions.
+  The complete offline ZIP is GitHub draft asset 673319647, selected by three
+  nonsecret backend values; the existing repository-limited read credential is
+  preserved. Both Ed25519 envelopes and immutable storage readback/hash pass;
+  original build 16 assets remain unchanged. Technical release root/catalog,
+  anonymous assets and automatic feed stay closed. Setup receipts pin their
+  baseline; this is a fresh-install package, not an existing-terminal upgrade or
+  a permitted downgrade from lab 1.0.14. Authenticode, clean install/runtime,
+  existing-terminal handoff and physical printers remain unqualified. End-user
+  browser grant transfer remains pending owner login/download permission.
+  Current delivery and owner checklist: `docs/PROTECTED_WINDOWS_DOWNLOADS.md`,
+  `docs/WINDOWS_BETA_TEST_INSTALL.md`.
 
 - POS touch input shares TEXT/NUMBER/DECIMAL/PIN modes, controller-backed fields,
   one text keyboard and one numeric/PIN pad. Login, lock and Staff authentication

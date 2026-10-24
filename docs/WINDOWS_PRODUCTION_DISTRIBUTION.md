@@ -1,13 +1,16 @@
 # Windows POS distribution: preparation and remaining release gates
 
-The approved free beta release site and a dedicated beta metadata signing key
-now exist. Build 16 is published as an explicitly test-only GitHub prerelease,
-with fresh-install bootstrap and pinned repair metadata. The automatic POS feed
-remains inactive; ordinary-user clean-install/runtime qualification is pending.
-`releases.vynic.ge` has verified DNS and a valid public HTTPS certificate.
-No trusted Authenticode certificate was purchased. See the current beta status at the end of this file.
-Do not run the LAN publisher to publish production: it prepares a development API,
-private HTTPS origin and development trust.
+Current delivery is **protected beta POS 1.0.1 build 18 / Edge and Setup 1.0.1.18**.
+The complete offline ZIP is a GitHub draft asset selected by the backend; anonymous
+assets, generic release pages and the update feed remain closed. No Authenticode
+certificate was purchased. Fresh-install/runtime and physical printer qualification
+remain pending. Follow `PROTECTED_WINDOWS_DOWNLOADS.md` and
+`WINDOWS_BETA_TEST_INSTALL.md` for current delivery, hashes and compatibility.
+
+The public-hosting plan and build 16 publication evidence below preserve earlier
+preparation history; they do not authorize reopening a catalog, publishing a draft
+release or activating updates. Do not use the LAN development publisher for this
+beta distribution.
 
 ## What exists
 
@@ -368,7 +371,7 @@ startup suites pass 53 tests, and synthetic restore/print-admission suites pass
 48 tests. These remain software proofs, not a real-data import or clean-installer
 pilot qualification.
 
-## Published beta test handoff
+## Historical public build 16 handoff (withdrawn)
 
 - Download page: https://releases.vynic.ge/
 - Installer: https://github.com/vaanskii/vynic-releases/releases/download/v1.0.0-beta.1/VynicSetup-1.0.0-build16-beta.exe

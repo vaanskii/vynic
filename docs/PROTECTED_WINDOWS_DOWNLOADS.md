@@ -2,7 +2,10 @@
 
 The anonymous Windows beta distribution was withdrawn on 2026-10-24. Release
 `vaanskii/vynic-releases` / `422823783` remains **draft** with its seven original
-assets intact. Old EXE, POS ZIP and Edge ZIP URLs were anonymously verified 404.
+assets intact. The current beta is protected draft release `422983256`, POS 1.0.1
+build 18 / Edge and Setup 1.0.1.18, complete ZIP asset `673319647`; see
+`WINDOWS_BETA_TEST_INSTALL.md` for hash, compatibility and test instructions.
+Old EXE, POS ZIP and Edge ZIP URLs were anonymously verified 404.
 The source repository `vaanskii/vynic` is public; its visibility was not changed.
 Never commit protected binaries or credentials to that repository.
 
@@ -57,18 +60,21 @@ recalled by this change.
 
 The former small Setup fetched public POS/Edge URLs. Restricting only its EXE would
 leave a bypass and break installation after withdrawing those payloads. The new
-authorized ZIP instead includes Setup plus the unchanged POS/Edge archives and
-their original signed metadata. Extract **all** files before running Setup.
+authorized ZIP instead includes the matched Setup, POS/Edge archives and their
+signed metadata. Extract **all** files before running Setup.
 
 Setup's offline transport maps original signed URLs to adjacent fixed filenames.
 It cannot fall back to public HTTP and does not store a download credential.
 Pinned Ed25519 signatures, metadata expiry, compatibility, SHA-256, antirollback,
 safe extraction and retained-data checks remain authoritative. Altering the local
-index cannot authorize modified bytes. Setup is rebuilt as revision `1.0.0.17`;
-POS/Edge remain the build-16 beta payloads. No live installation was changed.
+index cannot authorize modified bytes. Current POS is 1.0.1 build 18; Edge and
+Setup are 1.0.1.18. The original build 16 archive and Setup 1.0.0.17 remain immutable.
+No live installation was changed. Existing receipts pin their baseline; this new
+package is not an in-place upgrade of those receipts and supplies no Edge self-update.
 
 Repair of this exact baseline requires the complete authorized package before
-the signed metadata expires (`2026-11-23T15:28:45Z`). Later POS releases require
+its signed metadata expires (current baseline 18: `2026-11-23T21:06:43Z`; original
+baseline 16: `2026-11-23T15:28:45Z`). Later POS releases require
 their own qualified package. The future automatic update feed remains inactive;
 this change creates no Cloud-to-LAN calls or new live POS updater behavior.
 Unsigned Windows beta acceptance remains; real clean-PC installation/repair and
@@ -86,7 +92,9 @@ Set only on the Render backend, using its secret UI:
 - `VYNIC_INSTALLER_BYTES` and `VYNIC_INSTALLER_SHA256`: verified complete ZIP
   byte size and SHA-256.
 
-Keep the release draft. Do not publish the protected archive or private credential.
+Keep the release draft. Do not expose the protected archive publicly or publish a
+private credential. Update only the nonsecret asset ID/size/hash selection after
+verified immutable upload; preserve the existing read credential.
 The separately approved credential `Vynic Render releases read` is configured on
 the backend, restricted to this one repository with Contents and Metadata read-only
 and expiration on November 23, 2026. Renew it through the secure provider UI before

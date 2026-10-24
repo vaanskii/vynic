@@ -8,6 +8,9 @@ import 'package:vynic/core/services/database_service.dart';
 import 'package:vynic/core/services/printing/printer_service.dart';
 import 'package:vynic/core/utils/payment_utils.dart';
 import 'package:vynic/core/utils/pos_feedback.dart';
+import 'package:vynic/core/models/sale_visibility.dart';
+import 'package:vynic/core/models/feature_keys.dart';
+import 'package:vynic/core/database/repositories/inventory_repository.dart';
 
 class HomeXReportHelper {
   const HomeXReportHelper._();
@@ -70,6 +73,14 @@ class HomeXReportHelper {
     final rows = <XReportTableRow>[];
 
     for (final sale in sales) {
+      if (DatabaseService.saleIsAdvanceReceipt(sale) ||
+          !SaleVisibility.visible(
+            sale,
+            nonFiscalEnabled: InventoryRepository.hasFeature(
+              FeatureKeys.nonFiscalClose,
+            ),
+          ))
+        continue;
       final floor = (sale['floor'] as String?) ?? '';
       final numbers = _stringList(sale['tableNumbers']);
       final openedAt = _dateTime(sale['createdAt']);
@@ -129,7 +140,13 @@ class HomeXReportHelper {
     final byName = <String, ({int quantity, double total})>{};
 
     for (final sale in sales) {
-      if ((sale['isCancelled'] ?? false) == true) {
+      if ((sale['isCancelled'] ?? false) == true ||
+          !SaleVisibility.visible(
+            sale,
+            nonFiscalEnabled: InventoryRepository.hasFeature(
+              FeatureKeys.nonFiscalClose,
+            ),
+          )) {
         continue;
       }
       for (final item in _mapList(sale['items'])) {
@@ -397,6 +414,8 @@ class HomeXReportHelper {
   }
 
   static double _extractSaleTotal(Map<String, dynamic> sale) {
+    final gross = sale['grossSaleAmount'];
+    if (gross is num) return gross.toDouble();
     final primary = sale['total'];
     if (primary is num) {
       return primary.toDouble();

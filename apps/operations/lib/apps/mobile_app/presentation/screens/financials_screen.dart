@@ -847,7 +847,9 @@ class _FinancialsScreenState extends State<FinancialsScreen> {
         ? 'აღდგენილი'
         : sale['isFiscal'] == false
         ? 'შიდა დახურვა'
-        : 'ფისკალური';
+        : (ManagerEntitlements.has(FeatureKeys.nonFiscalClose)
+              ? 'ფისკალური'
+              : 'გაყიდვა');
     final payment =
         const {
           'cash': 'ნაღდი',
@@ -906,7 +908,7 @@ class _FinancialsScreenState extends State<FinancialsScreen> {
                     ),
                     decoration: BoxDecoration(
                       color:
-                          (status == 'ფისკალური'
+                          ((status == 'ფისკალური' || status == 'გაყიდვა')
                                   ? MobileGlassTheme.good
                                   : MobileGlassTheme.warn)
                               .withValues(alpha: .08),
@@ -915,7 +917,7 @@ class _FinancialsScreenState extends State<FinancialsScreen> {
                     child: Text(
                       status,
                       style: managerDesignText(context, 11).copyWith(
-                        color: status == 'ფისკალური'
+                        color: (status == 'ფისკალური' || status == 'გაყიდვა')
                             ? MobileGlassTheme.good
                             : MobileGlassTheme.warn,
                       ),
@@ -1471,7 +1473,21 @@ class _SaleDetailSheet extends StatelessWidget {
       : <Map<String, dynamic>>[];
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) => ValueListenableBuilder<Set<String>>(
+    valueListenable: ManagerEntitlements.features,
+    builder: (context, _, child) => _buildContent(context),
+  );
+
+  Widget _buildContent(BuildContext context) {
+    if (!SaleVisibility.visible(
+      sale,
+      nonFiscalEnabled: ManagerEntitlements.has(FeatureKeys.nonFiscalClose),
+    )) {
+      return const SizedBox(
+        height: 180,
+        child: Center(child: Text('ჩანაწერი მიუწვდომელია')),
+      );
+    }
     final lines = _maps(sale['lines']);
     final payments = _maps(sale['payments']);
     final audit = sale['auditLink'] is Map
@@ -1483,7 +1499,9 @@ class _SaleDetailSheet extends StatelessWidget {
         ? 'RESTORED'
         : sale['isFiscal'] == false
         ? 'INTERNAL'
-        : 'FISCAL';
+        : (ManagerEntitlements.has(FeatureKeys.nonFiscalClose)
+              ? 'FISCAL'
+              : 'SALE');
     return DraggableScrollableSheet(
       initialChildSize: 0.84,
       minChildSize: 0.5,
@@ -1523,7 +1541,7 @@ class _SaleDetailSheet extends StatelessWidget {
                 Text(
                   state,
                   style: TextStyle(
-                    color: state == 'FISCAL'
+                    color: (state == 'FISCAL' || state == 'SALE')
                         ? MobileGlassTheme.good
                         : MobileGlassTheme.warn,
                     fontWeight: FontWeight.w800,

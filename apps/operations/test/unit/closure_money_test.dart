@@ -1,3 +1,6 @@
+import 'package:vynic/core/database/repositories/inventory_repository.dart';
+import 'package:vynic/core/models/feature_keys.dart';
+import 'package:vynic/core/services/edge/edge_device_credential_store.dart';
 import 'dart:io';
 
 import 'package:vynic/core/services/edge/sale_consumption_sync_service.dart';
@@ -18,6 +21,9 @@ import 'package:vynic/core/models/table.dart';
 import 'package:vynic/core/models/user.dart';
 import 'package:vynic/core/services/pos/closure_recovery_service.dart';
 import 'package:vynic/core/services/sync/sync_events.dart';
+import 'package:vynic/core/services/sync/sale_ledger_sync_state.dart';
+import 'package:vynic/core/services/pos/table_payment_service.dart';
+import 'package:vynic/core/utils/payment_utils.dart';
 
 /// Money Integrity 1B: what a table closure is worth, how many times it can
 /// happen, and what survives a crash in the middle of one.
@@ -109,6 +115,22 @@ void main() {
 
   setUp(() async {
     DatabaseCore.settingsBox = await Hive.openBox('cm_settings');
+    DatabaseCore.userBox = await Hive.openBox<User>('cm_users');
+    await DatabaseCore.userBox!.put(
+      'manager',
+      User(username: 'manager', pinCode: '0000', role: 'manager'),
+    );
+    EdgeDeviceCredentialStore.resetForTest();
+    EdgeDeviceCredentialStore.directoryOverride = tempDir.path;
+    await EdgeDeviceCredentialStore.saveEnrollment(
+      rawCredential:
+          'vynic-device-v1.00000000-0000-4000-8000-000000000001.test-only-000000000000000000000000',
+      venueId: 'synthetic-entitlement-venue',
+      venueName: 'Synthetic venue',
+    );
+    await InventoryRepository.applyRuntimeFeatures([
+      FeatureKeys.nonFiscalClose,
+    ]);
     DatabaseCore.salesBox = await Hive.openBox('cm_sales');
     DatabaseCore.auditLogBox = await Hive.openBox('cm_audit');
     DatabaseCore.orderBox = await Hive.openBox<Order>('cm_orders');
@@ -121,9 +143,12 @@ void main() {
   });
 
   tearDown(() async {
+    await InventoryRepository.applyRuntimeFeatures([]);
+    EdgeDeviceCredentialStore.resetForTest();
     Order.serviceFeeRateResolver = null;
     for (final name in const [
       'cm_settings',
+      'cm_users',
       'cm_sales',
       'cm_audit',
       'cm_orders',
@@ -134,6 +159,7 @@ void main() {
       await Hive.deleteBoxFromDisk(name);
     }
     DatabaseCore.settingsBox = null;
+    DatabaseCore.userBox = null;
     DatabaseCore.salesBox = null;
     DatabaseCore.auditLogBox = null;
     DatabaseCore.orderBox = null;
@@ -148,6 +174,168 @@ void main() {
   });
 
   group('the accounting identity', () {
+    for (final advance in [0.0, 100.0, 1000.0]) {
+      test(
+        'GEL 1000 sale with $advance deposit keeps gross and one settlement',
+        () async {
+          final order = await seedOrder(itemTotal: 1000, advance: advance);
+          if (advance > 0) {
+            order.advanceReceiptId = await SalesRepository.recordAdvanceReceipt(
+              orderId: order.orderId,
+              amount: advance,
+              collectedBy: 'manager',
+              businessDate: dayOne,
+            );
+            await order.save();
+          }
+          final due = 1000 - advance;
+          final tender = due == 0
+              ? <String, double>{}
+              : {'cash': due / 3, 'card-tbc': due * 2 / 3};
+          final money = ClosureMoney.fromOrder(order, collectedNow: due);
+          final selection = TablePaymentSelection(
+            method: TablePaymentMethod.split,
+            cashAmount: due / 3,
+            bankAmount: due * 2 / 3,
+            bankProvider: 'tbc',
+          );
+          final snapshot = TableClosureHelper.buildFinalTransactionRecord(
+            order: order,
+            selection: selection,
+            paymentBreakdown: tender,
+            subtotal: 1000,
+            serviceFee: 0,
+            closedAt: DateTime(2026, 9, 4),
+            isFiscal: true,
+          );
+          expect(snapshot['total'], 1000);
+          expect(snapshot['advanceApplied'], advance);
+          expect(snapshot['amountDueNow'], due);
+          // An older caller still passing the net total is normalized at the writer.
+          snapshot['total'] = due;
+          Future<ClosureResult> close() => CloseTableTransaction.run(
+            orderId: order.orderId,
+            money: money,
+            paymentMethod: 'split',
+            tenderBreakdown: tender,
+            closedById: 'manager',
+            isFiscal: true,
+            finalTransaction: snapshot,
+          );
+          expect((await close()).isSuccess, isTrue);
+          expect((await close()).outcome, ClosureOutcome.alreadyClosed);
+          final sale = closedSales(today).single;
+          expect(sale['isFiscal'], isTrue);
+          expect(sale['totalAmount'], 1000);
+          expect(sale['grossSaleAmount'], 1000);
+          expect(sale['collectedNow'], due);
+          expect((sale['finalTransaction'] as Map)['total'], 1000);
+          expect(grossSalesFor(today), 1000);
+          expect(grossSalesFor(dayOne), 0);
+          expect(
+            PaymentUtils.formatPaymentDisplay(sale),
+            isNot(contains('Non-Fiscal')),
+          );
+          await SaleLedgerSyncState.ensureSaleIdentities();
+          final records = SalesRepository.getAllSales();
+          final first = SaleLedgerSyncState.buildBatch(records).single;
+          final retry = SaleLedgerSyncState.buildBatch(records).single;
+          expect(retry, first);
+          expect(first['gross'], '1000.00');
+          expect(first['advanceApplied'], advance.toStringAsFixed(2));
+          expect(first['collectedNow'], due.toStringAsFixed(2));
+          expect(first['isFiscal'], true);
+        },
+      );
+    }
+
+    for (final featureState in ['missing', 'disabled']) {
+      test(
+        'direct internal close is refused when entitlement is $featureState',
+        () async {
+          await InventoryRepository.applyRuntimeFeatures([]);
+          if (featureState == 'missing')
+            await DatabaseCore.settingsBox!.delete('runtimeFeatures');
+          final order = await seedOrder(itemTotal: 1000, advance: 100);
+          final result = await CloseTableTransaction.run(
+            orderId: order.orderId,
+            money: ClosureMoney.fromOrder(order, collectedNow: 0),
+            paymentMethod: 'non-fiscal',
+            tenderBreakdown: {},
+            closedById: 'manager',
+            isFiscal: false,
+          );
+          expect(result.isSuccess, isFalse);
+          expect(closedSales(today), isEmpty);
+          expect(DatabaseCore.closureJournalBox!.isEmpty, isTrue);
+          expect(
+            DatabaseCore.orderBox!.get(order.orderId)!.status,
+            order.status,
+          );
+        },
+      );
+    }
+
+    test(
+      'entitlement cannot bypass Staff permission or disabled Staff',
+      () async {
+        final order = await seedOrder();
+        await DatabaseCore.userBox!.put(
+          'waiter',
+          User(username: 'waiter', pinCode: '1111', role: 'waiter'),
+        );
+        for (final actor in ['waiter', 'unknown', 'manager']) {
+          if (actor == 'manager')
+            await DatabaseCore.settingsBox!.put(
+              'platform_staff_disabled:manager',
+              true,
+            );
+          final result = await CloseTableTransaction.run(
+            orderId: order.orderId,
+            money: ClosureMoney.fromOrder(order, collectedNow: 0),
+            paymentMethod: 'non-fiscal',
+            tenderBreakdown: {},
+            closedById: actor,
+            isFiscal: false,
+          );
+          expect(result.isSuccess, isFalse);
+        }
+        expect(closedSales(today), isEmpty);
+      },
+    );
+
+    test(
+      'fiscal flag cannot disguise a nonfiscal tender or an unpaid balance',
+      () async {
+        final order = await seedOrder();
+        for (final parts in [
+          {'non-fiscal': 900.0},
+          {'cash': 100.0},
+        ]) {
+          final result = await CloseTableTransaction.run(
+            orderId: order.orderId,
+            money: ClosureMoney.fromOrder(order, collectedNow: 900),
+            paymentMethod: 'cash',
+            tenderBreakdown: parts,
+            closedById: 'manager',
+            isFiscal: true,
+          );
+          expect(result.outcome, ClosureOutcome.moneyMismatch);
+        }
+        expect(closedSales(today), isEmpty);
+      },
+    );
+
+    test('advance receipt payment label is never nonfiscal', () {
+      expect(
+        PaymentUtils.formatPaymentDisplay({
+          'recordType': 'advance_receipt',
+          'isFiscal': false,
+          'paymentMethod': 'advance',
+        }),
+        'Advance',
+      );
+    });
     test('gross equals advance plus balance due', () {
       const money = ClosureMoney(
         gross: 900,
@@ -665,6 +853,7 @@ void main() {
         closedById: 'manager',
         isFiscal: false,
       );
+      await InventoryRepository.applyRuntimeFeatures([]);
       final second = await CloseTableTransaction.run(
         orderId: 2,
         money: money,

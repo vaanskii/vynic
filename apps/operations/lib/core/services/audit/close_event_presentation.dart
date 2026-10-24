@@ -72,12 +72,17 @@ abstract final class CloseEventPresentation {
   }
 
   /// Money facts worth a chip: payment, provider, gross, advance, collected.
-  static List<CloseEventChip> chips(AuditEvent event) {
+  static List<CloseEventChip> chips(
+    AuditEvent event, {
+    bool nonFiscalEnabled = true,
+  }) {
     if (!hasStructuredPayment(event)) return const [];
     final details = event.details!;
     final chips = <CloseEventChip>[];
     final summary = paymentSummary(event);
-    if (summary != null) chips.add((label: 'Payment', value: summary));
+    if (summary != null && (nonFiscalEnabled || summary != 'Non-fiscal')) {
+      chips.add((label: 'Payment', value: summary));
+    }
     final provider = providerOf(event);
     if (provider != null) chips.add((label: 'Provider', value: provider));
     final gross = details['grossAmount'];
@@ -93,7 +98,9 @@ abstract final class CloseEventPresentation {
 
   /// What to show as the event's free text: nothing when structured payment
   /// details already say it, the historical note otherwise.
-  static String? displayNote(AuditEvent event) {
+  static String? displayNote(AuditEvent event, {bool nonFiscalEnabled = true}) {
+    if (!nonFiscalEnabled && event.type == AuditEventType.internalClose)
+      return null;
     if (hasStructuredPayment(event)) return null;
     final note = event.note?.trim();
     return (note == null || note.isEmpty) ? null : note;

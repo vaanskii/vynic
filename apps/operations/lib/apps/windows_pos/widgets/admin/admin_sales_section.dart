@@ -1,3 +1,4 @@
+import 'package:vynic/core/models/closure_money.dart';
 import 'package:vynic/core/ui/pos_theme.dart';
 import 'package:vynic/core/ui/widgets/pos_dialog.dart';
 import 'package:vynic/core/database/repositories/inventory_repository.dart';
@@ -174,53 +175,11 @@ class _AdminSalesSectionState extends State<AdminSalesSection> {
     return '$day.$month.$year';
   }
 
-  double _resolveSaleTotal(Map<String, dynamic> sale) {
-    final totalAmount = sale['totalAmount'];
-    if (totalAmount is num) {
-      return totalAmount.toDouble();
-    }
-    final total = sale['total'];
-    if (total is num) {
-      return total.toDouble();
-    }
-    final parsedTotalAmount = totalAmount != null
-        ? double.tryParse(totalAmount.toString())
-        : null;
-    if (parsedTotalAmount != null) {
-      return parsedTotalAmount;
-    }
-    final parsedTotal = total != null
-        ? double.tryParse(total.toString())
-        : null;
-    return parsedTotal ?? 0.0;
-  }
+  double _resolveSaleTotal(Map<String, dynamic> sale) =>
+      ClosureMoney.fromSaleMap(sale).gross;
 
-  double _resolveAppliedAdvanceFromSale(Map<String, dynamic> sale) {
-    double parseNum(dynamic value) {
-      if (value is num) {
-        return value.toDouble();
-      }
-      if (value == null) {
-        return 0.0;
-      }
-      return double.tryParse(value.toString()) ?? 0.0;
-    }
-
-    final finalTransaction = sale['finalTransaction'];
-    if (finalTransaction is Map) {
-      final discount = parseNum(finalTransaction['discount']);
-      if (discount > 0) {
-        return discount;
-      }
-    }
-
-    final discountAmount = parseNum(sale['discountAmount']);
-    if (discountAmount > 0) {
-      return discountAmount;
-    }
-
-    return 0.0;
-  }
+  double _resolveAppliedAdvanceFromSale(Map<String, dynamic> sale) =>
+      ClosureMoney.fromSaleMap(sale).advanceApplied;
 
   double _expenseForDate(String date) {
     return DatabaseService.getExpenseTotalForDate(date);
@@ -586,8 +545,10 @@ class _AdminSalesSectionState extends State<AdminSalesSection> {
       (sum, sale) => sum + _resolveAppliedAdvanceFromSale(sale),
     );
     final todayCombinedTotal = todayFiscalTotal + todayNonFiscalTotal;
-    final todayTablesGrossTotal =
-        todayCombinedTotal + todayAppliedAdvanceFromTables;
+    final todayCollectedAtClose = todayFiscalSales.fold<double>(
+      0,
+      (sum, sale) => sum + ClosureMoney.fromSaleMap(sale).collectedNow,
+    );
     final todayExpenses = _expenseForDate(todayDate);
     final todayProfit = todayCombinedTotal - todayExpenses;
 
@@ -634,8 +595,10 @@ class _AdminSalesSectionState extends State<AdminSalesSection> {
       (sum, sale) => sum + _resolveAppliedAdvanceFromSale(sale),
     );
     final monthlyCombinedTotal = monthlyTotal + monthlyNonFiscalTotal;
-    final monthlyTablesGrossTotal =
-        monthlyCombinedTotal + monthlyAppliedAdvanceFromTables;
+    final monthlyCollectedAtClose = monthlyFiscalSales.fold<double>(
+      0,
+      (sum, sale) => sum + ClosureMoney.fromSaleMap(sale).collectedNow,
+    );
     final monthlyExpenseDates = <String>{};
     for (final sale in monthlyCoreActiveSales) {
       final date = (sale['date'] as String?) ?? '';
@@ -804,7 +767,9 @@ class _AdminSalesSectionState extends State<AdminSalesSection> {
                                       Expanded(
                                         child: _buildStatCard(
                                           icon: Icons.attach_money,
-                                          label: 'ფისკალური',
+                                          label: _showNonFiscal
+                                              ? 'ფისკალური'
+                                              : 'გაყიდვები',
                                           value:
                                               '₾${todayFiscalTotal.toStringAsFixed(2)}',
                                           color: AdminTones.successText,
@@ -857,7 +822,9 @@ class _AdminSalesSectionState extends State<AdminSalesSection> {
                                   Expanded(
                                     child: _buildStatCard(
                                       icon: Icons.attach_money,
-                                      label: 'ფისკალური თანხა',
+                                      label: _showNonFiscal
+                                          ? 'ფისკალური თანხა'
+                                          : 'გაყიდვების თანხა',
                                       value:
                                           '₾${todayFiscalTotal.toStringAsFixed(2)}',
                                       color: AdminTones.successText,
@@ -902,7 +869,7 @@ class _AdminSalesSectionState extends State<AdminSalesSection> {
                           Padding(
                             padding: const EdgeInsets.only(top: 8),
                             child: Text(
-                              'სუფრების სრული თანხა (ავანსით): ₾${todayTablesGrossTotal.toStringAsFixed(2)}  =  გადახდილი ₾${todayCombinedTotal.toStringAsFixed(2)} + ავანსი ₾${todayAppliedAdvanceFromTables.toStringAsFixed(2)}',
+                              'სუფრების სრული თანხა (ავანსით): ₾${todayFiscalTotal.toStringAsFixed(2)}  =  დახურვისას მიღებული ₾${todayCollectedAtClose.toStringAsFixed(2)} + ავანსი ₾${todayAppliedAdvanceFromTables.toStringAsFixed(2)}',
                               style: TextStyle(
                                 color: AdminDesign.muted,
                                 fontSize: 13,
@@ -1172,7 +1139,9 @@ class _AdminSalesSectionState extends State<AdminSalesSection> {
                                       Expanded(
                                         child: _buildStatCard(
                                           icon: Icons.attach_money,
-                                          label: 'ფისკალური',
+                                          label: _showNonFiscal
+                                              ? 'ფისკალური'
+                                              : 'გაყიდვები',
                                           value:
                                               '₾${monthlyTotal.toStringAsFixed(2)}',
                                           color: AdminTones.successText,
@@ -1225,7 +1194,9 @@ class _AdminSalesSectionState extends State<AdminSalesSection> {
                                   Expanded(
                                     child: _buildStatCard(
                                       icon: Icons.attach_money,
-                                      label: 'ფისკალური თანხა',
+                                      label: _showNonFiscal
+                                          ? 'ფისკალური თანხა'
+                                          : 'გაყიდვების თანხა',
                                       value:
                                           '₾${monthlyTotal.toStringAsFixed(2)}',
                                       color: AdminTones.successText,
@@ -1270,7 +1241,7 @@ class _AdminSalesSectionState extends State<AdminSalesSection> {
                           Padding(
                             padding: const EdgeInsets.only(top: 8),
                             child: Text(
-                              'სუფრების სრული თანხა (ავანსით): ₾${monthlyTablesGrossTotal.toStringAsFixed(2)}  =  გადახდილი ₾${monthlyCombinedTotal.toStringAsFixed(2)} + ავანსი ₾${monthlyAppliedAdvanceFromTables.toStringAsFixed(2)}',
+                              'სუფრების სრული თანხა (ავანსით): ₾${monthlyTotal.toStringAsFixed(2)}  =  დახურვისას მიღებული ₾${monthlyCollectedAtClose.toStringAsFixed(2)} + ავანსი ₾${monthlyAppliedAdvanceFromTables.toStringAsFixed(2)}',
                               style: TextStyle(
                                 color: AdminDesign.muted,
                                 fontSize: 13,
@@ -1451,8 +1422,8 @@ class _AdminSalesSectionState extends State<AdminSalesSection> {
                                             ? 'მონაცემი არ არის'
                                             : '${topPaymentMethod.key} • ₾${topPaymentMethod.value.toStringAsFixed(2)}',
                                         subtitle: topPaymentMethod == null
-                                            ? 'ამ თვეში ფისკალური გაყიდვები არ არის'
-                                            : 'ფისკალური ბრუნვის ${_formatPercent(topPaymentShare)}',
+                                            ? 'ამ თვეში გაყიდვები არ არის'
+                                            : 'ბრუნვის ${_formatPercent(topPaymentShare)}',
                                         accent: AdminDesign.accentDark,
                                       ),
                                     ),
@@ -1666,13 +1637,8 @@ class _AdminSalesSectionState extends State<AdminSalesSection> {
                             ...dateSales.map((sale) {
                               final tableNumbers =
                                   (sale['tableNumbers'] as List).cast<String>();
-                              final discountAmount =
-                                  (sale['discountAmount'] as num?)
-                                      ?.toDouble() ??
-                                  0.0;
                               final advanceAmount =
-                                  (sale['advanceAmount'] as num?)?.toDouble() ??
-                                  discountAmount;
+                                  _resolveAppliedAdvanceFromSale(sale);
                               final breakdown = PaymentUtils.extractBreakdown(
                                 sale,
                               );
@@ -1691,7 +1657,8 @@ class _AdminSalesSectionState extends State<AdminSalesSection> {
                                   (sale['date'] == todayDate ||
                                       widget.canCancelHistoricalSale);
                               final bool isNonFiscal =
-                                  !isCancelled && !_isFiscalSale(sale);
+                                  _showNonFiscal &&
+                                  SaleVisibility.isInternal(sale);
 
                               IconData paymentIcon = Icons.payments;
                               Color paymentColor = AdminTones.successText;

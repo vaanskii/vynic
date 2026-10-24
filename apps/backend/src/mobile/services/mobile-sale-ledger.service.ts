@@ -369,6 +369,7 @@ export class MobileSaleLedgerService {
       menuItemId?: string;
       variantId?: string;
     },
+    includeInternal = true,
   ) {
     const range = await this.range(tenant, query.from, query.to);
     const take = pageLimit(query.limit, 30);
@@ -387,6 +388,9 @@ export class MobileSaleLedgerService {
     const state = query.state?.toLowerCase();
     const where: any = {
       venueId: tenant.venueId,
+      ...(!includeInternal
+        ? { AND: [{ OR: [{ isFiscal: true }, { isCancelled: true }] }] }
+        : {}),
       businessDate: { gte: range.from, lte: range.to },
       ...(query.paymentMethod
         ? { payments: { some: { method: query.paymentMethod } } }
@@ -459,9 +463,15 @@ export class MobileSaleLedgerService {
     };
   }
 
-  async getSale(tenant: TenantContext, id: string) {
+  async getSale(tenant: TenantContext, id: string, includeInternal = true) {
     const sale = await (this.prisma as any).cloudSale.findFirst({
-      where: { id, venueId: tenant.venueId },
+      where: {
+        id,
+        venueId: tenant.venueId,
+        ...(!includeInternal
+          ? { OR: [{ isFiscal: true }, { isCancelled: true }] }
+          : {}),
+      },
       include: {
         lines: { orderBy: { lineSeq: 'asc' } },
         payments: { orderBy: { method: 'asc' } },

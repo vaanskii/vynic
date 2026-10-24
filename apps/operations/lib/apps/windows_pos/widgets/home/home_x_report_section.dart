@@ -154,7 +154,7 @@ class _WaiterSales extends StatelessWidget {
             PosSectionLabel('ოფიციანტები'),
             SizedBox(height: 10),
             Text(
-              'დღის ფისკალური გაყიდვები ჯერ არ არის',
+              'დღის გაყიდვები ჯერ არ არის',
               style: TextStyle(
                 color: VynicFloorTokens.text,
                 fontSize: 14.5,

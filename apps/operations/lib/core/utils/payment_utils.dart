@@ -85,6 +85,14 @@ class PaymentUtils {
   }
 
   static String formatPaymentDisplay(Map<dynamic, dynamic> sale) {
+    if (sale['recordType'] == 'advance_receipt' ||
+        sale['paymentMethod'] == methodAdvance) {
+      return 'Advance';
+    }
+    if (sale['isCancelled'] == true ||
+        sale['paymentMethod'] == methodCancelled) {
+      return 'Cancelled';
+    }
     final breakdown = extractBreakdown(sale);
     final method = sale['paymentMethod']?.toString();
     final bool isNonFiscal =

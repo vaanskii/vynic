@@ -589,7 +589,14 @@ export class MobileController {
       variantId?: string;
     },
   ) {
-    return this.saleLedger.listSales(tenant, query);
+    return this.saleLedger.listSales(
+      tenant,
+      query,
+      await this.entitlements.hasFeature(
+        tenant.venueId,
+        FeatureKeys.NON_FISCAL_CLOSE,
+      ),
+    );
   }
 
   @Get('sales/:id')
@@ -597,7 +604,14 @@ export class MobileController {
     @ManagerTenant() tenant: TenantContext,
     @Param('id') id: string,
   ) {
-    return this.saleLedger.getSale(tenant, id);
+    return this.saleLedger.getSale(
+      tenant,
+      id,
+      await this.entitlements.hasFeature(
+        tenant.venueId,
+        FeatureKeys.NON_FISCAL_CLOSE,
+      ),
+    );
   }
 
   @Get('product-analytics')

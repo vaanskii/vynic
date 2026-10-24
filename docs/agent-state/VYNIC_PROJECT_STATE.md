@@ -1236,8 +1236,11 @@ current transport status.
 - Device printer config is Cloud-authored, Device-authenticated pull and durable
   local cache. The owner portal configures printers without a developer token.
   Device names/features refresh every 10 seconds without restart; local menu
-  changes refresh the open menu. NON_FISCAL_CLOSE adds a cached capability gate
-  alongside Staff permissions. Plan grants are removed and rejected by the API,
+  changes refresh the open menu. NON_FISCAL_CLOSE requires an affirmative
+  Device/Venue-bound runtime pull and a session-only 15-minute monotonic grant
+  alongside enabled Staff permission at the close transaction. Missing, restored
+  or stale configuration cannot grant it; restart requires another pull.
+  Plan grants are removed and rejected by the API,
   resolver and database trigger; only explicit Venue overrides can enable it.
   First successful full sync records Device.firstSyncAt for onboarding readiness.
   See `docs/SAAS_BUILD_RUNTIME_ONBOARDING.md` for commands, rollout and limits.
@@ -1250,6 +1253,12 @@ current transport status.
 - NON_FISCAL_CLOSE also controls POS/Manager sales, report and dashboard
   presentation, including POS close-day non-fiscal summaries. Historical records,
   advances, cancellation evidence, audit and financial ledger rules remain intact.
+  Manager non-fiscal presentation expires after 15 minutes without refresh;
+  customer API projections hide its fields and filter Sale list/detail access.
+  New close snapshots preserve gross separately from advance/current collection;
+  POS history never treats discounts or advance receipts as internal closures or
+  adds an advance to an already-gross Sale. Beta proof and known unrelated test
+  failures: `docs/NONFISCAL_ADVANCE_BETA.md`.
   Platform explains dependencies before changes without altering override precedence;
   profitability is described as current cost/valuation and Website as access to a
   separately configured site, not automatic SaaS site provisioning.

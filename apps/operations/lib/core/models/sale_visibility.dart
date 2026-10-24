@@ -12,6 +12,9 @@ abstract final class SaleVisibility {
         sale['isAdvanceReceipt'] == true ||
         sale['recordType'] == 'ADVANCE_RECEIPT')
       return false;
+    if (sale['paymentMethod'] == 'advance' ||
+        sale['paymentMethod'] == 'cancelled')
+      return false;
     final kind =
         (sale['classification'] ?? sale['kind'] ?? sale['recordType'] ?? '')
             .toString()
@@ -23,7 +26,10 @@ abstract final class SaleVisibility {
       'CANCELLATION',
     }.contains(kind))
       return false;
-    if (kind == 'INTERNAL' || sale['isFiscal'] == false) return true;
+    if (kind == 'INTERNAL' ||
+        sale['isFiscal'] == false ||
+        nonFiscalPayment(sale['paymentMethod']?.toString() ?? ''))
+      return true;
     final payments = sale['paymentBreakdown'];
     return payments is Map &&
         payments.keys.any((key) => nonFiscalPayment(key.toString()));

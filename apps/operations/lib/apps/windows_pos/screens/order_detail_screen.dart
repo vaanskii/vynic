@@ -2226,7 +2226,9 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
 
   Future<void> _startNonFiscalClosureFlowTracked() async {
     if (!InventoryRepository.hasFeature(FeatureKeys.nonFiscalClose)) {
-      unawaited(showErrorToast(context, 'არაფისკალური დახურვა გამორთულია'));
+      unawaited(
+        showErrorToast(context, 'ამ ოპერაციის შესრულების უფლება არ გაქვთ'),
+      );
       return;
     }
     if (!widget.user.canCloseTablesNonFiscal) {
@@ -2296,7 +2298,9 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
 
   Future<void> _finalizeNonFiscalClosure(Order order) async {
     if (!InventoryRepository.hasFeature(FeatureKeys.nonFiscalClose)) {
-      unawaited(showErrorToast(context, 'არაფისკალური დახურვა გამორთულია'));
+      unawaited(
+        showErrorToast(context, 'ამ ოპერაციის შესრულების უფლება არ გაქვთ'),
+      );
       return;
     }
     final saleItems = <OrderItem>[...order.packageItems, ...order.items];

@@ -1,3 +1,6 @@
+import 'package:vynic/core/database/repositories/inventory_repository.dart';
+import 'package:vynic/core/models/feature_keys.dart';
+import 'package:vynic/core/services/edge/edge_device_credential_store.dart';
 import 'package:vynic/core/database/transactions/cancel_order_transaction.dart';
 import 'package:vynic/core/models/audit_source.dart';
 import 'package:vynic/core/database/repositories/table_repository.dart';
@@ -285,6 +288,22 @@ void main() {
 
   setUp(() async {
     DatabaseCore.settingsBox = await Hive.openBox('cai_settings');
+    DatabaseCore.userBox = await Hive.openBox<User>('cai_users');
+    await DatabaseCore.userBox!.put(
+      'manager',
+      User(username: 'manager', pinCode: '0000', role: 'manager'),
+    );
+    EdgeDeviceCredentialStore.resetForTest();
+    EdgeDeviceCredentialStore.directoryOverride = tempDir.path;
+    await EdgeDeviceCredentialStore.saveEnrollment(
+      rawCredential:
+          'vynic-device-v1.00000000-0000-4000-8000-000000000001.test-only-000000000000000000000000',
+      venueId: 'synthetic-entitlement-venue',
+      venueName: 'Synthetic venue',
+    );
+    await InventoryRepository.applyRuntimeFeatures([
+      FeatureKeys.nonFiscalClose,
+    ]);
     DatabaseCore.salesBox = await Hive.openBox('cai_sales');
     DatabaseCore.auditLogBox = await Hive.openBox('cai_audit');
     DatabaseCore.orderBox = await Hive.openBox<Order>('cai_orders');
@@ -300,9 +319,12 @@ void main() {
   });
 
   tearDown(() async {
+    await InventoryRepository.applyRuntimeFeatures([]);
+    EdgeDeviceCredentialStore.resetForTest();
     Order.serviceFeeRateResolver = null;
     for (final name in const [
       'cai_settings',
+      'cai_users',
       'cai_sales',
       'cai_audit',
       'cai_orders',
@@ -313,6 +335,7 @@ void main() {
       await Hive.deleteBoxFromDisk(name);
     }
     DatabaseCore.settingsBox = null;
+    DatabaseCore.userBox = null;
     DatabaseCore.salesBox = null;
     DatabaseCore.auditLogBox = null;
     DatabaseCore.orderBox = null;

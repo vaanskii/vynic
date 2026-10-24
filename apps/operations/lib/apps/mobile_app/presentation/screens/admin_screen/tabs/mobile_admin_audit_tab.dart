@@ -807,9 +807,13 @@ class _AuditReportCard extends StatelessWidget {
       case AuditEventType.deleteItem:
         return 'წაშლა';
       case AuditEventType.close:
-        return 'ფისკალური დახურვა';
+        return ManagerEntitlements.has(FeatureKeys.nonFiscalClose)
+            ? 'ფისკალური დახურვა'
+            : 'დახურვა';
       case AuditEventType.internalClose:
-        return 'არაფისკალური დახურვა';
+        return ManagerEntitlements.has(FeatureKeys.nonFiscalClose)
+            ? 'არაფისკალური დახურვა'
+            : 'დახურვა';
       case AuditEventType.restore:
         return 'შეკვეთის აღდგენა';
       case AuditEventType.cancelTable:
@@ -1107,9 +1111,13 @@ class _EventTile extends StatelessWidget {
       case AuditEventType.deleteItem:
         return 'პოზ. წაშლა';
       case AuditEventType.close:
-        return 'ფისკალური დახურვა';
+        return ManagerEntitlements.has(FeatureKeys.nonFiscalClose)
+            ? 'ფისკალური დახურვა'
+            : 'დახურვა';
       case AuditEventType.internalClose:
-        return 'არაფისკალური დახურვა';
+        return ManagerEntitlements.has(FeatureKeys.nonFiscalClose)
+            ? 'არაფისკალური დახურვა'
+            : 'დახურვა';
       case AuditEventType.restore:
         return 'შეკვეთის აღდგენა';
       case AuditEventType.cancelTable:
@@ -1195,11 +1203,22 @@ class _EventTile extends StatelessWidget {
               ),
               // Payment semantics come from the structured close details,
               // never from the free-text note.
-              for (final chip in CloseEventPresentation.chips(event))
+              for (final chip in CloseEventPresentation.chips(
+                event,
+                nonFiscalEnabled: ManagerEntitlements.has(
+                  FeatureKeys.nonFiscalClose,
+                ),
+              ))
                 _metaChip(chip.label, chip.value),
             ],
           ),
-          if (CloseEventPresentation.displayNote(event) != null) ...[
+          if (CloseEventPresentation.displayNote(
+                event,
+                nonFiscalEnabled: ManagerEntitlements.has(
+                  FeatureKeys.nonFiscalClose,
+                ),
+              ) !=
+              null) ...[
             SizedBox(height: 6),
             Container(
               width: double.infinity,
@@ -1210,7 +1229,12 @@ class _EventTile extends StatelessWidget {
                 border: Border.all(color: AdminTheme.border),
               ),
               child: Text(
-                CloseEventPresentation.displayNote(event)!,
+                CloseEventPresentation.displayNote(
+                  event,
+                  nonFiscalEnabled: ManagerEntitlements.has(
+                    FeatureKeys.nonFiscalClose,
+                  ),
+                )!,
                 style: TextStyle(color: AdminTheme.textMuted, fontSize: 12),
               ),
             ),

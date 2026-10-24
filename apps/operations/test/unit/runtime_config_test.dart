@@ -98,7 +98,6 @@ void main() {
       foreign.close();
       acceptedProfile.close();
       client.close();
-      EdgeDeviceCredentialStore.resetForTest();
       var updates = 0;
       void changed() => updates++;
       InventoryRepository.featureRevision.addListener(changed);
@@ -116,6 +115,17 @@ void main() {
         isFalse,
       );
       expect(updates, 2);
+      EdgeDeviceCredentialStore.resetForTest();
+      await InventoryRepository.applyRuntimeFeatures([
+        FeatureKeys.nonFiscalClose,
+      ]);
+      expect(
+        InventoryRepository.hasFeature(FeatureKeys.nonFiscalClose),
+        isFalse,
+        reason:
+            'cached features without an enrolled identity cannot grant access',
+      );
+      await InventoryRepository.applyRuntimeFeatures([FeatureKeys.pos]);
       InventoryRepository.featureRevision.removeListener(changed);
       final config = <String, dynamic>{
         'version': 1,

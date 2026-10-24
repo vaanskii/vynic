@@ -24,6 +24,7 @@ import { cloudMenuAdmission } from './cloud-menu-admission';
 import {
   BadRequestException,
   ConflictException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -309,6 +310,9 @@ export class PlatformVenueConfigService {
     effect: FeatureOverrideEffect,
     note?: string,
   ) {
+    if (featureKey === 'NON_FISCAL_CLOSE' && actor.role !== 'SUPER_ADMIN') {
+      throw new ForbiddenException('Platform administrator required');
+    }
     await this.directory.requireVenue(venueId);
     const feature = await this.requireFeature(featureKey);
 
@@ -346,6 +350,9 @@ export class PlatformVenueConfigService {
     venueId: string,
     featureKey: string,
   ) {
+    if (featureKey === 'NON_FISCAL_CLOSE' && actor.role !== 'SUPER_ADMIN') {
+      throw new ForbiddenException('Platform administrator required');
+    }
     await this.directory.requireVenue(venueId);
     const feature = await this.requireFeature(featureKey);
 

@@ -1,4 +1,6 @@
+import 'dart:async';
 import 'package:flutter/foundation.dart';
+import '../../models/non_fiscal_close_grant.dart';
 
 import '../../models/feature_keys.dart';
 export '../../models/feature_keys.dart';
@@ -8,6 +10,7 @@ abstract final class ManagerEntitlements {
   static final profile = ValueNotifier<Map<String, dynamic>?>(null);
   static final features = ValueNotifier<Set<String>>({});
   static final pastDue = ValueNotifier<bool>(false);
+  static Timer? _nonFiscalExpiry;
   static bool has(String feature) => features.value.contains(feature);
   static List<int> get destinations => [
     0,
@@ -20,14 +23,26 @@ abstract final class ManagerEntitlements {
   static void apply(Map<String, dynamic> snapshot) {
     if (snapshot['profile'] is Map)
       profile.value = Map<String, dynamic>.from(snapshot['profile'] as Map);
-    final next = snapshot['commercialAccess'] == false
+    final rawFeatures = snapshot['features'];
+    final next =
+        snapshot['commercialAccess'] == false ||
+            rawFeatures is! List ||
+            rawFeatures.any((key) => key is! String)
         ? <String>{}
-        : (snapshot['features'] as List).cast<String>().toSet();
+        : rawFeatures.cast<String>().toSet();
+    _nonFiscalExpiry?.cancel();
+    if (next.contains(FeatureKeys.nonFiscalClose)) {
+      _nonFiscalExpiry = Timer(NonFiscalCloseGrant.lifetime, () {
+        features.value = {...features.value}
+          ..remove(FeatureKeys.nonFiscalClose);
+      });
+    }
     pastDue.value = (snapshot['subscription'] as Map?)?['status'] == 'PAST_DUE';
     if (!setEquals(features.value, next)) features.value = next;
   }
 
   static void clear() {
+    _nonFiscalExpiry?.cancel();
     profile.value = null;
     features.value = {};
     pastDue.value = false;

@@ -20,6 +20,10 @@ import '../repositories/table_repository.dart';
 import '../repositories/order_repository.dart';
 import '../repositories/order_transfer_journal_repository.dart';
 import '../repositories/order_table_mutation_repository.dart';
+import '../repositories/inventory_repository.dart';
+import '../repositories/user_repository.dart';
+import '../../models/feature_keys.dart';
+import '../../models/sale_visibility.dart';
 
 /// Why a closure did not happen, or that it already had.
 enum ClosureOutcome {
@@ -183,6 +187,47 @@ class CloseTableTransaction {
       return const ClosureResult(outcome: ClosureOutcome.orderNotFound);
     }
 
+    // Existing durable intents must finish even after a capability is revoked.
+    // No new internal close may be admitted by a direct or transport caller.
+    if (existing == null &&
+        !isFiscal &&
+        (!InventoryRepository.hasFeature(FeatureKeys.nonFiscalClose) ||
+            UserRepository.isPlatformDisabled(closedById) ||
+            UserRepository.getUserByUsername(
+                  closedById,
+                )?.canCloseTablesNonFiscal !=
+                true)) {
+      return const ClosureResult(
+        outcome: ClosureOutcome.failed,
+        detail: 'ამ ოპერაციის შესრულების უფლება არ გაქვთ',
+      );
+    }
+
+    if (isFiscal &&
+        (SaleVisibility.nonFiscalPayment(paymentMethod) ||
+            paymentMethod == PaymentUtils.methodCancelled ||
+            paymentMethod == PaymentUtils.methodAdvance ||
+            tenderBreakdown.entries.any(
+              (part) =>
+                  PaymentUtils.isNonTenderSentinel(part.key) ||
+                  SaleVisibility.nonFiscalPayment(part.key) ||
+                  part.key == PaymentUtils.methodAdvance ||
+                  !part.value.isFinite ||
+                  part.value < 0,
+            ) ||
+            (tenderBreakdown.values.fold<double>(
+                          0,
+                          (sum, amount) => sum + amount,
+                        ) -
+                        money.collectedNow)
+                    .abs() >
+                0.01)) {
+      return const ClosureResult(
+        outcome: ClosureOutcome.moneyMismatch,
+        detail: 'გადახდის ნაწილები მიღებულ თანხას არ შეესაბამება',
+      );
+    }
+
     try {
       if (expectedOrder != null)
         OrderTableMutationRepository.requireFresh(expectedOrder);
@@ -207,11 +252,12 @@ class CloseTableTransaction {
       );
     }
 
-    if (isFiscal &&
-        (money.amountDueNow < -0.005 ||
-            money.collectedNow < 0 ||
-            !money.gross.isFinite ||
-            !money.collectedNow.isFinite)) {
+    if (!money.gross.isFinite ||
+        !money.advanceApplied.isFinite ||
+        !money.collectedNow.isFinite ||
+        money.gross < 0 ||
+        money.advanceApplied < 0 ||
+        (isFiscal && (money.amountDueNow < -0.005 || money.collectedNow < 0))) {
       return const ClosureResult(
         outcome: ClosureOutcome.moneyMismatch,
         detail:
@@ -392,7 +438,17 @@ class CloseTableTransaction {
           advanceAmount: current.advanceApplied,
           subtotalAmount: subtotalAmount,
           manualAdjustmentAmount: order.manualAdjustmentAmount,
-          finalTransaction: finalTransaction,
+          finalTransaction: {
+            ...?finalTransaction,
+            'total': current.grossSaleAmount,
+            'grossSaleAmount': current.grossSaleAmount,
+            'advanceApplied': current.advanceApplied,
+            'amountDueNow': current.grossSaleAmount - current.advanceApplied,
+            'collectedNow': current.collectedNow,
+            'isFiscal': current.isFiscal,
+            'paymentMethod': current.paymentMethod,
+            'paymentBreakdown': current.paymentBreakdown,
+          },
           isFiscal: current.isFiscal,
           closureId: current.closureId,
           closedById: closedById,

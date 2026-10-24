@@ -48,6 +48,38 @@ void main() {
     expect(CloseEventPresentation.displayNote(event), isNull);
   });
 
+  test(
+    'disabled capability keeps audit money evidence without nonfiscal labels',
+    () {
+      final event = close(
+        type: AuditEventType.internalClose,
+        details: {
+          'isFiscal': false,
+          'paymentMethod': 'non-fiscal',
+          'grossAmount': 1000,
+          'advanceApplied': 100,
+          'collectedNow': 0,
+        },
+        note: 'Order closed (non-fiscal)',
+      );
+      final chips = CloseEventPresentation.chips(
+        event,
+        nonFiscalEnabled: false,
+      );
+      expect(
+        chips.any((c) => c.value.toLowerCase().contains('non-fiscal')),
+        false,
+      );
+      expect(chips.firstWhere((c) => c.label == 'Gross').value, '1000.00');
+      expect(
+        CloseEventPresentation.displayNote(event, nonFiscalEnabled: false),
+        isNull,
+      );
+      expect(event.note, contains('non-fiscal'));
+      expect(event.details!['isFiscal'], false);
+    },
+  );
+
   test('card — TBC', () {
     final event = close(
       details: fiscal(method: 'card-tbc', breakdown: {'card-tbc': 100}),

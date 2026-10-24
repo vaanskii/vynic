@@ -1,4 +1,7 @@
+import 'dart:async';
 import 'package:flutter/foundation.dart';
+import 'package:vynic/core/models/non_fiscal_close_grant.dart';
+import 'package:vynic/core/services/edge/edge_device_credential_store.dart';
 import 'package:vynic/core/models/feature_keys.dart';
 import 'package:vynic/core/database/database_core.dart';
 import 'package:vynic/core/models/inventory.dart';
@@ -11,14 +14,54 @@ import 'package:vynic/core/models/inventory.dart';
 abstract final class InventoryRepository {
   static const String catalogKey = 'catalog';
   static final featureRevision = ValueNotifier<int>(0);
+  static NonFiscalCloseGrant? _nonFiscalGrant;
+  static Object? _grantSettings;
+  static Timer? _grantExpiry;
   static Future<void> applyRuntimeFeatures(List<String> features) async {
+    final wasGranted = hasFeature(FeatureKeys.nonFiscalClose);
     final old = DatabaseCore.settingsBox?.get('runtimeFeatures');
-    if (old is List && setEquals(old.toSet(), features.toSet())) return;
-    await DatabaseCore.settingsBox!.put('runtimeFeatures', features);
-    featureRevision.value++;
+    final device = EdgeDeviceCredentialStore.deviceId;
+    final venue = EdgeDeviceCredentialStore.venueId;
+    _grantExpiry?.cancel();
+    _nonFiscalGrant = null;
+    _grantSettings = null;
+    try {
+      await DatabaseCore.settingsBox!.put('runtimeFeatures', features);
+      if (features.contains(FeatureKeys.nonFiscalClose) &&
+          device != null &&
+          venue != null &&
+          EdgeDeviceCredentialStore.credential != null) {
+        _nonFiscalGrant = NonFiscalCloseGrant(deviceId: device, venueId: venue);
+        _grantSettings = DatabaseCore.settingsBox;
+        _grantExpiry = Timer(NonFiscalCloseGrant.lifetime, () {
+          _nonFiscalGrant = null;
+          featureRevision.value++;
+        });
+      }
+    } finally {
+      if (wasGranted != hasFeature(FeatureKeys.nonFiscalClose) ||
+          old is! List ||
+          !setEquals(old.toSet(), features.toSet())) {
+        featureRevision.value++;
+      }
+    }
   }
 
   static bool hasFeature(String feature) {
+    if (feature == FeatureKeys.nonFiscalClose) {
+      return identical(_grantSettings, DatabaseCore.settingsBox) &&
+          DatabaseCore.settingsBox?.isOpen == true &&
+          EdgeDeviceCredentialStore.hasCredential &&
+          DatabaseCore.settingsBox?.get('restoreLegacyIncomplete') != true &&
+          (DatabaseCore.settingsBox?.get('runtimeFeatures') is List &&
+              (DatabaseCore.settingsBox!.get('runtimeFeatures') as List)
+                  .contains(feature)) &&
+          _nonFiscalGrant?.allows(
+                EdgeDeviceCredentialStore.deviceId,
+                EdgeDeviceCredentialStore.venueId,
+              ) ==
+              true;
+    }
     final features =
         DatabaseCore.settingsBox?.get('runtimeFeatures') ??
         _catalog()['features'];

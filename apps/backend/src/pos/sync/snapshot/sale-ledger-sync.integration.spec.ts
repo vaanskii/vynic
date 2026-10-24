@@ -121,6 +121,109 @@ describeDatabase('Cloud Sale ledger (PostgreSQL)', () => {
     await prisma.$disconnect();
   });
 
+  it.each(['0.00', '100.00', '1000.00'])(
+    'keeps GEL 1000 gross with %s advance across repeated sync and Manager history',
+    async (advance) => {
+      const due = (1000 - Number(advance)).toFixed(2);
+      const half = (Number(due) / 2).toFixed(2);
+      const payments = [
+        ...(Number(due) > 0
+          ? [
+              { method: 'cash', amount: half },
+              { method: 'card-tbc', amount: half },
+            ]
+          : []),
+        ...(Number(advance) > 0
+          ? [{ method: 'advance', amount: advance }]
+          : []),
+      ];
+      const row = sale('deposit-1000', {
+        gross: '1000.00',
+        subtotal: '1000.00',
+        serviceFee: '0.00',
+        advanceApplied: advance,
+        amountDueNow: due,
+        collectedNow: due,
+        paymentMethod: 'split',
+        payments,
+        lines: [
+          {
+            lineSeq: 0,
+            itemName: 'Synthetic dinner',
+            quantity: 1,
+            unitPrice: '1000.00',
+            lineTotal: '1000.00',
+          },
+        ],
+      });
+      await sync.sync(venueA, [row], []);
+      await sync.sync(venueA, [row], []);
+      expect(
+        await prisma.cloudSale.count({ where: { venueId: venueA.venueId } }),
+      ).toBe(1);
+      const stored = await prisma.cloudSale.findFirstOrThrow({
+        where: { venueId: venueA.venueId },
+      });
+      const detail = await queries.getSale(venueA, stored.id, false);
+      expect(detail.gross).toBe('1000.00');
+      expect(detail.isFiscal).toBe(true);
+      expect(detail.advanceApplied).toBe(advance);
+      expect(detail.collectedNow).toBe(due);
+      const summary = await queries.getSummary(venueA, {
+        from: row.businessDate,
+        to: row.businessDate,
+      });
+      expect(summary.revenue).toBe('1000.00');
+      expect(summary.internalCount).toBe(0);
+      expect(summary.advanceApplied).toBe(advance);
+      expect(Number(summary.cashCollected) + Number(summary.tbcCollected)).toBe(
+        Number(due),
+      );
+    },
+  );
+
+  it('filters internal history before pagination and protects direct detail while retaining voids', async () => {
+    await sync.sync(
+      venueA,
+      [
+        sale('paid'),
+        sale('internal', {
+          isFiscal: false,
+          collectedNow: '0.00',
+          paymentMethod: 'non-fiscal',
+          payments: [],
+        }),
+        sale('void', {
+          isFiscal: false,
+          isCancelled: true,
+          collectedNow: '0.00',
+          paymentMethod: 'cancelled',
+          payments: [],
+        }),
+      ],
+      [],
+    );
+    const query = { from: '2026-09-04', to: '2026-09-04', limit: 2 };
+    const visible = await queries.listSales(venueA, query, false);
+    expect(visible.sales.map((s: any) => s.posSaleId).sort()).toEqual([
+      'paid',
+      'void',
+    ]);
+    expect(visible.nextCursor).toBeNull();
+    const internal = await prisma.cloudSale.findFirstOrThrow({
+      where: { venueId: venueA.venueId, posSaleId: 'internal' },
+    });
+    await expect(
+      queries.getSale(venueA, internal.id, false),
+    ).rejects.toMatchObject({ status: 404 });
+    expect((await queries.getSale(venueA, internal.id, true)).posSaleId).toBe(
+      'internal',
+    );
+    expect(
+      await prisma.cloudSale.count({ where: { venueId: venueA.venueId } }),
+    ).toBe(3);
+  });
+
   it.each([
     ['cash', [{ method: 'cash', amount: '100.00' }]],
     ['card-tbc', [{ method: 'card-tbc', amount: '100.00' }]],

@@ -1,3 +1,5 @@
+import 'package:vynic/core/database/repositories/inventory_repository.dart';
+import 'package:vynic/core/models/feature_keys.dart';
 import 'package:vynic/core/ui/pos_theme.dart';
 import 'package:vynic/core/ui/widgets/pos_dialog.dart';
 import 'package:flutter/material.dart';
@@ -959,11 +961,22 @@ class AdminAuditLogSection extends StatelessWidget {
               _metaChip('Qty', '${event.previousQty} → ${event.newQty}'),
               // Payment semantics come from the structured close details,
               // never from the free-text note.
-              for (final chip in CloseEventPresentation.chips(event))
+              for (final chip in CloseEventPresentation.chips(
+                event,
+                nonFiscalEnabled: InventoryRepository.hasFeature(
+                  FeatureKeys.nonFiscalClose,
+                ),
+              ))
                 _metaChip(chip.label, chip.value),
             ],
           ),
-          if (CloseEventPresentation.displayNote(event) != null) ...[
+          if (CloseEventPresentation.displayNote(
+                event,
+                nonFiscalEnabled: InventoryRepository.hasFeature(
+                  FeatureKeys.nonFiscalClose,
+                ),
+              ) !=
+              null) ...[
             const SizedBox(height: 6),
             Container(
               width: double.infinity,
@@ -974,7 +987,12 @@ class AdminAuditLogSection extends StatelessWidget {
                 border: Border.all(color: _border),
               ),
               child: Text(
-                CloseEventPresentation.displayNote(event)!,
+                CloseEventPresentation.displayNote(
+                  event,
+                  nonFiscalEnabled: InventoryRepository.hasFeature(
+                    FeatureKeys.nonFiscalClose,
+                  ),
+                )!,
                 style: const TextStyle(color: _muted, fontSize: 12),
               ),
             ),
@@ -1017,7 +1035,9 @@ class AdminAuditLogSection extends StatelessWidget {
       case AuditEventType.close:
         return Icons.point_of_sale_outlined;
       case AuditEventType.internalClose:
-        return Icons.do_not_disturb_on_outlined;
+        return InventoryRepository.hasFeature(FeatureKeys.nonFiscalClose)
+            ? Icons.do_not_disturb_on_outlined
+            : Icons.point_of_sale_outlined;
       case AuditEventType.restore:
         return Icons.settings_backup_restore;
       case AuditEventType.cancelTable:
@@ -1091,9 +1111,13 @@ class AdminAuditLogSection extends StatelessWidget {
       case AuditEventType.deleteItem:
         return 'პოზიციის წაშლა';
       case AuditEventType.close:
-        return 'ფისკალური დახურვა';
+        return InventoryRepository.hasFeature(FeatureKeys.nonFiscalClose)
+            ? 'ფისკალური დახურვა'
+            : 'დახურვა';
       case AuditEventType.internalClose:
-        return 'არაფისკალური დახურვა';
+        return InventoryRepository.hasFeature(FeatureKeys.nonFiscalClose)
+            ? 'არაფისკალური დახურვა'
+            : 'დახურვა';
       case AuditEventType.restore:
         return 'შეკვეთის აღდგენა';
       case AuditEventType.cancelTable:

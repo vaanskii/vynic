@@ -32,7 +32,7 @@ export function ProtectedInstallerDownloads({
   const call = useCallback(
     (suffix = "", body?: unknown): Promise<DownloadResponse> =>
       admin
-        ? platformOnboardingApi("downloads" + suffix, body)
+        ? platformOnboardingApi("downloads" + suffix, body, "POST")
         : customerApi<DownloadResponse>(
             `venues/${venueId}/downloads${suffix}`,
             body,
@@ -134,7 +134,11 @@ export function ProtectedInstallerDownloads({
             onClick={() =>
               void run(async () => {
                 await navigator.clipboard.writeText(link);
-                setMessage(admin ? "Download link copied." : "ჩამოტვირთვის ბმული დაკოპირებულია.");
+                setMessage(
+                  admin
+                    ? "Download link copied."
+                    : "ჩამოტვირთვის ბმული დაკოპირებულია.",
+                );
               })
             }
           >

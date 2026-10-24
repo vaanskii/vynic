@@ -2,8 +2,9 @@
 
 The approved free beta release site and a dedicated beta metadata signing key
 now exist. The candidate installer and signed feed remain unpublished pending
-clean-install qualification and DNS/TLS verification. `releases.vynic.ge` is
-bound in Render, but its DNS record is still pending. No trusted Authenticode
+clean-install qualification. `releases.vynic.ge` has verified DNS and a valid
+public HTTPS certificate. Local resolvers may cache its earlier NXDOMAIN.
+No trusted Authenticode
 certificate was purchased. See the current beta status at the end of this file.
 Do not run the LAN publisher to publish production: it prepares a development API,
 private HTTPS origin and development trust.
@@ -301,10 +302,16 @@ change was made. These tests do not certify native Windows or physical printers.
 - Dashboard verified Hobby, no payment card, 1/2 domains before adding releases,
   8 MB/5 GB bandwidth and 7/500 pipeline minutes. The new hostname uses domain
   2/2. No plan upgrade, paid service or billing method was added.
-- `releases.vynic.ge` is bound in Render but waiting for DNS and verification.
-  Required record: `CNAME releases -> vynic-releases.onrender.com`.
-  Domenebi.ge requires the user to sign in. No DNS record has been changed yet;
-  TLS issuance is pending DNS verification, not a confirmed certificate.
+- The owner added `CNAME releases -> vynic-releases.onrender.com`. Two
+  authoritative servers and Google DNS returned the correct answer. Render
+  shows Verified / Certificate Issued. TLS hostname and chain validation passed
+  against the public Google DNS address, with Google Trust Services WE1, SAN
+  `releases.vynic.ge`, expiry `2027-01-22T14:14:12Z`. HTTP returns 301 to HTTPS;
+  HTTPS returns 200 and the exact reviewed page. At the initial diagnostic check,
+  Cloudflare A lookup returned an earlier NXDOMAIN with 430 seconds of negative
+  cache TTL. Both Google and Cloudflare subsequently returned the correct A
+  records, while the Mac system resolver still failed. This establishes a
+  resolver-dependent cache failure rather than incorrect binding or TLS.
 - Dedicated Ed25519 key ID `vynic-beta-20261024`, public trust expiry
   `2027-10-24T00:00:00Z`. Private material is outside all repositories in an
   owner-only directory/file; never copy it into the release repository or ZIPs.
@@ -314,12 +321,32 @@ change was made. These tests do not certify native Windows or physical printers.
   Setup has asInvoker metadata, amd64 architecture and no Authenticode signature.
   Locally signed POS/bootstrap envelopes have a 30-day expiry; renew before expiry.
   Retained repair metadata also needs renewal, without replacing artifact bytes.
-- Final release publication is gated on DNS/TLS, exact artifact hash/signature
+- Final release publication is gated on exact artifact hash/signature
   verification and clean installer/runtime qualification. The current Windows VM
   has a working POS; Setup uses the real user's known LocalAppData path and refuses
   active POS processes. Do not install over that host or override its paths.
 
-Printer regression evidence: 137 focused tests passed on macOS, 151 including
-update suites on Windows, and targeted Dart analysis passed. Five pre-existing
-cross-Venue fixture cases were excluded; two failures were reproduced on the
-unchanged parent commit. Full printing-suite success is not claimed.
+Read-only inspection of the existing Parallels guest confirms a per-user
+`VynicSetup.exe --host` startup registration. Explorer launched Setup, which
+supervises the installed Edge under the same user's LocalAppData; Edge owns
+`127.0.0.1:7444`. No Vynic-named/path Windows services or Vynic-named scheduled
+tasks were found. A separate Windows user would isolate LocalAppData, HKCU and
+shortcuts, but not the fixed TCP port or the all-process POS admission check.
+Sequential qualification therefore still requires approved normal shutdown,
+backup/restore preparation and a new test user. Neither account creation nor
+stopping the existing runtime has been approved or performed. Use synthetic
+data only and restore the existing runtime afterward; no live Venue enrollment
+or printer output belongs in this installer check.
+
+Printer regression evidence: the five formerly excluded cross-Venue fixtures
+were repaired without production changes. Normal foreign enrollment is asserted
+to fail before changing identity memory/disk. Separate temporary identity-file
+replacement/reload faults exercise the later dispatch/render fences: original
+Venue/destination stay frozen, foreign output is held, and repeat dispatch sends
+no bytes. Rendering uses an explicit start barrier, and concurrent settings edits
+respect admission serialization. The full delivery file passes 43 tests on macOS.
+The complete ten printing/update suites pass 161 tests on Windows with no name
+filters or exclusions. Targeted Dart analysis passes. Separate Windows venue/
+startup suites pass 53 tests, and synthetic restore/print-admission suites pass
+48 tests. These remain software proofs, not a real-data import or clean-installer
+pilot qualification.

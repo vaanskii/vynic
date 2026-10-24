@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:vynic/core/database/database_core.dart';
 import 'package:vynic/core/database/local_data_admission.dart';
+import 'package:vynic/core/database/local_venue_binding.dart';
 import 'package:vynic/core/database/repositories/print_job_repository.dart';
 import 'package:vynic/core/models/user.dart';
 import 'package:vynic/core/services/auth/pos_session.dart';
@@ -23,6 +24,62 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   late Directory root;
   late Pos02Fixture f;
+
+  Future<void> rejectForeignEnrollment() async {
+    final identityFile = File('${root.path}/edge_device.json');
+    final before = await identityFile.readAsBytes();
+    final credential = EdgeDeviceCredentialStore.credential;
+    final device = EdgeDeviceCredentialStore.deviceId;
+    final installation = EdgeDeviceCredentialStore.installationId;
+    await expectLater(
+      EdgeDeviceCredentialStore.saveEnrollment(
+        rawCredential: 'vynic-device-v1.$menu01Device.${'s' * 40}',
+        venueId: 'synthetic-other-venue',
+        venueName: 'Other synthetic restaurant',
+      ),
+      throwsA(isA<LocalVenueMismatch>()),
+    );
+    expect(await identityFile.readAsBytes(), before);
+    expect(EdgeDeviceCredentialStore.venueId, menu01Venue);
+    expect(EdgeDeviceCredentialStore.credential, credential);
+    expect(EdgeDeviceCredentialStore.deviceId, device);
+    expect(EdgeDeviceCredentialStore.installationId, installation);
+    DatabaseCore.validateVenueBinding(menu01Venue);
+  }
+
+  Future<void> reloadForeignSyntheticIdentity() async {
+    // Enrollment rejects this transition. To exercise the later print fence,
+    // model an out-of-band identity-file replacement followed by a real reload.
+    // Only this test's temporary identity file is touched; this is not a
+    // supported migration path and does not remove any production guard.
+    expect(EdgeDeviceCredentialStore.directoryOverride, root.path);
+    final identityFile = File('${root.path}/edge_device.json');
+    final identity = jsonDecode(await identityFile.readAsString()) as Map;
+    identity['venueId'] = 'synthetic-other-venue';
+    await identityFile.writeAsString(jsonEncode(identity), flush: true);
+    await EdgeDeviceCredentialStore.load();
+    expect(EdgeDeviceCredentialStore.venueId, 'synthetic-other-venue');
+    expect(
+      () => DatabaseCore.validateVenueBinding('synthetic-other-venue'),
+      throwsA(isA<LocalVenueMismatch>()),
+    );
+  }
+
+  Future<bool> renderDocument(String kind) => switch (kind) {
+    'kitchen' => PrinterService.printKitchenCheckInBackground(
+      items: ['Synthetic food'],
+    ),
+    'receipt' => PrinterService.printReceiptInBackground(
+      items: ['Synthetic receipt'],
+      total: 3,
+    ),
+    'report' => PrinterService.printTextReport(
+      'Synthetic report',
+      reportType: 'X',
+    ),
+    _ => throw ArgumentError.value(kind),
+  };
+
   setUp(() async {
     root = await Directory.systemTemp.createTemp('vynic_pos02_unit_');
     f = Pos02Fixture();
@@ -460,7 +517,7 @@ void main() {
     },
   );
   for (final checkpoint in ['meta.flush:before', 'transport.connect']) {
-    test('Venue change at $checkpoint holds bytes before add', () async {
+    test('Venue reload at $checkpoint holds bytes before add', () async {
       var changed = false;
       f.fault = (point, _) async {
         if (!changed &&
@@ -468,17 +525,17 @@ void main() {
             PrintJobRepository.read(Pos02Fixture.jobId)?.state ==
                 PrintJobState.sending) {
           changed = true;
-          await EdgeDeviceCredentialStore.saveEnrollment(
-            rawCredential: 'vynic-device-v1.$menu01Device.${'s' * 40}',
-            venueId: 'synthetic-other-venue',
-            venueName: 'Other synthetic restaurant',
-          );
+          await reloadForeignSyntheticIdentity();
         }
       };
       await PrintQueue.enqueue(f.job());
       await f.dispatch();
       expect(changed, true);
       expect(f.transmitted, isEmpty);
+      expect(f.trace, isNot(contains('transport.after-add')));
+      expect(f.connections, checkpoint == 'transport.connect' ? 1 : 0);
+      expect(PrintJobRepository.failure, isNull);
+      expect(PrintJobRepository.read(Pos02Fixture.jobId)!.venueId, menu01Venue);
       expect(
         PrintJobRepository.read(Pos02Fixture.jobId)!.state,
         PrintJobState.uncertain,
@@ -487,7 +544,34 @@ void main() {
         PrintJobRepository.read(Pos02Fixture.jobId)!.detail,
         contains('held'),
       );
+      await f.dispatch();
+      expect(f.transmitted, isEmpty);
+      expect(f.connections, checkpoint == 'transport.connect' ? 1 : 0);
     });
+    test(
+      'foreign enrollment at $checkpoint is rejected before identity changes',
+      () async {
+        var rejected = false;
+        f.fault = (point, _) async {
+          if (!rejected &&
+              point == checkpoint &&
+              PrintJobRepository.read(Pos02Fixture.jobId)?.state ==
+                  PrintJobState.sending) {
+            rejected = true;
+            await rejectForeignEnrollment();
+          }
+        };
+        final job = f.job();
+        await PrintQueue.enqueue(job);
+        await f.dispatch();
+        expect(rejected, true);
+        expect(PrintJobRepository.failure, isNull);
+        expect(PrintJobRepository.read(job.id)!.state, PrintJobState.sent);
+        expect(PrintJobRepository.read(job.id)!.venueId, menu01Venue);
+        expect(f.transmitted, [job.transmissionBytes]);
+        expect(f.connections, 1);
+      },
+    );
   }
   test('copy request replay after safe retry remains idempotent', () async {
     await PrintQueue.enqueue(f.job());
@@ -664,44 +748,72 @@ void main() {
     },
   );
   for (final kind in ['kitchen', 'receipt', 'report']) {
-    test(
-      '$kind freezes Venue and destination across deferred rendering',
-      () async {
-        final rendering = Completer<List<int>>();
-        PrinterService.renderBytesOverride = () => rendering.future;
-        final sending = kind == 'kitchen'
-            ? PrinterService.printKitchenCheckInBackground(
-                items: ['Synthetic food'],
-              )
-            : kind == 'receipt'
-            ? PrinterService.printReceiptInBackground(
-                items: ['Synthetic receipt'],
-                total: 3,
-              )
-            : PrinterService.printTextReport(
-                'Synthetic report',
-                reportType: 'X',
-              );
-        await Future<void>.delayed(Duration.zero);
-        await EdgeDeviceCredentialStore.saveEnrollment(
-          rawCredential: 'vynic-device-v1.$menu01Device.${'s' * 40}',
-          venueId: 'synthetic-other-venue',
-          venueName: 'Other synthetic',
-        );
-        rendering.complete([0x1b, 0x40, ...ascii.encode('SYNTHETIC RASTER')]);
-        if (kind == 'report') {
-          PrintQueue.start();
-        }
-        expect(
-          await sending,
-          true == (kind != 'report'),
-        ); // reports await held delivery
-        await f.dispatch();
-        expect(f.transmitted, isEmpty);
-        expect(PrintJobRepository.all().single.venueId, menu01Venue);
-        expect(PrintJobRepository.all().single.state, PrintJobState.uncertain);
-      },
-    );
+    for (final foreignReload in [true, false]) {
+      test(
+        foreignReload
+            ? '$kind freezes Venue and destination across deferred rendering and foreign reload'
+            : '$kind rejects foreign enrollment while rendering and keeps its frozen destination',
+        () async {
+          final rendering = Completer<List<int>>();
+          final renderStarted = Completer<void>();
+          final raster = [0x1b, 0x40, ...ascii.encode('SYNTHETIC RASTER')];
+          PrinterService.renderBytesOverride = () {
+            renderStarted.complete();
+            return rendering.future;
+          };
+          final sending = renderDocument(kind);
+          Future<void>? destinationChange;
+          try {
+            await renderStarted.future.timeout(const Duration(seconds: 2));
+            expect(PrintJobRepository.all(), isEmpty);
+            expect(f.connections, 0);
+            if (foreignReload) {
+              await reloadForeignSyntheticIdentity();
+            } else {
+              await rejectForeignEnrollment();
+            }
+            // A later settings edit must not redirect the document already being
+            // rendered, regardless of whether the identity transition succeeded.
+            // Admission serializes ordinary settings writes with rendering.
+            // Queue the edit without waiting on the render we still own.
+            destinationChange = DatabaseCore.settingsBox!.putAll({
+              'printerKitchenIp': 'future-printer.invalid',
+              'printerReceiptIp': 'future-printer.invalid',
+            });
+          } finally {
+            rendering.complete(raster);
+            if (kind == 'report') PrintQueue.start();
+          }
+          await destinationChange.timeout(const Duration(seconds: 2));
+          expect(
+            await sending.timeout(const Duration(seconds: 2)),
+            !foreignReload || kind != 'report',
+          ); // reports await held delivery
+          await f.dispatch();
+          final job = PrintJobRepository.all().single;
+          expect(job.venueId, menu01Venue);
+          expect(job.host, 'synthetic.invalid');
+          expect(job.port, 9100);
+          expect(
+            base64Decode(job.toMap()['payload'] as String),
+            containsAllInOrder(raster),
+          );
+          expect(PrintJobRepository.failure, isNull);
+          if (foreignReload) {
+            expect(job.state, PrintJobState.uncertain);
+            expect(job.detail, contains('held'));
+            expect(f.transmitted, isEmpty);
+            expect(f.connections, 0);
+            await f.dispatch();
+            expect(f.transmitted, isEmpty);
+          } else {
+            expect(job.state, PrintJobState.sent);
+            expect(f.transmitted, [job.transmissionBytes]);
+            expect(f.connections, 1);
+          }
+        },
+      );
+    }
     test(
       '$kind render failure cannot admit a blank ticket or return success',
       () async {

@@ -78,12 +78,24 @@ class RuntimeConfigSync {
         headers: headers,
       ).timeout(const Duration(seconds: 15));
       requireRequestIdentity();
-      final decoded = jsonDecode(response.body);
+      if (response.statusCode == 401 || response.statusCode == 403) {
+        await InventoryRepository.invalidateNonFiscalCloseAuthority();
+      }
+      dynamic decoded;
+      try {
+        decoded = jsonDecode(response.body);
+      } on FormatException {
+        if (response.statusCode == 200) {
+          await InventoryRepository.invalidateNonFiscalCloseAuthority();
+        }
+        rethrow;
+      }
       if (!MenuClientCompatibility.observe(response.statusCode, decoded))
         return;
       if (response.statusCode != 200)
         throw StateError('Configuration request: ${response.statusCode}');
       if (decoded is! Map<String, dynamic>) {
+        await InventoryRepository.invalidateNonFiscalCloseAuthority();
         throw const FormatException('Invalid runtime snapshot');
       }
       final snapshot = decoded;
@@ -94,12 +106,27 @@ class RuntimeConfigSync {
           device is! Map ||
           venue is! Map ||
           device['id'] != requestDevice ||
-          (requestVenue != null && venue['id'] != requestVenue))
+          (requestVenue != null && venue['id'] != requestVenue)) {
+        await InventoryRepository.invalidateNonFiscalCloseAuthority();
         throw const FormatException('Unexpected Device configuration');
+      }
       final features = snapshot['features'];
       if (features is! List || features.any((key) => key is! String)) {
+        await InventoryRepository.invalidateNonFiscalCloseAuthority();
         throw const FormatException('Invalid feature snapshot');
       }
+      // A validated capability decision must not wait for unrelated printer
+      // publication, profile validation or a held native spool call.
+      await UpdateReadiness.track(
+        'Runtime features',
+        () => LocalDataAdmission.mutate(() async {
+          requireRequestIdentity();
+          await InventoryRepository.applyRuntimeFeatures(
+            List<String>.from(features),
+          );
+          requireRequestIdentity();
+        }),
+      );
       for (final field in [
         'name',
         'branchName',
@@ -135,9 +162,6 @@ class RuntimeConfigSync {
               );
           // Hold identity and native admission throughout awaited publication.
           await PrintIdentityAdmission.changeIdentity(() async {
-            await InventoryRepository.applyRuntimeFeatures(
-              List<String>.from(features),
-            );
             if (venue['profileUpdatedAt'] != null &&
                 requestSettings.get('pendingVenueProfile') == null) {
               await PosVenueProfile.cache(Map<String, dynamic>.from(venue));

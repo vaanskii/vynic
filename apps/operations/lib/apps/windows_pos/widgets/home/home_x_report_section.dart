@@ -1,3 +1,5 @@
+import 'package:vynic/core/database/repositories/inventory_repository.dart';
+import 'package:vynic/core/models/feature_keys.dart';
 import 'package:flutter/material.dart';
 
 import 'package:vynic/apps/windows_pos/widgets/home/home_x_report_helper.dart';
@@ -54,7 +56,20 @@ class HomeXReportSection extends StatelessWidget {
   static String _money(double value) => '${value.toStringAsFixed(2)} ₾';
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) => ValueListenableBuilder<int>(
+    valueListenable: InventoryRepository.featureRevision,
+    builder: (context, _, child) => _buildContent(context),
+  );
+
+  Widget _buildContent(BuildContext context) {
+    final visibleClosedTables = closedTables
+        .where(
+          (row) =>
+              row.cancelled ||
+              row.fiscal ||
+              InventoryRepository.hasFeature(FeatureKeys.nonFiscalClose),
+        )
+        .toList();
     final metrics = <PosMetricCard>[
       PosMetricCard(label: 'დღიური გაყიდვები', value: _money(dailySalesTotal)),
       if (openedTablesAmount != null)
@@ -110,7 +125,7 @@ class HomeXReportSection extends StatelessWidget {
               // The bill of the day and the kitchen's output are two views of
               // the same sales, so they sit side by side where there is room.
               if (narrow) ...[
-                _ClosedTables(rows: closedTables),
+                _ClosedTables(rows: visibleClosedTables),
                 const SizedBox(height: 16),
                 _SoldItems(items: soldItems),
               ] else
@@ -120,7 +135,7 @@ class HomeXReportSection extends StatelessWidget {
                     children: [
                       Expanded(
                         flex: 3,
-                        child: _ClosedTables(rows: closedTables),
+                        child: _ClosedTables(rows: visibleClosedTables),
                       ),
                       const SizedBox(width: 16),
                       Expanded(flex: 2, child: _SoldItems(items: soldItems)),

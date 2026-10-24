@@ -1,3 +1,4 @@
+import 'package:vynic/apps/windows_pos/widgets/order/non_fiscal_closure_dialog.dart';
 import 'package:vynic/apps/windows_pos/widgets/shared/pos_amount_form.dart';
 import 'package:vynic/core/ui/widgets/pos_dialog.dart';
 import 'package:vynic/core/database/local_data_admission.dart';
@@ -2266,24 +2267,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     final confirmed = await showPosModal<bool>(
       context: context,
       barrierDismissible: false,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('არაფისკალური დახურვა'),
-        constraints: const BoxConstraints(maxWidth: 560),
-        scrollable: true,
-        content: const Text(
-          'დახურეთ მაგიდა არაფისკალურად. ეს ოპერაცია არ გამოჩნდება Z რეპორტში, მაგრამ ჩაიწერება გაყიდვების ისტორიაში.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(false),
-            child: const Text('გაუქმება'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(dialogContext).pop(true),
-            child: const Text('დახურვა და დაფიქსირება'),
-          ),
-        ],
-      ),
+      builder: (_) => const NonFiscalClosureDialog(),
     );
     if (!mounted) {
       return;

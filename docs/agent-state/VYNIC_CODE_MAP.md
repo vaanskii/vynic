@@ -183,7 +183,7 @@ the implementation and nearby tests. Do not treat this as architecture truth.
 
 - Shared Venue identity: `apps/backend/src/venue-profile/` (validated/audited Owner, Manager and Device writes); profile fields in Venue, migration `20260921120000_venue_profile`. POS cache/pending sync: `apps/operations/lib/core/services/edge/pos_venue_profile.dart`; Manager editor: `apps/operations/lib/apps/mobile_app/presentation/widgets/venue_profile_card.dart`. Owner editor: `apps/platform-web/src/customer/WebsiteSections.tsx` (ProfileSection).
 - Feature descriptions/dependency warnings: `apps/platform-web/src/platform/feature-guidance.ts`; non-fiscal display classification: `apps/operations/lib/core/models/sale_visibility.dart`.
-- Nonfiscal session grant: `apps/operations/lib/core/models/non_fiscal_close_grant.dart` and `inventory_repository.dart`; customer API projection: `apps/backend/src/entitlements/non-fiscal-projection.ts`; beta accounting/authorization proof: `docs/NONFISCAL_ADVANCE_BETA.md`.
+- Nonfiscal device authorization: `apps/operations/lib/core/models/non_fiscal_close_grant.dart` and `inventory_repository.dart`; customer API projection: `apps/backend/src/entitlements/non-fiscal-projection.ts`; beta accounting/authorization proof: `docs/NONFISCAL_ADVANCE_BETA.md`.
 
 - Customer principal, portal/onboarding and operator pilot policy: `apps/backend/src/customer/`
 - Owner membership/invitations: apps/backend/src/customer/owner-invitations.service.ts and owner-invitations.controller.ts; acceptance UI: apps/platform-web/src/customer/AcceptInvitation.tsx. Runbook: docs/SAAS_OWNER_INVITATIONS.md; local server/browser/backfill proofs: apps/backend/scripts/*onboarding*.

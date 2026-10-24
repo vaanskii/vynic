@@ -776,133 +776,140 @@ class AdminAuditLogSection extends StatelessWidget {
     await showPosModal<void>(
       context: context,
       barrierColor: Colors.black45,
-      builder: (context) {
-        final isMobile = MediaQuery.of(context).size.width < 600;
-        // One Order's report reads as the story of that Order: opened, then
-        // what happened to it, then closed. Chronological by the POS-assigned
-        // sequence, never by timestamp — a creation event and the lines
-        // written with it share one instant on purpose.
-        final events = report.orderedEvents;
-        return Dialog(
-          insetPadding: isMobile
-              ? const EdgeInsets.symmetric(horizontal: 10, vertical: 20)
-              : const EdgeInsets.symmetric(horizontal: 40.0, vertical: 24.0),
-          backgroundColor: _card,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: ConstrainedBox(
-            constraints: BoxConstraints(
-              maxWidth: 780,
-              maxHeight: MediaQuery.of(context).size.height * 0.9,
+      builder: (context) => ValueListenableBuilder<int>(
+        valueListenable: InventoryRepository.featureRevision,
+        builder: (context, _, child) {
+          final isMobile = MediaQuery.of(context).size.width < 600;
+          // One Order's report reads as the story of that Order: opened, then
+          // what happened to it, then closed. Chronological by the POS-assigned
+          // sequence, never by timestamp — a creation event and the lines
+          // written with it share one instant on purpose.
+          final events = report.orderedEvents;
+          return Dialog(
+            insetPadding: isMobile
+                ? const EdgeInsets.symmetric(horizontal: 10, vertical: 20)
+                : const EdgeInsets.symmetric(horizontal: 40.0, vertical: 24.0),
+            backgroundColor: _card,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
             ),
-            child: Padding(
-              padding: EdgeInsets.all(isMobile ? 12 : 14),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              isMobile
-                                  ? 'Audit #${report.orderId}'
-                                  : 'Audit Report • Order #${report.orderId}',
-                              style: TextStyle(
-                                color: _text,
-                                fontSize: isMobile ? 16 : 18,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              'სუფრა: ${report.tableNumbers.isEmpty ? 'TA-${report.orderId}' : report.tableNumbers.join(', ')}',
-                              style: const TextStyle(
-                                color: _muted,
-                                fontSize: 12,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      IconButton(
-                        onPressed: () => Navigator.of(context).pop(),
-                        icon: const Icon(Icons.close, color: _muted, size: 20),
-                        padding: EdgeInsets.zero,
-                        constraints: const BoxConstraints(),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 6,
-                    children: [
-                      _metaChip(
-                        'Opened by',
-                        '${report.openedByName} (${report.openedById})',
-                      ),
-                      _metaChip(
-                        'Opened at',
-                        _formatAuditTimestamp(report.openedAt),
-                      ),
-                      if (report.closedAt != null)
-                        _metaChip(
-                          'Closed at',
-                          _formatAuditTimestamp(report.closedAt!),
-                        ),
-                      if (report.closedByName != null &&
-                          report.closedByName!.isNotEmpty)
-                        _metaChip(
-                          'Closed by',
-                          '${report.closedByName!} (${report.closedById ?? '-'})',
-                        ),
-                      _metaChip('Status', _auditStatusLabel(report.status)),
-                    ],
-                  ),
-                  const SizedBox(height: 10),
-                  const Text(
-                    'ქმედებების ქრონოლოგია (Who • What • When)',
-                    style: TextStyle(
-                      color: _text,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Expanded(
-                    child: events.isEmpty
-                        ? const Center(
-                            child: Text(
-                              'ამ რეპორტზე ცვლილებები არ არის',
-                              style: TextStyle(color: _muted, fontSize: 13),
-                            ),
-                          )
-                        : ListView.separated(
-                            itemCount: events.length,
-                            separatorBuilder: (_, __) =>
-                                const SizedBox(height: 6),
-                            itemBuilder: (context, index) =>
-                                _buildAuditEventTile(
-                                  events[index],
-                                  // The event's own ordinal. The list order
-                                  // already matches it; the index is the
-                                  // fallback only for a report written before
-                                  // sequences existed, which
-                                  // `orderedEvents` has already numbered.
-                                  events[index].sequence ?? index,
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                maxWidth: 780,
+                maxHeight: MediaQuery.of(context).size.height * 0.9,
+              ),
+              child: Padding(
+                padding: EdgeInsets.all(isMobile ? 12 : 14),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                isMobile
+                                    ? 'Audit #${report.orderId}'
+                                    : 'Audit Report • Order #${report.orderId}',
+                                style: TextStyle(
+                                  color: _text,
+                                  fontSize: isMobile ? 16 : 18,
+                                  fontWeight: FontWeight.w700,
                                 ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                'სუფრა: ${report.tableNumbers.isEmpty ? 'TA-${report.orderId}' : report.tableNumbers.join(', ')}',
+                                style: const TextStyle(
+                                  color: _muted,
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ],
                           ),
-                  ),
-                ],
+                        ),
+                        IconButton(
+                          onPressed: () => Navigator.of(context).pop(),
+                          icon: const Icon(
+                            Icons.close,
+                            color: _muted,
+                            size: 20,
+                          ),
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 6,
+                      children: [
+                        _metaChip(
+                          'Opened by',
+                          '${report.openedByName} (${report.openedById})',
+                        ),
+                        _metaChip(
+                          'Opened at',
+                          _formatAuditTimestamp(report.openedAt),
+                        ),
+                        if (report.closedAt != null)
+                          _metaChip(
+                            'Closed at',
+                            _formatAuditTimestamp(report.closedAt!),
+                          ),
+                        if (report.closedByName != null &&
+                            report.closedByName!.isNotEmpty)
+                          _metaChip(
+                            'Closed by',
+                            '${report.closedByName!} (${report.closedById ?? '-'})',
+                          ),
+                        _metaChip('Status', _auditStatusLabel(report.status)),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    const Text(
+                      'ქმედებების ქრონოლოგია (Who • What • When)',
+                      style: TextStyle(
+                        color: _text,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Expanded(
+                      child: events.isEmpty
+                          ? const Center(
+                              child: Text(
+                                'ამ რეპორტზე ცვლილებები არ არის',
+                                style: TextStyle(color: _muted, fontSize: 13),
+                              ),
+                            )
+                          : ListView.separated(
+                              itemCount: events.length,
+                              separatorBuilder: (_, __) =>
+                                  const SizedBox(height: 6),
+                              itemBuilder: (context, index) =>
+                                  _buildAuditEventTile(
+                                    events[index],
+                                    // The event's own ordinal. The list order
+                                    // already matches it; the index is the
+                                    // fallback only for a report written before
+                                    // sequences existed, which
+                                    // `orderedEvents` has already numbered.
+                                    events[index].sequence ?? index,
+                                  ),
+                            ),
+                    ),
+                  ],
+                ),
               ),
             ),
-          ),
-        );
-      },
+          );
+        },
+      ),
     );
   }
 
@@ -1111,9 +1118,7 @@ class AdminAuditLogSection extends StatelessWidget {
       case AuditEventType.deleteItem:
         return 'პოზიციის წაშლა';
       case AuditEventType.close:
-        return InventoryRepository.hasFeature(FeatureKeys.nonFiscalClose)
-            ? 'ფისკალური დახურვა'
-            : 'დახურვა';
+        return 'გადახდით დახურვა';
       case AuditEventType.internalClose:
         return InventoryRepository.hasFeature(FeatureKeys.nonFiscalClose)
             ? 'არაფისკალური დახურვა'

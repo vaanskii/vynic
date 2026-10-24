@@ -1,3 +1,5 @@
+import 'package:vynic/core/database/repositories/inventory_repository.dart';
+import 'package:vynic/core/models/feature_keys.dart';
 import 'dart:typed_data';
 import 'package:vynic/core/models/quick_order_draft.dart';
 import 'dart:async';
@@ -59,6 +61,40 @@ void main() {
     HttpOverrides.global = previous;
     await root.delete(recursive: true);
   });
+  test(
+    'old enabled backup cannot replay a grant after revocation or into a new installation',
+    () async {
+      await InventoryRepository.applyRuntimeFeatures([
+        FeatureKeys.nonFiscalClose,
+      ]);
+      expect(InventoryRepository.hasFeature(FeatureKeys.nonFiscalClose), true);
+      final file = await backup();
+      final raw = await PosBackupFormat.decode(await file.readAsString());
+      expect(
+        (raw['settingsAll'] as Map).containsKey(
+          InventoryRepository.runtimeFeatureAuthorityKey,
+        ),
+        false,
+      );
+      final entries = (raw['stores']['settings'] as List).cast<Map>();
+      expect(
+        entries.any(
+          (entry) =>
+              entry['key'] == InventoryRepository.runtimeFeatureAuthorityKey,
+        ),
+        false,
+      );
+      await InventoryRepository.applyRuntimeFeatures([]);
+      await BackupRepository.restoreDataBackupFromFile(
+        file,
+        backupBeforeRestore: false,
+      );
+      expect(InventoryRepository.hasFeature(FeatureKeys.nonFiscalClose), false);
+      await fresh(file);
+      expect(InventoryRepository.hasFeature(FeatureKeys.nonFiscalClose), false);
+    },
+  );
+
   test(
     'A/B/C/E/F/G stable/pending/conflict/closure/outbound/acknowledged edit survive fresh restore',
     () async {

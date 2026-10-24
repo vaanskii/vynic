@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:vynic/core/models/non_fiscal_close_grant.dart';
 import 'package:vynic/core/services/edge/edge_device_credential_store.dart';
@@ -14,30 +13,57 @@ import 'package:vynic/core/models/inventory.dart';
 abstract final class InventoryRepository {
   static const String catalogKey = 'catalog';
   static final featureRevision = ValueNotifier<int>(0);
-  static NonFiscalCloseGrant? _nonFiscalGrant;
-  static Object? _grantSettings;
-  static Timer? _grantExpiry;
+  static const runtimeFeatureAuthorityKey = 'runtimeFeatureAuthority';
+  static Object? _failedAuthoritySettings;
+
+  /// A server authentication denial or unreadable feature decision is not an
+  /// outage. Deny this capability without removing the operational catalog.
+  static Future<void> invalidateNonFiscalCloseAuthority() async {
+    final settings = DatabaseCore.settingsBox;
+    if (settings == null || !settings.isOpen) return;
+    _failedAuthoritySettings = settings;
+    try {
+      await settings.delete(runtimeFeatureAuthorityKey);
+      await settings.flush();
+      _failedAuthoritySettings = null;
+    } finally {
+      featureRevision.value++;
+    }
+  }
+
   static Future<void> applyRuntimeFeatures(List<String> features) async {
+    final settings = DatabaseCore.settingsBox!;
     final wasGranted = hasFeature(FeatureKeys.nonFiscalClose);
-    final old = DatabaseCore.settingsBox?.get('runtimeFeatures');
+    final old = settings.get('runtimeFeatures');
     final device = EdgeDeviceCredentialStore.deviceId;
     final venue = EdgeDeviceCredentialStore.venueId;
-    _grantExpiry?.cancel();
-    _nonFiscalGrant = null;
-    _grantSettings = null;
+    final installation = EdgeDeviceCredentialStore.installationId;
     try {
-      await DatabaseCore.settingsBox!.put('runtimeFeatures', features);
-      if (features.contains(FeatureKeys.nonFiscalClose) &&
+      final credential = EdgeDeviceCredentialStore.credential;
+      final authority =
           device != null &&
-          venue != null &&
-          EdgeDeviceCredentialStore.credential != null) {
-        _nonFiscalGrant = NonFiscalCloseGrant(deviceId: device, venueId: venue);
-        _grantSettings = DatabaseCore.settingsBox;
-        _grantExpiry = Timer(NonFiscalCloseGrant.lifetime, () {
-          _nonFiscalGrant = null;
-          featureRevision.value++;
-        });
-      }
+              venue != null &&
+              installation != null &&
+              credential != null
+          ? NonFiscalCloseGrant(
+              deviceId: device,
+              venueId: venue,
+              installationId: installation,
+              credentialFingerprint: NonFiscalCloseGrant.fingerprint(
+                credential,
+              ),
+              enabled: features.contains(FeatureKeys.nonFiscalClose),
+            )
+          : null;
+      // One durable decision: a partially updated legacy feature list cannot
+      // grant access. A failed write also denies it for this open store.
+      await settings.put(runtimeFeatureAuthorityKey, authority?.toMap());
+      await settings.flush();
+      await settings.put('runtimeFeatures', features);
+      _failedAuthoritySettings = null;
+    } catch (_) {
+      _failedAuthoritySettings = settings;
+      rethrow;
     } finally {
       if (wasGranted != hasFeature(FeatureKeys.nonFiscalClose) ||
           old is! List ||
@@ -49,18 +75,25 @@ abstract final class InventoryRepository {
 
   static bool hasFeature(String feature) {
     if (feature == FeatureKeys.nonFiscalClose) {
-      return identical(_grantSettings, DatabaseCore.settingsBox) &&
-          DatabaseCore.settingsBox?.isOpen == true &&
-          EdgeDeviceCredentialStore.hasCredential &&
-          DatabaseCore.settingsBox?.get('restoreLegacyIncomplete') != true &&
-          (DatabaseCore.settingsBox?.get('runtimeFeatures') is List &&
-              (DatabaseCore.settingsBox!.get('runtimeFeatures') as List)
-                  .contains(feature)) &&
-          _nonFiscalGrant?.allows(
-                EdgeDeviceCredentialStore.deviceId,
-                EdgeDeviceCredentialStore.venueId,
-              ) ==
-              true;
+      final settings = DatabaseCore.settingsBox;
+      if (settings == null ||
+          !settings.isOpen ||
+          identical(_failedAuthoritySettings, settings) ||
+          !EdgeDeviceCredentialStore.hasCredential ||
+          settings.get('restoreLegacyIncomplete') == true)
+        return false;
+      final venue = EdgeDeviceCredentialStore.venueId;
+      final binding = settings.get('restoreVenueBinding');
+      if (binding != null && binding != venue) return false;
+      return NonFiscalCloseGrant.fromMap(
+            settings.get(runtimeFeatureAuthorityKey),
+          )?.allows(
+            device: EdgeDeviceCredentialStore.deviceId,
+            venue: venue,
+            installation: EdgeDeviceCredentialStore.installationId,
+            credential: EdgeDeviceCredentialStore.credential,
+          ) ==
+          true;
     }
     final features =
         DatabaseCore.settingsBox?.get('runtimeFeatures') ??

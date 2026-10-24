@@ -1,5 +1,4 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:vynic/core/models/non_fiscal_close_grant.dart';
 import 'package:vynic/core/services/manager_app/manager_entitlements.dart';
 
 void main() {
@@ -26,13 +25,17 @@ void main() {
     }
   });
   testWidgets(
-    'stale offline session expires without removing ordinary features',
+    'explicit session access survives an outage until a server revocation or logout',
     (tester) async {
       ManagerEntitlements.apply({
         'features': [FeatureKeys.pos, FeatureKeys.nonFiscalClose],
       });
       expect(ManagerEntitlements.has(FeatureKeys.nonFiscalClose), true);
-      await tester.pump(NonFiscalCloseGrant.lifetime);
+      await tester.pump(const Duration(days: 1));
+      expect(ManagerEntitlements.has(FeatureKeys.nonFiscalClose), true);
+      ManagerEntitlements.apply({
+        'features': [FeatureKeys.pos],
+      });
       expect(ManagerEntitlements.has(FeatureKeys.nonFiscalClose), false);
       expect(ManagerEntitlements.has(FeatureKeys.pos), true);
       ManagerEntitlements.clear();

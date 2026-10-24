@@ -8,6 +8,7 @@ import type { TenantContext } from '../../../tenancy/tenant-context';
 import type { SaleLedgerSync } from '../sync-payload';
 import { MobileSaleLedgerService } from '../../../mobile/services/mobile-sale-ledger.service';
 import { SaleLedgerSyncService } from './sale-ledger-sync.service';
+import { withoutNonFiscal } from '../../../entitlements/non-fiscal-projection';
 
 const databaseUrl = process.env.TENANT_INTEGRATION_DATABASE_URL;
 const describeDatabase = databaseUrl ? describe : describe.skip;
@@ -164,21 +165,91 @@ describeDatabase('Cloud Sale ledger (PostgreSQL)', () => {
       const stored = await prisma.cloudSale.findFirstOrThrow({
         where: { venueId: venueA.venueId },
       });
-      const detail = await queries.getSale(venueA, stored.id, false);
-      expect(detail.gross).toBe('1000.00');
-      expect(detail.isFiscal).toBe(true);
-      expect(detail.advanceApplied).toBe(advance);
-      expect(detail.collectedNow).toBe(due);
-      const summary = await queries.getSummary(venueA, {
-        from: row.businessDate,
-        to: row.businessDate,
+      for (const entitled of [false, true]) {
+        const detail = await queries.getSale(venueA, stored.id, entitled);
+        expect(detail.gross).toBe('1000.00');
+        expect(detail.isFiscal).toBe(true);
+        expect(detail.advanceApplied).toBe(advance);
+        expect(detail.collectedNow).toBe(due);
+        const summary = await queries.getSummary(venueA, {
+          from: row.businessDate,
+          to: row.businessDate,
+        });
+        expect(summary.revenue).toBe('1000.00');
+        expect(summary.internalCount).toBe(0);
+        expect(summary.advanceApplied).toBe(advance);
+        expect(
+          Number(summary.cashCollected) + Number(summary.tbcCollected),
+        ).toBe(Number(due));
+        const report = entitled ? summary : withoutNonFiscal(summary);
+        expect(report.revenue).toBe('1000.00');
+        expect(report.advanceApplied).toBe(advance);
+        expect(
+          entitled ? report.internalCount : report.internalCount === undefined,
+        ).toBe(entitled ? 0 : true);
+        const list = await queries.listSales(
+          venueA,
+          { from: row.businessDate, to: row.businessDate },
+          entitled,
+        );
+        expect(list.sales).toHaveLength(1);
+        expect(list.sales[0].gross).toBe('1000.00');
+      }
+    },
+  );
+
+  it.each(['100.00', '1000.00'])(
+    'preserves internal GEL 1000 with %s advance, zero new collection and repeated sync',
+    async (advance) => {
+      const row = sale('internal-1000', {
+        gross: '1000.00',
+        subtotal: '1000.00',
+        serviceFee: '0.00',
+        advanceApplied: advance,
+        amountDueNow: (1000 - Number(advance)).toFixed(2),
+        collectedNow: '0.00',
+        isFiscal: false,
+        paymentMethod: 'non-fiscal',
+        payments: [],
+        lines: [
+          {
+            lineSeq: 0,
+            itemName: 'Synthetic internal dinner',
+            quantity: 1,
+            unitPrice: '1000.00',
+            lineTotal: '1000.00',
+          },
+        ],
       });
-      expect(summary.revenue).toBe('1000.00');
-      expect(summary.internalCount).toBe(0);
-      expect(summary.advanceApplied).toBe(advance);
-      expect(Number(summary.cashCollected) + Number(summary.tbcCollected)).toBe(
-        Number(due),
+      await sync.sync(venueA, [row], []);
+      await sync.sync(venueA, [row], []);
+      const stored = await prisma.cloudSale.findFirstOrThrow({
+        where: { venueId: venueA.venueId },
+      });
+      expect(
+        await prisma.cloudSale.count({ where: { venueId: venueA.venueId } }),
+      ).toBe(1);
+      expect(stored.gross.toFixed(2)).toBe('1000.00');
+      expect(stored.advanceApplied.toFixed(2)).toBe(advance);
+      expect(stored.collectedNow.toFixed(2)).toBe('0.00');
+      const range = { from: row.businessDate, to: row.businessDate };
+      const summary = await queries.getSummary(venueA, range);
+      expect(summary.revenue).toBe('0.00');
+      expect(summary.internalValue).toBe('1000.00');
+      expect(summary.cashCollected).toBe('0.00');
+      expect((await queries.listSales(venueA, range, true)).sales).toHaveLength(
+        1,
       );
+      expect(
+        (await queries.listSales(venueA, range, false)).sales,
+      ).toHaveLength(0);
+      await expect(
+        queries.getSale(venueA, stored.id, false),
+      ).rejects.toMatchObject({ status: 404 });
+      expect(withoutNonFiscal(summary).internalValue).toBeUndefined();
+      expect(
+        await prisma.salePayment.count({ where: { saleId: stored.id } }),
+      ).toBe(0);
     },
   );
 

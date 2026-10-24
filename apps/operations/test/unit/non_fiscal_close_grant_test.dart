@@ -1,35 +1,66 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:vynic/core/models/non_fiscal_close_grant.dart';
 
-class _Age implements Stopwatch {
-  Duration value = Duration.zero;
-  @override
-  Duration get elapsed => value;
-  @override
-  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
-}
-
 void main() {
+  const credential = 'synthetic-current-credential';
+  final grant = NonFiscalCloseGrant(
+    deviceId: 'device-a',
+    venueId: 'venue-a',
+    installationId: 'installation-a',
+    credentialFingerprint: NonFiscalCloseGrant.fingerprint(credential),
+    enabled: true,
+  );
+  bool allows(
+    NonFiscalCloseGrant? value, {
+    String? device = 'device-a',
+    String? venue = 'venue-a',
+    String? installation = 'installation-a',
+    String? key = credential,
+  }) =>
+      value?.allows(
+        device: device,
+        venue: venue,
+        installation: installation,
+        credential: key,
+      ) ==
+      true;
   test(
-    'grant is identity bound and expires on monotonic age, including offline',
+    'durable explicit grant is bound to Device, Venue, installation and credential',
     () {
-      final age = _Age();
-      final grant = NonFiscalCloseGrant(
-        deviceId: 'device-a',
-        venueId: 'venue-a',
-        age: age,
-      );
-      expect(grant.allows('device-a', 'venue-a'), true);
-      expect(grant.allows('device-b', 'venue-a'), false);
-      expect(grant.allows('device-a', 'venue-b'), false);
-      expect(grant.allows(null, null), false);
-      age.value =
-          NonFiscalCloseGrant.lifetime - const Duration(microseconds: 1);
-      expect(grant.allows('device-a', 'venue-a'), true);
-      age.value = NonFiscalCloseGrant.lifetime;
-      expect(grant.allows('device-a', 'venue-a'), false);
-      age.value = const Duration(days: 1);
-      expect(grant.allows('device-a', 'venue-a'), false);
+      expect(allows(NonFiscalCloseGrant.fromMap(grant.toMap())), true);
+      expect(allows(grant, device: 'device-b'), false);
+      expect(allows(grant, venue: 'venue-b'), false);
+      expect(allows(grant, installation: 'installation-b'), false);
+      expect(allows(grant, key: 'rotated-credential'), false);
+      expect(allows(grant, device: null), false);
+      expect(allows(grant, key: null), false);
     },
   );
+  test(
+    'missing, malformed, legacy or disabled authority cannot grant access',
+    () {
+      for (final raw in [
+        null,
+        ['NON_FISCAL_CLOSE'],
+        {},
+        {...grant.toMap(), 'version': 0},
+        {...grant.toMap(), 'enabled': 'true'},
+        {...grant.toMap(), 'venueId': ''},
+        {...grant.toMap(), 'enabled': false},
+      ]) {
+        expect(allows(NonFiscalCloseGrant.fromMap(raw)), false);
+      }
+    },
+  );
+  test('wall clock metadata cannot enable or extend a disabled decision', () {
+    for (final timestamp in ['1900-01-01T00:00:00Z', '2999-01-01T00:00:00Z']) {
+      final raw = {
+        ...grant.toMap(),
+        'enabled': false,
+        'observedAt': timestamp,
+        'expiresAt': timestamp,
+      };
+      expect(allows(NonFiscalCloseGrant.fromMap(raw)), false);
+    }
+  });
 }

@@ -28,6 +28,7 @@ abstract final class PosBackupFormat {
     'edge_command_journal',
   ];
   static const deviceSettings = <String>{
+    'runtimeFeatureAuthority',
     'posIngestConnectionKey',
     'developerTerminalId',
     'developerClockHighWater',

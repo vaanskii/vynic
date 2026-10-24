@@ -550,7 +550,7 @@ class _AdminSalesSectionState extends State<AdminSalesSection> {
       (sum, sale) => sum + ClosureMoney.fromSaleMap(sale).collectedNow,
     );
     final todayExpenses = _expenseForDate(todayDate);
-    final todayProfit = todayCombinedTotal - todayExpenses;
+    final todayProfit = todayFiscalTotal - todayExpenses;
 
     final selectedMonthDate = DateTime(_selectedSalesYear, _selectedSalesMonth);
     final monthPrefix =
@@ -599,16 +599,17 @@ class _AdminSalesSectionState extends State<AdminSalesSection> {
       0,
       (sum, sale) => sum + ClosureMoney.fromSaleMap(sale).collectedNow,
     );
-    final monthlyExpenseDates = <String>{};
-    for (final sale in monthlyCoreActiveSales) {
-      final date = (sale['date'] as String?) ?? '';
-      if (date.isNotEmpty) monthlyExpenseDates.add(date);
-    }
-    final monthlyExpenses = monthlyExpenseDates.fold<double>(
-      0.0,
-      (sum, date) => sum + _expenseForDate(date),
-    );
-    final monthlyProfit = monthlyCombinedTotal - monthlyExpenses;
+    final monthlyExpenses = DatabaseService.getAllExpenseRecords()
+        .where(
+          (expense) =>
+              (expense['date'] as String?)?.startsWith(monthPrefix) == true,
+        )
+        .fold<double>(
+          0,
+          (sum, expense) =>
+              sum + ((expense['amount'] as num?)?.toDouble() ?? 0),
+        );
+    final monthlyProfit = monthlyTotal - monthlyExpenses;
     final monthlyCancelled = monthlySales.length - monthlyActiveSales.length;
     final averageOrderValue = monthlyActiveCount == 0
         ? 0.0
@@ -767,9 +768,7 @@ class _AdminSalesSectionState extends State<AdminSalesSection> {
                                       Expanded(
                                         child: _buildStatCard(
                                           icon: Icons.attach_money,
-                                          label: _showNonFiscal
-                                              ? 'ფისკალური'
-                                              : 'გაყიდვები',
+                                          label: 'გაყიდვები',
                                           value:
                                               '₾${todayFiscalTotal.toStringAsFixed(2)}',
                                           color: AdminTones.successText,
@@ -794,7 +793,9 @@ class _AdminSalesSectionState extends State<AdminSalesSection> {
                                       Expanded(
                                         child: _buildStatCard(
                                           icon: Icons.summarize_outlined,
-                                          label: 'სრული',
+                                          label: _showNonFiscal
+                                              ? 'ოპერაციული'
+                                              : 'სრული',
                                           value:
                                               '₾${todayCombinedTotal.toStringAsFixed(2)}',
                                           color: AdminDesign.accentDark,
@@ -810,7 +811,7 @@ class _AdminSalesSectionState extends State<AdminSalesSection> {
                                     child: _buildStatCard(
                                       icon: Icons.receipt_long,
                                       label: (_showNonFiscal
-                                          ? 'შეკვეთები (ფისკალური / არაფისკალური)'
+                                          ? 'შეკვეთები (გადახდით / არაფისკალური)'
                                           : 'შეკვეთები'),
                                       value: (_showNonFiscal
                                           ? '${todayFiscalSales.length} / ${todayOperationalNonFiscalSales.length}'
@@ -822,9 +823,7 @@ class _AdminSalesSectionState extends State<AdminSalesSection> {
                                   Expanded(
                                     child: _buildStatCard(
                                       icon: Icons.attach_money,
-                                      label: _showNonFiscal
-                                          ? 'ფისკალური თანხა'
-                                          : 'გაყიდვების თანხა',
+                                      label: 'გაყიდვების თანხა',
                                       value:
                                           '₾${todayFiscalTotal.toStringAsFixed(2)}',
                                       color: AdminTones.successText,
@@ -845,7 +844,9 @@ class _AdminSalesSectionState extends State<AdminSalesSection> {
                                   Expanded(
                                     child: _buildStatCard(
                                       icon: Icons.summarize_outlined,
-                                      label: 'სრული თანხა',
+                                      label: _showNonFiscal
+                                          ? 'ოპერაციული ჯამი'
+                                          : 'სრული თანხა',
                                       value:
                                           '₾${todayCombinedTotal.toStringAsFixed(2)}',
                                       color: AdminDesign.accentDark,
@@ -1139,9 +1140,7 @@ class _AdminSalesSectionState extends State<AdminSalesSection> {
                                       Expanded(
                                         child: _buildStatCard(
                                           icon: Icons.attach_money,
-                                          label: _showNonFiscal
-                                              ? 'ფისკალური'
-                                              : 'გაყიდვები',
+                                          label: 'გაყიდვები',
                                           value:
                                               '₾${monthlyTotal.toStringAsFixed(2)}',
                                           color: AdminTones.successText,
@@ -1166,7 +1165,9 @@ class _AdminSalesSectionState extends State<AdminSalesSection> {
                                       Expanded(
                                         child: _buildStatCard(
                                           icon: Icons.summarize_outlined,
-                                          label: 'სრული',
+                                          label: _showNonFiscal
+                                              ? 'ოპერაციული'
+                                              : 'სრული',
                                           value:
                                               '₾${monthlyCombinedTotal.toStringAsFixed(2)}',
                                           color: AdminDesign.accentDark,
@@ -1182,7 +1183,7 @@ class _AdminSalesSectionState extends State<AdminSalesSection> {
                                     child: _buildStatCard(
                                       icon: Icons.receipt_long,
                                       label: (_showNonFiscal
-                                          ? 'შეკვეთები (ფისკალური / არაფისკალური)'
+                                          ? 'შეკვეთები (გადახდით / არაფისკალური)'
                                           : 'შეკვეთები'),
                                       value: (_showNonFiscal
                                           ? '${monthlyFiscalCount.toString()} / ${monthlyNonFiscalCount.toString()}'
@@ -1194,9 +1195,7 @@ class _AdminSalesSectionState extends State<AdminSalesSection> {
                                   Expanded(
                                     child: _buildStatCard(
                                       icon: Icons.attach_money,
-                                      label: _showNonFiscal
-                                          ? 'ფისკალური თანხა'
-                                          : 'გაყიდვების თანხა',
+                                      label: 'გაყიდვების თანხა',
                                       value:
                                           '₾${monthlyTotal.toStringAsFixed(2)}',
                                       color: AdminTones.successText,
@@ -1217,7 +1216,9 @@ class _AdminSalesSectionState extends State<AdminSalesSection> {
                                   Expanded(
                                     child: _buildStatCard(
                                       icon: Icons.summarize_outlined,
-                                      label: 'სრული თანხა',
+                                      label: _showNonFiscal
+                                          ? 'ოპერაციული ჯამი'
+                                          : 'სრული თანხა',
                                       value:
                                           '₾${monthlyCombinedTotal.toStringAsFixed(2)}',
                                       color: AdminDesign.accentDark,
@@ -1494,7 +1495,7 @@ class _AdminSalesSectionState extends State<AdminSalesSection> {
                     );
                     final dateCombinedTotal = dateTotal + nonFiscalDateTotal;
                     final dateExpenses = _expenseForDate(date);
-                    final dateProfit = dateCombinedTotal - dateExpenses;
+                    final dateProfit = dateTotal - dateExpenses;
                     final dateAverageOrderValue = activeCount == 0
                         ? 0.0
                         : dateCombinedTotal / activeCount;

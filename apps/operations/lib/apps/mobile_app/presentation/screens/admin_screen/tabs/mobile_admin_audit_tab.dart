@@ -807,9 +807,7 @@ class _AuditReportCard extends StatelessWidget {
       case AuditEventType.deleteItem:
         return 'წაშლა';
       case AuditEventType.close:
-        return ManagerEntitlements.has(FeatureKeys.nonFiscalClose)
-            ? 'ფისკალური დახურვა'
-            : 'დახურვა';
+        return 'გადახდით დახურვა';
       case AuditEventType.internalClose:
         return ManagerEntitlements.has(FeatureKeys.nonFiscalClose)
             ? 'არაფისკალური დახურვა'
@@ -852,7 +850,12 @@ class _AuditDetailDialog extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) => ValueListenableBuilder<Set<String>>(
+    valueListenable: ManagerEntitlements.features,
+    builder: (context, _, child) => _buildContent(context),
+  );
+
+  Widget _buildContent(BuildContext context) {
     // Chronological, matching the POS: an Order's report is that Order's
     // story, ordered by the sequence the POS assigned.
     final events = report.orderedEvents;
@@ -1111,9 +1114,7 @@ class _EventTile extends StatelessWidget {
       case AuditEventType.deleteItem:
         return 'პოზ. წაშლა';
       case AuditEventType.close:
-        return ManagerEntitlements.has(FeatureKeys.nonFiscalClose)
-            ? 'ფისკალური დახურვა'
-            : 'დახურვა';
+        return 'გადახდით დახურვა';
       case AuditEventType.internalClose:
         return ManagerEntitlements.has(FeatureKeys.nonFiscalClose)
             ? 'არაფისკალური დახურვა'

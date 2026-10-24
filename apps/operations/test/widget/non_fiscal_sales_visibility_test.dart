@@ -2,6 +2,11 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:vynic/apps/windows_pos/widgets/admin/admin_sales_section.dart';
+import 'package:vynic/apps/windows_pos/widgets/admin/admin_audit_log_section.dart';
+import 'package:vynic/apps/windows_pos/widgets/home/home_x_report_section.dart';
+import 'package:vynic/apps/windows_pos/widgets/order/non_fiscal_closure_dialog.dart';
+import 'package:vynic/core/models/audit_report.dart';
+import 'package:vynic/core/database/repositories/audit_repository.dart';
 import 'package:vynic/core/database/database_core.dart';
 import 'package:vynic/core/database/repositories/inventory_repository.dart';
 import 'package:vynic/core/models/feature_keys.dart';
@@ -160,6 +165,10 @@ void main() {
       );
       await host(tester);
       expect(find.textContaining('არაფისკალურ'), findsWidgets);
+      expect(find.text('ფისკალური'), findsNothing);
+      expect(find.text('ფისკალური თანხა'), findsNothing);
+      expect(find.textContaining('მოგება: ₾1000.00'), findsWidgets);
+      expect(find.textContaining('მოგება: ₾2000.00'), findsNothing);
       await capturePosVisual(tester, 'sales-enabled');
       await tester.runAsync(() => InventoryRepository.applyRuntimeFeatures([]));
       await tester.pump();
@@ -173,6 +182,228 @@ void main() {
       expect(DatabaseCore.salesBox!.length, 3);
       expect(tester.takeException(), isNull);
       await capturePosVisual(tester, 'sales-revoked');
+      await tester.pumpWidget(const SizedBox());
+    },
+  );
+
+  testWidgets(
+    'already-open confirmation removes its nonfiscal action and labels on revocation',
+    (tester) async {
+      await tester.runAsync(
+        () => InventoryRepository.applyRuntimeFeatures([
+          FeatureKeys.nonFiscalClose,
+        ]),
+      );
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Builder(
+            builder: (context) => Scaffold(
+              body: TextButton(
+                onPressed: () => showDialog<bool>(
+                  context: context,
+                  builder: (_) => const NonFiscalClosureDialog(),
+                ),
+                child: const Text('open'),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.tap(find.text('open'));
+      await tester.pumpAndSettle();
+      expect(find.text('არაფისკალური დახურვა'), findsOneWidget);
+      await tester.runAsync(() => InventoryRepository.applyRuntimeFeatures([]));
+      await tester.pump();
+      expect(find.textContaining('არაფისკალურ'), findsNothing);
+      expect(find.text('დახურვა და დაფიქსირება'), findsNothing);
+      expect(find.text('ოპერაცია მიუწვდომელია'), findsOneWidget);
+      expect(DatabaseCore.salesBox!.length, 3);
+      await tester.pumpWidget(const SizedBox());
+    },
+  );
+
+  testWidgets('already-rendered X report removes internal rows on revocation', (
+    tester,
+  ) async {
+    await tester.runAsync(
+      () => InventoryRepository.applyRuntimeFeatures([
+        FeatureKeys.nonFiscalClose,
+      ]),
+    );
+    tester.view
+      ..devicePixelRatio = 1
+      ..physicalSize = const Size(1024, 768);
+    addTearDown(tester.view.reset);
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: PosTheme.light,
+        home: Scaffold(
+          body: HomeXReportSection(
+            dailySalesTotal: 1000,
+            takeAwayCount: 0,
+            activeWaitersCount: 1,
+            waiterSummaries: const [],
+            closedTables: [
+              (
+                orderId: 1,
+                tables: 'Internal table',
+                waiter: 'Synthetic manager',
+                openedAt: null,
+                closedAt: null,
+                itemCount: 1,
+                total: 1000,
+                payment: 'Non-Fiscal',
+                cancelled: false,
+                fiscal: false,
+              ),
+            ],
+            onPrintReport: () {},
+            primaryColor: Colors.blue,
+            secondaryColor: Colors.blue,
+            textPrimary: Colors.black,
+            mutedText: Colors.grey,
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+    expect(find.textContaining('Non-Fiscal'), findsWidgets);
+    await tester.runAsync(() => InventoryRepository.applyRuntimeFeatures([]));
+    await tester.pump();
+    expect(find.textContaining('Non-Fiscal'), findsNothing);
+    expect(find.textContaining('არაფისკალურ'), findsNothing);
+    expect(find.text('Internal table'), findsNothing);
+    expect(tester.takeException(), isNull);
+    await tester.pumpWidget(const SizedBox());
+  });
+
+  testWidgets(
+    'open audit dialog removes nonfiscal labels while preserving stored evidence',
+    (tester) async {
+      await tester.runAsync(() async {
+        await InventoryRepository.applyRuntimeFeatures([
+          FeatureKeys.nonFiscalClose,
+        ]);
+        final time = DateTime(2026, 10, 24, 12);
+        await AuditRepository.saveAuditReport(
+          AuditReport(
+            reportId: AuditRepository.buildAuditReportKey(1),
+            orderId: 1,
+            tableNumbers: ['1'],
+            floor: 'first',
+            openedById: 'manager',
+            openedByName: 'Synthetic manager',
+            openedAt: time,
+            status: AuditReportStatus.closed,
+            updatedAt: time,
+            locked: true,
+            events: [
+              AuditEvent(
+                type: AuditEventType.internalClose,
+                itemName: 'ORDER',
+                previousQty: 0,
+                newQty: 0,
+                waiterId: 'manager',
+                waiterName: 'Synthetic manager',
+                timestamp: time,
+                note: 'Order closed (non-fiscal)',
+                details: {
+                  'isFiscal': false,
+                  'paymentMethod': 'non-fiscal',
+                  'grossAmount': 1000,
+                  'advanceApplied': 100,
+                  'collectedNow': 0,
+                },
+              ),
+            ],
+          ),
+        );
+      });
+      tester.view
+        ..devicePixelRatio = 1
+        ..physicalSize = const Size(1280, 900);
+      addTearDown(tester.view.reset);
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: PosTheme.light,
+          home: Scaffold(
+            body: AdminAuditLogSection(
+              selectedAuditYear: 2026,
+              selectedAuditMonth: 10,
+              onChangeAuditMonth: (_) {},
+              onSetSelectedAuditMonth: (_) {},
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.byType(ExpansionTile).first);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('დეტალურად ნახვა'));
+      await tester.pumpAndSettle();
+      final dialog = find.byType(Dialog);
+      expect(
+        find.descendant(
+          of: dialog,
+          matching: find.textContaining('არაფისკალურ'),
+        ),
+        findsWidgets,
+      );
+      await tester.runAsync(() => InventoryRepository.applyRuntimeFeatures([]));
+      await tester.pump();
+      expect(
+        find.descendant(
+          of: dialog,
+          matching: find.textContaining('არაფისკალურ'),
+        ),
+        findsNothing,
+      );
+      expect(
+        find.descendant(
+          of: dialog,
+          matching: find.textContaining('Non-fiscal'),
+        ),
+        findsNothing,
+      );
+      expect(
+        AuditRepository.getAuditReport(1)!.events.single.details!['isFiscal'],
+        false,
+      );
+      expect(
+        AuditRepository.getAuditReport(1)!.events.single.note,
+        contains('non-fiscal'),
+      );
+      await tester.pumpWidget(const SizedBox());
+    },
+  );
+  testWidgets(
+    'monthly expenses on an internal-only day remain in profit when access is off',
+    (tester) async {
+      await tester.runAsync(() async {
+        final paid = Map<String, dynamic>.from(
+          DatabaseCore.salesBox!.get('paid') as Map,
+        );
+        await DatabaseCore.salesBox!.put('paid', {
+          ...paid,
+          'date': '2026-10-23',
+        });
+        await DatabaseCore.expenseBox!.put('synthetic-expense', {
+          'date': '2026-10-24',
+          'createdAt': '2026-10-24T12:00:00',
+          'category': 'other',
+          'amount': 100.0,
+        });
+        await InventoryRepository.applyRuntimeFeatures([
+          FeatureKeys.nonFiscalClose,
+        ]);
+      });
+      await host(tester);
+      expect(find.textContaining('მოგება: ₾900.00'), findsWidgets);
+      await tester.runAsync(() => InventoryRepository.applyRuntimeFeatures([]));
+      await tester.pump();
+      expect(find.textContaining('მოგება: ₾900.00'), findsWidgets);
+      expect(find.textContaining('არაფისკალურ'), findsNothing);
+      expect(tester.takeException(), isNull);
       await tester.pumpWidget(const SizedBox());
     },
   );

@@ -1,3 +1,4 @@
+import 'package:vynic/core/services/sync/manager_sales_history_builder.dart';
 import 'package:vynic/core/database/repositories/inventory_repository.dart';
 import 'package:vynic/core/models/feature_keys.dart';
 import 'package:vynic/core/services/edge/edge_device_credential_store.dart';
@@ -175,76 +176,141 @@ void main() {
 
   group('the accounting identity', () {
     for (final advance in [0.0, 100.0, 1000.0]) {
+      for (final entitlement in ['enabled', 'disabled', 'missing']) {
+        test(
+          'GEL 1000 sale with $advance deposit, entitlement $entitlement keeps gross and one settlement',
+          () async {
+            if (entitlement != 'enabled')
+              await InventoryRepository.applyRuntimeFeatures([]);
+            if (entitlement == 'missing')
+              await DatabaseCore.settingsBox!.delete(
+                InventoryRepository.runtimeFeatureAuthorityKey,
+              );
+            final order = await seedOrder(itemTotal: 1000, advance: advance);
+            if (advance > 0) {
+              order.advanceReceiptId =
+                  await SalesRepository.recordAdvanceReceipt(
+                    orderId: order.orderId,
+                    amount: advance,
+                    collectedBy: 'manager',
+                    businessDate: dayOne,
+                  );
+              await order.save();
+            }
+            final due = 1000 - advance;
+            final tender = due == 0
+                ? <String, double>{}
+                : {'cash': due / 3, 'card-tbc': due * 2 / 3};
+            final money = ClosureMoney.fromOrder(order, collectedNow: due);
+            final selection = TablePaymentSelection(
+              method: TablePaymentMethod.split,
+              cashAmount: due / 3,
+              bankAmount: due * 2 / 3,
+              bankProvider: 'tbc',
+            );
+            final snapshot = TableClosureHelper.buildFinalTransactionRecord(
+              order: order,
+              selection: selection,
+              paymentBreakdown: tender,
+              subtotal: 1000,
+              serviceFee: 0,
+              closedAt: DateTime(2026, 9, 4),
+              isFiscal: true,
+            );
+            expect(snapshot['total'], 1000);
+            expect(snapshot['advanceApplied'], advance);
+            expect(snapshot['amountDueNow'], due);
+            // An older caller still passing the net total is normalized at the writer.
+            snapshot['total'] = due;
+            Future<ClosureResult> close() => CloseTableTransaction.run(
+              orderId: order.orderId,
+              money: money,
+              paymentMethod: 'split',
+              tenderBreakdown: tender,
+              closedById: 'manager',
+              isFiscal: true,
+              finalTransaction: snapshot,
+            );
+            expect((await close()).isSuccess, isTrue);
+            expect((await close()).outcome, ClosureOutcome.alreadyClosed);
+            final sale = closedSales(today).single;
+            expect(sale['isFiscal'], isTrue);
+            expect(sale['totalAmount'], 1000);
+            expect(sale['grossSaleAmount'], 1000);
+            expect(sale['collectedNow'], due);
+            expect((sale['finalTransaction'] as Map)['total'], 1000);
+            expect(grossSalesFor(today), 1000);
+            expect(grossSalesFor(dayOne), 0);
+            expect(
+              PaymentUtils.formatPaymentDisplay(sale),
+              isNot(contains('Non-Fiscal')),
+            );
+            await SaleLedgerSyncState.ensureSaleIdentities();
+            final records = SalesRepository.getAllSales();
+            final first = SaleLedgerSyncState.buildBatch(records).single;
+            final retry = SaleLedgerSyncState.buildBatch(records).single;
+            expect(retry, first);
+            expect(first['gross'], '1000.00');
+            expect(first['advanceApplied'], advance.toStringAsFixed(2));
+            expect(first['collectedNow'], due.toStringAsFixed(2));
+            expect(first['isFiscal'], true);
+            final history = ManagerSalesHistoryBuilder.build(
+              sales: records,
+              expenseTotalForDate: (_) => 0,
+            );
+            expect(history[today]!['totalRevenue'], 1000);
+            expect(history[today]!['orderCount'], 1);
+            expect(
+              (history[today]!['closedTables'] as List).single['totalAmount'],
+              1000,
+            );
+            if (advance > 0)
+              expect(history[dayOne]!['advanceReceived'], advance);
+          },
+        );
+      }
+    }
+
+    for (final advance in [100.0, 1000.0]) {
       test(
-        'GEL 1000 sale with $advance deposit keeps gross and one settlement',
+        'explicit internal GEL 1000 close with $advance advance preserves value without new collection',
         () async {
           final order = await seedOrder(itemTotal: 1000, advance: advance);
-          if (advance > 0) {
-            order.advanceReceiptId = await SalesRepository.recordAdvanceReceipt(
-              orderId: order.orderId,
-              amount: advance,
-              collectedBy: 'manager',
-              businessDate: dayOne,
-            );
-            await order.save();
-          }
-          final due = 1000 - advance;
-          final tender = due == 0
-              ? <String, double>{}
-              : {'cash': due / 3, 'card-tbc': due * 2 / 3};
-          final money = ClosureMoney.fromOrder(order, collectedNow: due);
-          final selection = TablePaymentSelection(
-            method: TablePaymentMethod.split,
-            cashAmount: due / 3,
-            bankAmount: due * 2 / 3,
-            bankProvider: 'tbc',
-          );
-          final snapshot = TableClosureHelper.buildFinalTransactionRecord(
-            order: order,
-            selection: selection,
-            paymentBreakdown: tender,
-            subtotal: 1000,
-            serviceFee: 0,
-            closedAt: DateTime(2026, 9, 4),
-            isFiscal: true,
-          );
-          expect(snapshot['total'], 1000);
-          expect(snapshot['advanceApplied'], advance);
-          expect(snapshot['amountDueNow'], due);
-          // An older caller still passing the net total is normalized at the writer.
-          snapshot['total'] = due;
-          Future<ClosureResult> close() => CloseTableTransaction.run(
+          order.advanceReceiptId = await SalesRepository.recordAdvanceReceipt(
             orderId: order.orderId,
-            money: money,
-            paymentMethod: 'split',
-            tenderBreakdown: tender,
+            amount: advance,
+            collectedBy: 'manager',
+            businessDate: dayOne,
+          );
+          await order.save();
+          final result = await CloseTableTransaction.run(
+            orderId: order.orderId,
+            money: ClosureMoney.fromOrder(order, collectedNow: 0),
+            paymentMethod: 'non-fiscal',
+            tenderBreakdown: {},
             closedById: 'manager',
-            isFiscal: true,
-            finalTransaction: snapshot,
+            isFiscal: false,
           );
-          expect((await close()).isSuccess, isTrue);
-          expect((await close()).outcome, ClosureOutcome.alreadyClosed);
+          expect(result.isSuccess, true);
           final sale = closedSales(today).single;
-          expect(sale['isFiscal'], isTrue);
-          expect(sale['totalAmount'], 1000);
           expect(sale['grossSaleAmount'], 1000);
-          expect(sale['collectedNow'], due);
-          expect((sale['finalTransaction'] as Map)['total'], 1000);
-          expect(grossSalesFor(today), 1000);
-          expect(grossSalesFor(dayOne), 0);
-          expect(
-            PaymentUtils.formatPaymentDisplay(sale),
-            isNot(contains('Non-Fiscal')),
+          expect(sale['advanceApplied'], advance);
+          expect(sale['collectedNow'], 0);
+          expect(SalesRepository.countsAsRevenue(sale), false);
+          final history = ManagerSalesHistoryBuilder.build(
+            sales: SalesRepository.getAllSales(),
+            expenseTotalForDate: (_) => 0,
           );
+          expect(history[today]!['totalRevenue'], 0);
           await SaleLedgerSyncState.ensureSaleIdentities();
           final records = SalesRepository.getAllSales();
           final first = SaleLedgerSyncState.buildBatch(records).single;
-          final retry = SaleLedgerSyncState.buildBatch(records).single;
-          expect(retry, first);
           expect(first['gross'], '1000.00');
           expect(first['advanceApplied'], advance.toStringAsFixed(2));
-          expect(first['collectedNow'], due.toStringAsFixed(2));
-          expect(first['isFiscal'], true);
+          expect(first['collectedNow'], '0.00');
+          expect(first['payments'], isEmpty);
+          expect(first['isFiscal'], false);
+          expect(SaleLedgerSyncState.buildBatch(records).single, first);
         },
       );
     }

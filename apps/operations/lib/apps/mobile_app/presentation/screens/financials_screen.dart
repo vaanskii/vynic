@@ -847,9 +847,7 @@ class _FinancialsScreenState extends State<FinancialsScreen> {
         ? 'აღდგენილი'
         : sale['isFiscal'] == false
         ? 'შიდა დახურვა'
-        : (ManagerEntitlements.has(FeatureKeys.nonFiscalClose)
-              ? 'ფისკალური'
-              : 'გაყიდვა');
+        : 'გაყიდვა';
     final payment =
         const {
           'cash': 'ნაღდი',
@@ -908,7 +906,7 @@ class _FinancialsScreenState extends State<FinancialsScreen> {
                     ),
                     decoration: BoxDecoration(
                       color:
-                          ((status == 'ფისკალური' || status == 'გაყიდვა')
+                          ((status == 'გაყიდვა')
                                   ? MobileGlassTheme.good
                                   : MobileGlassTheme.warn)
                               .withValues(alpha: .08),
@@ -917,7 +915,7 @@ class _FinancialsScreenState extends State<FinancialsScreen> {
                     child: Text(
                       status,
                       style: managerDesignText(context, 11).copyWith(
-                        color: (status == 'ფისკალური' || status == 'გაყიდვა')
+                        color: (status == 'გაყიდვა')
                             ? MobileGlassTheme.good
                             : MobileGlassTheme.warn,
                       ),
@@ -1499,9 +1497,7 @@ class _SaleDetailSheet extends StatelessWidget {
         ? 'RESTORED'
         : sale['isFiscal'] == false
         ? 'INTERNAL'
-        : (ManagerEntitlements.has(FeatureKeys.nonFiscalClose)
-              ? 'FISCAL'
-              : 'SALE');
+        : 'SALE';
     return DraggableScrollableSheet(
       initialChildSize: 0.84,
       minChildSize: 0.5,
@@ -1541,7 +1537,7 @@ class _SaleDetailSheet extends StatelessWidget {
                 Text(
                   state,
                   style: TextStyle(
-                    color: (state == 'FISCAL' || state == 'SALE')
+                    color: (state == 'SALE')
                         ? MobileGlassTheme.good
                         : MobileGlassTheme.warn,
                     fontWeight: FontWeight.w800,

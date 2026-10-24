@@ -1237,9 +1237,11 @@ current transport status.
   local cache. The owner portal configures printers without a developer token.
   Device names/features refresh every 10 seconds without restart; local menu
   changes refresh the open menu. NON_FISCAL_CLOSE requires an affirmative
-  Device/Venue-bound runtime pull and a session-only 15-minute monotonic grant
-  alongside enabled Staff permission at the close transaction. Missing, restored
-  or stale configuration cannot grant it; restart requires another pull.
+  Device/Venue/installation/credential-bound runtime decision alongside enabled
+  Staff permission at the close transaction. The verified device-only decision
+  survives offline restart; unbound/missing configuration cannot grant it.
+  Backups cannot replay it. Revocation applies on the next authenticated pull,
+  independently of printer/profile state; no client time limit is imposed.
   Plan grants are removed and rejected by the API,
   resolver and database trigger; only explicit Venue overrides can enable it.
   First successful full sync records Device.firstSyncAt for onboarding readiness.
@@ -1253,8 +1255,11 @@ current transport status.
 - NON_FISCAL_CLOSE also controls POS/Manager sales, report and dashboard
   presentation, including POS close-day non-fiscal summaries. Historical records,
   advances, cancellation evidence, audit and financial ledger rules remain intact.
-  Manager non-fiscal presentation expires after 15 minutes without refresh;
-  customer API projections hide its fields and filter Sale list/detail access.
+  Manager uses explicit session features; customer API projections hide
+  non-fiscal fields and filter Sale list/detail access. Open customer dialogs and
+  reports react to revocation. Paid-sale labels do not assert fiscal receipt
+  issuance. Financial profit excludes internal gross and includes selected-month
+  expenses independently of feature presentation.
   New close snapshots preserve gross separately from advance/current collection;
   POS history never treats discounts or advance receipts as internal closures or
   adds an advance to an already-gross Sale. Beta proof and known unrelated test

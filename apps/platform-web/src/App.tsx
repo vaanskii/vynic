@@ -96,6 +96,7 @@ export function AppRoutes({
         element={<Navigate to="/request-access" replace />}
       />
       <Route path="/invite/*" element={<AcceptInvitation />} />
+      <Route path="/download" element={<Navigate to="/" replace />} />
       <Route path="/dashboard/:section?" element={<CustomerDashboard />} />
       <Route
         path="/start"

@@ -1175,7 +1175,19 @@ current transport status.
   membership and dashboard access, independently of product access. Invitation
   registration reuses the approved access request’s personal name; only manual
   invitations without a saved applicant name ask for it. Existing
-  accounts use the same invited-email sign-in and membership flow. Platform can
+  accounts use the same invited-email sign-in and membership flow. Owners can
+  resume password setup after refresh through an expiring, host-only HttpOnly
+  continuation that rechecks the original invitation. Lost-link requests are
+  rate-limited, enumeration-safe Admin review requests; operators reissue manually
+  until an email provider is configured. Windows installer links now use audited,
+  revocable 15-minute capabilities issued to Platform operators or current POS
+  owners, with ownership/entitlement rechecks and a streaming private-asset proxy.
+  There is no public installer landing/catalog: the release root is technical-only
+  and generic `/download` redirects to the main site. Only issued per-grant links
+  enter the backend fragment-to-cookie handshake. They are bearer capabilities,
+  not recipient identity-bound links; forwarding grants temporary access while
+  the issuer retains authority. Public binary distribution is withdrawn; delivery
+  uses a repository-limited read credential configured on the backend. Platform can
   explicitly prepare a chosen TRIAL/ACTIVE plan during assisted onboarding or
   assign it later. Owners with current access cannot request a duplicate Trial.
   Operators control Trial dates, paid manual agreements, suspension/resume and

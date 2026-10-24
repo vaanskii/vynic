@@ -21,6 +21,7 @@ import {
 import { PlatformPrincipal } from '../platform/platform-auth-context';
 import { provisionWebsite } from '../website/provisioning/website-provisioning';
 import { profileInput } from '../venue-profile/venue-profile';
+import { admit, secretHash } from './security-admission';
 
 const hash = (token: string) =>
   createHash('sha256').update(token).digest('hex');
@@ -36,6 +37,7 @@ const invitationFields = {
   createdBy: true,
   acceptedById: true,
   revokedBy: true,
+  recoveryRequestedAt: true,
   organization: { select: { name: true } },
 } as const;
 
@@ -140,7 +142,14 @@ export class OwnerInvitationsService {
       orderBy: { createdAt: 'desc' },
     });
   }
-  create(actor: PlatformPrincipal, body: Record<string, unknown>) {
+  async create(actor: PlatformPrincipal, body: Record<string, unknown>) {
+    await admit(
+      this.db,
+      'invitation-admin-create',
+      actor.platformUserId,
+      30,
+      3600000,
+    );
     const organizationId = requireText(body.organizationId, 'Organization');
     const email = this.email(body.email);
     return this.db.$transaction((tx) =>
@@ -148,6 +157,7 @@ export class OwnerInvitationsService {
     );
   }
   async change(actor: PlatformPrincipal, id: string, regenerate: boolean) {
+    await admit(this.db, 'invitation-admin', actor.platformUserId, 30, 3600000);
     return this.db.$transaction(async (tx) => {
       const row = await tx.ownerInvitation.findUnique({ where: { id } });
       if (!row) throw new NotFoundException('Invitation not found');
@@ -315,13 +325,93 @@ export class OwnerInvitationsService {
       displayName: account ? null : await this.applicantName(this.db, row),
     };
   }
+  async startSession(body: Record<string, unknown>, ip: string) {
+    await admit(this.db, 'invitation-session-ip', ip, 30, 900000);
+    const details = await this.inspect(body, ip);
+    const row = await this.db.ownerInvitation.findUniqueOrThrow({
+      where: { tokenHash: hash(this.token(body.token)) },
+    });
+    await admit(this.db, 'invitation-session-link', row.id, 30, 900000);
+    await this.db.invitationResumeSession.deleteMany({
+      where: { expiresAt: { lt: new Date() } },
+    });
+    const sessionId = randomBytes(32).toString('base64url');
+    await this.db.invitationResumeSession.create({
+      data: {
+        sessionHash: secretHash(sessionId),
+        invitationId: row.id,
+        expiresAt: row.expiresAt,
+      },
+    });
+    return { details, sessionId, expiresAt: row.expiresAt };
+  }
+  private async sessionInvitation(sessionId: string | undefined) {
+    this.token(sessionId);
+    const session = await this.db.invitationResumeSession.findUnique({
+      where: { sessionHash: secretHash(sessionId!) },
+    });
+    if (!session || session.expiresAt <= new Date()) this.valid(null);
+    const row = await this.db.ownerInvitation.findUnique({
+      where: { id: session!.invitationId },
+    });
+    this.valid(row);
+    return row;
+  }
+  async resume(sessionId: string | undefined, ip: string) {
+    this.throttle(ip);
+    const row = await this.sessionInvitation(sessionId);
+    const account = await this.db.customerAccount.findUnique({
+      where: { email: row.email },
+      select: { id: true },
+    });
+    const organization = await this.db.organization.findUniqueOrThrow({
+      where: { id: row.organizationId },
+      select: { name: true },
+    });
+    return {
+      email: row.email,
+      organizationName: organization.name,
+      expiresAt: row.expiresAt,
+      existingAccount: !!account,
+      displayName: account ? null : await this.applicantName(this.db, row),
+    };
+  }
+  async requestRecovery(body: Record<string, unknown>, ip: string) {
+    await admit(this.db, 'invitation-recovery-ip', ip, 10, 3600000);
+    const email = this.email(body.email);
+    await admit(this.db, 'invitation-recovery-email', email, 3, 3600000);
+    // A request never revokes a working link or reveals whether an email exists.
+    // Operators issue the replacement; no email sender is configured here.
+    await this.db.$transaction(async (tx) => {
+      const rows = await tx.ownerInvitation.findMany({
+        where: { email, acceptedAt: null, revokedAt: null },
+        select: { id: true },
+      });
+      await tx.ownerInvitation.updateMany({
+        where: { id: { in: rows.map((r) => r.id) } },
+        data: { recoveryRequestedAt: new Date() },
+      });
+      for (const row of rows)
+        await tx.platformAuditEvent.create({
+          data: {
+            action: 'owner_invitation.recovery_requested',
+            targetType: 'OwnerInvitation',
+            targetId: row.id,
+          },
+        });
+    });
+    return { received: true, delivery: 'ADMIN_REVIEW' };
+  }
   async accept(
     body: Record<string, unknown>,
     ip: string,
     actor?: CustomerPrincipal,
+    sessionId?: string,
   ) {
     this.throttle(ip);
-    const tokenHash = hash(this.token(body.token));
+    const tokenHash = sessionId
+      ? (await this.sessionInvitation(sessionId)).tokenHash
+      : hash(this.token(body.token));
     // No password handling for existing accounts: only normal Customer JWT authentication.
     let passwordHash: string | undefined;
     if (!actor) {
@@ -385,6 +475,9 @@ export class OwnerInvitationsService {
         await tx.ownerInvitation.update({
           where: { id: row.id },
           data: { acceptedAt: new Date(), acceptedById: account.id },
+        });
+        await tx.invitationResumeSession.deleteMany({
+          where: { invitationId: row.id },
         });
         await tx.customerAuditEvent.create({
           data: {

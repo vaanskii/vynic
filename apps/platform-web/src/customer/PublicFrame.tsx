@@ -17,7 +17,7 @@ export function PublicFrame({
 }) {
   return (
     <LocaleProvider locale="ka" title={`${title} | Vynic`}>
-      <div className="min-h-[100dvh] bg-vynic-background text-vynic-charcoal">
+      <div className="customer-public-frame min-h-[100dvh] bg-vynic-background text-vynic-charcoal">
         <Navbar />
         <main className="customer customer-public">{children}</main>
       </div>

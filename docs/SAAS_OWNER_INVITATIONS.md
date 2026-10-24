@@ -53,14 +53,25 @@ explicit; Platform retains mode authority.
   never undoes membership.
 - Links use /invite#token=… so tokens never enter HTTP URLs (older
   /portal/invite#token=… links redirect there with the fragment intact). The page
-  clears the fragment and keeps it only in memory; reload requires reopening the
-  link. Tokens are submitted in bodies, never logged by this implementation.
+  exchanges the fragment for a random server-backed continuation, then clears it.
+  The host-only HttpOnly/SameSite=Strict cookie is Secure in production and scoped
+  to `/customer/invitations`; refresh and direct return to `/invite` resume the
+  same invitation until its original expiry. Every continuation use rechecks
+  expiry/revocation/acceptance. No invitation token or password enters browser
+  storage. Cookie mutations require a custom CSRF header and matching Origin/Host.
+  Tokens are submitted in bodies, never logged by this implementation.
   Deployments must not enable request-body logging for auth/invitation endpoints.
 - Inspection/acceptance have per-IP throttling; login retains IP/email throttling.
   Secret/context responses are no-store. Platform, Customer, Staff, Device and
   preview audiences remain separate. SUPPORT_READONLY cannot mutate invitations.
 - Acceptance does not mark emailVerifiedAt. A manually copied link is not a claim
   of verified email ownership. Password recovery/email verification remain absent.
+- Lost/expired invitation pages offer `POST /customer/invitations/request-new`.
+  Existing and unknown valid emails receive the same receipt; requests do not
+  invalidate working links or return a secret. Durable IP/email admission bounds
+  requests. Matching pending invitations record an audited Admin-review request;
+  Admin regenerates and manually distributes the new link. Regeneration invalidates
+  prior links and their continuations. No email is sent or claimed to have been sent.
 
 ## API
 

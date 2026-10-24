@@ -25,11 +25,15 @@ export async function customerApi<T = any>(
   const response = await fetch(`${base}/customer/${path}`, {
     method: body === undefined ? "GET" : method,
     headers: {
+      ...(path.startsWith("invitations/")
+        ? { "X-CSRF-Token": "vynic-invitation" }
+        : {}),
       ...(body instanceof FormData
         ? {}
         : { "Content-Type": "application/json" }),
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
     },
+    credentials: "same-origin",
     ...(body === undefined
       ? {}
       : { body: body instanceof FormData ? body : JSON.stringify(body) }),

@@ -1,4 +1,10 @@
 import { CustomerWebsitePaymentReviewsController } from './customer-website-payment-reviews.controller';
+import { InstallerDownloadsService } from './installer-downloads.service';
+import {
+  PlatformInstallerDownloadsController,
+  CustomerInstallerDownloadsController,
+  InstallerDownloadFileController,
+} from './installer-downloads.controller';
 import { MenuClientGuard } from '../menu-catalog/menu-client.guard';
 import { MenuRolloutService } from '../menu-catalog/menu-rollout.service';
 import {
@@ -59,6 +65,7 @@ import {
     EntitlementsModule,
   ],
   providers: [
+    InstallerDownloadsService,
     OnboardingRequestsService,
     RestaurantFoundationService,
     MenuClientGuard,
@@ -72,6 +79,9 @@ import {
     EdgeDeviceGuard,
   ],
   controllers: [
+    PlatformInstallerDownloadsController,
+    CustomerInstallerDownloadsController,
+    InstallerDownloadFileController,
     CustomerWebsitePaymentReviewsController,
     PublicAccessRequestsController,
     PlatformAccessRequestsController,

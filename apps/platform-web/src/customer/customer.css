@@ -1,4 +1,9 @@
 /* Owner pages share the Vynic site tokens (styles/index.css). */
+@media (max-width: 420px) {
+  .customer-public-frame .vynic-header nav > a > span {
+    display: none;
+  }
+}
 .customer {
   --customer-tint: color-mix(in srgb, var(--vynic-plum) 8%, var(--vynic-surface));
   min-height: 100vh;

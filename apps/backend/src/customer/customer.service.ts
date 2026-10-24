@@ -97,8 +97,10 @@ export class CustomerService {
       releaseLinks: Object.fromEntries(
         Object.entries(
           (policy?.releaseLinks ?? {}) as Record<string, string>,
-        ).filter(([key]) =>
-          enabled.has(key.startsWith('pos') ? 'POS' : 'MANAGER_APP'),
+        ).filter(
+          ([key]) =>
+            key !== 'posWindows' &&
+            enabled.has(key.startsWith('pos') ? 'POS' : 'MANAGER_APP'),
         ),
       ),
       // Lets first-run show the full website address before a Venue exists.

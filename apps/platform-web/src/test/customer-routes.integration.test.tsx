@@ -52,7 +52,7 @@ function customerBackend(venues: unknown[] = [prepared]) {
     if (path === "/customer/access-requests")
       return { body: { received: true } };
     if (path === "/customer/portal") return { body: portal(venues) };
-    if (path === "/customer/invitations/inspect")
+    if (path === "/customer/invitations/session")
       return {
         body: {
           email: "owner@test.invalid",
@@ -214,7 +214,7 @@ describe("Vynic site to dashboard", () => {
       api.requests.find(
         (r) => r.url.pathname === "/customer/invitations/register",
       )?.body,
-    ).toMatchObject({ token: "invite-secret" });
+    ).toMatchObject({ password: "a long test passphrase" });
   });
 });
 
@@ -303,7 +303,7 @@ describe("Old portal addresses", () => {
     await waitFor(() =>
       expect(
         api.requests.find(
-          (r) => r.url.pathname === "/customer/invitations/inspect",
+          (r) => r.url.pathname === "/customer/invitations/session",
         )?.body,
       ).toEqual({ token: "old-link" }),
     );

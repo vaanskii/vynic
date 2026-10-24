@@ -73,3 +73,25 @@ describe("SaaS preview exception", () => {
     expect((await saasProxy(request("vynic-restaurant-web.vercel.app", "/preview-other?token=synthetic"))).headers.get("Location")).toBe("https://vynic.ge/#");
   });
 });
+
+describe("Withdrawn generic download page", () => {
+  it("rejects generic download writes without forwarding them", async () => {
+    const response = await platformProxy(
+      request("www.vynic.ge", "/download", "POST"),
+    );
+    expect(response.status).toBe(404);
+    expect(response.headers.get("Location")).toBeNull();
+  });
+  it.each(["www.vynic.ge", "vynic.ge", "admin.vynic.ge"])(
+    "redirects %s/download to the main site with a cleared fragment",
+    async (host) => {
+      const response = await platformProxy(
+        request(host, "/download?token=discard#token=discard"),
+      );
+      expect(response.status).toBe(308);
+      expect(response.headers.get("Location")).toBe("https://www.vynic.ge/#");
+      expect(response.headers.get("Referrer-Policy")).toBe("no-referrer");
+      expect(response.headers.get("Cache-Control")).toContain("no-store");
+    },
+  );
+});

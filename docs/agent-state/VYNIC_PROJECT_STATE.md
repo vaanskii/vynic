@@ -169,10 +169,14 @@ current transport status.
 - Production Windows distribution preparation adds an offline public-config gate
   (`build-setup.py --production`) and separate payload/Setup Authenticode stages,
   with verify-only, expected certificate thumbprint and timestamp checks. Python
-  policy regressions pass; native signing remains unqualified. Public hosting,
-  production keys/certificate, publication and Windows install/recovery testing
-  remain pending. Admin's existing `releaseLinks.posWindows` stores the installer
-  URL, not the installed update feed. See `docs/WINDOWS_PRODUCTION_DISTRIBUTION.md`.
+  policy regressions pass; native publisher signing remains unqualified. Free
+  `releases.vynic.ge` hosting/TLS and GitHub prerelease `v1.0.0-beta.1` are live
+  for POS 1.0.0 build 16 test installation, including app-local Microsoft CRT
+  DLLs. Bootstrap/pinned repair metadata is signed; the automatic POS feed stays
+  inactive. Clean Windows install/runtime/recovery and physical printing remain
+  pending. Admin's `releaseLinks.posWindows` stores a download URL, not the
+  installed feed; live Admin configuration is unverified. See
+  `docs/WINDOWS_PRODUCTION_DISTRIBUTION.md` and `docs/WINDOWS_BETA_TEST_INSTALL.md`.
 
 - POS touch input shares TEXT/NUMBER/DECIMAL/PIN modes, controller-backed fields,
   one text keyboard and one numeric/PIN pad. Login, lock and Staff authentication

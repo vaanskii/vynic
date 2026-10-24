@@ -1,11 +1,11 @@
 # Windows POS distribution: preparation and remaining release gates
 
 The approved free beta release site and a dedicated beta metadata signing key
-now exist. The candidate installer and signed feed remain unpublished pending
-clean-install qualification. `releases.vynic.ge` has verified DNS and a valid
-public HTTPS certificate. Local resolvers may cache its earlier NXDOMAIN.
-No trusted Authenticode
-certificate was purchased. See the current beta status at the end of this file.
+now exist. Build 16 is published as an explicitly test-only GitHub prerelease,
+with fresh-install bootstrap and pinned repair metadata. The automatic POS feed
+remains inactive; ordinary-user clean-install/runtime qualification is pending.
+`releases.vynic.ge` has verified DNS and a valid public HTTPS certificate.
+No trusted Authenticode certificate was purchased. See the current beta status at the end of this file.
 Do not run the LAN publisher to publish production: it prepares a development API,
 private HTTPS origin and development trust.
 
@@ -36,15 +36,14 @@ only changes future downloads. Existing LAN installations need a separately
 qualified data-preserving reprovisioning plan; pointing them at a public URL or
 resetting their updater DB is not a supported migration.
 
-## Hosting proposal
+## Hosting
 
-For the initial budget-limited beta, the proposed route is a Render static site
+For the initial budget-limited beta, the approved route is a Render static site
 for a release landing page and small signed JSON envelopes, with immutable ZIP/EXE
 assets in a separate public, binaries-only GitHub repository. This keeps DNS at
 domenebi.ge: only the release subdomain's provider-directed record is needed.
-Both provisioning and a dedicated beta manifest key await approval. Check the
-workspace's domain, bandwidth and pipeline quotas before claiming zero cost; do
-not enable paid overages. The existing runtime downloader permits bounded HTTPS
+The static site and dedicated beta manifest key are provisioned. Retain the
+verified free workspace limits; do not enable paid overages. The existing runtime downloader permits bounded HTTPS
 cross-host redirects, so GitHub's release asset redirects fit its current policy.
 See [Render static sites](https://render.com/docs/static-sites) and
 [GitHub release assets](https://docs.github.com/en/repositories/releasing-projects-on-github/about-releases).
@@ -233,7 +232,7 @@ Keep the current updater contract (`POS_WINDOWS_UPDATER.md`, D021/D022):
 - Uninstall/repair preserves data/identity. Edge is pinned; this is not Edge
   self-update, a printer service rollout, or an automatic key-rotation mechanism.
 
-Before public release, execute a Windows amd64 clean-install/upgrade/repair/
+Before production qualification, execute a Windows amd64 clean-install/upgrade/repair/
 uninstall matrix under an ordinary user. Verify legal publisher, signatures and
 timestamps on the exact downloadable bytes, Defender/SmartScreen behavior, same
 Hive directory and data after restart, explicit Later behavior, blocked active
@@ -294,11 +293,14 @@ change was made. These tests do not certify native Windows or physical printers.
 ## Approved free beta distribution status
 
 - Public binaries/metadata repository: `https://github.com/vaanskii/vynic-releases`.
-  Landing commit `32dfa086b714655deb5c654636f45663653978c6` contains only public
-  page files; no app source, executable, update feed or private key.
+  Prerelease `v1.0.0-beta.1` (ID `422823783`) is published with seven reviewed
+  assets. Landing/metadata commit `ee0025e4d2b613fa8102b4c0df0ea79a60719435`
+  contains public page files, bootstrap/repair envelopes, hashes and qualification;
+  no application source, executable, automatic update feed or private key.
 - Render static site: `https://vynic-releases.onrender.com`, service
   `srv-dbebg2vavr4c73acdgq0`, workspace `tea-cspa7ujgbbvc73bad3lg`.
-  First deploy `dep-dbebg37avr4c73acdhqg` is live. Auto-deploy/previews are off.
+  Beta download deploy `dep-dbed6po473hc73cucr8g` is live. Auto-deploy/previews
+  are off; no paid resource or billing change was made.
 - Dashboard verified Hobby, no payment card, 1/2 domains before adding releases,
   8 MB/5 GB bandwidth and 7/500 pipeline minutes. The new hostname uses domain
   2/2. No plan upgrade, paid service or billing method was added.
@@ -317,12 +319,27 @@ change was made. These tests do not certify native Windows or physical printers.
   owner-only directory/file; never copy it into the release repository or ZIPs.
   Secure backup has not yet been established. This is beta metadata trust, not
   an Authenticode publisher certificate or SmartScreen reputation.
-- Local candidate: `/tmp/vynic-beta-candidate-1.0.0-16-print-label-v2`;
-  Setup has asInvoker metadata, amd64 architecture and no Authenticode signature.
-  Locally signed POS/bootstrap envelopes have a 30-day expiry; renew before expiry.
-  Retained repair metadata also needs renewal, without replacing artifact bytes.
-- Final release publication is gated on exact artifact hash/signature
-  verification and clean installer/runtime qualification. The current Windows VM
+- Published candidate: `/tmp/vynic-beta-candidate-1.0.0-16-runtime-v3`.
+  Setup and Edge are byte-identical to the prior `print-label-v2` candidate.
+  All 20 prior POS runtime files are unchanged; three official Visual Studio
+  x64 CRT redistributables were added after PE import inspection found they
+  were absent: `msvcp140.dll`, `vcruntime140.dll`, `vcruntime140_1.dll`. Windows
+  verified all three as Valid Microsoft Corporation signatures, file version
+  `14.44.35211.0`; architecture and exported hashes were checked. This follows
+  [Flutter's app-local distribution guidance](https://docs.flutter.dev/platform-integration/windows/building#building-your-own-zip-file-for-windows).
+  No installer or POS/Edge runtime was run.
+- Setup has asInvoker metadata, amd64 architecture and no Authenticode signature.
+  The renewed POS/bootstrap envelopes expire `2026-11-23T15:28:45Z`. Renew current
+  bootstrap and both retained repair envelopes before expiry, preserving artifact
+  identities. The dedicated existing key was reused; private material never
+  entered either repository or any upload.
+- All seven GitHub assets were downloaded anonymously over verified HTTPS and
+  matched local SHA-256/size. The installer's own Go verifier accepted public
+  trust, beta channel, POS/bootstrap signatures, schemas, hashes and safe ZIP
+  extraction. `bootstrap.json`, `bootstrap/16.json`, `pos/1.0.0.json` are
+  published; `pos/manifest.json` deliberately remains HTTP 404. No stable feed
+  is published. Fresh-install bootstrap is separate from automatic updates.
+- Clean installer/runtime qualification is still pending. The current Windows VM
   has a working POS; Setup uses the real user's known LocalAppData path and refuses
   active POS processes. Do not install over that host or override its paths.
 
@@ -350,3 +367,37 @@ filters or exclusions. Targeted Dart analysis passes. Separate Windows venue/
 startup suites pass 53 tests, and synthetic restore/print-admission suites pass
 48 tests. These remain software proofs, not a real-data import or clean-installer
 pilot qualification.
+
+## Published beta test handoff
+
+- Download page: https://releases.vynic.ge/
+- Installer: https://github.com/vaanskii/vynic-releases/releases/download/v1.0.0-beta.1/VynicSetup-1.0.0-build16-beta.exe
+- Release: https://github.com/vaanskii/vynic-releases/releases/tag/v1.0.0-beta.1
+- Hashes: https://releases.vynic.ge/windows/beta/SHA256SUMS.txt
+- Qualification: https://releases.vynic.ge/windows/beta/qualification.json
+
+Setup SHA-256: `2809ab6c9c83bda44c34ffc418b3bbb3cc5fd9fde974a41b0bda989268ca72ca`
+
+POS ZIP SHA-256: `0cb2b8feb21b5f31b60ee736bd0bfae0a06e90c920ab292afca8c955ad6d6d3e`
+
+Edge ZIP SHA-256: `11bc81f360d8d33045f20001b094c738e56292119697752ca852817a0a1fe21b`
+
+The original `print-label-v2` candidate is preserved as pre-publication evidence,
+not the published payload. Never publish its older POS ZIP under this issued tag.
+The unrelated old `build/windows-installer/2026-10-24` POS 1.0.14 package is also
+not this release. Neither package was installed over the working POS.
+
+Public `/request-access` was checked in the browser: it is an application,
+operator approval and invitation flow, not immediate account creation. No form
+was submitted and no user/restaurant/device was created. Source confirms the
+owner Devices/POS download and enrollment-code path. Checking/changing live
+Admin `releaseLinks.posWindows` remains pending: automatic approval review
+denied claiming/reading the existing authenticated Admin tab, because release
+publication did not clearly authorize private administrative session access.
+No Admin write was attempted. An authorized operator can set the field to
+`https://releases.vynic.ge/`, preserving all other onboarding policy values.
+Do not use the current broad Save-policy form without checking those values.
+
+See `WINDOWS_BETA_TEST_INSTALL.md` for the user test procedure and retained gates.
+
+Retained public read-back/TLS/policy evidence: `docs/proofs/WINDOWS_BETA_1.0.0_BUILD16_2026-10-24/publication.json`.

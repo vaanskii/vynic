@@ -1,0 +1,186 @@
+{
+  "release": {
+    "releaseId": 422823783,
+    "url": "https://github.com/vaanskii/vynic-releases/releases/tag/v1.0.0-beta.1",
+    "tag": "v1.0.0-beta.1",
+    "publishedAt": "2026-10-24T15:48:21Z",
+    "prerelease": true,
+    "assets": [
+      {
+        "name": "bootstrap-16.json",
+        "url": "https://github.com/vaanskii/vynic-releases/releases/download/v1.0.0-beta.1/bootstrap-16.json",
+        "sha256": "e9c65b99d35e9dfa0a016eb5be0afc956f20dd7d818ea0f2a75b8d9549d9e5ec",
+        "bytes": 2180,
+        "unauthenticatedDownloadVerified": true
+      },
+      {
+        "name": "pos-1.0.0.json",
+        "url": "https://github.com/vaanskii/vynic-releases/releases/download/v1.0.0-beta.1/pos-1.0.0.json",
+        "sha256": "c48952911dea6cb540bbad098586dd24a1fce28d66a6229079b3f8356d164628",
+        "bytes": 728,
+        "unauthenticatedDownloadVerified": true
+      },
+      {
+        "name": "qualification.json",
+        "url": "https://github.com/vaanskii/vynic-releases/releases/download/v1.0.0-beta.1/qualification.json",
+        "sha256": "a9425017c928feb7d566689756766e9db62615db33e36de687dff4044dce3417",
+        "bytes": 2634,
+        "unauthenticatedDownloadVerified": true
+      },
+      {
+        "name": "SHA256SUMS.txt",
+        "url": "https://github.com/vaanskii/vynic-releases/releases/download/v1.0.0-beta.1/SHA256SUMS.txt",
+        "sha256": "9f9f8b6db2bb98d8ce39b734e7231baeae53969b1bfd005590a57873d077de71",
+        "bytes": 310,
+        "unauthenticatedDownloadVerified": true
+      },
+      {
+        "name": "VynicEdge-1.0.0.16-windows-amd64.zip",
+        "url": "https://github.com/vaanskii/vynic-releases/releases/download/v1.0.0-beta.1/VynicEdge-1.0.0.16-windows-amd64.zip",
+        "sha256": "11bc81f360d8d33045f20001b094c738e56292119697752ca852817a0a1fe21b",
+        "bytes": 14000353,
+        "unauthenticatedDownloadVerified": true
+      },
+      {
+        "name": "VynicPOS-1.0.0-build16-windows-amd64.zip",
+        "url": "https://github.com/vaanskii/vynic-releases/releases/download/v1.0.0-beta.1/VynicPOS-1.0.0-build16-windows-amd64.zip",
+        "sha256": "0cb2b8feb21b5f31b60ee736bd0bfae0a06e90c920ab292afca8c955ad6d6d3e",
+        "bytes": 19418297,
+        "unauthenticatedDownloadVerified": true
+      },
+      {
+        "name": "VynicSetup-1.0.0-build16-beta.exe",
+        "url": "https://github.com/vaanskii/vynic-releases/releases/download/v1.0.0-beta.1/VynicSetup-1.0.0-build16-beta.exe",
+        "sha256": "2809ab6c9c83bda44c34ffc418b3bbb3cc5fd9fde974a41b0bda989268ca72ca",
+        "bytes": 25216512,
+        "unauthenticatedDownloadVerified": true
+      }
+    ],
+    "tagCommit": "ee0025e4d2b613fa8102b4c0df0ea79a60719435"
+  },
+  "publicSite": {
+    "checkedUtc": "2026-10-24T15:50:29.817447+00:00",
+    "tls": {
+      "protocol": "TLSv1.2",
+      "hostnameAndChainVerified": true,
+      "notAfter": "Jan 22 14:14:12 2027 GMT",
+      "subjectAltName": [
+        [
+          "DNS",
+          "releases.vynic.ge"
+        ]
+      ]
+    },
+    "httpRedirectsToHttps": true,
+    "objects": [
+      {
+        "path": "/",
+        "status": 200,
+        "sha256": "f27cd1871e8eecf913eb8ed4fd81f14b8fc470f5bda80e859d72d3a3edc4db71"
+      },
+      {
+        "path": "/style.css",
+        "status": 200,
+        "sha256": "031e1fb16d6b7631729db0e2a372cc7ad663186cd7a2cb1e7a333f1ea05aa468"
+      },
+      {
+        "path": "/windows/beta/bootstrap.json",
+        "status": 200,
+        "sha256": "e9c65b99d35e9dfa0a016eb5be0afc956f20dd7d818ea0f2a75b8d9549d9e5ec"
+      },
+      {
+        "path": "/windows/beta/bootstrap/16.json",
+        "status": 200,
+        "sha256": "e9c65b99d35e9dfa0a016eb5be0afc956f20dd7d818ea0f2a75b8d9549d9e5ec"
+      },
+      {
+        "path": "/windows/beta/pos/1.0.0.json",
+        "status": 200,
+        "sha256": "c48952911dea6cb540bbad098586dd24a1fce28d66a6229079b3f8356d164628"
+      },
+      {
+        "path": "/windows/beta/SHA256SUMS.txt",
+        "status": 200,
+        "sha256": "9f9f8b6db2bb98d8ce39b734e7231baeae53969b1bfd005590a57873d077de71"
+      },
+      {
+        "path": "/windows/beta/qualification.json",
+        "status": 200,
+        "sha256": "a9425017c928feb7d566689756766e9db62615db33e36de687dff4044dce3417"
+      },
+      {
+        "path": "/windows/beta/pos/manifest.json",
+        "status": 404,
+        "sha256": "7515bf959b73b956ceb967351c7e299cbb3668a53d35f9c770eb72e00d93ced6"
+      }
+    ],
+    "automaticUpdateFeedActive": false
+  },
+  "installerPolicyVerification": {
+    "artifactHashesVerified": true,
+    "automaticUpdateFeedActive": false,
+    "bootstrapRelease": 16,
+    "bootstrapSignatureVerified": true,
+    "channel": "beta",
+    "checkedUtc": "2026-10-24T15:52:55.266909Z",
+    "cleanInstallQualified": false,
+    "edgeSchema": 2,
+    "hiveSchema": 9,
+    "installerConfiguration": "exact match to public beta distribution",
+    "metadataExpires": "2026-11-23T15:28:45Z",
+    "posSignatureVerified": true,
+    "release": 16,
+    "safeZipExtractionVerified": true,
+    "status": "verified-test-candidate",
+    "version": "1.0.0"
+  },
+  "runtimeCompletion": {
+    "preservesAllOriginalPOSRuntimeBytes": true,
+    "addedMicrosoftSignedX64Dlls": {
+      "msvcp140.dll": "0f885b509a685d2bbfa652fed26b5fb31d88fbdab0a978c641d1c7b8aa460aa9",
+      "vcruntime140.dll": "d5e4d9a3e835fa679450145d6a7d94e36573a509317111904d9b3712c30d9066",
+      "vcruntime140_1.dll": "1f2d41c4aa5db0bc33ebf7b66d72943a817d7ce6cbe880502a9403823633093f"
+    },
+    "fileVersion": "14.44.35211.0",
+    "source": "Visual Studio 2022 Community VC Redist 14.44.35112 x64/Microsoft.VC143.CRT",
+    "windowsAuthenticodeStatus": "Valid Microsoft Corporation",
+    "cleanInstallQualified": false
+  },
+  "renderDeploy": {
+    "serviceId": "srv-dbebg2vavr4c73acdgq0",
+    "deployId": "dep-dbed6po473hc73cucr8g",
+    "status": "live",
+    "commit": "ee0025e4d2b613fa8102b4c0df0ea79a60719435",
+    "autoDeploy": "off",
+    "previews": "off"
+  },
+  "browserQa": {
+    "desktop": "passed",
+    "mobileWidth": 390,
+    "mobileScrollWidth": 390,
+    "viewportRestored": true,
+    "accessRequestForm": "loaded, no submission",
+    "adminSession": "claim/read denied by automatic approval review; no Admin write attempted"
+  },
+  "concurrency": {
+    "priorCoordinator": "idle, completed stop checkpoint",
+    "previousLocalTask": "idle, completed stop checkpoint, no active build/upload"
+  },
+  "safety": {
+    "existingPOSOrEdgeStopped": false,
+    "setupExecuted": false,
+    "usersCreated": false,
+    "liveVenueEnrolled": false,
+    "restaurantDataChanged": false,
+    "privateKeysPublished": false,
+    "paidServicesAdded": false,
+    "automaticUpdateFeedActivated": false
+  },
+  "pending": [
+    "ordinary-user clean-install/runtime",
+    "real-PC enrollment and offline/reconnect",
+    "update/repair/uninstall/recovery matrix",
+    "physical printing",
+    "authorized live Admin download-link inspection/configuration"
+  ]
+}

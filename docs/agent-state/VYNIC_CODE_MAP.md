@@ -131,7 +131,8 @@ the implementation and nearby tests. Do not treat this as architecture truth.
 ## Windows POS updater
 
 - Native Setup UI/shortcuts and Defender qualification: `apps/edge/cmd/setup/ui_windows.go`, `apps/edge/cmd/setup/wizard_windows.go`, `apps/edge/internal/setup/destination_windows.go`, `apps/edge/internal/setup/update_windows.go`, `apps/edge/internal/setup/shortcuts_windows.go`, `docs/WINDOWS_DEFENDER_REVIEW.md`; PE resources/signing: `apps/edge/tool/windows_pe.py`, `apps/edge/tool/sign-windows-release.py`.
-- Production distribution preparation and pending hosting/signing gates: `docs/WINDOWS_PRODUCTION_DISTRIBUTION.md`; offline public-config gate: `apps/edge/tool/windows_distribution.py`, used by `build-setup.py --production`; template: `apps/edge/packaging/windows/distribution.example.json`. Signing stages/publisher checks: `sign-windows-release.py`, regressions `sign_windows_release_test.py`, `windows_distribution_test.py` (same tool directory).
+- Published beta test-install handoff and remaining runtime gates: `docs/WINDOWS_BETA_TEST_INSTALL.md`.
+- Production distribution preparation and remaining signing/qualification gates: `docs/WINDOWS_PRODUCTION_DISTRIBUTION.md`; offline public-config gate: `apps/edge/tool/windows_distribution.py`, used by `build-setup.py --production`; template: `apps/edge/packaging/windows/distribution.example.json`. Signing stages/publisher checks: `sign-windows-release.py`, regressions `sign_windows_release_test.py`, `windows_distribution_test.py` (same tool directory).
 
 - One-command local Windows VM build/sign/publish: `apps/edge/tool/publish-local-pos.sh`, `publish_local_pos.py`; tests: `publish_local_pos_test.py` (under the same tool directory).
 - Local LAN release lab: `apps/edge/tool/local-windows-release-test.sh`; Windows source build handoff and HTTPS verification: `docs/LOCAL_WINDOWS_RELEASE_TEST.md`, `apps/edge/cmd/verify-local-release`.

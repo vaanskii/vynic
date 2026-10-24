@@ -166,6 +166,14 @@ current transport status.
   remain on Mac; publication never installs POS or replaces Edge. See
   `docs/LOCAL_WINDOWS_RELEASE_TEST.md`.
 
+- Production Windows distribution preparation adds an offline public-config gate
+  (`build-setup.py --production`) and separate payload/Setup Authenticode stages,
+  with verify-only, expected certificate thumbprint and timestamp checks. Python
+  policy regressions pass; native signing remains unqualified. Public hosting,
+  production keys/certificate, publication and Windows install/recovery testing
+  remain pending. Admin's existing `releaseLinks.posWindows` stores the installer
+  URL, not the installed update feed. See `docs/WINDOWS_PRODUCTION_DISTRIBUTION.md`.
+
 - POS touch input shares TEXT/NUMBER/DECIMAL/PIN modes, controller-backed fields,
   one text keyboard and one numeric/PIN pad. Login, lock and Staff authentication
   pads remain available when the optional operational keyboard is off. PIN digits

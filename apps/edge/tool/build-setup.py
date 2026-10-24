@@ -10,7 +10,7 @@ import os
 from pathlib import Path
 import struct
 import subprocess
-from urllib.parse import urlparse
+from windows_distribution import validate as validate_distribution
 
 MANIFEST = b'''<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <assembly xmlns="urn:schemas-microsoft-com:asm.v1" manifestVersion="1.0">
@@ -56,25 +56,13 @@ def main():
     p.add_argument('--out', required=True, type=Path)
     p.add_argument('--go', default='go')
     p.add_argument('--version', default='1.0.8.0')
+    p.add_argument('--production', action='store_true', help='Require a public stable/beta feed and unexpired production trust configuration')
     a = p.parse_args()
     raw = a.distribution.read_bytes()
-    d = json.loads(raw)
-    if not d.get('bootstrapURL', '').startswith('https://') or not d.get('keys') or not d.get('channel'):
-        p.error('distribution requires HTTPS bootstrapURL, channel and public keys')
-    if set(d) != {'bootstrapURL', 'channel', 'keys'}:
-        p.error('unexpected distribution fields; do not include secrets')
-    endpoint = urlparse(d['bootstrapURL'])
-    if not endpoint.netloc or endpoint.username or endpoint.fragment:
-        p.error('bootstrap endpoint must have a host and no embedded credentials/fragment')
-    for key_id, key in d['keys'].items():
-        if not key_id or set(key) != {'public', 'expires'}:
-            p.error('trusted keys contain only public and expires; never supply private keys')
-        try:
-            public = base64.b64decode(key['public'], validate=True)
-        except (ValueError, TypeError):
-            p.error('trusted public key must be base64')
-        if len(public) != 32:
-            p.error('Ed25519 public key must be 32 bytes')
+    try:
+        validate_distribution(raw, production=a.production)
+    except ValueError as error:
+        p.error(str(error))
     root = Path(__file__).resolve().parents[1]
     syso = root / 'cmd/setup/manifest_windows_amd64.syso'
     if syso.exists():

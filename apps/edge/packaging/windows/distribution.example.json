@@ -1,0 +1,5 @@
+{
+  "bootstrapURL": "https://releases.example.invalid/windows/stable/bootstrap.json",
+  "channel": "stable",
+  "keys": {}
+}

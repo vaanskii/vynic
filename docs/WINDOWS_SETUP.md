@@ -225,7 +225,7 @@ infrastructure; neither setup nor Edge/POS contains them.
 
 ```sh
 python3 apps/edge/tool/build-setup.py \
-  --distribution /release/distribution.json --out /release/VynicSetup.exe
+  --production --distribution /release/distribution.json --out /release/VynicSetup.exe
 ```
 
 The build script embeds the public distribution JSON, generates a temporary
@@ -235,6 +235,12 @@ The temporary object is removed; no generated resource is hand-maintained.
 Authenticode-sign and timestamp `VynicSetup.exe` **after** building it. The build
 script does not sign or claim SmartScreen reputation. The fixture cross-build is
 about 17.6 MB; no restaurant/Edge/POS release payload is embedded.
+
+Use `sign-windows-release.py --stage payload` before ZIP/manifest generation,
+then `--stage setup` on the final bootstrapper; `--verify-only` checks existing
+bytes against the expected publisher and requires timestamp verification.
+The production configuration gate, proposed hosting paths, Admin link wiring and
+pending release qualifications are in `WINDOWS_PRODUCTION_DISTRIBUTION.md`.
 
 ## Provisioning and first launch
 

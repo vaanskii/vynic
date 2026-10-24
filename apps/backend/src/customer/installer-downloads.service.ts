@@ -2,6 +2,7 @@ import {
   BadRequestException,
   ForbiddenException,
   Injectable,
+  Logger,
   NotFoundException,
   ServiceUnavailableException,
 } from '@nestjs/common';
@@ -31,6 +32,7 @@ const fields = {
 
 @Injectable()
 export class InstallerDownloadsService {
+  private readonly logger = new Logger(InstallerDownloadsService.name);
   constructor(private readonly db: PrismaService) {}
   configuration() {
     const {
@@ -295,9 +297,10 @@ export class InstallerDownloadsService {
       if (!res.writableFinished) abort.abort();
     };
     res.on('close', closed);
+    let upstream: globalThis.Response | undefined;
+    let phase = 'storage_request';
     try {
       let url = `https://api.github.com/repos/vaanskii/vynic-releases/releases/assets/${config.assetId}`;
-      let upstream: globalThis.Response | undefined;
       for (let hop = 0; hop < 4; hop++) {
         const api = new URL(url).hostname === 'api.github.com';
         upstream = await fetch(url, {
@@ -317,6 +320,7 @@ export class InstallerDownloadsService {
           },
         });
         if (![301, 302, 303, 307, 308].includes(upstream.status)) break;
+        phase = 'storage_redirect';
         const location = upstream.headers.get('location');
         await upstream.body?.cancel();
         if (!location) throw new Error('Missing storage redirect');
@@ -331,6 +335,7 @@ export class InstallerDownloadsService {
         url = next.href;
       }
       const expectedStatus = range ? 206 : 200;
+      phase = 'storage_response';
       if (
         !upstream ||
         upstream.status !== expectedStatus ||
@@ -357,6 +362,7 @@ export class InstallerDownloadsService {
         await upstream.body?.cancel();
         res.end();
       } else {
+        phase = 'storage_stream';
         await pipeline(Readable.fromWeb(upstream.body as any), res);
         await this.audit(
           this.db,
@@ -366,6 +372,16 @@ export class InstallerDownloadsService {
         );
       }
     } catch {
+      this.logger.warn({
+        event: 'installer_storage_unavailable',
+        phase,
+        status: upstream?.status ?? null,
+        json: upstream?.headers.get('content-type')?.includes('json') ?? false,
+        expectedBytes: end - start + 1,
+        receivedLength: upstream?.headers.get('content-length') ?? null,
+        method: req.method,
+        range: Boolean(range),
+      });
       await this.audit(this.db, grant, 'installer_download.failed', grant.id);
       if (res.headersSent) res.destroy();
       else

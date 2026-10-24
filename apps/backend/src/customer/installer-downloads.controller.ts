@@ -10,6 +10,8 @@ import {
   Res,
   UseGuards,
   ForbiddenException,
+  HttpException,
+  Logger,
 } from '@nestjs/common';
 import type { Request, Response } from 'express';
 import { InstallerDownloadsService } from './installer-downloads.service';
@@ -20,7 +22,10 @@ import type { PlatformPrincipal } from '../platform/platform-auth-context';
 import { PlatformAuthGuard } from '../platform/platform-auth.guard';
 import { isSameOriginRequest } from '../website/tenancy/same-origin';
 import { randomBytes } from 'node:crypto';
-import { installerDownloadBridge } from './installer-download-bridge';
+import {
+  installerDownloadBridge,
+  installerDownloadFailure,
+} from './installer-download-bridge';
 
 @Controller('platform/onboarding/downloads')
 @UseGuards(PlatformAuthGuard)
@@ -87,6 +92,7 @@ export class CustomerInstallerDownloadsController {
 
 @Controller('customer/downloads/access/:id')
 export class InstallerDownloadFileController {
+  private readonly logger = new Logger(InstallerDownloadFileController.name);
   constructor(private readonly service: InstallerDownloadsService) {}
   @Get()
   async bridge(
@@ -149,12 +155,49 @@ export class InstallerDownloadFileController {
   @Header('Cache-Control', 'private, no-store')
   @Header('Referrer-Policy', 'no-referrer')
   @Get('file')
-  file(@Param('id') id: string, @Req() req: Request, @Res() res: Response) {
+  async file(
+    @Param('id') id: string,
+    @Req() req: Request,
+    @Res() res: Response,
+  ) {
     res.set({
       'Cache-Control': 'private, no-store',
       'Referrer-Policy': 'no-referrer',
       'X-Content-Type-Options': 'nosniff',
+      'Content-Security-Policy':
+        "default-src 'none'; frame-ancestors 'none'; base-uri 'none'",
+      'X-Robots-Tag': 'noindex, nofollow, noarchive',
     });
-    return this.service.stream(req.cookies?.['vynic-download'], req, res, id);
+    try {
+      await this.service.stream(req.cookies?.['vynic-download'], req, res, id);
+    } catch (error) {
+      const status = error instanceof HttpException ? error.getStatus() : 500;
+      const reasons: Record<string, string> = {
+        'Download unavailable or expired': 'link_unavailable',
+        'Installer changed. Issue a new download link.': 'artifact_changed',
+        'Download limit reached. Issue a new link.': 'transfer_limit',
+        'Protected installer storage is awaiting configuration.':
+          'storage_unconfigured',
+        'Protected installer storage is unavailable. Try again later.':
+          'storage_unavailable',
+      };
+      this.logger.warn({
+        event: 'installer_download_unavailable',
+        reason:
+          error instanceof Error
+            ? (reasons[error.message] ?? 'request_unavailable')
+            : 'request_unavailable',
+        status,
+        method: req.method,
+      });
+      if (res.headersSent || res.destroyed) {
+        res.destroy();
+        return;
+      }
+      res.removeHeader('Content-Disposition');
+      res.removeHeader('Content-Length');
+      res.removeHeader('Content-Range');
+      res.status(status).type('html').send(installerDownloadFailure(status));
+    }
   }
 }

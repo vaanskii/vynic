@@ -120,3 +120,23 @@ and invitation-name regressions remain included. The frontend invitation journey
 covers refresh, lost-link recovery, existing accounts and prepared-Venue routing.
 Offline Go tests install only synthetic bundles, with the network server stopped,
 and reject corrupt metadata/artifacts and unsafe/missing mappings.
+
+## Browser delivery failure handling
+
+The per-grant handshake now verifies an authorized HEAD response (ZIP MIME,
+attachment disposition and positive byte length) before offering the file link.
+The link relies on the server attachment header; it no longer forces arbitrary
+error responses into browser downloads named `file.json`. File GET/HEAD errors
+retain their HTTP status and return a no-store HTML explanation without an
+attachment header or raw upstream details. Grant expiry, revocation, authority,
+rate and current-artifact checks remain enforced.
+
+Storage failures log only fixed phase/reason, numeric status/length and method;
+no capability URL, token, cookie, credential or upstream signed redirect is logged.
+The delivery regression suite exercises a local technical-origin redirect,
+script/session-cookie handshake, complete ZIP response and resumed range through
+real HTTP, plus denied/upstream JSON failures. Existing disposable PostgreSQL
+coverage retains real grant authorization, expiry/revocation and issuer isolation.
+These local cases do not attest the owner's live browser session. A fresh authorized
+link and browser download approval remain necessary for the production handoff;
+authenticated GitHub readback alone does not verify that handoff.

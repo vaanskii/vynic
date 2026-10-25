@@ -39,6 +39,7 @@ type Receipt struct {
 	Bootstrap        json.RawMessage `json:"bootstrap"`
 	EdgeVersion      string          `json:"edgeVersion"`
 	EdgeHash         string          `json:"edgeHash"`
+	BootstrapHigh    uint64          `json:"bootstrapHigh,omitempty"`
 	BootstrapRelease uint64          `json:"bootstrapRelease"`
 	RepairBase       string          `json:"repairBase"`
 	POSReleaseBase   string          `json:"posReleaseBase"`
@@ -183,6 +184,13 @@ func rejectLinks(root string) error {
 	})
 }
 func (i *Installer) Install(ctx context.Context, repair bool) (err error) {
+	if _, e := os.Stat(i.Layout.upgradeJournal()); e == nil {
+		if e = i.RecoverUpgrade(ctx); e != nil {
+			return e
+		}
+	} else if !os.IsNotExist(e) {
+		return e
+	}
 	unlock, e := i.lock()
 	if e != nil {
 		return e
@@ -585,6 +593,13 @@ func (i *Installer) recoverSwaps() error {
 // Uninstall deliberately offers no data-deletion path. Retained identity, Hive,
 // updater history/config and diagnostics allow a later explicit Repair.
 func (i *Installer) Uninstall(ctx context.Context) error {
+	if _, e := os.Stat(i.Layout.upgradeJournal()); e == nil {
+		if e = i.RecoverUpgrade(ctx); e != nil {
+			return e
+		}
+	} else if !os.IsNotExist(e) {
+		return e
+	}
 	unlock, e := i.lock()
 	if e != nil {
 		return e

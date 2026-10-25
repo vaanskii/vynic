@@ -1,3 +1,4 @@
+import { invitationMailStatus } from "../mail-status";
 import { publicSiteUrl } from "../../site-origins";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
@@ -84,7 +85,10 @@ export function CustomerOnboarding({
     setLink("");
     try {
       const result = await platformOnboardingApi(path, body, "POST");
-      if (result.invitationPath) setLink(publicSiteUrl(result.invitationPath));
+      if (result.invitationPath) {
+        setLink(publicSiteUrl(result.invitationPath));
+        setMessage(invitationMailStatus(result.mail));
+      }
       else setMessage("Invitation revoked.");
       await refresh();
     } catch (e) {

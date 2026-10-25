@@ -1,3 +1,4 @@
+import 'package:vynic/core/services/licensing/subscription_license.dart';
 import 'package:vynic/core/database/repositories/inventory_repository.dart';
 import 'package:vynic/core/models/feature_keys.dart';
 import 'package:vynic/core/services/edge/edge_device_credential_store.dart';
@@ -281,6 +282,7 @@ void main() {
       .fold<double>(0, (sum, value) => sum + (value as num).toDouble());
 
   setUpAll(() {
+    TestWidgetsFlutterBinding.ensureInitialized();
     tempDir = Directory.systemTemp.createTempSync('vynic_closure_audit');
     Hive.init(tempDir.path);
     registerAdapters();
@@ -319,6 +321,7 @@ void main() {
   });
 
   tearDown(() async {
+    SubscriptionLicense.instance.resetForTest();
     await InventoryRepository.applyRuntimeFeatures([]);
     EdgeDeviceCredentialStore.resetForTest();
     Order.serviceFeeRateResolver = null;
@@ -348,6 +351,116 @@ void main() {
     await Hive.close();
     tempDir.deleteSync(recursive: true);
   });
+
+  test(
+    'subscription restriction settles frozen 1000/100/900 once and blocks new items and reopened sales',
+    () async {
+      final order = await seedOrder(orderId: 8001, gross: 1000, advance: 100);
+      final frozenBeforeClose = order.clone();
+      final license = SubscriptionLicense.instance;
+      license.enabled = true;
+      license.lease.reason = 'VALID';
+      await license.recordBills();
+      license.lease.restrict('EXPIRED');
+      await license.check();
+      await expectLater(order.setDiscount(50), throwsStateError);
+      await expectLater(
+        OrderRepository.createTakeAwayOrder(
+          customerName: 'fixture',
+          customerPhone: '',
+          pickupTime: '',
+          items: order.items,
+          createdBy: 'manager',
+        ),
+        throwsStateError,
+      );
+      final close = await CloseTableTransaction.run(
+        orderId: order.orderId,
+        money: const ClosureMoney(
+          gross: 1000,
+          advanceApplied: 100,
+          collectedNow: 900,
+        ),
+        paymentMethod: 'cash',
+        tenderBreakdown: {'cash': 900},
+        closedById: 'manager',
+        isFiscal: true,
+      );
+      expect(close.isSuccess, true, reason: close.detail);
+      final sale = saleFor(order.orderId);
+      expect(sale['grossSaleAmount'], 1000);
+      expect(sale['advanceApplied'], 100);
+      expect(sale['collectedNow'], 900);
+      final again = await CloseTableTransaction.run(
+        orderId: order.orderId,
+        money: const ClosureMoney(
+          gross: 1000,
+          advanceApplied: 100,
+          collectedNow: 900,
+        ),
+        paymentMethod: 'cash',
+        tenderBreakdown: {'cash': 900},
+        closedById: 'manager',
+        isFiscal: true,
+      );
+      expect(again.outcome, ClosureOutcome.alreadyClosed);
+      await expectLater(
+        license.requireSettlement(frozenBeforeClose, gross: 1000, advance: 100),
+        throwsStateError,
+      );
+      await expectLater(
+        license.operation('restoreClosedOrderFromSale', () async {}),
+        throwsStateError,
+      );
+      expect(
+        SalesRepository.getSalesForDate(
+          businessDate,
+        ).where((s) => s['recordType'] == 'sale').length,
+        1,
+      );
+    },
+  );
+
+  test(
+    'restriction rejects altered bill value, added items and orders introduced by restore',
+    () async {
+      final order = await seedOrder(orderId: 8002, gross: 1000);
+      final license = SubscriptionLicense.instance;
+      license.enabled = true;
+      license.lease.reason = 'VALID';
+      await license.recordBills();
+      license.lease.restrict('EXPIRED');
+      await license.check();
+      await expectLater(
+        license.requireSettlement(order, gross: 1001, advance: 0),
+        throwsStateError,
+      );
+      await expectLater(
+        license.requireSettlement(
+          order,
+          gross: 1000,
+          advance: 0,
+          items: [...order.items, order.items.first],
+        ),
+        throwsStateError,
+      );
+      final restored = order.clone()..orderId = 9999;
+      await expectLater(
+        license.requireSettlement(restored, gross: 1000, advance: 0),
+        throwsStateError,
+      );
+      final changed = order.clone()..customerName = 'changed';
+      await expectLater(
+        license.requireSettlement(changed, gross: 1000, advance: 0),
+        throwsStateError,
+      );
+      expect(DatabaseCore.orderBox!.get(8002)!.totalAmount, 1000);
+      expect(DatabaseCore.salesBox!.isEmpty, true);
+      // Infrastructure and historical ingestion remain admitted.
+      expect(await license.operation('Runtime features', () async => 42), 42);
+      expect(await license.operation('Hive write', () async => 43), 43);
+    },
+  );
 
   test(
     'fiscal close matrix preserves money and never emits cancellation',

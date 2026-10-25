@@ -7,9 +7,11 @@ import 'package:hive/hive.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:vynic/core/database/database_core.dart';
+import 'package:vynic/core/database/local_venue_binding.dart';
 import 'package:vynic/core/database/local_data_admission.dart';
 import 'package:vynic/core/database/repositories/print_job_repository.dart';
 import 'package:vynic/core/database/repositories/settings_repository.dart';
+import 'package:vynic/core/database/repositories/inventory_repository.dart';
 import 'package:vynic/core/models/feature_keys.dart';
 import 'package:vynic/core/services/edge/edge_device_credential_store.dart';
 import 'package:vynic/core/services/edge/runtime_config_sync.dart';
@@ -104,11 +106,13 @@ class _RuntimeSettingsBox extends UpdateTrackedBox<dynamic> {
   bool failNextFlush = false;
   bool rejectRestoreAfterFailedFlush = false;
   bool _rejectNextConfigPut = false;
+  bool _printerWritePending = false;
 
   @override
   Future<void> put(dynamic key, dynamic value) async {
     expect(LocalDataAdmission.insideMutation, true);
     if (key == _configKey) {
+      _printerWritePending = true;
       trace.add('config.put');
       if (_rejectNextConfigPut) {
         _rejectNextConfigPut = false;
@@ -121,6 +125,8 @@ class _RuntimeSettingsBox extends UpdateTrackedBox<dynamic> {
   @override
   Future<void> flush() async {
     expect(LocalDataAdmission.insideMutation, true);
+    if (!_printerWritePending) { await super.flush(); return; }
+    _printerWritePending = false;
     trace.add('settings.flush');
     flushEntered?.complete();
     flushEntered = null;
@@ -179,11 +185,14 @@ void main() {
     );
     fixture = Pos02Fixture();
     await fixture.open(directory.path);
-    await fixture.seed();
+    await fixture.seed(venueId: _venue);
     await DatabaseCore.settingsBox!.delete(_configKey);
     EdgeDeviceCredentialStore.resetForTest();
     EdgeDeviceCredentialStore.directoryOverride = directory.path;
     await enroll();
+    // Establish the independently durable capability decision before instrumenting
+    // printer publication. A malformed printer config must not block revocation.
+    await InventoryRepository.applyRuntimeFeatures([FeatureKeys.pos]);
     DeveloperAccess.resetForTest();
     UpdateReadiness.startupReady = true;
     settings = _RuntimeSettingsBox(DatabaseCore.settingsBox!);
@@ -262,7 +271,24 @@ void main() {
     },
   );
 
-  for (final changed in ['Device', 'Venue', 'credential']) {
+  test(
+    'foreign Venue enrollment is refused before replacing identity or printer cache',
+    () async {
+      await settings.inner.put(_configKey, _config());
+      final before = jsonDecode(jsonEncode(settings.toMap()));
+      final credential = EdgeDeviceCredentialStore.credential;
+      await expectLater(
+        enroll(venue: _otherVenue),
+        throwsA(isA<LocalVenueMismatch>()),
+      );
+      expect(EdgeDeviceCredentialStore.credential, credential);
+      expect(EdgeDeviceCredentialStore.venueId, _venue);
+      expect(settings.toMap(), before);
+      expect(settings.trace, isEmpty);
+    },
+  );
+
+  for (final changed in ['Device', 'credential']) {
     test(
       'a stale HTTP response after $changed change cannot alter any cached snapshot',
       () async {
@@ -280,7 +306,7 @@ void main() {
         await requested.future.timeout(const Duration(seconds: 2));
         await enroll(
           device: changed == 'Device' ? _otherDevice : _device,
-          venue: changed == 'Venue' ? _otherVenue : _venue,
+          venue: _venue,
           secret: changed == 'credential' ? 'y' : 'x',
         );
         response.complete(_response(_config(revision: 8)));
@@ -331,7 +357,7 @@ void main() {
   );
 
   test(
-    'malformed or foreign v2 never mutates printers, features or profile',
+    'malformed or foreign v2 retains printers/profile while capability revocation remains independent',
     () async {
       await settings.inner.put(_configKey, _config());
       final before = jsonDecode(jsonEncode(settings.toMap()));
@@ -370,7 +396,10 @@ void main() {
         );
         await RuntimeConfigSync(client: client).pull();
         client.close();
-        expect(settings.toMap(), before);
+        final after = settings.toMap()..remove(InventoryRepository.runtimeFeatureAuthorityKey);
+        final preserved = Map.of(before as Map)..remove(InventoryRepository.runtimeFeatureAuthorityKey);
+        expect(after, preserved);
+        expect(InventoryRepository.hasFeature(FeatureKeys.nonFiscalClose), false);
         expect(settings.trace, isEmpty);
       }
     },

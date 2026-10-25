@@ -1,3 +1,4 @@
+import '../../services/licensing/subscription_license.dart';
 import 'order_edit_repository.dart';
 import 'table_repair_repository.dart';
 import 'package:vynic/core/services/edge/orders_tables/shadow.dart';
@@ -1489,6 +1490,8 @@ abstract final class OrderTableMutationRepository {
     String? requestId,
     String? activatesReservationId,
   }) async {
+    if (SubscriptionLicense.instance.enabled)
+      await SubscriptionLicense.instance.requireSale();
     final id = requestId ?? const Uuid().v4();
     final old = retry(id, request);
     if (old != null) return old;

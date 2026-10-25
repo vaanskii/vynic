@@ -1,3 +1,4 @@
+import { invitationMailStatus } from "../mail-status";
 import { publicSiteUrl } from "../../site-origins";
 import { ConfirmDialog } from "../components/ConfirmDialog";
 import { useEffect, useState } from "react";
@@ -33,6 +34,7 @@ export function AccessRequests({
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [link, setLink] = useState("");
+  const [mailStatus, setMailStatus] = useState("");
   const [minimumTrialDate] = useState(() =>
     new Date(Date.now() + 86400000).toISOString().slice(0, 10),
   );
@@ -49,14 +51,17 @@ export function AccessRequests({
     setBusy(true);
     setError("");
     setLink("");
+    setMailStatus("");
     try {
       const result = await platformOnboardingApi(
         `requests/${review.row.id}/review`,
         review.body,
         "POST",
       );
-      if (result.prepared?.invitationPath)
+      if (result.prepared?.invitationPath) {
         setLink(publicSiteUrl(result.prepared.invitationPath));
+        setMailStatus(invitationMailStatus(result.prepared.mail));
+      }
       await refresh();
       setReview(null);
     } catch (error) {
@@ -78,6 +83,7 @@ export function AccessRequests({
         invitation.
       </p>
       {error && <p role="alert">{error}</p>}
+      {mailStatus && <p role="status">{mailStatus}</p>}
       {link && (
         <label>
           Owner invitation — copy and share with the applicant

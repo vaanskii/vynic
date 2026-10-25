@@ -5,6 +5,8 @@
 #include <flutter/flutter_view_controller.h>
 
 #include <memory>
+#include <flutter/method_channel.h>
+#include <flutter/standard_method_codec.h>
 
 #include "win32_window.h"
 #include "windows_spooler_channel.h"
@@ -35,6 +37,7 @@ class FlutterWindow : public Win32Window {
 
   // The Flutter instance hosted by this window.
   std::unique_ptr<flutter::FlutterViewController> flutter_controller_;
+  std::unique_ptr<flutter::MethodChannel<flutter::EncodableValue>> license_channel_;
   std::unique_ptr<WindowsSpoolerChannel> windows_spooler_channel_;
 };
 

@@ -21,6 +21,20 @@ import {
   classifyInstallerStorage,
 } from './installer-storage-readiness';
 
+import { installerObjectKey, installerRange } from './installer-worker-gateway';
+import type { InstallerWorkerRequest } from './installer-worker-gateway';
+
+type InstallerConfiguration = {
+  ready: boolean;
+  token?: string;
+  assetId?: string;
+  bytes: number;
+  sha256?: string;
+  provider?: 'github' | 'r2-worker';
+  objectKey?: string;
+  origin?: string;
+};
+
 type Issuer =
   | { customerAccountId: string; venueId: string; platformUserId?: never }
   | { platformUserId: string; customerAccountId?: never; venueId?: never };
@@ -42,7 +56,7 @@ export class InstallerDownloadsService implements OnApplicationBootstrap {
   onApplicationBootstrap() {
     if (process.env.NODE_ENV !== 'production') return;
     const config = this.configuration();
-    if (!config.ready) return;
+    if (!config.ready || config.provider === 'r2-worker') return;
     // One bounded read-only check, using the existing server credential. No grant
     // is created and API/restaurant readiness does not wait on external storage.
     void checkInstallerStorage({
@@ -70,7 +84,32 @@ export class InstallerDownloadsService implements OnApplicationBootstrap {
         ),
       );
   }
-  configuration() {
+  configuration(): InstallerConfiguration {
+    if (process.env.VYNIC_INSTALLER_STORAGE === 'r2-worker') {
+      const objectKey = process.env.VYNIC_INSTALLER_R2_KEY;
+      const bytes = Number(process.env.VYNIC_INSTALLER_BYTES);
+      const sha256 = process.env.VYNIC_INSTALLER_SHA256;
+      const origin = process.env.VYNIC_INSTALLER_WORKER_ORIGIN;
+      const ready =
+        installerObjectKey(objectKey) &&
+        Number.isSafeInteger(bytes) &&
+        bytes > 0 &&
+        bytes <= 512 * 1024 * 1024 &&
+        /^[a-f0-9]{64}$/.test(sha256 ?? '') &&
+        origin === 'https://releases.vynic.ge' &&
+        /^[A-Za-z0-9_-]{43}$/.test(
+          process.env.VYNIC_DOWNLOAD_GATEWAY_SECRET ?? '',
+        );
+      return {
+        ready,
+        provider: 'r2-worker',
+        objectKey,
+        assetId: 'r2:' + objectKey,
+        bytes,
+        sha256,
+        origin,
+      };
+    }
     const {
       VYNIC_RELEASE_GITHUB_TOKEN: token,
       VYNIC_INSTALLER_ASSET_ID: assetId,
@@ -78,6 +117,8 @@ export class InstallerDownloadsService implements OnApplicationBootstrap {
       VYNIC_INSTALLER_SHA256: sha256,
     } = process.env;
     const ready =
+      (!process.env.VYNIC_INSTALLER_STORAGE ||
+        process.env.VYNIC_INSTALLER_STORAGE === 'github') &&
       !!token &&
       /^\d+$/.test(assetId ?? '') &&
       /^\d+$/.test(bytes ?? '') &&
@@ -201,7 +242,8 @@ export class InstallerDownloadsService implements OnApplicationBootstrap {
     return {
       grant,
       downloadUrl:
-        'https://releases.vynic.ge/windows/access/' +
+        (config.origin ?? 'https://releases.vynic.ge') +
+        '/windows/access/' +
         grant.id +
         '#token=' +
         token,
@@ -276,7 +318,80 @@ export class InstallerDownloadsService implements OnApplicationBootstrap {
     await this.authorize(this.db, row);
     return row;
   }
+  async workerDecision(request: InstallerWorkerRequest) {
+    const config = this.configuration();
+    if (!config.ready || config.provider !== 'r2-worker')
+      throw new ServiceUnavailableException(
+        'Private R2 downloads are not configured',
+      );
+    if (request.operation === 'outcome') {
+      await admit(
+        this.db,
+        'installer-outcome-ip',
+        request.clientIp,
+        60,
+        3600000,
+      );
+      const row = await this.db.installerDownloadGrant.findUnique({
+        where: { tokenHash: secretHash(request.token!) },
+      });
+      if (
+        !row ||
+        row.id !== request.id ||
+        row.artifactId !== config.assetId ||
+        row.requestCount < 1
+      )
+        throw new NotFoundException('Download unavailable');
+      await this.audit(
+        this.db,
+        row,
+        'installer_download.' + request.outcome,
+        row.id,
+      );
+      return { recorded: true };
+    }
+    const grant =
+      request.operation === 'context'
+        ? await this.linkContext(request.id, request.clientIp)
+        : await this.resolve(request.token, request.clientIp, request.id);
+    if (
+      grant.artifactId !== config.assetId ||
+      grant.artifactBytes !== config.bytes ||
+      grant.artifactSha256 !== config.sha256
+    )
+      throw new NotFoundException(
+        'Installer changed. Issue a new download link.',
+      );
+    const expiresAt = grant.expiresAt.toISOString();
+    if (request.operation !== 'file') return { expiresAt };
+    const range = installerRange(request.range, config.bytes);
+    if (request.method === 'GET') {
+      const admitted = await this.db.installerDownloadGrant.updateMany({
+        where: {
+          id: grant.id,
+          revokedAt: null,
+          expiresAt: { gt: new Date() },
+          requestCount: { lt: 16 },
+        },
+        data: { requestCount: { increment: 1 } },
+      });
+      if (!admitted.count)
+        throw new NotFoundException(
+          'Download limit reached. Issue a new link.',
+        );
+      await this.audit(this.db, grant, 'installer_download.started', grant.id);
+    }
+    return {
+      expiresAt,
+      key: config.objectKey,
+      bytes: config.bytes,
+      sha256: config.sha256,
+      ...range,
+    };
+  }
   async stream(token: unknown, req: Request, res: Response, id: string) {
+    if (this.configuration().provider === 'r2-worker')
+      throw new NotFoundException('Use the private download gateway');
     const grant = await this.resolve(token, req.ip ?? 'unknown', id);
     const config = this.configuration();
     if (!config.ready)

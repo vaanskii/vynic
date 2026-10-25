@@ -1,3 +1,4 @@
+import { MailService } from '../src/mail/mail.service';
 import { MenuClientGuard } from '../src/menu-catalog/menu-client.guard';
 import { MenuRolloutService } from '../src/menu-catalog/menu-rollout.service';
 import {
@@ -115,6 +116,15 @@ export async function onboardingApp(
       PlatformPaymentsController,
     ],
     providers: [
+      {
+        provide: MailService,
+        useValue: {
+          sendOwnerInvitation: async () => ({
+            status: 'disabled',
+            diagnostic: 'Test sender disabled.',
+          }),
+        },
+      },
       ...(extra.providers ?? []),
       OnboardingRequestsService,
       PlanCatalogService,

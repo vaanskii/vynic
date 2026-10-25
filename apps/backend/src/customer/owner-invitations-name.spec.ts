@@ -1,3 +1,4 @@
+import { MailService } from '../mail/mail.service';
 import { OwnerInvitationsService } from './owner-invitations.service';
 import { PrismaService } from '../prisma.service';
 import { CustomerAuth } from './customer-auth';
@@ -45,6 +46,7 @@ describe('Invitation applicant name reuse', () => {
       db as unknown as PrismaService,
       { session: jest.fn().mockResolvedValue({}) } as unknown as CustomerAuth,
       { consume: () => true } as unknown as EnrollmentRateLimiter,
+      disabledMail,
     );
     return { db, service };
   }
@@ -84,3 +86,10 @@ describe('Invitation applicant name reuse', () => {
     });
   });
 });
+
+const disabledMail = {
+  sendOwnerInvitation: async () => ({
+    status: 'disabled',
+    diagnostic: 'Test sender disabled.',
+  }),
+} as unknown as MailService;

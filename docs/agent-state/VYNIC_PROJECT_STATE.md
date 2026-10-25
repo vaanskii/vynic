@@ -87,6 +87,17 @@ current transport status.
 
 ## Current Phase
 
+- Beta subscription licensing source uses a Device/installation/Venue-bound
+  Ed25519 lease capped at server verification + 24 hours and known commercial
+  expiry. Native suspend-aware time and action admission enforce it. Same-boot
+  app restart restores the original signed deadline from the OS vault; uncertain
+  boot/clock/storage continuity requires online verification. Georgian/English restriction UI
+  preserves records/sync and unchanged pre-existing bill settlement. This is
+  separate from the timeless explicit nonfiscal capability. Production signing,
+  deployment and Windows qualification remain gates. See
+  `docs/OFFLINE_SUBSCRIPTION_LICENSE.md` for evidence and limitations.
+
+
 - Commercial subscription lifecycle connects explicit Trial approval to atomic
   provisioning and adds anchored paid periods, server upgrade quotes, deferred
   downgrades/cancellation, suspension/resume and trusted/manual payment receipts.
@@ -165,6 +176,19 @@ current transport status.
   rejects changed binaries under an issued version and rejects backward feeds. Signing keys
   remain on Mac; publication never installs POS or replaces Edge. See
   `docs/LOCAL_WINDOWS_RELEASE_TEST.md`.
+
+- Private R2 release preparation verifies qualified beta ZIPs, signed metadata
+  and complete conditional-upload readback. The private `vynic-installers`
+  bucket exists; no live upload/credentials/deployment are configured. Opt-in
+  backend authority + Worker direct R2 streaming retain per-request revocation,
+  HEAD/Range and quotas. Manual release approval remains required; no automatic
+  Windows release CI exists. See `docs/PRIVATE_R2_RELEASES.md`.
+- Setup supports explicit downloaded signed POS+Edge pair upgrades with retained
+  binary recovery and authenticated startup probation. It preserves data,
+  identity and monotonic counters; the coordinator is not downgraded on rollback.
+  Native Windows qualification of the new integrated beta is still pending.
+  The active TCP/Windows RAW printing path remains bundled; the held standalone
+  printer-agent is not activated. See `docs/WINDOWS_INTEGRATED_BETA.md`.
 
 - Current Windows beta is POS 1.0.1 build 18 / Edge and Setup 1.0.1.18 from
   reviewed accounting/entitlement source 1dea4294, with current main and build 16
@@ -1185,7 +1209,10 @@ current transport status.
   resume password setup after refresh through an expiring, host-only HttpOnly
   continuation that rechecks the original invitation. Lost-link requests are
   rate-limited, enumeration-safe Admin review requests; operators reissue manually
-  until an email provider is configured. Windows installer links now use audited,
+  with optional Google SMTP delivery after committed issuance/regeneration. Mail is
+  disabled by default, fails closed on placeholders, reports SMTP acceptance separately
+  from delivery, and retains explicit operator recovery without automatic message retries
+  (see `docs/MAIL_SENDER.md`). Windows installer links now use audited,
   revocable 15-minute capabilities issued to Platform operators or current POS
   owners, with ownership/entitlement rechecks and a streaming private-asset proxy.
   There is no public installer landing/catalog: the release root is technical-only

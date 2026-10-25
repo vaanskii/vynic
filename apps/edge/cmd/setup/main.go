@@ -1,4 +1,4 @@
-// VynicSetup is a first-install/repair/uninstall bootstrapper, not an Edge updater.
+// VynicSetup installs, repairs and explicitly upgrades signed POS/Edge pairs.
 package main
 
 import (

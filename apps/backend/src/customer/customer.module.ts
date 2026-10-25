@@ -1,3 +1,5 @@
+import { MailModule } from '../mail/mail.module';
+import { InstallerWorkerGatewayController } from './installer-worker-gateway.controller';
 import { CustomerWebsitePaymentReviewsController } from './customer-website-payment-reviews.controller';
 import { InstallerDownloadsService } from './installer-downloads.service';
 import {
@@ -57,6 +59,7 @@ import {
 } from './customer.controller';
 @Module({
   imports: [
+    MailModule,
     WebsiteCoreModule,
     PaymentIntegrationsModule,
     AuthModule,
@@ -79,6 +82,7 @@ import {
     EdgeDeviceGuard,
   ],
   controllers: [
+    InstallerWorkerGatewayController,
     PlatformInstallerDownloadsController,
     CustomerInstallerDownloadsController,
     InstallerDownloadFileController,

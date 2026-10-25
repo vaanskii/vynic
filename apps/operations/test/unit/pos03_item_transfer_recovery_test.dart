@@ -89,6 +89,9 @@ void main() {
         fixture.verify();
       }
     },
+    // The fault matrix reopens real Hive files at every durable boundary.
+    // Windows filesystem flushes under emulation can exceed the default 30s.
+    timeout: const Timeout(Duration(minutes: 3)),
   );
 
   test(

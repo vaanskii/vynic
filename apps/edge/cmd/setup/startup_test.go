@@ -11,7 +11,7 @@ func TestStartupModes(t *testing.T) {
 	}{
 		{nil, "installer"}, {[]string{"--launch"}, "launch"}, {[]string{"--host"}, "host"},
 		{[]string{"--host=false"}, "installer"}, {[]string{"--repair"}, "repair"},
-		{[]string{"--uninstall"}, "uninstall"}, {[]string{"--distribution", `C:\Test Folder\distribution.json`}, "installer"},
+		{[]string{"--uninstall"}, "uninstall"}, {[]string{"--upgrade"}, "upgrade"}, {[]string{"--distribution", `C:\Test Folder\distribution.json`}, "installer"},
 	} {
 		t.Run(tc.want, func(t *testing.T) {
 			o, e := parseStartup(tc.args)

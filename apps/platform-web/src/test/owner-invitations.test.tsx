@@ -178,7 +178,7 @@ describe("Owner invitation journey", () => {
   it("provides assisted creation and a copyable one-time link separately from invitation status", async () => {
     const user = userEvent.setup();
     api.platform.mockImplementation(async (path: string) =>
-      path === "customers" ? { invitationPath: "/invite#token=new-token" } : [],
+      path === "customers" ? { invitationPath: "/invite#token=new-token", mail: { status: "disabled" } } : [],
     );
     render(
       <MemoryRouter>
@@ -201,6 +201,7 @@ describe("Owner invitation journey", () => {
           .value,
       ).toContain("/invite#token=new-token"),
     );
+    expect(screen.getByRole("status")).toHaveTextContent("Email is disabled");
     await user.click(
       screen.getByRole("button", { name: "Copy invitation link" }),
     );

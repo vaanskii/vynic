@@ -74,10 +74,14 @@ EdgeCommandEnvelope menu01Command(
   leaseExpiresAt: DateTime.now().toUtc().add(const Duration(minutes: 2)),
 );
 
-Future<void> seedMenu01({int itemCount = 2, int salesCount = 1}) async {
+Future<void> seedMenu01({
+  int itemCount = 2,
+  int salesCount = 1,
+  String venueId = menu01Venue,
+}) async {
   await EdgeDeviceCredentialStore.saveEnrollment(
     rawCredential: 'vynic-device-v1.$menu01Device.${'s' * 40}',
-    venueId: menu01Venue,
+    venueId: venueId,
     venueName: 'Synthetic restaurant',
   );
   await DatabaseCore.settingsBox!.putAll({
@@ -95,7 +99,7 @@ Future<void> seedMenu01({int itemCount = 2, int salesCount = 1}) async {
     User(username: 'manager', pinCode: '852963', role: 'manager'),
   );
   final canonical = CanonicalMenu(
-    venueId: menu01Venue,
+    venueId: venueId,
     sequence: 15,
     nodes: {
       menu01Category: CanonicalNode(
@@ -152,7 +156,7 @@ Future<void> seedMenu01({int itemCount = 2, int salesCount = 1}) async {
     final conflict = MenuMutationEntry(
       seq: 2,
       mutationId: 'conflict-original-id',
-      venueId: menu01Venue,
+      venueId: venueId,
       entityType: 'ITEM',
       operation: 'UPSERT',
       entityId: menu01ConflictItem,
@@ -165,7 +169,7 @@ Future<void> seedMenu01({int itemCount = 2, int salesCount = 1}) async {
     final synced = MenuMutationEntry(
       seq: 3,
       mutationId: 'accepted-diagnostic-id',
-      venueId: menu01Venue,
+      venueId: venueId,
       entityType: 'ITEM',
       operation: 'UPSERT',
       entityId: menu01Item,

@@ -1,3 +1,4 @@
+import { SubscriptionLeaseController } from './subscription-lease.controller';
 import { PrinterEnrollmentController } from '../printer-provisioning/controller';
 import { PrinterProvisioningService } from '../printer-provisioning/service';
 import { EntitlementsModule } from '../entitlements/entitlements.module';
@@ -32,6 +33,7 @@ import { InventoryModule } from '../inventory/inventory.module';
     InventoryModule,
   ],
   controllers: [
+    SubscriptionLeaseController,
     EdgeTransportController,
     DeviceEnrollmentController,
     PrinterEnrollmentController,

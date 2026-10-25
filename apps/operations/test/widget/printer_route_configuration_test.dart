@@ -29,7 +29,7 @@ void main() {
     root = await Directory.systemTemp.createTemp('vynic_printer_route_widget_');
     fixture = Pos02Fixture();
     await fixture.open(root.path);
-    await fixture.seed();
+    await fixture.seed(venueId: 'synthetic-venue');
     await DatabaseCore.settingsBox!.delete('deviceRuntimeConfig');
     EdgeDeviceCredentialStore.resetForTest();
     EdgeDeviceCredentialStore.directoryOverride = root.path;

@@ -18,6 +18,18 @@ x-backend: &backend
     FRONTEND_URL: ${FRONTEND_URL:?Set FRONTEND_URL}
     API_URL: ${API_URL:?Set API_URL}
     ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-}
+    # Disabled by default; Google configuration remains backend-only.
+    MAIL_ENABLED: ${MAIL_ENABLED:-false}
+    MAIL_SMTP_HOST: ${MAIL_SMTP_HOST:-smtp.invalid}
+    MAIL_SMTP_PORT: ${MAIL_SMTP_PORT:-465}
+    MAIL_AUTH_MODE: ${MAIL_AUTH_MODE:-app-password}
+    MAIL_USER: ${MAIL_USER:-not-configured@sender.invalid}
+    MAIL_FROM: ${MAIL_FROM:-not-configured@sender.invalid}
+    MAIL_PUBLIC_ORIGIN: ${MAIL_PUBLIC_ORIGIN:-https://owner-portal.invalid}
+    MAIL_APP_PASSWORD: ${MAIL_APP_PASSWORD:-replace-me.invalid}
+    MAIL_OAUTH_CLIENT_ID: ${MAIL_OAUTH_CLIENT_ID:-replace-me.invalid}
+    MAIL_OAUTH_CLIENT_SECRET: ${MAIL_OAUTH_CLIENT_SECRET:-replace-me.invalid}
+    MAIL_OAUTH_REFRESH_TOKEN: ${MAIL_OAUTH_REFRESH_TOKEN:-replace-me.invalid}
     SAAS_WEBSITE_BASE_DOMAIN: ${SAAS_WEBSITE_BASE_DOMAIN:?Set SAAS_WEBSITE_BASE_DOMAIN}
     SAAS_WEBSITE_PREVIEW_ORIGIN: ${SAAS_WEBSITE_PREVIEW_ORIGIN:-}
     WEBSITE_MEDIA_DIR: /var/lib/vynic/media

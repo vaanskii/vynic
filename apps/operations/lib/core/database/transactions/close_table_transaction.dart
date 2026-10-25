@@ -1,3 +1,4 @@
+import '../../services/licensing/subscription_license.dart';
 import 'package:vynic/core/services/pos/update/update_readiness.dart';
 import 'dart:developer' as developer;
 
@@ -187,6 +188,23 @@ class CloseTableTransaction {
       return const ClosureResult(outcome: ClosureOutcome.orderNotFound);
     }
 
+    if (existing == null && SubscriptionLicense.instance.enabled) {
+      try {
+        await SubscriptionLicense.instance.requireSettlement(
+          order,
+          gross: money.gross,
+          advance: money.advanceApplied,
+          items: saleItems,
+        );
+      } on StateError {
+        return const ClosureResult(
+          outcome: ClosureOutcome.failed,
+          detail:
+              'ლიცენზიის შეზღუდვა — შესაძლებელია მხოლოდ არსებული უცვლელი ანგარიშის დახურვა',
+        );
+      }
+    }
+
     // Existing durable intents must finish even after a capability is revoked.
     // No new internal close may be admitted by a direct or transport caller.
     if (existing == null &&
@@ -325,6 +343,8 @@ class CloseTableTransaction {
 
     // Resume an interrupted attempt rather than starting a second one.
     if (existing != null) {
+      if (SubscriptionLicense.instance.enabled)
+        await SubscriptionLicense.instance.consumeSettlement(orderId);
       final resumed = await _finish(
         entry: existing,
         order: order,
@@ -373,6 +393,8 @@ class CloseTableTransaction {
       advanceReceiptId: order.advanceReceiptId,
     );
     await ClosureJournalRepository.write(entry);
+    if (SubscriptionLicense.instance.enabled)
+      await SubscriptionLicense.instance.consumeSettlement(orderId);
 
     final done = await _finish(
       entry: entry,

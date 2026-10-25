@@ -253,6 +253,12 @@ func LegacyCheck(l Layout) error { return legacyCheck(l) }
 // Supervise runs in the interactive user's session. One file lock covers its
 // children; a graceful stop marker stops Edge without killing POS or Manager.
 func Supervise(l Layout) error {
+	i := &Installer{Layout: l, Host: NativeHost{}}
+	if j, e := i.readUpgrade(); e == nil && j.Phase != "probation" && j.Phase != "committed" {
+		return errors.New("application upgrade recovery required; open Vynic Setup")
+	} else if e != nil && !os.IsNotExist(e) {
+		return e
+	}
 	if e := rejectLinks(l.Root); e != nil {
 		return e
 	}
@@ -318,7 +324,40 @@ func Supervise(l Layout) error {
 	return errors.New("Edge repeatedly failed; inspect logs/edge.log and use Repair")
 }
 func EnsureHost(ctx context.Context, l Layout, launch bool) error {
-	return ensureHost(ctx, l, launch, nil)
+	i := &Installer{Layout: l, Host: NativeHost{}}
+	j, e := i.readUpgrade()
+	if e != nil && !os.IsNotExist(e) {
+		return e
+	}
+	if e == nil && j.Phase != "probation" {
+		if e = i.RecoverUpgrade(ctx); e != nil {
+			return e
+		}
+	}
+	e = ensureHost(ctx, l, launch, nil)
+	if e != nil {
+		if _, je := os.Stat(l.upgradeJournal()); je == nil {
+			return errors.Join(e, i.RecoverUpgrade(ctx))
+		}
+		return e
+	}
+	if launch {
+		r, re := Load(l)
+		if re != nil {
+			return re
+		}
+		st, se := status(ctx, r.Config)
+		if se != nil {
+			return se
+		}
+		if _, je := os.Stat(l.upgradeJournal()); je == nil {
+			if st.Current != j.CandidatePOS {
+				return errors.Join(errors.New("candidate POS failed health; restoring the previous Edge pair after POS is closed"), i.RecoverUpgrade(ctx))
+			}
+			return i.CompleteUpgrade(st)
+		}
+	}
+	return nil
 }
 func ensureHost(ctx context.Context, l Layout, launch bool, report func(UpdateProgress)) error {
 	if e := rejectLinks(l.Root); e != nil {
@@ -391,7 +430,7 @@ func ensureHost(ctx context.Context, l Layout, launch bool, report func(UpdatePr
 			if st.Status == "FAILED" && !st.StartupVerified {
 				return fmt.Errorf("POS startup failed: %s; inspect logs and close POS before Repair", st.Reason)
 			}
-			if report != nil && !st.StartupVerified {
+			if !st.StartupVerified {
 				return waitHealth(st.Reason)
 			}
 			return nil

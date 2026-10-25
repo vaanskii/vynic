@@ -41,6 +41,8 @@ type Manifest struct {
 	HiveSchema      int       `json:"hiveSchema"`
 	EdgeSchema      int       `json:"edgeSchema"`
 	DataPolicy      string    `json:"dataPolicy"`
+	// Publisher attestation bound to the signed artifact hash, not a version guess.
+	LicenseProtocol int `json:"licenseProtocol,omitempty"`
 }
 type Envelope struct {
 	KeyID     string `json:"keyId"`
@@ -119,7 +121,7 @@ func Verify(raw []byte, keys map[string]TrustedKey, channel, current string, hig
 	}
 	u, err := url.Parse(m.URL)
 	digest, de := hex.DecodeString(m.SHA256)
-	if m.Product != Product || m.OS != "windows" || m.Arch != "amd64" || m.Channel != channel || !newer(m.Version, current) || m.Release <= high || m.UpdaterProtocol != 1 || m.HiveSchema != 9 || m.EdgeSchema != 2 || m.DataPolicy != "hive9-no-migration" || !now.Before(m.Expires) || m.Expires.After(now.Add(31*24*time.Hour)) || err != nil || u.Scheme != "https" || u.Host == "" || u.User != nil || de != nil || len(digest) != 32 || m.Size < 1 || m.Size > MaxArtifact {
+	if m.Product != Product || m.OS != "windows" || m.Arch != "amd64" || m.Channel != channel || !newer(m.Version, current) || m.Release <= high || m.UpdaterProtocol != 1 || m.HiveSchema != 9 || m.EdgeSchema != 2 || m.DataPolicy != "hive9-no-migration" || (m.LicenseProtocol != 0 && m.LicenseProtocol != 1) || !now.Before(m.Expires) || m.Expires.After(now.Add(31*24*time.Hour)) || err != nil || u.Scheme != "https" || u.Host == "" || u.User != nil || de != nil || len(digest) != 32 || m.Size < 1 || m.Size > MaxArtifact {
 		return m, errors.New("release compatibility/policy rejected")
 	}
 	return m, nil

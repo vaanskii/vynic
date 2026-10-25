@@ -1,3 +1,4 @@
+import { MailService } from '../mail/mail.service';
 import 'reflect-metadata';
 import { Test } from '@nestjs/testing';
 import { JwtService } from '@nestjs/jwt';
@@ -82,6 +83,7 @@ const url = process.env.PROTECTED_ONBOARDING_TEST_DATABASE_URL;
         db,
         auth,
         new EnrollmentRateLimiter(),
+        disabledMail,
       );
       downloads = new InstallerDownloadsService(db);
       const org = await db.organization.create({
@@ -617,3 +619,10 @@ const url = process.env.PROTECTED_ONBOARDING_TEST_DATABASE_URL;
     });
   },
 );
+
+const disabledMail = {
+  sendOwnerInvitation: async () => ({
+    status: 'disabled',
+    diagnostic: 'Test sender disabled.',
+  }),
+} as unknown as MailService;

@@ -1,3 +1,5 @@
+import { MailService, MailResult } from '../mail/mail.service';
+import { mailbox } from '../mail/mail-config';
 import { nextRenewal } from '../subscriptions/billing-policy';
 import {
   BadRequestException,
@@ -47,12 +49,12 @@ export class OwnerInvitationsService {
     private readonly db: PrismaService,
     private readonly auth: CustomerAuth,
     private readonly limiter: EnrollmentRateLimiter,
+    private readonly mail: MailService,
   ) {}
 
   private email(value: unknown) {
     const email = requireText(value, 'email', { max: 254 }).toLowerCase();
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
-      throw new BadRequestException('Invalid email');
+    if (!mailbox(email)) throw new BadRequestException('Invalid email');
     return email;
   }
   private token(value: unknown) {
@@ -93,6 +95,7 @@ export class OwnerInvitationsService {
     organizationId: string,
     email: string,
   ) {
+    email = this.email(email);
     // Serialize issuance/acceptance/revocation on the Organization, including new rows.
     const org = await tx.organization.findUnique({
       where: { id: organizationId },
@@ -152,13 +155,14 @@ export class OwnerInvitationsService {
     );
     const organizationId = requireText(body.organizationId, 'Organization');
     const email = this.email(body.email);
-    return this.db.$transaction((tx) =>
+    const issued = await this.db.$transaction((tx) =>
       this.issue(tx, actor, organizationId, email),
     );
+    return this.deliverIssued(issued);
   }
   async change(actor: PlatformPrincipal, id: string, regenerate: boolean) {
     await admit(this.db, 'invitation-admin', actor.platformUserId, 30, 3600000);
-    return this.db.$transaction(async (tx) => {
+    const result = await this.db.$transaction(async (tx) => {
       const row = await tx.ownerInvitation.findUnique({ where: { id } });
       if (!row) throw new NotFoundException('Invitation not found');
       await tx.$queryRaw`SELECT "id" FROM "pos"."Organization" WHERE "id"=${row.organizationId} FOR UPDATE`;
@@ -178,6 +182,7 @@ export class OwnerInvitationsService {
       }
       return { revoked: true };
     });
+    return 'invitation' in result ? this.deliverIssued(result) : result;
   }
   async provision(
     actor: PlatformPrincipal,
@@ -284,8 +289,56 @@ export class OwnerInvitationsService {
         ...(await this.issue(tx, actor, org.id, email)),
       };
     };
-    return existingTx ? run(existingTx) : this.db.$transaction(run);
+    if (existingTx) return run(existingTx);
+    return this.deliverIssued(await this.db.$transaction(run));
   }
+  // Call only after the owning transaction commits. Never store raw invitation tokens.
+  async deliverIssued<
+    T extends {
+      invitation: { id: string; organizationId: string; email: string };
+      invitationPath: string;
+    },
+  >(issued: T): Promise<T & { mail: MailResult }> {
+    let mail: MailResult;
+    try {
+      const row = await this.db.ownerInvitation.findUnique({
+        where: { id: issued.invitation.id },
+        include: { organization: true },
+      });
+      const token = issued.invitationPath.slice('/invite#token='.length);
+      if (
+        !row ||
+        row.organizationId !== issued.invitation.organizationId ||
+        row.email !== issued.invitation.email ||
+        row.tokenHash !== hash(token) ||
+        row.acceptedAt ||
+        row.revokedAt ||
+        row.expiresAt <= new Date()
+      ) {
+        mail = {
+          status: 'skipped',
+          diagnostic: 'Invitation is no longer available for sending.',
+        };
+      } else {
+        mail = await this.mail.sendOwnerInvitation({
+          id: row.id,
+          email: row.email,
+          organization: row.organization.name,
+          path: issued.invitationPath,
+          expiresAt: row.expiresAt,
+        });
+      }
+    } catch {
+      // The invitation transaction already committed. Do not invite an HTTP retry of provisioning.
+      mail = {
+        status: 'unknown',
+        diagnostic:
+          'Mail submission could not be confirmed. Share the link manually or regenerate explicitly.',
+      };
+    }
+    return { ...issued, mail };
+  }
+
   private async applicantName(
     db: Prisma.TransactionClient,
     invitation: OwnerInvitation,
@@ -381,7 +434,7 @@ export class OwnerInvitationsService {
     const email = this.email(body.email);
     await admit(this.db, 'invitation-recovery-email', email, 3, 3600000);
     // A request never revokes a working link or reveals whether an email exists.
-    // Operators issue the replacement; no email sender is configured here.
+    // Operators review and regenerate; anonymous requests never send email.
     await this.db.$transaction(async (tx) => {
       const rows = await tx.ownerInvitation.findMany({
         where: { email, acceptedAt: null, revokedAt: null },

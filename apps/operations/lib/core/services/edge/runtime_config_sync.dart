@@ -1,3 +1,4 @@
+import '../licensing/subscription_license.dart';
 import 'pos_venue_profile.dart';
 import 'dart:async';
 import 'dart:convert';
@@ -80,6 +81,7 @@ class RuntimeConfigSync {
       requireRequestIdentity();
       if (response.statusCode == 401 || response.statusCode == 403) {
         await InventoryRepository.invalidateNonFiscalCloseAuthority();
+        await SubscriptionLicense.instance.authenticationDenied();
       }
       dynamic decoded;
       try {

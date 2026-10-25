@@ -65,7 +65,7 @@ describe("Commercial operator controls", () => {
       if (req.method === "POST") {
         approved = true;
         return {
-          body: { prepared: { invitationPath: "/invite#token=test-only" } },
+          body: { prepared: { invitationPath: "/invite#token=test-only", mail: { status: "accepted" } } },
         };
       }
       return {
@@ -88,6 +88,7 @@ describe("Commercial operator controls", () => {
       ((await screen.findByLabelText(/Owner invitation/)) as HTMLInputElement)
         .value,
     ).toContain("/invite#token=test-only");
+    expect(screen.getByRole("status")).toHaveTextContent("Inbox delivery is not confirmed");
     expect(api.requests.find((r) => r.method === "POST")?.body).toEqual({
       status: "APPROVED",
       outcome: "NO_PLAN",

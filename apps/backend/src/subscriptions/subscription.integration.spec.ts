@@ -1,3 +1,4 @@
+import { MailService } from '../mail/mail.service';
 import { isFreshDisposableDatabase } from '../../test/disposable-database';
 import 'reflect-metadata';
 jest.mock('uuid', () => ({ v4: () => require('node:crypto').randomUUID() }));
@@ -82,7 +83,12 @@ const url = process.env.COMMERCIAL_TEST_DATABASE_URL;
       const limiter = new EnrollmentRateLimiter(),
         commercial = new PlatformCommercialService(db, new StaffPinVault(db));
       const auth = new CustomerAuth(db, new JwtService(), limiter);
-      invitations = new OwnerInvitationsService(db, auth, limiter);
+      invitations = new OwnerInvitationsService(
+        db,
+        auth,
+        limiter,
+        disabledMail,
+      );
       const owners = new CustomerService(
         db,
         new VenueEntitlementsService(db),
@@ -739,3 +745,10 @@ const url = process.env.COMMERCIAL_TEST_DATABASE_URL;
     });
   },
 );
+
+const disabledMail = {
+  sendOwnerInvitation: async () => ({
+    status: 'disabled',
+    diagnostic: 'Test sender disabled.',
+  }),
+} as unknown as MailService;

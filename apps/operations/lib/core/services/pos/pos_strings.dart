@@ -1,6 +1,8 @@
 /// POS UI catalog. Restaurant-entered names, notes and PIN values are not
 /// translated. Keys retain the existing Georgian copy for migration stability.
 const posEnglish = <String, String>{
+  'ლიცენზიის შეზღუდვა — შესაძლებელია მხოლოდ არსებული უცვლელი ანგარიშის დახურვა':
+      'License restriction — only unchanged existing bills can be settled',
   'აპლიკაციიდან გასვლა': 'Quit application',
   'ნამდვილად გსურთ Vynic POS-ის დახურვა?':
       'Are you sure you want to close Vynic POS?',

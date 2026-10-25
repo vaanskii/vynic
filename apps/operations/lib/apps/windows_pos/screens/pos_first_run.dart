@@ -12,7 +12,15 @@ import 'login_screen.dart';
 import 'pos_manager_registration_screen.dart';
 
 class PosFirstRun extends StatefulWidget {
-  const PosFirstRun({super.key, this.service, this.activationClient});
+  const PosFirstRun({
+    super.key,
+    this.service,
+    this.activationClient,
+    this.enrollmentOnly = false,
+  });
+
+  /// A dedicated connection route remains available for configured restaurants.
+  final bool enrollmentOnly;
   final PosEnrollmentService? service;
   final http.Client? activationClient;
   @override
@@ -39,8 +47,11 @@ class _PosFirstRunState extends State<PosFirstRun> {
   @override
   Widget build(BuildContext context) {
     // Existing configured restaurants retain local access even before fleet enrollment.
-    if (DatabaseService.isSetupComplete()) return const LoginScreen();
-    if (!PosEnrollmentService.needsEnrollment && !_reconnecting) {
+    if (!widget.enrollmentOnly && DatabaseService.isSetupComplete())
+      return const LoginScreen();
+    if (!widget.enrollmentOnly &&
+        !PosEnrollmentService.needsEnrollment &&
+        !_reconnecting) {
       return StreamBuilder<dynamic>(
         stream: DatabaseService.userBox?.watch(),
         builder: (context, snapshot) {
@@ -137,8 +148,8 @@ class _PosFirstRunState extends State<PosFirstRun> {
         },
       );
     }
-    return Scaffold(
-      appBar: _updateBar(),
+    final form = Scaffold(
+      appBar: widget.enrollmentOnly ? AppBar() : _updateBar(),
       body: SafeArea(
         child: Center(
           child: ConstrainedBox(
@@ -157,7 +168,9 @@ class _PosFirstRunState extends State<PosFirstRun> {
                   const Text(
                     'შეიყვანეთ თქვენი რესტორნის გვერდზე მიღებული მოწყობილობის კოდი.',
                   ),
-                  if (_reconnecting) ...[
+                  if (_reconnecting ||
+                      (widget.enrollmentOnly &&
+                          !PosEnrollmentService.needsEnrollment)) ...[
                     const SizedBox(height: 12),
                     const Text(
                       'ხელახალი დაკავშირება ცვლის ამ POS-ის წვდომას. '
@@ -212,6 +225,10 @@ class _PosFirstRunState extends State<PosFirstRun> {
                               code: _code.text,
                             );
                             if (!mounted) return;
+                            if (result.isConnected && widget.enrollmentOnly) {
+                              Navigator.of(context).pop(true);
+                              return;
+                            }
                             setState(() {
                               _busy = false;
                               _error = result.isConnected
@@ -251,6 +268,7 @@ class _PosFirstRunState extends State<PosFirstRun> {
         ),
       ),
     );
+    return PopScope(canPop: !_busy, child: form);
   }
 
   PreferredSizeWidget? _updateBar() => !kIsWeb && Platform.isWindows

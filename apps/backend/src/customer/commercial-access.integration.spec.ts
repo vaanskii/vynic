@@ -1,3 +1,4 @@
+import { MailService } from '../mail/mail.service';
 import { ManagerActivationService } from '../auth/manager-activation.service';
 import { isFreshDisposableDatabase } from '../../test/disposable-database';
 import { HostnameRequestsService } from '../website/core/hostname-requests';
@@ -206,7 +207,12 @@ const url = process.env.COMMERCIAL_TEST_DATABASE_URL;
         settings,
       );
       const customerAuth = new CustomerAuth(db, jwt, limiter);
-      invitations = new OwnerInvitationsService(db, customerAuth, limiter);
+      invitations = new OwnerInvitationsService(
+        db,
+        customerAuth,
+        limiter,
+        disabledMail,
+      );
       const platformAuth = new PlatformAuthService(db, jwt, settings);
       const user = await db.platformUser.create({
         data: {
@@ -1014,3 +1020,10 @@ const url = process.env.COMMERCIAL_TEST_DATABASE_URL;
     });
   },
 );
+
+const disabledMail = {
+  sendOwnerInvitation: async () => ({
+    status: 'disabled',
+    diagnostic: 'Test sender disabled.',
+  }),
+} as unknown as MailService;

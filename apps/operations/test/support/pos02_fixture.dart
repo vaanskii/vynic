@@ -98,8 +98,8 @@ class Pos02Fixture {
     }
   }
 
-  Future<void> seed() async {
-    await seedMenu01(itemCount: 1, salesCount: 0);
+  Future<void> seed({String venueId = menu01Venue}) async {
+    await seedMenu01(itemCount: 1, salesCount: 0, venueId: venueId);
     await DatabaseCore.settingsBox!.putAll({
       'printerKitchenIp': 'synthetic.invalid',
       'printerReceiptIp': 'synthetic.invalid',

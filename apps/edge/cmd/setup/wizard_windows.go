@@ -53,7 +53,7 @@ func maintenanceWizard(l setup.Layout) (int, error) {
 		if e != nil || action != 6 {
 			return action, e
 		}
-		action, e = nativePage("Manage Vynic POS", "Installation folder:\n"+l.Root+"\n\nRepair keeps the installed version and restaurant data.\nUninstall removes applications and retains restaurant data.", nil, []button{{"< Back", 6}, {"Open POS", 4}, {"Repair", 2}, {"Uninstall", 3}}, nil)
+		action, e = nativePage("Manage Vynic POS", "Installation folder:\n"+l.Root+"\n\nRepair keeps the installed version and restaurant data.\nUninstall removes applications and retains restaurant data.", nil, []button{{"< Back", 6}, {"Open POS", 4}, {"Repair", 2}, {"Upgrade POS + Edge", 7}, {"Uninstall", 3}}, nil)
 		if e != nil || action != 6 {
 			return action, e
 		}

@@ -28,6 +28,8 @@ abstract final class PosBackupFormat {
     'edge_command_journal',
   ];
   static const deviceSettings = <String>{
+    'subscriptionLicenseDenial',
+    'subscriptionLicenseBills',
     'runtimeFeatureAuthority',
     'posIngestConnectionKey',
     'developerTerminalId',

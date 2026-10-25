@@ -13,7 +13,7 @@ func parseStartup(args []string) (startupOptions, error) {
 	f := flag.NewFlagSet("VynicSetup", flag.ContinueOnError)
 	f.SetOutput(io.Discard)
 	f.StringVar(&o.distribution, "distribution", "", "public distribution config")
-	modes := []string{"launch", "host", "repair", "uninstall"}
+	modes := []string{"launch", "host", "repair", "uninstall", "upgrade"}
 	selected := make([]bool, len(modes))
 	for i, mode := range modes {
 		f.BoolVar(&selected[i], mode, false, mode)
@@ -29,7 +29,7 @@ func parseStartup(args []string) (startupOptions, error) {
 		}
 	}
 	if count > 1 || f.NArg() != 0 {
-		return o, fmt.Errorf("choose only one of --launch, --host, --repair or --uninstall")
+		return o, fmt.Errorf("choose only one of --launch, --host, --repair, --uninstall or --upgrade")
 	}
 	return o, nil
 }

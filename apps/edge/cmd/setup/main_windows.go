@@ -161,7 +161,9 @@ func runWindows(o startupOptions) error {
 		return errors.New("existing installation trust cannot be changed by --distribution; Repair uses the provisioned public keys")
 	}
 	action := 1
-	if o.mode == "repair" {
+	if o.mode == "upgrade" {
+		action = 7
+	} else if o.mode == "repair" {
 		action = 2
 	} else if o.mode == "uninstall" {
 		action = 3
@@ -223,7 +225,18 @@ func runWindows(o startupOptions) error {
 		_, e = dialog("Vynic applications were removed. Restaurant data was retained.", "", button{"Close", 1})
 		return e
 	}
-	e = withProgress(l, func(report func(string)) error { i.Report = report; return i.Install(ctx, action == 2) })
+	if action == 7 {
+		yes, ce := dialog("Upgrade POS and Edge together from this signed release?\n\nClose POS normally first. Previous binaries are retained until startup health passes. Restaurant data, identity and counters stay in place.", "", button{"Upgrade", 7}, button{"Cancel", 0})
+		if ce != nil {
+			return ce
+		}
+		if yes != 7 {
+			return nil
+		}
+		e = withProgress(l, func(report func(string)) error { i.Report = report; return i.Upgrade(ctx) })
+	} else {
+		e = withProgress(l, func(report func(string)) error { i.Report = report; return i.Install(ctx, action == 2) })
+	}
 	if e != nil {
 		if exists && r.Status == "installed" {
 			e = errors.Join(e, setup.EnsureHost(ctx, l, false))

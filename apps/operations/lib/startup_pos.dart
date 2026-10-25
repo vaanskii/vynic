@@ -1,3 +1,5 @@
+import 'core/services/licensing/subscription_license.dart';
+import 'core/services/licensing/license_host.dart';
 import 'core/widgets/menu_update_required.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:vynic/core/services/pos/pos_locale.dart';
@@ -71,6 +73,7 @@ Future<void> startPos() async {
   PosInputSettings.load();
   await PrinterService.initialize();
   await PosUpdater.instance.initialize();
+  await SubscriptionLicense.instance.start();
   runApp(const PosApp());
   WidgetsBinding.instance.addPostFrameCallback((_) async {
     await PosUpdater.instance.startAfterFirstFrame();
@@ -156,7 +159,10 @@ class _PosAppState extends State<PosApp> with WidgetsBindingObserver {
                     child: PosInputScope(
                       child: MenuUpdateRequired(
                         child: ConnectionFeedback.pos(
-                          child: activityAwareChild,
+                          child: LicenseHost(
+                            navigatorKey: navigatorKey,
+                            child: activityAwareChild,
+                          ),
                         ),
                       ),
                     ),

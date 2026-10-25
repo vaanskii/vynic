@@ -169,7 +169,7 @@ export class OnboardingRequestsService {
   ) {
     if (!['APPROVED', 'REJECTED'].includes(String(body.status)))
       throw new BadRequestException('Approve or reject the request');
-    return this.db.$transaction(async (tx) => {
+    const result = await this.db.$transaction(async (tx) => {
       await tx.$queryRaw`SELECT "id" FROM "pos"."OnboardingRequest" WHERE "id"=${id} FOR UPDATE`;
       const request = await tx.onboardingRequest.findUniqueOrThrow({
         where: { id },
@@ -257,6 +257,12 @@ export class OnboardingRequestsService {
       });
       return { request: result, prepared };
     });
+    return {
+      ...result,
+      prepared: result.prepared
+        ? await this.invitations.deliverIssued(result.prepared)
+        : null,
+    };
   }
 }
 @Controller('customer/access-requests')

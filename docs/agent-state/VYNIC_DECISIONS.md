@@ -523,3 +523,20 @@ immutable observations; keep read-only owner history accessible after access
 loss. Causal proof of timely payment can finish the original unconflicted hold,
 never steal reassigned occupancy. Old history is not inferred or replayed.
 See `docs/WEB0104_BOOKING_HOLDS_PAYMENT_LEDGER.md`.
+
+
+## D039 — Subscription offline access is a signed bounded lease
+
+**Decision:** Overall beta POS subscription access uses a Device/installation/
+Venue-bound signed lease no later than verified server time + 24 hours and known
+trial/paid expiry. It is separate from nonfiscal authorization. New sales require
+same-boot, OS-vault-backed continuity across normal app restart; uncertain boot,
+clock or anchor continuity requires fresh online verification. Preserve
+read/export/sync and only unchanged, previously admitted bill settlement.
+**Reason:** The user approved bounded outage operation and explicit expiry UX;
+client wall time and cached feature lists cannot extend commercial authority.
+**Implication:** The central server alone activates/history-tracks trials. Native
+suspend-aware elapsed time, nonce replay protection, action-time checks, retained
+revocation and device-local consumed settlement permissions are required. No
+instant offline remote revocation or administrator/VM snapshot resistance is
+claimed. See `docs/OFFLINE_SUBSCRIPTION_LICENSE.md`.

@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:hive/hive.dart';
+import 'package:path/path.dart' as path;
 
 import 'package:vynic/core/database/database_core.dart';
 import 'package:vynic/core/database/repositories/backup_repository.dart';
@@ -256,10 +257,10 @@ void main() {
     final backup = await BackupRepository.createDataBackup();
 
     expect(
-      backup.path,
-      startsWith('${DatabaseCore.dataDirectoryPath}${Platform.pathSeparator}'),
+      path.isWithin(DatabaseCore.dataDirectoryPath, backup.path),
+      isTrue,
     );
-    expect(backup.path, contains('${Platform.pathSeparator}backups'));
+    expect(path.basename(path.dirname(backup.path)), 'backups');
     expect(backup.path, isNot(contains('DatabaseCore.dataDirectoryPath')));
   });
 

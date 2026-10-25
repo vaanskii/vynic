@@ -10,6 +10,8 @@
 /// wrong is not a visual bug.
 library;
 
+import '../licensing/subscription_license.dart';
+
 import 'package:vynic/core/services/pos/update/update_readiness.dart';
 
 import 'dart:developer' as developer;
@@ -335,141 +337,144 @@ abstract final class OrderItemTransfer {
         );
       }
       final result = await LocalDataAdmission.exclusive(
-        () => UpdateReadiness.track('transferItems', () async {
-          var ownsIntent = false;
-          try {
-            List<OrderTransferIntent> records;
+        () => SubscriptionLicense.instance.operation(
+          'transferItems',
+          () => UpdateReadiness.track('transferItems', () async {
+            var ownsIntent = false;
             try {
-              records = OrderTransferJournalRepository.records();
+              List<OrderTransferIntent> records;
+              try {
+                records = OrderTransferJournalRepository.records();
+              } catch (error) {
+                LocalDataAdmission.failure =
+                    'Order transfer journal requires recovery: $error';
+                rethrow;
+              }
+              final prior = records
+                  .where((record) => record.id == id)
+                  .firstOrNull;
+              if (prior != null) {
+                if (useRecordedBusinessDateOnRetry) {
+                  request['businessDate'] = prior.request['businessDate'];
+                }
+                if (prior.fingerprint != PosBackupFormat.digest(request)) {
+                  return const OrderTransferResult.failed(
+                    OrderTransferError.transferIdConflict,
+                  );
+                }
+                if (prior.pending) {
+                  ownsIntent = true;
+                  await _finish(prior);
+                }
+                return _result(prior);
+              }
+              if (records.any((record) => record.pending)) {
+                LocalDataAdmission.failure =
+                    'Order transfer requires startup recovery';
+                return const OrderTransferResult.failed(
+                  OrderTransferError.recoveryRequired,
+                );
+              }
+              final sourceImage = request['sourceOrder'] as Map;
+              final sourceEntry = _findOrder(
+                sourceImage['orderId'] as int,
+                sourceImage['orderUuid'] as String,
+              );
+              final source = sourceEntry.$2;
+              if (request['kind'] == 'releaseEmpty' &&
+                  (_isFinalized(source.status) ||
+                      source.items.isNotEmpty ||
+                      source.packageItems.isNotEmpty)) {
+                return const OrderTransferResult.applied(
+                  moved: [],
+                  sourceLeftEmpty: false,
+                );
+              }
+              if (!OrderTransferIntent.sameImage(
+                OrderTransferIntent.snapshot(source),
+                sourceImage,
+              )) {
+                throw const _TransferRefusal(OrderTransferError.staleSource);
+              }
+              (Object, Order)? destinationEntry;
+              if (request['destinationOrder'] != null) {
+                final image = request['destinationOrder'] as Map;
+                destinationEntry = _findOrder(
+                  image['orderId'] as int,
+                  image['orderUuid'] as String,
+                );
+                if (!OrderTransferIntent.sameImage(
+                  OrderTransferIntent.snapshot(destinationEntry.$2),
+                  image,
+                )) {
+                  throw const _TransferRefusal(
+                    OrderTransferError.staleDestination,
+                  );
+                }
+              }
+              if (BusinessDayRepository.dateKey(
+                    BusinessDayRepository.getCurrentDate(),
+                  ) !=
+                  request['businessDate']) {
+                throw const _TransferRefusal(
+                  OrderTransferError.businessDateChanged,
+                );
+              }
+              final draft = source.clone();
+              final destination = destinationEntry?.$2.clone();
+              final result = request['kind'] == 'releaseEmpty'
+                  ? const OrderTransferResult.applied(
+                      moved: [],
+                      sourceLeftEmpty: true,
+                    )
+                  : move(
+                      source: draft,
+                      destination: destination!,
+                      moves: [
+                        for (final move in request['moves'] as List)
+                          (
+                            index: move['index'] as int,
+                            quantity: move['quantity'] as int,
+                          ),
+                      ],
+                    );
+              if (!result.ok) return result;
+              final intent = _capture(
+                id,
+                request,
+                sourceEntry.$1,
+                draft,
+                destinationEntry?.$1,
+                destination,
+                result,
+              );
+              // Old adapters may mint Order/line identities on read. Persist the
+              // unmodified loaded rows before a durable plan references them.
+              for (final entry in [
+                sourceEntry,
+                if (destinationEntry != null) destinationEntry,
+              ]) {
+                await DatabaseCore.orderBox!.put(entry.$1, entry.$2);
+                await DatabaseCore.orderBox!.flush();
+              }
+              ownsIntent =
+                  true; // Also latch an uncertain failed intent put/flush.
+              await OrderTransferJournalRepository.write(intent);
+              await _finish(intent);
+              return _result(intent);
+            } on _TransferRefusal catch (refusal) {
+              return OrderTransferResult.failed(refusal.reason);
             } catch (error) {
-              LocalDataAdmission.failure =
-                  'Order transfer journal requires recovery: $error';
+              if (ownsIntent) {
+                // Latch before exclusive.finally can release waiting writers, even
+                // if the completed receipt's put succeeded but its flush failed.
+                LocalDataAdmission.failure =
+                    'Order transfer recovery required: $error';
+              }
               rethrow;
             }
-            final prior = records
-                .where((record) => record.id == id)
-                .firstOrNull;
-            if (prior != null) {
-              if (useRecordedBusinessDateOnRetry) {
-                request['businessDate'] = prior.request['businessDate'];
-              }
-              if (prior.fingerprint != PosBackupFormat.digest(request)) {
-                return const OrderTransferResult.failed(
-                  OrderTransferError.transferIdConflict,
-                );
-              }
-              if (prior.pending) {
-                ownsIntent = true;
-                await _finish(prior);
-              }
-              return _result(prior);
-            }
-            if (records.any((record) => record.pending)) {
-              LocalDataAdmission.failure =
-                  'Order transfer requires startup recovery';
-              return const OrderTransferResult.failed(
-                OrderTransferError.recoveryRequired,
-              );
-            }
-            final sourceImage = request['sourceOrder'] as Map;
-            final sourceEntry = _findOrder(
-              sourceImage['orderId'] as int,
-              sourceImage['orderUuid'] as String,
-            );
-            final source = sourceEntry.$2;
-            if (request['kind'] == 'releaseEmpty' &&
-                (_isFinalized(source.status) ||
-                    source.items.isNotEmpty ||
-                    source.packageItems.isNotEmpty)) {
-              return const OrderTransferResult.applied(
-                moved: [],
-                sourceLeftEmpty: false,
-              );
-            }
-            if (!OrderTransferIntent.sameImage(
-              OrderTransferIntent.snapshot(source),
-              sourceImage,
-            )) {
-              throw const _TransferRefusal(OrderTransferError.staleSource);
-            }
-            (Object, Order)? destinationEntry;
-            if (request['destinationOrder'] != null) {
-              final image = request['destinationOrder'] as Map;
-              destinationEntry = _findOrder(
-                image['orderId'] as int,
-                image['orderUuid'] as String,
-              );
-              if (!OrderTransferIntent.sameImage(
-                OrderTransferIntent.snapshot(destinationEntry.$2),
-                image,
-              )) {
-                throw const _TransferRefusal(
-                  OrderTransferError.staleDestination,
-                );
-              }
-            }
-            if (BusinessDayRepository.dateKey(
-                  BusinessDayRepository.getCurrentDate(),
-                ) !=
-                request['businessDate']) {
-              throw const _TransferRefusal(
-                OrderTransferError.businessDateChanged,
-              );
-            }
-            final draft = source.clone();
-            final destination = destinationEntry?.$2.clone();
-            final result = request['kind'] == 'releaseEmpty'
-                ? const OrderTransferResult.applied(
-                    moved: [],
-                    sourceLeftEmpty: true,
-                  )
-                : move(
-                    source: draft,
-                    destination: destination!,
-                    moves: [
-                      for (final move in request['moves'] as List)
-                        (
-                          index: move['index'] as int,
-                          quantity: move['quantity'] as int,
-                        ),
-                    ],
-                  );
-            if (!result.ok) return result;
-            final intent = _capture(
-              id,
-              request,
-              sourceEntry.$1,
-              draft,
-              destinationEntry?.$1,
-              destination,
-              result,
-            );
-            // Old adapters may mint Order/line identities on read. Persist the
-            // unmodified loaded rows before a durable plan references them.
-            for (final entry in [
-              sourceEntry,
-              if (destinationEntry != null) destinationEntry,
-            ]) {
-              await DatabaseCore.orderBox!.put(entry.$1, entry.$2);
-              await DatabaseCore.orderBox!.flush();
-            }
-            ownsIntent =
-                true; // Also latch an uncertain failed intent put/flush.
-            await OrderTransferJournalRepository.write(intent);
-            await _finish(intent);
-            return _result(intent);
-          } on _TransferRefusal catch (refusal) {
-            return OrderTransferResult.failed(refusal.reason);
-          } catch (error) {
-            if (ownsIntent) {
-              // Latch before exclusive.finally can release waiting writers, even
-              // if the completed receipt's put succeeded but its flush failed.
-              LocalDataAdmission.failure =
-                  'Order transfer recovery required: $error';
-            }
-            rethrow;
-          }
-        }),
+          }),
+        ),
         operation: 'transferItems',
       );
       if (result.ok && result.transferId != null) {

@@ -26,6 +26,7 @@ export function failureDiagnostic(stage, result) {
 export function validateTarget(config) {
   if (config.name !== worker || config.account_id !== account ||
       config.workers_dev !== false || config.preview_urls !== false ||
+      config.observability?.enabled !== true ||
       config.r2_buckets?.length !== 1 ||
       config.r2_buckets[0].binding !== 'INSTALLERS' ||
       config.r2_buckets[0].bucket_name !== 'vynic-installers' ||

@@ -36,6 +36,8 @@ test('preview, missing gate, invalid SHA and wrong target fail before remote wor
   for (const override of [{ branch: 'feature' }, { branch: undefined }, { enabled: undefined },
     { enabled: 'false' }, { sha: 'latest' }, { config: { ...config, name: 'other' } },
     { config: { ...config, workers_dev: true } }, { config: { ...config, preview_urls: true } },
+    { config: { ...config, observability: undefined } },
+    { config: { ...config, observability: { enabled: false } } },
     { config: { ...config, r2_buckets: [{ binding: 'INSTALLERS', bucket_name: 'other' }] } }]) {
     const f = fixture(override); assert.throws(f.run); assert.equal(f.calls.length, 0);
   }

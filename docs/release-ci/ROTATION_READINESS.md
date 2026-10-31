@@ -144,6 +144,15 @@ Both inputs true is rejected before credentials are available. This is the
 diagnostic path after an uncertain failure; inspect remote state before retrying
 any upload. `--strict` remains enabled and token scope is never widened by CI.
 
+The checked-in config preserves the existing dashboard's enabled observability.
+Pinned Wrangler treats an omitted local observability setting as disabled; after
+a dashboard deployment that difference makes `versions upload --strict` abort
+before upload. `strict-config.test.mjs` reproduces the failure using the actual
+installed CLI against a dummy localhost API, then checks that the matching
+configuration passes the strict comparison and inherits the existing R2 binding
+without an R2 management request. The fixture refuses the version POST. This is
+a regression proof, not proof that a production run deployed successfully.
+
 Build/install scripts run before token injection. The token is available only
 to the explicit read-only inspector or version upload/deploy step, never to PRs or fork builds. CI deployment access
 can replace code that has the R2 binding and runtime secret; protect the source

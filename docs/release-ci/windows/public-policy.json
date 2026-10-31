@@ -1,0 +1,22 @@
+{
+  "schema": 1,
+  "channel": "beta",
+  "apiOrigin": "https://api.vynic.ge",
+  "licensePublicKey": "BJ43z43oVc3uxsehovFkIIO+3/t6D2P8iARcOv60CSk=",
+  "distribution": {
+    "bootstrapURL": "https://releases.vynic.ge/windows/beta/bootstrap.json",
+    "channel": "beta",
+    "keys": {
+      "vynic-beta-20261024": {
+        "public": "aG4K+/S07LkwVAVrE3D5YNTRnbQr/rqaMIQUHjUxnng=",
+        "expires": "2027-10-24T00:00:00Z"
+      }
+    }
+  },
+  "minimumPreviousVersion": "1.1.0",
+  "minimumPreviousBuild": 19,
+  "flutterVersion": "3.44.1",
+  "flutterRevision": "924134a44c189315be2148659913dda1671cbe99",
+  "goVersion": "1.26.10",
+  "pythonVersion": "3.12.10"
+}

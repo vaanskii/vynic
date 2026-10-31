@@ -1,0 +1,110 @@
+# INACTIVE until candidate source review, required runner capacity and release
+# credential/acceptance handoffs are resolved. Does not publish any installer.
+name: Windows beta candidate qualification
+on:
+  workflow_dispatch:
+    inputs:
+      approved_sha:
+        description: Exact reviewed main commit
+        type: string
+        required: true
+      version:
+        description: Strictly newer POS version (e.g. 1.1.1, not another 1.1.0)
+        type: string
+        required: true
+      build:
+        description: Strictly increasing build counter
+        type: string
+        required: true
+permissions:
+  contents: read
+concurrency:
+  group: windows-beta-release
+  cancel-in-progress: false
+jobs:
+  portable-core:
+    if: github.repository == 'vaanskii/vynic' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # v6
+        with:
+          go-version: '1.26.10'
+          cache: false
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: '3.12.10'
+      - name: Check source and release policy
+        env:
+          APPROVED_SHA: ${{ inputs.approved_sha }}
+          RELEASE_VERSION: ${{ inputs.version }}
+          RELEASE_BUILD: ${{ inputs.build }}
+        run: |
+          test "$APPROVED_SHA" = "$GITHUB_SHA"
+          python apps/edge/tool/windows_release_candidate.py --validate-only --approved-sha "$APPROVED_SHA" --version "$RELEASE_VERSION" --build "$RELEASE_BUILD" --output "$RUNNER_TEMP/candidate"
+          cd apps/edge/tool
+          python -m unittest windows_release_candidate_test -v
+      - name: Test portable installation and update engine
+        working-directory: apps/edge
+        env:
+          GOTOOLCHAIN: local
+        run: go test -count=1 ./internal/setup ./internal/updater ./cmd/setup
+  candidate:
+    needs: portable-core
+    if: github.repository == 'vaanskii/vynic' && github.ref == 'refs/heads/main'
+    runs-on: windows-2022
+    timeout-minutes: 90
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: '3.12.10'
+      - uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # v6
+        with:
+          go-version: '1.26.10'
+          cache: false
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          repository: flutter/flutter
+          ref: 924134a44c189315be2148659913dda1671cbe99 # Flutter 3.44.1
+          path: .release-sdk/flutter
+          persist-credentials: false
+      - name: Validate request before build
+        env:
+          APPROVED_SHA: ${{ inputs.approved_sha }}
+          RELEASE_VERSION: ${{ inputs.version }}
+          RELEASE_BUILD: ${{ inputs.build }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          if ($env:APPROVED_SHA -cne $env:GITHUB_SHA) { throw 'Reviewed SHA differs from run SHA' }
+          python apps/edge/tool/windows_release_candidate.py --validate-only --approved-sha $env:APPROVED_SHA --version $env:RELEASE_VERSION --build $env:RELEASE_BUILD --output "$env:RUNNER_TEMP/candidate"
+          if ($LASTEXITCODE -ne 0) { throw 'Release request rejected' }
+      - name: Compile and test without any release credentials
+        env:
+          APPROVED_SHA: ${{ inputs.approved_sha }}
+          RELEASE_VERSION: ${{ inputs.version }}
+          RELEASE_BUILD: ${{ inputs.build }}
+          CI: 'true'
+          FLUTTER_SUPPRESS_ANALYTICS: 'true'
+          GOTOOLCHAIN: local
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $flutter = Join-Path $env:GITHUB_WORKSPACE '.release-sdk/flutter/bin/flutter.bat'
+          python apps/edge/tool/windows_release_candidate.py --approved-sha $env:APPROVED_SHA --version $env:RELEASE_VERSION --build $env:RELEASE_BUILD --flutter $flutter --go (Get-Command go).Source --output "$env:RUNNER_TEMP/candidate"
+          if ($LASTEXITCODE -ne 0) { throw 'Candidate failed; no signing or publication' }
+      # Intentionally no upload-artifact of binaries. A public source repository's
+      # Actions artifacts are not an entitlement-protected distribution store.
+      # Protected signing/private-R2 staging must consume these exact bytes on
+      # this runner after their separate credentials and access are approved.
+      # Hosted Windows is admin/UAC-disabled: compiled asInvoker tests still need
+      # normal-user QA, and the actual final signed package needs lifecycle QA.

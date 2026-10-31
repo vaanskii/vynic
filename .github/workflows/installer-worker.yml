@@ -1,5 +1,5 @@
 name: Qualified installer Worker deployment
-run-name: Worker ${{ inputs.approved_sha }} (deploy=${{ inputs.deploy }})
+run-name: Worker ${{ inputs.approved_sha }} (deploy=${{ inputs.deploy }}, inspect=${{ inputs.inspect_only }})
 on:
   workflow_dispatch:
     inputs:
@@ -9,6 +9,11 @@ on:
         type: string
       deploy:
         description: Deploy after checks and protected-environment approval
+        required: true
+        default: false
+        type: boolean
+      inspect_only:
+        description: Read-only scoped API diagnostics; never upload or activate
         required: true
         default: false
         type: boolean
@@ -38,17 +43,20 @@ jobs:
       - name: Require the exact approved source
         env:
           APPROVED_SHA: ${{ inputs.approved_sha }}
+          DEPLOY: ${{ inputs.deploy }}
+          INSPECT_ONLY: ${{ inputs.inspect_only }}
         run: |
           set -euo pipefail
           [[ "$APPROVED_SHA" =~ ^[0-9a-f]{40}$ ]]
           [[ "$APPROVED_SHA" == "$GITHUB_SHA" ]]
           [[ "$(git rev-parse HEAD)" == "$APPROVED_SHA" ]]
+          [[ "$DEPLOY" != true || "$INSPECT_ONLY" != true ]]
       - run: npm ci
       - run: npm run check
       - run: npm run deploy:dry-run
   deploy:
     needs: check
-    if: inputs.deploy && github.repository == 'vaanskii/vynic' && github.ref == 'refs/heads/main'
+    if: (inputs.deploy || inputs.inspect_only) && github.repository == 'vaanskii/vynic' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     environment: installer-worker-production
@@ -77,7 +85,13 @@ jobs:
           [[ "$DEPLOY_ENABLED" == true ]]
       - run: npm ci
       - run: npm run check
+      - name: Read only current Worker state and scoped API permissions
+        if: inputs.inspect_only && !inputs.deploy
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_INSTALLER_WORKER_DEPLOY_TOKEN }}
+        run: node tool/inspect-deployment.mjs
       - name: Upload and activate only the returned version; verify 100 percent traffic
+        if: inputs.deploy && !inputs.inspect_only
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_INSTALLER_WORKER_DEPLOY_TOKEN }}
           WORKERS_CI_BRANCH: ${{ github.ref_name }}

@@ -134,8 +134,18 @@ activation; dry-run compilation does not prove remote permissions.
 If the provider requires additional privileges, report the exact failed scope;
 do not silently substitute account-wide Scripts/KV/R2 or all-zone access.
 
+An optional `inspect_only=true, deploy=false` dispatch performs only the fixed
+Worker API GET requests used by pinned Wrangler's dashboard-config preflight,
+plus version/deployment readback. It still uses the protected environment and
+requires its reviewer. Output is restricted to HTTP status, numeric error codes,
+known boolean configuration checks and validated version IDs. No provider body,
+binding value, error message or credential is logged or saved as an artifact.
+Both inputs true is rejected before credentials are available. This is the
+diagnostic path after an uncertain failure; inspect remote state before retrying
+any upload. `--strict` remains enabled and token scope is never widened by CI.
+
 Build/install scripts run before token injection. The token is available only
-to version upload/deploy steps, never to PRs or fork builds. CI deployment access
+to the explicit read-only inspector or version upload/deploy step, never to PRs or fork builds. CI deployment access
 can replace code that has the R2 binding and runtime secret; protect the source
 branch/workflow and reviewers accordingly. Runtime secret and publisher object
 credentials are never copied into CI. Windows artifact CI remains separate.

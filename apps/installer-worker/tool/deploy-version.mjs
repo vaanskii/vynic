@@ -9,6 +9,20 @@ const worker = 'vynic-installer-downloads';
 const account = '4347dd6103310d9273ecca7f207a0f4b';
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 
+export function failureDiagnostic(stage, result) {
+  const text = String(result.stdout ?? '') + '\n' + String(result.stderr ?? '');
+  const codes = [...text.matchAll(/\[code: ([0-9]{4,6})\]/g)].map(m => Number(m[1]));
+  return {
+    stage: ['preflight', 'upload', 'compare', 'activate', 'verify', 'dry-run'].includes(stage) ? stage : 'unknown',
+    exit: Number.isInteger(result.status) ? result.status : null,
+    diagnostic: text.includes('Aborting the upload operation because of conflicts') ? 'strict-config-conflict' :
+      text.includes('Unable to fetch bindings, routes, or services metadata') ? 'dashboard-config-read-failed' :
+      text.includes('required secrets have not been set') ? 'required-secret-unavailable' :
+      codes.length ? 'provider-api-error' : 'provider-command-failed',
+    codes: [...new Set(codes)].slice(0, 8),
+  };
+}
+
 export function validateTarget(config) {
   if (config.name !== worker || config.account_id !== account ||
       config.workers_dev !== false || config.preview_urls !== false ||
@@ -106,7 +120,10 @@ function main() {
         env: { ...env, WRANGLER_OUTPUT_FILE_PATH: join(directory, `${stage}.jsonl`),
           WRANGLER_LOG_PATH: join(directory, 'wrangler.log') } });
     // Provider output can contain configuration. Never echo raw stdout/stderr.
-    if (result.status !== 0) throw new Error(`${stage} did not confirm completion; inspect the Worker dashboard before retrying`);
+    if (result.status !== 0) {
+      console.error(JSON.stringify(failureDiagnostic(stage, result)));
+      throw new Error(`${stage} did not confirm completion; inspect the Worker dashboard before retrying`);
+    }
     return result.stdout;
   };
   try {

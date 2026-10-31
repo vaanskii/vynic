@@ -112,7 +112,7 @@ license key or code change was made here.
 ## Least-privilege CI reconciliation
 
 The selected Worker deployment service is GitHub Actions with a narrowly scoped
-account-owned token. Cloudflare Builds remains unconnected/off. The executable
+account-owned token. Cloudflare Builds remains disabled. The executable
 workflow is `.github/workflows/installer-worker.yml`; its default dispatch mode
 runs checks only and has no secrets. Deployment additionally requires main, an
 exact approved SHA, passing checks, an explicit deploy input, and approval in

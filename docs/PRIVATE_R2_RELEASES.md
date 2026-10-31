@@ -267,7 +267,7 @@ Route bootstrap remains a separate operator action (`npm run deploy:bootstrap`),
 requiring its own zone permission; never run it before the DNS/parity gates pass.
 
 GitHub Actions is the selected Worker code deployment service. Cloudflare Builds
-remains unconnected/off: its user-token flow cannot provide the approved narrow
+is connected to the repository with Disable builds enabled; its user-token flow cannot provide the approved narrow
 account-owned grant. Do not activate a second Worker deployment pipeline.
 
 `.github/workflows/installer-worker.yml` runs only by explicit workflow_dispatch

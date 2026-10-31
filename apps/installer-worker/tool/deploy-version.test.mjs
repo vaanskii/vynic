@@ -26,8 +26,8 @@ function fixture(overrides = {}) {
 test('version publication activates only the returned ID and verifies latest traffic', () => {
   const f = fixture();
   assert.deepEqual(f.run(), { worker: config.name, source: 'a'.repeat(40), versionId, deploymentId, traffic: 100 });
-  assert.equal(f.calls.length, 3);
-  assert.deepEqual(f.calls[1].args.slice(0, 3), ['versions', 'deploy', `${versionId}@100%`]);
+  assert.equal(f.calls.length, 5);
+  assert.deepEqual(f.calls[3].args.slice(0, 3), ['versions', 'deploy', `${versionId}@100%`]);
   assert.ok(f.calls.every(c => !c.args.includes('triggers') && !c.args.includes('secret') && !c.args.includes('r2')));
   assert.notEqual(f.calls[0].args[0], 'deploy');
 });
@@ -44,10 +44,16 @@ test('preview, missing gate, invalid SHA and wrong target fail before remote wor
 test('upload errors, invalid receipts and changed source never activate', () => {
   for (const override of [{ receipt: () => '' }, { receipt: () => upload + '\n' + upload },
     { receipt: () => upload.replace(config.name, 'other') }, { unchanged: () => false }]) {
-    const f = fixture(override); assert.throws(f.run); assert.equal(f.calls.length, 1);
+    const f = fixture(override); assert.throws(f.run); assert.equal(f.calls.length, 2);
   }
-  const f = fixture({ run: () => { throw new Error('synthetic upload failure'); } });
+  const stages = [];
+  const f = fixture({ run: (_args, stage) => {
+    stages.push(stage);
+    if (stage === 'upload') throw new Error('synthetic upload failure');
+    return JSON.stringify([latest]);
+  } });
   assert.throws(f.run, /upload failure/);
+  assert.deepEqual(stages, ['preflight', 'upload']);
 });
 
 test('activation/verification failures never retry, roll back or claim success', () => {
@@ -56,7 +62,7 @@ test('activation/verification failures never retry, roll back or claim success',
     calls.push(stage); if (stage === 'activate') throw new Error('synthetic ambiguous timeout');
     return JSON.stringify([latest]);
   } });
-  assert.throws(f.run, /ambiguous/); assert.deepEqual(calls, ['upload', 'activate']);
+  assert.throws(f.run, /ambiguous/); assert.deepEqual(calls, ['preflight', 'upload', 'compare', 'activate']);
   const wrong = fixture({ run: () => JSON.stringify([{ ...latest, versions: [{ version_id: versionId, percentage: 50 }] }]) });
   assert.throws(wrong.run, /Latest deployment/);
 });
@@ -74,4 +80,18 @@ test('actual config retains the private target and rejects custom build/environm
   validateTarget(config);
   assert.throws(() => validateTarget({ ...config, build: { command: 'anything' } }));
   assert.throws(() => validateTarget({ ...config, env: { preview: {} } }));
+});
+
+test('missing deployment read scope stops before upload; concurrent deployment stops activation', () => {
+  for (const response of ['', '[]', '{}']) {
+    const f = fixture({ run: () => response });
+    assert.throws(f.run);
+  }
+  const stages = [];
+  const f = fixture({ run: (_args, stage) => {
+    stages.push(stage);
+    return JSON.stringify([{ ...latest, id: stage === 'compare' ? versionId : deploymentId }]);
+  } });
+  assert.throws(f.run, /changed during upload/);
+  assert.deepEqual(stages, ['preflight', 'upload', 'compare']);
 });

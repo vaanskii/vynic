@@ -257,7 +257,7 @@ artifact selection, atomic quota, HEAD, legacy provider and safe failures.
 compatibility date and intended path route. It deliberately disables workers.dev
 and preview URLs. The route is prepared configuration, not proof of live DNS.
 The local exact Wrangler dependency is installed from the lockfile. `npm run check`
-runs 22 tests (including local workerd/R2) and a deployment dry run without account
+runs 23 tests (including local workerd/R2) and a deployment dry run without account
 credentials. Runtime tests read the same compatibility date and binding names.
 `npm run deploy` uses only version upload and exact-version activation, with strict
 configuration and preserved remote variables. It verifies the returned deployment
@@ -266,54 +266,53 @@ mutation commands. `npm run deploy:dry-run` packages that exact version-only pat
 Route bootstrap remains a separate operator action (`npm run deploy:bootstrap`),
 requiring its own zone permission; never run it before the DNS/parity gates pass.
 
-GitHub is not required for the currently deployed Worker. For Workers Builds,
-propose only `vaanskii/vynic`, root `apps/installer-worker`, build `npm ci && npm run
-check`, deploy `npm run deploy`, and include watch path `apps/installer-worker/**`.
-Do not connect all repositories or enable automatic production deployment before
-qualification. Production should consume a reviewed protected branch with required
-checks; preview builds must not inherit the production bucket or secret.
+GitHub Actions is the selected Worker code deployment service. Cloudflare Builds
+remains unconnected/off: its user-token flow cannot provide the approved narrow
+account-owned grant. Do not activate a second Worker deployment pipeline.
 
-Cloudflare Builds is the selected Worker automation. The dashboard draft selects
-`vaanskii/vynic` on `main` with the commands above, preview builds off and builds
-disabled pending qualification. Connect has not been submitted. The proposed
-default Builds token is a separate access grant: official docs list script, KV
-and R2 edit and Workers Routes edit for all zones. Inspect and approve the actual
-minimum token scope before connection; repository selection alone does not
-authorize that broader Cloudflare access. Do not activate a second Worker
-deployment workflow in GitHub Actions.
+`.github/workflows/installer-worker.yml` runs only by explicit workflow_dispatch
+on main with an approved full SHA equal to the run/checkout SHA. Its default
+check-only mode has no environment secrets. A deployment needs passing checks,
+`deploy=true`, and approval in `installer-worker-production`. That environment
+allows only main, requires the owner reviewer and disables administrator bypass.
+The owner may approve their own explicitly initiated release; this is not a
+two-person approval policy. Official actions are commit-pinned and Node is pinned
+to 22.23.4. Dependency installation and checks finish before credential injection.
 
 The version-only command requires `WORKERS_CI_BRANCH=main`, a clean committed
-checkout and the explicit nonsecret build variable `VYNIC_WORKER_DEPLOY_ENABLED=true`.
-Leave that gate unset until the existing route, runtime configuration and protected
-download checks pass. Missing/expired credentials or an ambiguous provider result
-stop the run; inspect the dashboard before retrying. An uploaded version is not
-reported active until its deployment ID and latest traffic are read back. Safe
-source/version/deployment IDs appear in build logs; raw provider output and token
-values are not echoed. Source branch protections remain necessary because Worker
-Editor can replace code running with the production binding and runtime secret.
+checkout and the environment variable `VYNIC_WORKER_DEPLOY_ENABLED=true`.
+It first checks deployment-read permission, uploads a version, rejects a changed
+remote deployment before activation, deploys the exact returned UUID and verifies
+that deployment at 100% traffic. Test/preflight/upload failures do not activate.
+An ambiguous activation/readback failure requires dashboard inspection, not an
+automatic retry or rollback. No distributed compare-and-swap is supplied by the
+provider: avoid manual concurrent changes during a run; Actions serializes its
+own runs without cancelling an in-flight deployment.
 
-Minimum deployment grant is Editor only on the existing
-`vynic-installer-downloads` Worker. No zone/routes or direct R2 permissions are
-used by this path. The Builds connection currently accepts user tokens only;
-the account's custom user-token form must actually offer this per-Worker scope
-before proceeding. Do not substitute account-wide Workers Admin/Scripts Edit or
-the default broad Builds token if it does not.
+Credential `CLOUDFLARE_INSTALLER_WORKER_DEPLOY_TOKEN` belongs only in the protected
+GitHub environment. The actual account-token review form supports exactly
+Specified Workers -> vynic-installer-downloads -> Individual Workers Editor.
+No other Worker, DNS/routes, KV or R2 administrative permissions are selected.
+Editor can replace code/settings/secrets and operate through the existing private
+R2 binding; this is a significant production credential, not read-only access.
+A 90-day expiry is prepared; replacement requires deliberate secure handoff,
+never automatic renewal. Token creation/storage and a successful live CI run
+must be verified separately. Never print or capture the token in a tool record.
 
-Worker CI and Windows artifact publication are separate. Windows release CI is
-not configured. A release must preserve exact source/build provenance, native
-install/enrollment/update qualification, package signatures, explicit Authenticode
-status, immutable upload plan approval, full readback and a separately reviewed
-activation. Test harnesses are explicitly asInvoker and verify unelevated execution;
-they do not substitute for real installer UI acceptance or hardware printer tests.
+The route is a separate approved bootstrap operation. Ordinary CI cannot change
+DNS/routes and may qualify/deploy the existing unrouted Worker before DNS cutover.
+This does not make company download or Windows updates live. Full authoritative
+DNS inventory, protected download GET/HEAD/Range/revocation proof, coordinated
+Render configuration and installer acceptance remain their own activation gates.
 
-References: [Build configuration](https://developers.cloudflare.com/workers/ci-cd/builds/configuration/),
-[GitHub integration](https://developers.cloudflare.com/workers/ci-cd/builds/git-integration/github-integration/).
+Windows installer build/test/sign/upload is still separate and not implemented
+by this Worker workflow. Artifact publication must preserve exact source/build
+provenance, native install/enrollment/update qualification, package signatures,
+explicit Authenticode status, immutable upload, full readback, and manifest-last
+activation. Tests or Worker CI success alone do not qualify a Windows installer.
 
-
-`docs/release-ci/installer-worker.yml.example` is a deferred alternative, not the
-selected integration. Do not move it into `.github/workflows`. Windows installer
-build/test/sign/upload automation remains separate from Worker Builds. Neither
-the Builds connection nor a new CI credential has been activated by this work.
+References: [Account-owned tokens](https://developers.cloudflare.com/fundamentals/api/get-started/account-owned-tokens/),
+[Worker permissions](https://developers.cloudflare.com/workers/authorization/workers/).
 
 ### Retiring the legacy GitHub download credential
 
@@ -331,4 +330,4 @@ Range, full checksum, expiry, revocation and unauthorized denial. Check bootstra
 POS feed, referenced archives and repair availability independently. Existing
 GitHub grants are tied to their old artifact identity and require new links.
 Only after that cutover is verified can the legacy token be retired; it has not
-been revoked and no replacement is required merely to configure Builds.
+been revoked and no replacement is required merely to configure Worker CI.

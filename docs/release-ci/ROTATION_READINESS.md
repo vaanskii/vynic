@@ -2,8 +2,9 @@
 
 No production credential, database row, DNS record or deployment was changed by
 this preparation. Only synthetic keys, in-memory rows and loopback HTTP are used
-by the new tests. The inactive workflow has no credential and does not run from
-this directory. It is not an installer qualification receipt.
+by the rotation tests. The protected Worker workflow lives in `.github/workflows`;
+its credential and actual deployment are separately verified. This document is
+not an installer qualification receipt.
 
 ## Confirmed metadata and unresolved identity checks
 
@@ -110,19 +111,13 @@ license key or code change was made here.
 
 ## Least-privilege CI reconciliation
 
-The selected deployment service is Cloudflare Builds for Worker code and a
-separate future Windows artifact pipeline. The Actions template below is a
-deferred alternative only; do not activate it alongside Builds. Its narrower
-version-only deployment design is not proof of the permissions accepted by the
-current Builds connection form. That form's default token grant still needs
-scope review and approval before Connect.
-
-`installer-worker.yml.example` is deliberately outside `.github/workflows`, with
-unresolved action commit placeholders and an explicit enable variable. It uses
-only workflow_dispatch on main, exact approved commit equality, contents:read,
-non-persisted checkout credentials and a protected production environment. Pin
-reviewed official action commits and configure required reviewers before moving
-it into the active directory. Do not activate it as part of incident response.
+The selected Worker deployment service is GitHub Actions with a narrowly scoped
+account-owned token. Cloudflare Builds remains unconnected/off. The executable
+workflow is `.github/workflows/installer-worker.yml`; its default dispatch mode
+runs checks only and has no secrets. Deployment additionally requires main, an
+exact approved SHA, passing checks, an explicit deploy input, and approval in
+`installer-worker-production`. Actions and Node are pinned. See
+`docs/PRIVATE_R2_RELEASES.md` for verified environment protections and handoff.
 
 The deploy stages use `wrangler versions upload` followed by deployment of the
 exact validated upload receipt UUID. Unlike `wrangler deploy`, these commands do
@@ -135,7 +130,7 @@ Proposed credential is the dashboard's account token limited to the existing
 `vynic-installer-downloads` Worker, stored only as the protected environment secret
 `CLOUDFLARE_INSTALLER_WORKER_DEPLOY_TOKEN`. No GitHub App is required. Verify the
 actual token permissions and whether existing R2 binding reuse works before
-approval/activation; dry-run compilation does not prove remote permissions.
+activation; dry-run compilation does not prove remote permissions.
 If the provider requires additional privileges, report the exact failed scope;
 do not silently substitute account-wide Scripts/KV/R2 or all-zone access.
 

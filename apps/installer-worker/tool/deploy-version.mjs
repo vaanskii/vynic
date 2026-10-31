@@ -51,11 +51,20 @@ export function deployVersion({ sha, branch, enabled, config, run, receipt, unch
   if (!/^[a-f0-9]{40}$/.test(sha) || branch !== 'main' || enabled !== 'true') {
     throw new Error('Deployment requires main, an exact source commit and the activation gate');
   }
+  const before = run(['deployments', 'list', '--json'], 'preflight');
+  const rows = JSON.parse(before);
+  if (!Array.isArray(rows) || !rows.length || rows.some(row =>
+      !uuid.test(row.id ?? '') || !Number.isFinite(Date.parse(row.created_on)))) {
+    throw new Error('Cannot verify existing Worker deployment before upload');
+  }
   const message = `Reviewed source ${sha}`;
   run(['versions', 'upload', '--strict', '--keep-vars', '--tag', sha, '--message', message], 'upload');
   const versionId = uploadedVersion(receipt('upload'));
   progress({ stage: 'uploaded-not-active', source: sha, versionId });
   if (!unchanged()) throw new Error('Source changed after upload; activation stopped');
+  if (run(['deployments', 'list', '--json'], 'compare') !== before) {
+    throw new Error('Worker deployment changed during upload; activation stopped');
+  }
   run(['versions', 'deploy', `${versionId}@100%`, '--yes', '--message', message], 'activate');
   const deploymentId = deploymentReceipt(receipt('activate'));
   progress({ stage: 'activation-received-verification-pending', source: sha, versionId, deploymentId });
@@ -80,7 +89,7 @@ function main() {
   const unchanged = () => git(['rev-parse', 'HEAD']) === sha &&
     git(['status', '--porcelain', '--untracked-files=no']) === '';
   if (!dry && !unchanged()) throw new Error('Commit reviewed source before deployment');
-  if (!dry && !process.env.CLOUDFLARE_API_TOKEN) throw new Error('Builds deployment token is unavailable');
+  if (!dry && !process.env.CLOUDFLARE_API_TOKEN) throw new Error('Worker deployment token is unavailable');
   const env = { ...process.env, WRANGLER_SEND_METRICS: 'false' };
   // Strip ambient API credentials for the offline packaging check.
   if (dry) for (const key of Object.keys(env)) {

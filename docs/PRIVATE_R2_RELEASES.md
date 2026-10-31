@@ -257,10 +257,14 @@ artifact selection, atomic quota, HEAD, legacy provider and safe failures.
 compatibility date and intended path route. It deliberately disables workers.dev
 and preview URLs. The route is prepared configuration, not proof of live DNS.
 The local exact Wrangler dependency is installed from the lockfile. `npm run check`
-runs 16 tests (including local workerd/R2) and a deployment dry run without account
+runs 22 tests (including local workerd/R2) and a deployment dry run without account
 credentials. Runtime tests read the same compatibility date and binding names.
-`npm run deploy` repeats those checks and uses strict configuration with preserved
-remote variables. Never deploy this route before the DNS/activation gates pass.
+`npm run deploy` uses only version upload and exact-version activation, with strict
+configuration and preserved remote variables. It verifies the returned deployment
+and its latest 100% traffic assignment. It never runs route, DNS, R2 object or secret
+mutation commands. `npm run deploy:dry-run` packages that exact version-only path.
+Route bootstrap remains a separate operator action (`npm run deploy:bootstrap`),
+requiring its own zone permission; never run it before the DNS/parity gates pass.
 
 GitHub is not required for the currently deployed Worker. For Workers Builds,
 propose only `vaanskii/vynic`, root `apps/installer-worker`, build `npm ci && npm run
@@ -277,6 +281,23 @@ and R2 edit and Workers Routes edit for all zones. Inspect and approve the actua
 minimum token scope before connection; repository selection alone does not
 authorize that broader Cloudflare access. Do not activate a second Worker
 deployment workflow in GitHub Actions.
+
+The version-only command requires `WORKERS_CI_BRANCH=main`, a clean committed
+checkout and the explicit nonsecret build variable `VYNIC_WORKER_DEPLOY_ENABLED=true`.
+Leave that gate unset until the existing route, runtime configuration and protected
+download checks pass. Missing/expired credentials or an ambiguous provider result
+stop the run; inspect the dashboard before retrying. An uploaded version is not
+reported active until its deployment ID and latest traffic are read back. Safe
+source/version/deployment IDs appear in build logs; raw provider output and token
+values are not echoed. Source branch protections remain necessary because Worker
+Editor can replace code running with the production binding and runtime secret.
+
+Minimum deployment grant is Editor only on the existing
+`vynic-installer-downloads` Worker. No zone/routes or direct R2 permissions are
+used by this path. The Builds connection currently accepts user tokens only;
+the account's custom user-token form must actually offer this per-Worker scope
+before proceeding. Do not substitute account-wide Workers Admin/Scripts Edit or
+the default broad Builds token if it does not.
 
 Worker CI and Windows artifact publication are separate. Windows release CI is
 not configured. A release must preserve exact source/build provenance, native

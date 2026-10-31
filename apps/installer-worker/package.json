@@ -5,7 +5,9 @@
   "scripts": {
     "test": "node --test",
     "check": "npm test && wrangler deploy --dry-run --outdir dist",
-    "deploy": "npm run check && wrangler deploy --strict --keep-vars"
+    "deploy": "node tool/deploy-version.mjs",
+    "deploy:dry-run": "node tool/deploy-version.mjs --dry-run",
+    "deploy:bootstrap": "npm run check && wrangler deploy --strict --keep-vars"
   },
   "devDependencies": {
     "miniflare": "4.20260730.0",

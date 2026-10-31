@@ -179,7 +179,9 @@ current transport status.
 
 - Private R2 release preparation verifies qualified beta ZIPs, signed metadata
   and complete conditional-upload readback. The private `vynic-installers`
-  bucket exists; no live upload/credentials/deployment are configured. Opt-in
+  bucket contains beta19; the reviewed Worker and private binding are deployed,
+  with runtime secret encrypted. Render has the matching secret saved but its
+  deployment/R2 selection and DNS route activation remain pending. Opt-in
   backend authority + Worker direct R2 streaming retain per-request revocation,
   HEAD/Range and quotas. Manual release approval remains required; no automatic
   Windows release CI exists. See `docs/PRIVATE_R2_RELEASES.md`.
@@ -1686,7 +1688,8 @@ current transport status.
 - `scripts/docker.sh studio` exposes Prisma Studio only on `127.0.0.1:5555`
   through the local `tools` profile. Production Compose has no Studio service.
 - `reset-customer-data --dry-run|--confirm-local` uses an audited deletion matrix
-  and preserves Platform users, catalogs, onboarding/release settings and migrations.
+  and preserves Platform users, catalogs, onboarding/release settings, security
+  admission/capability history and migrations.
   Local-only Platform Venue/Organization deletion requires typed confirmation;
   shared accounts and other Venues survive. Scoped deletes retain WebsiteUser
   identities; full customer reset removes them. Media cleanup uses retryable

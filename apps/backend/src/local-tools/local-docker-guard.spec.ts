@@ -52,6 +52,9 @@ describe('local maintenance guard', () => {
       'Feature',
       'PlanFeature',
       'OnboardingPolicy',
+      'SecurityAdmission',
+      'InstallerDownloadGrant',
+      'InvitationResumeSession',
     ]);
     for (const name of preservedModels)
       expect([...venueModels, ...specialModels]).not.toContain(name);

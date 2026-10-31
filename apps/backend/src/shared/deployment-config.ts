@@ -1,5 +1,9 @@
 import { isIP } from 'node:net';
 import { normalizeHostname } from '../website/tenancy/website-host';
+import {
+  proxyRotationFromEnv,
+  validateProxyRotation,
+} from './web-proxy-rotation';
 
 /** Explicit, isolated Compose HTTP mode. Never inferred from NODE_ENV or input. */
 export function localDockerHost(host: string | undefined): boolean {
@@ -19,6 +23,7 @@ export function websiteCookieSecure(host: string | undefined): boolean {
 export function validateDeploymentEnvironment(
   env: NodeJS.ProcessEnv = process.env,
 ): void {
+  validateProxyRotation(env.VYNIC_WEB_PROXY_SECRET, proxyRotationFromEnv(env));
   if (env.NODE_ENV !== 'production') return;
   for (const key of [
     'DATABASE_URL',
@@ -60,7 +65,9 @@ export function validateDeploymentEnvironment(
     env.VYNIC_WEB_PROXY_SECRET &&
     ['1', 'true'].includes((env.TRUST_PROXY_HOST ?? '').trim().toLowerCase())
   )
-    throw new Error('VYNIC_WEB_PROXY_SECRET requires TRUST_PROXY_HOST to remain disabled');
+    throw new Error(
+      'VYNIC_WEB_PROXY_SECRET requires TRUST_PROXY_HOST to remain disabled',
+    );
   if (env.VYNIC_LOCAL_DOCKER === 'true') {
     const db = new URL(env.DATABASE_URL!);
     if (

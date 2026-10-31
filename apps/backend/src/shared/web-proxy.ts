@@ -1,7 +1,11 @@
-import { timingSafeEqual } from 'node:crypto';
 import { isIP } from 'node:net';
 import type { RequestHandler } from 'express';
 import { normalizeHostname } from '../website/tenancy/website-host';
+import {
+  proxyCredentialVerifier,
+  validateProxyRotation,
+  type ProxyRotation,
+} from './web-proxy-rotation';
 
 export const WEB_PROXY_SECRET_HEADER = 'x-vynic-web-proxy-secret';
 
@@ -19,15 +23,6 @@ function one(value: string | string[] | undefined): string | undefined {
     : undefined;
 }
 
-function matchesSecret(
-  value: string | string[] | undefined,
-  expected: Buffer,
-): boolean {
-  if (typeof value !== 'string') return false;
-  const actual = Buffer.from(value);
-  return actual.length === expected.length && timingSafeEqual(actual, expected);
-}
-
 /**
  * Convert authenticated gateway metadata into the normal request authority.
  *
@@ -41,11 +36,15 @@ function matchesSecret(
  * malformed authenticated metadata fails explicitly. Native transports and
  * direct health/payment callbacks keep their existing authorization boundary.
  */
-export function webProxyIngress(secret: string | undefined): RequestHandler {
+export function webProxyIngress(
+  secret: string | undefined,
+  rotation: ProxyRotation = {},
+): RequestHandler {
+  validateProxyRotation(secret, rotation);
   if (!secret) return (_request, _response, next) => next();
   if (secret.length < 32)
     throw new Error('VYNIC_WEB_PROXY_SECRET is too short');
-  const expected = Buffer.from(secret);
+  const acceptsCredential = proxyCredentialVerifier(secret, rotation);
 
   return (request, response, next) => {
     const credential = request.headers[WEB_PROXY_SECRET_HEADER];
@@ -62,7 +61,7 @@ export function webProxyIngress(secret: string | undefined): RequestHandler {
       next();
       return;
     }
-    if (!matchesSecret(credential, expected)) {
+    if (!acceptsCredential(credential)) {
       response
         .status(403)
         .json({ statusCode: 403, message: 'Invalid web proxy credentials' });

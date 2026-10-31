@@ -59,8 +59,10 @@ Cookies stay host-only, Secure and SameSite=Strict; CORS uses no wildcard.
 Existing authentication/database keys, DNS/domain bindings, CORS origins and
 Render automatic deployment settings are not changed by this integration.
 Manage keys in Render's service Environment page and each Vercel project's
-Settings -> Environment Variables. A future rotation must update all four
-server environments and deploy the matching backend/frontends together.
+Settings -> Environment Variables. A rotation must update all four server environments. Source now supports a
+fixed, at-most-30-minute previous-key overlap for staged consumer deployment;
+this is not active production configuration. Exact settings, risks, verification
+and removal gates are in `docs/release-ci/ROTATION_READINESS.md`.
 
 ## Verification and rollout
 

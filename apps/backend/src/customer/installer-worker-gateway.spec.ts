@@ -91,6 +91,41 @@ test('r2 configuration requires exact protected origin, secret and immutable art
   process.env.VYNIC_INSTALLER_STORAGE = 'typo';
   expect(s.configuration().ready).toBe(false);
 });
+test('R2 remains ready without the legacy GitHub token and never performs its startup fetch', async () => {
+  const { s } = fixture();
+  process.env.NODE_ENV = 'production';
+  delete process.env.VYNIC_RELEASE_GITHUB_TOKEN;
+  delete process.env.VYNIC_INSTALLER_ASSET_ID;
+  const fetch = jest
+    .spyOn(globalThis, 'fetch')
+    .mockRejectedValue(new Error('Unexpected external request'));
+  s.onApplicationBootstrap();
+  expect(s.configuration()).toMatchObject({
+    ready: true,
+    provider: 'r2-worker',
+    assetId: 'r2:' + key,
+  });
+  expect(
+    await s.workerDecision({
+      operation: 'file',
+      id,
+      token,
+      clientIp: '192.0.2.1',
+      method: 'HEAD',
+    }),
+  ).toMatchObject({ key, bytes: 5 });
+  expect(fetch).not.toHaveBeenCalled();
+});
+test('incomplete R2 configuration never falls back to the exposed legacy credential', () => {
+  const { s } = fixture();
+  process.env.VYNIC_RELEASE_GITHUB_TOKEN = 'synthetic-legacy-token-not-for-use';
+  process.env.VYNIC_INSTALLER_ASSET_ID = '123';
+  delete process.env.VYNIC_DOWNLOAD_GATEWAY_SECRET;
+  expect(s.configuration()).toMatchObject({
+    ready: false,
+    provider: 'r2-worker',
+  });
+});
 test('HEAD and GET call live resolution; only GET consumes grant and audits', async () => {
   const { s, db } = fixture();
   const resolve = jest.spyOn(s, 'resolve');

@@ -8,6 +8,7 @@ import { websiteAuthBodyParsers } from './website/auth/auth-body-parsers';
 
 import { validateDeploymentEnvironment } from './shared/deployment-config';
 import { webProxyIngress } from './shared/web-proxy';
+import { proxyRotationFromEnv } from './shared/web-proxy-rotation';
 
 import { isDevLanOrigin } from './dev-origins';
 import { isSameOriginRequest } from './website/tenancy/same-origin';
@@ -46,7 +47,12 @@ async function bootstrap() {
   const allowedOrigins = new Set(buildAllowedOrigins());
 
   // Normalize only authenticated Vercel metadata before CORS and tenant reads.
-  app.use(webProxyIngress(process.env.VYNIC_WEB_PROXY_SECRET));
+  app.use(
+    webProxyIngress(
+      process.env.VYNIC_WEB_PROXY_SECRET,
+      proxyRotationFromEnv(process.env),
+    ),
+  );
   app.use('/api/auth', ...websiteAuthBodyParsers());
   app.use(
     json({

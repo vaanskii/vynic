@@ -225,6 +225,9 @@ Venue IDs. Rows are deleted child-first; counts are measured before any cascades
 | `Feature` | Always preserved. |
 | `PlanFeature` | Always preserved. |
 | `OnboardingPolicy` | Always preserved, including release/distribution links. |
+| `SecurityAdmission` | Always preserved; customer cleanup must not reset shared admission counters. |
+| `InstallerDownloadGrant` | Always preserved as capability history; expiry/revocation and live issuer checks still apply. |
+| `InvitationResumeSession` | Always preserved until normal expiry cleanup; deleted/invalid invitations remain unusable. |
 
 Prisma migration history, database schema, Docker configuration and secrets are outside the deletion matrix and are never changed. Venue policy/profile fields embedded on Venue are removed with it; there is no separate global policy table to infer. Billing quotes/receipts are customer-owned despite denormalized Venue IDs without foreign keys.
 

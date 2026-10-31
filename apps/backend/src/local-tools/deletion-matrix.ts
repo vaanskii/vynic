@@ -89,6 +89,12 @@ export const preservedModels = [
   'Feature',
   'PlanFeature',
   'OnboardingPolicy',
+  // Shared admission and capability history must not be reset by customer
+  // cleanup. Grants/sessions have no relational ownership/FK and expire;
+  // their consumers recheck the retained issuer/invitation before admission.
+  'SecurityAdmission',
+  'InstallerDownloadGrant',
+  'InvitationResumeSession',
 ] as const;
 export const specialModels = [
   'Venue',

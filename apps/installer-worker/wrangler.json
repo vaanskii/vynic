@@ -1,0 +1,16 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "vynic-installer-downloads",
+  "account_id": "4347dd6103310d9273ecca7f207a0f4b",
+  "main": "src/index.mjs",
+  "compatibility_date": "2026-06-16",
+  "workers_dev": false,
+  "preview_urls": false,
+  "secrets": { "required": ["DOWNLOAD_GATEWAY_SECRET"] },
+  "r2_buckets": [
+    { "binding": "INSTALLERS", "bucket_name": "vynic-installers" }
+  ],
+  "routes": [
+    { "pattern": "releases.vynic.ge/windows/access/*", "zone_name": "vynic.ge" }
+  ]
+}

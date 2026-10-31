@@ -6,35 +6,35 @@ sign, install, deploy, publish a GitHub release, activate downloads or updates,
 modify bucket access, or delete files. The existing local LAN publisher remains
 development-only. There is no checked-in Windows release CI workflow at base
 `bf7bd647`; this adds a callable release stage without silently turning every
-build into a distribution event. No source or binary was pushed by this change.
+build into a distribution event. The integrated source was published separately; this upload command never pushes code.
 
 ## Current storage and delivery boundary
 
-On 2026-10-25 the user activated R2. The separately authorized bucket
-`vynic-installers` was created with Standard storage and Automatic location
-(Cloudflare chose Eastern Europe/EEUR). Dashboard verification showed 0 B,
-Public Access disabled, public development URL disabled and no custom domain.
-No object, publisher credential, Worker binding or billing add-on was created.
+The private Standard `vynic-installers` bucket contains the beta19 offline ZIP
+at `windows/beta/1.1.0/build19/Vynic-Windows-1.1.0-build19-beta-offline.zip`
+(46,835,519 bytes; SHA-256
+`f46c1075a0b9dd8f388938dfebd3a13ef512b5509ce22a1abba114b51e685b79`).
+Public bucket access, r2.dev and bucket custom domains remain disabled. Upload
+and historical full readback do not establish successful customer installation.
 
-The current backend still reads a protected GitHub draft asset. Its provider
-HEAD 403 remains a separate delivery blocker. A new bucket alone cannot repair
-that route. `releases.vynic.ge` currently uses Render as a technical origin:
-only `/windows/access/*` forwards the selector to the backend; the root/catalog
-and public artifacts remain closed. Do not delete this Render site or change
-the public `vynic-releases` repository visibility: the repository also supplies
-the site. No DNS migration is part of this publisher.
+The reviewed Worker source is deployed with `INSTALLERS` bound to that bucket,
+compatibility date `2026-06-16`, and an encrypted `DOWNLOAD_GATEWAY_SECRET`.
+Workers Paid is active. workers.dev and preview URLs remain disabled. The matching
+Render secret is saved, but that new environment has not been deployed and R2
+selection remains inactive. The DNS inventory/parity gate is still pending;
+there is no active Worker route or authenticated production R2 download proof.
 
-The proposed later route is authenticated download request -> live issuer,
-membership, expiry/revocation and POS entitlement check -> fixed private R2
-object stream. An authorization Worker may use a **Worker custom hostname**;
-that is distinct from a public R2 bucket custom domain, which stays disabled.
-Preserve the current capability/CSRF/cookie, HEAD/Range and no-store semantics,
-and recheck authority for every admitted transfer/range. Do not redirect users
-to a public object URL or long-lived presigned storage URL. Before replacing the
-Render origin, qualify anonymous denial, revocation, entitlement loss, complete
-and resumed download, safe errors and old-link behavior. Source wiring is now implemented in `apps/installer-worker` and the backend
-`installer-worker-gateway` controller. It is opt-in and has not been deployed.
-No additional subscription is assumed.
+The intended route is **only** `releases.vynic.ge/windows/access/*`. Preserve the
+existing Render origin for other bootstrap/repair paths and as a rollback target.
+Do not delete the Render site or privatize its `vynic-releases` source repository.
+The approved DNS migration still requires complete authoritative export, backup,
+mail/validation/DNSSEC review and parity before nameserver changes. A public DNS
+sample cannot establish completeness.
+
+Every admitted transfer/range must recheck issuer, membership, entitlement,
+expiry and revocation. Never redirect to a public object or durable presigned URL.
+Before activating the new selection, prove anonymous denial, expired/revoked
+requests, full and resumed downloads, safe errors and old-link behavior.
 
 ## Release integration
 
@@ -177,8 +177,7 @@ fresh-install-only restrictions from `WINDOWS_BETA_TEST_INSTALL.md` still apply.
 Build18 publication evidence records Setup and Edge 1.0.1.18, POS 1.0.1 build18,
 and exact packaged hashes. The exact local archive was inspected and verified offline in this task.
 Current production printing stays on Flutter TCP/Windows RAW; this storage task
-does not silently activate or install the held Go printer daemon. Licensing integration awaits its final reviewed handoff; its new behavior is
-not qualified by build18 evidence.
+does not silently activate or install the held Go printer daemon. Licensing integration is included in beta19; build18 evidence does not qualify it.
 Existing setup/updater regression sources cover interrupted swap, retained data,
 wrong signatures, pinned Edge repair, startup health and rollback. They were rerun using the existing isolated Go toolchain; new coordinated
 upgrade tests also passed. New publisher
@@ -197,7 +196,7 @@ Official references:
 [R2 S3 compatibility and atomic conditional writes](https://developers.cloudflare.com/r2/api/s3/api/),
 [R2 bucket-scoped permissions](https://developers.cloudflare.com/r2/api/tokens/).
 
-## Opt-in runtime wiring (source only)
+## Opt-in runtime wiring and activation gates
 
 The Worker accepts only `https://releases.vynic.ge/windows/access/<grant-id>`
 and its `/session` and `/file` children. Fragment capability exchange produces
@@ -214,16 +213,16 @@ A transfer admitted before revocation may finish; each subsequent range is
 re-authorized. The publisher cryptographically hashes complete object readback;
 runtime metadata checks do not claim to hash a whole ZIP on each range request.
 
-Reviewed deployment settings, still **unapplied**:
+Reviewed deployment settings (remote state verified separately from local configuration):
 
 - Dedicated Worker `vynic-installer-downloads`, main `src/index.mjs`, compatibility
-  date `2026-07-01`, no public workers.dev or preview URLs.
+  date `2026-06-16`, no public workers.dev or preview URLs.
 - `INSTALLERS` R2 binding to only `vynic-installers`. This standard binding can
   write at the platform level; reviewed source uses only `head`/`get`. Limit who
   can deploy code. No R2 publisher credential in this Worker.
 - Dedicated random 32-byte machine secret encoded as 43-character base64url,
   stored in **Worker secret `DOWNLOAD_GATEWAY_SECRET`** and **Render backend
-  secret `VYNIC_DOWNLOAD_GATEWAY_SECRET`**. Not yet generated or configured.
+  secret `VYNIC_DOWNLOAD_GATEWAY_SECRET`**. Configured in Worker; saved in Render with its process redeploy still pending.
   Possession permits calling the machine gateway, but does not remove the need
   for a live grant token and authority checks. Logging request bodies, cookies,
   Authorization headers, full invitation URLs or secrets is prohibited.
@@ -233,14 +232,14 @@ Reviewed deployment settings, still **unapplied**:
   `VYNIC_INSTALLER_WORKER_ORIGIN=https://releases.vynic.ge`.
   The default remains GitHub. Unknown modes fail closed. Existing GitHub grants
   do not match new `r2:` identities and require a fresh issued link.
-- Only after upload/readback, staging checks and approval: attach the Worker
-  custom hostname and update DNS/routing. Retain Render until rollback is
+- Only after upload/readback, staging checks and approval: activate only the approved Worker
+  path route after complete DNS parity and cutover. Retain Render until rollback is
   qualified. A bucket custom domain remains disabled.
 
 Publisher credentials belong in the approved release runner's protected secret
 store (or a temporary process environment for one supervised local upload).
 They do not belong in Codex MCP config, a checked-in `.env`, Windows installer,
-Flutter defines, browser, Render, or runtime Worker. No such secret was created.
+Flutter defines, browser, Render, or runtime Worker. The approved seven-day local publisher is held in macOS Keychain, separate from runtime access. It expires on 2026-11-01; renewal is not automatic.
 The local upload command is a manual release gate; automatic Windows CI and
 protected-environment wiring remain unconfigured. Client installers contain
 compiled Go binaries/public trust only, never Google SMTP or R2 secrets.
@@ -251,3 +250,64 @@ fixture GET/HEAD/Range/revocation. The isolated Miniflare test dependency has
 patched `undici`/`sharp` overrides; npm audit reports zero findings. Backend
 regressions cover machine-secret validation, retained live authority, pinned
 artifact selection, atomic quota, HEAD, legacy provider and safe failures.
+
+## Repeatable Worker deployment and CI access
+
+`apps/installer-worker/wrangler.json` pins the account, Worker, private bucket,
+compatibility date and intended path route. It deliberately disables workers.dev
+and preview URLs. The route is prepared configuration, not proof of live DNS.
+The local exact Wrangler dependency is installed from the lockfile. `npm run check`
+runs 16 tests (including local workerd/R2) and a deployment dry run without account
+credentials. Runtime tests read the same compatibility date and binding names.
+`npm run deploy` repeats those checks and uses strict configuration with preserved
+remote variables. Never deploy this route before the DNS/activation gates pass.
+
+GitHub is not required for the currently deployed Worker. For Workers Builds,
+propose only `vaanskii/vynic`, root `apps/installer-worker`, build `npm ci && npm run
+check`, deploy `npm run deploy`, and include watch path `apps/installer-worker/**`.
+Do not connect all repositories or enable automatic production deployment before
+qualification. Production should consume a reviewed protected branch with required
+checks; preview builds must not inherit the production bucket or secret.
+
+Cloudflare Builds is the selected Worker automation. The dashboard draft selects
+`vaanskii/vynic` on `main` with the commands above, preview builds off and builds
+disabled pending qualification. Connect has not been submitted. The proposed
+default Builds token is a separate access grant: official docs list script, KV
+and R2 edit and Workers Routes edit for all zones. Inspect and approve the actual
+minimum token scope before connection; repository selection alone does not
+authorize that broader Cloudflare access. Do not activate a second Worker
+deployment workflow in GitHub Actions.
+
+Worker CI and Windows artifact publication are separate. Windows release CI is
+not configured. A release must preserve exact source/build provenance, native
+install/enrollment/update qualification, package signatures, explicit Authenticode
+status, immutable upload plan approval, full readback and a separately reviewed
+activation. Test harnesses are explicitly asInvoker and verify unelevated execution;
+they do not substitute for real installer UI acceptance or hardware printer tests.
+
+References: [Build configuration](https://developers.cloudflare.com/workers/ci-cd/builds/configuration/),
+[GitHub integration](https://developers.cloudflare.com/workers/ci-cd/builds/git-integration/github-integration/).
+
+
+`docs/release-ci/installer-worker.yml.example` is a deferred alternative, not the
+selected integration. Do not move it into `.github/workflows`. Windows installer
+build/test/sign/upload automation remains separate from Worker Builds. Neither
+the Builds connection nor a new CI credential has been activated by this work.
+
+### Retiring the legacy GitHub download credential
+
+`VYNIC_RELEASE_GITHUB_TOKEN` is consumed only by the legacy GitHub installer
+provider and its startup storage diagnostic. With `VYNIC_INSTALLER_STORAGE` set
+to `r2-worker`, configuration and startup return before reading that credential;
+missing R2 configuration fails closed instead of falling back to GitHub. The
+installer's bootstrap, POS feed, Edge archive and repair paths use the existing
+Render release origin and do not consume this backend token. Preserve those
+paths when routing only `/windows/access/*` to the Worker.
+
+Before removing the backend variable and revoking the old token, prove a newly
+issued company download link through the live Worker: authenticated GET, HEAD,
+Range, full checksum, expiry, revocation and unauthorized denial. Check bootstrap,
+POS feed, referenced archives and repair availability independently. Existing
+GitHub grants are tied to their old artifact identity and require new links.
+Only after that cutover is verified can the legacy token be retired; it has not
+been revoked and no replacement is required merely to configure Builds.

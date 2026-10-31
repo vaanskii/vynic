@@ -80,3 +80,13 @@ test('classifier markers match the installed pinned Wrangler contract', () => {
   assert.ok(wrangler.includes('required secrets have not been set'));
   assert.ok(wrangler.includes('script.last_deployed_from === "dash"'));
 });
+
+test('inspection handles the actual deployments object without exposing provider extras', () => {
+  const id = '00000000-0000-4000-8000-000000000001';
+  const result = summarize('deployments', 200, { success: true, result: {
+    deployments: [{ id, secret: 'synthetic-secret', versions: [{ version_id: id, percentage: 100 }] }],
+  } });
+  assert.equal(result.deployments[0].id, id);
+  assert.equal(result.deployments[0].versions[0].percentage, 100);
+  assert.ok(!JSON.stringify(result).includes('synthetic-secret'));
+});

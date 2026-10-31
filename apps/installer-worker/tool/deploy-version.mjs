@@ -3,7 +3,6 @@ import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { uploadedVersion } from './read-upload-version.mjs';
 
 const worker = 'vynic-installer-downloads';
 const account = '4347dd6103310d9273ecca7f207a0f4b';
@@ -36,16 +35,6 @@ export function validateTarget(config) {
   }
 }
 
-export function deploymentReceipt(text) {
-  const rows = text.split(/\r?\n/).filter(Boolean).map(line => JSON.parse(line));
-  const found = rows.filter(row => row.type === 'version-deploy');
-  if (found.length !== 1 || found[0].version !== 1 ||
-      found[0].worker_name !== worker || !uuid.test(found[0].deployment_id ?? '')) {
-    throw new Error('Deployment receipt is missing or targets another Worker');
-  }
-  return found[0].deployment_id;
-}
-
 export function verifyActivation(text, deploymentId, versionId) {
   const rows = JSON.parse(text);
   if (!Array.isArray(rows) || !rows.length || rows.some(row =>
@@ -60,34 +49,7 @@ export function verifyActivation(text, deploymentId, versionId) {
   }
 }
 
-/** Injectable process boundary is for local tests; the CLI always uses pinned Wrangler. */
-export function deployVersion({ sha, branch, enabled, config, run, receipt, unchanged, progress = () => {} }) {
-  validateTarget(config);
-  if (!/^[a-f0-9]{40}$/.test(sha) || branch !== 'main' || enabled !== 'true') {
-    throw new Error('Deployment requires main, an exact source commit and the activation gate');
-  }
-  const before = run(['deployments', 'list', '--json'], 'preflight');
-  const rows = JSON.parse(before);
-  if (!Array.isArray(rows) || !rows.length || rows.some(row =>
-      !uuid.test(row.id ?? '') || !Number.isFinite(Date.parse(row.created_on)))) {
-    throw new Error('Cannot verify existing Worker deployment before upload');
-  }
-  const message = `Reviewed source ${sha}`;
-  run(['versions', 'upload', '--strict', '--keep-vars', '--tag', sha, '--message', message], 'upload');
-  const versionId = uploadedVersion(receipt('upload'));
-  progress({ stage: 'uploaded-not-active', source: sha, versionId });
-  if (!unchanged()) throw new Error('Source changed after upload; activation stopped');
-  if (run(['deployments', 'list', '--json'], 'compare') !== before) {
-    throw new Error('Worker deployment changed during upload; activation stopped');
-  }
-  run(['versions', 'deploy', `${versionId}@100%`, '--yes', '--message', message], 'activate');
-  const deploymentId = deploymentReceipt(receipt('activate'));
-  progress({ stage: 'activation-received-verification-pending', source: sha, versionId, deploymentId });
-  verifyActivation(run(['deployments', 'list', '--json'], 'verify'), deploymentId, versionId);
-  return { worker, source: sha, versionId, deploymentId, traffic: 100 };
-}
-
-function main() {
+async function main() {
   const root = fileURLToPath(new URL('..', import.meta.url));
   const configPath = join(root, 'wrangler.json');
   const config = JSON.parse(readFileSync(configPath, 'utf8'));
@@ -106,8 +68,9 @@ function main() {
   if (!dry && !unchanged()) throw new Error('Commit reviewed source before deployment');
   if (!dry && !process.env.CLOUDFLARE_API_TOKEN) throw new Error('Worker deployment token is unavailable');
   const env = { ...process.env, WRANGLER_SEND_METRICS: 'false' };
-  // Strip ambient API credentials for the offline packaging check.
-  if (dry) for (const key of Object.keys(env)) {
+  // Wrangler only packages locally. The official code-only API owns remote work.
+  // Never give the bundler credentials, including during a real deployment.
+  for (const key of Object.keys(env)) {
     if (/^(CLOUDFLARE|CF)_.*(TOKEN|KEY|EMAIL)$/.test(key)) delete env[key];
   }
   if (env.WRANGLER_CI_OVERRIDE_NAME || env.CLOUDFLARE_ENV || env.WRANGLER_ENV) {
@@ -132,11 +95,14 @@ function main() {
       run(['versions', 'upload', '--dry-run', '--strict', '--keep-vars', '--outdir', 'dist-version'], 'dry-run');
       console.log('Version-only package dry run passed; no upload, activation or route change');
     } else {
-      const result = deployVersion({ sha, config, run, unchanged,
+      run(['versions', 'upload', '--dry-run', '--strict', '--keep-vars', '--outdir', join(directory, 'bundle')], 'dry-run');
+      const { deployCodeOnly } = await import('./code-only-api.mjs');
+      const code = readFileSync(join(directory, 'bundle', 'index.js'), 'utf8');
+      const result = await deployCodeOnly({ sha, config, unchanged, code,
+        token: process.env.CLOUDFLARE_API_TOKEN,
         branch: process.env.WORKERS_CI_BRANCH,
         enabled: process.env.VYNIC_WORKER_DEPLOY_ENABLED,
-        progress: event => console.log(JSON.stringify(event)),
-        receipt: stage => readFileSync(join(directory, `${stage}.jsonl`), 'utf8') });
+        progress: event => console.log(JSON.stringify(event)) });
       console.log(JSON.stringify(result));
     }
   } finally {
@@ -146,7 +112,7 @@ function main() {
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
-  try { main(); } catch (error) {
+  try { await main(); } catch (error) {
     // Only our fixed errors are emitted. Parsing errors never include provider payloads.
     const message = error instanceof SyntaxError ? 'Invalid provider receipt or configuration' :
       error.code ? 'Required deployment input unavailable' : error.message;

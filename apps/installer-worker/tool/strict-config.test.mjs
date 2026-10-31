@@ -14,7 +14,7 @@ const config=JSON.parse(await readFile(join(root,'wrangler.json'),'utf8'));
 const temp=await mkdtemp(join(tmpdir(),'vynic-strict-proof-'));
 const observations=[];
 try {
- for(const preserveLogs of [false,true]) {
+ for(const [preserveLogs,denyRoutes] of [[false,false],[true,false],[true,true]]) {
   const calls=[];
   const script={tag:'synthetic-worker-tag',last_deployed_from:'dash',compatibility_date:'2026-06-16',compatibility_flags:[],observability:{enabled:true,head_sampling_rate:1,logs:{enabled:true,head_sampling_rate:1,invocation_logs:true,persist:true},traces:{enabled:false,persist:true,head_sampling_rate:1}}};
   const server=createServer((req,res)=>{
@@ -22,6 +22,7 @@ try {
    res.setHeader('Content-Type','application/json');
    if(req.method!=='GET'){res.statusCode=409;res.end(JSON.stringify({success:false,errors:[{code:10021,message:'Synthetic proof deliberately stops before upload'}]}));return;}
    let result;
+   if(denyRoutes && (path.endsWith('/routes')||path.endsWith('/domains/records'))){res.statusCode=403;res.end(JSON.stringify({success:false,errors:[{code:10000,message:'Synthetic route permission denied'}]}));return;}
    if(path.endsWith('/workers/services/vynic-installer-downloads'))result={default_environment:{environment:'production',script}};
    else if(path.endsWith('/bindings'))result=[{type:'r2_bucket',name:'INSTALLERS',bucket_name:'vynic-installers'},{type:'secret_text',name:'DOWNLOAD_GATEWAY_SECRET'}];
    else if(path.endsWith('/routes')||path.endsWith('/domains/records'))result=[];
@@ -45,7 +46,7 @@ try {
   const timer=setTimeout(()=>child.kill('SIGTERM'),20000);
   const code=await new Promise(resolve=>child.on('close',resolve));clearTimeout(timer);
   await new Promise(resolve=>server.close(resolve));
-  observations.push({preserveLogs,exit:code,strictConflict:output.includes('Aborting the upload operation because of conflicts'),writeAttemptsToSyntheticServer:calls.filter(c=>c.method!=='GET').length,reads:calls.filter(c=>c.method==='GET').map(c=>c.path.split('/').slice(-2).join('/'))});
+  observations.push({preserveLogs,denyRoutes,dashboardReadFailed:output.includes('Unable to fetch bindings, routes, or services metadata'),exit:code,strictConflict:output.includes('Aborting the upload operation because of conflicts'),writeAttemptsToSyntheticServer:calls.filter(c=>c.method!=='GET').length,reads:calls.filter(c=>c.method==='GET').map(c=>c.path.split('/').slice(-2).join('/'))});
  }
  assert.equal(observations[0].strictConflict,true);
  assert.equal(observations[0].writeAttemptsToSyntheticServer,0);
@@ -53,6 +54,8 @@ try {
  assert.equal(observations[1].writeAttemptsToSyntheticServer,1);
  assert.equal(observations[1].exit,1,'fixture refuses the real upload');
  assert.ok(observations[1].reads.every(p=>!p.startsWith('buckets/')),'no R2 management read is needed');
+ assert.equal(observations[2].dashboardReadFailed,true,'per-Worker token cannot satisfy legacy dashboard route reads');
+ assert.equal(observations[2].writeAttemptsToSyntheticServer,0,'permission failure happens before version upload');
 } finally {await rm(temp,{recursive:true,force:true});}
 
 });

@@ -257,11 +257,13 @@ artifact selection, atomic quota, HEAD, legacy provider and safe failures.
 compatibility date and intended path route. It deliberately disables workers.dev
 and preview URLs. The route is prepared configuration, not proof of live DNS.
 The local exact Wrangler dependency is installed from the lockfile. `npm run check`
-runs 23 tests (including local workerd/R2) and a deployment dry run without account
+runs the regression suite (including local workerd/R2) and a deployment dry run without account
 credentials. Runtime tests read the same compatibility date and binding names.
-`npm run deploy` uses only version upload and exact-version activation, with strict
-configuration and preserved remote variables. It verifies the returned deployment
-and its latest 100% traffic assignment. It never runs route, DNS, R2 object or secret
+`npm run deploy` packages locally with credential-free pinned Wrangler, then uses
+the official Versions/Deployments APIs for code-only publication. It validates
+existing private settings and the exact two bindings, inherits them with
+`bindings_inherit=strict`, and verifies the uploaded source tag/runtime/bindings
+before activating its exact UUID. It verifies the latest deployment at 100% traffic. It never runs route, DNS, R2 object or secret
 mutation commands. `npm run deploy:dry-run` packages that exact version-only path.
 Route bootstrap remains a separate operator action (`npm run deploy:bootstrap`),
 requiring its own zone permission; never run it before the DNS/parity gates pass.
@@ -281,8 +283,10 @@ to 22.23.4. Dependency installation and checks finish before credential injectio
 
 The version-only command requires `WORKERS_CI_BRANCH=main`, a clean committed
 checkout and the environment variable `VYNIC_WORKER_DEPLOY_ENABLED=true`.
-It first checks deployment-read permission, uploads a version, rejects a changed
-remote deployment before activation, deploys the exact returned UUID and verifies
+It first checks deployment-read permission and requires the newest uploaded
+version to be the sole active version (otherwise reconcile the inactive upload).
+It uploads a version, rejects changed settings/source/remote deployment before
+activation, deploys the exact returned UUID and verifies
 that deployment at 100% traffic. Test/preflight/upload failures do not activate.
 An ambiguous activation/readback failure requires dashboard inspection, not an
 automatic retry or rollback. No distributed compare-and-swap is supplied by the

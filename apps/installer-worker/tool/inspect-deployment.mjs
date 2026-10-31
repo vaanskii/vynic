@@ -67,8 +67,9 @@ export function summarize(label, status, body) {
       id: uuid.test(v.id ?? '') ? v.id : null,
       failedRunSource: v.annotations?.['workers/tag'] === '352749a44a61c87c334b2489681f72dcf2ed3115',
     })) : null;
-  } else if (label === 'deployments' && Array.isArray(value)) {
-    result.deployments = value.slice(0, 10).map(d => ({
+  } else if (label === 'deployments') {
+    const items = Array.isArray(value) ? value : value?.deployments;
+    result.deployments = (Array.isArray(items) ? items : []).slice(0, 10).map(d => ({
       id: uuid.test(d.id ?? '') ? d.id : null,
       versions: Array.isArray(d.versions) ? d.versions.map(v => ({
         id: uuid.test(v.version_id ?? '') ? v.version_id : null,

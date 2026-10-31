@@ -119,12 +119,31 @@ exact approved SHA, passing checks, an explicit deploy input, and approval in
 `installer-worker-production`. Actions and Node are pinned. See
 `docs/PRIVATE_R2_RELEASES.md` for verified environment protections and handoff.
 
-The deploy stages use `wrangler versions upload` followed by deployment of the
-exact validated upload receipt UUID. Unlike `wrangler deploy`, these commands do
-not apply route/custom-domain/cron trigger changes; Wrangler explicitly directs
-those to `triggers deploy`, which is absent here. Existing wrangler.json remains
-the declarative routing reference, while route creation/change is a separate
-approved operation. No DNS/zone-edit permission is requested for ordinary CI.
+The deploy stage packages with credential-free Wrangler, then uses the official
+Versions/Deployments API under the existing per-Worker Editor grant. It does not
+request route/custom-domain/cron or R2 management access. Existing wrangler.json
+remains the routing reference; route creation/change is a separate operation.
+
+Run 41199165765 confirmed the token could read this Worker's service, bindings,
+settings, versions and deployments (HTTP 200). Only the legacy dashboard routes
+and domains reads failed (HTTP 403, code 10000). Pinned Wrangler 4.156.0 invokes
+these reads for a dashboard-created Worker before code upload. This is not proof
+of a wrong token or permission needed by the official version upload endpoint.
+The actual CLI fixture now reproduces this 403-before-upload behavior. The
+code-only API regression refuses those endpoints and still completes its
+synthetic version/activation cycle without broader permission.
+
+`tool/code-only-api.mjs` validates private settings and exactly the approved R2
+and secret bindings, inherits them strictly without reading/writing secret
+values, and checks source tag, runtime and inherited binding metadata on the
+uploaded UUID before activation. The newest uploaded version must initially be
+the sole active version, preventing accidental inheritance from an unreviewed
+inactive upload. Changes in configuration, source, latest version or active
+deployment stop activation. Non-versioned logging/settings are never patched.
+Ambiguous writes and failed readbacks stop without retries or automatic rollback.
+Provider response bodies/messages are never printed. Existing GitHub approval
+and concurrency gates remain in force. Live API success is a separate gate from
+these synthetic tests; no new permission is automatically requested on 403.
 
 Proposed credential is the dashboard's account token limited to the existing
 `vynic-installer-downloads` Worker, stored only as the protected environment secret
@@ -142,15 +161,16 @@ known boolean configuration checks and validated version IDs. No provider body,
 binding value, error message or credential is logged or saved as an artifact.
 Both inputs true is rejected before credentials are available. This is the
 diagnostic path after an uncertain failure; inspect remote state before retrying
-any upload. `--strict` remains enabled and token scope is never widened by CI.
+any upload. Strict binding inheritance is required and token scope is never widened by CI.
 
 The checked-in config preserves the existing dashboard's enabled observability.
 Pinned Wrangler treats an omitted local observability setting as disabled; after
 a dashboard deployment that difference makes `versions upload --strict` abort
 before upload. `strict-config.test.mjs` reproduces the failure using the actual
 installed CLI against a dummy localhost API, then checks that the matching
-configuration passes the strict comparison and inherits the existing R2 binding
-without an R2 management request. The fixture refuses the version POST. This is
+configuration passes that comparison when its dashboard reads are allowed, but
+reproduces the route/domain 403 when they are forbidden. The fixture refuses the
+version POST in the allowed-read case. This is
 a regression proof, not proof that a production run deployed successfully.
 
 Build/install scripts run before token injection. The token is available only
